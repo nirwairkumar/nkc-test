@@ -7,6 +7,7 @@ export interface Test {
     description: string;
     questions: Question[]; // JSONB
     created_at: string;
+    custom_id?: string;
 }
 
 export interface Question {

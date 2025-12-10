@@ -54,7 +54,9 @@ export default function AdminMigration() {
         const reader = new FileReader();
         reader.onload = async (e) => {
             const text = e.target?.result as string;
-            await processFileContent(text);
+            // Extract filename without extension
+            const filename = file.name.replace(/\.[^/.]+$/, "");
+            await processFileContent(text, filename);
         };
         reader.onerror = () => {
             log('Error reading file', 'error');
@@ -63,10 +65,11 @@ export default function AdminMigration() {
         reader.readAsText(file);
     };
 
-    const processFileContent = async (text: string) => {
+    const processFileContent = async (text: string, customId?: string) => {
         try {
             log('Parsing file content...');
 
+            // ... (regex parsing logic remains same) ...
             // Regex to find the start of the array
             const startRegex = /export\s+const\s+allTests\s*(?::\s*\w+(?:\[\])?)?\s*=\s*\[/s;
             const match = startRegex.exec(text);
@@ -122,7 +125,7 @@ export default function AdminMigration() {
             log(`Successfully parsed ${parsedData.length} tests.`, 'success');
             setFileStats({ total: parsedData.length, parsed: parsedData.length });
 
-            await uploadData(parsedData);
+            await uploadData(parsedData, customId);
 
         } catch (error: any) {
             log(`Parsing Error: ${error.message}`, 'error');
@@ -141,7 +144,7 @@ export default function AdminMigration() {
         try {
             const examples = [...mathTests, ...scienceTests];
             log(`Found ${examples.length} example tests to seed.`, 'info');
-            await uploadData(examples);
+            await uploadData(examples, "example-data");
         } catch (error: any) {
             log(`Seed Error: ${error.message}`, 'error');
         } finally {
@@ -149,7 +152,7 @@ export default function AdminMigration() {
         }
     };
 
-    const uploadData = async (tests: any[]) => {
+    const uploadData = async (tests: any[], customId?: string) => {
         log('Starting database upload...');
         let successCount = 0;
         let failCount = 0;
@@ -181,7 +184,8 @@ export default function AdminMigration() {
                     .insert({
                         title: test.title,
                         description: test.description || '',
-                        questions: test.questions
+                        questions: test.questions,
+                        custom_id: customId || null
                     });
 
                 if (error) {

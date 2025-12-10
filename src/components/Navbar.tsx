@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, User, History, Shield } from 'lucide-react';
+import { LogOut, User, History, Shield, Home } from 'lucide-react';
 
 
 export default function Navbar() {
@@ -42,17 +42,29 @@ export default function Navbar() {
                 </Link>
 
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                     <Button
                         variant="ghost"
-                        className="hidden sm:flex"
-                        onClick={() => {
-                            navigate(isAdmin ? '/admin-migration' : '/admin-login');
-                        }}
+                        onClick={() => navigate('/')}
+                        className="flex items-center"
                     >
-                        <Shield className="mr-2 h-4 w-4" />
-                        Admin
+                        <Home className="mr-2 h-4 w-4" />
+                        <span className="hidden sm:inline">Home</span>
+                        <span className="sm:hidden">Home</span>
                     </Button>
+
+                    {!user && (
+                        <Button
+                            variant="ghost"
+                            className="hidden sm:flex"
+                            onClick={() => {
+                                navigate('/admin-login');
+                            }}
+                        >
+                            <Shield className="mr-2 h-4 w-4" />
+                            Admin
+                        </Button>
+                    )}
 
                     {user ? (
                         <DropdownMenu>
@@ -74,10 +86,17 @@ export default function Navbar() {
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => navigate('/history')}>
-                                    <History className="mr-2 h-4 w-4" />
-                                    <span>Test History</span>
-                                </DropdownMenuItem>
+                                {isAdmin ? (
+                                    <DropdownMenuItem onClick={() => navigate('/manage-tests')}>
+                                        <Shield className="mr-2 h-4 w-4" />
+                                        <span>Manage Tests</span>
+                                    </DropdownMenuItem>
+                                ) : (
+                                    <DropdownMenuItem onClick={() => navigate('/history')}>
+                                        <History className="mr-2 h-4 w-4" />
+                                        <span>Test History</span>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem onClick={() => navigate('/admin-migration')}>
                                     <Shield className="mr-2 h-4 w-4" />
                                     <span>Admin Panel</span>

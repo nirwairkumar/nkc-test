@@ -53,11 +53,18 @@ export default function TestList() {
                         </CardHeader>
                         <CardContent className="flex-1">
                             <p className="text-muted-foreground mb-4 line-clamp-3">{test.description}</p>
-                            <div className="flex items-center text-sm text-muted-foreground">
-                                <Clock className="mr-1 h-4 w-4" />
-                                {test.questions?.length || 0} Questions
-                                <span className="mx-2">•</span>
-                                {test.questions?.length || 0} Minutes
+                            <div className="flex items-center justify-between mt-auto">
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                    <Clock className="mr-1 h-4 w-4" />
+                                    {test.questions?.length || 0} Questions
+                                    <span className="mx-2">•</span>
+                                    {test.questions?.length || 0} Minutes
+                                </div>
+                                {test.custom_id && (
+                                    <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                        ID: {test.custom_id}
+                                    </span>
+                                )}
                             </div>
                         </CardContent>
                         <CardFooter>
