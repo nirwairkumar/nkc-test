@@ -14,6 +14,8 @@ import AuthForm from "@/components/AuthForm";
 import UpdatePassword from "./pages/UpdatePassword";
 
 import AdminMigration from "./pages/AdminMigration";
+import AdminLogin from "./pages/AdminLogin";
+
 import NotFound from "./pages/NotFound";
 import Layout from "./Layout";
 
@@ -32,6 +34,8 @@ const App = () => (
               <Route path="/login" element={<AuthForm />} />
               <Route path="/update-password" element={<UpdatePassword />} />
               <Route path="/admin-migration" element={<AdminMigration />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
+
 
               {/* Protected Routes */}
               <Route

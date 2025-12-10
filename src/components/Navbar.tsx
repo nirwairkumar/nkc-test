@@ -14,8 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogOut, User, History, Shield } from 'lucide-react';
 
+
 export default function Navbar() {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const navigate = useNavigate();
 
     const handleSignOut = async () => {
@@ -40,7 +41,19 @@ export default function Navbar() {
                     TestTaker
                 </Link>
 
+
                 <div className="flex items-center gap-4">
+                    <Button
+                        variant="ghost"
+                        className="hidden sm:flex"
+                        onClick={() => {
+                            navigate(isAdmin ? '/admin-migration' : '/admin-login');
+                        }}
+                    >
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin
+                    </Button>
+
                     {user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

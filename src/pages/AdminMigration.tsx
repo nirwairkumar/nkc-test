@@ -8,12 +8,34 @@ import { CheckCircle } from 'lucide-react';
 import { allTests as mathTests } from '@/data/examples/math-test';
 import { allTests as scienceTests } from '@/data/examples/science-test';
 import { BackButton } from '@/components/ui/BackButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+
 
 export default function AdminMigration() {
+    const { user, loading: authLoading, isAdmin } = useAuth();
+    const navigate = useNavigate();
+
+    // Protect Route
+    useEffect(() => {
+        if (!authLoading) {
+            // Because AuthContext now handles the DB check, we just check isAdmin
+            if (!isAdmin) {
+                navigate('/admin-login');
+            }
+        }
+    }, [user, authLoading, isAdmin, navigate]);
+
     const [status, setStatus] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [fileStats, setFileStats] = useState<{ total: number, parsed: number } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
+    // Extra safety: Don't render if not admin
+    if (!authLoading && !isAdmin) return null;
+
 
     const log = (message: string, type: 'info' | 'error' | 'success' = 'info') => {
         const timestamp = new Date().toLocaleTimeString();

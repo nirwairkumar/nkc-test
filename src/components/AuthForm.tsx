@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import supabase from '@/lib/supabaseClient';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -61,11 +63,23 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
-                const { error } = await signInWithEmail(values.email, values.password);
+                const { error, data } = await signInWithEmail(values.email, values.password);
                 if (error) throw error;
                 toast.success('Successfully logged in!');
-                const from = location.state?.from?.pathname || '/';
-                navigate(from, { replace: true });
+
+                // Check for admin status to auto-redirect
+                const { data: adminRecord } = await supabase
+                    .from('admins')
+                    .select('email')
+                    .eq('email', values.email)
+                    .single();
+
+                if (adminRecord) {
+                    navigate('/admin-migration');
+                } else {
+                    const from = location.state?.from?.pathname || '/';
+                    navigate(from, { replace: true });
+                }
 
             } else if (view === 'signup') {
                 if (!values.name || !values.password) {
