@@ -1,233 +1,189 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useTest } from '@/contexts/TestContext';
-import { allTests } from '@/data/questions';
+import { fetchTestById, Test, Question } from '@/lib/testsApi';
+import { saveAttempt } from '@/lib/attemptsApi';
+import { useAuth } from '@/contexts/AuthContext';
 import { ChevronLeft, ChevronRight, CheckCircle, Clock } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { BackButton } from '@/components/ui/BackButton';
 
-const TestPage = () => {
-  const { 
-    studentName,
-    selectedTest,
-    currentQuestionIndex, 
-    setCurrentQuestionIndex, 
-    answers, 
-    addAnswer,
-    setIsTestCompleted,
-    isTestCompleted,
-    timeRemaining,
-    setTimeRemaining,
-    totalTestTime
-  } = useTest();
+export default function TestPage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const timerInitialized = React.useRef(false);
+  const [test, setTest] = useState<Test | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  // Store simple map of questionId -> answerKey
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentQuestion = selectedTest?.questions[currentQuestionIndex];
-  const totalQuestions = selectedTest?.questions.length || 0;
-  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const currentAnswer = answers.find(a => a.questionId === currentQuestion?.id)?.selectedAnswer;
-
-  // Initialize timer when test starts
   useEffect(() => {
-    if (selectedTest && timeRemaining === 0) {
-      setTimeRemaining(totalTestTime);
-    }
-  }, [selectedTest, totalTestTime, timeRemaining, setTimeRemaining]);
+    if (!id) return;
+    loadTest(id);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [id]);
 
-  // Timer countdown effect
   useEffect(() => {
-    if (timeRemaining > 0 && !isTestCompleted) {
-      if (!timerInitialized.current) {
-        timerInitialized.current = true;
-      }
-      const timer = setInterval(() => {
-        setTimeRemaining((prev) => prev - 1);
+    if (timeRemaining > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current!);
+            handleSubmitTest(true); // Auto submit
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
-      return () => clearInterval(timer);
     }
-    if (timeRemaining === 0 && selectedTest && timerInitialized.current && !isTestCompleted) {
-      // Auto-submit when time runs out
-      handleSubmitTest();
-    }
-  }, [timeRemaining, isTestCompleted, setTimeRemaining, selectedTest]);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timeRemaining]);
 
-  // Format time display
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+  async function loadTest(testId: string) {
+    try {
+      const { data, error } = await fetchTestById(testId);
+      if (error) throw error;
+      if (!data) throw new Error('Test not found');
 
-  const handleAnswerSelect = (option: 'A' | 'B' | 'C' | 'D') => {
-    if (currentQuestion) {
-      addAnswer(currentQuestion.id, option);
+      setTest(data);
+      // Initialize timer: 1 minute per question (example)
+      const duration = (data.questions?.length || 0) * 60;
+      setTimeRemaining(duration);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load test');
+      navigate('/');
+    } finally {
+      setLoading(false);
     }
+  }
+
+  const handleAnswerSelect = (questionId: number, optionKey: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: optionKey }));
   };
 
   const handleNext = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    if (test && currentQuestionIndex < test.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setCurrentQuestionIndex(prev => prev - 1);
     }
   };
 
-  const handleSubmitTest = async () => {
-    if (answers.length < totalQuestions && timeRemaining > 0) {
-      const unanswered = totalQuestions - answers.length;
-      toast({
-        title: "Incomplete Test",
-        description: `You have ${unanswered} unanswered question(s). Please answer all questions before submitting.`,
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (timeRemaining === 0) {
-      toast({
-        title: "Time is over.",
-        description: "Please submit your test.",
-        variant: "default"
-      });
+  const handleSubmitTest = async (autoSubmit = false) => {
+    if (!test || !user) return;
+    if (isSubmitting) return;
+
+    const totalQuestions = test.questions.length;
+    const currentAnswerCount = Object.keys(answers).length;
+
+    if (!autoSubmit && currentAnswerCount < totalQuestions) {
+      toast.warning(`You have answered ${currentAnswerCount} of ${totalQuestions} questions.`);
+      // Allow them to continue or enforce it? User requirement said "graceful error handling". 
+      // We'll trust the user wants to submit if they clicked submit, but maybe show a confirmation?
+      // For simplicity, we proceed but showed warning. Or we can just return.
+      // To match previous behavior:
+      if (!window.confirm("You have unanswered questions. Are you sure you want to submit?")) return;
     }
 
-    // Calculate score and save to database
-    const correctAnswers = answers.filter(answer => {
-      const question = selectedTest?.questions.find(q => q.id === answer.questionId);
-      return question && question.correctAnswer === answer.selectedAnswer;
-    }).length;
+    setIsSubmitting(true);
+    if (timerRef.current) clearInterval(timerRef.current);
 
-    try {
-      const { error } = await supabase
-        .from('test_results')
-        .insert({
-          test_name: selectedTest!.title,
-          student_name: studentName,
-          marks_scored: correctAnswers,
-          total_marks: totalQuestions
-        });
-
-      if (error) {
-        console.error('Error saving test result:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save test results. Please try again.",
-          variant: "destructive"
-        });
-        return;
+    // Calculate score
+    let score = 0;
+    test.questions.forEach(q => {
+      if (answers[q.id] === q.correctAnswer) {
+        score++;
       }
+    });
 
-      toast({
-        title: "Test Submitted",
-        description: "Your test has been submitted successfully!",
-        variant: "default"
-      });
-    } catch (error) {
-      console.error('Error saving test result:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save test results. Please try again.",
-        variant: "destructive"
-      });
-      return;
+    const { error } = await saveAttempt(user.id, test.id, answers, score);
+
+    if (error) {
+      toast.error('Failed to save results. Please try again.');
+      setIsSubmitting(false);
+    } else {
+      toast.success('Test Submitted Successfully!');
+      navigate('/history');
     }
-    
-    setIsTestCompleted(true);
-    navigate('/results');
   };
 
-  if (!studentName || !selectedTest) {
-    navigate('/');
-    return null;
-  }
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
-  if (!currentQuestion) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div className="p-8 text-center">Loading Test...</div>;
+  if (!test) return <div className="p-8 text-center">Test not found.</div>;
 
-  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  const canSubmit = answers.length === totalQuestions;
+  const currentQuestion = test.questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / test.questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
+    <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
+        <BackButton className="mb-0" />
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Hello, {studentName}</h1>
-            <p className="text-muted-foreground">{selectedTest.title}</p>
+            <h1 className="text-xl font-bold">{test.title}</h1>
+            <p className="text-sm text-muted-foreground">Question {currentQuestionIndex + 1} of {test.questions.length}</p>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">Question</div>
-              <div className="text-lg font-semibold text-primary">
-                {currentQuestionIndex + 1} of {totalQuestions}
-              </div>
+          <div className="text-right">
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Clock className="w-4 h-4" /> Time Remaining
             </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Time Remaining
-              </div>
-              <div className={`text-lg font-semibold ${timeRemaining <= 60 ? 'text-destructive' : timeRemaining <= 180 ? 'text-warning' : 'text-primary'}`}>
-                {formatTime(timeRemaining)}
-              </div>
+            <div className={`text-xl font-mono font-bold ${timeRemaining < 60 ? 'text-red-500' : 'text-primary'}`}>
+              {formatTime(timeRemaining)}
             </div>
           </div>
         </div>
 
-        {/* Progress */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="text-primary font-medium">{Math.round(progress)}%</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-        </div>
+        <Progress value={progress} className="h-2" />
 
         {/* Question Card */}
-        <Card className="border-0 shadow-xl bg-card/80 backdrop-blur-sm">
+        <Card className="min-h-[400px] flex flex-col justify-center">
           <CardHeader>
-            <CardTitle className="text-xl leading-relaxed">
+            <CardTitle className="text-lg leading-relaxed">
               {currentQuestion.question}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {Object.entries(currentQuestion.options).map(([option, text]) => (
-              <button
-                key={option}
-                onClick={() => handleAnswerSelect(option as 'A' | 'B' | 'C' | 'D')}
-                className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 hover:scale-[1.02] ${
-                  currentAnswer === option
-                    ? 'border-primary bg-primary/10 text-primary font-medium'
-                    : 'border-border bg-card hover:border-primary/50 hover:bg-secondary/50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-semibold ${
-                    currentAnswer === option
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-muted-foreground/30 text-muted-foreground'
-                  }`}>
-                    {option}
+          <CardContent className="space-y-3">
+            {Object.entries(currentQuestion.options).map(([key, text]) => {
+              const isSelected = answers[currentQuestion.id] === key;
+              return (
+                <div
+                  key={key}
+                  onClick={() => handleAnswerSelect(currentQuestion.id, key)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all flex items-center gap-3
+                                        ${isSelected ? 'border-primary bg-primary/5' : 'border-transparent bg-secondary/50 hover:bg-secondary'}
+                                    `}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border
+                                        ${isSelected ? 'bg-primary text-primary-foreground border-primary' : 'bg-white text-muted-foreground border-muted'}`}>
+                    {key}
                   </div>
-                  <span className="flex-1">{text}</span>
-                  {currentAnswer === option && (
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                  )}
+                  <span className="text-base">{text}</span>
+                  {isSelected && <CheckCircle className="ml-auto w-5 h-5 text-primary" />}
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -237,38 +193,21 @@ const TestPage = () => {
             variant="outline"
             onClick={handlePrevious}
             disabled={currentQuestionIndex === 0}
-            className="flex items-center gap-2"
           >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
+            <ChevronLeft className="w-4 h-4 mr-2" /> Previous
           </Button>
 
-          <div className="text-sm text-muted-foreground">
-            {answers.length} of {totalQuestions} answered
-          </div>
-
-          {isLastQuestion ? (
-            <Button
-              onClick={handleSubmitTest}
-              disabled={!canSubmit}
-              className="flex items-center gap-2 bg-success hover:bg-success/90"
-            >
-              Submit Test
-              <CheckCircle className="h-4 w-4" />
+          {currentQuestionIndex === test.questions.length - 1 ? (
+            <Button onClick={() => handleSubmitTest(false)} disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit Test'}
             </Button>
           ) : (
-            <Button
-              onClick={handleNext}
-              className="flex items-center gap-2"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
+            <Button onClick={handleNext}>
+              Next <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           )}
         </div>
       </div>
     </div>
   );
-};
-
-export default TestPage;
+}

@@ -2,32 +2,60 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { TestProvider } from "@/contexts/TestContext";
-import Homepage from "./pages/Homepage";
-import NameEntry from "./pages/NameEntry";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import PrivateRoute from "@/components/ui/PrivateRoute";
+
+// Pages
+import TestList from "./pages/TestList";
 import TestPage from "./pages/TestPage";
-import ResultsPage from "./pages/ResultsPage";
+import TestHistory from "./pages/TestHistory";
+import AuthForm from "@/components/AuthForm";
+import UpdatePassword from "./pages/UpdatePassword";
+
+import AdminMigration from "./pages/AdminMigration";
 import NotFound from "./pages/NotFound";
+import Layout from "./Layout";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <TestProvider>
+      <AuthProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/name-entry" element={<NameEntry />} />
-            <Route path="/test" element={<TestPage />} />
-            <Route path="/results" element={<ResultsPage />} />
-            <Route path="*" element={<NotFound />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<TestList />} />
+              <Route path="/login" element={<AuthForm />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
+              <Route path="/admin-migration" element={<AdminMigration />} />
+
+              {/* Protected Routes */}
+              <Route
+                path="/test/:id"
+                element={
+                  <PrivateRoute>
+                    <TestPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/history"
+                element={
+                  <PrivateRoute>
+                    <TestHistory />
+                  </PrivateRoute>
+                }
+              />
+              {/* Fallback */}
+              <Route path="*" element={<NotFound />} />
+            </Route>
           </Routes>
         </BrowserRouter>
-      </TestProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
