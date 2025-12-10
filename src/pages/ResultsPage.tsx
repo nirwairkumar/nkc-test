@@ -1,21 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTest } from '@/contexts/TestContext';
-import { allTests } from '@/data/questions';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Trophy, 
-  RotateCcw, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Trophy,
+  RotateCcw,
+  CheckCircle,
+  XCircle,
   Target,
   TrendingUp,
   ArrowUpDown,
-  Home
+  Home,
+  History
 } from 'lucide-react';
 
 interface TestResult {
@@ -28,15 +28,43 @@ interface TestResult {
 }
 
 const ResultsPage = () => {
-  const { studentName, selectedTest, answers, resetTest, isTestCompleted } = useTest();
+  const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
   const navigate = useNavigate();
+  const location = useLocation();
   const [allResults, setAllResults] = useState<TestResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'submission_time' | 'marks_scored'>('submission_time');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // If user accessed results page directly (not from completing a test)
-  const showPersonalResults = studentName && selectedTest && isTestCompleted;
+  // Check for state passed from TestPage
+  // logs for debugging
+  console.log('ResultsPage location state:', location.state);
+  console.log('Context data:', { contextStudentName, contextSelectedTest, isTestCompleted });
+
+  const stateData = location.state as {
+    test: any;
+    answers: Record<number, string>;
+    score: number;
+    totalQuestions: number
+  } | undefined;
+
+  // Use state data if available, otherwise fall back to context (legacy support)
+  const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
+
+  const studentName = stateData ? 'Student' : contextStudentName; // We could fetch user name if needed
+  const selectedTest = stateData?.test || contextSelectedTest;
+
+  // Normalize answers to array format: { questionId, selectedAnswer }
+  let answers: { questionId: number; selectedAnswer: string }[] = [];
+  try {
+    if (stateData && stateData.answers) {
+      answers = Object.entries(stateData.answers).map(([qid, ans]) => ({ questionId: Number(qid), selectedAnswer: ans }));
+    } else if (contextAnswers) {
+      answers = contextAnswers;
+    }
+  } catch (e) {
+    console.error("Error parsing answers:", e);
+  }
 
   useEffect(() => {
     fetchAllResults();
@@ -87,21 +115,24 @@ const ResultsPage = () => {
   };
 
   const getPercentage = (scored: number, total: number) => {
+    if (total === 0) return 0;
     return Math.round((scored / total) * 100);
   };
 
-  // Personal test results (only if user just completed a test)
+  // Calculate Personal test results logic
   let totalQuestions = 0;
   let correctAnswers = 0;
   let score = 0;
-  
-  if (showPersonalResults) {
+
+  if (showPersonalResults && selectedTest && selectedTest.questions) {
     totalQuestions = selectedTest.questions.length;
     correctAnswers = answers.filter(answer => {
-      const question = selectedTest?.questions.find(q => q.id === answer.questionId);
+      const question = selectedTest?.questions?.find((q: any) => q.id === answer.questionId);
       return question && question.correctAnswer === answer.selectedAnswer;
     }).length;
     score = Math.round((correctAnswers / totalQuestions) * 100);
+  } else {
+    console.log("Skipping score calculation: Missing selectedTest or questions", { showPersonalResults, selectedTest });
   }
 
   const getScoreColor = () => {
@@ -128,18 +159,30 @@ const ResultsPage = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/')}
-            className="flex items-center gap-2"
-          >
-            <Home className="h-4 w-4" />
-            Back to Home
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/history')}
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              Test History
+            </Button>
+          </div>
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground">Test Results</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {showPersonalResults && selectedTest ? `Results: ${selectedTest.title}` : 'Test Results'}
+            </h1>
             <p className="text-muted-foreground">
-              {showPersonalResults ? `Here's how you performed, ${studentName}` : 'All test results from students'}
+              {showPersonalResults ? `Here's how you performed` : 'All test results from students'}
             </p>
           </div>
           <div className="w-[120px]"></div> {/* Spacer for centering */}
@@ -160,7 +203,7 @@ const ResultsPage = () => {
                   {score}%
                 </div>
                 <div className="text-lg text-muted-foreground">
-                  {correctAnswers} out of {totalQuestions} correct
+                  Correct: {correctAnswers} | Wrong: {totalQuestions - correctAnswers} | Marks: {score}
                 </div>
                 <Badge variant="outline" className="text-lg px-4 py-1">
                   {getScoreMessage()}
@@ -250,9 +293,9 @@ const ResultsPage = () => {
                             <span className="font-semibold">
                               {result.marks_scored}/{result.total_marks}
                             </span>
-                            <Badge 
-                              variant={getPercentage(result.marks_scored, result.total_marks) >= 80 ? "default" : 
-                                     getPercentage(result.marks_scored, result.total_marks) >= 60 ? "secondary" : "destructive"}
+                            <Badge
+                              variant={getPercentage(result.marks_scored, result.total_marks) >= 80 ? "default" :
+                                getPercentage(result.marks_scored, result.total_marks) >= 60 ? "secondary" : "destructive"}
                               className="text-xs"
                             >
                               {getPercentage(result.marks_scored, result.total_marks)}%
@@ -272,7 +315,7 @@ const ResultsPage = () => {
         </Card>
 
         {/* Detailed Results (only if user just completed a test) */}
-        {showPersonalResults && (
+        {showPersonalResults && selectedTest && (
           <Card className="border-0 shadow-xl bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -281,10 +324,10 @@ const ResultsPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {selectedTest.questions.map((question, index) => {
+              {selectedTest.questions?.map((question: any, index: number) => {
                 const userAnswer = answers.find(a => a.questionId === question.id);
                 const isCorrect = userAnswer?.selectedAnswer === question.correctAnswer;
-                
+
                 return (
                   <div key={question.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-start gap-3">
@@ -324,12 +367,21 @@ const ResultsPage = () => {
           </Card>
         )}
 
-        {/* Actions */}
+        {/* Actions - Bottom */}
         {showPersonalResults && (
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-4">
             <Button onClick={handleRetakeTest} size="lg" className="flex items-center gap-2">
               <RotateCcw className="h-4 w-4" />
               Take Test Again
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Back to Dashboard
             </Button>
           </div>
         )}

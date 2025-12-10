@@ -119,7 +119,17 @@ export default function TestPage() {
       setIsSubmitting(false);
     } else {
       toast.success('Test Submitted Successfully!');
-      navigate('/history');
+
+      // Navigate to results page with data, replacing current history entry
+      navigate('/results', {
+        state: {
+          test: test,
+          answers: answers,
+          score: score,
+          totalQuestions: test.questions.length
+        },
+        replace: true
+      });
     }
   };
 

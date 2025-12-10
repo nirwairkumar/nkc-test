@@ -3,7 +3,7 @@ import { fetchUserAttempts } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, Calendar, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
     Table,
@@ -16,6 +16,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { fetchTestById } from '@/lib/testsApi';
 import { BackButton } from '@/components/ui/BackButton';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
 // Extend the attempt type to include test title which we might need to join or fetch
 interface Attempt {
@@ -70,8 +72,34 @@ export default function TestHistory() {
         }
     }
 
-    const toggleExpand = (id: string) => {
+    const toggleExpand = (id: string, e: React.MouseEvent) => {
+        // Prevent toggle if clicking buttons
+        if ((e.target as HTMLElement).closest('button')) return;
         setExpandedAttempt(expandedAttempt === id ? null : id);
+    };
+
+    const handleDelete = async (attemptId: string) => {
+        if (!confirm('Are you sure you want to delete this test record? This action cannot be undone.')) return;
+
+        try {
+            // Delete from user_tests
+            const { error } = await supabase
+                .from('user_tests')
+                .delete()
+                .eq('id', attemptId);
+
+            if (error) throw error;
+
+            toast.success('Test record deleted successfully');
+
+            // Remove from local state
+            setAttempts(prev => prev.filter(a => a.id !== attemptId));
+            if (expandedAttempt === attemptId) setExpandedAttempt(null);
+
+        } catch (error: any) {
+            console.error('Error deleting test:', error);
+            toast.error('Failed to delete test record: ' + (error.message || 'Unknown error'));
+        }
     };
 
     if (loading) {
@@ -103,7 +131,7 @@ export default function TestHistory() {
                             ) : (
                                 attempts.map((attempt) => (
                                     <React.Fragment key={attempt.id}>
-                                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleExpand(attempt.id)}>
+                                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={(e) => toggleExpand(attempt.id, e)}>
                                             <TableCell className="font-medium">{attempt.test_title}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center text-muted-foreground">
@@ -117,10 +145,25 @@ export default function TestHistory() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm">
-                                                    {expandedAttempt === attempt.id ? <ChevronUp /> : <ChevronDown />}
-                                                    View Answers
-                                                </Button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Button variant="ghost" size="sm" onClick={() => setExpandedAttempt(expandedAttempt === attempt.id ? null : attempt.id)}>
+                                                        {expandedAttempt === attempt.id ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
+                                                        View Answers
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(attempt.id);
+                                                        }}
+                                                        className="h-8 px-2"
+                                                        title="Delete Record"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                         {expandedAttempt === attempt.id && (

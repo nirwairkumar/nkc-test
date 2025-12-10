@@ -4,12 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
 
 // Pages
 import TestList from "./pages/TestList";
 import TestPage from "./pages/TestPage";
 import TestHistory from "./pages/TestHistory";
+import ResultsPage from "./pages/ResultsPage";
 import AuthForm from "@/components/AuthForm";
 import UpdatePassword from "./pages/UpdatePassword";
 
@@ -27,38 +29,48 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<TestList />} />
-              <Route path="/login" element={<AuthForm />} />
-              <Route path="/update-password" element={<UpdatePassword />} />
-              <Route path="/admin-migration" element={<AdminMigration />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
+        <TestProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<TestList />} />
+                <Route path="/login" element={<AuthForm />} />
+                <Route path="/update-password" element={<UpdatePassword />} />
+                <Route path="/admin-migration" element={<AdminMigration />} />
+                <Route path="/admin-login" element={<AdminLogin />} />
 
 
-              {/* Protected Routes */}
-              <Route
-                path="/test/:id"
-                element={
-                  <PrivateRoute>
-                    <TestPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/history"
-                element={
-                  <PrivateRoute>
-                    <TestHistory />
-                  </PrivateRoute>
-                }
-              />
-              {/* Fallback */}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+                {/* Protected Routes */}
+                <Route
+                  path="/test/:id"
+                  element={
+                    <PrivateRoute>
+                      <TestPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/history"
+                  element={
+                    <PrivateRoute>
+                      <TestHistory />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/results"
+                  element={
+                    <PrivateRoute>
+                      <ResultsPage />
+                    </PrivateRoute>
+                  }
+                />
+                {/* Fallback */}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </TestProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
