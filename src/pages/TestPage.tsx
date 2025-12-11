@@ -152,7 +152,7 @@ export default function TestPage() {
         {/* Header */}
         <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
           <div>
-            <h1 className="text-xl font-bold">{test.title}</h1>
+            <h1 className="text-lg md:text-xl font-bold">{test.title}</h1>
             <p className="text-sm text-muted-foreground">Question {currentQuestionIndex + 1} of {test.questions.length}</p>
           </div>
           <div className="text-right">

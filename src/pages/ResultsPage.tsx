@@ -158,8 +158,8 @@ const ResultsPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex gap-2 w-full md:w-auto justify-center md:justify-start">
             <Button
               variant="outline"
               onClick={() => navigate('/')}
@@ -177,142 +177,18 @@ const ResultsPage = () => {
               Test History
             </Button>
           </div>
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground">
+          <div className="text-center w-full md:w-auto">
+            <h1 className="text-xl md:text-3xl font-bold text-foreground break-words px-2">
               {showPersonalResults && selectedTest ? `Results: ${selectedTest.title}` : 'Test Results'}
             </h1>
             <p className="text-muted-foreground">
-              {showPersonalResults ? `Here's how you performed` : 'All test results from students'}
+              {showPersonalResults ? `Here's how you performed` : 'Test results overview'}
             </p>
           </div>
-          <div className="w-[120px]"></div> {/* Spacer for centering */}
+          <div className="hidden md:block w-[120px]"></div> {/* Spacer for desktop centering */}
         </div>
 
         {/* Personal Score Summary (only if user just completed a test) */}
-        {showPersonalResults && (
-          <Card className="border-0 shadow-xl bg-card/80 backdrop-blur-sm">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl flex items-center justify-center gap-2">
-                <Trophy className={`h-6 w-6 ${getScoreColor()}`} />
-                Your Score
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center space-y-2">
-                <div className={`text-6xl font-bold ${getScoreColor()}`}>
-                  {score}%
-                </div>
-                <div className="text-lg text-muted-foreground">
-                  Correct: {correctAnswers} | Wrong: {totalQuestions - correctAnswers} | Marks: {score}
-                </div>
-                <Badge variant="outline" className="text-lg px-4 py-1">
-                  {getScoreMessage()}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="space-y-2">
-                  <div className="flex justify-center">
-                    <Target className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="text-sm text-muted-foreground">Total Questions</div>
-                  <div className="text-xl font-semibold">{totalQuestions}</div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-center">
-                    <CheckCircle className="h-6 w-6 text-success" />
-                  </div>
-                  <div className="text-sm text-muted-foreground">Correct</div>
-                  <div className="text-xl font-semibold text-success">{correctAnswers}</div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-center">
-                    <XCircle className="h-6 w-6 text-destructive" />
-                  </div>
-                  <div className="text-sm text-muted-foreground">Incorrect</div>
-                  <div className="text-xl font-semibold text-destructive">{totalQuestions - correctAnswers}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* All Results Table */}
-        <Card className="border-0 shadow-xl bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              All Test Results
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading results...</div>
-            ) : allResults.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No test results found. Be the first to take a test!
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Test Name</TableHead>
-                      <TableHead>Student Name</TableHead>
-                      <TableHead className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSort('marks_scored')}
-                          className="flex items-center gap-1 h-auto p-0"
-                        >
-                          Marks
-                          <ArrowUpDown className="h-4 w-4" />
-                        </Button>
-                      </TableHead>
-                      <TableHead className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSort('submission_time')}
-                          className="flex items-center gap-1 h-auto p-0"
-                        >
-                          Submission Time
-                          <ArrowUpDown className="h-4 w-4" />
-                        </Button>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allResults.map((result) => (
-                      <TableRow key={result.id}>
-                        <TableCell className="font-medium">{result.test_name}</TableCell>
-                        <TableCell>{result.student_name}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="font-semibold">
-                              {result.marks_scored}/{result.total_marks}
-                            </span>
-                            <Badge
-                              variant={getPercentage(result.marks_scored, result.total_marks) >= 80 ? "default" :
-                                getPercentage(result.marks_scored, result.total_marks) >= 60 ? "secondary" : "destructive"}
-                              className="text-xs"
-                            >
-                              {getPercentage(result.marks_scored, result.total_marks)}%
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {formatDateTime(result.submission_time)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Detailed Results (only if user just completed a test) */}
         {showPersonalResults && selectedTest && (

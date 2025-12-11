@@ -18,6 +18,7 @@ import UpdatePassword from "./pages/UpdatePassword";
 import AdminMigration from "./pages/AdminMigration";
 import AdminLogin from "./pages/AdminLogin";
 import ManageTests from "./pages/ManageTests";
+import SupportPage from "./pages/SupportPage";
 
 import NotFound from "./pages/NotFound";
 import Layout from "./Layout";
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/admin-migration" element={<AdminMigration />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/manage-tests" element={<ManageTests />} />
+                <Route path="/support" element={<SupportPage />} />
 
 
                 {/* Protected Routes */}

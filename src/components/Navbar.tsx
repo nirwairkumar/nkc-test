@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu } from 'lucide-react';
 
 
 export default function Navbar() {
@@ -43,29 +43,76 @@ export default function Navbar() {
 
 
                 <div className="flex items-center gap-2 sm:gap-4">
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/')}
-                        className="flex items-center"
-                    >
-                        <Home className="mr-2 h-4 w-4" />
-                        <span className="hidden sm:inline">Home</span>
-                        <span className="sm:hidden">Home</span>
-                    </Button>
-
-                    {!user && (
+                    {/* Desktop Navigation */}
+                    <div className="hidden md:flex items-center gap-2">
                         <Button
                             variant="ghost"
-                            className="hidden sm:flex"
-                            onClick={() => {
-                                navigate('/admin-login');
-                            }}
+                            onClick={() => navigate('/')}
+                            className="flex items-center"
                         >
-                            <Shield className="mr-2 h-4 w-4" />
-                            Admin
+                            <Home className="mr-2 h-4 w-4" />
+                            <span>Home</span>
                         </Button>
-                    )}
 
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate('/support')}
+                            className="flex items-center"
+                        >
+                            <HelpCircle className="mr-2 h-4 w-4" />
+                            <span>Support</span>
+                        </Button>
+
+                        {!user && (
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/admin-login')}
+                            >
+                                <Shield className="mr-2 h-4 w-4" />
+                                Admin
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Mobile Menu (Hamburger) */}
+                    <div className="md:hidden">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Menu className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => navigate('/')}>
+                                    <Home className="mr-2 h-4 w-4" />
+                                    <span>Home</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate('/support')}>
+                                    <HelpCircle className="mr-2 h-4 w-4" />
+                                    <span>Support</span>
+                                </DropdownMenuItem>
+                                {!user && (
+                                    <>
+                                        <DropdownMenuItem onClick={() => navigate('/admin-login')}>
+                                            <Shield className="mr-2 h-4 w-4" />
+                                            <span>Admin</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => navigate('/login')}>
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Login</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => navigate('/login', { state: { isSignup: true } })}>
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Sign Up</span>
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+
+                    {/* Authenticated User Avatar (Visible on both) */}
                     {user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -109,7 +156,7 @@ export default function Navbar() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <div className="flex gap-2">
+                        <div className="hidden md:flex gap-2">
                             <Button variant="ghost" onClick={() => navigate('/login')}>
                                 Login
                             </Button>

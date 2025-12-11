@@ -13,6 +13,10 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 
+import { fetchSections, createSection, assignSectionsToTest, Section } from '@/lib/sectionsApi';
+import { Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+
 export default function AdminMigration() {
     const { user, loading: authLoading, isAdmin } = useAuth();
     const navigate = useNavigate();
@@ -31,6 +35,38 @@ export default function AdminMigration() {
     const [loading, setLoading] = useState(false);
     const [fileStats, setFileStats] = useState<{ total: number, parsed: number } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Section States
+    const [sections, setSections] = useState<Section[]>([]);
+    const [selectedSections, setSelectedSections] = useState<string[]>([]);
+    const [newSectionName, setNewSectionName] = useState('');
+
+    useEffect(() => {
+        loadSections();
+    }, []);
+
+    const loadSections = async () => {
+        const { data } = await fetchSections();
+        if (data) setSections(data);
+    };
+
+    const handleCreateSection = async () => {
+        if (!newSectionName.trim()) return;
+        const { data, error } = await createSection(newSectionName.trim());
+        if (error) {
+            log(`Error creating section: ${error.message}`, 'error');
+        } else {
+            log(`Section created: ${data.name}`, 'success');
+            setNewSectionName('');
+            loadSections();
+        }
+    };
+
+    const toggleSection = (id: string) => {
+        setSelectedSections(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
 
     if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
     // Extra safety: Don't render if not admin
@@ -179,20 +215,32 @@ export default function AdminMigration() {
                     continue;
                 }
 
-                const { error } = await supabase
+                const { data: insertedTest, error } = await supabase
                     .from('tests')
                     .insert({
                         title: test.title,
                         description: test.description || '',
                         questions: test.questions,
                         custom_id: customId || null
-                    });
+                    })
+                    .select()
+                    .single();
 
                 if (error) {
                     log(`-> Error inserting: ${error.message}`, 'error');
                     failCount++;
-                } else {
-                    log(`-> Success: Uploaded "${test.title}"`);
+                } else if (insertedTest) {
+                    // Assign Sections
+                    if (selectedSections.length > 0) {
+                        const { error: sectionError } = await assignSectionsToTest(insertedTest.id, selectedSections);
+                        if (sectionError) {
+                            log(`-> Warning: Test created but section assignment failed: ${sectionError.message}`, 'error');
+                        } else {
+                            log(`-> Success: Uploaded "${test.title}" with sections.`);
+                        }
+                    } else {
+                        log(`-> Success: Uploaded "${test.title}" (No sections).`);
+                    }
                     successCount++;
                 }
 
@@ -210,6 +258,26 @@ export default function AdminMigration() {
         <div className="container mx-auto max-w-4xl py-10 space-y-6">
             <BackButton />
             <h1 className="text-3xl font-bold">Admin Data Migration</h1>
+
+            {/* Manage Sections */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Manage Sections</CardTitle>
+                    <CardDescription>Create sections to categorize tests.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex gap-2">
+                        <Input
+                            placeholder="New Section Name"
+                            value={newSectionName}
+                            onChange={(e) => setNewSectionName(e.target.value)}
+                        />
+                        <Button onClick={handleCreateSection} disabled={!newSectionName.trim()}>
+                            <Plus className="h-4 w-4 mr-2" /> Add
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="h-full">
@@ -235,6 +303,23 @@ export default function AdminMigration() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Assign Sections (Optional)</Label>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {sections.length === 0 && <span className="text-sm text-muted-foreground">No sections created yet.</span>}
+                                {sections.map(section => (
+                                    <div key={section.id} className="flex items-center space-x-2 border p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer" onClick={() => toggleSection(section.id)}>
+                                        <Checkbox
+                                            id={`section-${section.id}`}
+                                            checked={selectedSections.includes(section.id)}
+                                            onCheckedChange={() => toggleSection(section.id)}
+                                        />
+                                        <Label htmlFor={`section-${section.id}`} className="cursor-pointer">{section.name}</Label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="grid w-full max-w-sm items-center gap-1.5">
                             <Label htmlFor="file">Test Data File (.ts)</Label>
                             <Input
