@@ -7,13 +7,53 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
-  }
   public: {
     Tables: {
+      sections: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       test_results: {
         Row: {
           created_at: string
@@ -44,36 +84,18 @@ export type Database = {
         }
         Relationships: []
       }
-      sections: {
-        Row: {
-          id: string
-          name: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       test_sections: {
         Row: {
-          test_id: string
           section_id: string
+          test_id: string
         }
         Insert: {
-          test_id: string
           section_id: string
+          test_id: string
         }
         Update: {
-          test_id?: string
           section_id?: string
+          test_id?: string
         }
         Relationships: [
           {
@@ -89,6 +111,42 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
+      }
+      tests: {
+        Row: {
+          created_at: string
+          custom_id: string | null
+          description: string | null
+          id: string
+          questions: Json[]
+          title: string
+          marks_per_question: number
+          negative_marks: number
+          duration: number // minutes
+        }
+        Insert: {
+          created_at?: string
+          custom_id?: string | null
+          description?: string | null
+          id?: string
+          questions: Json[]
+          title: string
+          marks_per_question?: number
+          negative_marks?: number
+          duration?: number
+        }
+        Update: {
+          created_at?: string
+          custom_id?: string | null
+          description?: string | null
+          id?: string
+          questions?: Json[]
+          title?: string
+          marks_per_question?: number
+          negative_marks?: number
+          duration?: number
+        }
+        Relationships: []
       }
     }
     Views: {

@@ -8,6 +8,9 @@ export interface Test {
     questions: Question[]; // JSONB
     created_at: string;
     custom_id?: string;
+    marks_per_question?: number;
+    negative_marks?: number;
+    duration?: number; // minutes
 }
 
 export interface Question {

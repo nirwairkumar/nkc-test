@@ -1,20 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import supabase from '@/lib/supabaseClient';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Plus } from 'lucide-react';
 import { allTests as mathTests } from '@/data/examples/math-test';
 import { allTests as scienceTests } from '@/data/examples/science-test';
 import { BackButton } from '@/components/ui/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-
-
 import { fetchSections, createSection, assignSectionsToTest, Section } from '@/lib/sectionsApi';
-import { Plus } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export default function AdminMigration() {
@@ -24,7 +20,6 @@ export default function AdminMigration() {
     // Protect Route
     useEffect(() => {
         if (!authLoading) {
-            // Because AuthContext now handles the DB check, we just check isAdmin
             if (!isAdmin) {
                 navigate('/admin-login');
             }
@@ -40,6 +35,12 @@ export default function AdminMigration() {
     const [sections, setSections] = useState<Section[]>([]);
     const [selectedSections, setSelectedSections] = useState<string[]>([]);
     const [newSectionName, setNewSectionName] = useState('');
+
+    // Test Settings State
+    const [globalDescription, setGlobalDescription] = useState('');
+    const [marksPerQuestion, setMarksPerQuestion] = useState<number>(4);
+    const [negativeMarks, setNegativeMarks] = useState<number>(1);
+    const [duration, setDuration] = useState<number>(180); // minutes
 
     useEffect(() => {
         loadSections();
@@ -105,7 +106,6 @@ export default function AdminMigration() {
         try {
             log('Parsing file content...');
 
-            // ... (regex parsing logic remains same) ...
             // Regex to find the start of the array
             const startRegex = /export\s+const\s+allTests\s*(?::\s*\w+(?:\[\])?)?\s*=\s*\[/s;
             const match = startRegex.exec(text);
@@ -219,9 +219,12 @@ export default function AdminMigration() {
                     .from('tests')
                     .insert({
                         title: test.title,
-                        description: test.description || '',
+                        description: test.description || globalDescription || '',
                         questions: test.questions,
-                        custom_id: customId || null
+                        custom_id: customId || null,
+                        marks_per_question: test.marks_per_question || marksPerQuestion,
+                        negative_marks: test.negative_marks !== undefined ? test.negative_marks : negativeMarks,
+                        duration: test.duration || duration
                     })
                     .select()
                     .single();
@@ -303,6 +306,44 @@ export default function AdminMigration() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Default Test Settings</Label>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Marks/Q</Label>
+                                    <Input
+                                        type="number"
+                                        value={marksPerQuestion}
+                                        onChange={(e) => setMarksPerQuestion(parseFloat(e.target.value))}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Neg. Marks</Label>
+                                    <Input
+                                        type="number"
+                                        value={negativeMarks}
+                                        onChange={(e) => setNegativeMarks(parseFloat(e.target.value))}
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs">Duration (mins)</Label>
+                                    <Input
+                                        type="number"
+                                        value={duration}
+                                        onChange={(e) => setDuration(parseFloat(e.target.value))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1 mt-2">
+                                <Label className="text-xs">Default Description</Label>
+                                <Input
+                                    value={globalDescription}
+                                    onChange={(e) => setGlobalDescription(e.target.value)}
+                                    placeholder="Enter test description"
+                                />
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <Label>Assign Sections (Optional)</Label>
                             <div className="flex flex-wrap gap-2 mb-4">

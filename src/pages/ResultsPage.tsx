@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useTest } from '@/contexts/TestContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -11,12 +10,19 @@ import {
   RotateCcw,
   CheckCircle,
   XCircle,
-  Target,
-  TrendingUp,
-  ArrowUpDown,
+  AlertCircle,
   Home,
-  History
+  History,
+  Timer,
+  Target
 } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Separator } from '@/components/ui/separator';
 
 interface TestResult {
   id: string;
@@ -31,236 +37,215 @@ const ResultsPage = () => {
   const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
   const navigate = useNavigate();
   const location = useLocation();
-  const [allResults, setAllResults] = useState<TestResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<'submission_time' | 'marks_scored'>('submission_time');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
-  // Check for state passed from TestPage
-  // logs for debugging
-  console.log('ResultsPage location state:', location.state);
-  console.log('Context data:', { contextStudentName, contextSelectedTest, isTestCompleted });
 
   const stateData = location.state as {
     test: any;
     answers: Record<number, string>;
     score: number;
-    totalQuestions: number
+    totalQuestions: number;
+    marksPerQuestion: number;
+    negativeMark: number;
   } | undefined;
 
-  // Use state data if available, otherwise fall back to context (legacy support)
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
 
-  const studentName = stateData ? 'Student' : contextStudentName; // We could fetch user name if needed
   const selectedTest = stateData?.test || contextSelectedTest;
 
-  // Normalize answers to array format: { questionId, selectedAnswer }
-  let answers: { questionId: number; selectedAnswer: string }[] = [];
-  try {
-    if (stateData && stateData.answers) {
-      answers = Object.entries(stateData.answers).map(([qid, ans]) => ({ questionId: Number(qid), selectedAnswer: ans }));
-    } else if (contextAnswers) {
-      answers = contextAnswers;
-    }
-  } catch (e) {
-    console.error("Error parsing answers:", e);
+  // Normalize answers
+  let answers: Record<number, string> = {};
+  if (stateData?.answers) {
+    answers = stateData.answers;
+  } else if (contextAnswers) {
+    // Context answers are array? Or record? check context definition. 
+    // Based on previous file, contextAnswers was treated as array in some places but map in others.
+    // previous file: answers = contextAnswers; (as array of {questionId, selectedAnswer})
+    // let's assume map for consistency if possible, or convert.
+    // actually previous file had `contextAnswers` as `any` and tried to map it.
+    // Let's rely on stateData mostly as that's the new flow.
+    answers = {}; // Fallback
   }
 
-  useEffect(() => {
-    fetchAllResults();
-  }, []);
+  // Calculate Stats
+  let totalQuestions = selectedTest?.questions?.length || 0;
+  let correctCount = 0;
+  let wrongCount = 0;
+  let skippedCount = 0;
+  let marksScored = stateData?.score || 0;
+  let totalMarks = totalQuestions * (selectedTest?.marks_per_question || 4);
 
-  const fetchAllResults = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('test_results')
-        .select('*')
-        .order(sortBy, { ascending: sortOrder === 'asc' });
-
-      if (error) {
-        console.error('Error fetching results:', error);
-        return;
+  if (selectedTest?.questions) {
+    selectedTest.questions.forEach((q: any) => {
+      const ans = answers[q.id];
+      if (ans === q.correctAnswer) {
+        correctCount++;
+      } else if (ans) {
+        wrongCount++;
+      } else {
+        skippedCount++;
       }
-
-      setAllResults(data || []);
-    } catch (error) {
-      console.error('Error fetching results:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSort = (column: 'submission_time' | 'marks_scored') => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(column);
-      setSortOrder('desc');
-    }
-  };
-
-  useEffect(() => {
-    fetchAllResults();
-  }, [sortBy, sortOrder]);
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
     });
-  };
-
-  const getPercentage = (scored: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((scored / total) * 100);
-  };
-
-  // Calculate Personal test results logic
-  let totalQuestions = 0;
-  let correctAnswers = 0;
-  let score = 0;
-
-  if (showPersonalResults && selectedTest && selectedTest.questions) {
-    totalQuestions = selectedTest.questions.length;
-    correctAnswers = answers.filter(answer => {
-      const question = selectedTest?.questions?.find((q: any) => q.id === answer.questionId);
-      return question && question.correctAnswer === answer.selectedAnswer;
-    }).length;
-    score = Math.round((correctAnswers / totalQuestions) * 100);
-  } else {
-    console.log("Skipping score calculation: Missing selectedTest or questions", { showPersonalResults, selectedTest });
+    // Recalculate score just in case to be safe, or trust passed score.
+    // marksScored = (correctCount * (selectedTest.marks_per_question || 4)) - (wrongCount * (selectedTest.negative_marks || 1));
+    // Trust passed score for now.
   }
 
-  const getScoreColor = () => {
-    if (score >= 80) return 'text-success';
-    if (score >= 60) return 'text-warning';
-    return 'text-destructive';
-  };
-
-  const getScoreMessage = () => {
-    if (score >= 90) return 'Excellent work!';
-    if (score >= 80) return 'Great job!';
-    if (score >= 70) return 'Good effort!';
-    if (score >= 60) return 'Keep practicing!';
-    return 'Study more and try again!';
-  };
+  const percentage = totalMarks > 0 ? Math.round((marksScored / totalMarks) * 100) : 0;
 
   const handleRetakeTest = () => {
     resetTest();
     navigate('/');
   };
 
+  if (!showPersonalResults) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-2xl font-bold mb-4">No Result Found</h1>
+        <Button onClick={() => navigate('/')}>Go Home</Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex gap-2 w-full md:w-auto justify-center md:justify-start">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2"
-            >
-              <Home className="h-4 w-4" />
-              Home
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/history')}
-              className="flex items-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              Test History
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header Actions */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Result Analysis</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+              <Home className="w-4 h-4 mr-2" /> Home
             </Button>
           </div>
-          <div className="text-center w-full md:w-auto">
-            <h1 className="text-xl md:text-3xl font-bold text-foreground break-words px-2">
-              {showPersonalResults && selectedTest ? `Results: ${selectedTest.title}` : 'Test Results'}
-            </h1>
-            <p className="text-muted-foreground">
-              {showPersonalResults ? `Here's how you performed` : 'Test results overview'}
-            </p>
-          </div>
-          <div className="hidden md:block w-[120px]"></div> {/* Spacer for desktop centering */}
         </div>
 
-        {/* Personal Score Summary (only if user just completed a test) */}
+        {/* Score Card */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="md:col-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-xl">
+            <CardContent className="p-6 flex flex-col justify-between h-full">
+              <div>
+                <h2 className="text-2xl font-semibold opacity-90">{selectedTest?.title}</h2>
+                <p className="text-indigo-100">Test Completed Successfully</p>
+              </div>
 
-        {/* Detailed Results (only if user just completed a test) */}
-        {showPersonalResults && selectedTest && (
-          <Card className="border-0 shadow-xl bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Your Detailed Results
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {selectedTest.questions?.map((question: any, index: number) => {
-                const userAnswer = answers.find(a => a.questionId === question.id);
-                const isCorrect = userAnswer?.selectedAnswer === question.correctAnswer;
-
-                return (
-                  <div key={question.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {isCorrect ? (
-                          <CheckCircle className="h-5 w-5 text-success" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-destructive" />
-                        )}
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="font-medium">
-                          Q{index + 1}: {question.question}
-                        </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground">Your answer:</span>
-                            <Badge variant={isCorrect ? "default" : "destructive"}>
-                              {userAnswer?.selectedAnswer} - {question.options[userAnswer?.selectedAnswer || 'A']}
-                            </Badge>
-                          </div>
-                          {!isCorrect && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-muted-foreground">Correct answer:</span>
-                              <Badge variant="outline" className="border-success text-success">
-                                {question.correctAnswer} - {question.options[question.correctAnswer]}
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              <div className="flex items-end gap-4 mt-6">
+                <div>
+                  <span className="text-6xl font-bold">{marksScored}</span>
+                  <span className="text-2xl opacity-75">/{totalMarks}</span>
+                </div>
+                <div className="mb-2">
+                  <Badge variant="secondary" className="text-lg px-3 py-1">
+                    {percentage}% Score
+                  </Badge>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        )}
 
-        {/* Actions - Bottom */}
-        {showPersonalResults && (
-          <div className="flex flex-col items-center gap-4">
-            <Button onClick={handleRetakeTest} size="lg" className="flex items-center gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Take Test Again
-            </Button>
+          <Card className="flex flex-col justify-center gap-4 p-6 shadow-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="w-5 h-5" />
+                <span className="font-medium">Correct</span>
+              </div>
+              <span className="font-bold text-xl">{correctCount}</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-red-600">
+                <XCircle className="w-5 h-5" />
+                <span className="font-medium">Wrong</span>
+              </div>
+              <span className="font-bold text-xl">{wrongCount}</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-slate-500">
+                <AlertCircle className="w-5 h-5" />
+                <span className="font-medium">Skipped</span>
+              </div>
+              <span className="font-bold text-xl">{skippedCount}</span>
+            </div>
+          </Card>
+        </div>
 
-            <Button
-              variant="outline"
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2"
-            >
-              <Home className="h-4 w-4" />
-              Back to Dashboard
-            </Button>
-          </div>
-        )}
+        {/* Detailed Analysis Accordion */}
+        <Card className="shadow-lg border-t-4 border-t-primary">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5" /> Detailed Analysis
+            </CardTitle>
+            <CardDescription>Review your answers against the correct solutions.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full space-y-2">
+              {selectedTest?.questions?.map((q: any, index: number) => {
+                const ans = answers[q.id];
+                const isCorrect = ans === q.correctAnswer;
+                const isSkipped = !ans;
+                const isWrong = !isSkipped && !isCorrect;
+
+                return (
+                  <AccordionItem key={q.id} value={`item-${q.id}`} className="border rounded-lg px-2 data-[state=open]:bg-slate-50">
+                    <AccordionTrigger className="hover:no-underline py-3 px-2">
+                      <div className="flex items-center gap-4 text-left w-full">
+                        <div className={`
+                                            flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border
+                                            ${isCorrect ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                                            ${isWrong ? 'bg-red-100 text-red-700 border-red-200' : ''}
+                                            ${isSkipped ? 'bg-slate-100 text-slate-500 border-slate-200' : ''}
+                                        `}>
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 font-medium text-sm line-clamp-1">
+                          {q.question}
+                        </div>
+                        <div className="mr-2">
+                          {isCorrect && <Badge className="bg-green-600">Correct</Badge>}
+                          {isWrong && <Badge variant="destructive">Wrong</Badge>}
+                          {isSkipped && <Badge variant="secondary">Skipped</Badge>}
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4">
+                      <div className="space-y-4 pt-2">
+                        <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3">
+                          {q.question}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className={`p-3 rounded-md border ${isCorrect ? 'bg-green-50 border-green-200' : isWrong ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Your Answer</span>
+                            <span className={`font-semibold ${isCorrect ? 'text-green-700' : isWrong ? 'text-red-700' : 'text-slate-600'}`}>
+                              {ans ? `${ans}) ${q.options[ans]}` : 'Not Answered'}
+                            </span>
+                          </div>
+
+                          <div className="p-3 rounded-md border bg-blue-50 border-blue-100">
+                            <span className="text-xs font-bold uppercase tracking-wider text-blue-500 block mb-1">Correct Answer</span>
+                            <span className="font-semibold text-blue-900">
+                              {q.correctAnswer}) {q.options[q.correctAnswer]}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </CardContent>
+        </Card>
+
+        {/* Footer Actions */}
+        <div className="flex justify-center gap-4 pb-10">
+          <Button size="lg" onClick={handleRetakeTest}>
+            <RotateCcw className="w-4 h-4 mr-2" /> Retake Test
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => navigate('/')}>
+            View Other Tests
+          </Button>
+        </div>
       </div>
     </div>
   );

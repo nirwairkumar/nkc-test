@@ -1,0 +1,111 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/BackButton';
+import { fetchTestById, Test } from '@/lib/testsApi';
+import { Clock, HelpCircle, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
+
+export default function TestIntroPage() {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { loading: authLoading } = useAuth();
+
+    const [test, setTest] = useState<Test | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (id) {
+            loadTest(id);
+        }
+    }, [id]);
+
+    const loadTest = async (testId: string) => {
+        try {
+            const { data, error } = await fetchTestById(testId);
+            if (error) throw error;
+            setTest(data);
+        } catch (err: any) {
+            console.error("Error loading test:", err);
+            setError(err.message || "Failed to load test details.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleStartTest = () => {
+        navigate(`/test/${id}`);
+    };
+
+    if (loading || authLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    if (error || !test) return (
+        <div className="container mx-auto py-10 text-center">
+            <h2 className="text-xl text-red-500 mb-4">Error: {error || "Test not found"}</h2>
+            <BackButton />
+        </div>
+    );
+
+    return (
+        <div className="container mx-auto max-w-3xl py-10 px-4 space-y-6">
+            <BackButton />
+
+            <Card className="border-t-4 border-t-primary shadow-lg">
+                <CardHeader className="text-center pb-2">
+                    <CardTitle className="text-3xl font-bold">{test.title}</CardTitle>
+                    <CardDescription className="text-lg mt-2">
+                        {test.description || "No description provided."}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <HelpCircle className="h-6 w-6 text-blue-500 mb-2" />
+                            <span className="text-sm text-muted-foreground">Questions</span>
+                            <span className="font-bold text-lg">{test.questions?.length || 0}</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <Clock className="h-6 w-6 text-orange-500 mb-2" />
+                            <span className="text-sm text-muted-foreground">Duration</span>
+                            <span className="font-bold text-lg">{test.duration || "N/A"} mins</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <CheckCircle className="h-6 w-6 text-green-500 mb-2" />
+                            <span className="text-sm text-muted-foreground">Marks/Q</span>
+                            <span className="font-bold text-lg">{test.marks_per_question || 4}</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <AlertTriangle className="h-6 w-6 text-red-500 mb-2" />
+                            <span className="text-sm text-muted-foreground">Negative</span>
+                            <span className="font-bold text-lg">{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 border p-4 rounded-md">
+                        <div className="flex items-center gap-2">
+                            <FileText className="h-5 w-5 text-primary" />
+                            <h3 className="font-semibold text-lg">Terms & Instructions</h3>
+                        </div>
+                        <Separator />
+                        <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                            <li>The test contains <strong>{test.questions?.length}</strong> questions.</li>
+                            <li>Total duration of the test is <strong>{test.duration} minutes</strong>.</li>
+                            <li>Each correct answer awards <strong>+{test.marks_per_question || 4} marks</strong>.</li>
+                            <li>Each wrong answer deducts <strong>{test.negative_marks !== undefined ? test.negative_marks : 1} marks</strong>.</li>
+                            <li>Once you start, the timer will begin and cannot be paused.</li>
+                            <li>Ensure you have a stable internet connection before starting.</li>
+                            <li>Click "Submit" to finish the test manually, or it will auto-submit when time runs out (though we have confirmations in place).</li>
+                        </ul>
+                    </div>
+                </CardContent>
+                <CardFooter className="pt-2 pb-6 px-6">
+                    <Button size="lg" className="w-full text-lg h-12" onClick={handleStartTest}>
+                        Start Test Now
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+    );
+}

@@ -149,8 +149,8 @@ export default function TestList() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button className="w-full" onClick={() => navigate(`/test/${test.id}`)}>
-                                Start Test
+                            <Button className="w-full" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                                Open
                                 <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </CardFooter>

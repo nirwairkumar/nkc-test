@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { BackButton } from '@/components/ui/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Trash2, Edit, Tag } from 'lucide-react';
+import { Trash2, Settings, Save } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { fetchSections, assignSectionsToTest, fetchTestSections, Section } from '@/lib/sectionsApi';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 
 export default function ManageTests() {
     const { loading: authLoading, isAdmin } = useAuth();
     const navigate = useNavigate();
 
-    // Protect Route
     useEffect(() => {
         if (!authLoading && !isAdmin) {
             navigate('/admin-login');
@@ -26,12 +29,13 @@ export default function ManageTests() {
     const [tests, setTests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Section Management State
-    const [isSectionDialogOpen, setIsSectionDialogOpen] = useState(false);
-    const [currentTestId, setCurrentTestId] = useState<string | null>(null);
+    // Edit Modal State
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editingTest, setEditingTest] = useState<any>(null);
+
+    // Sections State
     const [availableSections, setAvailableSections] = useState<Section[]>([]);
     const [selectedSections, setSelectedSections] = useState<string[]>([]);
-    const [testsSectionsMap, setTestsSectionsMap] = useState<Record<string, string[]>>({}); // Map testId -> sectionIds
 
     useEffect(() => {
         loadTests();
@@ -43,23 +47,9 @@ export default function ManageTests() {
             const { data, error } = await supabase.from('tests').select('*').order('created_at', { ascending: false });
             if (error) throw error;
             setTests(data || []);
-
-            // Fetch sections for all tests to display badges
-            // Ideally we should join in the query but for now valid to fetch separate or just fetch on demand
-            // Let's simplified: fetched sections on demand or load all mappings?
-            // Let's try to load all test_sections mappings
-            const { data: mappings } = await supabase.from('test_sections').select('*');
-            if (mappings) {
-                const map: Record<string, string[]> = {};
-                mappings.forEach((m: any) => {
-                    if (!map[m.test_id]) map[m.test_id] = [];
-                    map[m.test_id].push(m.section_id);
-                });
-                setTestsSectionsMap(map);
-            }
-
         } catch (error) {
             console.error('Error loading tests:', error);
+            toast.error("Failed to load tests");
         } finally {
             setLoading(false);
         }
@@ -79,36 +69,51 @@ export default function ManageTests() {
             const { error } = await supabase.from('tests').delete().eq('id', testId);
             if (error) throw error;
 
-            // Update UI
             setTests(prev => prev.filter(t => t.id !== testId));
-            alert(`Test "${testTitle}" deleted successfully.`);
+            toast.success(`Test "${testTitle}" deleted`);
         } catch (error: any) {
             console.error('Error deleting test:', error);
-            alert('Failed to delete test: ' + error.message);
+            toast.error('Failed to delete test: ' + error.message);
         }
     };
 
-    const openSectionDialog = async (testId: string) => {
-        setCurrentTestId(testId);
-        setIsSectionDialogOpen(true);
-        // Load current sections for this test
-        const { data } = await fetchTestSections(testId);
+    const openEditDialog = async (test: any) => {
+        setEditingTest({ ...test });
+        setIsEditOpen(true);
+
+        // Load sections for this test
+        const { data } = await fetchTestSections(test.id);
         setSelectedSections(data || []);
     };
 
-    const handleSaveSections = async () => {
-        if (!currentTestId) return;
+    const handleSaveTest = async () => {
+        if (!editingTest) return;
 
-        const { error } = await assignSectionsToTest(currentTestId, selectedSections);
-        if (error) {
-            alert('Failed to save sections: ' + error.message);
-        } else {
-            // Update local map
-            setTestsSectionsMap(prev => ({
-                ...prev,
-                [currentTestId]: selectedSections
-            }));
-            setIsSectionDialogOpen(false);
+        try {
+            // Update Test Details
+            const { error } = await supabase
+                .from('tests')
+                .update({
+                    title: editingTest.title,
+                    description: editingTest.description,
+                    custom_id: editingTest.custom_id,
+                    marks_per_question: parseFloat(editingTest.marks_per_question),
+                    negative_marks: parseFloat(editingTest.negative_marks),
+                    duration: parseFloat(editingTest.duration)
+                })
+                .eq('id', editingTest.id);
+
+            if (error) throw error;
+
+            // Update Sections
+            await assignSectionsToTest(editingTest.id, selectedSections);
+
+            toast.success("Test updated successfully");
+            setIsEditOpen(false);
+            loadTests(); // Refresh list
+        } catch (error: any) {
+            console.error("Error updating test:", error);
+            toast.error("Failed to update test: " + error.message);
         }
     };
 
@@ -118,23 +123,21 @@ export default function ManageTests() {
         );
     };
 
-    const getSectionName = (id: string) => availableSections.find(s => s.id === id)?.name || id;
-
     if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
     if (!isAdmin) return null;
 
     return (
-        <div className="container mx-auto max-w-6xl py-10 space-y-6">
+        <div className="container mx-auto max-w-5xl py-10 space-y-6">
             <BackButton />
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Manage Tests</h1>
-                    <p className="text-muted-foreground">View and delete existing tests.</p>
+                    <p className="text-muted-foreground">Edit test details, settings, and manage existing assessments.</p>
                 </div>
                 <Button variant="outline" onClick={loadTests} size="sm">Refresh List</Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {loading ? (
                     <div className="col-span-full text-center py-10">Loading tests...</div>
                 ) : tests.length === 0 ? (
@@ -143,55 +146,35 @@ export default function ManageTests() {
                     </div>
                 ) : (
                     tests.map(test => (
-                        <Card key={test.id} className="relative group flex flex-col">
-                            <CardHeader>
+                        <Card key={test.id} className="relative group hover:shadow-md transition-shadow">
+                            <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start gap-2">
                                     <CardTitle className="text-lg line-clamp-1" title={test.title}>{test.title}</CardTitle>
-                                    <Button
-                                        variant="destructive"
-                                        size="icon"
-                                        className="h-8 w-8 absolute -top-3 -right-3 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => handleDeleteTest(test.id, test.title)}
-                                        title="Delete Test"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <Badge variant="secondary" className="font-mono text-xs">
+                                        {test.custom_id || 'NO-ID'}
+                                    </Badge>
                                 </div>
-                                <CardDescription className="line-clamp-2 min-h-[40px]">
-                                    {test.description || 'No description provided.'}
-                                </CardDescription>
                             </CardHeader>
-                            <CardContent className="flex-1">
-                                <div className="text-sm text-muted-foreground flex flex-col gap-2">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="bg-secondary px-2 py-1 rounded text-xs font-medium">
-                                            {Array.isArray(test.questions) ? test.questions.length : 0} Questions • {Array.isArray(test.questions) ? test.questions.length : 0} Mins
-                                        </span>
-                                        {test.custom_id && (
-                                            <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                                                ID: {test.custom_id}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* Sections Badges */}
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                        {testsSectionsMap[test.id]?.length > 0 ? (
-                                            testsSectionsMap[test.id].map(secId => (
-                                                <Badge key={secId} variant="outline" className="text-[10px] px-1 py-0 h-5">
-                                                    {getSectionName(secId)}
-                                                </Badge>
-                                            ))
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground italic">No sections</span>
-                                        )}
-                                    </div>
+                            <CardContent className="pb-2">
+                                <div className="text-xs text-muted-foreground flex gap-4">
+                                    <span>{test.questions?.length || 0} Qs</span>
+                                    <span>{test.duration || 0} mins</span>
+                                    <span>{test.marks_per_question || '-'} Marks</span>
                                 </div>
                             </CardContent>
-                            <CardFooter className="pt-0">
-                                <Button variant="outline" size="sm" className="w-full" onClick={() => openSectionDialog(test.id)}>
-                                    <Tag className="h-3 w-3 mr-2" />
-                                    Manage Sections
+                            <CardFooter className="pt-2 flex justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
+                                <Button variant="outline" size="sm" className="w-full" onClick={() => openEditDialog(test)}>
+                                    <Settings className="h-3 w-3 mr-2" />
+                                    Manage
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleDeleteTest(test.id, test.title)}
+                                    title="Delete Test"
+                                >
+                                    <Trash2 className="h-4 w-4" />
                                 </Button>
                             </CardFooter>
                         </Card>
@@ -199,33 +182,107 @@ export default function ManageTests() {
                 )}
             </div>
 
-            {/* Edit Sections Dialog */}
-            <Dialog open={isSectionDialogOpen} onOpenChange={setIsSectionDialogOpen}>
-                <DialogContent>
+            {/* Edit Dialog */}
+            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Manage Sections</DialogTitle>
-                        <DialogDescription>
-                            Assign sections to this test.
-                        </DialogDescription>
+                        <DialogTitle>Edit Test Details</DialogTitle>
+                        <DialogDescription>Update test metadata and settings.</DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <div className="flex flex-wrap gap-2">
-                            {availableSections.length === 0 && <span className="text-sm text-muted-foreground">No sections available. Create some in the Migration page first.</span>}
-                            {availableSections.map(section => (
-                                <div key={section.id} className="flex items-center space-x-2 border p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer" onClick={() => toggleSection(section.id)}>
-                                    <Checkbox
-                                        id={`edit-section-${section.id}`}
-                                        checked={selectedSections.includes(section.id)}
-                                        onCheckedChange={() => toggleSection(section.id)}
-                                    />
-                                    <Label htmlFor={`edit-section-${section.id}`} className="cursor-pointer">{section.name}</Label>
+
+                    {editingTest && (
+                        <Tabs defaultValue="details" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="details">Details & Settings</TabsTrigger>
+                                <TabsTrigger value="sections">Sections</TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="details" className="space-y-4 py-4">
+                                <div className="grid gap-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="title">Test Title</Label>
+                                        <Input
+                                            id="title"
+                                            value={editingTest.title}
+                                            onChange={(e) => setEditingTest({ ...editingTest, title: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="custom_id">Custom ID</Label>
+                                            <Input
+                                                id="custom_id"
+                                                value={editingTest.custom_id || ''}
+                                                onChange={(e) => setEditingTest({ ...editingTest, custom_id: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="duration">Duration (mins)</Label>
+                                            <Input
+                                                id="duration"
+                                                type="number"
+                                                value={editingTest.duration || ''}
+                                                onChange={(e) => setEditingTest({ ...editingTest, duration: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="marks">Marks per Q</Label>
+                                            <Input
+                                                id="marks"
+                                                type="number"
+                                                value={editingTest.marks_per_question || ''}
+                                                onChange={(e) => setEditingTest({ ...editingTest, marks_per_question: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="negative">Negative Marks</Label>
+                                            <Input
+                                                id="negative"
+                                                type="number"
+                                                step="0.25"
+                                                value={editingTest.negative_marks !== undefined ? editingTest.negative_marks : 0}
+                                                onChange={(e) => setEditingTest({ ...editingTest, negative_marks: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="description">Description</Label>
+                                        <Textarea
+                                            id="description"
+                                            value={editingTest.description || ''}
+                                            onChange={(e) => setEditingTest({ ...editingTest, description: e.target.value })}
+                                            rows={4}
+                                        />
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            </TabsContent>
+
+                            <TabsContent value="sections" className="space-y-4 py-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {availableSections.length === 0 && <span className="text-sm text-muted-foreground">No sections available.</span>}
+                                    {availableSections.map(section => (
+                                        <div key={section.id} className="flex items-center space-x-2 border p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer" onClick={() => toggleSection(section.id)}>
+                                            <Checkbox
+                                                id={`edit-section-${section.id}`}
+                                                checked={selectedSections.includes(section.id)}
+                                                onCheckedChange={() => toggleSection(section.id)}
+                                            />
+                                            <Label htmlFor={`edit-section-${section.id}`} className="cursor-pointer">{section.name}</Label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    )}
+
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsSectionDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSaveSections}>Save Changes</Button>
+                        <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveTest} disabled={!editingTest}>
+                            <Save className="w-4 h-4 mr-2" />
+                            Save Changes
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

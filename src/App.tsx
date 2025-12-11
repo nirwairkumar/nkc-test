@@ -10,6 +10,7 @@ import PrivateRoute from "@/components/ui/PrivateRoute";
 // Pages
 import TestList from "./pages/TestList";
 import TestPage from "./pages/TestPage";
+import TestIntroPage from "./pages/TestIntroPage"; // Added
 import TestHistory from "./pages/TestHistory";
 import ResultsPage from "./pages/ResultsPage";
 import AuthForm from "@/components/AuthForm";
@@ -45,6 +46,14 @@ const App = () => (
 
 
                 {/* Protected Routes */}
+                <Route
+                  path="/test-intro/:id"
+                  element={
+                    <PrivateRoute>
+                      <TestIntroPage />
+                    </PrivateRoute>
+                  }
+                />
                 <Route
                   path="/test/:id"
                   element={
