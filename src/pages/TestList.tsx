@@ -115,18 +115,15 @@ export default function TestList() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTests.map((test) => (
                     <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="text-xl">{test.title}</CardTitle>
+                        <CardHeader className="p-3">
+                            <CardTitle className="text-base font-bold text-red-900 md:text-lg">{test.title}</CardTitle>
                         </CardHeader>
-                        <CardContent className="flex-1">
-                            <p className="text-muted-foreground mb-4 line-clamp-3">{test.description}</p>
-                            <div className="flex flex-col justify-end mt-auto gap-2">
+                        <CardContent className="flex-1 p-3 pt-0">
+                            <div className="flex flex-col justify-end mt-auto gap-1">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center text-sm text-muted-foreground">
                                         <Clock className="mr-1 h-4 w-4" />
                                         {test.questions?.length || 0} Questions
-                                        <span className="mx-2">•</span>
-                                        {test.questions?.length || 0} Minutes
                                     </div>
                                     {test.custom_id && (
                                         <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
@@ -148,10 +145,10 @@ export default function TestList() {
                                 </div>
                             </div>
                         </CardContent>
-                        <CardFooter>
-                            <Button className="w-full" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                        <CardFooter className="p-3 pt-0">
+                            <Button className="w-full h-8 text-sm" onClick={() => navigate(`/test-intro/${test.id}`)}>
                                 Open
-                                <ArrowRight className="ml-2 h-4 w-4" />
+                                <ArrowRight className="ml-2 h-3 w-3" />
                             </Button>
                         </CardFooter>
                     </Card>

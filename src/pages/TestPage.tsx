@@ -102,6 +102,15 @@ export default function TestPage() {
     });
   };
 
+  const handleClearResponse = (questionId: number) => {
+    if (isTimeUp) return;
+    setAnswers(prev => {
+      const next = { ...prev };
+      delete next[questionId];
+      return next;
+    });
+  };
+
   const jumpToQuestion = (index: number) => {
     setCurrentQuestionIndex(index);
   };
@@ -190,25 +199,36 @@ export default function TestPage() {
         const isVisited = visited.has(idx);
         const isCurrent = currentQuestionIndex === idx;
 
-        let bgClass = "bg-white border-slate-200 text-slate-700"; // Default (Not Visited)
+        let baseClasses = "h-10 w-10 flex items-center justify-center rounded-md border text-sm font-semibold transition-all";
+        let colorClasses = "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"; // Default
 
         if (isCurrent) {
-          bgClass = "ring-2 ring-primary border-primary"; // Focus
+          // Focus ring, keeps underlying color unless strictly overridden, but usually we focus on the border.
+          // If we want the current question to ALSO show its status (e.g. green if answered), we should merge logic.
+          // But usually current question is highlighted distinctively.
+          // Let's make current question have a strong blue border, but keep the status background if possible, or just blue.
+          // The previous logic was: Replaced everything with blue ring.
+          // Let's keep distinct status colors, but add a ring for current.
         }
 
         if (isMarked) {
-          bgClass += " bg-yellow-100 border-yellow-500 text-yellow-900"; // Review
+          colorClasses = "bg-yellow-400 border-yellow-500 text-black shadow-sm hover:bg-yellow-500";
         } else if (isAnswered) {
-          bgClass += " bg-green-100 border-green-500 text-green-900"; // Answered
+          colorClasses = "bg-green-500 border-green-600 text-white shadow-sm hover:bg-green-600";
         } else if (isVisited) {
-          bgClass += " bg-red-50 border-red-200 text-red-900"; // Visited but Unanswered (Red)
+          colorClasses = "bg-red-500 border-red-600 text-white shadow-sm hover:bg-red-600";
+        }
+
+        // Apply Focus Ring strictly on top
+        if (isCurrent) {
+          baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
         }
 
         return (
           <button
             key={q.id}
             onClick={() => jumpToQuestion(idx)}
-            className={`h-10 w-10 flex items-center justify-center rounded-md border text-sm font-semibold transition-all ${bgClass}`}
+            className={`${baseClasses} ${colorClasses}`}
           >
             {idx + 1}
           </button>
@@ -278,6 +298,14 @@ export default function TestPage() {
 
             <div className="flex gap-2">
               <Button
+                variant="outline"
+                onClick={() => handleClearResponse(currentQuestion.id)}
+                disabled={!answers[currentQuestion.id]}
+                className="text-muted-foreground border-dashed"
+              >
+                Clear
+              </Button>
+              <Button
                 variant={markedForReview.has(currentQuestion.id) ? "secondary" : "ghost"}
                 onClick={() => toggleMarkForReview(currentQuestion.id)}
                 className={markedForReview.has(currentQuestion.id) ? "border-yellow-200 bg-yellow-50 text-yellow-800" : ""}
@@ -300,9 +328,9 @@ export default function TestPage() {
               <QuestionPalette />
 
               <div className="grid grid-cols-2 gap-2 mt-6 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-100 border border-green-500 rounded"></div> Answered</div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-100 border border-yellow-500 rounded"></div> Review</div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-50 border border-red-200 rounded"></div> Unanswered</div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 border border-green-600 rounded"></div> Answered</div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div> Review</div>
+                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 border border-red-600 rounded"></div> Unanswered</div>
                 <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white border border-slate-200 rounded"></div> Not Visited</div>
               </div>
             </CardContent>

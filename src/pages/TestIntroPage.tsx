@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BackButton } from '@/components/ui/BackButton';
 import { fetchTestById, Test } from '@/lib/testsApi';
-import { Clock, HelpCircle, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
+import { Clock, HelpCircle, AlertTriangle, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -41,26 +40,33 @@ export default function TestIntroPage() {
     };
 
     if (loading || authLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+
     if (error || !test) return (
         <div className="container mx-auto py-10 text-center">
             <h2 className="text-xl text-red-500 mb-4">Error: {error || "Test not found"}</h2>
-            <BackButton />
+            <Button onClick={() => navigate(-1)}>Go Back</Button>
         </div>
     );
 
     return (
-        <div className="container mx-auto max-w-3xl py-10 px-4 space-y-6">
-            <BackButton />
+        <div className="container mx-auto max-w-3xl py-2 px-4 space-y-4 relative">
+            <Button
+                variant="ghost"
+                className="fixed top-20 left-0 h-10 w-12 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-none rounded-r-lg shadow-md z-50 transition-transform hover:translate-x-1"
+                onClick={() => navigate(-1)}
+            >
+                <ArrowLeft className="h-6 w-6" />
+            </Button>
 
-            <Card className="border-t-4 border-t-primary shadow-lg">
-                <CardHeader className="text-center pb-2">
-                    <CardTitle className="text-3xl font-bold">{test.title}</CardTitle>
-                    <CardDescription className="text-lg mt-2">
+            <Card className="border-t-4 border-t-primary shadow-lg relative">
+                <CardHeader className="text-center pb-2 pt-6 p-4">
+                    <CardTitle className="text-2xl font-bold text-red-900">{test.title}</CardTitle>
+                    <CardDescription className="text-sm mt-1">
                         {test.description || "No description provided."}
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 bg-slate-50 dark:bg-slate-900 rounded-lg p-4">
+                <CardContent className="space-y-4 p-4 pt-0">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-3 bg-slate-50 dark:bg-slate-900 rounded-lg p-3">
                         <div className="flex flex-col items-center justify-center text-center">
                             <HelpCircle className="h-6 w-6 text-blue-500 mb-2" />
                             <span className="text-sm text-muted-foreground">Questions</span>
@@ -83,25 +89,25 @@ export default function TestIntroPage() {
                         </div>
                     </div>
 
-                    <div className="space-y-4 border p-4 rounded-md">
+                    <div className="space-y-3 border p-3 rounded-md">
                         <div className="flex items-center gap-2">
                             <FileText className="h-5 w-5 text-primary" />
-                            <h3 className="font-semibold text-lg">Terms & Instructions</h3>
+                            <h3 className="font-semibold text-base">Terms & Instructions</h3>
                         </div>
                         <Separator />
-                        <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                        <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
                             <li>The test contains <strong>{test.questions?.length}</strong> questions.</li>
                             <li>Total duration of the test is <strong>{test.duration} minutes</strong>.</li>
                             <li>Each correct answer awards <strong>+{test.marks_per_question || 4} marks</strong>.</li>
                             <li>Each wrong answer deducts <strong>{test.negative_marks !== undefined ? test.negative_marks : 1} marks</strong>.</li>
                             <li>Once you start, the timer will begin and cannot be paused.</li>
                             <li>Ensure you have a stable internet connection before starting.</li>
-                            <li>Click "Submit" to finish the test manually, or it will auto-submit when time runs out (though we have confirmations in place).</li>
+                            <li>Click "Submit" to finish the test manually, or it will auto-submit when time runs out.</li>
                         </ul>
                     </div>
                 </CardContent>
-                <CardFooter className="pt-2 pb-6 px-6">
-                    <Button size="lg" className="w-full text-lg h-12" onClick={handleStartTest}>
+                <CardFooter className="pt-0 pb-4 px-4">
+                    <Button size="lg" className="w-full text-lg h-10" onClick={handleStartTest}>
                         Start Test Now
                     </Button>
                 </CardFooter>

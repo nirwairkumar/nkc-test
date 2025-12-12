@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import supabase from '@/lib/supabaseClient';
 
@@ -43,6 +43,14 @@ export default function AuthForm() {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.isSignup) {
+            setView('signup');
+        } else {
+            setView('login');
+        }
+    }, [location.state]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
