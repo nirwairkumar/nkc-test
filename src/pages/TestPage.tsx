@@ -36,6 +36,7 @@ export default function TestPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -128,8 +129,6 @@ export default function TestPage() {
   };
 
   const handleSaveAndNext = () => {
-    // Already saved to state on selection. Just move next.
-    // If not answered, maybe prompt? No, user can skip.
     handleNext();
   };
 
@@ -191,7 +190,7 @@ export default function TestPage() {
   const currentQuestion = test.questions[currentQuestionIndex];
 
   // Palette Component
-  const QuestionPalette = () => (
+  const QuestionPalette = ({ onQuestionClick }: { onQuestionClick?: () => void }) => (
     <div className="grid grid-cols-5 gap-2">
       {test.questions.map((q, idx) => {
         const isAnswered = answers[q.id] !== undefined;
@@ -200,16 +199,7 @@ export default function TestPage() {
         const isCurrent = currentQuestionIndex === idx;
 
         let baseClasses = "h-10 w-10 flex items-center justify-center rounded-md border text-sm font-semibold transition-all";
-        let colorClasses = "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"; // Default
-
-        if (isCurrent) {
-          // Focus ring, keeps underlying color unless strictly overridden, but usually we focus on the border.
-          // If we want the current question to ALSO show its status (e.g. green if answered), we should merge logic.
-          // But usually current question is highlighted distinctively.
-          // Let's make current question have a strong blue border, but keep the status background if possible, or just blue.
-          // The previous logic was: Replaced everything with blue ring.
-          // Let's keep distinct status colors, but add a ring for current.
-        }
+        let colorClasses = "bg-white border-slate-200 text-slate-700 hover:bg-slate-50";
 
         if (isMarked) {
           colorClasses = "bg-yellow-400 border-yellow-500 text-black shadow-sm hover:bg-yellow-500";
@@ -219,7 +209,6 @@ export default function TestPage() {
           colorClasses = "bg-red-500 border-red-600 text-white shadow-sm hover:bg-red-600";
         }
 
-        // Apply Focus Ring strictly on top
         if (isCurrent) {
           baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
         }
@@ -227,7 +216,10 @@ export default function TestPage() {
         return (
           <button
             key={q.id}
-            onClick={() => jumpToQuestion(idx)}
+            onClick={() => {
+              jumpToQuestion(idx);
+              onQuestionClick?.();
+            }}
             className={`${baseClasses} ${colorClasses}`}
           >
             {idx + 1}
@@ -252,9 +244,37 @@ export default function TestPage() {
         </Button>
       </div>
 
-      <div className="flex-1 container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="flex-1 container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
         {/* Main Question Area */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
+        <div className="lg:col-span-8 flex flex-col gap-6 relative">
+
+          {/* Mobile Palette Trigger (Top Left - Floating above Card) */}
+          <div className="lg:hidden absolute -top-4 -left-4 z-20">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button size="icon" className="h-12 w-12 rounded-full shadow-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[80%] sm:w-[380px]">
+                <SheetHeader>
+                  <SheetTitle>Questions</SheetTitle>
+                </SheetHeader>
+                <div className="py-4">
+                  {/* Legend - Above Palette */}
+                  <div className="grid grid-cols-2 gap-y-2 mb-6 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 border border-green-600 rounded"></div> Answered</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div> Review</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 border border-red-600 rounded"></div> Unanswered</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white border border-slate-200 rounded"></div> Not Visited</div>
+                  </div>
+
+                  <QuestionPalette onQuestionClick={() => setIsMobileMenuOpen(false)} />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
           <Card className="flex-1 flex flex-col min-h-[500px] shadow-md border-t-4 border-t-primary">
             <CardContent className="p-6 flex-1 flex flex-col gap-6">
               <div className="flex justify-between items-start">
@@ -292,8 +312,8 @@ export default function TestPage() {
 
           {/* Bottom Controls */}
           <div className="flex items-center justify-between gap-2">
-            <Button variant="outline" onClick={handlePrevious} disabled={currentQuestionIndex === 0}>
-              <ChevronLeft className="w-4 h-4 mr-2" /> Prev
+            <Button variant="outline" size="icon" onClick={handlePrevious} disabled={currentQuestionIndex === 0}>
+              <ChevronLeft className="w-6 h-6" />
             </Button>
 
             <div className="flex gap-2">
@@ -309,12 +329,12 @@ export default function TestPage() {
                 variant={markedForReview.has(currentQuestion.id) ? "secondary" : "ghost"}
                 onClick={() => toggleMarkForReview(currentQuestion.id)}
                 className={markedForReview.has(currentQuestion.id) ? "border-yellow-200 bg-yellow-50 text-yellow-800" : ""}
+                title={markedForReview.has(currentQuestion.id) ? "Marked for Review" : "Mark for Review"}
               >
-                <Flag className={`w-4 h-4 mr-2 ${markedForReview.has(currentQuestion.id) ? "fill-yellow-500 text-yellow-500" : ""}`} />
-                {markedForReview.has(currentQuestion.id) ? "Marked" : "Review"}
+                <Flag className={`w-4 h-4 ${markedForReview.has(currentQuestion.id) ? "fill-yellow-500 text-yellow-500" : ""}`} />
               </Button>
-              <Button onClick={handleSaveAndNext} disabled={currentQuestionIndex === test.questions.length - 1}>
-                Save & Next <ChevronRight className="w-4 h-4 ml-2" />
+              <Button onClick={handleSaveAndNext} size="sm" className="px-3" disabled={currentQuestionIndex === test.questions.length - 1}>
+                Save & Next <ChevronRight className="w-4 h-4 ml-0.5" />
               </Button>
             </div>
           </div>
@@ -336,25 +356,6 @@ export default function TestPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Mobile Palette Trigger */}
-      <div className="lg:hidden fixed bottom-4 right-4 z-20">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button size="icon" className="h-12 w-12 rounded-full shadow-lg">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right">
-            <SheetHeader>
-              <SheetTitle>Questions</SheetTitle>
-            </SheetHeader>
-            <div className="py-4">
-              <QuestionPalette />
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
 
       {/* Submit Confirmation Dialog */}
