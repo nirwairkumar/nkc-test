@@ -7,6 +7,17 @@ import { Clock, HelpCircle, AlertTriangle, FileText, CheckCircle, ArrowLeft } fr
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 export default function TestIntroPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -15,6 +26,7 @@ export default function TestIntroPage() {
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showFullScreenDialog, setShowFullScreenDialog] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -36,6 +48,16 @@ export default function TestIntroPage() {
     };
 
     const handleStartTest = () => {
+        setShowFullScreenDialog(true);
+    };
+
+    const confirmStartTest = (enableFullScreen: boolean) => {
+        setShowFullScreenDialog(false);
+        if (enableFullScreen) {
+            document.documentElement.requestFullscreen().catch((err) => {
+                console.error("Error attempting to enable full-screen mode:", err);
+            });
+        }
         navigate(`/test/${id}`);
     };
 
@@ -112,6 +134,21 @@ export default function TestIntroPage() {
                     </Button>
                 </CardFooter>
             </Card>
-        </div>
+
+            <AlertDialog open={showFullScreenDialog} onOpenChange={setShowFullScreenDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Enable Full Screen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            For the best test-taking experience, we recommend enabling full screen mode.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => confirmStartTest(false)}>No, Continue</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => confirmStartTest(true)}>Yes, Enable Full Screen</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </div >
     );
 }
