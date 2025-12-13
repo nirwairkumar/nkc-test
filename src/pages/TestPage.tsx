@@ -336,11 +336,11 @@ export default function TestPage() {
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[80%] sm:w-[380px]">
+                <SheetContent side="left" className="w-[80%] sm:w-[380px] flex flex-col h-full">
                   <SheetHeader>
                     <SheetTitle>Questions</SheetTitle>
                   </SheetHeader>
-                  <div className="py-4">
+                  <div className="py-4 flex-1 overflow-y-auto pb-6">
                     {/* Legend - Above Palette */}
                     <div className="grid grid-cols-2 gap-y-2 mb-6 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 border border-green-600 rounded"></div> Answered</div>
