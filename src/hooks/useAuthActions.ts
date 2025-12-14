@@ -13,8 +13,31 @@ export async function signUpWithEmail(email: string, password: string, name?: st
     });
 }
 
+
+export async function sendMagicLoginLink(email: string) {
+    const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+            emailRedirectTo: window.location.origin,
+        },
+    });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+}
+
 export async function signInWithEmail(email: string, password: string) {
     return supabase.auth.signInWithPassword({ email, password });
+}
+
+export async function signInWithGoogle() {
+    return supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${window.location.origin}`,
+        }
+    });
 }
 
 
