@@ -118,17 +118,12 @@ export async function generateTestFromYouTube(url: string, userId: string) {
 
         let transcriptText = await fetchTranscript(videoId);
 
-        // LIMITATION CHECK
-        // If transcript is missing, we try to proceed ONLY if the user wants "any video".
-        // Use Gemini Multimodal Fallback for videos without transcripts
+        // Logic check for method
         let usedMethod = "transcript";
 
         if (!transcriptText || transcriptText.length < 50) {
             console.log("Transcript failed or empty. Attempting direct video processing (Multimodal)...");
             usedMethod = "video";
-            // Check if video is potentially accessible (public)
-            // Note: We can't easily check 'public' status client-side without API key, 
-            // but Gemini Multimodal works on Public videos.
         } else {
             // Limit transcript length (Token limit)
             if (transcriptText.length > 30000) {
@@ -137,36 +132,45 @@ export async function generateTestFromYouTube(url: string, userId: string) {
             console.log("Using Transcript-based Generation. Length:", transcriptText.length);
         }
 
-        // Use Gemini 2.5 Flash
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", generationConfig: { responseMimeType: "application/json" } });
+        // Use Gemini 2.5 Flash as requested
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
         let prompt;
         let requestContent;
 
         if (usedMethod === "transcript") {
             prompt = `
-                You are an expert exam setter. I have provided a lecture transcript below.
+                You are an expert exam setter and educator.
                 
-                Your task:
-                1. Analyze the content deeply.
-                2. Create a comprehensive summary (max 300 words) in English.
-                3. Generate **at least 10** high-quality multiple-choice questions (MCQs) in English.
+                Task:
+                1. Analyze the lecture transcript.
+                2. Extract metadata (Teacher, Subject, Exam Type) for a short description.
+                3. Create **structured revision notes** (Markdown supported) that help a student revise before exams.
+                   - Use clear bullet points
+                   - Include formulas, keywords, shortcuts, and step-by-step logic where applicable
+                   - Highlight common mistakes or traps if mentioned
+                   - Keep language simple and exam-oriented
+                4. **Extract(if questions present in the video)** orGenerate **as many MCQs as possible** (aim for 15-20, minimum 10) based strictly on the content.
                 
-                IMPORTANT: Output **ONLY** valid raw JSON. Do not use markdown formatting (no \`\`\`json).
+                IMPORTANT: Output **ONLY** valid raw JSON.
                 
                 JSON Structure:
                 {
-                    "summary": "Summary of the lecture...",
-                    "title": "A suitable title",
+                    "title": "Topic or Video Title",
+                    "description": "Short info: Teacher Name | Subject | Exam Target (e.g. JEE/NEET/Board)",
+                    "revision_notes": "# Key Notes\n* Point 1\n* Formula...",
                     "questions": [
                         {
                             "id": 1,
                             "question": "Question text...",
                             "options": {
-                                "A": "Option A text",
-                                "B": "Option B text",
-                                "C": "Option C text",
-                                "D": "Option D text"
+                                "A": "...",
+                                "B": "...",
+                                "C": "...",
+                                "D": "..."
                             },
                             "correctAnswer": "A"
                         }
@@ -181,23 +185,29 @@ export async function generateTestFromYouTube(url: string, userId: string) {
             // MULTIMODAL FALLBACK
             prompt = `
                 You are an expert exam setter.
-                Analyze the video content efficiently.
-                1. Extract key educational concepts.
-                2. Create a summary (max 300 words).
-                3. Generate 10 high-quality MCQs.
+                Analyze the visual video content efficiently.
+                1. Create a short description (Subject/Topic).
+                2. Create structured revision notes (bullet points, key concepts).
+                3. Extract(if questions present in the video) or Generate **high-quality MCQs** as many as possible. for large videos, generate minimum 10 MCQs. based strictly on the content.
 
                 Output **ONLY** valid raw JSON.
                 JSON Structure:
                 {
-                    "summary": "Summary...",
                     "title": "Topic Title",
+                    "description": "Short info...",
+                    "revision_notes": "Markdown notes...",
                     "questions": [ 
-                        { 
-                            "id": 1, 
-                            "question": "...", 
-                            "options": { "A": "...", "B": "...", "C": "...", "D": "..." }, 
-                            "correctAnswer": "A" 
-                        } 
+                    {
+                            "id": 1,
+                            "question": "Question text...",
+                            "options": {
+                                "A": "...",
+                                "B": "...",
+                                "C": "...",
+                                "D": "..."
+                            },
+                            "correctAnswer": "A"
+                        }
                     ]
                 }
             `;
@@ -221,15 +231,26 @@ export async function generateTestFromYouTube(url: string, userId: string) {
 
         console.log("Raw AI Response:", text);
 
-        // Clean markdown code blocks
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        // Create a more robust JSON cleaner
+        const cleanJson = (str: string) => {
+            // Find the first '{' and last '}'
+            const start = str.indexOf('{');
+            const end = str.lastIndexOf('}');
+
+            if (start === -1 || end === -1) return str;
+
+            return str.substring(start, end + 1);
+        };
+
+        const cleanedText = cleanJson(text);
 
         // Parse JSON
         let data;
         try {
-            data = JSON.parse(text);
+            data = JSON.parse(cleanedText);
         } catch (e) {
             console.error("Failed to parse AI JSON:", e);
+            console.log("Failed Text Snippet:", text.substring(0, 500)); // Log part of text for debugging
             throw new Error("AI generated invalid data format. Please try again or use a different video.");
         }
 
@@ -246,11 +267,12 @@ export async function generateTestFromYouTube(url: string, userId: string) {
             .from('tests')
             .insert({
                 title: data.title,
-                description: data.summary,
+                description: data.description,
+                revision_notes: data.revision_notes, // New field
                 questions: data.questions,
-                duration: 15,
-                marks_per_question: 1,
-                negative_marks: 0,
+                duration: Math.max(15, Math.ceil(data.questions.length * 1.5)), // Dynamic duration
+                marks_per_question: 4,
+                negative_marks: -1,
                 custom_id: customId,
                 created_by: userId
             })

@@ -128,15 +128,26 @@ export default function TestIntroPage() {
                         </ul>
                     </div>
 
-                    {test.custom_id && test.custom_id.startsWith('YT-') && test.description && (
+                    {test.description && (
+                        <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md border text-sm text-center italic text-muted-foreground mb-4">
+                            {test.description}
+                        </div>
+                    )}
+
+                    {test.revision_notes && (
                         <div className="mt-4 border rounded-md">
-                            <div className="p-3 bg-muted/50 border-b font-medium flex items-center gap-2">
-                                <FileText className="h-4 w-4" />
-                                Lecture Summary & Notes
-                            </div>
-                            <div className="p-4 text-sm text-muted-foreground bg-slate-50 dark:bg-slate-950/30 whitespace-pre-wrap leading-relaxed max-h-[300px] overflow-y-auto">
-                                {test.description}
-                            </div>
+                            <details className="group">
+                                <summary className="cursor-pointer p-4 bg-muted/30 hover:bg-muted/50 font-medium flex items-center justify-between select-none">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        View Revision Notes & Summary
+                                    </div>
+                                    <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div className="p-4 text-sm text-muted-foreground bg-slate-50 dark:bg-slate-950/30 whitespace-pre-wrap leading-relaxed border-t max-h-[500px] overflow-y-auto">
+                                    {test.revision_notes}
+                                </div>
+                            </details>
                         </div>
                     )}
                 </CardContent>

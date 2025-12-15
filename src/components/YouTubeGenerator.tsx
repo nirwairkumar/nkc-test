@@ -131,7 +131,7 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
 
         try {
             // Updated status messages to reflect video processing
-            setStatus('Watching video (this takes 10-20 seconds)...');
+            setStatus('this takes 3-5 minutes...');
             await generateTestFromYouTube(url, user.id);
 
             setStatus('Finalizing...');

@@ -11,6 +11,7 @@ export interface Test {
     marks_per_question?: number;
     negative_marks?: number;
     duration?: number; // minutes
+    revision_notes?: string;
 }
 
 export interface Question {
