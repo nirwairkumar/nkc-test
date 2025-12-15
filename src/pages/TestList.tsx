@@ -6,6 +6,7 @@ import { fetchTests, Test } from '@/lib/testsApi';
 import { BookOpen, Clock, ArrowRight, History, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import supabase from '@/lib/supabaseClient';
+import YouTubeGenerator from '@/components/YouTubeGenerator';
 
 export default function TestList() {
     const [tests, setTests] = useState<Test[]>([]);
@@ -85,6 +86,8 @@ export default function TestList() {
                     <h1 className="text-3xl font-bold">Available Tests</h1>
                     <p className="text-muted-foreground mt-2">Select a test to begin your practice</p>
                 </div>
+
+                <YouTubeGenerator onTestGenerated={loadData} />
 
                 {/* Section Filters */}
                 {sections.length > 0 && (

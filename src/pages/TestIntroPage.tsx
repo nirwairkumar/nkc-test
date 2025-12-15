@@ -127,6 +127,18 @@ export default function TestIntroPage() {
                             <li>Click "Submit" to finish the test manually, or it will auto-submit when time runs out.</li>
                         </ul>
                     </div>
+
+                    {test.custom_id && test.custom_id.startsWith('YT-') && test.description && (
+                        <div className="mt-4 border rounded-md">
+                            <div className="p-3 bg-muted/50 border-b font-medium flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                Lecture Summary & Notes
+                            </div>
+                            <div className="p-4 text-sm text-muted-foreground bg-slate-50 dark:bg-slate-950/30 whitespace-pre-wrap leading-relaxed max-h-[300px] overflow-y-auto">
+                                {test.description}
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
                 <CardFooter className="pt-0 pb-4 px-4">
                     <Button size="lg" className="w-full text-lg h-10" onClick={handleStartTest}>

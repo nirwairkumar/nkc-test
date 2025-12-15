@@ -62,3 +62,21 @@ export async function fetchTestSections(testId: string) {
 
     return { data: data.map(d => d.section_id), error: null };
 }
+
+export async function updateSection(id: string, name: string) {
+    const { data, error } = await supabase
+        .from('sections')
+        .update({ name })
+        .eq('id', id)
+        .select()
+        .single();
+    return { data, error };
+}
+
+export async function deleteSection(id: string) {
+    const { error } = await supabase
+        .from('sections')
+        .delete()
+        .eq('id', id);
+    return { error };
+}

@@ -23,6 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
+import { FeedbackForm } from '@/components/FeedbackForm';
 
 interface TestResult {
   id: string;
@@ -57,13 +58,7 @@ const ResultsPage = () => {
   if (stateData?.answers) {
     answers = stateData.answers;
   } else if (contextAnswers) {
-    // Context answers are array? Or record? check context definition. 
-    // Based on previous file, contextAnswers was treated as array in some places but map in others.
-    // previous file: answers = contextAnswers; (as array of {questionId, selectedAnswer})
-    // let's assume map for consistency if possible, or convert.
-    // actually previous file had `contextAnswers` as `any` and tried to map it.
-    // Let's rely on stateData mostly as that's the new flow.
-    answers = {}; // Fallback
+    answers = {};
   }
 
   // Calculate Stats
@@ -85,9 +80,6 @@ const ResultsPage = () => {
         skippedCount++;
       }
     });
-    // Recalculate score just in case to be safe, or trust passed score.
-    // marksScored = (correctCount * (selectedTest.marks_per_question || 4)) - (wrongCount * (selectedTest.negative_marks || 1));
-    // Trust passed score for now.
   }
 
   const percentage = totalMarks > 0 ? Math.round((marksScored / totalMarks) * 100) : 0;
@@ -105,6 +97,9 @@ const ResultsPage = () => {
       </div>
     )
   }
+
+  // Determine testId for feedback
+  const testId = selectedTest?.id;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
@@ -236,6 +231,13 @@ const ResultsPage = () => {
             </Accordion>
           </CardContent>
         </Card>
+
+        {/* Feedback Section */}
+        {testId && (
+          <div className="max-w-2xl mx-auto">
+            <FeedbackForm testId={testId} />
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="flex justify-center gap-4 pb-10">
