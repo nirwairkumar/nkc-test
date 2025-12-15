@@ -139,15 +139,18 @@ export default function Navbar() {
                                         <span>Manage Tests</span>
                                     </DropdownMenuItem>
                                 ) : (
-                                    <DropdownMenuItem onClick={() => navigate('/history')}>
-                                        <History className="mr-2 h-4 w-4" />
-                                        <span>Test History</span>
-                                    </DropdownMenuItem>
+                                    <>
+                                        <DropdownMenuItem onClick={() => navigate('/my-tests')}>
+                                            <Shield className="mr-2 h-4 w-4" />
+                                            <span>Your Tests</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => navigate('/history')}>
+                                            <History className="mr-2 h-4 w-4" />
+                                            <span>Test History</span>
+                                        </DropdownMenuItem>
+                                    </>
                                 )}
-                                <DropdownMenuItem onClick={() => navigate('/admin-migration')}>
-                                    <Shield className="mr-2 h-4 w-4" />
-                                    <span>Admin Panel</span>
-                                </DropdownMenuItem>
+
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={handleSignOut}>
                                     <LogOut className="mr-2 h-4 w-4" />

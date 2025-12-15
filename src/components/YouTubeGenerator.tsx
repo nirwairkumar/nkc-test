@@ -100,18 +100,28 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Youtube, Sparkles } from 'lucide-react';
+import { Loader2, Youtube, Sparkles, Languages } from 'lucide-react';
 import { generateTestFromYouTube } from '@/lib/gemini';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated: () => void }) {
     const [url, setUrl] = useState('');
+    const [language, setLanguage] = useState('English');
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    const abortControllerRef = React.useRef<AbortController | null>(null);
 
     const handleGenerate = async () => {
         if (!user) {
@@ -129,21 +139,36 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
         setLoading(true);
         setStatus('Initializing AI...');
 
+        // Create new abort controller
+        abortControllerRef.current = new AbortController();
+
         try {
             // Updated status messages to reflect video processing
-            setStatus('this takes 3-5 minutes...');
-            await generateTestFromYouTube(url, user.id);
+            setStatus('Watching Video(this takes 50-60 seconds)...');
+            await generateTestFromYouTube(url, user.id, language, abortControllerRef.current.signal);
 
             setStatus('Finalizing...');
-            toast.success("Test generated successfully!");
+            toast.success(`Test generated successfully in ${language}!`);
             setUrl('');
             onTestGenerated();
         } catch (error: any) {
-            console.error(error);
-            toast.error(error.message || "Failed to generate test.");
+            if (error.message === 'Process cancelled') {
+                toast.info("Generation processed stopped.");
+            } else {
+                console.error(error);
+                toast.error(error.message || "Failed to generate test.");
+            }
         } finally {
             setLoading(false);
             setStatus('');
+            abortControllerRef.current = null;
+        }
+    };
+
+    const handleStop = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            setStatus('Stopping...'); // UI feedback
         }
     };
 
@@ -161,30 +186,49 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
             </CardHeader>
             <CardContent>
                 <div className="flex flex-col md:flex-row gap-4">
-                    <Input
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        disabled={loading}
-                        className="bg-background"
-                    />
-                    <Button
-                        onClick={handleGenerate}
-                        disabled={loading || !url}
-                        className="bg-red-600 hover:bg-red-700 text-white min-w-[140px]"
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {status === 'Initializing AI...' ? 'Starting...' : 'Analyzing...'}
-                            </>
-                        ) : (
-                            <>
+                    <div className="flex-1">
+                        <Input
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            disabled={loading}
+                            className="bg-background"
+                        />
+                    </div>
+
+                    <div className="w-full md:w-[140px]">
+                        <Select value={language} onValueChange={setLanguage} disabled={loading}>
+                            <SelectTrigger className="bg-background">
+                                <SelectValue placeholder="Language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="English">English</SelectItem>
+                                <SelectItem value="Hindi">Hindi</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex gap-2">
+                        {!loading ? (
+                            <Button
+                                onClick={handleGenerate}
+                                disabled={!url}
+                                className="bg-red-600 hover:bg-red-700 text-white min-w-[140px]"
+                            >
                                 <Sparkles className="mr-2 h-4 w-4" />
                                 Generate
-                            </>
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleStop}
+                                variant="destructive"
+                                className="min-w-[140px]"
+                            >
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Stop
+                            </Button>
                         )}
-                    </Button>
+                    </div>
                 </div>
                 {loading && (
                     <p className="text-xs text-muted-foreground mt-2 animate-pulse">

@@ -20,6 +20,7 @@ const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const AdminMigration = lazy(() => import("./pages/AdminMigration"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const ManageTests = lazy(() => import("./pages/ManageTests"));
+const UserTestManager = lazy(() => import("./pages/UserTestManager"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Layout = lazy(() => import("./Layout"));
@@ -51,6 +52,14 @@ const App = () => (
 
 
                   {/* Protected Routes */}
+                  <Route
+                    path="/my-tests"
+                    element={
+                      <PrivateRoute>
+                        <UserTestManager />
+                      </PrivateRoute>
+                    }
+                  />
                   <Route
                     path="/test-intro/:id"
                     element={

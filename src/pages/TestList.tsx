@@ -2,11 +2,53 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { fetchTests, Test } from '@/lib/testsApi';
-import { BookOpen, Clock, ArrowRight, History, Loader2 } from 'lucide-react';
+import { fetchTests, Test, toggleTestLike, getTestLikeCount, getTestLikeStatus } from '@/lib/testsApi';
+import { BookOpen, Clock, ArrowRight, History, Loader2, Heart, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import supabase from '@/lib/supabaseClient';
 import YouTubeGenerator from '@/components/YouTubeGenerator';
+import { Input } from '@/components/ui/input';
+
+function TestLikeButton({ testId, userId }: { testId: string, userId: string | undefined }) {
+    const [liked, setLiked] = useState(false);
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        getTestLikeCount(testId).then(({ count }) => setCount(count || 0));
+        if (userId) {
+            getTestLikeStatus(testId, userId).then(({ liked }) => setLiked(liked));
+        }
+    }, [testId, userId]);
+
+    const handleLike = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!userId) return; // Or show login toast
+
+        // Optimistic update
+        const newLiked = !liked;
+        setLiked(newLiked);
+        setCount(prev => newLiked ? prev + 1 : prev - 1);
+
+        const { error } = await toggleTestLike(testId, userId);
+        if (error) {
+            // Revert on error
+            setLiked(!newLiked);
+            setCount(prev => !newLiked ? prev + 1 : prev - 1);
+        }
+    };
+
+    return (
+        <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLike}
+            className={`flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 ${liked ? 'text-red-500' : 'text-muted-foreground'}`}
+        >
+            <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+            <span className="text-xs">{count > 0 ? count : ''}</span>
+        </Button>
+    );
+}
 
 export default function TestList() {
     const [tests, setTests] = useState<Test[]>([]);
@@ -18,6 +60,7 @@ export default function TestList() {
     const [sections, setSections] = useState<any[]>([]); // Using any for minimal import changes
     const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
     const [testSectionMap, setTestSectionMap] = useState<Record<string, string[]>>({});
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         loadData();
@@ -67,9 +110,20 @@ export default function TestList() {
     }
 
     // Filter Logic
-    const filteredTests = selectedSectionId
-        ? tests.filter(test => testSectionMap[test.id]?.includes(selectedSectionId))
-        : tests;
+    const filteredTests = tests.filter(test => {
+        // 1. Section Filter
+        if (selectedSectionId && !testSectionMap[test.id]?.includes(selectedSectionId)) {
+            return false;
+        }
+        // 2. Search Filter (Title or ID)
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            const matchesTitle = test.title.toLowerCase().includes(lowerQuery);
+            const matchesId = test.custom_id?.toLowerCase().includes(lowerQuery);
+            return matchesTitle || matchesId;
+        }
+        return true;
+    });
 
     if (loading) {
         return (
@@ -89,30 +143,23 @@ export default function TestList() {
 
                 <YouTubeGenerator onTestGenerated={loadData} />
 
-                {/* Section Filters */}
-                {sections.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                        <Button
-                            variant={selectedSectionId === null ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedSectionId(null)}
-                            className="rounded-full"
-                        >
-                            All
-                        </Button>
-                        {sections.map(section => (
-                            <Button
-                                key={section.id}
-                                variant={selectedSectionId === section.id ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setSelectedSectionId(section.id)}
-                                className="rounded-full"
-                            >
-                                {section.name}
-                            </Button>
-                        ))}
+                {/* Filters & Search Row */}
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border">
+                    <h2 className="text-lg font-semibold text-foreground pl-2">
+                        Explore Tests
+                    </h2>
+
+                    {/* Search Bar */}
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search by Title or ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 h-8 text-sm bg-background"
+                        />
                     </div>
-                )}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -148,8 +195,9 @@ export default function TestList() {
                                 </div>
                             </div>
                         </CardContent>
-                        <CardFooter className="p-3 pt-0">
-                            <Button className="w-full h-8 text-sm" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                        <CardFooter className="p-3 pt-0 flex justify-between gap-2">
+                            <TestLikeButton testId={test.id} userId={user?.id} />
+                            <Button size="sm" className="flex-1 h-8 text-sm" onClick={() => navigate(`/test-intro/${test.id}`)}>
                                 Open
                                 <ArrowRight className="ml-2 h-3 w-3" />
                             </Button>

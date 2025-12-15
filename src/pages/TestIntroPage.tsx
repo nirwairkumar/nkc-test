@@ -6,6 +6,8 @@ import { fetchTestById, Test } from '@/lib/testsApi';
 import { Clock, HelpCircle, AlertTriangle, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import {
     AlertDialog,
@@ -128,11 +130,11 @@ export default function TestIntroPage() {
                         </ul>
                     </div>
 
-                    {test.description && (
+                    {/* {test.description && (
                         <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md border text-sm text-center italic text-muted-foreground mb-4">
                             {test.description}
                         </div>
-                    )}
+                    )} */}
 
                     {test.revision_notes && (
                         <div className="mt-4 border rounded-md">
@@ -144,8 +146,12 @@ export default function TestIntroPage() {
                                     </div>
                                     <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
                                 </summary>
-                                <div className="p-4 text-sm text-muted-foreground bg-slate-50 dark:bg-slate-950/30 whitespace-pre-wrap leading-relaxed border-t max-h-[500px] overflow-y-auto">
-                                    {test.revision_notes}
+                                <div className="p-4 bg-slate-50 dark:bg-slate-950/30 border-t max-h-[500px] overflow-y-auto">
+                                    <article className="prose prose-sm dark:prose-invert max-w-none">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {test.revision_notes}
+                                        </ReactMarkdown>
+                                    </article>
                                 </div>
                             </details>
                         </div>

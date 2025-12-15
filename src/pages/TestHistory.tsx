@@ -49,12 +49,18 @@ export default function TestHistory() {
             if (error) throw error;
 
             // Fetch test titles for these attempts (optimize by fetching unique test IDs)
-            const uniqueTestIds = Array.from(new Set(data?.map(a => a.test_id) || []));
+            // Fetch test titles for these attempts (optimize by fetching unique test IDs)
+            const uniqueTestIds = Array.from(new Set(data?.map(a => a.test_id).filter(id => id) || []));
             const details: Record<string, any> = {};
 
             await Promise.all(uniqueTestIds.map(async (tid) => {
-                const { data: t } = await fetchTestById(tid);
-                if (t) details[tid] = t;
+                if (!tid) return;
+                try {
+                    const { data: t } = await fetchTestById(tid);
+                    if (t) details[tid] = t;
+                } catch (e) {
+                    console.error(`Failed to fetch test ${tid}`, e);
+                }
             }));
 
             setTestDetails(details);
@@ -172,7 +178,18 @@ export default function TestHistory() {
                                                     <div className="space-y-4">
                                                         <h4 className="font-semibold">Detailed Answers</h4>
                                                         {testDetails[attempt.test_id]?.questions?.map((q: any, idx: number) => {
-                                                            const userAnswer = attempt.answers?.[q.id] || attempt.answers?.find((a: any) => a.questionId === q.id)?.selectedAnswer; // handle both map or array formats if any
+                                                            // Helper to safely extract answer from mixed formats
+                                                            const getAnswer = (answers: any, qId: number) => {
+                                                                if (!answers) return null;
+                                                                // If array format
+                                                                if (Array.isArray(answers)) {
+                                                                    return answers.find((a: any) => a.questionId === qId)?.selectedAnswer;
+                                                                }
+                                                                // If object format
+                                                                return answers[qId];
+                                                            };
+
+                                                            const userAnswer = getAnswer(attempt.answers, q.id);
                                                             const isCorrect = userAnswer === q.correctAnswer;
                                                             return (
                                                                 <div key={q.id} className={`p-3 rounded border ${isCorrect ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>

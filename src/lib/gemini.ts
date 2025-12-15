@@ -11,16 +11,16 @@ const genAI = new GoogleGenerativeAI(API_KEY || "");
 
 // Helper to extract Video ID
 function extractVideoId(url: string): string | null {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|live\/)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
 // Fetch via local proxy to bypass CORS
-async function fetchTranscript(videoId: string): Promise<string> {
+async function fetchTranscript(videoId: string, signal?: AbortSignal): Promise<string> {
     try {
         console.log("Fetching video page via proxy...");
-        const videoPageResponse = await fetch(`/api/yt/watch?v=${videoId}`);
+        const videoPageResponse = await fetch(`/api/yt/watch?v=${videoId}`, { signal });
         const videoPageHtml = await videoPageResponse.text();
 
         // Strategy 1: Look for "captionTracks" directly (common in some responses)
@@ -32,40 +32,60 @@ async function fetchTranscript(videoId: string): Promise<string> {
             captionTracks = JSON.parse(match[1]);
         }
 
-        // Strategy 2: Look for ytInitialPlayerResponse (more robust)
+        // Strategy 2: Look for ytInitialPlayerResponse using robust brace counting
         if (!captionTracks) {
-            const playerResponseRegex = /ytInitialPlayerResponse\s*=\s*({.+?});/;
-            const playerMatch = videoPageHtml.match(playerResponseRegex);
-            if (playerMatch) {
+            const startToken = "ytInitialPlayerResponse = ";
+            const startIdx = videoPageHtml.indexOf(startToken);
+
+            if (startIdx !== -1) {
+                let jsonStr = "";
+                let braceCount = 0;
+                let foundStart = false;
+
+                // Start looking from after the token
+                for (let i = startIdx + startToken.length; i < videoPageHtml.length; i++) {
+                    const char = videoPageHtml[i];
+                    if (char === '{') {
+                        braceCount++;
+                        foundStart = true;
+                    } else if (char === '}') {
+                        braceCount--;
+                    }
+
+                    if (foundStart) {
+                        jsonStr += char;
+                        if (braceCount === 0) break; // Found complete object
+                    }
+                }
+
                 try {
-                    const playerResponse = JSON.parse(playerMatch[1]);
+                    const playerResponse = JSON.parse(jsonStr);
                     captionTracks = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
                 } catch (e) {
-                    console.error("Failed to parse ytInitialPlayerResponse", e);
+                    console.error("Failed to parse extracted ytInitialPlayerResponse");
                 }
             }
         }
 
         if (!captionTracks || captionTracks.length === 0) {
             console.log("No captionTracks found manually.");
-            // Return empty to allow fallback check later
             return "";
         }
 
         console.log(`Found ${captionTracks.length} caption tracks.`);
 
         // Priority: 
-        // 1. English
-        // 2. Hindi
-        // 3. ANY (Support for 'any language' request)
-        const track = captionTracks.find((t: any) => t.languageCode === 'en' && !t.kind) ||
-            captionTracks.find((t: any) => t.languageCode === 'en') ||
-            captionTracks.find((t: any) => t.languageCode === 'hi') ||
-            captionTracks[0]; // Fallback to whatever is available
+        // 1. Language Match (if provided via logic, but here we prioritize English/Hindi)
+        // 2. English
+        // 3. Hindi
+        // 4. Any
 
-        if (!track) {
-            return "";
-        }
+        let track = captionTracks.find((t: any) => t.languageCode === 'en' && !t.kind);
+        if (!track) track = captionTracks.find((t: any) => t.languageCode === 'en');
+        if (!track) track = captionTracks.find((t: any) => t.languageCode === 'hi');
+        if (!track) track = captionTracks[0];
+
+        if (!track) return "";
 
         const transcriptUrl = track.baseUrl;
         console.log("Fetching transcript from:", transcriptUrl, "Lang:", track.languageCode);
@@ -75,7 +95,7 @@ async function fetchTranscript(videoId: string): Promise<string> {
         const path = urlObj.pathname + urlObj.search;
         const finalUrl = `/api/yt${path}`;
 
-        const transcriptResponse = await fetch(finalUrl);
+        const transcriptResponse = await fetch(finalUrl, { signal });
         if (!transcriptResponse.ok) throw new Error("Failed to fetch transcript XML");
 
         const transcriptXml = await transcriptResponse.text();
@@ -98,17 +118,18 @@ async function fetchTranscript(videoId: string): Promise<string> {
 
     } catch (error) {
         console.error("Transcript fetch error:", error);
-        // Do not throw here, return empty string so we can handle it in the main function (maybe fallback?)
         return "";
     }
 }
 
-export async function generateTestFromYouTube(url: string, userId: string) {
+export async function generateTestFromYouTube(url: string, userId: string, language: string = 'English', signal?: AbortSignal) {
     if (!API_KEY) {
         throw new Error("Gemini API Key is missing. Please check .env file.");
     }
 
     try {
+        if (signal?.aborted) throw new Error("Process cancelled");
+
         console.log("Processing video URL:", url);
         const videoId = extractVideoId(url);
 
@@ -116,10 +137,12 @@ export async function generateTestFromYouTube(url: string, userId: string) {
             throw new Error("Invalid YouTube URL");
         }
 
-        let transcriptText = await fetchTranscript(videoId);
+        let transcriptText = await fetchTranscript(videoId, signal);
 
         // Logic check for method
         let usedMethod = "transcript";
+
+        if (signal?.aborted) throw new Error("Process cancelled");
 
         if (!transcriptText || transcriptText.length < 50) {
             console.log("Transcript failed or empty. Attempting direct video processing (Multimodal)...");
@@ -132,9 +155,11 @@ export async function generateTestFromYouTube(url: string, userId: string) {
             console.log("Using Transcript-based Generation. Length:", transcriptText.length);
         }
 
-        // Use Gemini 2.5 Flash as requested
+        if (signal?.aborted) throw new Error("Process cancelled");
+
+        // Use Gemini 3.0 Pro Preview (Restored)
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-3-pro-preview",
             generationConfig: { responseMimeType: "application/json" }
         });
 
@@ -143,43 +168,44 @@ export async function generateTestFromYouTube(url: string, userId: string) {
 
         if (usedMethod === "transcript") {
             prompt = `
-                You are an expert exam setter and educator.
-                
-                Task:
-                1. Analyze the lecture transcript.
-                2. Extract metadata (Teacher, Subject, Exam Type) for a short description.
-                3. Create **structured revision notes** (Markdown supported) that help a student revise before exams.
-                   - Use clear bullet points
-                   - Include formulas, keywords, shortcuts, and step-by-step logic where applicable
-                   - Highlight common mistakes or traps if mentioned
-                   - Keep language simple and exam-oriented
-                4. **Extract(if questions present in the video)** orGenerate **as many MCQs as possible** (aim for 15-20, minimum 10) based strictly on the content.
-                
-                IMPORTANT: Output **ONLY** valid raw JSON.
-                
-                JSON Structure:
-                {
-                    "title": "Topic or Video Title",
-                    "description": "Short info: Teacher Name | Subject | Exam Target (e.g. JEE/NEET/Board)",
-                    "revision_notes": "# Key Notes\n* Point 1\n* Formula...",
-                    "questions": [
-                        {
-                            "id": 1,
-                            "question": "Question text...",
-                            "options": {
-                                "A": "...",
-                                "B": "...",
-                                "C": "...",
-                                "D": "..."
-                            },
-                            "correctAnswer": "A"
-                        }
-                    ]
-                }
+            You are an expert exam setter and educator.
+            
+            Task:
+            1. Analyze the lecture transcript.
+            2. **IMPORTANT**: Generate ALL content (Description, Revision Notes, Questions, Options) in **${language}**.
+            3. Extract metadata (Teacher, Subject, Exam Type) for a short description.
+            3. Create **structured revision notes** (Markdown supported) that help a student revise before exams.
+               - Use clear bullet points
+               - Include formulas, keywords, shortcuts, and step-by-step logic where applicable
+               - Highlight common mistakes or traps if mentioned
+               - Keep language simple and exam-oriented
+            4. **Extract(if questions present in the video)** or **Generate as many MCQs as possible** (minimum 10) based strictly on the content.
+            
+            IMPORTANT: Output **ONLY** valid raw JSON.
+            
+            JSON Structure:
+            {
+                "title": "Topic or Video Title",
+                "description": "Short info: Teacher Name | Subject | Exam Target (e.g. JEE/NEET/Board)",
+                "revision_notes": "# Key Notes\n* Point 1\n* Formula...",
+                "questions": [
+                    {
+                        "id": 1,
+                        "question": "Question text...",
+                        "options": {
+                            "A": "...",
+                            "B": "...",
+                            "C": "...",
+                            "D": "..."
+                        },
+                        "correctAnswer": "A"
+                    }
+                ]
+            }
 
-                Transcript:
-                ${transcriptText}
-            `;
+            Transcript:
+            ${transcriptText}
+        `;
             requestContent = prompt;
         } else {
             // MULTIMODAL FALLBACK
@@ -187,8 +213,13 @@ export async function generateTestFromYouTube(url: string, userId: string) {
                 You are an expert exam setter.
                 Analyze the visual video content efficiently.
                 1. Create a short description (Subject/Topic).
-                2. Create structured revision notes (bullet points, key concepts).
-                3. Extract(if questions present in the video) or Generate **high-quality MCQs** as many as possible. for large videos, generate minimum 10 MCQs. based strictly on the content.
+                2. **IMPORTANT**: Generate ALL content (Description, Revision Notes, Questions, Options) in **${language}**.
+                3. Create **structured revision notes** (Markdown supported) that help a student revise before exams.
+                   - Use clear bullet points
+                   - Include formulas, keywords, shortcuts, and step-by-step logic where applicable
+                   - Highlight common mistakes or traps if mentioned
+                   - Keep language simple and exam-oriented
+                3. **Extract(if questions present in the video)** or **Generate as many MCQs as possible** (minimum 10) based strictly on the content.
 
                 Output **ONLY** valid raw JSON.
                 JSON Structure:
@@ -231,6 +262,8 @@ export async function generateTestFromYouTube(url: string, userId: string) {
 
         console.log("Raw AI Response:", text);
 
+        if (signal?.aborted) throw new Error("Process cancelled");
+
         // Create a more robust JSON cleaner
         const cleanJson = (str: string) => {
             // Find the first '{' and last '}'
@@ -260,6 +293,8 @@ export async function generateTestFromYouTube(url: string, userId: string) {
             throw new Error("AI discovered no questions content. Try a longer educational video.");
         }
 
+        if (signal?.aborted) throw new Error("Process cancelled");
+
         // 3. Save to Supabase
         const customId = `YT-${Date.now().toString().slice(-6)}`;
 
@@ -270,9 +305,9 @@ export async function generateTestFromYouTube(url: string, userId: string) {
                 description: data.description,
                 revision_notes: data.revision_notes, // New field
                 questions: data.questions,
-                duration: Math.max(15, Math.ceil(data.questions.length * 1.5)), // Dynamic duration
+                duration: Math.ceil(data.questions.length * 1), // Dynamic duration
                 marks_per_question: 4,
-                negative_marks: -1,
+                negative_marks: 1,
                 custom_id: customId,
                 created_by: userId
             })
