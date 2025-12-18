@@ -122,7 +122,7 @@ async function fetchTranscript(videoId: string, signal?: AbortSignal): Promise<s
     }
 }
 
-export async function generateTestFromYouTube(url: string, userId: string, language: string = 'English', signal?: AbortSignal) {
+export async function generateTestFromYouTube(url: string, userId: string, creatorName: string, creatorAvatar: string, language: string = 'English', signal?: AbortSignal) {
     if (!API_KEY) {
         throw new Error("Gemini API Key is missing. Please check .env file.");
     }
@@ -296,7 +296,8 @@ export async function generateTestFromYouTube(url: string, userId: string, langu
         if (signal?.aborted) throw new Error("Process cancelled");
 
         // 3. Save to Supabase
-        const customId = `YT-${Date.now().toString().slice(-6)}`;
+        const { getNextTestId } = await import('./testsApi');
+        const customId = await getNextTestId('YT');
 
         const { data: insertedData, error } = await supabase
             .from('tests')
@@ -309,7 +310,10 @@ export async function generateTestFromYouTube(url: string, userId: string, langu
                 marks_per_question: 4,
                 negative_marks: 1,
                 custom_id: customId,
-                created_by: userId
+                created_by: userId,
+                creator_name: creatorName,
+                creator_avatar: creatorAvatar,
+                is_public: true // Default to public
             })
             .select()
             .single();

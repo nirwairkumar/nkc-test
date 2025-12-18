@@ -12,21 +12,66 @@ export interface Test {
     negative_marks?: number;
     duration?: number; // minutes
     revision_notes?: string;
+    is_public?: boolean;
+    creator_name?: string;
+    creator_avatar?: string;
+    created_by?: string;
 }
 
 export interface Question {
     id: number;
     question: string;
+    image?: string; // Optional URL for question image
     options: { [key: string]: string };
+    optionImages?: { [key: string]: string }; // Optional URLs for option images
     correctAnswer: string;
+}
+
+export async function createTest(testData: Partial<Test>) {
+    const { data, error } = await supabase
+        .from('tests')
+        .insert([testData])
+        .select()
+        .single();
+    return { data, error };
 }
 
 export async function fetchTests() {
     const { data, error } = await supabase
         .from('tests')
         .select('*')
+        .or('is_public.eq.true,is_public.is.null') // Show public tests OR older tests with null status
         .order('created_at', { ascending: false });
     return { data, error };
+}
+
+export async function getNextTestId(prefix: 'M' | 'YT'): Promise<string> {
+    // Fetch all custom_ids to determine the next number
+    // Ideally we would do this with a database function, but for now we'll do it client-side
+    // assuming low volume.
+    const { data, error } = await supabase
+        .from('tests')
+        .select('custom_id')
+        .not('custom_id', 'is', null);
+
+    let maxNum = 100; // Start from 100 so first is 101
+
+    if (data && data.length > 0) {
+        data.forEach(row => {
+            if (row.custom_id) {
+                // Extract number part: match M-123 or YT-123
+                const match = row.custom_id.match(/-(.+)$/);
+                if (match && match[1]) {
+                    const num = parseInt(match[1]);
+                    if (!isNaN(num) && num > maxNum) {
+                        maxNum = num;
+                    }
+                }
+            }
+        });
+    }
+
+    return `${prefix}-${maxNum + 1}`;
 }
 
 export async function fetchTestById(id: string) {

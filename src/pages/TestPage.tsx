@@ -367,23 +367,46 @@ export default function TestPage() {
                   {currentQuestion.question}
                 </div>
 
+                {/* Question Image */}
+                {currentQuestion.image && (
+                  <div className="my-4">
+                    <img
+                      src={currentQuestion.image}
+                      alt={`Question ${currentQuestionIndex + 1}`}
+                      className="max-w-full max-h-[400px] rounded-lg border object-contain mx-auto"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-3 mt-4">
                   {Object.entries(currentQuestion.options).map(([key, text]) => {
                     const isSelected = answers[currentQuestion.id] === key;
+                    const optionImage = currentQuestion.optionImages?.[key];
+
                     return (
                       <div
                         key={key}
                         onClick={() => handleAnswerSelect(currentQuestion.id, key)}
-                        className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
+                        className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
                                         ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
                                      `}
                       >
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm border
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm border shrink-0
                                          ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
                                      `}>
                           {key}
                         </div>
-                        <div className="flex-1 text-base break-words">{text}</div>
+
+                        <div className="flex-1 flex flex-col gap-2">
+                          {text && <div className="text-base break-words pt-1">{text}</div>}
+                          {optionImage && (
+                            <img
+                              src={optionImage}
+                              alt={`Option ${key}`}
+                              className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
+                            />
+                          )}
+                        </div>
                       </div>
                     )
                   })}

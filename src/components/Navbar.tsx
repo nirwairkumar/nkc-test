@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus } from 'lucide-react';
 
 
 export default function Navbar() {
@@ -82,7 +82,7 @@ export default function Navbar() {
                                     <Menu className="h-5 w-5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-56">
                                 <DropdownMenuItem onClick={() => navigate('/')}>
                                     <Home className="mr-2 h-4 w-4" />
                                     <span>Home</span>
@@ -90,6 +90,10 @@ export default function Navbar() {
                                 <DropdownMenuItem onClick={() => navigate('/support')}>
                                     <HelpCircle className="mr-2 h-4 w-4" />
                                     <span>Support</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate('/create-test')}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    <span>Create Test</span>
                                 </DropdownMenuItem>
                                 {!user && (
                                     <>
@@ -150,6 +154,10 @@ export default function Navbar() {
                                         </DropdownMenuItem>
                                     </>
                                 )}
+                                <DropdownMenuItem onClick={() => navigate('/create-test')}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    <span>Create Test</span>
+                                </DropdownMenuItem>
 
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={handleSignOut}>

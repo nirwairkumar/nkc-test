@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { fetchTests, Test, toggleTestLike, getTestLikeCount, getTestLikeStatus } from '@/lib/testsApi';
-import { BookOpen, Clock, ArrowRight, History, Loader2, Heart, Search } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, History, Loader2, Heart, Search, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import supabase from '@/lib/supabaseClient';
 import YouTubeGenerator from '@/components/YouTubeGenerator';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { toast } from 'sonner';
 
 function TestLikeButton({ testId, userId }: { testId: string, userId: string | undefined }) {
     const [liked, setLiked] = useState(false);
@@ -22,7 +24,10 @@ function TestLikeButton({ testId, userId }: { testId: string, userId: string | u
 
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!userId) return; // Or show login toast
+        if (!userId) {
+            toast.error("Please login to like tests");
+            return;
+        }
 
         // Optimistic update
         const newLiked = !liked;
@@ -125,6 +130,13 @@ export default function TestList() {
         return true;
     });
 
+    const handleShare = (e: React.MouseEvent, testId: string) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}/test-intro/${testId}`;
+        navigator.clipboard.writeText(url);
+        toast.success("Test link copied to clipboard!");
+    };
+
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center">
@@ -164,25 +176,50 @@ export default function TestList() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTests.map((test) => (
-                    <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                        <CardHeader className="p-3">
-                            <CardTitle className="text-base font-bold text-red-900 md:text-lg">{test.title}</CardTitle>
+                    <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden">
+                        {/* Share Button (Top Right) */}
+                        <div className="absolute top-2 right-2 z-10">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm"
+                                onClick={(e) => handleShare(e, test.id)}
+                                title="Share Test"
+                            >
+                                <Share2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+
+                        <CardHeader className="p-3 pb-2">
+                            {/* Creator Profile (Small & Aesthetic) */}
+                            <div className="flex items-center gap-2 mb-2">
+                                <Avatar className="h-6 w-6">
+                                    <AvatarImage src={test.creator_avatar} />
+                                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                        {test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs text-muted-foreground font-medium truncate max-w-[150px]">
+                                    {test.creator_name || 'Test Creator'}
+                                </span>
+                            </div>
+                            <CardTitle className="text-base font-bold text-red-900 md:text-lg pr-8 leading-tight">{test.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-1 p-3 pt-0">
                             <div className="flex flex-col justify-end mt-auto gap-1">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center text-sm text-muted-foreground">
                                         <Clock className="mr-1 h-4 w-4" />
-                                        {test.questions?.length || 0} Questions
+                                        {test.questions?.length || 0} Qs • {test.duration || 30}m
                                     </div>
                                     {test.custom_id && (
                                         <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                                            ID: {test.custom_id}
+                                            #{test.custom_id}
                                         </span>
                                     )}
                                 </div>
                                 {/* Section Tags on Card */}
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-1 mt-1">
                                     {testSectionMap[test.id]?.map(secId => {
                                         const sec = sections.find(s => s.id === secId);
                                         if (!sec) return null;

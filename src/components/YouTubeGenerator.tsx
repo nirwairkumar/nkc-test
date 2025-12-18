@@ -145,7 +145,14 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
         try {
             // Updated status messages to reflect video processing
             setStatus('Watching Video(this takes 50-60 seconds)...');
-            await generateTestFromYouTube(url, user.id, language, abortControllerRef.current.signal);
+            await generateTestFromYouTube(
+                url,
+                user.id,
+                user.user_metadata?.full_name || 'AI Generator',
+                user.user_metadata?.avatar_url || '',
+                language,
+                abortControllerRef.current.signal
+            );
 
             setStatus('Finalizing...');
             toast.success(`Test generated successfully in ${language}!`);
