@@ -371,9 +371,21 @@ export default function TestPage() {
                 {currentQuestion.image && (
                   <div className="my-4">
                     <img
-                      src={currentQuestion.image}
+                      src={currentQuestion.image.trim()}
                       alt={`Question ${currentQuestionIndex + 1}`}
+                      referrerPolicy="no-referrer"
                       className="max-w-full max-h-[400px] rounded-lg border object-contain mx-auto"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const errorMsg = document.createElement('div');
+                          errorMsg.className = "text-center p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-600 space-y-2";
+                          errorMsg.innerHTML = `<p>Image failed to load.</p><a href="${currentQuestion.image?.trim()}" target="_blank" rel="noopener noreferrer" class="underline font-bold">Click here to view image</a>`;
+                          parent.appendChild(errorMsg);
+                        }
+                      }}
                     />
                   </div>
                 )}
@@ -401,9 +413,24 @@ export default function TestPage() {
                           {text && <div className="text-base break-words pt-1">{text}</div>}
                           {optionImage && (
                             <img
-                              src={optionImage}
+                              src={optionImage.trim()}
                               alt={`Option ${key}`}
+                              referrerPolicy="no-referrer"
                               className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  const errorLink = document.createElement('a');
+                                  errorLink.href = optionImage.trim();
+                                  errorLink.target = "_blank";
+                                  errorLink.rel = "noopener noreferrer";
+                                  errorLink.className = "text-xs text-blue-600 underline block mt-1";
+                                  errorLink.textContent = "View Image (Load Failed)";
+                                  parent.appendChild(errorLink);
+                                }
+                              }}
                             />
                           )}
                         </div>

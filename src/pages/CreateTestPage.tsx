@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { BackButton } from '@/components/ui/BackButton';
 import {
@@ -86,6 +86,43 @@ export default function CreateTestPage() {
         setQuestions(newQuestions);
     };
 
+    const processImageUrl = (url: string) => {
+        if (!url) return url;
+
+        // Handle Google Drive File Links (convert view link to direct image link)
+        const driveRegex = /drive\.google\.com\/file\/d\/([-_\w]+)/;
+        const match = url.match(driveRegex);
+        if (match && match[1]) {
+            return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+        }
+
+        // Handle Google Drive Open Links
+        const openRegex = /drive\.google\.com\/open\?id=([-_\w]+)/;
+        const openMatch = url.match(openRegex);
+        if (openMatch && openMatch[1]) {
+            return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
+        }
+
+        return url;
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 50 * 1024) { // 50KB limit
+            toast.error("Image size must be less than 50KB");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result as string;
+            callback(base64String);
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleSave = async () => {
         if (!user) {
             toast.error("You must be logged in to create a test.");
@@ -103,15 +140,22 @@ export default function CreateTestPage() {
             return;
         }
 
-        // Validate Questions
+        // Validate Questions (Relaxed: Text OR Image required)
         for (let i = 0; i < questions.length; i++) {
-            if (!questions[i].question.trim()) {
-                toast.error(`Question ${i + 1} text is empty`);
+            const hasQuestionContent = questions[i].question.trim() || questions[i].image;
+            if (!hasQuestionContent) {
+                toast.error(`Question ${i + 1} must have either text or an image`);
                 return;
             }
-            if (Object.values(questions[i].options).some(o => !o.trim())) {
-                toast.error(`All options for Question ${i + 1} must be filled`);
-                return;
+
+            // Check options
+            const options = ['A', 'B', 'C', 'D'];
+            for (const opt of options) {
+                const hasOptionContent = questions[i].options[opt].trim() || questions[i].optionImages?.[opt];
+                if (!hasOptionContent) {
+                    toast.error(`Option ${opt} for Question ${i + 1} is required (Text or Image)`);
+                    return;
+                }
             }
         }
 
@@ -121,6 +165,15 @@ export default function CreateTestPage() {
             const { getNextTestId } = await import('@/lib/testsApi');
             const customId = await getNextTestId('M');
 
+            // Sanitize Questions (Trim URLs)
+            const sanitizedQuestions = questions.map(q => ({
+                ...q,
+                image: q.image ? q.image.trim() : q.image,
+                optionImages: q.optionImages ? Object.fromEntries(
+                    Object.entries(q.optionImages).map(([k, v]) => [k, v ? v.trim() : v])
+                ) : undefined
+            }));
+
             const newTest = {
                 title,
                 description,
@@ -128,7 +181,7 @@ export default function CreateTestPage() {
                 marks_per_question: marks,
                 negative_marks: negativeMarks,
                 is_public: isPublic,
-                questions: questions,
+                questions: sanitizedQuestions,
                 created_by: user.id,
                 custom_id: customId,
                 creator_name: user.user_metadata?.full_name || 'Anonymous',
@@ -228,61 +281,122 @@ export default function CreateTestPage() {
 
                     {questions.map((q, index) => (
                         <Card key={index} className="relative">
-                            <div className="absolute right-2 top-2">
+                            <div className="absolute right-0 top-0">
                                 <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}>
                                     <Trash2 className="w-4 h-4" />
                                 </Button>
                             </div>
-                            <CardContent className="pt-6 space-y-4">
+                            <CardContent className="pt-10 space-y-4">
                                 <div className="flex gap-2">
                                     <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
                                     <div className="flex-1 space-y-4">
-                                        <Textarea
-                                            placeholder="Type your question here..."
-                                            value={q.question}
-                                            onChange={(e) => updateQuestion(index, 'question', e.target.value)}
-                                            className="min-h-[80px]"
-                                        />
-                                        <Input
-                                            placeholder="Image URL (Optional)"
-                                            value={q.image || ''}
-                                            onChange={(e) => updateQuestion(index, 'image', e.target.value)}
-                                            className="text-sm bg-slate-50 dark:bg-slate-900 h-9 md:w-[calc(50%-0.5rem)]"
-                                        />
+                                        <div className="flex flex-col">
+                                            <Textarea
+                                                placeholder="Type your question here..."
+                                                value={q.question}
+                                                onChange={(e) => updateQuestion(index, 'question', e.target.value)}
+                                                className="min-h-[80px] rounded-b-none border-b-0 resize-y focus-visible:ring-0 focus-visible:border-slate-400 z-10 relative"
+                                            />
+                                            <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-8">
+                                                <Input
+                                                    placeholder="Paste Image URL"
+                                                    value={q.image || ''}
+                                                    onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
+                                                    className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none"
+                                                />
+                                                <label className="cursor-pointer h-full border-l border-input">
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))}
+                                                    />
+                                                    <div className="flex items-center justify-center h-full px-3 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 w-[120px]">
+                                                        <Upload className="w-3 h-3 mr-2" />
+                                                        Upload Image
+                                                    </div>
+                                                </label>
+                                            </div>
+
+                                            {q.image && (
+                                                <div className="mt-2 relative group w-fit">
+                                                    <img
+                                                        src={q.image}
+                                                        alt="Question Preview"
+                                                        className="h-24 w-auto object-contain border rounded bg-white shadow-sm"
+                                                        referrerPolicy="no-referrer"
+                                                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x200?text=Invalid+Image+URL'; }}
+                                                    />
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs rounded pointer-events-none">
+                                                        Preview
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {['A', 'B', 'C', 'D'].map((optKey) => (
-                                                <div key={optKey} className="flex flex-col gap-2">
-                                                    <div className="flex gap-2 items-center">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border font-bold ${q.correctAnswer === optKey ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50'}`}>
-                                                            {optKey}
-                                                        </div>
-                                                        <Input
-                                                            placeholder={`Option ${optKey}`}
-                                                            value={q.options[optKey]}
-                                                            onChange={(e) => updateOption(index, optKey, e.target.value)}
-                                                        />
-                                                        <input
-                                                            type="radio"
-                                                            name={`correct-${index}`}
-                                                            checked={q.correctAnswer === optKey}
-                                                            onChange={() => updateQuestion(index, 'correctAnswer', optKey)}
-                                                            className="w-4 h-4 cursor-pointer accent-green-600"
-                                                            title="Mark as correct"
-                                                        />
+                                                <div key={optKey} className="flex gap-2 items-start">
+                                                    <div
+                                                        onClick={() => updateQuestion(index, 'correctAnswer', optKey)}
+                                                        className={`mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border font-bold cursor-pointer transition-all ${q.correctAnswer === optKey ? 'bg-green-100 border-green-500 text-green-700 ring-2 ring-green-500/20' : 'bg-slate-50 hover:bg-slate-100 border-slate-200'}`}
+                                                        title="Click to mark as correct"
+                                                    >
+                                                        {optKey}
                                                     </div>
-                                                    {/* Option Image Input */}
-                                                    <Input
-                                                        placeholder={`Image URL for Option ${optKey} (Optional)`}
-                                                        value={q.optionImages?.[optKey] || ''}
-                                                        onChange={(e) => {
-                                                            const newQuestions = [...questions];
-                                                            if (!newQuestions[index].optionImages) newQuestions[index].optionImages = {};
-                                                            newQuestions[index].optionImages![optKey] = e.target.value;
-                                                            setQuestions(newQuestions);
-                                                        }}
-                                                        className="ml-10 text-[10px] h-6 bg-slate-50/50 w-[calc(100%-2.5rem)]"
-                                                    />
+
+                                                    <div className="flex-1 flex flex-col">
+                                                        <div className="relative group">
+                                                            <Input
+                                                                placeholder={`Option ${optKey}`}
+                                                                value={q.options[optKey]}
+                                                                onChange={(e) => updateOption(index, optKey, e.target.value)}
+                                                                className="rounded-b-none border-b-0 h-9 focus-visible:ring-0 focus-visible:border-slate-400 z-10"
+                                                            />
+                                                            <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7">
+                                                                <Input
+                                                                    placeholder="Paste Image URL"
+                                                                    value={q.optionImages?.[optKey] || ''}
+                                                                    onChange={(e) => {
+                                                                        const newQuestions = [...questions];
+                                                                        if (!newQuestions[index].optionImages) newQuestions[index].optionImages = {};
+                                                                        newQuestions[index].optionImages![optKey] = processImageUrl(e.target.value);
+                                                                        setQuestions(newQuestions);
+                                                                    }}
+                                                                    className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-[10px] bg-transparent px-2 rounded-none"
+                                                                />
+                                                                <label className="cursor-pointer h-full border-l border-input">
+                                                                    <input
+                                                                        type="file"
+                                                                        className="hidden"
+                                                                        accept="image/*"
+                                                                        onChange={(e) => handleFileUpload(e, (base64) => {
+                                                                            const newQuestions = [...questions];
+                                                                            if (!newQuestions[index].optionImages) newQuestions[index].optionImages = {};
+                                                                            newQuestions[index].optionImages![optKey] = base64;
+                                                                            setQuestions(newQuestions);
+                                                                        })}
+                                                                    />
+                                                                    <div className="flex items-center justify-center h-full px-2 bg-slate-100 hover:bg-slate-200 transition-colors text-[10px] font-medium text-slate-700 w-[100px]">
+                                                                        <Upload className="w-3 h-3 mr-1" />
+                                                                        Upload Image
+                                                                    </div>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
+                                                        {q.optionImages?.[optKey] && (
+                                                            <div className="mt-1 relative w-fit">
+                                                                <img
+                                                                    src={q.optionImages[optKey]}
+                                                                    alt={`Option ${optKey} Preview`}
+                                                                    className="h-16 w-auto object-contain border rounded bg-white shadow-sm"
+                                                                    referrerPolicy="no-referrer"
+                                                                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Invalid+URL'; }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

@@ -208,19 +208,67 @@ const ResultsPage = () => {
                           {q.question}
                         </div>
 
+                        {/* Question Image */}
+                        {q.image && (
+                          <div className="my-2">
+                            <img
+                              src={q.image.trim()}
+                              alt={`Question ${index + 1}`}
+                              referrerPolicy="no-referrer"
+                              className="max-w-full max-h-[300px] rounded-lg border object-contain"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  const errorLink = document.createElement('a');
+                                  errorLink.href = q.image.trim();
+                                  errorLink.target = "_blank";
+                                  errorLink.rel = "noopener noreferrer";
+                                  errorLink.className = "text-xs text-blue-600 underline block mt-1";
+                                  errorLink.textContent = "View Image (Load Failed)";
+                                  parent.appendChild(errorLink);
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className={`p-3 rounded-md border ${isCorrect ? 'bg-green-50 border-green-200' : isWrong ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
                             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Your Answer</span>
-                            <span className={`font-semibold ${isCorrect ? 'text-green-700' : isWrong ? 'text-red-700' : 'text-slate-600'}`}>
-                              {ans ? `${ans}) ${q.options[ans]}` : 'Not Answered'}
-                            </span>
+                            <div className={`font-semibold ${isCorrect ? 'text-green-700' : isWrong ? 'text-red-700' : 'text-slate-600'}`}>
+                              {ans ? (
+                                <div className="flex flex-col gap-1">
+                                  <span>{ans}) {q.options[ans]}</span>
+                                  {q.optionImages?.[ans] && (
+                                    <img
+                                      src={q.optionImages[ans].trim()}
+                                      alt="Your Answer"
+                                      referrerPolicy="no-referrer"
+                                      className="max-h-[100px] w-auto rounded border bg-white object-contain"
+                                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                                    />
+                                  )}
+                                </div>
+                              ) : 'Not Answered'}
+                            </div>
                           </div>
 
                           <div className="p-3 rounded-md border bg-blue-50 border-blue-100">
                             <span className="text-xs font-bold uppercase tracking-wider text-blue-500 block mb-1">Correct Answer</span>
-                            <span className="font-semibold text-blue-900">
-                              {q.correctAnswer}) {q.options[q.correctAnswer]}
-                            </span>
+                            <div className="font-semibold text-blue-900 flex flex-col gap-1">
+                              <span>{q.correctAnswer}) {q.options[q.correctAnswer]}</span>
+                              {q.optionImages?.[q.correctAnswer] && (
+                                <img
+                                  src={q.optionImages[q.correctAnswer].trim()}
+                                  alt="Correct Answer"
+                                  referrerPolicy="no-referrer"
+                                  className="max-h-[100px] w-auto rounded border bg-white object-contain"
+                                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

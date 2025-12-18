@@ -220,7 +220,13 @@ export default function AdminMigration() {
                     .insert({
                         title: test.title,
                         description: test.description || globalDescription || '',
-                        questions: test.questions,
+                        questions: test.questions.map((q: any) => ({
+                            ...q,
+                            image: q.image ? q.image.trim() : q.image,
+                            optionImages: q.optionImages ? Object.fromEntries(
+                                Object.entries(q.optionImages).map(([k, v]) => [k, (v as string)?.trim()])
+                            ) : undefined
+                        })),
                         custom_id: customId || null,
                         marks_per_question: test.marks_per_question || marksPerQuestion,
                         negative_marks: test.negative_marks !== undefined ? test.negative_marks : negativeMarks,

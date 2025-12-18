@@ -56,6 +56,15 @@ export default function Navbar() {
 
                         <Button
                             variant="ghost"
+                            onClick={() => navigate('/create-test')}
+                            className="flex items-center"
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            <span>Create Test</span>
+                        </Button>
+
+                        <Button
+                            variant="ghost"
                             onClick={() => navigate('/support')}
                             className="flex items-center"
                         >
