@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { BackButton } from '@/components/ui/BackButton';
+import { IMEInput } from '@/components/ui/IMEInput';
+import { Languages } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -21,7 +23,11 @@ import {
 } from "@/components/ui/select";
 import { fetchSections } from '@/lib/sectionsApi';
 
-const DEFAULT_QUESTION: Question = {
+interface QuestionState extends Question {
+    typingMode: 'en' | 'hi';
+}
+
+const DEFAULT_QUESTION: QuestionState = {
     id: 1,
     question: '',
     options: {
@@ -30,7 +36,8 @@ const DEFAULT_QUESTION: Question = {
         C: '',
         D: ''
     },
-    correctAnswer: 'A'
+    correctAnswer: '',
+    typingMode: 'en'
 };
 
 export default function CreateTestPage() {
@@ -48,7 +55,8 @@ export default function CreateTestPage() {
     const [isPublic, setIsPublic] = useState(true); // Default Public
 
     // Questions State
-    const [questions, setQuestions] = useState<Question[]>([DEFAULT_QUESTION]);
+    const [questions, setQuestions] = useState<QuestionState[]>([DEFAULT_QUESTION]);
+    const [lastTypingMode, setLastTypingMode] = useState<'en' | 'hi'>('en');
 
     // Section State
     const [sections, setSections] = useState<any[]>([]); // Should load sections
@@ -64,7 +72,12 @@ export default function CreateTestPage() {
     const handleAddQuestion = () => {
         setQuestions([
             ...questions,
-            { ...DEFAULT_QUESTION, id: questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1, options: { ...DEFAULT_QUESTION.options } }
+            {
+                ...DEFAULT_QUESTION,
+                id: questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1,
+                options: { ...DEFAULT_QUESTION.options },
+                typingMode: lastTypingMode // Auto-carry logic
+            }
         ]);
     };
 
@@ -74,7 +87,7 @@ export default function CreateTestPage() {
         setQuestions(newQuestions);
     };
 
-    const updateQuestion = (index: number, field: keyof Question, value: any) => {
+    const updateQuestion = (index: number, field: keyof QuestionState, value: any) => {
         const newQuestions = [...questions];
         newQuestions[index] = { ...newQuestions[index], [field]: value };
         setQuestions(newQuestions);
@@ -157,6 +170,11 @@ export default function CreateTestPage() {
                     return;
                 }
             }
+
+            if (!questions[i].correctAnswer) {
+                toast.error(`Please select a correct answer for Question ${i + 1}`);
+                return;
+            }
         }
 
         setLoading(true);
@@ -181,7 +199,11 @@ export default function CreateTestPage() {
                 marks_per_question: marks,
                 negative_marks: negativeMarks,
                 is_public: isPublic,
-                questions: sanitizedQuestions,
+                questions: sanitizedQuestions.map((q: any) => {
+                    // Remove typingMode before saving
+                    const { typingMode, ...rest } = q;
+                    return rest;
+                }),
                 created_by: user.id,
                 custom_id: customId,
                 creator_name: user.user_metadata?.full_name || 'Anonymous',
@@ -207,6 +229,13 @@ export default function CreateTestPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const toggleQuestionLanguage = (index: number, mode: 'en' | 'hi') => {
+        const newQuestions = [...questions];
+        newQuestions[index].typingMode = mode;
+        setQuestions(newQuestions);
+        setLastTypingMode(mode); // Update for auto-carry
     };
 
     return (
@@ -291,10 +320,34 @@ export default function CreateTestPage() {
                                     <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
                                     <div className="flex-1 space-y-4">
                                         <div className="flex flex-col">
-                                            <Textarea
+                                            {/* Language Selector */}
+                                            <div className="flex justify-end mb-2">
+                                                <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-md p-1">
+                                                    <div className="flex items-center px-2 text-xs font-medium text-slate-500">
+                                                        <Languages className="w-3 h-3 mr-1" />
+                                                        Typing:
+                                                    </div>
+                                                    <Select
+                                                        value={q.typingMode}
+                                                        onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}
+                                                    >
+                                                        <SelectTrigger className="h-7 text-xs w-[90px] border-none bg-white shadow-sm">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="en">English</SelectItem>
+                                                            <SelectItem value="hi">Hindi</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+
+                                            <IMEInput
+                                                as="textarea"
+                                                typingMode={q.typingMode}
                                                 placeholder="Type your question here..."
                                                 value={q.question}
-                                                onChange={(e) => updateQuestion(index, 'question', e.target.value)}
+                                                onChange={(val: string) => updateQuestion(index, 'question', val)}
                                                 className="min-h-[80px] rounded-b-none border-b-0 resize-y focus-visible:ring-0 focus-visible:border-slate-400 z-10 relative"
                                             />
                                             <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-8">
@@ -347,10 +400,11 @@ export default function CreateTestPage() {
 
                                                     <div className="flex-1 flex flex-col">
                                                         <div className="relative group">
-                                                            <Input
+                                                            <IMEInput
+                                                                typingMode={q.typingMode}
                                                                 placeholder={`Option ${optKey}`}
                                                                 value={q.options[optKey]}
-                                                                onChange={(e) => updateOption(index, optKey, e.target.value)}
+                                                                onChange={(val: string) => updateOption(index, optKey, val)}
                                                                 className="rounded-b-none border-b-0 h-9 focus-visible:ring-0 focus-visible:border-slate-400 z-10"
                                                             />
                                                             <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7">
