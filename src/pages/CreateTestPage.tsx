@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,11 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { BackButton } from '@/components/ui/BackButton';
 import { IMEInput } from '@/components/ui/IMEInput';
-import { Languages } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -23,12 +21,15 @@ import {
 } from "@/components/ui/select";
 import { fetchSections } from '@/lib/sectionsApi';
 
-interface QuestionState extends Question {
+interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
+    options: { [key: string]: string }; // Keep options required in state for easy switching
+    correctAnswer: any; // Allow dynamic type in state
     typingMode: 'en' | 'hi';
 }
 
 const DEFAULT_QUESTION: QuestionState = {
     id: 1,
+    type: 'single',
     question: '',
     options: {
         A: '',
@@ -153,27 +154,41 @@ export default function CreateTestPage() {
             return;
         }
 
-        // Validate Questions (Relaxed: Text OR Image required)
+        // Validate Questions
         for (let i = 0; i < questions.length; i++) {
-            const hasQuestionContent = questions[i].question.trim() || questions[i].image;
+            const q = questions[i];
+            const hasQuestionContent = q.question.trim() || q.image;
             if (!hasQuestionContent) {
                 toast.error(`Question ${i + 1} must have either text or an image`);
                 return;
             }
 
-            // Check options
-            const options = ['A', 'B', 'C', 'D'];
-            for (const opt of options) {
-                const hasOptionContent = questions[i].options[opt].trim() || questions[i].optionImages?.[opt];
-                if (!hasOptionContent) {
-                    toast.error(`Option ${opt} for Question ${i + 1} is required (Text or Image)`);
+            if (q.type === 'numerical') {
+                if (!q.correctAnswer || typeof q.correctAnswer !== 'object' ||
+                    q.correctAnswer.min === undefined || q.correctAnswer.max === undefined) {
+                    toast.error(`Question ${i + 1} (Numerical) must have a Min and Max value`);
                     return;
                 }
-            }
+                if (Number(q.correctAnswer.min) > Number(q.correctAnswer.max)) {
+                    toast.error(`Question ${i + 1}: Min value cannot be greater than Max value`);
+                    return;
+                }
+            } else {
+                // Single or Multiple Choice
+                // Check options
+                const options = ['A', 'B', 'C', 'D'];
+                for (const opt of options) {
+                    const hasOptionContent = q.options[opt].trim() || (q.optionImages && q.optionImages[opt]);
+                    if (!hasOptionContent) {
+                        toast.error(`Option ${opt} for Question ${i + 1} is required (Text or Image)`);
+                        return;
+                    }
+                }
 
-            if (!questions[i].correctAnswer) {
-                toast.error(`Please select a correct answer for Question ${i + 1}`);
-                return;
+                if (!q.correctAnswer || (Array.isArray(q.correctAnswer) && q.correctAnswer.length === 0)) {
+                    toast.error(`Please select a correct answer for Question ${i + 1}`);
+                    return;
+                }
             }
         }
 
@@ -320,8 +335,34 @@ export default function CreateTestPage() {
                                     <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
                                     <div className="flex-1 space-y-4">
                                         <div className="flex flex-col">
-                                            {/* Language Selector */}
-                                            <div className="flex justify-end mb-2">
+                                            {/* Type Selector & Language Selector */}
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Select
+                                                        value={q.type || 'single'}
+                                                        onValueChange={(val: 'single' | 'multiple' | 'numerical') => {
+                                                            const newQ = { ...q, type: val };
+                                                            // Reset answer when type changes
+                                                            if (val === 'single') newQ.correctAnswer = '';
+                                                            if (val === 'multiple') newQ.correctAnswer = [];
+                                                            if (val === 'numerical') newQ.correctAnswer = { min: 0, max: 0 };
+
+                                                            const newQuestions = [...questions];
+                                                            newQuestions[index] = newQ;
+                                                            setQuestions(newQuestions);
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="h-8 w-[140px] text-xs">
+                                                            <SelectValue placeholder="Type" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="single">Single Choice</SelectItem>
+                                                            <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                            <SelectItem value="numerical">Numerical</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+
                                                 <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-md p-1">
                                                     <div className="flex items-center px-2 text-xs font-medium text-slate-500">
                                                         <Languages className="w-3 h-3 mr-1" />
@@ -387,73 +428,159 @@ export default function CreateTestPage() {
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {['A', 'B', 'C', 'D'].map((optKey) => (
-                                                <div key={optKey} className="flex gap-2 items-start">
-                                                    <div
-                                                        onClick={() => updateQuestion(index, 'correctAnswer', optKey)}
-                                                        className={`mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border font-bold cursor-pointer transition-all ${q.correctAnswer === optKey ? 'bg-green-100 border-green-500 text-green-700 ring-2 ring-green-500/20' : 'bg-slate-50 hover:bg-slate-100 border-slate-200'}`}
-                                                        title="Click to mark as correct"
-                                                    >
-                                                        {optKey}
+                                        {/* Answer Section */}
+                                        {q.type === 'numerical' ? (
+                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                                <Label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">Correct Numerical Range</Label>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="grid gap-1.5 flex-1">
+                                                        <Label className="text-xs">Min Value</Label>
+                                                        <Input
+                                                            type="number"
+                                                            step="any"
+                                                            placeholder="e.g. 1.5"
+                                                            value={(q.correctAnswer as any)?.min || ''}
+                                                            onChange={(e) => {
+                                                                const val = parseFloat(e.target.value);
+                                                                const current = (q.correctAnswer as any) || { min: 0, max: 0 };
+                                                                updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val });
+                                                            }}
+                                                            className={Number((q.correctAnswer as any)?.min) > Number((q.correctAnswer as any)?.max) ? "border-red-500 bg-red-50" : ""}
+                                                        />
                                                     </div>
-
-                                                    <div className="flex-1 flex flex-col">
-                                                        <div className="relative group">
-                                                            <IMEInput
-                                                                typingMode={q.typingMode}
-                                                                placeholder={`Option ${optKey}`}
-                                                                value={q.options[optKey]}
-                                                                onChange={(val: string) => updateOption(index, optKey, val)}
-                                                                className="rounded-b-none border-b-0 h-9 focus-visible:ring-0 focus-visible:border-slate-400 z-10"
-                                                            />
-                                                            <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7">
-                                                                <Input
-                                                                    placeholder="Paste Image URL"
-                                                                    value={q.optionImages?.[optKey] || ''}
-                                                                    onChange={(e) => {
-                                                                        const newQuestions = [...questions];
-                                                                        if (!newQuestions[index].optionImages) newQuestions[index].optionImages = {};
-                                                                        newQuestions[index].optionImages![optKey] = processImageUrl(e.target.value);
-                                                                        setQuestions(newQuestions);
-                                                                    }}
-                                                                    className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-[10px] bg-transparent px-2 rounded-none"
-                                                                />
-                                                                <label className="cursor-pointer h-full border-l border-input">
-                                                                    <input
-                                                                        type="file"
-                                                                        className="hidden"
-                                                                        accept="image/*"
-                                                                        onChange={(e) => handleFileUpload(e, (base64) => {
-                                                                            const newQuestions = [...questions];
-                                                                            if (!newQuestions[index].optionImages) newQuestions[index].optionImages = {};
-                                                                            newQuestions[index].optionImages![optKey] = base64;
-                                                                            setQuestions(newQuestions);
-                                                                        })}
-                                                                    />
-                                                                    <div className="flex items-center justify-center h-full px-2 bg-slate-100 hover:bg-slate-200 transition-colors text-[10px] font-medium text-slate-700 w-[100px]">
-                                                                        <Upload className="w-3 h-3 mr-1" />
-                                                                        Upload Image
-                                                                    </div>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-
-                                                        {q.optionImages?.[optKey] && (
-                                                            <div className="mt-1 relative w-fit">
-                                                                <img
-                                                                    src={q.optionImages[optKey]}
-                                                                    alt={`Option ${optKey} Preview`}
-                                                                    className="h-16 w-auto object-contain border rounded bg-white shadow-sm"
-                                                                    referrerPolicy="no-referrer"
-                                                                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Invalid+URL'; }}
-                                                                />
-                                                            </div>
-                                                        )}
+                                                    <div className="grid gap-1.5 flex-1">
+                                                        <Label className="text-xs">Max Value</Label>
+                                                        <Input
+                                                            type="number"
+                                                            step="any"
+                                                            placeholder="e.g. 1.6"
+                                                            value={(q.correctAnswer as any)?.max || ''}
+                                                            onChange={(e) => {
+                                                                const val = parseFloat(e.target.value);
+                                                                const current = (q.correctAnswer as any) || { min: 0, max: 0 };
+                                                                updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val });
+                                                            }}
+                                                            className={Number((q.correctAnswer as any)?.max) < Number((q.correctAnswer as any)?.min) ? "border-red-500 bg-red-50" : ""}
+                                                        />
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                {Number((q.correctAnswer as any)?.min) > Number((q.correctAnswer as any)?.max) && (
+                                                    <p className="text-[10px] text-red-600 font-medium mt-2 flex items-center">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-600 mr-1.5" />
+                                                        Min value cannot be greater than Max value
+                                                    </p>
+                                                )}
+                                                <p className="text-[10px] text-muted-foreground mt-2">
+                                                    Students will be marked correct if their answer is between Min and Max (inclusive). For exact answers, set Min and Max to the same value.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {['A', 'B', 'C', 'D'].map((optKey) => {
+                                                    const isSelected = q.type === 'multiple'
+                                                        ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey)
+                                                        : q.correctAnswer === optKey;
+
+                                                    const handleSelect = () => {
+                                                        if (q.type === 'multiple') {
+                                                            // Toggle selection for multiple choice
+                                                            const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                            const idx = current.indexOf(optKey);
+                                                            if (idx > -1) current.splice(idx, 1);
+                                                            else current.push(optKey);
+                                                            updateQuestion(index, 'correctAnswer', current.sort());
+                                                        } else {
+                                                            // Single choice
+                                                            updateQuestion(index, 'correctAnswer', optKey);
+                                                        }
+                                                    };
+
+                                                    return (
+                                                        <div key={optKey} className="flex gap-2 items-start">
+                                                            {/* Checkbox for Multiple Choice */}
+                                                            {q.type === 'multiple' && (
+                                                                <div
+                                                                    onClick={handleSelect}
+                                                                    className="mt-2 cursor-pointer text-slate-400 hover:text-primary transition-colors"
+                                                                >
+                                                                    {isSelected
+                                                                        ? <CheckSquare className="w-6 h-6 text-primary" />
+                                                                        : <Square className="w-6 h-6" />}
+                                                                </div>
+                                                            )}
+
+                                                            <div
+                                                                onClick={handleSelect}
+                                                                className={`mt-1 flex-shrink-0 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all 
+                                                                ${isSelected
+                                                                        ? 'bg-green-100 border-green-500 text-green-700 ring-2 ring-green-500/20'
+                                                                        : 'bg-slate-50 hover:bg-slate-100 border-slate-200'}
+                                                                ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
+                                                            `}
+                                                                title="Click to mark as correct"
+                                                            >
+                                                                {isSelected && q.type === 'multiple' ? <div className="absolute w-2 h-2 bg-green-500 rounded-sm" /> : null}
+                                                                {optKey}
+                                                            </div>
+
+                                                            <div className="flex-1 flex flex-col">
+                                                                <div className="relative group">
+                                                                    <IMEInput
+                                                                        typingMode={q.typingMode}
+                                                                        placeholder={`Option ${optKey}`}
+                                                                        value={q.options[optKey]}
+                                                                        onChange={(val: string) => updateOption(index, optKey, val)}
+                                                                        className="rounded-b-none border-b-0 h-9 focus-visible:ring-0 focus-visible:border-slate-400 z-10"
+                                                                    />
+                                                                    <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7">
+                                                                        <Input
+                                                                            placeholder="Paste Image URL"
+                                                                            value={q.optionImages?.[optKey] || ''}
+                                                                            onChange={(e) => {
+                                                                                const newQuestions = [...questions];
+                                                                                if (!newQuestions[index].optionImages) newQuestions[index].optionImages = {};
+                                                                                newQuestions[index].optionImages![optKey] = processImageUrl(e.target.value);
+                                                                                setQuestions(newQuestions);
+                                                                            }}
+                                                                            className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-[10px] bg-transparent px-2 rounded-none"
+                                                                        />
+                                                                        <label className="cursor-pointer h-full border-l border-input">
+                                                                            <input
+                                                                                type="file"
+                                                                                className="hidden"
+                                                                                accept="image/*"
+                                                                                onChange={(e) => handleFileUpload(e, (base64) => {
+                                                                                    const newQuestions = [...questions];
+                                                                                    if (!newQuestions[index].optionImages) newQuestions[index].optionImages = {};
+                                                                                    newQuestions[index].optionImages![optKey] = base64;
+                                                                                    setQuestions(newQuestions);
+                                                                                })}
+                                                                            />
+                                                                            <div className="flex items-center justify-center h-full px-2 bg-slate-100 hover:bg-slate-200 transition-colors text-[10px] font-medium text-slate-700 w-[100px]">
+                                                                                <Upload className="w-3 h-3 mr-1" />
+                                                                                Upload Image
+                                                                            </div>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+
+                                                                {q.optionImages?.[optKey] && (
+                                                                    <div className="mt-1 relative w-fit">
+                                                                        <img
+                                                                            src={q.optionImages[optKey]}
+                                                                            alt={`Option ${optKey} Preview`}
+                                                                            className="h-16 w-auto object-contain border rounded bg-white shadow-sm"
+                                                                            referrerPolicy="no-referrer"
+                                                                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Invalid+URL'; }}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>

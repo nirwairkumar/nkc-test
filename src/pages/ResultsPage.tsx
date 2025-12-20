@@ -72,7 +72,32 @@ const ResultsPage = () => {
   if (selectedTest?.questions) {
     selectedTest.questions.forEach((q: any) => {
       const ans = answers[q.id];
-      if (ans === q.correctAnswer) {
+      let isCorrect = false;
+
+      if (q.type === 'numerical') {
+        // Numerical Check
+        const numAns = parseFloat(ans);
+        const range = q.correctAnswer;
+        if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+          isCorrect = true;
+        }
+      } else if (q.type === 'multiple') {
+        // Multiple Choice Check (Exact Match)
+        const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
+        const userArr = Array.isArray(ans) ? [...ans].sort() : [];
+
+        if (correctArr.length > 0 && correctArr.length === userArr.length &&
+          correctArr.every((val, index) => val === userArr[index])) {
+          isCorrect = true;
+        }
+      } else {
+        // Single Choice Check
+        if (ans === q.correctAnswer) {
+          isCorrect = true;
+        }
+      }
+
+      if (isCorrect) {
         correctCount++;
       } else if (ans) {
         wrongCount++;
@@ -176,7 +201,27 @@ const ResultsPage = () => {
             <Accordion type="single" collapsible className="w-full space-y-2">
               {selectedTest?.questions?.map((q: any, index: number) => {
                 const ans = answers[q.id];
-                const isCorrect = ans === q.correctAnswer;
+
+                let isCorrect = false;
+                if (q.type === 'numerical') {
+                  const numAns = parseFloat(ans);
+                  const range = q.correctAnswer;
+                  if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+                    isCorrect = true;
+                  }
+                } else if (q.type === 'multiple') {
+                  const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
+                  const userArr = Array.isArray(ans) ? [...ans].sort() : [];
+                  if (correctArr.length > 0 && correctArr.length === userArr.length &&
+                    correctArr.every((val, index) => val === userArr[index])) {
+                    isCorrect = true;
+                  }
+                } else {
+                  if (ans === q.correctAnswer) {
+                    isCorrect = true;
+                  }
+                }
+
                 const isSkipped = !ans;
                 const isWrong = !isSkipped && !isCorrect;
 
@@ -240,8 +285,15 @@ const ResultsPage = () => {
                             <div className={`font-semibold ${isCorrect ? 'text-green-700' : isWrong ? 'text-red-700' : 'text-slate-600'}`}>
                               {ans ? (
                                 <div className="flex flex-col gap-1">
-                                  <span>{ans}) {q.options[ans]}</span>
-                                  {q.optionImages?.[ans] && (
+                                  <span>
+                                    {q.type === 'numerical'
+                                      ? ans
+                                      : Array.isArray(ans)
+                                        ? (ans as string[]).join(', ') // Multi
+                                        : `${ans}) ${q.options[ans]}` // Single
+                                    }
+                                  </span>
+                                  {q.type !== 'numerical' && !Array.isArray(ans) && q.optionImages?.[ans] && (
                                     <img
                                       src={q.optionImages[ans].trim()}
                                       alt="Your Answer"
@@ -258,10 +310,18 @@ const ResultsPage = () => {
                           <div className="p-3 rounded-md border bg-blue-50 border-blue-100">
                             <span className="text-xs font-bold uppercase tracking-wider text-blue-500 block mb-1">Correct Answer</span>
                             <div className="font-semibold text-blue-900 flex flex-col gap-1">
-                              <span>{q.correctAnswer}) {q.options[q.correctAnswer]}</span>
-                              {q.optionImages?.[q.correctAnswer] && (
+                              <span>
+                                {q.type === 'numerical' ? (
+                                  `Between ${(q.correctAnswer as any).min} and ${(q.correctAnswer as any).max}`
+                                ) : Array.isArray(q.correctAnswer) ? (
+                                  (q.correctAnswer as string[]).join(', ')
+                                ) : (
+                                  `${q.correctAnswer}) ${q.options[q.correctAnswer as string]}`
+                                )}
+                              </span>
+                              {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                 <img
-                                  src={q.optionImages[q.correctAnswer].trim()}
+                                  src={q.optionImages[q.correctAnswer as string].trim()}
                                   alt="Correct Answer"
                                   referrerPolicy="no-referrer"
                                   className="max-h-[100px] w-auto rounded border bg-white object-contain"

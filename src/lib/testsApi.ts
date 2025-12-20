@@ -20,11 +20,12 @@ export interface Test {
 
 export interface Question {
     id: number;
+    type?: 'single' | 'multiple' | 'numerical'; // Default 'single'
     question: string;
-    image?: string; // Optional URL for question image
-    options: { [key: string]: string };
-    optionImages?: { [key: string]: string }; // Optional URLs for option images
-    correctAnswer: string;
+    image?: string;
+    options?: { [key: string]: string }; // Optional for numerical
+    optionImages?: { [key: string]: string };
+    correctAnswer: string | string[] | { min: number, max: number }; // Dynamic type
 }
 
 export async function createTest(testData: Partial<Test>) {

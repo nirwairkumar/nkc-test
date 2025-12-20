@@ -5,7 +5,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -29,7 +31,7 @@ export default function TestPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // State
-  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
   const [markedForReview, setMarkedForReview] = useState<Set<number>>(new Set());
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -216,14 +218,40 @@ export default function TestPage() {
     // Calculate score
     let score = 0;
     test.questions.forEach(q => {
-      if (answers[q.id] === q.correctAnswer) {
-        // Correct
+      let isCorrect = false;
+      const userAns = answers[q.id];
+
+      if (!userAns) return; // Unanswered
+
+      if (q.type === 'numerical') {
+        // Numerical Check
+        const numAns = parseFloat(userAns as string);
+        const range = q.correctAnswer as { min: number, max: number };
+        if (!isNaN(numAns) && numAns >= range.min && numAns <= range.max) {
+          isCorrect = true;
+        }
+      } else if (q.type === 'multiple') {
+        // Multiple Choice Check (Exact Match)
+        // Sort both arrays to ensure order doesn't matter
+        const correctArr = (q.correctAnswer as string[] || []).sort();
+        const userArr = (userAns as string[] || []).sort();
+
+        if (correctArr.length === userArr.length &&
+          correctArr.every((val, index) => val === userArr[index])) {
+          isCorrect = true;
+        }
+      } else {
+        // Single Choice Check
+        if (userAns === q.correctAnswer) {
+          isCorrect = true;
+        }
+      }
+
+      if (isCorrect) {
         score += (test.marks_per_question || 4);
-      } else if (answers[q.id]) {
-        // Wrong
+      } else {
         score -= (test.negative_marks !== undefined ? test.negative_marks : 1);
       }
-      // Unanswered = 0
     });
 
     const { error } = await saveAttempt(user.id, test.id, answers, score);
@@ -391,52 +419,92 @@ export default function TestPage() {
                 )}
 
                 <div className="space-y-3 mt-4">
-                  {Object.entries(currentQuestion.options).map(([key, text]) => {
-                    const isSelected = answers[currentQuestion.id] === key;
-                    const optionImage = currentQuestion.optionImages?.[key];
+                  {currentQuestion.type === 'numerical' ? (
+                    <div className="max-w-xs">
+                      <Label className="mb-2 block">Your Answer</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="Enter your answer"
+                        value={answers[currentQuestion.id] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+                        }}
+                        className="text-lg"
+                      />
+                    </div>
+                  ) : (
+                    Object.entries(currentQuestion.options || {}).map(([key, text]) => {
+                      const isSelected = currentQuestion.type === 'multiple'
+                        ? (Array.isArray(answers[currentQuestion.id]) && (answers[currentQuestion.id] as any).includes(key))
+                        : answers[currentQuestion.id] === key;
 
-                    return (
-                      <div
-                        key={key}
-                        onClick={() => handleAnswerSelect(currentQuestion.id, key)}
-                        className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                        ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
-                                     `}
-                      >
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm border shrink-0
-                                         ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
-                                     `}>
-                          {key}
-                        </div>
+                      const optionImage = currentQuestion.optionImages?.[key];
 
-                        <div className="flex-1 flex flex-col gap-2">
-                          {text && <div className="text-base break-words pt-1">{text}</div>}
-                          {optionImage && (
-                            <img
-                              src={optionImage.trim()}
-                              alt={`Option ${key}`}
-                              referrerPolicy="no-referrer"
-                              className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
-                              onError={(e) => {
-                                const target = e.currentTarget;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  const errorLink = document.createElement('a');
-                                  errorLink.href = optionImage.trim();
-                                  errorLink.target = "_blank";
-                                  errorLink.rel = "noopener noreferrer";
-                                  errorLink.className = "text-xs text-blue-600 underline block mt-1";
-                                  errorLink.textContent = "View Image (Load Failed)";
-                                  parent.appendChild(errorLink);
-                                }
-                              }}
-                            />
-                          )}
+                      return (
+                        <div
+                          key={key}
+                          onClick={() => {
+                            if (currentQuestion.type === 'multiple') {
+                              // Handle Multi Select
+                              const current = (answers[currentQuestion.id] as any) || [];
+                              const newAnswers = Array.isArray(current) ? [...current] : [];
+
+                              if (newAnswers.includes(key)) {
+                                newAnswers.splice(newAnswers.indexOf(key), 1);
+                              } else {
+                                newAnswers.push(key);
+                              }
+                              newAnswers.sort();
+
+                              setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
+                            } else {
+                              // Handle Single Select
+                              handleAnswerSelect(currentQuestion.id, key);
+                            }
+                          }}
+                          className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
+                                            ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
+                                        `}
+                        >
+                          <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
+                                            ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
+                                            ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
+                                        `}>
+                            {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
+                            <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
+                          </div>
+
+                          <div className="flex-1 flex flex-col gap-2">
+                            {text && <div className="text-base break-words pt-1">{text}</div>}
+                            {optionImage && (
+                              <img
+                                src={optionImage.trim()}
+                                alt={`Option ${key}`}
+                                referrerPolicy="no-referrer"
+                                className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    const errorLink = document.createElement('a');
+                                    errorLink.href = optionImage.trim();
+                                    errorLink.target = "_blank";
+                                    errorLink.rel = "noopener noreferrer";
+                                    errorLink.className = "text-xs text-blue-600 underline block mt-1";
+                                    errorLink.textContent = "View Image (Load Failed)";
+                                    parent.appendChild(errorLink);
+                                  }
+                                }}
+                              />
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>
