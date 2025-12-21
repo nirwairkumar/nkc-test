@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { BackButton } from '@/components/ui/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
@@ -152,7 +151,6 @@ export default function UserTestManager() {
 
     return (
         <div className="container mx-auto max-w-5xl py-10 space-y-6">
-            <BackButton />
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Your Tests</h1>

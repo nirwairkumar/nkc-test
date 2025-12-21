@@ -16,6 +16,8 @@ export interface Test {
     creator_name?: string;
     creator_avatar?: string;
     created_by?: string;
+    institution_name?: string;
+    institution_logo?: string;
 }
 
 export interface Question {

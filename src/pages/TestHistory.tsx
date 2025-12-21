@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { fetchTestById } from '@/lib/testsApi';
-import { BackButton } from '@/components/ui/BackButton';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 
@@ -115,7 +114,6 @@ export default function TestHistory() {
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-3xl font-bold mb-8">Test History</h1>
-            <BackButton />
             <Card>
                 <CardContent className="p-0">
                     <Table>

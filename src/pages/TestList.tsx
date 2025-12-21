@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { fetchTests, Test, toggleTestLike, getTestLikeCount, getTestLikeStatus } from '@/lib/testsApi';
-import { BookOpen, Clock, ArrowRight, History, Loader2, Heart, Search, Share2 } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, History, Loader2, Heart, Search, Share2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import supabase from '@/lib/supabaseClient';
 import YouTubeGenerator from '@/components/YouTubeGenerator';
@@ -52,6 +52,74 @@ function TestLikeButton({ testId, userId }: { testId: string, userId: string | u
             <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
             <span className="text-xs">{count > 0 ? count : ''}</span>
         </Button>
+    );
+}
+
+function TestCardSectionList({ sectionIds, allSections }: { sectionIds: string[] | undefined, allSections: any[] }) {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [showRightArrow, setShowRightArrow] = useState(false);
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+
+    // Filter valid sections
+    const sections = (sectionIds || []).map(id => allSections.find(s => s.id === id)).filter(Boolean);
+
+    useEffect(() => {
+        checkOverflow();
+        window.addEventListener('resize', checkOverflow);
+        return () => window.removeEventListener('resize', checkOverflow);
+    }, [sections]);
+
+    const checkOverflow = () => {
+        if (scrollRef.current) {
+            const { scrollWidth, clientWidth, scrollLeft } = scrollRef.current;
+            setShowRightArrow(scrollWidth > clientWidth && Math.ceil(scrollLeft + clientWidth) < scrollWidth);
+            setShowLeftArrow(scrollLeft > 0);
+        }
+    };
+
+    const scroll = (direction: 'left' | 'right') => {
+        if (scrollRef.current) {
+            const amount = 100;
+            scrollRef.current.scrollBy({ left: direction === 'right' ? amount : -amount, behavior: 'smooth' });
+            setTimeout(checkOverflow, 300); // Check after scroll animation
+        }
+    };
+
+    if (sections.length === 0) return null;
+
+    return (
+        <div className="flex-1 min-w-0 relative group flex items-center justify-end">
+            {/* Left Fade/Arrow */}
+            {showLeftArrow && (
+                <div className="absolute left-0 z-10 h-full flex items-center bg-gradient-to-r from-white to-transparent pr-2">
+                    <button onClick={(e) => { e.stopPropagation(); scroll('left'); }} className="h-5 w-5 flex items-center justify-center hover:text-primary transition-colors">
+                        <ChevronLeft className="h-4 w-4 text-slate-500" />
+                    </button>
+                </div>
+            )}
+
+            <div
+                ref={scrollRef}
+                onScroll={checkOverflow}
+                className="flex items-center gap-1 overflow-x-auto scrollbar-hide max-w-full px-1"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+                {sections.map((sec: any) => (
+                    <span key={sec.id} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap shrink-0">
+                        {sec.name}
+                    </span>
+                ))}
+            </div>
+
+            {/* Right Arrow */}
+            {showRightArrow && (
+                <div className="absolute right-0 z-10 h-full flex items-center bg-gradient-to-l from-white to-transparent pl-2">
+                    <button onClick={(e) => { e.stopPropagation(); scroll('right'); }} className="h-5 w-5 flex items-center justify-center hover:text-primary transition-colors">
+                        <ChevronRight className="h-4 w-4 text-slate-500" />
+                    </button>
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -192,18 +260,8 @@ export default function TestList() {
 
                         <CardHeader className="p-3 pb-2">
                             {/* Creator Profile (Small & Aesthetic) */}
-                            <div className="flex items-center gap-2 mb-2">
-                                <Avatar className="h-6 w-6">
-                                    <AvatarImage src={test.creator_avatar} />
-                                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                        {test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs text-muted-foreground font-medium truncate max-w-[150px]">
-                                    {test.creator_name || 'Test Creator'}
-                                </span>
-                            </div>
-                            <CardTitle className="text-base font-bold text-red-900 md:text-lg pr-8 leading-tight">{test.title}</CardTitle>
+
+                            <CardTitle className="text-lg font-bold text-red-900 md:text-xl pr-8 leading-tight">{test.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-1 p-3 pt-0">
                             <div className="flex flex-col justify-end mt-auto gap-1">
@@ -218,18 +276,31 @@ export default function TestList() {
                                         </span>
                                     )}
                                 </div>
-                                {/* Section Tags on Card */}
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                    {testSectionMap[test.id]?.map(secId => {
-                                        const sec = sections.find(s => s.id === secId);
-                                        if (!sec) return null;
-                                        return (
-                                            <span key={secId} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                                {sec.name}
-                                            </span>
-                                        );
-                                    })}
+
+                            </div>
+                            {/* Footer Row: Profile & Sections */}
+                            <div className="flex items-center justify-between mt-1.5 gap-2 h-8">
+                                {/* Creator Profile */}
+                                <div
+                                    className="flex items-center gap-2 shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full pr-2 transition-colors py-0.5"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/creator/${test.created_by}`);
+                                    }}
+                                >
+                                    <Avatar className="h-6 w-6">
+                                        <AvatarImage src={test.creator_avatar} />
+                                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                                            {test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">
+                                        {test.creator_name || 'Test Creator'}
+                                    </span>
                                 </div>
+
+                                {/* Sections (Scrollable) */}
+                                <TestCardSectionList sectionIds={testSectionMap[test.id]} allSections={sections} />
                             </div>
                         </CardContent>
                         <CardFooter className="p-3 pt-0 flex justify-between gap-2">

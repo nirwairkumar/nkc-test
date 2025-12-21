@@ -24,6 +24,8 @@ const UserTestManager = lazy(() => import("./pages/UserTestManager"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const CreateTestPage = lazy(() => import("./pages/CreateTestPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const CreatorProfilePage = lazy(() => import("./pages/CreatorProfilePage"));
 const Layout = lazy(() => import("./Layout"));
 
 const queryClient = new QueryClient();
@@ -92,6 +94,22 @@ const App = () => (
                     element={
                       <PrivateRoute>
                         <ResultsPage />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <PrivateRoute>
+                        <ProfilePage />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/creator/:id"
+                    element={
+                      <PrivateRoute>
+                        <CreatorProfilePage />
                       </PrivateRoute>
                     }
                   />

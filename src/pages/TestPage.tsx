@@ -335,6 +335,18 @@ export default function TestPage() {
 
   return (
     <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-slate-50 flex flex-col">
+      {/* Institution Branding Bar */}
+      {(test.institution_name || test.institution_logo) && (
+        <div className="bg-white border-b px-4 py-2 flex items-center justify-center gap-3">
+          {test.institution_logo && (
+            <img src={test.institution_logo} alt="Institution Logo" className="h-10 w-auto object-contain" />
+          )}
+          {test.institution_name && (
+            <span className="text-lg font-bold text-slate-800">{test.institution_name}</span>
+          )}
+        </div>
+      )}
+
       {/* Top Header: Timer & Submit */}
       <div className="bg-white border-b px-4 py-3 sticky top-0 z-10 shadow-sm flex items-center justify-between">
         <div className="font-mono text-xl font-bold flex items-center gap-2">
@@ -348,7 +360,7 @@ export default function TestPage() {
         </Button>
       </div>
 
-      <div className="flex-1 container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative lg:h-full lg:overflow-hidden">
+      <div className="flex-1 container mx-auto p-1 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative lg:h-full lg:overflow-hidden">
         {/* Main Question Area */}
         {/* Main Question Area - Independently Scrollable on Desktop */}
         {/* Main Question Area - Independently Scrollable on Desktop */}

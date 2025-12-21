@@ -36,13 +36,22 @@ export default function Navbar() {
 
     return (
         <header className="border-b bg-white">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <div className="container mx-auto flex h-16 items-center justify-between px-1 sm:px-4">
                 <Link to="/" className="text-xl font-bold text-primary">
                     TestTaker
                 </Link>
 
 
                 <div className="flex items-center gap-2 sm:gap-4">
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate('/create-test')}
+                        className="flex items-center"
+                    >
+                        <Plus className="mr-0 h-4 w-4" />
+                        <span>Create Test</span>
+                    </Button>
+
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-2">
                         <Button
@@ -54,14 +63,7 @@ export default function Navbar() {
                             <span>Home</span>
                         </Button>
 
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate('/create-test')}
-                            className="flex items-center"
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            <span>Create Test</span>
-                        </Button>
+
 
                         <Button
                             variant="ghost"
@@ -100,10 +102,7 @@ export default function Navbar() {
                                     <HelpCircle className="mr-2 h-4 w-4" />
                                     <span>Support</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate('/create-test')}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    <span>Create Test</span>
-                                </DropdownMenuItem>
+
                                 {!user && (
                                     <>
                                         <DropdownMenuItem onClick={() => navigate('/admin-login')}>
@@ -146,6 +145,10 @@ export default function Navbar() {
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                                    <User className="mr-2 h-4 w-4" />
+                                    <span>Profile</span>
+                                </DropdownMenuItem>
                                 {isAdmin ? (
                                     <DropdownMenuItem onClick={() => navigate('/manage-tests')}>
                                         <Shield className="mr-2 h-4 w-4" />

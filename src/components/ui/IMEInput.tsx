@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,11 +27,12 @@ export const IMEInput: React.FC<IMEInputProps> = ({
     const [suggestionIndex, setSuggestionIndex] = useState(0);
     const [currentWordStart, setCurrentWordStart] = useState<number | null>(null);
     const inputRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     // Close suggestions on click outside or blur
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
-            if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
                 setSuggestions([]);
             }
         };
@@ -131,7 +131,7 @@ export const IMEInput: React.FC<IMEInputProps> = ({
     };
 
     return (
-        <div className="relative w-full">
+        <div className="relative w-full" ref={containerRef}>
             <Component
                 ref={inputRef}
                 value={value}

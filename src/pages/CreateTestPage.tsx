@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,25 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { BackButton } from '@/components/ui/BackButton';
 import { IMEInput } from '@/components/ui/IMEInput';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+
 import {
     Select,
     SelectContent,
@@ -50,21 +65,26 @@ export default function CreateTestPage() {
     // Test Metadata State
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [institutionName, setInstitutionName] = useState('');
+    const [institutionLogo, setInstitutionLogo] = useState('');
     const [time, setTime] = useState<number>(30);
     const [marks, setMarks] = useState<number>(4);
     const [negativeMarks, setNegativeMarks] = useState<number>(1);
-    const [isPublic, setIsPublic] = useState(true); // Default Public
+    const [isPublic, setIsPublic] = useState(true);
+
+    // Section State
+    const [sections, setSections] = useState<any[]>([]);
+    const [selectedSections, setSelectedSections] = useState<string[]>([]);
+    const [openSectionCombobox, setOpenSectionCombobox] = useState(false);
+    const [selectedSection, setSelectedSection] = useState<string>("none"); // Remove this later if unused, but user code might still reference it in other parts? No, I replaced usage. Safest to remove if I'm sure. I'll remove it.
 
     // Questions State
     const [questions, setQuestions] = useState<QuestionState[]>([DEFAULT_QUESTION]);
     const [lastTypingMode, setLastTypingMode] = useState<'en' | 'hi'>('en');
+    const [isDragging, setIsDragging] = useState(false);
 
-    // Section State
-    const [sections, setSections] = useState<any[]>([]); // Should load sections
-    const [selectedSection, setSelectedSection] = useState<string>("none");
-
-    React.useEffect(() => {
-        // Load sections
+    // Load Sections
+    useEffect(() => {
         fetchSections().then(({ data }) => {
             if (data) setSections(data);
         });
@@ -223,6 +243,8 @@ export default function CreateTestPage() {
                 custom_id: customId,
                 creator_name: user.user_metadata?.full_name || 'Anonymous',
                 creator_avatar: user.user_metadata?.avatar_url || '',
+                institution_name: institutionName,
+                institution_logo: institutionLogo,
                 created_at: new Date().toISOString()
             };
 
@@ -230,10 +252,10 @@ export default function CreateTestPage() {
 
             if (error) throw error;
 
-            // Assign Section if selected
-            if (selectedSection && selectedSection !== "none") {
+            // Assign Sections if selected
+            if (selectedSections.length > 0) {
                 const { assignSectionsToTest } = await import('@/lib/sectionsApi');
-                await assignSectionsToTest(data.id, [selectedSection]);
+                await assignSectionsToTest(data.id, selectedSections);
             }
 
             toast.success("Test created successfully!");
@@ -253,40 +275,198 @@ export default function CreateTestPage() {
         setLastTypingMode(mode); // Update for auto-carry
     };
 
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) {
+            processFile(file, setInstitutionLogo);
+        }
+    };
+
+    const processFile = (file: File, callback: (base64: string) => void) => {
+        if (file.size > 200 * 1024) { // Increased to 200KB for logos
+            toast.error("Image size must be less than 200KB");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result as string;
+            callback(base64String);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveLogo = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setInstitutionLogo('');
+    };
+
     return (
         <div className="container mx-auto py-8 max-w-4xl">
-            <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <BackButton />
-                    <h1 className="text-3xl font-bold">Create New Test</h1>
-                </div>
+            <div className="mb-6 flex items-center justify-center">
+                <h1 className="text-3xl font-bold">Create New Test</h1>
             </div>
 
             <div className="grid gap-6">
+                {/* Branding Section */}
+                {/* Branding Section */}
                 {/* Test Details Card */}
                 <Card>
+                    <div className="flex items-center justify-center gap-6 p-6 pb-0">
+                        {/* Logo Upload */}
+                        <div className="relative group shrink-0">
+                            {institutionLogo && (
+                                <button
+                                    onClick={handleRemoveLogo}
+                                    className="absolute -top-2 -right-2 z-20 bg-destructive text-white rounded-full p-1 shadow-md hover:bg-destructive/90 transition-colors"
+                                    title="Remove Logo"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            )}
+                            <label
+                                className="cursor-pointer block"
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) processFile(file, setInstitutionLogo);
+                                    }}
+                                />
+                                <div className={`w-16 h-16 rounded-lg border-2 border-dashed flex flex-col items-center justify-center transition-all relative overflow-hidden
+                                    ${isDragging
+                                        ? 'border-primary bg-primary/10 scale-105'
+                                        : institutionLogo ? 'border-primary/50 bg-primary/5' : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'}
+                                `}>
+                                    {institutionLogo ? (
+                                        <img src={institutionLogo} alt="Logo" className="w-full h-full object-contain p-1 rounded-lg" />
+                                    ) : (
+                                        <Upload className={`w-5 h-5 ${isDragging ? 'text-primary' : 'text-slate-400'}`} />
+                                    )}
+
+                                    {/* Hover overlay for replace (only when not dragging) */}
+                                    {institutionLogo && !isDragging && (
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span className="text-white text-[8px] font-medium">Edit</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Institution Name */}
+                        <div className="w-full max-w-lg">
+                            <Input
+                                value={institutionName}
+                                onChange={(e) => setInstitutionName(e.target.value)}
+                                placeholder="Add Your Institution Name"
+                                className="text-left text-xl md:text-2xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 h-auto py-1 bg-transparent px-0"
+                            />
+                            <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
+                        </div>
+                    </div>
+
                     <CardHeader>
-                        <CardTitle>Test Details</CardTitle>
+                        <CardTitle className="text-lg">Test Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
+
+
                         <div className="grid gap-2">
                             <Label htmlFor="title">Test Title</Label>
                             <Input placeholder="Enter test title..." value={title} onChange={e => setTitle(e.target.value)} />
                         </div>
 
                         <div className="grid gap-2">
-                            <Label>Section</Label>
-                            <Select value={selectedSection} onValueChange={setSelectedSection}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a section" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">No Section</SelectItem>
-                                    {sections.map((sec: any) => (
-                                        <SelectItem key={sec.id} value={sec.id}>{sec.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Label>Sections</Label>
+                            <Popover open={openSectionCombobox} onOpenChange={setOpenSectionCombobox}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={openSectionCombobox}
+                                        className="w-full justify-between"
+                                    >
+                                        {selectedSections.length > 0
+                                            ? `${selectedSections.length} selected`
+                                            : "Select sections..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Search section..." />
+                                        <CommandList>
+                                            <CommandEmpty>No section found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {sections.map((section) => (
+                                                    <CommandItem
+                                                        key={section.id}
+                                                        value={section.name}
+                                                        onSelect={() => {
+                                                            setSelectedSections(prev =>
+                                                                prev.includes(section.id)
+                                                                    ? prev.filter(id => id !== section.id)
+                                                                    : [...prev, section.id]
+                                                            );
+                                                            // Keep open for multiple selection
+                                                        }}
+                                                    >
+                                                        <Check
+                                                            className={cn(
+                                                                "mr-2 h-4 w-4",
+                                                                selectedSections.includes(section.id) ? "opacity-100" : "opacity-0"
+                                                            )}
+                                                        />
+                                                        {section.name}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+
+                            {/* Selected Tags */}
+                            {selectedSections.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {selectedSections.map(sectionId => {
+                                        const sec = sections.find(s => s.id === sectionId);
+                                        return (
+                                            <Badge key={sectionId} variant="secondary" className="pl-2 pr-1 h-7">
+                                                {sec?.name}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-4 w-4 ml-1 hover:bg-transparent text-muted-foreground hover:text-foreground"
+                                                    onClick={() => setSelectedSections(prev => prev.filter(id => id !== sectionId))}
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </Button>
+                                            </Badge>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid gap-2">
@@ -364,10 +544,8 @@ export default function CreateTestPage() {
                                                 </div>
 
                                                 <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-md p-1">
-                                                    <div className="flex items-center px-2 text-xs font-medium text-slate-500">
-                                                        <Languages className="w-3 h-3 mr-1" />
-                                                        Typing:
-                                                    </div>
+                                                    <div className="flex items-center px-1 text-xs font-medium text-slate-500">
+                                                        <Languages className="w-3.5 h-3.5 mr-0" /></div>
                                                     <Select
                                                         value={q.typingMode}
                                                         onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}
