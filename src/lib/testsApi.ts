@@ -37,6 +37,17 @@ export async function createTest(testData: Partial<Test>) {
         .select()
         .single();
     return { data, error };
+    return { data, error };
+}
+
+export async function updateTest(id: string, updates: Partial<Test>) {
+    const { data, error } = await supabase
+        .from('tests')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+    return { data, error };
 }
 
 export async function fetchTests() {
@@ -88,7 +99,7 @@ export async function fetchTestById(id: string) {
 export async function fetchTestsByUserId(userId: string) {
     const { data, error } = await supabase
         .from('tests')
-        .select('*')
+        .select('*, test_likes(count)')
         .eq('created_by', userId)
         .order('created_at', { ascending: false });
     return { data, error };

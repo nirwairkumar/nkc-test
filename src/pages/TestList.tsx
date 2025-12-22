@@ -135,6 +135,17 @@ export default function TestList() {
     const [testSectionMap, setTestSectionMap] = useState<Record<string, string[]>>({});
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Dynamic Placeholder State
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+    const placeholders = ["Search by Title...", "Search by ID...", "Search by Name..."];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
     useEffect(() => {
         loadData();
     }, []);
@@ -182,18 +193,42 @@ export default function TestList() {
         }
     }
 
+    // Extract Unique Profiles
+    const uniqueCreators = React.useMemo(() => {
+        const creators = new Map();
+        tests.forEach(t => {
+            if (t.created_by && t.creator_name && !creators.has(t.created_by)) {
+                creators.set(t.created_by, { name: t.creator_name, avatar: t.creator_avatar, id: t.created_by });
+            }
+        });
+        return Array.from(creators.values());
+    }, [tests]);
+
     // Filter Logic
+    const matchedProfiles = searchQuery
+        ? uniqueCreators.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        : [];
+
     const filteredTests = tests.filter(test => {
         // 1. Section Filter
         if (selectedSectionId && !testSectionMap[test.id]?.includes(selectedSectionId)) {
             return false;
         }
-        // 2. Search Filter (Title or ID)
+        // 2. Search Filter (Title or ID or Creator)
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
             const matchesTitle = test.title.toLowerCase().includes(lowerQuery);
             const matchesId = test.custom_id?.toLowerCase().includes(lowerQuery);
-            return matchesTitle || matchesId;
+            const matchesCreator = test.creator_name?.toLowerCase().includes(lowerQuery);
+
+            // Check Sections
+            const testSectionIds = testSectionMap[test.id] || [];
+            const matchesSection = testSectionIds.some(id => {
+                const section = sections.find(s => s.id === id);
+                return section?.name.toLowerCase().includes(lowerQuery);
+            });
+
+            return matchesTitle || matchesId || matchesCreator || matchesSection;
         }
         return true;
     });
@@ -231,16 +266,41 @@ export default function TestList() {
 
                     {/* Search Bar */}
                     <div className="relative w-full md:w-64">
-                        <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search by Title or ID..."
+                            placeholder={placeholders[placeholderIndex]}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-9 h-8 text-sm bg-background"
+                            className="pl-9 h-9 text-sm bg-background transition-all"
                         />
                     </div>
                 </div>
             </div>
+
+            {/* Profiles Section */}
+            {matchedProfiles.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 px-1">Profiles</h3>
+                    <div className="flex flex-wrap gap-6">
+                        {matchedProfiles.map(profile => (
+                            <div
+                                key={profile.id}
+                                className="flex flex-col items-center gap-2 cursor-pointer group"
+                                onClick={() => navigate(`/creator/${profile.id}`)}
+                            >
+                                <Avatar className="h-16 w-16 border-2 border-transparent group-hover:border-primary transition-all">
+                                    <AvatarImage src={profile.avatar} />
+                                    <AvatarFallback>{profile.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm font-medium text-center group-hover:text-primary transition-colors">
+                                    {profile.name}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="h-px bg-border my-6" />
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTests.map((test) => (
@@ -314,9 +374,11 @@ export default function TestList() {
                 ))}
             </div>
 
-            {filteredTests.length === 0 && (
+            {filteredTests.length === 0 && matchedProfiles.length === 0 && (
                 <div className="text-center py-12">
-                    <p className="text-muted-foreground">No tests found for this section.</p>
+                    <p className="text-muted-foreground">
+                        {searchQuery ? "No results found." : "No tests available."}
+                    </p>
                 </div>
             )}
         </div>

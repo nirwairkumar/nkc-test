@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchSections, createSection, assignSectionsToTest, Section } from '@/lib/sectionsApi';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 
 export default function AdminMigration() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -104,64 +105,43 @@ export default function AdminMigration() {
 
     const processFileContent = async (text: string, customId?: string) => {
         try {
-            log('Parsing file content...');
+            log('Parsing JSON content...');
+            let parsedData: any;
 
-            // Regex to find the start of the array
-            const startRegex = /export\s+const\s+allTests\s*(?::\s*\w+(?:\[\])?)?\s*=\s*\[/s;
-            const match = startRegex.exec(text);
-
-            if (!match) {
-                throw new Error("Could not find 'export const allTests = [' variable in the file.");
+            try {
+                parsedData = JSON.parse(text);
+            } catch (e) {
+                throw new Error("Invalid JSON file. Please check the syntax.");
             }
 
-            const startIndex = match.index + match[0].length - 1; // start at '['
+            // Support both single object (Test) and array of objects (Tests or legacy)
+            let testsToUpload: any[] = [];
 
-            // Simple bracket counting to find the end of the array
-            let bracketCount = 0;
-            let endIndex = -1;
-            let inString = false;
-            let stringChar = '';
-
-            for (let i = startIndex; i < text.length; i++) {
-                const char = text[i];
-
-                if (inString) {
-                    if (char === stringChar && text[i - 1] !== '\\') {
-                        inString = false;
-                    }
-                } else {
-                    if (char === '"' || char === "'" || char === '`') {
-                        inString = true;
-                        stringChar = char;
-                    } else if (char === '[') {
-                        bracketCount++;
-                    } else if (char === ']') {
-                        bracketCount--;
-                        if (bracketCount === 0) {
-                            endIndex = i + 1;
-                            break;
-                        }
-                    }
+            if (Array.isArray(parsedData)) {
+                // If it's an array, assume it's a list of tests
+                testsToUpload = parsedData;
+                log(`Detected array format inside JSON. Found ${testsToUpload.length} items.`, 'success');
+            } else if (typeof parsedData === 'object' && parsedData !== null) {
+                // If it's a single object
+                // Check if it's our "Test" structure which HAS a "questions" array
+                if (parsedData.title && Array.isArray(parsedData.questions)) {
+                    testsToUpload = [parsedData];
+                    log(`Detected single Test object: "${parsedData.title}"`, 'success');
                 }
+                // Check if it's the wrapper structure with "allTests" (legacy support just in case someone wraps it)
+                else if (parsedData.allTests && Array.isArray(parsedData.allTests)) {
+                    testsToUpload = parsedData.allTests;
+                    log(`Detected 'allTests' wrapper. Found ${testsToUpload.length} items.`, 'success');
+                }
+                else {
+                    throw new Error("JSON must be either an array of tests or a single Test object with a 'questions' array.");
+                }
+            } else {
+                throw new Error("Invalid JSON structure.");
             }
 
-            if (endIndex === -1) {
-                throw new Error("Could not find the closing bracket ']' for the allTests array.");
-            }
-
-            let arrayString = text.substring(startIndex, endIndex);
-
-            // Use new Function to parse
-            const parsedData = new Function(`return ${arrayString};`)();
-
-            if (!Array.isArray(parsedData)) {
-                throw new Error("Parsed data is not an array.");
-            }
-
-            log(`Successfully parsed ${parsedData.length} tests.`, 'success');
-            setFileStats({ total: parsedData.length, parsed: parsedData.length });
-
-            await uploadData(parsedData, customId);
+            setFileStats({ total: testsToUpload.length, parsed: testsToUpload.length });
+            await uploadData(testsToUpload, customId);
 
         } catch (error: any) {
             log(`Parsing Error: ${error.message}`, 'error');
@@ -308,7 +288,7 @@ export default function AdminMigration() {
                     <CardHeader>
                         <CardTitle>Option 2: Upload Test Data</CardTitle>
                         <CardDescription>
-                            Upload a custom <code>questions.ts</code> file.
+                            Upload a JSON file containing tests.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -368,12 +348,15 @@ export default function AdminMigration() {
                         </div>
 
                         <div className="grid w-full max-w-sm items-center gap-1.5">
-                            <Label htmlFor="file">Test Data File (.ts)</Label>
+                            <div className="flex justify-between">
+                                <Label htmlFor="file">Test Data File (.json)</Label>
+                                <TestUploadFormatGuide />
+                            </div>
                             <Input
                                 ref={fileInputRef}
                                 id="file"
                                 type="file"
-                                accept=".ts,.js,.txt"
+                                accept=".json"
                                 onChange={handleFileChange}
                                 disabled={loading}
                             />

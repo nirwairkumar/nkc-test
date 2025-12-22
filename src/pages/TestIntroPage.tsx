@@ -142,7 +142,7 @@ export default function TestIntroPage() {
                                 <summary className="cursor-pointer p-4 bg-muted/30 hover:bg-muted/50 font-medium flex items-center justify-between select-none">
                                     <div className="flex items-center gap-2">
                                         <FileText className="h-4 w-4" />
-                                        View Revision Notes & Summary
+                                        View Test Summary & Instructions
                                     </div>
                                     <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
                                 </summary>

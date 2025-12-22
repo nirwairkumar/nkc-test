@@ -128,8 +128,8 @@ export default function Navbar() {
                     {user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                                    <Avatar className="h-10 w-10">
+                                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                                    <Avatar className="h-8 w-8">
                                         <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name} />
                                         <AvatarFallback>{getInitials(user.user_metadata?.full_name)}</AvatarFallback>
                                     </Avatar>

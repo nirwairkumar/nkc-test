@@ -54,6 +54,9 @@ const App = () => (
                   <Route path="/manage-tests" element={<ManageTests />} />
                   <Route path="/support" element={<SupportPage />} />
                   <Route path="/create-test" element={<CreateTestPage />} />
+                  <Route path="/edit-test/:id" element={<CreateTestPage />} />
+                  <Route path="/creator/:id" element={<CreatorProfilePage />} />
+
 
 
                   {/* Protected Routes */}
@@ -105,14 +108,7 @@ const App = () => (
                       </PrivateRoute>
                     }
                   />
-                  <Route
-                    path="/creator/:id"
-                    element={
-                      <PrivateRoute>
-                        <CreatorProfilePage />
-                      </PrivateRoute>
-                    }
-                  />
+
                   {/* Fallback */}
                   <Route path="*" element={<NotFound />} />
                 </Route>

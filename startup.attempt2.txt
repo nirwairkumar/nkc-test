@@ -1,0 +1,283 @@
+
+> vite_react_shadcn_ts@0.0.0 dev
+> vite
+
+
+  [32m[1mVITE[22m v5.4.19[39m  [2mready in [0m[1m755[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m8080[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://10.42.187.100:[1m8080[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[2m12:05:54 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/pages/Homepage.tsx[22m
+[2m12:08:56 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Navbar.tsx, /src/index.css[22m
+[2m12:19:02 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TestList.tsx, /src/index.css[22m
+Error processing file src\pages\TestList.tsx: SyntaxError: Unexpected token (241:80)
+    at constructor (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:362:19)
+    at TypeScriptParserMixin.raise (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3259:19)
+    at TypeScriptParserMixin.unexpected (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3279:16)
+    at TypeScriptParserMixin.jsxParseIdentifier (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6616:12)
+    at TypeScriptParserMixin.jsxParseNamespacedName (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6623:23)
+    at TypeScriptParserMixin.jsxParseAttribute (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6699:22)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6714:28)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:9690:18)
+    at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6709:17)
+    at TypeScriptParserMixin.jsxParseElementAt (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6733:33) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'UnexpectedToken',
+  loc: Position { line: 241, column: 80, index: 10194 },
+  pos: 10194,
+  syntaxPlugin: undefined
+}
+[2m12:19:03 PM[22m [31m[1m[vite][22m[39m [31mInternal server error:   x Unterminated string constant
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/TestList.tsx:241:1]
+ 238 |                             onChange={(e) => setSearchQuery(e.target.value)}
+ 239 |                             className="pl-10 h-9 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-
+ 240 | 
+ 241 |             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+     :                                                                                 ^^
+ 242 |                 {filteredTests.map((test) => (
+ 243 |                     <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden">
+ 243 |                         {/* Share Button (Top Right) */}
+     `----
+  x Expected '</', got 'string literal (>, ">)'
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/TestList.tsx:241:1]
+ 238 |                             onChange={(e) => setSearchQuery(e.target.value)}
+ 239 |                             className="pl-10 h-9 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-
+ 240 | 
+ 241 |             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+     :                                                                                 ^^
+ 242 |                 {filteredTests.map((test) => (
+ 243 |                     <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden">
+ 243 |                         {/* Share Button (Top Right) */}
+     `----
+
+
+Caused by:
+    Syntax Error[39m
+  Plugin: [35mvite:react-swc[39m
+  File: [36mD:/Yuga Yatra/nkc-Test-platform/src/pages/TestList.tsx[39m
+  
+[2m12:19:33 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TestList.tsx, /src/index.css[22m
+Error processing file src\pages\TestList.tsx: SyntaxError: Unexpected token (268:80)
+    at constructor (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:362:19)
+    at TypeScriptParserMixin.raise (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3259:19)
+    at TypeScriptParserMixin.unexpected (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3279:16)
+    at TypeScriptParserMixin.jsxParseIdentifier (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6616:12)
+    at TypeScriptParserMixin.jsxParseNamespacedName (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6623:23)
+    at TypeScriptParserMixin.jsxParseAttribute (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6699:22)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6714:28)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:9690:18)
+    at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6709:17)
+    at TypeScriptParserMixin.jsxParseElementAt (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6733:33) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'UnexpectedToken',
+  loc: Position { line: 268, column: 80, index: 11329 },
+  pos: 11329,
+  syntaxPlugin: undefined
+}
+[2m12:19:33 PM[22m [31m[1m[vite][22m[39m [31mInternal server error:   x Unterminated string constant
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/TestList.tsx:268:1]
+ 265 |                             onChange={(e) => setSearchQuery(e.target.value)}
+ 266 |                             className="pl-10 h-9 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-
+ 267 | 
+ 268 |             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+     :                                                                                 ^^
+ 269 |                 {filteredTests.map((test) => (
+ 270 |                     <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden">
+ 270 |                         {/* Share Button (Top Right) */}
+     `----
+  x Expected '</', got 'string literal (>, ">)'
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/TestList.tsx:268:1]
+ 265 |                             onChange={(e) => setSearchQuery(e.target.value)}
+ 266 |                             className="pl-10 h-9 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-primary/20 transition-
+ 267 | 
+ 268 |             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+     :                                                                                 ^^
+ 269 |                 {filteredTests.map((test) => (
+ 270 |                     <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden">
+ 270 |                         {/* Share Button (Top Right) */}
+     `----
+
+
+Caused by:
+    Syntax Error[39m
+  Plugin: [35mvite:react-swc[39m
+  File: [36mD:/Yuga Yatra/nkc-Test-platform/src/pages/TestList.tsx[39m
+  
+[2m12:20:12 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TestList.tsx, /src/index.css[22m
+[2m12:28:33 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m12:37:37 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TestList.tsx, /src/index.css[22m
+[2m12:54:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/TestList.tsx, /src/components/YouTubeGenerator.tsx, /src/pages/CreateTestPage.tsx[22m
+[2m12:54:52 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m12:55:24 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CreateTestPage.tsx, /src/index.css[22m
+Error processing file src\pages\CreateTestPage.tsx: SyntaxError: Unexpected token, expected "," (599:37)
+    at constructor (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:362:19)
+    at TypeScriptParserMixin.raise (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3259:19)
+    at TypeScriptParserMixin.unexpected (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3279:16)
+    at TypeScriptParserMixin.expect (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3589:12)
+    at TypeScriptParserMixin.parseObjectLike (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:11344:14)
+    at TypeScriptParserMixin.parseExprAtom (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10868:23)
+    at TypeScriptParserMixin.parseExprAtom (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6811:20)
+    at TypeScriptParserMixin.parseExprSubscripts (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10592:23)
+    at TypeScriptParserMixin.parseUpdate (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10577:21)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10557:23) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'UnexpectedToken',
+  loc: Position { line: 599, column: 37, index: 27806 },
+  pos: 27806,
+  syntaxPlugin: undefined
+}
+[2m12:55:24 PM[22m [31m[1m[vite][22m[39m [31mInternal server error:   x Expected a semicolon
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/CreateTestPage.tsx:599:1]
+ 596 | 
+ 597 |                     {questions.map((q, index) => (
+ 598 |                         {
+ 599 |                             questions.map((q, index) => (
+     :                                      ^
+ 600 |                                 <Card
+ 601 |                                     key={index}
+ 601 |                                     className={`relative transition-all ${isDragging ? 'border-dashed border-primary/50' : ''}`}
+     `----
+  x Expected '</', got '.'
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/CreateTestPage.tsx:599:1]
+ 596 | 
+ 597 |                     {questions.map((q, index) => (
+ 598 |                         {
+ 599 |                             questions.map((q, index) => (
+     :                                      ^
+ 600 |                                 <Card
+ 601 |                                     key={index}
+ 601 |                                     className={`relative transition-all ${isDragging ? 'border-dashed border-primary/50' : ''}`}
+     `----
+
+
+Caused by:
+    Syntax Error[39m
+  Plugin: [35mvite:react-swc[39m
+  File: [36mD:/Yuga Yatra/nkc-Test-platform/src/pages/CreateTestPage.tsx[39m
+  
+[2m12:55:40 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CreateTestPage.tsx, /src/index.css[22m
+[2m12:56:19 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CreateTestPage.tsx, /src/index.css[22m
+[2m1:04:54 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CreateTestPage.tsx, /src/index.css[22m
+[2m1:05:30 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:05:38 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:12:30 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/TestList.tsx, /src/components/YouTubeGenerator.tsx, /src/pages/CreateTestPage.tsx, /src/pages/UserTestManager.tsx, /src/components/TestBuilder.tsx[22m
+[2m1:12:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:12:44 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:16:06 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:16:06 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:16:22 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestBuilder.tsx, /src/index.css[22m
+[2m1:19:54 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:20:10 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:38:25 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestBuilder.tsx, /src/index.css[22m
+[2m1:38:28 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestBuilder.tsx, /src/index.css[22m
+[2m1:38:30 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestBuilder.tsx, /src/index.css[22m
+[2m1:38:37 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestBuilder.tsx, /src/index.css[22m
+[2m1:38:53 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TestIntroPage.tsx, /src/index.css[22m
+[2m1:49:05 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TestIntroPage.tsx, /src/index.css[22m
+[2m1:58:19 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:58:19 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:58:22 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m1:58:52 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m2:07:36 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+Error processing file src\pages\UserTestManager.tsx: SyntaxError: Unexpected token (172:16)
+    at constructor (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:362:19)
+    at TypeScriptParserMixin.raise (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3259:19)
+    at TypeScriptParserMixin.unexpected (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3279:16)
+    at TypeScriptParserMixin.parseExprAtom (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10970:16)
+    at TypeScriptParserMixin.parseExprAtom (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6811:20)
+    at TypeScriptParserMixin.parseExprSubscripts (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10592:23)
+    at TypeScriptParserMixin.parseUpdate (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10577:21)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10557:23)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:9483:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10411:61) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'UnexpectedToken',
+  loc: Position { line: 172, column: 16, index: 7113 },
+  pos: 7113,
+  syntaxPlugin: undefined
+}
+[2m2:07:36 PM[22m [31m[1m[vite][22m[39m [31mInternal server error:   x Expected '</', got ')'
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/UserTestManager.tsx:172:1]
+ 169 |                                 <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
+ 170 |                                     You haven't generated any tests yet.
+ 171 |                                 </div>
+ 172 |                 ) : (
+     :                 ^
+ 173 |                     tests.map(test => (
+ 174 |                     <Card key={test.id} className="relative group hover:shadow-md transition-shadow">
+ 174 |                         <CardHeader className="pb-2">
+     `----
+
+
+Caused by:
+    Syntax Error[39m
+  Plugin: [35mvite:react-swc[39m
+  File: [36mD:/Yuga Yatra/nkc-Test-platform/src/pages/UserTestManager.tsx[39m
+  
+[2m2:07:39 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+Error processing file src\pages\UserTestManager.tsx: SyntaxError: Unexpected token (173:16)
+    at constructor (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:362:19)
+    at TypeScriptParserMixin.raise (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3259:19)
+    at TypeScriptParserMixin.unexpected (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:3279:16)
+    at TypeScriptParserMixin.parseExprAtom (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10970:16)
+    at TypeScriptParserMixin.parseExprAtom (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:6811:20)
+    at TypeScriptParserMixin.parseExprSubscripts (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10592:23)
+    at TypeScriptParserMixin.parseUpdate (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10577:21)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10557:23)
+    at TypeScriptParserMixin.parseMaybeUnary (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:9483:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Yuga Yatra\nkc-Test-platform\node_modules\@babel\parser\lib\index.js:10411:61) {
+  code: 'BABEL_PARSER_SYNTAX_ERROR',
+  reasonCode: 'UnexpectedToken',
+  loc: Position { line: 173, column: 16, index: 7190 },
+  pos: 7190,
+  syntaxPlugin: undefined
+}
+[2m2:07:39 PM[22m [31m[1m[vite][22m[39m [31mInternal server error:   x Expected '</', got ')'
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/UserTestManager.tsx:173:1]
+ 170 |                                 <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
+ 171 |                                     You haven't generated any tests yet.
+ 172 |                                 </div>
+ 173 |                 ) : (
+     :                 ^
+ 174 |                     tests.map(test => (
+ 175 |                     <Card key={test.id} className="relative group hover:shadow-md transition-shadow">
+ 175 |                         <CardHeader className="pb-2">
+     `----
+
+
+Caused by:
+    Syntax Error[39m
+  Plugin: [35mvite:react-swc[39m
+  File: [36mD:/Yuga Yatra/nkc-Test-platform/src/pages/UserTestManager.tsx[39m
+  
+[2m2:08:22 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/UserTestManager.tsx, /src/index.css[22m
+[2m2:12:22 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestUploadFormatGuide.tsx, /src/index.css[22m
+[2m2:12:22 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestUploadFormatGuide.tsx, /src/index.css[22m
+[2m2:13:29 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestUploadFormatGuide.tsx, /src/index.css[22m
+[2m2:18:20 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/TestUploadFormatGuide.tsx, /src/index.css[22m
+[2m2:18:24 PM[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33m@radix-ui/react-collapsible[32m[39m
+[2m2:18:24 PM[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m2:23:21 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/AdminMigration.tsx, /src/index.css[22m
+[2m2:23:21 PM[22m [31m[1m[vite][22m[39m [31mInternal server error:   x Unexpected token. Did you mean `{'>'}` or `&gt;`?
+     ,-[D:/Yuga Yatra/nkc-Test-platform/src/pages/AdminMigration.tsx:292:1]
+ 289 |                         <CardTitle data-lov-id="src\pages\AdminMigration.tsx:289:24" data-lov-name="CardTitle"  data-component-path="src\pages\AdminMigration.tsx" data-component-line="289" data-component-file="AdminMigration.tsx" data-component-name="CardTitle" data-component-content="%7B%22text%22%3A%22Option%202%3A%20Upload%20Test%20Data%22%7D">Option 2: Upload Test Data</CardTitle>
+ 290 |                         <CardDescription data-lov-id="src\pages\AdminMigration.tsx:290:24" data-lov-name="CardDescription"  data-component-path="src\pages\AdminMigration.tsx" data-component-line="290" data-component-file="AdminMigration.tsx" data-component-name="CardDescription" data-component-content="%7B%22text%22%3A%22Upload%20a%20JSON%20file%20containing%20tests.%22%7D">
+ 291 |                             Upload a JSON file containing tests.
+ 292 |                         </CardDescription>>
+     :                                           ^
+ 293 |                     </CardHeader>
+ 294 |                     <CardContent data-lov-id="src\pages\AdminMigration.tsx:294:20" data-lov-name="CardContent"  data-component-path="src\pages\AdminMigration.tsx" data-component-line="294" data-component-file="AdminMigration.tsx" data-component-name="CardContent" data-component-content="%7B%22className%22%3A%22space-y-4%22%7D" className="space-y-4">
+ 294 |                         <div data-lov-id="src\pages\AdminMigration.tsx:295:24" data-lov-name="div"  data-component-path="src\pages\AdminMigration.tsx" data-component-line="295" data-component-file="AdminMigration.tsx" data-component-name="div" data-component-content="%7B%22className%22%3A%22space-y-2%22%7D" className="space-y-2">
+     `----
+
+
+Caused by:
+    Syntax Error[39m
+  Plugin: [35mvite:react-swc[39m
+  File: [36mD:/Yuga Yatra/nkc-Test-platform/src/pages/AdminMigration.tsx[39m
+  
+[2m2:23:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/AdminMigration.tsx, /src/index.css[22m
