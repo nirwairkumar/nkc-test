@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { transliterateWord } from '@/lib/ime';
 import { cn } from '@/lib/utils';
+
 
 interface IMEInputProps {
     value: string;
@@ -11,7 +11,7 @@ interface IMEInputProps {
     as?: 'input' | 'textarea';
     className?: string;
     placeholder?: string;
-    [key: string]: any; // Spread other props
+    [key: string]: any;
 }
 
 export const IMEInput: React.FC<IMEInputProps> = ({
@@ -22,151 +22,138 @@ export const IMEInput: React.FC<IMEInputProps> = ({
     className,
     ...props
 }) => {
-    const Component = as === 'textarea' ? Textarea : Input;
+    // Only difference: Textarea vs Input
+    // Ideally we always use Textarea for multi-line support as asked, or we respect 'as' prop but default to Textarea for questions?
+    // User requested: "fix the issue so the user can type next line... (question and all options text-area)"
+    // So we should force Textarea or ensure the passed component supports multiline.
+    // The "Input" component is usually single line. We will prefer Textarea.
+
+    // Actually, for specific fields like "Option A" which are usually short, user MIGHT want multiline but it looks like a single line input.
+    // Let's stick with the prop but default question to Textarea in parent. 
+    // However, user specifically asked "question and all options text-area". 
+    // So we will override for options too if they are currently passed as 'input'.
+
+    const Component = as === 'textarea' || props.multiline ? Textarea : Input;
+
     const [suggestions, setSuggestions] = useState<string[]>([]);
-    const [suggestionIndex, setSuggestionIndex] = useState(0);
-    const [currentWordStart, setCurrentWordStart] = useState<number | null>(null);
-    const inputRef = useRef<any>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
+    const [lastWordPos, setLastWordPos] = useState<{ start: number, end: number } | null>(null);
+    const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
-    // Close suggestions on click outside or blur
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setSuggestions([]);
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        // If Enter is pressed, let it work naturally for new lines (if it's a textarea)
+        // unless we are selecting a suggestion? No, user wants natural behavior.
+        // We only intercept Space for transliteration.
+
+        if (typingMode === 'hi' && e.key === ' ') {
+            const cursor = e.currentTarget.selectionStart || 0;
+            const text = e.currentTarget.value;
+
+            // Get text before cursor
+            const textBefore = text.substring(0, cursor);
+            const words = textBefore.split(/[\s\n]/); // Split by space or newline
+            const lastWord = words[words.length - 1];
+
+            if (lastWord && /^[a-zA-Z]+$/.test(lastWord)) {
+                e.preventDefault(); // Stop space
+
+                // Fetch suggestion
+                fetch(`https://inputtools.google.com/request?text=${lastWord}&itc=hi-t-i0-und&num=5`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data[0] === 'SUCCESS' && data[1][0] && data[1][0][1]) {
+                            const suggestionsList = data[1][0][1];
+                            const bestMatch = suggestionsList[0];
+
+                            const newValue = text.substring(0, cursor - lastWord.length) + bestMatch + " " + text.substring(cursor);
+                            onChange(newValue);
+
+                            // Set cursor position: (cursor - lastWordLen) + bestMatchLen + 1 (space)
+                            // We need to wait for render or use a layout effect, but simple timeout usually works in simple inputs
+                            setTimeout(() => {
+                                if (inputRef.current) {
+                                    const newPos = cursor - lastWord.length + bestMatch.length + 1;
+                                    inputRef.current.setSelectionRange(newPos, newPos);
+                                }
+                            }, 0);
+
+                            // Show suggestions bar
+                            setSuggestions(suggestionsList);
+                            setLastWordPos({
+                                start: cursor - lastWord.length,
+                                end: cursor - lastWord.length + bestMatch.length
+                            });
+                        } else {
+                            // Fallback
+                            const newValue = text.substring(0, cursor) + " " + text.substring(cursor);
+                            onChange(newValue);
+                            setTimeout(() => {
+                                if (inputRef.current) {
+                                    inputRef.current.setSelectionRange(cursor + 1, cursor + 1);
+                                }
+                            }, 0);
+                        }
+                    })
+                    .catch(() => {
+                        // Fallback
+                        const newValue = text.substring(0, cursor) + " " + text.substring(cursor);
+                        onChange(newValue);
+                    });
             }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const newValue = e.target.value;
-        const cursorUrl = e.target.selectionStart || 0;
-
-        onChange(newValue);
-
-        if (typingMode !== 'hi') {
-            setSuggestions([]);
             return;
         }
 
-        // Detect word being typed
-        const textBeforeCursor = newValue.slice(0, cursorUrl);
-        const words = textBeforeCursor.split(/[\s\n]/);
-        const currentWord = words[words.length - 1];
-
-        if (currentWord && /^[a-zA-Z]+$/.test(currentWord)) {
-            // It's a valid English-like word being typed
-            setCurrentWordStart(cursorUrl - currentWord.length);
-            const transliterations = transliterateWord(currentWord);
-            setSuggestions(transliterations);
-            setSuggestionIndex(0);
-        } else {
+        // On any other key, clear suggestions (unless it's navigation?)
+        if (suggestions.length > 0 && e.key.length === 1) {
             setSuggestions([]);
-            setCurrentWordStart(null);
+            setLastWordPos(null);
         }
     };
 
-    const applySuggestion = (suggestion: string) => {
-        if (currentWordStart === null || !inputRef.current) return;
+    const replaceWord = (word: string) => {
+        if (!lastWordPos || !inputRef.current) return;
 
-        // Use current cursor position to determine end of word
-        // But since we are selecting, we might have moved? 
-        // Best to use "currentWordStart" + length of whatever generated the suggestions?
-        // Actually, we need to reconstruct from the input's current value.
-        // Re-calculate current word based on inputRef value to depend on latest state
-        const val = inputRef.current.value;
-        const cursor = inputRef.current.selectionStart || 0;
-
-        // Find the word boundary at cursor
-        // (Simplified: we assume we are AT the end of the word or inside it)
-        // But our "onChange" logic assumes typing at the END. 
-        // Let's rely on stored "currentWordStart" and replace until current cursor.
-
-        const beforeWord = val.slice(0, currentWordStart);
-        const afterCursor = val.slice(cursor);
-
-        // The part to replace is from currentWordStart to cursor
-        const newValue = beforeWord + suggestion + afterCursor;
-
+        const text = value;
+        const newValue = text.substring(0, lastWordPos.start) + word + text.substring(lastWordPos.end);
         onChange(newValue);
-        setSuggestions([]);
 
-        // Restore cursor position roughly (after the inserted word)
-        // We need a timeout for React to update the value first
+        setSuggestions([]);
+        setLastWordPos(null); // Or update it? No, once replaced, we are done.
+
         setTimeout(() => {
             if (inputRef.current) {
-                const newCursorPos = beforeWord.length + suggestion.length;
-                inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+                const newPos = lastWordPos.start + word.length;
+                inputRef.current.setSelectionRange(newPos, newPos);
+                inputRef.current.focus();
             }
         }, 0);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (suggestions.length === 0) return;
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            setSuggestionIndex(prev => (prev + 1) % suggestions.length);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            setSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
-        } else if (e.key === 'Enter' || e.key === 'Tab') {
-            e.preventDefault();
-            applySuggestion(suggestions[suggestionIndex]);
-        } else if (e.key === 'Escape') {
-            setSuggestions([]);
-        } else if (e.key === ' ' && suggestions.length > 0) {
-            // Optional: Space selects the first suggestion? 
-            // Standard IME often selects first suggestion on space
-            e.preventDefault(); // Prevent space briefly
-            applySuggestion(suggestions[suggestionIndex]);
-            // Then we need to append the space that triggered it? 
-            // In standard IME, space commits the word AND adds a space.
-            setTimeout(() => {
-                onChange(inputRef.current!.value + ' ');
-            }, 0);
-        }
-    };
-
     return (
-        <div className="relative w-full" ref={containerRef}>
+        <div className="w-full">
+            {/* Suggestions Bar - Fixed wording to not include "Suggestions:" label as requested */}
+            {suggestions.length > 0 && (
+                <div className="flex items-center gap-2 p-1.5 bg-orange-50 border border-orange-100 rounded-t-md overflow-x-auto mb-[-1px] relative z-10">
+                    {suggestions.map((s, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => replaceWord(s)}
+                            className="text-xs px-2 py-1 rounded bg-white border border-gray-200 hover:bg-orange-100 text-gray-800 whitespace-nowrap shadow-sm"
+                        >
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <Component
-                ref={inputRef}
+                ref={inputRef as any}
                 value={value}
-                onChange={handleChange}
+                onChange={(e) => onChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className={cn(className, typingMode === 'hi' ? "border-orange-200 focus-visible:ring-orange-200" : "")}
                 autoComplete="off"
                 {...props}
             />
-            {suggestions.length > 0 && (
-                <div
-                    className="absolute z-50 w-full bg-white border border-slate-200 shadow-lg rounded-md mt-1 overflow-hidden max-h-40 overflow-y-auto"
-                    style={{ bottom: as === 'textarea' ? 'auto' : undefined, top: as === 'textarea' ? undefined : undefined }}
-                // Positioning logic is simple: just below input. 
-                // For textarea, it might float weirdly if long. 
-                // Ideally we use a library like floating-ui, but per constraints we keep it simple.
-                // We'll just stick it to the bottom of the input container.
-                >
-                    <div className="flex flex-col bg-white">
-                        {suggestions.map((s, idx) => (
-                            <button
-                                key={idx}
-                                className={cn(
-                                    "px-3 py-2 text-left text-sm hover:bg-slate-100 focus:bg-slate-100 outline-none transition-colors flex justify-between",
-                                    idx === suggestionIndex ? "bg-orange-50 text-orange-900" : ""
-                                )}
-                                onClick={() => applySuggestion(s)}
-                            >
-                                <span className="font-medium">{s}</span>
-                                {idx < 9 && <span className="text-xs text-slate-400 opacity-50">{idx + 1}</span>}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

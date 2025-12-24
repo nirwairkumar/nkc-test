@@ -11,7 +11,8 @@ import { toast } from 'sonner';
 import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { IMEInput } from '@/components/ui/IMEInput';
-import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
+import { Wifi, WifiOff } from 'lucide-react';
 import {
     Command,
     CommandEmpty,
@@ -59,7 +60,7 @@ interface TestBuilderProps {
 }
 
 export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBuilderProps) {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -91,6 +92,28 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     const [lastTypingMode, setLastTypingMode] = useState<'en' | 'hi'>('en');
     const [isDragging, setIsDragging] = useState(false);
 
+    // Online/Offline State
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            toast.success("Back online!");
+        };
+        const handleOffline = () => {
+            setIsOnline(false);
+            toast.error("You are offline. Transliteration may not work.");
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
     // Load Sections
     useEffect(() => {
         fetchSections().then(({ data }) => {
@@ -113,7 +136,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             setLoading(true);
             fetchTestById(testId).then(async ({ data, error }) => {
                 if (data) {
-                    if (data.created_by !== user.id) {
+                    if (data.created_by !== user.id && !isAdmin) {
                         toast.error("You can only edit your own tests");
                         navigate('/my-tests');
                         return;
@@ -372,6 +395,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 </div>
             </div>
 
+            {!isOnline && (
+                <div className="bg-red-500 text-white text-sm py-2 px-4 rounded mb-4 flex items-center justify-center gap-2">
+                    <WifiOff className="w-4 h-4" />
+                    <span>You are currently offline. Transliteration features require an internet connection.</span>
+                </div>
+            )}
+
             <div className="grid gap-6">
                 <Card>
                     <div className="flex items-center justify-center gap-6 p-6 pb-0">
@@ -451,10 +481,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
                         <div className="grid gap-2">
                             <Label>Test Summary & Instructions (Rich Text)</Label>
-                            <MarkdownEditor
+                            <RichTextEditor
                                 value={revisionNotes}
                                 onChange={setRevisionNotes}
-                                placeholder="Add detailed instructions, syllabus, or summary here. Supports Markdown formatting."
+                                placeholder="Add detailed instructions, syllabus, or summary here..."
                             />
                         </div>
 
@@ -491,17 +521,40 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                 </Select>
                                             </div>
                                         </div>
-                                        <IMEInput typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestion(index, 'question', val)} className="min-h-[80px]" />
+                                        <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestion(index, 'question', val)} className="min-h-[80px]" />
 
                                         {/* Image Upload for Question */}
-                                        <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-8">
-                                            <Input placeholder="Paste Image URL" value={q.image || ''} onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))} className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none" />
-                                            <label className="cursor-pointer h-full border-l border-input">
-                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
-                                                <div className="flex items-center justify-center h-full px-3 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 w-[120px]"><Upload className="w-3 h-3 mr-2" />Upload</div>
-                                            </label>
+                                        <div className="space-y-2">
+                                            {q.image ? (
+                                                <div className="relative group w-fit">
+                                                    <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white shadow-sm" />
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        onClick={() => updateQuestion(index, 'image', '')}
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
+                                                    <Input
+                                                        placeholder="Paste Image URL or Upload"
+                                                        value={q.image || ''}
+                                                        onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
+                                                        className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none"
+                                                    />
+                                                    <label className="cursor-pointer h-full border-l border-input">
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
+                                                        <div className="flex items-center justify-center h-full px-4 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 whitespace-nowrap">
+                                                            <Upload className="w-3.5 h-3.5 mr-2" />
+                                                            Upload
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            )}
                                         </div>
-                                        {q.image && <img src={q.image} alt="Preview" className="h-24 w-auto object-contain border rounded bg-white shadow-sm mt-2" />}
 
                                         {/* Answers */}
                                         {q.type === 'numerical' ? (
@@ -531,12 +584,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                             {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
                                                             <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
                                                             <div className="flex-1 flex flex-col">
-                                                                <IMEInput typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="h-9" />
-                                                                <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7">
-                                                                    <Input placeholder="Image URL" value={q.optionImages?.[optKey] || ''} onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2" />
-                                                                    <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px]"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
-                                                                </div>
-                                                                {q.optionImages?.[optKey] && <img src={q.optionImages[optKey]} className="h-16 w-auto object-contain border rounded mt-1 bg-white" />}
+                                                                {/* Changed to textarea for multiline support as requested */}
+                                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y" />
+                                                                {q.optionImages?.[optKey] ? (
+                                                                    <div className="relative group mt-1 w-fit">
+                                                                        <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
+                                                                        <button
+                                                                            onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
+                                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        >
+                                                                            <X className="w-3 h-3" />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7 mt-1">
+                                                                        <Input placeholder="Image URL" value="" onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2 shadow-none focus-visible:ring-0" />
+                                                                        <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px] whitespace-nowrap"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     );

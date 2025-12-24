@@ -281,3 +281,4 @@ Caused by:
   File: [36mD:/Yuga Yatra/nkc-Test-platform/src/pages/AdminMigration.tsx[39m
   
 [2m2:23:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/AdminMigration.tsx, /src/index.css[22m
+npm error A complete log of this run can be found in: C:\Users\kumar\AppData\Local\npm-cache\_logs\2025-12-22T06_24_44_440Z-debug-0.log

@@ -16,6 +16,11 @@ function extractVideoId(url: string): string | null {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
+// Helper to detect if it is a live video URL pattern
+function isLiveVideo(url: string): boolean {
+    return url.includes('/live/') || url.includes('live_stream');
+}
+
 // Fetch via local proxy to bypass CORS
 async function fetchTranscript(videoId: string, signal?: AbortSignal): Promise<string> {
     try {
@@ -68,6 +73,7 @@ async function fetchTranscript(videoId: string, signal?: AbortSignal): Promise<s
         }
 
         if (!captionTracks || captionTracks.length === 0) {
+            // Check if it's an auto-generated caption issue or just missing
             console.log("No captionTracks found manually.");
             return "";
         }
@@ -75,7 +81,7 @@ async function fetchTranscript(videoId: string, signal?: AbortSignal): Promise<s
         console.log(`Found ${captionTracks.length} caption tracks.`);
 
         // Priority: 
-        // 1. Language Match (if provided via logic, but here we prioritize English/Hindi)
+        // 1. Language Match (English/Hindi)
         // 2. English
         // 3. Hindi
         // 4. Any
@@ -137,27 +143,35 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
             throw new Error("Invalid YouTube URL");
         }
 
-        let transcriptText = await fetchTranscript(videoId, signal);
+        const isLive = isLiveVideo(url);
+        let transcriptText = "";
 
-        // Logic check for method
+        // Always try transcript first, but for Live videos it's Mandatory
+        transcriptText = await fetchTranscript(videoId, signal);
+
         let usedMethod = "transcript";
 
-        if (signal?.aborted) throw new Error("Process cancelled");
-
-        if (!transcriptText || transcriptText.length < 50) {
-            console.log("Transcript failed or empty. Attempting direct video processing (Multimodal)...");
-            usedMethod = "video";
-        } else {
-            // Limit transcript length (Token limit)
-            if (transcriptText.length > 30000) {
-                transcriptText = transcriptText.slice(0, 30000);
+        if (isLive) {
+            if (!transcriptText || transcriptText.length < 50) {
+                throw new Error("Live-streamed videos require captions to be enabled. No transcript found.");
             }
-            console.log("Using Transcript-based Generation. Length:", transcriptText.length);
+            console.log("Live Video Detected: Forced Transcript Mode.");
+        } else {
+            // Normal video fallback logic
+            if (!transcriptText || transcriptText.length < 50) {
+                console.log("Transcript failed or empty. Attempting direct video processing (Multimodal)...");
+                usedMethod = "video";
+            } else {
+                if (transcriptText.length > 30000) {
+                    transcriptText = transcriptText.slice(0, 30000);
+                }
+                console.log("Using Transcript-based Generation. Length:", transcriptText.length);
+            }
         }
 
         if (signal?.aborted) throw new Error("Process cancelled");
 
-        // Use Gemini 3.0 Pro Preview (Restored)
+        // Use Gemini 3.0 Pro Preview as requested/restored
         const model = genAI.getGenerativeModel({
             model: "gemini-3-pro-preview",
             generationConfig: { responseMimeType: "application/json" }
@@ -167,11 +181,13 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
         let requestContent;
 
         if (usedMethod === "transcript") {
+            const contextType = isLive ? "YouTube LIVE lecture transcript" : "lecture transcript";
+
             prompt = `
             You are an expert exam setter and educator.
             
             Task:
-            1. Analyze the lecture transcript.
+            1. Analyze the ${contextType}.
             2. **IMPORTANT**: Generate ALL content (Description, Revision Notes, Questions, Options) in **${language}**.
             3. Extract metadata (Teacher, Subject, Exam Type) for a short description.
             3. Create **structured revision notes** (Markdown supported) that help a student revise before exams.
@@ -208,7 +224,7 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
         `;
             requestContent = prompt;
         } else {
-            // MULTIMODAL FALLBACK
+            // MULTIMODAL FALLBACK - ONLY FOR NORMAL VIDEOS
             prompt = `
                 You are an expert exam setter.
                 Analyze the visual video content efficiently.
@@ -264,26 +280,20 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
 
         if (signal?.aborted) throw new Error("Process cancelled");
 
-        // Create a more robust JSON cleaner
         const cleanJson = (str: string) => {
-            // Find the first '{' and last '}'
             const start = str.indexOf('{');
             const end = str.lastIndexOf('}');
-
             if (start === -1 || end === -1) return str;
-
             return str.substring(start, end + 1);
         };
 
         const cleanedText = cleanJson(text);
 
-        // Parse JSON
         let data;
         try {
             data = JSON.parse(cleanedText);
         } catch (e) {
             console.error("Failed to parse AI JSON:", e);
-            console.log("Failed Text Snippet:", text.substring(0, 500)); // Log part of text for debugging
             throw new Error("AI generated invalid data format. Please try again or use a different video.");
         }
 
@@ -295,7 +305,6 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
 
         if (signal?.aborted) throw new Error("Process cancelled");
 
-        // 3. Save to Supabase
         const { getNextTestId } = await import('./testsApi');
         const customId = await getNextTestId('YT');
 
@@ -304,16 +313,16 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
             .insert({
                 title: data.title,
                 description: data.description,
-                revision_notes: data.revision_notes, // New field
+                revision_notes: data.revision_notes,
                 questions: data.questions,
-                duration: Math.ceil(data.questions.length * 1), // Dynamic duration
-                marks_per_question: 4,
-                negative_marks: 1,
+                duration: Math.ceil(data.questions.length * 1),
+                marks_per_question: 1,
+                negative_marks: 0,
                 custom_id: customId,
                 created_by: userId,
                 creator_name: creatorName,
                 creator_avatar: creatorAvatar,
-                is_public: true // Default to public
+                is_public: true
             })
             .select()
             .single();

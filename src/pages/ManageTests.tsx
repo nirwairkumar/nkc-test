@@ -96,11 +96,8 @@ export default function ManageTests() {
     };
 
     const openTestEditDialog = async (test: any) => {
-        setEditingTest({ ...test });
-        setIsTestEditOpen(true);
-        // Load sections for this test
-        const { data } = await fetchTestSections(test.id);
-        setSelectedSectionsForTest(data || []);
+        // Navigate to the full editor instead of the limited dialog
+        navigate(`/edit-test/${test.id}`);
     };
 
     const handleSaveTest = async () => {
