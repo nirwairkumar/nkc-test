@@ -22,7 +22,7 @@ export interface Test {
 
 export interface Question {
     id: number;
-    type?: 'single' | 'multiple' | 'numerical'; // Default 'single'
+    type?: 'single' | 'multiple' | 'numerical' | 'single-advance'; // Default 'single'
     question: string;
     image?: string;
     options?: { [key: string]: string }; // Optional for numerical

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RichTextEditorProps {
     value: string;
@@ -186,7 +187,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     };
 
     return (
-        <div className={`border rounded-md flex flex-col bg-background ${className}`}>
+        <div className={`border rounded-md flex flex-col bg-background ${className} ${language === 'hi' ? 'border-orange-200 ring-1 ring-orange-200' : ''}`}>
             <div className="flex items-center gap-1 p-2 border-b bg-muted/30 flex-wrap">
                 <Button
                     variant="ghost"
@@ -317,16 +318,17 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
                     <Redo className="w-4 h-4" />
                 </Button>
 
-                <div className="ml-auto flex items-center space-x-2 bg-slate-100 dark:bg-slate-800 rounded-md p-1 border">
-                    <Languages className="w-3.5 h-3.5 ml-1 text-muted-foreground" />
-                    <select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value as 'en' | 'hi')}
-                        className="h-6 text-xs bg-transparent border-none focus:ring-0 cursor-pointer pr-1"
-                    >
-                        <option value="en">English</option>
-                        <option value="hi">Hindi</option>
-                    </select>
+                <div className="ml-auto flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group pointer-events-auto">
+                    <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
+                    <Select value={language} onValueChange={(val: 'en' | 'hi') => setLanguage(val)}>
+                        <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
+                            <SelectValue placeholder="Language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="hi">Hindi</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
 
