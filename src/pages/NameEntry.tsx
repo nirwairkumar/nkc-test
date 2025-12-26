@@ -17,7 +17,7 @@ const NameEntry = () => {
       navigate('/');
       return;
     }
-    
+
     // Initialize timer when test is selected
     const totalTime = selectedTest.questions.length * 60; // 1 minute per question
     setTimeRemaining(totalTime);
@@ -43,8 +43,8 @@ const NameEntry = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4 flex items-center justify-center">
       <div className="max-w-md mx-auto space-y-8">
         {/* Back Button */}
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={handleBack}
           className="flex items-center gap-2"
         >
@@ -92,9 +92,9 @@ const NameEntry = () => {
                   autoFocus
                 />
               </div>
-              
-              <Button 
-                type="submit" 
+
+              <Button
+                type="submit"
                 className="w-full h-12 text-lg flex items-center justify-center gap-2"
                 disabled={!name.trim()}
               >

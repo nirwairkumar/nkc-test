@@ -44,7 +44,7 @@ export const TestProvider: React.FC<TestProviderProps> = ({ children }) => {
   const [answers, setAnswers] = useState<StudentAnswer[]>([]);
   const [isTestCompleted, setIsTestCompleted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  
+
   const totalTestTime = selectedTest ? selectedTest.questions.length * 60 : 0; // 1 minute per question
 
   const addAnswer = (questionId: number, answer: 'A' | 'B' | 'C' | 'D') => {

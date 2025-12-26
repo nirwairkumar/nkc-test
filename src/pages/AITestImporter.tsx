@@ -16,6 +16,7 @@ interface Question {
     options: { [key: string]: string };
     optionImages: { [key: string]: string };
     correctAnswer?: string | null;
+    needsAnswer?: boolean;
 }
 
 interface ParseResponse {
@@ -47,7 +48,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: Questio
         formData.append("file", file);
 
         try {
-            // Using relative /api path (works in Dev via Vite Proxy, and Prod via Vercel)
+            // Using relative /api path which proxies to backend root
             const response = await fetch("/api/parse", {
                 method: "POST",
                 body: formData,
