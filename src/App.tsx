@@ -9,6 +9,8 @@ import PrivateRoute from "@/components/ui/PrivateRoute";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 
+import AITestImporter from "./pages/AITestImporter";
+
 // Lazy Load Pages
 const TestList = lazy(() => import("./pages/TestList"));
 const TestPage = lazy(() => import("./pages/TestPage"));
@@ -56,7 +58,7 @@ const App = () => (
                   <Route path="/create-test" element={<CreateTestPage />} />
                   <Route path="/edit-test/:id" element={<CreateTestPage />} />
                   <Route path="/creator/:id" element={<CreatorProfilePage />} />
-
+                  <Route path="/ai-import" element={<AITestImporter onImport={(data) => console.log(data)} />} />
 
 
                   {/* Protected Routes */}
