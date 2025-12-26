@@ -5,6 +5,10 @@
             "destination": "https://www.youtube.com/:path*"
         },
         {
+            "source": "/api/parse",
+            "destination": "/api/index.py"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

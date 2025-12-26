@@ -47,8 +47,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: Questio
         formData.append("file", file);
 
         try {
-            // Using localhost:8000 as configured in main.py
-            const response = await fetch("http://localhost:8000/parse", {
+            // Using relative /api path (works in Dev via Vite Proxy, and Prod via Vercel)
+            const response = await fetch("/api/parse", {
                 method: "POST",
                 body: formData,
             });

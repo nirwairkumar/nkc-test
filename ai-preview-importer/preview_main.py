@@ -66,7 +66,7 @@ async def parse_document(file: UploadFile = File(...)):
         
         return {
             "status": "ok",
-            "preview": final_preview,
+            "questions": final_preview, # Frontend expects "questions"
             "canConfirm": can_confirm,
             "unansweredCount": unanswered_count
         }
