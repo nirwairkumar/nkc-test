@@ -31,6 +31,7 @@ except Exception as e:
     print(f"Failed to load AI Preview Importer: {e}")
     # Fallback app to show error in Vercel logs
     app = FastAPI()
-    @app.get("/api/parse")
+    @app.get("https://nkc-test-production.up.railway.app/parse")
+    # @app.get("/api/parse")
     def error_route():
         return {"error": str(e)}
