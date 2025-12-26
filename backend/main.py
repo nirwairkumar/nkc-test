@@ -20,6 +20,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def health():
+    return {"status": "ok", "service": "pdf-to-test-backend"}
+
 @app.get("/health")
 def health_check():
     """
