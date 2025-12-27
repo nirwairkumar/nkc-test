@@ -1,46 +1,90 @@
 from ai_preview_importer.pdf_extractor import extract_text_blocks
 from ai_preview_importer.image_extractor import extract_images
-from ai_preview_importer.block_grouper import group_blocks_into_questions
-from ai_preview_importer.image_assigner import assign_images_to_questions
-from ai_preview_importer.question_builder import build_preview_questions
+from ai_preview_importer.ai_reasoner import analyze_page_with_ai
 from utils.logger import get_logger
+import asyncio
 
 logger = get_logger(__name__)
 
 async def run_preview_pipeline(file_bytes: bytes):
     """
     Orchestrates the PDF processing pipeline:
-    Extract Text -> Extract Images -> Group -> Map Images -> Build output
+    Extract Content -> AI Semantic Analysis (Per Page) -> Aggregate -> Build Output
     """
     try:
-        # 1. Extract Text
-        blocks = extract_text_blocks(file_bytes)
-        if not blocks:
-            raise ValueError("No text blocks extracted from PDF")
-
-        # 2. Extract Images
-        images = extract_images(file_bytes)
-
-        # 3. Group Text into Questions
-        grouped_qs = group_blocks_into_questions(blocks)
-        if not grouped_qs:
-             # If strict heuristic fails, could fallback or error. 
-             # Requirement says "If zero questions extracted -> HTTP 500"
-             raise ValueError("No questions identified in the document")
-
-        # 4. Map Images to Questions
-        mapped_qs = assign_images_to_questions(grouped_qs, images)
-
-        # 5. Build Final Output Format
-        final_questions = build_preview_questions(mapped_qs)
+        # 1. Extract Text & Images
+        # We need to split extraction per page for the AI context
+        # But our current extractors return flat lists. We'll group them here.
         
-        # 6. (Optional) Run Answer Resolution here if needed, or keeping it separate
-        # For now, just return the preview result
-        # Note: Answer Resolution is Phase 2, can be injected here or later.
+        all_blocks = extract_text_blocks(file_bytes)
+        all_images = extract_images(file_bytes)
         
-        # Calculate stats for response
-        unanswered_count = sum(1 for q in final_questions if q['needsAnswer'])
+        if not all_blocks:
+            raise ValueError("No text extracted from PDF")
+
+        # Group by Page
+        pages = {}
+        for b in all_blocks:
+            p = b['page_num']
+            if p not in pages: pages[p] = {'blocks': [], 'images': []}
+            pages[p]['blocks'].append(b)
+            
+        for img in all_images:
+            p = img['page_num']
+            if p not in pages: pages[p] = {'blocks': [], 'images': []}
+            pages[p]['images'].append(img)
+
+        final_questions = []
+        global_id_counter = 1
+
+        # 2. Process Each Page with AI
+        # Iterate sequentially or in parallel? Parallel might hit rate limits, but let's try sequential for safety first.
+        sorted_page_nums = sorted(pages.keys())
+        
+        for p_num in sorted_page_nums:
+            page_data = pages[p_num]
+            logger.info(f"Processing Page {p_num}...")
+            
+            # Call AI
+            ai_questions = await analyze_page_with_ai(
+                page_data['blocks'], 
+                page_data['images'], 
+                p_num
+            )
+            
+            # 3. Post-Process & Re-attach Images
+            # The AI returns "image": "IMG_0". We need to find the actual base64 for IMG_0 on this page.
+            # Local mapping for this page's images
+            page_img_map = {f"IMG_{i}": img['base64'] for i, img in enumerate(page_data['images'])}
+            
+            for q in ai_questions:
+                # Assign global ID
+                q['id'] = global_id_counter
+                global_id_counter += 1
+                
+                # Resolve Question Image
+                if q.get('image') and q['image'] in page_img_map:
+                    q['image'] = page_img_map[q['image']]
+                else:
+                    q['image'] = None
+                    
+                # Resolve Option Images
+                if q.get('optionImages'):
+                    for opt_key, img_id in q['optionImages'].items():
+                        if img_id and img_id in page_img_map:
+                            q['optionImages'][opt_key] = page_img_map[img_id]
+                        else:
+                            q['optionImages'][opt_key] = None
+                else:
+                     q['optionImages'] = {k: None for k in ["A","B","C","D"]}
+
+                final_questions.append(q)
+
+        # 4. Calculate Stats
+        unanswered_count = sum(1 for q in final_questions if q.get('needsAnswer'))
         can_confirm = unanswered_count == 0
+
+        logger.info(f"Pipeline Complete. Generated {len(final_questions)} questions.")
 
         return {
             "questions": final_questions,
