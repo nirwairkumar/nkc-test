@@ -48,15 +48,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: Questio
         formData.append("file", file);
 
         try {
-            // Using relative /api path which proxies to backend root
-            const response = await fetch("/api/parse", {
+            // Direct call to Railway Backend
+            const response = await fetch("https://nkc-test-production.up.railway.app/parse", {
                 method: "POST",
                 body: formData,
             });
 
             if (!response.ok) {
                 const errText = await response.text();
-                throw new Error(errText || "Failed to process file");
+                throw new Error(errText || "Failed to process file. Ensure Backend is running.");
             }
 
             const data: ParseResponse = await response.json();
