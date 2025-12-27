@@ -15,83 +15,106 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 export function TestUploadFormatGuide() {
     const [isOpen, setIsOpen] = React.useState(false);
 
-    const jsonTemplate = `**Role**: You are an expert educational content developer and software engineer. Your task is to generate a valid JSON file for a test platform based on a specific topic I will provide.
+    const jsonTemplate = `ROLE:
+You are an AI document parser, OCR analyst, and exam-content extractor.
 
-**Context**: The output JSON will be uploaded to a React application that supports:
+GOAL:
+Convert the PROVIDED PDF or IMAGE into a STRICT, VALID JSON test file.
+DO NOT generate new questions.
+ONLY extract and restructure content that exists in the file.
 
-- Multiple Question Types: Single Choice, Multiple Choice, and Numerical.
-- Advanced Math Rendering: The system uses KaTeX and remark-math. It supports pure LaTeX syntax using libraries like MathJax or KaTeX (e.g., \int, \frac, \sqrt).
-- Automatic Processing: The system automatically wraps "naked" LaTeX (like x^2) in math delimiters, so strict delimiter usage ($..$) is good but not strictly fatal. However, for complex equations, use $$...$$ for block math or $...$ for inline.
+CRITICAL BEHAVIOR RULES:
+- Read the uploaded PDF/Image visually (OCR + layout reasoning).
+- Identify QUESTIONS, OPTIONS, ANSWERS, and IMAGES based on layout.
+- If a diagram/image appears immediately before or after a question, attach it to that question.
+- NEVER hallucinate or invent content.
+- If something is unclear, infer conservatively from the document layout.
+- Output ONLY valid JSON. No markdown. No explanations. No comments.
 
-**Step-by-Step Instructions**:
-- Analyze the Topic: Deeply understand the subject matter to create challenging, high-quality questions (JEE/University level).
-- Formulate Questions: Create a mix of conceptual and calculation-based questions.
-- Format Mathematics:
-- Use LaTeX for ALL mathematical symbols.
-- Crucial: Escape all backslashes in the JSON string (e.g., use \\frac instead of \frac).
-- Example: "Calculate $\\int_{0}^{1} x^2 dx$"
-- Construct JSON: Follow the Strict Schema below.
-- Strict JSON Schema
+--------------------------------------------------
+DOCUMENT ANALYSIS STEPS (MANDATORY):
+1. Detect each question boundary using:
+   - Question numbers
+   - Line breaks
+   - Bullets (Q., 1., 1), etc.
+2. For each question:
+   - Extract full question text
+   - Detect if it is:
+     - Single choice
+     - Multiple choice
+     - Numerical
+3. Extract options (A/B/C/D or similar)
+4. Detect correct answers using:
+   - Answer keys
+   - Highlighted/marked answers
+   - End-of-page answer sections
+5. Convert all mathematical expressions into LaTeX.
+6. Preserve original wording (do NOT rewrite).
+7. Attach diagrams/images to the correct question using base64 or URL placeholder.
+
+--------------------------------------------------
+MATH & FORMATTING RULES:
+- Use LaTeX for ALL math: \\frac, \\sqrt, \\int, x^2, etc.
+- Escape ALL backslashes for JSON (\\ instead of \).
+- Inline math: $...$
+- Block math: $$...$$
+- Do NOT simplify expressions.
+
+TEXT & LINE-BREAK RULES:
+- DO NOT use escaped newline characters (\\n).
+- Use REAL line breaks inside JSON strings.
+- Multi-line questions must appear as visually separated lines.
+- Do NOT use <br>, HTML tags, or markdown.
+
+--------------------------------------------------
+STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
 {
-  "title": "String: Test Title",
-  "description": "String: Short description",
-  "duration": Number (minutes, e.g., 60),
-  "marks_per_question": Number (e.g., 4),
-  "negative_marks": Number (positive integer, e.g., 1 for -1 penalty),
-  "questions": [
-    {
-      "id": Number (1, 2, 3...),
-      "type": "single" | "multiple" | "numerical",
-      "question": "String: The question text with LaTeX math.",
-      "image": "String (Optional): URL to an image",
-      "options": {
-        "A": "String: Option text (LaTeX allowed)",
-        "B": "String: Option text",
-        "C": "String: Option text",
-        "D": "String: Option text"
-      },
-      "correctAnswer": "String (e.g., 'A') OR Array ['A','B'] OR Object { 'min': 10, 'max': 10.5 }"
-    }
-  ]
-}
-
-**Rules for correctAnswer**
-- Single Choice (type: "single"): correctAnswer must be a string key (e.g., "A").
-- Multiple Choice (type: "multiple"): correctAnswer must be an array of keys (e.g., ["A", "C"]).
-- Numerical (type: "numerical"):
-- No options object needed.
-- correctAnswer must be a range object: {"min": 5.0, "max": 5.2}.
-
-**Example Output to Generate**
-{
-  "title": "Advanced Calculus",
-  "description": "Test on Limits, Derivatives, and Integrals.",
-  "duration": 45,
+  "title": "Extracted from document or inferred",
+  "description": "Auto-generated from document content",
+  "duration": 60,
   "marks_per_question": 4,
   "negative_marks": 1,
   "questions": [
     {
       "id": 1,
-      "type": "single",
-      "question": "Evaluate the limit: $$\\lim_{x \\to 0} \\frac{\\sin x}{x}$$",
+      "type": "single | multiple | numerical",
+      "question": "Exact extracted question text with LaTeX",
+      "image": "base64_or_url_if_present_else_null",
       "options": {
-        "A": "$0$",
-        "B": "$1$",
-        "C": "$\\infty$",
-        "D": "Undefined"
+        "A": "Option text",
+        "B": "Option text",
+        "C": "Option text",
+        "D": "Option text"
       },
-      "correctAnswer": "B"
-    },
-    {
-      "id": 2,
-      "type": "numerical",
-      "question": "If $f(x) = x^2$, find $f'(2)$.",
-      "correctAnswer": { "min": 3.99, "max": 4.01 }
+      "correctAnswer":
+        "A" |
+        ["A","C"] |
+        { "min": 9.8, "max": 10.2 }
     }
   ]
 }
 
-**Task:** Please generate a JSON test file for the topic: [INSERT TOPIC HERE] with [NUMBER] questions.
+--------------------------------------------------
+ANSWER RULES:
+- Single choice → correctAnswer: "A"
+- Multiple choice → correctAnswer: ["A","C"]
+- Numerical → NO options field, only:
+  { "min": value, "max": value }
+
+--------------------------------------------------
+FAIL-SAFE RULES:
+- If an image-only question exists → still create a question entry.
+- If options are missing → infer from alignment or labels.
+- If answer key exists separately → map carefully to question IDs.
+- If ANY field is missing → set it to null (never omit keys).
+- If a question contains multiple statements or expressions,
+  format them on separate physical lines.
+
+--------------------------------------------------
+FINAL OUTPUT RULE:
+RETURN ONLY RAW JSON.
+NO TEXT BEFORE OR AFTER.
+
 `;
 
     const handleDownload = () => {

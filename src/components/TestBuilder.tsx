@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { IMEInput } from '@/components/ui/IMEInput';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
@@ -99,6 +99,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     // Online/Offline State
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+    // Auto Save State
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
@@ -154,6 +158,32 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             });
         }
     }, [testId, isEditMode, user, navigate, initialData]);
+
+    // Auto-Save Effect
+    useEffect(() => {
+        if (!isEditMode || !testId || !user) return; // Only auto-save existing tests
+        if (loading) return; // Don't save while initial loading
+
+        const timer = setTimeout(() => {
+            handleAutoSave();
+        }, 2000); // 2 second debounce
+
+        return () => clearTimeout(timer);
+    }, [questions, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedSections]);
+
+    const handleAutoSave = async () => {
+        if (!title.trim()) return; // Silent fail if no title
+
+        setSaveStatus('saving');
+        try {
+            await performSave(true);
+            setSaveStatus('saved');
+            setLastSaved(new Date());
+        } catch (error) {
+            console.error("Auto-save failed", error);
+            setSaveStatus('error');
+        }
+    };
 
     const fetchAndSetSections = async (tid: string) => {
         const { fetchTestSections } = await import('@/lib/sectionsApi');
@@ -248,6 +278,66 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         reader.readAsDataURL(file);
     };
 
+    const performSave = async (isAuto: boolean) => {
+        const sanitizedQuestions = questions.map(q => ({
+            ...q,
+            image: q.image ? q.image.trim() : q.image,
+            optionImages: q.optionImages ? Object.fromEntries(
+                Object.entries(q.optionImages).map(([k, v]) => [k, v ? v.trim() : v])
+            ) : undefined
+        }));
+
+        const testDataPayload = {
+            title,
+            description,
+            revision_notes: revisionNotes,
+            duration: time,
+            marks_per_question: marks,
+            negative_marks: negativeMarks,
+            is_public: isPublic,
+            questions: sanitizedQuestions.map((q: any) => {
+                const { typingMode, ...rest } = q;
+                return rest;
+            }),
+            institution_name: institutionName,
+            institution_logo: institutionLogo,
+        };
+
+        if (isEditMode && testId) {
+            const { error } = await updateTest(testId, testDataPayload);
+            if (error) throw error;
+            // Only update sections if changed? For now update always to be safe
+            // Ideally check dirty state, but lightweight enough
+            if (selectedSections.length > 0) {
+                const { assignSectionsToTest } = await import('@/lib/sectionsApi');
+                await assignSectionsToTest(testId, selectedSections);
+            }
+        } else {
+            // Creation logic handles its own ID generation so we can't reuse this perfectly for auto-save 'creation'
+            // Auto-save currently ONLY works for 'isEditMode'.
+            // If we want auto-save for new tests, we'd need to create the record on first auto-save.
+            // For now, adhere to "only editing existing test" or "manual save first".
+            if (isAuto) throw new Error("Auto-save not supported for new unsaved tests yet");
+
+            const { getNextTestId } = await import('@/lib/testsApi');
+            const customId = await getNextTestId('M');
+            const newTest = {
+                ...testDataPayload,
+                created_by: user.id,
+                custom_id: customId,
+                creator_name: user.user_metadata?.full_name || 'Anonymous',
+                creator_avatar: user.user_metadata?.avatar_url || '',
+                created_at: new Date().toISOString()
+            };
+            const { data, error } = await createTest(newTest);
+            if (error) throw error;
+            if (selectedSections.length > 0) {
+                const { assignSectionsToTest } = await import('@/lib/sectionsApi');
+                await assignSectionsToTest(data.id, selectedSections);
+            }
+        }
+    };
+
     const handleSave = async () => {
         if (!user) {
             toast.error("You must be logged in.");
@@ -295,59 +385,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
         setLoading(true);
         try {
-            const sanitizedQuestions = questions.map(q => ({
-                ...q,
-                image: q.image ? q.image.trim() : q.image,
-                optionImages: q.optionImages ? Object.fromEntries(
-                    Object.entries(q.optionImages).map(([k, v]) => [k, v ? v.trim() : v])
-                ) : undefined
-            }));
-
-            const testDataPayload = {
-                title,
-                description,
-                revision_notes: revisionNotes,
-                duration: time,
-                marks_per_question: marks,
-                negative_marks: negativeMarks,
-                is_public: isPublic,
-                questions: sanitizedQuestions.map((q: any) => {
-                    const { typingMode, ...rest } = q;
-                    return rest;
-                }),
-                institution_name: institutionName,
-                institution_logo: institutionLogo,
-            };
-
-            if (isEditMode && testId) {
-                const { error } = await updateTest(testId, testDataPayload);
-                if (error) throw error;
-                const { assignSectionsToTest } = await import('@/lib/sectionsApi');
-                await assignSectionsToTest(testId, selectedSections);
-                toast.success("Test updated successfully!");
-                if (onSuccess) onSuccess();
-                else navigate('/my-tests');
-            } else {
-                const { getNextTestId } = await import('@/lib/testsApi');
-                const customId = await getNextTestId('M');
-                const newTest = {
-                    ...testDataPayload,
-                    created_by: user.id,
-                    custom_id: customId,
-                    creator_name: user.user_metadata?.full_name || 'Anonymous',
-                    creator_avatar: user.user_metadata?.avatar_url || '',
-                    created_at: new Date().toISOString()
-                };
-                const { data, error } = await createTest(newTest);
-                if (error) throw error;
-                if (selectedSections.length > 0) {
-                    const { assignSectionsToTest } = await import('@/lib/sectionsApi');
-                    await assignSectionsToTest(data.id, selectedSections);
-                }
-                toast.success("Test created successfully!");
-                if (onSuccess) onSuccess();
-                else navigate('/my-tests');
-            }
+            await performSave(false);
+            toast.success(isEditMode ? "Test updated successfully!" : "Test created successfully!");
+            if (onSuccess) onSuccess();
+            else navigate('/my-tests');
         } catch (error: any) {
             console.error("Error saving test:", error);
             toast.error("Failed to save test: " + error.message);
@@ -410,6 +451,29 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                     )}
                     <h1 className="text-3xl font-bold">{isEditMode ? 'Edit Test' : 'Create New Test'}</h1>
                 </div>
+
+                {isEditMode && (
+                    <div className="flex items-center gap-2 text-sm font-medium animate-in fade-in slide-in-from-right-4 duration-300">
+                        {saveStatus === 'saving' && (
+                            <span className="text-muted-foreground flex items-center gap-1.5">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Saving...
+                            </span>
+                        )}
+                        {saveStatus === 'saved' && (
+                            <span className="text-emerald-600 flex items-center gap-1.5">
+                                <Cloud className="w-4 h-4" />
+                                All changes saved
+                            </span>
+                        )}
+                        {saveStatus === 'error' && (
+                            <span className="text-red-500 flex items-center gap-1.5">
+                                <CloudOff className="w-4 h-4" />
+                                Save failed
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {!isOnline && (

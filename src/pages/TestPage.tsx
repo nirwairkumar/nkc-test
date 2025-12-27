@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import Latex from 'react-latex-next';
 
 export default function TestPage() {
   const { id } = useParams<{ id: string }>();
@@ -404,7 +405,7 @@ export default function TestPage() {
                 </div>
 
                 <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
-                  {currentQuestion.question}
+                  <Latex>{currentQuestion.question}</Latex>
                 </div>
 
                 {/* Question Image */}
@@ -489,7 +490,7 @@ export default function TestPage() {
                           </div>
 
                           <div className="flex-1 flex flex-col gap-2">
-                            {text && <div className="text-base break-words pt-1">{text}</div>}
+                            {text && <div className="text-base break-words pt-1"><Latex>{text}</Latex></div>}
                             {optionImage && (
                               <img
                                 src={optionImage.trim()}

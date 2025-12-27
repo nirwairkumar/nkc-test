@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
 import { FeedbackForm } from '@/components/FeedbackForm';
+import Latex from 'react-latex-next';
 
 interface TestResult {
   id: string;
@@ -238,7 +239,7 @@ const ResultsPage = () => {
                           {index + 1}
                         </div>
                         <div className="flex-1 font-medium text-sm line-clamp-1">
-                          {q.question}
+                          <Latex>{q.question}</Latex>
                         </div>
                         <div className="mr-2">
                           {isCorrect && <Badge className="bg-green-600">Correct</Badge>}
@@ -250,7 +251,7 @@ const ResultsPage = () => {
                     <AccordionContent className="px-4 pb-4">
                       <div className="space-y-4 pt-2">
                         <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3">
-                          {q.question}
+                          <Latex>{q.question}</Latex>
                         </div>
 
                         {/* Question Image */}
@@ -290,8 +291,9 @@ const ResultsPage = () => {
                                       ? ans
                                       : Array.isArray(ans)
                                         ? (ans as string[]).join(', ') // Multi
-                                        : `${ans}) ${q.options[ans]}` // Single
+                                        : `${ans}) ` // Single
                                     }
+                                    {q.type !== 'numerical' && !Array.isArray(ans) && <Latex>{q.options[ans]}</Latex>}
                                   </span>
                                   {q.type !== 'numerical' && !Array.isArray(ans) && q.optionImages?.[ans] && (
                                     <img
@@ -316,8 +318,9 @@ const ResultsPage = () => {
                                 ) : Array.isArray(q.correctAnswer) ? (
                                   (q.correctAnswer as string[]).join(', ')
                                 ) : (
-                                  `${q.correctAnswer}) ${q.options[q.correctAnswer as string]}`
+                                  `${q.correctAnswer}) `
                                 )}
+                                {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <Latex>{q.options[q.correctAnswer as string]}</Latex>}
                               </span>
                               {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                 <img
