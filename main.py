@@ -50,11 +50,11 @@ async def parse_document(file: UploadFile = File(...)):
         
         # 2. Run Answer Resolution (Phase 2)
         # We enrich the questions in place
-        result["questions"] = resolve_answers(result["questions"], file_bytes)
+        # result["questions"] = resolve_answers(result["questions"], file_bytes)
         
         # Recalculate stats after resolution
-        result["unansweredCount"] = sum(1 for q in result["questions"] if q['needsAnswer'])
-        result["canConfirm"] = result["unansweredCount"] == 0
+        # result["unansweredCount"] = sum(1 for q in result["questions"] if q['needsAnswer'])
+        # result["canConfirm"] = result["unansweredCount"] == 0
 
         logger.info("Parsing complete. Returning response.")
         return result

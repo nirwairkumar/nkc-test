@@ -61,12 +61,39 @@ async def analyze_page_with_ai(text_blocks, images_metadata, page_num):
         logger.info(f"Sending Page {page_num} to AI...")
         response = model.generate_content(user_content)
         
-        # Parse Response
-        result_json = json.loads(response.text)
+        try:
+            raw_text = response.text
+        except Exception:
+            logger.warning(f"AI blocked response for Page {page_num}. Safety reasons likely.")
+            return []
+
+        # Clean Markdown wrappers if present (Common Gemini quirk, even with JSON mode)
+        clean_text = raw_text.strip()
+        if clean_text.startswith("```json"):
+            clean_text = clean_text[7:]
+        elif clean_text.startswith("```"):
+            clean_text = clean_text[3:]
         
-        # Post-Processing: Map IMG_ID back to base64 if needed
-        # (This happens in the calling pipeline or here? Let's do it here roughly or leave it to pipeline)
-        # The prompt asks to return IMG_ID. The pipeline will re-attach the base64.
+        if clean_text.endswith("```"):
+            clean_text = clean_text[:-3]
+        
+        clean_text = clean_text.strip()
+
+        # Parse Response
+        try:
+            result_json = json.loads(clean_text)
+        except json.JSONDecodeError:
+            logger.error(f"JSON Parse Error on Page {page_num}. Raw text start: {clean_text[:100]}")
+            # Fallback: Try to find the first { and last }
+            start = clean_text.find("{")
+            end = clean_text.rfind("}")
+            if start != -1 and end != -1:
+                try:
+                    result_json = json.loads(clean_text[start:end+1])
+                except:
+                    return []
+            else:
+                return []
         
         questions = result_json.get("questions", [])
         logger.info(f"AI extracted {len(questions)} questions from Page {page_num}")
