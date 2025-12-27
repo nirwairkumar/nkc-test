@@ -129,11 +129,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         });
     }, []);
 
+    // Track loaded ID to prevent re-fetching/resetting on parent re-renders
+    const loadedTestId = React.useRef<string | null>(null);
+
     // Load Existing Test Data
     useEffect(() => {
+        const targetId = initialData?.id || (isEditMode ? testId : null);
+
+        // If we already loaded this test ID, don't reload/reset state
+        if (targetId && loadedTestId.current === targetId) {
+            return;
+        }
+
         // If initialData is provided directly, populate from it
         if (initialData) {
             populateData(initialData);
+            loadedTestId.current = initialData.id;
             // We also need to fetch sections for this test if not in initialData
             fetchAndSetSections(initialData.id);
             return;
@@ -150,6 +161,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                         return;
                     }
                     populateData(data);
+                    loadedTestId.current = data.id;
                     await fetchAndSetSections(data.id);
                 } else {
                     toast.error("Test not found");
