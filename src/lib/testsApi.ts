@@ -22,9 +22,11 @@ export interface Test {
 
 export interface Question {
     id: number;
-    type?: 'single' | 'multiple' | 'numerical' | 'single-advance'; // Default 'single'
+    type?: 'single' | 'multiple' | 'numerical' | 'single-advance' | 'comprehension'; // Default 'single'
     question: string;
     image?: string;
+    passageContent?: string; // For comprehension type
+    groupId?: string; // To group questions in editor
     options?: { [key: string]: string }; // Optional for numerical
     optionImages?: { [key: string]: string };
     correctAnswer: string | string[] | { min: number, max: number }; // Dynamic type

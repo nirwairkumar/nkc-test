@@ -50,7 +50,7 @@ export function AdvancedQuestionEditor({
             onDragOver={handleDragOver}
             onDrop={(e) => { e.stopPropagation(); handleDrop(e, index); }}
         >
-            <div className="absolute left-2 top-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10">
+            <div className="drag-handle absolute left-2 top-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10 p-1">
                 <GripVertical className="h-5 w-5" />
             </div>
             <div className="absolute right-0 top-0 z-10">
@@ -65,20 +65,26 @@ export function AdvancedQuestionEditor({
                     <div className="flex-1 space-y-4">
                         {/* Header Controls: Type Selector (Language is now in Toolbar) */}
                         <div className="flex justify-between items-center mb-2">
-                            <Select
-                                value={question.type}
-                                onValueChange={handleTypeChange}
+                            <div
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
                             >
-                                <SelectTrigger className="h-8 w-[180px] text-xs">
-                                    <SelectValue placeholder="Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="single">Single Choice</SelectItem>
-                                    <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
-                                    <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                    <SelectItem value="numerical">Numerical</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                <Select
+                                    value={question.type}
+                                    onValueChange={handleTypeChange}
+                                >
+                                    <SelectTrigger className="h-8 w-[180px] text-xs">
+                                        <SelectValue placeholder="Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="single">Single Choice</SelectItem>
+                                        <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
+                                        <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                        <SelectItem value="numerical">Numerical</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         {/* Shared Toolbar - Sticky or Top */}

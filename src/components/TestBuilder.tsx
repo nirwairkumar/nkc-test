@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { IMEInput } from '@/components/ui/IMEInput';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
@@ -49,6 +49,8 @@ const DEFAULT_QUESTION: QuestionState = {
     id: 1,
     type: 'single',
     question: '',
+    passageContent: '',
+    groupId: '',
     options: { A: '', B: '', C: '', D: '' },
     correctAnswer: '',
     typingMode: 'en'
@@ -250,14 +252,58 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
     const handleQuestionTypeChange = (index: number, type: string) => {
         const newQuestions = [...questions];
-        const newQ = { ...newQuestions[index], type: type as any };
+        const newQ = { ...newQuestions[index] }; // Create a copy of the question object
 
-        // Reset answers based on type
-        if (type.startsWith('single')) newQ.correctAnswer = '';
-        else if (type === 'multiple') newQ.correctAnswer = [];
-        else if (type === 'numerical') newQ.correctAnswer = { min: 0, max: 0 };
+        if (type === 'comprehension') {
+            // "Comprehension" selection acts as a "Create Passage" action
+            // It sets the type to 'single' (default Inner type) but assigns a groupId
+            newQ.type = 'single';
+            newQ.correctAnswer = '';
+            if (!newQ.groupId) newQ.groupId = Math.random().toString(36).substr(2, 9);
+        } else {
+            // Normal type change
+            newQ.type = type as any;
+
+            // Reset answers based on type
+            if (type.startsWith('single')) newQ.correctAnswer = '';
+            else if (type === 'multiple') newQ.correctAnswer = [];
+            else if (type === 'numerical') newQ.correctAnswer = { min: 0, max: 0 };
+        }
 
         newQuestions[index] = newQ;
+        setQuestions(newQuestions);
+    };
+
+    const updatePassageContent = (groupId: string, content: string) => {
+        const newQuestions = questions.map(q =>
+            q.groupId === groupId ? { ...q, passageContent: content } : q
+        );
+        setQuestions(newQuestions);
+    };
+
+    const handleAddSubQuestion = (index: number) => {
+        const parentQ = questions[index];
+        if (!parentQ.groupId) return;
+
+        const newQ: QuestionState = {
+            ...DEFAULT_QUESTION,
+            id: Math.max(0, ...questions.map(q => q.id)) + 1,
+            type: 'single', // Default to single
+            groupId: parentQ.groupId,
+            passageContent: parentQ.passageContent,
+            options: { ...DEFAULT_QUESTION.options },
+            typingMode: lastTypingMode
+        };
+
+        const newQuestions = [...questions];
+        // Insert after the last question of this group
+        let insertIndex = index;
+        for (let i = index + 1; i < questions.length; i++) {
+            if (questions[i].groupId === parentQ.groupId) insertIndex = i;
+            else break;
+        }
+
+        newQuestions.splice(insertIndex + 1, 0, newQ);
         setQuestions(newQuestions);
     };
 
@@ -417,6 +463,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     };
 
     const handleDragStart = (e: React.DragEvent, index: number) => {
+        // Only allow drag if initiated from the grip handle
+        const target = e.target as HTMLElement;
+        if (!target.closest('.drag-handle')) {
+            e.preventDefault();
+            return;
+        }
         e.dataTransfer.setData('questionIndex', index.toString());
         setIsDragging(true);
     };
@@ -615,146 +667,199 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold">Questions ({questions.length})</h2>
                     {questions.map((q, index) => {
-                        if (q.type === 'single-advance') {
-                            return (
-                                <AdvancedQuestionEditor
-                                    key={index}
-                                    question={q}
-                                    index={index}
-                                    updateQuestion={updateQuestion}
-                                    updateOption={updateOption}
-                                    handleRemove={handleRemoveQuestion}
-                                    isDragging={isDragging}
-                                    handleDragStart={handleDragStart}
-                                    handleDragOver={handleDragOver}
-                                    handleDrop={handleDropQuestion}
-                                    handleTypeChange={(type) => handleQuestionTypeChange(index, type)}
-                                />
-                            );
-                        }
+                        // VISUAL GROUPING LOGIC
+                        const currentGroupId = q.groupId;
+                        const prevGroupId = index > 0 ? questions[index - 1].groupId : undefined;
+                        const nextGroupId = index < questions.length - 1 ? questions[index + 1].groupId : undefined;
+
+                        const isStartOfGroup = !!currentGroupId && currentGroupId !== prevGroupId;
+                        const isEndOfGroup = !!currentGroupId && currentGroupId !== nextGroupId;
+                        const isInGroup = !!currentGroupId;
 
                         return (
-                            <Card key={index} className={`relative transition-all ${isDragging ? 'border-dashed border-primary/50' : ''}`} draggable onDragStart={(e) => handleDragStart(e, index)} onDragOver={handleDragOver} onDrop={(e) => { e.stopPropagation(); handleDropQuestion(e, index); }}>
-                                <div className="absolute left-2 top-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600"><GripVertical className="h-5 w-5" /></div>
-                                <div className="absolute right-0 top-0"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
-                                <CardContent className="pt-10 space-y-4">
-                                    <div className="flex gap-2">
-                                        <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
-                                        <div className="flex-1 space-y-4">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
-                                                    <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="single">Single Choice</SelectItem>
-                                                        <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
-                                                        <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                                        <SelectItem value="numerical">Numerical</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
-                                                    <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
-                                                    <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}>
-                                                        <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
-                                                            <SelectValue placeholder="Language" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="en">English</SelectItem>
-                                                            <SelectItem value="hi">Hindi</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                            </div>
-                                            <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestion(index, 'question', val)} className="min-h-[80px]" />
+                            <div key={index} className={isInGroup ? "space-y-0" : "space-y-4"}>
 
-                                            {/* Image Upload for Question */}
-                                            <div className="space-y-2">
-                                                {q.image ? (
-                                                    <div className="relative group w-fit">
-                                                        <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white shadow-sm" />
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="icon"
-                                                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            onClick={() => updateQuestion(index, 'image', '')}
-                                                        >
-                                                            <X className="h-3 w-3" />
-                                                        </Button>
+                                {/* Passage Header - Renders only at the start of a group */}
+                                {isStartOfGroup && (
+                                    <div className="rounded-t-lg border-2 border-b-0 border-blue-500 bg-blue-50/30 overflow-hidden mt-4">
+                                        <div className="bg-blue-100/80 px-4 py-3 border-b-2 border-blue-500 flex justify-between items-center">
+                                            <h3 className="text-sm font-bold text-blue-700 flex items-center gap-2">
+                                                <FileText className="w-4 h-4" /> Passage Reference
+                                            </h3>
+                                        </div>
+                                        <div className="p-4">
+                                            <RichTextEditor
+                                                value={q.passageContent || ''}
+                                                onChange={(val) => updatePassageContent(q.groupId!, val)}
+                                                placeholder="Enter the passage, story, or comprehension text here..."
+                                                className="min-h-[150px] bg-white border-blue-100 shadow-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Question Card */}
+                                <Card
+                                    className={`
+                                        relative transition-all 
+                                        ${isDragging ? 'border-dashed border-primary/50' : ''}
+                                        ${isInGroup ? 'border-2 border-blue-500 border-t-0 rounded-none shadow-none bg-blue-50/5' : 'shadow-sm'}
+                                        ${isStartOfGroup ? '' : ''}
+                                        ${isEndOfGroup ? 'rounded-b-lg border-b-2' : ''}
+                                    `}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragOver={handleDragOver}
+                                    onDrop={(e) => { e.stopPropagation(); handleDropQuestion(e, index); }}
+                                >
+                                    <div className="drag-handle absolute left-2 top-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10 p-1"><GripVertical className="h-5 w-5" /></div>
+                                    <div className="absolute right-0 top-0"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
+                                    <CardContent className="pt-10 space-y-4">
+                                        <div className="flex gap-2">
+                                            <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
+                                            <div className="flex-1 space-y-4">
+                                                <div className="flex justify-between items-center mb-2 relative">
+                                                    {isInGroup && (
+                                                        <span className="absolute -top-5 left-0 text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 rounded-full uppercase tracking-wider border border-blue-200">
+                                                            Passage Related
+                                                        </span>
+                                                    )}
+
+                                                    {/* Question Type Selector */}
+                                                    <div
+                                                        onPointerDown={(e) => e.stopPropagation()}
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
+                                                            <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="single">Single Choice</SelectItem>
+                                                                <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
+                                                                <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                <SelectItem value="numerical">Numerical</SelectItem>
+                                                                {/* Hide Comprehension option if already inside a group */}
+                                                                {!isInGroup && <SelectItem value="comprehension">Passage/Comprehension</SelectItem>}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
+                                                        <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
+                                                        <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}>
+                                                            <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
+                                                                <SelectValue placeholder="Language" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="en">English</SelectItem>
+                                                                <SelectItem value="hi">Hindi</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestion(index, 'question', val)} className="min-h-[80px]" />
+
+                                                {/* Image Upload for Question */}
+                                                <div className="space-y-2">
+                                                    {q.image ? (
+                                                        <div className="relative group w-fit">
+                                                            <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white shadow-sm" />
+                                                            <Button
+                                                                variant="destructive"
+                                                                size="icon"
+                                                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                onClick={() => updateQuestion(index, 'image', '')}
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
+                                                            <Input
+                                                                placeholder="Paste Image URL or Upload"
+                                                                value={q.image || ''}
+                                                                onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
+                                                                className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none"
+                                                            />
+                                                            <label className="cursor-pointer h-full border-l border-input">
+                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
+                                                                <div className="flex items-center justify-center h-full px-4 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 whitespace-nowrap">
+                                                                    <Upload className="w-3.5 h-3.5 mr-2" />
+                                                                    Upload
+                                                                </div>
+                                                            </label>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Answers */}
+                                                {q.type === 'numerical' ? (
+                                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <Label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">Correct Numerical Range</Label>
+                                                        <div className="flex gap-4">
+                                                            <div><Label className="text-xs">Min</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} /></div>
+                                                            <div><Label className="text-xs">Max</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} /></div>
+                                                        </div>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
-                                                        <Input
-                                                            placeholder="Paste Image URL or Upload"
-                                                            value={q.image || ''}
-                                                            onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
-                                                            className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none"
-                                                        />
-                                                        <label className="cursor-pointer h-full border-l border-input">
-                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
-                                                            <div className="flex items-center justify-center h-full px-4 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 whitespace-nowrap">
-                                                                <Upload className="w-3.5 h-3.5 mr-2" />
-                                                                Upload
-                                                            </div>
-                                                        </label>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {['A', 'B', 'C', 'D'].map(optKey => {
+                                                            const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                            const handleSelect = () => {
+                                                                if (q.type === 'multiple') {
+                                                                    const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                    const idx = current.indexOf(optKey);
+                                                                    if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                    updateQuestion(index, 'correctAnswer', current.sort());
+                                                                } else {
+                                                                    updateQuestion(index, 'correctAnswer', optKey);
+                                                                }
+                                                            };
+                                                            return (
+                                                                <div key={optKey} className="flex gap-2 items-start">
+                                                                    {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
+                                                                    <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
+                                                                    <div className="flex-1 flex flex-col">
+                                                                        <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y" />
+                                                                        {q.optionImages?.[optKey] ? (
+                                                                            <div className="relative group mt-1 w-fit">
+                                                                                <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
+                                                                                <button
+                                                                                    onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
+                                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                >
+                                                                                    <X className="w-3 h-3" />
+                                                                                </button>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7 mt-1">
+                                                                                <Input placeholder="Image URL" value="" onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2 shadow-none focus-visible:ring-0" />
+                                                                                <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px] whitespace-nowrap"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {/* Answers */}
-                                            {q.type === 'numerical' ? (
-                                                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                                    <Label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">Correct Numerical Range</Label>
-                                                    <div className="flex gap-4">
-                                                        <div><Label className="text-xs">Min</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} /></div>
-                                                        <div><Label className="text-xs">Max</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} /></div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {['A', 'B', 'C', 'D'].map(optKey => {
-                                                        const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
-                                                        const handleSelect = () => {
-                                                            if (q.type === 'multiple') {
-                                                                const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
-                                                                const idx = current.indexOf(optKey);
-                                                                if (idx > -1) current.splice(idx, 1); else current.push(optKey);
-                                                                updateQuestion(index, 'correctAnswer', current.sort());
-                                                            } else {
-                                                                updateQuestion(index, 'correctAnswer', optKey);
-                                                            }
-                                                        };
-                                                        return (
-                                                            <div key={optKey} className="flex gap-2 items-start">
-                                                                {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
-                                                                <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
-                                                                <div className="flex-1 flex flex-col">
-                                                                    {/* Changed to textarea for multiline support as requested */}
-                                                                    <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y" />
-                                                                    {q.optionImages?.[optKey] ? (
-                                                                        <div className="relative group mt-1 w-fit">
-                                                                            <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
-                                                                            <button
-                                                                                onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
-                                                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                            >
-                                                                                <X className="w-3 h-3" />
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7 mt-1">
-                                                                            <Input placeholder="Image URL" value="" onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2 shadow-none focus-visible:ring-0" />
-                                                                            <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px] whitespace-nowrap"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
                                         </div>
+                                    </CardContent>
+                                </Card>
+                                {isEndOfGroup && (
+                                    <div className="flex justify-center -mt-2 pb-6 pt-2 bg-blue-50/20 border-x border-b border-blue-200 rounded-b-lg mb-4">
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            onClick={() => handleAddSubQuestion(index)}
+                                            className="gap-2 bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 shadow-sm"
+                                        >
+                                            <Plus className="w-4 h-4" /> Add Question to Passage
+                                        </Button>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                )}
+                            </div>
                         );
                     })}
                     <Button onClick={handleAddQuestion} size="sm" variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" /> Add Question</Button>

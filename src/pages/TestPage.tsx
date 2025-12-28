@@ -361,168 +361,294 @@ export default function TestPage() {
         </Button>
       </div>
 
-      <div className="flex-1 container mx-auto p-1 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative lg:h-full lg:overflow-hidden">
+      <div className="flex-1 w-full px-2 lg:px-4 py-2 grid grid-cols-1 lg:grid-cols-12 gap-4 relative lg:h-full lg:overflow-hidden">
         {/* Main Question Area */}
         {/* Main Question Area - Independently Scrollable on Desktop */}
         {/* Main Question Area - Independently Scrollable on Desktop */}
-        <div className="lg:col-span-8 flex flex-col gap-0 relative lg:h-full lg:overflow-hidden">
+        <div className="lg:col-span-9 flex flex-col gap-0 relative lg:h-full lg:overflow-hidden">
 
-          {/* Scrollable Content Wrapper */}
-          <div className="flex-1 h-full flex flex-col gap-6 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-2 pb-24 p-1">
-
-            {/* Mobile Palette Trigger (Top Left - Floating above Card) */}
-            <div className="lg:hidden absolute -top-4 -left-4 z-20">
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button size="icon" className="h-12 w-12 rounded-full shadow-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[80%] sm:w-[380px] flex flex-col h-full">
-                  <SheetHeader>
-                    <SheetTitle>Questions</SheetTitle>
-                  </SheetHeader>
-                  <div className="py-4 flex-1 overflow-y-auto pb-6">
-                    {/* Legend - Above Palette */}
-                    <div className="grid grid-cols-2 gap-y-2 mb-6 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 border border-green-600 rounded"></div> Answered</div>
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div> Review</div>
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 border border-red-600 rounded"></div> Unanswered</div>
-                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white border border-slate-200 rounded"></div> Not Visited</div>
-                    </div>
-
-                    <QuestionPalette onQuestionClick={() => setIsMobileMenuOpen(false)} />
+          {/* Mobile Palette Trigger (Top Left - Floating above Card) */}
+          <div className="lg:hidden absolute top-2 left-2 z-20">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button size="icon" className="h-10 w-10 rounded-full shadow-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[80%] sm:w-[380px] flex flex-col h-full">
+                <SheetHeader>
+                  <SheetTitle>Questions</SheetTitle>
+                </SheetHeader>
+                <div className="py-4 flex-1 overflow-y-auto pb-6">
+                  {/* Legend - Above Palette */}
+                  <div className="grid grid-cols-2 gap-y-2 mb-6 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 border border-green-600 rounded"></div> Answered</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div> Review</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 border border-red-600 rounded"></div> Unanswered</div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white border border-slate-200 rounded"></div> Not Visited</div>
                   </div>
-                </SheetContent>
-              </Sheet>
-            </div>
 
-            <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
-              <CardContent className="p-6 gap-6 flex flex-col h-auto">
-                <div className="flex justify-between items-start">
-                  <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
-                  <span className="text-sm font-medium text-emerald-600">+{test.marks_per_question || 4} / -{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
+                  <QuestionPalette onQuestionClick={() => setIsMobileMenuOpen(false)} />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {currentQuestion.passageContent ? (
+            /* SPLIT VIEW FOR COMPREHENSION */
+            <div className="flex-1 h-full flex flex-col lg:flex-row gap-4 lg:overflow-hidden pb-4 p-1 pt-14 lg:pt-1">
+              {/* Passage Pane (Desktop) */}
+              <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white rounded-lg border shadow-sm custom-scrollbar">
+                <div className="p-4 border-b bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                    <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px]">Passage</span>
+                  </h3>
+                </div>
+                <div className="p-6 text-base leading-relaxed text-slate-800">
+                  <Latex>{currentQuestion.passageContent}</Latex>
+                </div>
+              </div>
+
+              {/* Question Pane */}
+              <div className="flex-1 h-full overflow-y-auto lg:pr-2 custom-scrollbar">
+                {/* Mobile Passage (Collapsed/Scrollable) */}
+                <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
+                  <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Passage Reference</div>
+                  <div className="text-sm leading-relaxed max-h-48 overflow-y-auto bg-slate-50 p-3 rounded border">
+                    <Latex>{currentQuestion.passageContent}</Latex>
+                  </div>
                 </div>
 
-                <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
-                  <Latex>{currentQuestion.question}</Latex>
-                </div>
-
-                {/* Question Image */}
-                {currentQuestion.image && (
-                  <div className="my-4">
-                    <img
-                      src={currentQuestion.image.trim()}
-                      alt={`Question ${currentQuestionIndex + 1}`}
-                      referrerPolicy="no-referrer"
-                      className="max-w-full max-h-[400px] rounded-lg border object-contain mx-auto"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          const errorMsg = document.createElement('div');
-                          errorMsg.className = "text-center p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-600 space-y-2";
-                          errorMsg.innerHTML = `<p>Image failed to load.</p><a href="${currentQuestion.image?.trim()}" target="_blank" rel="noopener noreferrer" class="underline font-bold">Click here to view image</a>`;
-                          parent.appendChild(errorMsg);
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-3 mt-4">
-                  {currentQuestion.type === 'numerical' ? (
-                    <div className="max-w-xs">
-                      <Label className="mb-2 block">Your Answer</Label>
-                      <Input
-                        type="number"
-                        step="any"
-                        placeholder="Enter your answer"
-                        value={answers[currentQuestion.id] || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
-                        }}
-                        className="text-lg"
-                      />
+                <Card className="min-h-[400px] shadow-sm border-0 bg-white w-full h-auto block">
+                  <CardContent className="p-6 gap-6 flex flex-col h-auto">
+                    <div className="flex justify-between items-start">
+                      <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
+                      <span className="text-sm font-medium text-emerald-600">+{test.marks_per_question || 4} / -{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
                     </div>
-                  ) : (
-                    Object.entries(currentQuestion.options || {}).map(([key, text]) => {
-                      const isSelected = currentQuestion.type === 'multiple'
-                        ? (Array.isArray(answers[currentQuestion.id]) && (answers[currentQuestion.id] as any).includes(key))
-                        : answers[currentQuestion.id] === key;
 
-                      const optionImage = currentQuestion.optionImages?.[key];
+                    <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
+                      <Latex>{currentQuestion.question}</Latex>
+                    </div>
 
-                      return (
-                        <div
-                          key={key}
-                          onClick={() => {
-                            if (currentQuestion.type === 'multiple') {
-                              // Handle Multi Select
-                              const current = (answers[currentQuestion.id] as any) || [];
-                              const newAnswers = Array.isArray(current) ? [...current] : [];
-
-                              if (newAnswers.includes(key)) {
-                                newAnswers.splice(newAnswers.indexOf(key), 1);
-                              } else {
-                                newAnswers.push(key);
-                              }
-                              newAnswers.sort();
-
-                              setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
-                            } else {
-                              // Handle Single Select
-                              handleAnswerSelect(currentQuestion.id, key);
+                    {currentQuestion.image && (
+                      <div className="my-4">
+                        <img
+                          src={currentQuestion.image.trim()}
+                          alt={`Question ${currentQuestionIndex + 1}`}
+                          referrerPolicy="no-referrer"
+                          className="max-w-full max-h-[400px] rounded-lg border object-contain mx-auto"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              const errorMsg = document.createElement('div');
+                              errorMsg.className = "text-center p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-600 space-y-2";
+                              errorMsg.innerHTML = `<p>Image failed to load.</p><a href="${currentQuestion.image?.trim()}" target="_blank" rel="noopener noreferrer" class="underline font-bold">Click here to view image</a>`;
+                              parent.appendChild(errorMsg);
                             }
                           }}
-                          className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                            ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
-                                        `}
-                        >
-                          <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
-                                            ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
-                                            ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
-                                        `}>
-                            {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
-                            <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
-                          </div>
+                        />
+                      </div>
+                    )}
 
-                          <div className="flex-1 flex flex-col gap-2">
-                            {text && <div className="text-base break-words pt-1"><Latex>{text}</Latex></div>}
-                            {optionImage && (
-                              <img
-                                src={optionImage.trim()}
-                                alt={`Option ${key}`}
-                                referrerPolicy="no-referrer"
-                                className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
-                                onError={(e) => {
-                                  const target = e.currentTarget;
-                                  target.style.display = 'none';
-                                  const parent = target.parentElement;
-                                  if (parent) {
-                                    const errorLink = document.createElement('a');
-                                    errorLink.href = optionImage.trim();
-                                    errorLink.target = "_blank";
-                                    errorLink.rel = "noopener noreferrer";
-                                    errorLink.className = "text-xs text-blue-600 underline block mt-1";
-                                    errorLink.textContent = "View Image (Load Failed)";
-                                    parent.appendChild(errorLink);
-                                  }
-                                }}
-                              />
-                            )}
-                          </div>
+                    <div className="space-y-3 mt-4">
+                      {currentQuestion.type === 'numerical' ? (
+                        <div className="max-w-xs">
+                          <Label className="mb-2 block">Your Answer</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            placeholder="Enter your answer"
+                            value={answers[currentQuestion.id] || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+                            }}
+                            className="text-lg"
+                          />
                         </div>
-                      )
-                    })
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                      ) : (
+                        Object.entries(currentQuestion.options || {}).map(([key, text]) => {
+                          const isSelected = currentQuestion.type === 'multiple'
+                            ? (Array.isArray(answers[currentQuestion.id]) && (answers[currentQuestion.id] as any).includes(key))
+                            : answers[currentQuestion.id] === key;
 
-          </div>
+                          const optionImage = currentQuestion.optionImages?.[key];
+
+                          return (
+                            <div
+                              key={key}
+                              onClick={() => {
+                                if (currentQuestion.type === 'multiple') {
+                                  const current = (answers[currentQuestion.id] as any) || [];
+                                  const newAnswers = Array.isArray(current) ? [...current] : [];
+
+                                  if (newAnswers.includes(key)) {
+                                    newAnswers.splice(newAnswers.indexOf(key), 1);
+                                  } else {
+                                    newAnswers.push(key);
+                                  }
+                                  newAnswers.sort();
+                                  setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
+                                } else {
+                                  handleAnswerSelect(currentQuestion.id, key);
+                                }
+                              }}
+                              className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
+                                                       ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
+                                                   `}
+                            >
+                              <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
+                                                       ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
+                                                       ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
+                                                   `}>
+                                {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
+                                <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
+                              </div>
+
+                              <div className="flex-1 flex flex-col gap-2">
+                                {text && <div className="text-base break-words pt-1"><Latex>{text}</Latex></div>}
+                                {optionImage && (
+                                  <img
+                                    src={optionImage.trim()}
+                                    alt={`Option ${key}`}
+                                    referrerPolicy="no-referrer"
+                                    className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
+                                    onError={(e) => {
+                                      const target = e.currentTarget;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        // Simple error handler
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ) : (
+            /* STANDARD VIEW */
+            <div className="flex-1 h-full flex flex-col gap-6 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-2 pb-24 p-1 pt-14 lg:pt-1">
+              <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
+                <CardContent className="p-6 gap-6 flex flex-col h-auto">
+                  <div className="flex justify-between items-start">
+                    <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
+                    <span className="text-sm font-medium text-emerald-600">+{test.marks_per_question || 4} / -{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
+                  </div>
+
+                  <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
+                    <Latex>{currentQuestion.question}</Latex>
+                  </div>
+
+                  {currentQuestion.image && (
+                    <div className="my-4">
+                      <img
+                        src={currentQuestion.image.trim()}
+                        alt={`Question ${currentQuestionIndex + 1}`}
+                        referrerPolicy="no-referrer"
+                        className="max-w-full max-h-[400px] rounded-lg border object-contain mx-auto"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            const errorMsg = document.createElement('div');
+                            errorMsg.className = "text-center p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-600 space-y-2";
+                            errorMsg.innerHTML = `<p>Image failed to load.</p><a href="${currentQuestion.image?.trim()}" target="_blank" rel="noopener noreferrer" class="underline font-bold">Click here to view image</a>`;
+                            parent.appendChild(errorMsg);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-3 mt-4">
+                    {currentQuestion.type === 'numerical' ? (
+                      <div className="max-w-xs">
+                        <Label className="mb-2 block">Your Answer</Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          placeholder="Enter your answer"
+                          value={answers[currentQuestion.id] || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+                          }}
+                          className="text-lg"
+                        />
+                      </div>
+                    ) : (
+                      Object.entries(currentQuestion.options || {}).map(([key, text]) => {
+                        const isSelected = currentQuestion.type === 'multiple'
+                          ? (Array.isArray(answers[currentQuestion.id]) && (answers[currentQuestion.id] as any).includes(key))
+                          : answers[currentQuestion.id] === key;
+
+                        const optionImage = currentQuestion.optionImages?.[key];
+
+                        return (
+                          <div
+                            key={key}
+                            onClick={() => {
+                              if (currentQuestion.type === 'multiple') {
+                                const current = (answers[currentQuestion.id] as any) || [];
+                                const newAnswers = Array.isArray(current) ? [...current] : [];
+
+                                if (newAnswers.includes(key)) {
+                                  newAnswers.splice(newAnswers.indexOf(key), 1);
+                                } else {
+                                  newAnswers.push(key);
+                                }
+                                newAnswers.sort();
+                                setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
+                              } else {
+                                handleAnswerSelect(currentQuestion.id, key);
+                              }
+                            }}
+                            className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
+                                                 ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
+                                             `}
+                          >
+                            <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
+                                                 ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
+                                                 ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
+                                             `}>
+                              {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
+                              <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
+                            </div>
+
+                            <div className="flex-1 flex flex-col gap-2">
+                              {text && <div className="text-base break-words pt-1"><Latex>{text}</Latex></div>}
+                              {optionImage && (
+                                <img
+                                  src={optionImage.trim()}
+                                  alt={`Option ${key}`}
+                                  referrerPolicy="no-referrer"
+                                  className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
+                                  onError={(e) => {
+                                    // Simple Error Handler
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Bottom Controls */}
           {/* Fixed Bottom for Mobile, Absolute for Desktop Column */}
@@ -588,7 +714,8 @@ export default function TestPage() {
         </div>
 
         {/* Right Side Palette (Desktop) - Independently Scrollable */}
-        <div className="hidden lg:block lg:col-span-4 lg:h-full lg:overflow-hidden">
+        <div className="hidden lg:block lg:col-span-3 lg:h-full lg:overflow-hidden">
+
           <Card className="h-full flex flex-col shadow-md border-t-4 border-t-slate-500">
             <CardContent className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
               <h3 className="font-semibold mb-4 text-sm uppercase tracking-wide text-muted-foreground">Question Palette</h3>
