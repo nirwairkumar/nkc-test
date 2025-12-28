@@ -1,13 +1,14 @@
 // src/hooks/useAuthActions.ts
 import supabase from '@/lib/supabaseClient';
 
-export async function signUpWithEmail(email: string, password: string, name?: string) {
+export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string) {
     return supabase.auth.signUp({
         email,
         password,
         options: {
             data: {
                 full_name: name, // Standard Supabase metadata field
+                designation: designation, // No default - strictly required or null
             }
         }
     });

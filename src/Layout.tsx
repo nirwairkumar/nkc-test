@@ -10,7 +10,11 @@ export default function Layout() {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {!isLiveTestPage && <Navbar />}
+            {!isLiveTestPage && (
+                <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+                    <Navbar />
+                </div>
+            )}
             <main>
                 <Outlet />
             </main>

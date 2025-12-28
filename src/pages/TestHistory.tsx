@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { fetchTestById } from '@/lib/testsApi';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import Latex from 'react-latex-next';
 
 // Extend the attempt type to include test title which we might need to join or fetch
 interface Attempt {
@@ -179,27 +180,113 @@ export default function TestHistory() {
                                                             // Helper to safely extract answer from mixed formats
                                                             const getAnswer = (answers: any, qId: number) => {
                                                                 if (!answers) return null;
-                                                                // If array format
                                                                 if (Array.isArray(answers)) {
                                                                     return answers.find((a: any) => a.questionId === qId)?.selectedAnswer;
                                                                 }
-                                                                // If object format
                                                                 return answers[qId];
                                                             };
 
                                                             const userAnswer = getAnswer(attempt.answers, q.id);
-                                                            const isCorrect = userAnswer === q.correctAnswer;
+
+                                                            // Calculate correctness logic similar to ResultsPage
+                                                            let isCorrect = false;
+                                                            if (q.type === 'numerical') {
+                                                                const numAns = parseFloat(userAnswer);
+                                                                const range = q.correctAnswer;
+                                                                if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+                                                                    isCorrect = true;
+                                                                }
+                                                            } else if (q.type === 'multiple') {
+                                                                const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
+                                                                const userArr = Array.isArray(userAnswer) ? [...userAnswer].sort() : [];
+                                                                if (correctArr.length > 0 && correctArr.length === userArr.length &&
+                                                                    correctArr.every((val, index) => val === userArr[index])) {
+                                                                    isCorrect = true;
+                                                                }
+                                                            } else {
+                                                                if (userAnswer === q.correctAnswer) {
+                                                                    isCorrect = true;
+                                                                }
+                                                            }
+
+                                                            const renderRichAnswer = (ansKey: any, isUser: boolean) => {
+                                                                if (ansKey === null || ansKey === undefined) return isUser ? <span className="text-muted-foreground italic">Not answered</span> : null;
+
+                                                                // Helper to render a single key (e.g. "A") with its content
+                                                                const renderSingleKey = (key: string) => {
+                                                                    const optText = q.options ? (Array.isArray(q.options) ? q.options[parseInt(key)] : q.options[key]) : null;
+                                                                    const optImg = q.optionImages ? q.optionImages[key] : null;
+
+                                                                    return (
+                                                                        <div key={key} className="flex items-start gap-2 mt-1">
+                                                                            <span className="font-semibold whitespace-nowrap min-w-[1.5rem]">{key})</span>
+                                                                            <div className="flex flex-col gap-1">
+                                                                                {optText && <span><Latex>{optText}</Latex></span>}
+                                                                                {optImg && (
+                                                                                    <img
+                                                                                        src={optImg.trim()}
+                                                                                        alt="Option"
+                                                                                        className="max-h-[80px] w-auto h-auto object-contain border rounded bg-white"
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                };
+
+                                                                // Numerical Type
+                                                                if (q.type === 'numerical') {
+                                                                    if (typeof ansKey === 'object') {
+                                                                        return <span>{ansKey.min} - {ansKey.max}</span>;
+                                                                    }
+                                                                    return <span>{ansKey}</span>;
+                                                                }
+
+                                                                // Multiple/Single Choice
+                                                                // Check if it's an array (Multiple Choice)
+                                                                if (Array.isArray(ansKey)) {
+                                                                    return (
+                                                                        <div className="flex flex-col gap-2">
+                                                                            {ansKey.map((k: string) => renderSingleKey(k))}
+                                                                        </div>
+                                                                    );
+                                                                }
+
+                                                                // Single Key
+                                                                return renderSingleKey(String(ansKey));
+                                                            };
+
                                                             return (
-                                                                <div key={q.id} className={`p-3 rounded border ${isCorrect ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
-                                                                    <p className="font-medium text-sm mb-2">{idx + 1}. {q.question}</p>
-                                                                    <div className="flex gap-4 text-sm">
-                                                                        <span className={isCorrect ? 'text-green-700' : 'text-red-700'}>
-                                                                            Your Answer: {userAnswer || 'Not answered'}
-                                                                        </span>
-                                                                        {!isCorrect && (
-                                                                            <span className="text-green-700 font-semibold">
-                                                                                Correct: {q.correctAnswer}
+                                                                <div key={q.id} className={`p-4 rounded-lg border ${isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}`}>
+                                                                    <div className="mb-3">
+                                                                        <span className="font-bold mr-2 text-slate-500">{idx + 1}.</span>
+                                                                        <span className="font-medium"><Latex>{q.question}</Latex></span>
+                                                                        {q.image && (
+                                                                            <div className="mt-2">
+                                                                                <img src={q.image} alt="Question" className="max-h-[150px] rounded border" />
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                                        <div className={`p-3 rounded border ${isCorrect ? 'bg-green-100/50 border-green-200' : 'bg-red-100/50 border-red-200'}`}>
+                                                                            <span className={`block text-xs font-bold uppercase mb-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                                                                                Your Answer
                                                                             </span>
+                                                                            <div className={isCorrect ? 'text-green-900' : 'text-red-900'}>
+                                                                                {renderRichAnswer(userAnswer, true)}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {!isCorrect && (
+                                                                            <div className="p-3 rounded border bg-blue-50 border-blue-100">
+                                                                                <span className="block text-xs font-bold uppercase mb-2 text-blue-700">
+                                                                                    Correct Answer
+                                                                                </span>
+                                                                                <div className="text-blue-900">
+                                                                                    {renderRichAnswer(q.correctAnswer, false)}
+                                                                                </div>
+                                                                            </div>
                                                                         )}
                                                                     </div>
                                                                 </div>

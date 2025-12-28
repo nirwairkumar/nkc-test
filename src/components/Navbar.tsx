@@ -35,7 +35,7 @@ export default function Navbar() {
     };
 
     return (
-        <header className="border-b bg-white">
+        <header className="w-full">
             <div className="container mx-auto flex h-16 items-center justify-between px-1 sm:px-4">
                 <Link to="/" className="text-xl font-bold text-primary">
                     TestTaker
@@ -150,10 +150,16 @@ export default function Navbar() {
                                     <span>Profile</span>
                                 </DropdownMenuItem>
                                 {isAdmin ? (
-                                    <DropdownMenuItem onClick={() => navigate('/manage-tests')}>
-                                        <Shield className="mr-2 h-4 w-4" />
-                                        <span>Manage Tests</span>
-                                    </DropdownMenuItem>
+                                    <>
+                                        <DropdownMenuItem onClick={() => navigate('/manage-tests')}>
+                                            <Shield className="mr-2 h-4 w-4" />
+                                            <span>Manage Tests</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => navigate('/admin-migration')}>
+                                            <Shield className="mr-2 h-4 w-4" />
+                                            <span>Admin Data Migration</span>
+                                        </DropdownMenuItem>
+                                    </>
                                 ) : (
                                     <>
                                         <DropdownMenuItem onClick={() => navigate('/my-tests')}>

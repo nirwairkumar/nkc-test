@@ -13,6 +13,14 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -27,6 +35,7 @@ const formSchema = z.object({
     }).optional(),
     confirmPassword: z.string().optional(),
     name: z.string().optional(),
+    designation: z.enum(["Student", "Teacher", "Institution", "Guest"]).optional(),
 }).refine((data) => {
     // If name is present (signup mode), check passwords match
     if (data.name && data.password !== data.confirmPassword) {
@@ -59,6 +68,7 @@ export default function AuthForm() {
             password: '',
             confirmPassword: '',
             name: '',
+            designation: undefined,
         },
     });
 
@@ -95,7 +105,12 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
-                const { error } = await signUpWithEmail(values.email, values.password, values.name);
+                if (!values.designation) {
+                    toast.error("Please select a designation");
+                    setIsLoading(false);
+                    return;
+                }
+                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation);
                 if (error) {
                     if (error.message.includes('already registered') || error.message.includes('already exists')) {
                         toast.error('Account already exists. Please login.');
@@ -171,6 +186,32 @@ export default function AuthForm() {
                                             <FormControl>
                                                 <Input placeholder="John Doe" {...field} />
                                             </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+
+                            {view === 'signup' && (
+                                <FormField
+                                    control={form.control}
+                                    name="designation"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Designation</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select designation" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Student">Student</SelectItem>
+                                                    <SelectItem value="Teacher">Teacher</SelectItem>
+                                                    <SelectItem value="Institution">Institution</SelectItem>
+                                                    <SelectItem value="Guest">Guest</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}

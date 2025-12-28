@@ -4,19 +4,24 @@ import supabase from '@/lib/supabaseClient';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowRight, Clock, FileText } from 'lucide-react';
 import { Test, fetchTestsByUserId } from '@/lib/testsApi';
+import TestLikeButton from '@/components/TestLikeButton';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CreatorProfile {
     id: string;
     full_name: string;
     bio: string;
     avatar_url: string;
+    designation: string;
 }
 
 export default function CreatorProfilePage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [profile, setProfile] = useState<CreatorProfile | null>(null);
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
@@ -42,12 +47,6 @@ export default function CreatorProfilePage() {
             setProfile(profileData);
 
             // 2. Fetch Creator's Public Tests
-            // fetchTestsByUserId usually fetches *all* tests for that user (including private if configured that way),
-            // but we might want to filter only public ones if looking at someone else's profile.
-            // For now, let's assume fetchTestsByUserId is safe or we filter here.
-            // Actually, fetchTestsByUserId queries by 'created_by'. 
-            // We should ideally only show IS_PUBLIC true.
-
             const { data: testsData, error: testsError } = await supabase
                 .from('tests')
                 .select('*')
@@ -73,6 +72,17 @@ export default function CreatorProfilePage() {
             .join('')
             .toUpperCase()
             .slice(0, 2);
+    };
+
+    // Custom badge styling (Same as ProfilePage)
+    const getBadgeStyle = (role: string) => {
+        switch (role) {
+            case 'Teacher': return { backgroundColor: '#3b82f6', color: 'white' }; // Blue
+            case 'Institution': return { backgroundColor: '#eab308', color: 'black' }; // Gold
+            case 'Student': return { backgroundColor: '#6b7280', color: 'white' }; // Gray
+            case 'Guest': return { backgroundColor: '#9ca3af', color: 'white' }; // Lighter Gray
+            default: return {};
+        }
     };
 
     if (loading) {
@@ -103,12 +113,15 @@ export default function CreatorProfilePage() {
                     </Avatar>
                     <div className="text-center md:text-left space-y-2">
                         <h1 className="text-3xl font-bold">{profile.full_name}</h1>
+                        <Badge style={getBadgeStyle(profile.designation)} className="text-xs px-2 py-0.5 pointer-events-none">
+                            {profile.designation || 'Student'}
+                        </Badge>
                         {profile.bio && (
-                            <p className="text-muted-foreground max-w-lg mx-auto md:mx-0">
+                            <p className="text-muted-foreground max-w-lg mx-auto md:mx-0 whitespace-pre-wrap text-left">
                                 {profile.bio}
                             </p>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-slate-500 justify-center md:justify-start">
+                        <div className="flex items-center gap-2 text-sm text-slate-500 justify-center md:justify-start pt-2">
                             <FileText className="w-4 h-4" />
                             <span>{tests.length} Public Tests</span>
                         </div>
@@ -143,8 +156,9 @@ export default function CreatorProfilePage() {
                                     </span>
                                 </div>
                             </CardContent>
-                            <CardFooter>
-                                <Button className="w-full" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                            <CardFooter className="flex justify-between gap-2 p-3 mt-auto">
+                                <TestLikeButton testId={test.id} userId={user?.id} />
+                                <Button className="flex-1" onClick={() => navigate(`/test-intro/${test.id}`)}>
                                     Take Test <ArrowRight className="w-4 h-4 ml-2" />
                                 </Button>
                             </CardFooter>

@@ -13,3 +13,17 @@ ADD COLUMN IF NOT EXISTS duration integer;
 COMMENT ON COLUMN tests.marks_per_question IS 'Marks awarded for a correct answer';
 COMMENT ON COLUMN tests.negative_marks IS 'Marks deducted for a wrong answer';
 COMMENT ON COLUMN tests.duration IS 'Duration of the test in minutes';
+
+
+-- Bulk update all tests to match current profile information
+-- This fixes legacy tests that show "Anonymous" or old names
+UPDATE tests
+SET 
+  creator_name = profiles.full_name,
+  creator_avatar = profiles.avatar_url
+FROM profiles
+WHERE tests.created_by = profiles.id
+  AND (
+    tests.creator_name IS DISTINCT FROM profiles.full_name 
+    OR tests.creator_avatar IS DISTINCT FROM profiles.avatar_url
+  );

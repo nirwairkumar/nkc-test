@@ -49,29 +49,7 @@ export default function SupportPage() {
         <div className="container mx-auto py-10 px-4 max-w-4xl">
             <h1 className="text-3xl font-bold text-center mb-8">Help & Support</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Contact Info */}
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Contact Information</CardTitle>
-                            <CardDescription>Reach out to us directly or fill out the form.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center space-x-3 text-muted-foreground hover:text-foreground transition-colors">
-                                <Mail className="h-5 w-5" />
-                                <a href="mailto:nkchaudhary431@gmail.com" className="hover:underline">nkchaudhary431@gmail.com</a>
-                            </div>
-                            <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
-                                <p className="text-sm">
-                                    <strong>Note:</strong> We typically respond within 24-48 hours. For urgent issues, please check our FAQ or community forums.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Query Form */}
+            <div className="max-w-2xl mx-auto">
                 <Card>
                     <CardHeader>
                         <CardTitle>Send us a Message</CardTitle>
@@ -140,6 +118,44 @@ export default function SupportPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Footer Section */}
+            <footer className="mt-16 border-t pt-8 pb-4 text-muted-foreground">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+                    <div>
+                        <h3 className="font-semibold mb-4 text-foreground">Quick Links</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="/" className="hover:text-primary transition-colors">Home</a></li>
+                            <li><a href="/my-tests" className="hover:text-primary transition-colors">My Tests</a></li>
+                            <li><a href="/results" className="hover:text-primary transition-colors">Results</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-4 text-foreground">Support</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="/support" className="hover:text-primary transition-colors">Help Center</a></li>
+                            <li><a href="/contact" className="hover:text-primary transition-colors">Contact Us</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-4 text-foreground">Legal</h3>
+                        <ul className="space-y-2 text-sm">
+                            <li><a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a></li>
+                            <li><a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-4 text-foreground">Get in Touch</h3>
+                        <div className="flex flex-col space-y-2 text-sm">
+                            <span className="text-xs">Contact Email:</span>
+                            <a href="mailto:nkchaudhary431@gmail.com" className="font-medium hover:text-primary transition-colors">nkchaudhary431@gmail.com</a>
+                        </div>
+                    </div>
+                </div>
+                <div className="text-center text-xs border-t pt-4">
+                    &copy; {new Date().getFullYear()} NKC Test Platform. All rights reserved.
+                </div>
+            </footer>
         </div>
     );
 }
