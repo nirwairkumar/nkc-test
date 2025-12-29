@@ -23,6 +23,9 @@ import {
 import { Plus, Upload } from 'lucide-react';
 import TestBuilder from '@/components/TestBuilder';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
+import TestSettingsPanel from '@/components/TestSettingsPanel';
+import TestResultsPanel from '@/components/TestResultsPanel';
+import { FileText } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -51,6 +54,9 @@ export default function UserTestManager() {
     const [selectedSection, setSelectedSection] = useState<string>("none");
     const [isNewSectionMode, setIsNewSectionMode] = useState(false);
     const [newSectionName, setNewSectionName] = useState("");
+
+    const [configuringTest, setConfiguringTest] = useState<any>(null);
+    const [viewingResultsTest, setViewingResultsTest] = useState<any>(null); // New State
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -108,31 +114,17 @@ export default function UserTestManager() {
     if (authLoading) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
     if (!user) return null;
 
-    if (isTestEditOpen && editingTest) {
-        return (
-            <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
-                <div className="min-h-screen">
-                    {/* Re-using TestBuilder as a full page overlay */}
-                    <TestBuilder
-                        initialData={editingTest}
-                        onCancel={() => setIsTestEditOpen(false)}
-                        onSuccess={() => {
-                            setIsTestEditOpen(false);
-                            loadUserTests();
-                        }}
-                    />
-                </div>
-            </div>
-        );
-    }
+    // ... (keep test editor render)
 
     return (
         <div className="container mx-auto max-w-5xl py-10 space-y-6">
+            {/* ... Header ... */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Your Tests</h1>
                     <p className="text-muted-foreground">Manage the tests you have generated.</p>
                 </div>
+                {/* ... Import buttons ... */}
                 <div className="flex gap-2 items-center">
                     <label className="cursor-pointer">
                         <Input
@@ -212,16 +204,20 @@ export default function UserTestManager() {
                                     <span>{test.marks_per_question || '-'} Marks</span>
                                 </div>
                             </CardContent>
-                            <CardFooter className="pt-2 flex justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50 items-center">
+                            <CardFooter className="pt-2 flex flex-wrap justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50 items-center">
                                 <div className="flex items-center gap-1 text-muted-foreground mr-auto pl-1" title="Likes">
                                     <Heart className="h-4 w-4" />
                                     <span className="text-sm font-medium">
                                         {test.test_likes?.[0]?.count || 0}
                                     </span>
                                 </div>
-                                <Button variant="outline" size="sm" className="w-[120px]" onClick={() => openTestEditor(test)}>
+                                <Button variant="outline" size="sm" className="h-8" onClick={() => openTestEditor(test)}>
                                     <Edit className="h-3 w-3 mr-2" />
-                                    Edit Full Test
+                                    Edit
+                                </Button>
+                                <Button variant="secondary" size="sm" className="h-8" onClick={() => setConfiguringTest(test)}>
+                                    <Settings className="h-3 w-3 mr-2" />
+                                    Manage
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -252,6 +248,26 @@ export default function UserTestManager() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {configuringTest && (
+                <TestSettingsPanel
+                    test={configuringTest}
+                    onClose={() => setConfiguringTest(null)}
+                    onUpdate={loadUserTests}
+                    onViewResults={() => {
+                        setConfiguringTest(null);
+                        setViewingResultsTest(configuringTest);
+                    }}
+                />
+            )}
+
+            {viewingResultsTest && (
+                // Dynamic Import or Direct Import? Let's use Lazy if needed, but direct is fine for now if we import it
+                <TestResultsPanel
+                    test={viewingResultsTest}
+                    onClose={() => setViewingResultsTest(null)}
+                />
+            )}
         </div >
     );
 }

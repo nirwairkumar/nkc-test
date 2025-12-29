@@ -18,7 +18,29 @@ export interface Test {
     created_by?: string;
     institution_name?: string;
     institution_logo?: string;
+    settings?: TestSettings;
 }
+
+export interface TestSettings {
+    attempt_limit?: number; // 1 for single attempt
+    strict_timer?: boolean; // Server-side time validation
+    tab_switch_mode?: 'warming' | 'strict' | 'off'; // Warning then submit, or instant submit
+    disable_copy_paste?: boolean;
+    disable_actions?: boolean; // Right click, etc
+    force_fullscreen?: boolean;
+    shuffle_questions?: boolean;
+    show_results_immediate?: boolean;
+    schedule?: {
+        enabled: boolean;
+        start_time?: string;
+        end_time?: string;
+    };
+    start_form?: {
+        enabled: boolean;
+        fields: { label: string; required: boolean }[];
+    };
+}
+
 
 export interface Question {
     id: number;

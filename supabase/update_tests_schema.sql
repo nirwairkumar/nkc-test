@@ -27,3 +27,12 @@ WHERE tests.created_by = profiles.id
     tests.creator_name IS DISTINCT FROM profiles.full_name 
     OR tests.creator_avatar IS DISTINCT FROM profiles.avatar_url
   );
+
+
+
+
+
+  -- for advanced-test-environment 
+  ALTER TABLE tests ADD COLUMN IF NOT EXISTS settings JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE user_tests ADD COLUMN IF NOT EXISTS snapshot_settings JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE user_tests ADD COLUMN IF NOT EXISTS violation_log JSONB DEFAULT '[]'::jsonb;

@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon } from 'lucide-react';
+import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -26,6 +27,7 @@ export default function TestPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const [test, setTest] = useState<Test | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,6 +142,99 @@ export default function TestPage() {
     toast.info("Starting fresh test session.");
   };
 
+  // Proctoring State
+  const [warnings, setWarnings] = useState(0);
+  const MAX_WARNINGS = 2; // Auto-submit on 3rd violation
+
+  // Proctoring: Full Screen & Tab Switching & Action Blocking
+  useEffect(() => {
+    if (!test || isSubmitting || isTimeUp) return;
+    const settings = test.settings;
+    if (!settings) return;
+
+    // 1. Action Blocking
+    const handleContextMenu = (e: Event) => {
+      if (settings.disable_actions) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const handleCopyPaste = (e: ClipboardEvent) => {
+      if (settings.disable_copy_paste) {
+        e.preventDefault();
+        toast.error("Copy/Paste is disabled for this test.");
+        return false;
+      }
+    };
+
+    if (settings.disable_actions) {
+      document.addEventListener('contextmenu', handleContextMenu);
+    }
+    if (settings.disable_copy_paste) {
+      document.addEventListener('copy', handleCopyPaste);
+      document.addEventListener('cut', handleCopyPaste);
+      document.addEventListener('paste', handleCopyPaste);
+    }
+
+    // 2. Tab Swithcing / Visibility
+    const handleVisibilityChange = () => {
+      if (document.hidden && settings.tab_switch_mode !== 'off') {
+        handleViolation("Tab Switching / Navigation");
+      }
+    };
+
+    // 3. Full Screen Check
+    const handleFullScreenChange = () => {
+      if (!document.fullscreenElement && settings.force_fullscreen) {
+        handleViolation("Exited Full Screen");
+      }
+    };
+
+    if (settings.tab_switch_mode !== 'off') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    if (settings.force_fullscreen) {
+      document.addEventListener('fullscreenchange', handleFullScreenChange);
+      // Initial Check
+      if (!document.fullscreenElement) {
+        // Maybe give a grace period or dialog to re-enter?
+        // For now, we'll just warn if they start without it or exit
+      }
+    }
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('copy', handleCopyPaste);
+      document.removeEventListener('cut', handleCopyPaste);
+      document.removeEventListener('paste', handleCopyPaste);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+    };
+  }, [test, isSubmitting, isTimeUp, warnings]); // Re-bind if warnings change? No, better handleViolation internally
+
+  const handleViolation = (reason: string) => {
+    if (!test?.settings) return;
+    const mode = test.settings.tab_switch_mode;
+    const isStrict = mode === 'strict';
+
+    if (isStrict) {
+      toast.error(`Violation Detected: ${reason}. Test Auto-Submitting.`);
+      confirmSubmit(); // Immediate Submit
+    } else if (mode === 'warming') {
+      if (warnings >= MAX_WARNINGS) {
+        toast.error(`Maximum violations reached (${reason}). Test Auto-Submitting.`);
+        confirmSubmit();
+      } else {
+        setWarnings(prev => prev + 1);
+        toast.warning(`Warning ${warnings + 1}/${MAX_WARNINGS + 1}: ${reason} is not allowed!`);
+      }
+    }
+
+    // Ideally log this violation to DB (to be implemented in next step)
+  };
+
   // Mark current question as visited
   useEffect(() => {
     setVisited(prev => new Set(prev).add(currentQuestionIndex));
@@ -150,6 +245,16 @@ export default function TestPage() {
       const { data, error } = await fetchTestById(testId);
       if (error) throw error;
       if (!data) throw new Error('Test not found');
+
+      // Randomize questions if setting is enabled
+      const settings = data.settings;
+      if (settings?.shuffle_questions && data.questions && data.questions.length > 0) {
+        // Fisher-Yates shuffle
+        for (let i = data.questions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [data.questions[i], data.questions[j]] = [data.questions[j], data.questions[i]];
+        }
+      }
 
       setTest(data);
       // Initialize timer: Use test duration if available, else calc from question count
@@ -216,26 +321,34 @@ export default function TestPage() {
     setShowSubmitDialog(false);
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // Calculate score
+    // Calculate score & stats
     let score = 0;
+    let positiveScore = 0;
+    let negativeScore = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let unattemptedCount = 0;
+
     test.questions.forEach(q => {
       let isCorrect = false;
       const userAns = answers[q.id];
 
-      if (!userAns) return; // Unanswered
+      if (!userAns) {
+        unattemptedCount++;
+        return; // Unanswered
+      }
 
       if (q.type === 'numerical') {
         // Numerical Check
         const numAns = parseFloat(userAns as string);
         const range = q.correctAnswer as { min: number, max: number };
-        if (!isNaN(numAns) && numAns >= range.min && numAns <= range.max) {
+        if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
           isCorrect = true;
         }
       } else if (q.type === 'multiple') {
         // Multiple Choice Check (Exact Match)
-        // Sort both arrays to ensure order doesn't matter
-        const correctArr = (q.correctAnswer as string[] || []).sort();
-        const userArr = (userAns as string[] || []).sort();
+        const correctArr = (Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]).map(String).sort();
+        const userArr = (Array.isArray(userAns) ? userAns : [userAns]).map(String).sort();
 
         if (correctArr.length === userArr.length &&
           correctArr.every((val, index) => val === userArr[index])) {
@@ -249,13 +362,43 @@ export default function TestPage() {
       }
 
       if (isCorrect) {
-        score += (test.marks_per_question || 4);
+        const marks = (test.marks_per_question || 4);
+        score += marks;
+        positiveScore += marks;
+        correctCount++;
       } else {
-        score -= (test.negative_marks !== undefined ? test.negative_marks : 1);
+        const neg = (test.negative_marks !== undefined ? test.negative_marks : 1);
+        score -= neg;
+        negativeScore += neg;
+        wrongCount++;
       }
     });
 
-    const { error } = await saveAttempt(user.id, test.id, answers, score);
+    // Prepare Metadata
+    let startFormData = {};
+    try {
+      const storedForm = sessionStorage.getItem(`start_form_${test.id}`);
+      if (storedForm) {
+        startFormData = JSON.parse(storedForm);
+      }
+    } catch (e) {
+      console.error("Failed to parse start form data", e);
+    }
+
+    const metadata = {
+      startFormData,
+      stats: {
+        positiveScore,
+        negativeScore,
+        correctCount,
+        wrongCount,
+        unattemptedCount,
+        totalQuestions: test.questions.length
+      },
+      submittedAt: new Date().toISOString()
+    };
+
+    const { error } = await saveAttempt(user.id, test.id, answers, score, metadata);
 
     if (error) {
       toast.error('Failed to save results. Please try again.');
@@ -266,17 +409,26 @@ export default function TestPage() {
       localStorage.removeItem(`test_session_${user.id}_${test.id}`);
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
 
-      navigate('/results', {
-        state: {
-          test: test,
-          answers: answers,
-          score: score,
-          totalQuestions: test.questions.length,
-          marksPerQuestion: test.marks_per_question || 4,
-          negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1
-        },
-        replace: true
-      });
+      // Handle Result Visibility
+      if (test.settings?.show_results_immediate === false) {
+        // Navigate to home or a simpler success page if results are hidden
+        navigate('/dashboard', { state: { message: "Test submitted successfully. Results will be published later." } });
+        // Note: Assuming /dashboard exists or similar (UserTestManager is at / ?)
+        // Let's go to root '/' which seems to be the main list or dashboard
+        navigate('/');
+      } else {
+        navigate('/results', {
+          state: {
+            test: test,
+            answers: answers,
+            score: score,
+            totalQuestions: test.questions.length,
+            marksPerQuestion: test.marks_per_question || 4,
+            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1
+          },
+          replace: true
+        });
+      }
     }
   };
 
@@ -289,7 +441,9 @@ export default function TestPage() {
   };
 
   if (loading) return <div className="p-8 text-center">Loading Test...</div>;
+  if (loading) return <div className="p-8 text-center">Loading Test...</div>;
   if (!test) return <div className="p-8 text-center">Test not found.</div>;
+  if (!test.questions || test.questions.length === 0) return <div className="p-8 text-center">This test has no questions.</div>;
 
   const currentQuestion = test.questions[currentQuestionIndex];
 
@@ -335,10 +489,10 @@ export default function TestPage() {
   );
 
   return (
-    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-slate-50 flex flex-col">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
       {/* Institution Branding Bar */}
       {(test.institution_name || test.institution_logo) && (
-        <div className="bg-white border-b px-4 py-2 flex items-center justify-center gap-3">
+        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2 flex items-center justify-center gap-3">
           {test.institution_logo && (
             <img src={test.institution_logo} alt="Institution Logo" className="h-10 w-auto object-contain" />
           )}
@@ -349,16 +503,23 @@ export default function TestPage() {
       )}
 
       {/* Top Header: Timer & Submit */}
-      <div className="bg-white border-b px-4 py-3 sticky top-0 z-10 shadow-sm flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-3 sticky top-0 z-10 shadow-sm flex items-center justify-between">
         <div className="font-mono text-xl font-bold flex items-center gap-2">
-          <Clock className={`w-5 h-5 ${timeRemaining < 300 ? 'text-red-500 animate-pulse' : 'text-slate-600'}`} />
-          <span className={timeRemaining < 300 ? 'text-red-600' : 'text-slate-800'}>
+          <Clock className={`w-5 h-5 ${timeRemaining < 300 ? 'text-red-500 animate-pulse' : 'text-slate-600 dark:text-slate-400'}`} />
+          <span className={timeRemaining < 300 ? 'text-red-600' : 'text-slate-800 dark:text-slate-200'}>
             {formatTime(timeRemaining)}
           </span>
         </div>
-        <Button onClick={attemptSubmit} disabled={isSubmitting} variant="destructive" size="sm">
-          Submit Test
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+          <Button onClick={attemptSubmit} disabled={isSubmitting} variant="destructive" size="sm">
+            Submit Test
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 w-full px-2 lg:px-4 py-2 grid grid-cols-1 lg:grid-cols-12 gap-4 relative lg:h-full lg:overflow-hidden">
@@ -371,7 +532,7 @@ export default function TestPage() {
           <div className="lg:hidden absolute top-2 left-2 z-20">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button size="icon" className="h-10 w-10 rounded-full shadow-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">
+                <Button size="icon" className="h-10 w-10 rounded-full shadow-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -398,13 +559,13 @@ export default function TestPage() {
             /* SPLIT VIEW FOR COMPREHENSION */
             <div className="flex-1 h-full flex flex-col lg:flex-row gap-4 lg:overflow-hidden pb-4 p-1 pt-14 lg:pt-1">
               {/* Passage Pane (Desktop) */}
-              <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white rounded-lg border shadow-sm custom-scrollbar">
-                <div className="p-4 border-b bg-slate-50/50 sticky top-0 z-10 backdrop-blur-sm">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                    <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px]">Passage</span>
+              <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-800 shadow-sm custom-scrollbar">
+                <div className="p-4 border-b dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
+                  <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px]">Passage</span>
                   </h3>
                 </div>
-                <div className="p-6 text-base leading-relaxed text-slate-800">
+                <div className="p-6 text-base leading-relaxed text-slate-800 dark:text-slate-200">
                   <Latex>{currentQuestion.passageContent}</Latex>
                 </div>
               </div>
@@ -419,7 +580,7 @@ export default function TestPage() {
                   </div>
                 </div>
 
-                <Card className="min-h-[400px] shadow-sm border-0 bg-white w-full h-auto block">
+                <Card className="min-h-[400px] shadow-sm border-0 bg-white dark:bg-slate-900 w-full h-auto block">
                   <CardContent className="p-6 gap-6 flex flex-col h-auto">
                     <div className="flex justify-between items-start">
                       <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
@@ -465,7 +626,7 @@ export default function TestPage() {
                               const val = e.target.value;
                               setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
                             }}
-                            className="text-lg"
+                            className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800"
                           />
                         </div>
                       ) : (
@@ -496,12 +657,13 @@ export default function TestPage() {
                                 }
                               }}
                               className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                                       ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
+                                                       ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
                                                    `}
+
                             >
                               <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
                                                        ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
-                                                       ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
+                                                       ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'}
                                                    `}>
                                 {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
                                 <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
@@ -584,7 +746,7 @@ export default function TestPage() {
                             const val = e.target.value;
                             setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
                           }}
-                          className="text-lg"
+                          className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800"
                         />
                       </div>
                     ) : (
@@ -615,12 +777,12 @@ export default function TestPage() {
                               }
                             }}
                             className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                                 ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 hover:bg-slate-50'}
+                                                 ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
                                              `}
                           >
                             <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
                                                  ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
-                                                 ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}
+                                                 ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'}
                                              `}>
                               {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
                               <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
@@ -652,7 +814,7 @@ export default function TestPage() {
 
           {/* Bottom Controls */}
           {/* Fixed Bottom for Mobile, Absolute for Desktop Column */}
-          <div className="fixed lg:absolute bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-2 rounded-b-lg transition-all">
+          <div className="fixed lg:absolute bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-2 rounded-b-lg transition-all">
             <div className="flex items-center justify-between gap-2 md:gap-4">
 
               <Button
@@ -716,7 +878,7 @@ export default function TestPage() {
         {/* Right Side Palette (Desktop) - Independently Scrollable */}
         <div className="hidden lg:block lg:col-span-3 lg:h-full lg:overflow-hidden">
 
-          <Card className="h-full flex flex-col shadow-md border-t-4 border-t-slate-500">
+          <Card className="h-full flex flex-col shadow-md border-t-4 border-t-slate-500 dark:border-t-slate-600 bg-white dark:bg-slate-900 border-x dark:border-x-slate-800 border-b dark:border-b-slate-800">
             <CardContent className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
               <h3 className="font-semibold mb-4 text-sm uppercase tracking-wide text-muted-foreground">Question Palette</h3>
               <QuestionPalette />

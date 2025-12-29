@@ -23,18 +23,70 @@ import {
 export default function TestIntroPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { loading: authLoading } = useAuth();
+    const { user, loading: authLoading } = useAuth();
 
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showFullScreenDialog, setShowFullScreenDialog] = useState(false);
 
+    const [hasAttempted, setHasAttempted] = useState(false);
+    const [checklistDiff, setChecklistDiff] = useState(false); // User accepted checklist
+    const [startFormValues, setStartFormValues] = useState<Record<string, string>>({});
+    const [schedulingError, setSchedulingError] = useState<string | null>(null);
+
     useEffect(() => {
         if (id) {
             loadTest(id);
         }
     }, [id]);
+
+    // Check for attempt limit and schedule when test loads or user changes
+    useEffect(() => {
+        if (test && user) {
+            checkPermissions();
+        }
+    }, [test, user]);
+
+    const checkPermissions = async () => {
+        if (!test || !user) return;
+
+        // 1. Schedule Check
+        if (test.settings?.schedule?.enabled) {
+            const now = new Date();
+            const start = test.settings.schedule.start_time ? new Date(test.settings.schedule.start_time) : null;
+            const end = test.settings.schedule.end_time ? new Date(test.settings.schedule.end_time) : null;
+
+            if (start && now < start) {
+                setSchedulingError(`Test starts on ${start.toLocaleString()}`);
+                return;
+            }
+            if (end && now > end) {
+                setSchedulingError(`Test ended on ${end.toLocaleString()}`);
+                return;
+            }
+        }
+
+        // 2. Attempt Limit Check
+        // console.log("Checking attempt limit:", test.settings?.attempt_limit);
+        if (test.settings?.attempt_limit === 1) {
+            try {
+                const { checkUserTestAttempt } = await import('@/lib/attemptsApi');
+                const { hasAttempted, error } = await checkUserTestAttempt(user.id, test.id);
+                // console.log("Attempt Check Result:", { hasAttempted, error, userId: user.id, testId: test.id });
+
+                if (error) {
+                    console.error("Error checking attempts:", error);
+                }
+
+                if (hasAttempted) {
+                    setHasAttempted(true);
+                }
+            } catch (err) {
+                console.error("Failed to check attempts:", err);
+            }
+        }
+    };
 
     const loadTest = async (testId: string) => {
         try {
@@ -50,12 +102,38 @@ export default function TestIntroPage() {
     };
 
     const handleStartTest = () => {
+        if (hasAttempted) return;
+        if (schedulingError) return;
+
+        // If pre-test checklist is required but not confirmed?
+        // Actually we show checklist inside a dialog or inline?
+        // Let's show the Full Screen dialog which now acts as the "Pre-Flight" check
         setShowFullScreenDialog(true);
     };
 
-    const confirmStartTest = (enableFullScreen: boolean) => {
+    const confirmStartTest = async (enableFullScreen: boolean) => {
+        // Validate Start Form if enabled
+        if (test?.settings?.start_form?.enabled) {
+            const missing = test.settings.start_form.fields.filter(f => f.required && !startFormValues[f.label]);
+            if (missing.length > 0) {
+                alert(`Please fill all required fields: ${missing.map(f => f.label).join(', ')}`);
+                return;
+            }
+            // Save form values to sessionStorage to be picked up by TestPage or Attempts
+            sessionStorage.setItem(`start_form_${test.id}`, JSON.stringify(startFormValues));
+        }
+
         setShowFullScreenDialog(false);
-        if (enableFullScreen) {
+
+        // Register the attempt if limited attempt is enabled (or always, for general tracking)
+        // For now let's enforce it if attempt limit is on, or Schedule is strict?
+        // Let's Just do it always to be safe and future proof
+        if (user && test) {
+            const { registerTestStart } = await import('@/lib/attemptsApi');
+            await registerTestStart(user.id, test.id);
+        }
+
+        if (enableFullScreen || test?.settings?.force_fullscreen) {
             document.documentElement.requestFullscreen().catch((err) => {
                 console.error("Error attempting to enable full-screen mode:", err);
             });
@@ -125,26 +203,24 @@ export default function TestIntroPage() {
                             <li>Each correct answer awards <strong>+{test.marks_per_question || 4} marks</strong>.</li>
                             <li>Each wrong answer deducts <strong>{test.negative_marks !== undefined ? test.negative_marks : 1} marks</strong>.</li>
                             <li>Once you start, the timer will begin and cannot be paused.</li>
-                            <li>Ensure you have a stable internet connection before starting.</li>
-                            <li>Click "Submit" to finish the test manually, or it will auto-submit when time runs out.</li>
+                            {test.settings?.force_fullscreen && (
+                                <li className="text-red-600 font-medium">Full Screen Mode is mandatory. Exiting may submit the test.</li>
+                            )}
+                            {test.settings?.tab_switch_mode !== 'off' && test.settings?.tab_switch_mode && (
+                                <li className="text-red-600 font-medium">Switching tabs or minimizing window is PROHIBITED.</li>
+                            )}
                         </ul>
                     </div>
-
-                    {/* {test.description && (
-                        <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md border text-sm text-center italic text-muted-foreground mb-4">
-                            {test.description}
-                        </div>
-                    )} */}
 
                     {test.revision_notes && (
                         <div className="mt-4 border rounded-md">
                             <details className="group">
-                                <summary className="cursor-pointer p-4 bg-muted/30 hover:bg-muted/50 font-medium flex items-center justify-between select-none">
+                                <summary className="cursor-pointer p-4 bg-muted/30 hover:bg-muted/50 font-medium flex items-center justify-center select-none">
                                     <div className="flex items-center gap-2">
                                         <FileText className="h-4 w-4" />
                                         View Test Summary & Instructions
                                     </div>
-                                    <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
+                                    <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform ml-2">▼</span>
                                 </summary>
                                 <div className="p-4 bg-slate-50 dark:bg-slate-950/30 border-t max-h-[500px] overflow-y-auto">
                                     <article className="prose prose-sm dark:prose-invert max-w-none">
@@ -157,24 +233,80 @@ export default function TestIntroPage() {
                         </div>
                     )}
                 </CardContent>
-                <CardFooter className="pt-0 pb-4 px-4">
-                    <Button size="lg" className="w-full text-lg h-10" onClick={handleStartTest}>
-                        Start Test Now
-                    </Button>
+                <CardFooter className="pt-0 pb-4 px-4 flex flex-col gap-3">
+                    {schedulingError ? (
+                        <div className="w-full p-4 bg-red-100 text-red-800 rounded-lg text-center font-bold">
+                            {schedulingError}
+                        </div>
+                    ) : hasAttempted ? (
+                        <div className="w-full p-4 bg-amber-100 text-amber-800 rounded-lg text-center font-bold">
+                            You have already attempted this test.
+                        </div>
+                    ) : (
+                        <Button size="lg" className="w-full text-lg h-10" onClick={handleStartTest}>
+                            Start Test Now
+                        </Button>
+                    )}
                 </CardFooter>
             </Card>
 
             <AlertDialog open={showFullScreenDialog} onOpenChange={setShowFullScreenDialog}>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-md">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Enable Full Screen?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            For the best test-taking experience, we recommend enabling full screen mode.
+                        <AlertDialogTitle>Pre-Exam Checklist</AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-4 pt-2">
+                            <div className="space-y-2">
+                                <label className="flex items-start gap-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" className="mt-1" checked={checklistDiff} onChange={(e) => setChecklistDiff(e.target.checked)} />
+                                    <span className="text-sm text-slate-800">
+                                        I have closed all other tabs and applications. I enable "Do Not Disturb" mode on my device.
+                                    </span>
+                                </label>
+                                {test.settings?.force_fullscreen && (
+                                    <div className="text-xs text-amber-600 font-medium p-2 bg-amber-50 rounded">
+                                        Note: This test requires Full Screen mode.
+                                    </div>
+                                )}
+                            </div>
+
+                            {test.settings?.start_form?.enabled && (
+                                <div className="space-y-3 pt-2 border-t">
+                                    <p className="text-sm font-bold text-slate-900">Candidate Details</p>
+                                    {test.settings.start_form.fields.map((field, idx) => (
+                                        <div key={idx} className="space-y-1">
+                                            <div className="flex justify-between">
+                                                <label className="text-xs font-medium">{field.label}</label>
+                                                {field.required && <span className="text-xs text-red-500">*</span>}
+                                            </div>
+                                            <input
+                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                placeholder={`Enter ${field.label}`}
+                                                value={startFormValues[field.label] || ''}
+                                                onChange={(e) => setStartFormValues(prev => ({ ...prev, [field.label]: e.target.value }))}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => confirmStartTest(false)}>No, Continue</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => confirmStartTest(true)}>Yes, Enable Full Screen</AlertDialogAction>
+                    <AlertDialogFooter className="sm:justify-between items-center gap-2">
+                        <AlertDialogCancel onClick={() => setShowFullScreenDialog(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                if (!checklistDiff) {
+                                    e.preventDefault();
+                                    alert("Please accept the checklist.");
+                                    return;
+                                }
+                                confirmStartTest(true);
+                            }}
+                            disabled={!checklistDiff}
+                            className={!checklistDiff ? "opacity-50 cursor-not-allowed" : ""}
+                        >
+                            {test.settings?.force_fullscreen ? "Enable Full Screen & Start" : "Start Test"}
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
