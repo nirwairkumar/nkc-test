@@ -173,17 +173,62 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         }
     }, [testId, isEditMode, user, navigate, initialData]);
 
+    // Load Draft on Mount
+    useEffect(() => {
+        // Only restore draft if creating a new test (no ID) and draft exists
+        if (!testId && !initialData) {
+            const draft = localStorage.getItem('create_test_draft');
+            if (draft) {
+                try {
+                    const parsed = JSON.parse(draft);
+                    populateData(parsed);
+                    // If sections were saved, restore them too
+                    if (parsed.selectedSections) {
+                        setSelectedSections(parsed.selectedSections);
+                    }
+                    toast.success("Your test draft has been restored. You can continue editing.");
+                } catch (e) {
+                    console.error("Failed to parse draft", e);
+                }
+            }
+        }
+    }, [testId, initialData]);
+
     // Auto-Save Effect
     useEffect(() => {
-        if (!isEditMode || !testId || !user) return; // Only auto-save existing tests
         if (loading) return; // Don't save while initial loading
 
-        const timer = setTimeout(() => {
-            handleAutoSave();
-        }, 2000); // 2 second debounce
+        // Don't auto-save if we are in "edit existing" mode -- that uses the API auto-save
+        // We only want localStorage draft for NEW tests (unpersisted)
+        if (isEditMode && testId) {
+            const timer = setTimeout(() => {
+                handleAutoSave();
+            }, 2000); // 2 second debounce
+            return () => clearTimeout(timer);
+        }
 
-        return () => clearTimeout(timer);
-    }, [questions, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedSections]);
+        // For new tests (guest or user creating new), save to localStorage
+        if (!isEditMode) {
+            const timer = setTimeout(() => {
+                const draftData = {
+                    title,
+                    description,
+                    revision_notes: revisionNotes,
+                    institution_name: institutionName,
+                    institution_logo: institutionLogo,
+                    duration: time,
+                    marks_per_question: marks,
+                    negative_marks: negativeMarks,
+                    is_public: isPublic,
+                    questions,
+                    selectedSections
+                };
+                localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+
+    }, [questions, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedSections, isEditMode, testId, institutionName, institutionLogo]);
 
     const handleAutoSave = async () => {
         if (!title.trim()) return; // Silent fail if no title
@@ -398,7 +443,27 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
     const handleSave = async () => {
         if (!user) {
-            toast.error("You must be logged in.");
+            // Save current draft state before redirecting
+            const draftData = {
+                title,
+                description,
+                revision_notes: revisionNotes,
+                institution_name: institutionName,
+                institution_logo: institutionLogo,
+                duration: time,
+                marks_per_question: marks,
+                negative_marks: negativeMarks,
+                is_public: isPublic,
+                questions,
+                selectedSections
+            };
+            localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+
+            // Set redirect intent
+            localStorage.setItem('auth_redirect_intent', '/create-test');
+
+            toast.error("Please login to save your test. Redirecting...");
+            setTimeout(() => navigate('/login'), 1500);
             return;
         }
         if (!title.trim()) {
@@ -444,6 +509,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         setLoading(true);
         try {
             await performSave(false);
+            // Clear draft after successful save
+            localStorage.removeItem('create_test_draft');
+
             toast.success(isEditMode ? "Test updated successfully!" : "Test created successfully!");
             if (onSuccess) onSuccess();
             else navigate('/my-tests');

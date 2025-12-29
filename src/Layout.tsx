@@ -2,8 +2,24 @@ import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+
 export default function Layout() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
+    // Check for redirect intent after login
+    React.useEffect(() => {
+        if (user) {
+            const redirectPath = localStorage.getItem('auth_redirect_intent');
+            if (redirectPath) {
+                localStorage.removeItem('auth_redirect_intent');
+                navigate(redirectPath);
+            }
+        }
+    }, [user, navigate]);
     // Hide navbar only on live test page (/test/:id)
     // Note: /test-intro/:id starts with /test-intro so it won't match /test/
     const isLiveTestPage = location.pathname.startsWith('/test/');

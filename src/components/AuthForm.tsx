@@ -95,10 +95,14 @@ export default function AuthForm() {
                 if (adminRecord) {
                     navigate('/admin-migration');
                 } else {
-                    const from = location.state?.from?.pathname || '/';
+
+                    //  const from = location.state?.from?.pathname || '/';
+
+                    const intent = localStorage.getItem('auth_redirect_intent');
+
+                    const from = intent || location.state?.from?.pathname || '/';
                     navigate(from, { replace: true });
                 }
-
             } else if (view === 'signup') {
                 if (!values.name || !values.password) {
                     toast.error("All fields are required");
