@@ -61,11 +61,11 @@ export default function UserTestManager() {
     useEffect(() => {
         if (!authLoading && !user) {
             navigate('/login');
-        } else if (user) {
+        } else if (user?.id) {
             loadUserTests();
             loadSections();
         }
-    }, [user, authLoading, navigate]);
+    }, [user?.id, authLoading, navigate]);
 
     const loadSections = async () => {
         const { data } = await fetchSections();
@@ -114,7 +114,22 @@ export default function UserTestManager() {
     if (authLoading) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
     if (!user) return null;
 
-    // ... (keep test editor render)
+    if (isTestEditOpen) {
+        return (
+            <TestBuilder
+                initialData={editingTest}
+                onSuccess={() => {
+                    setIsTestEditOpen(false);
+                    setEditingTest(null);
+                    loadUserTests();
+                }}
+                onCancel={() => {
+                    setIsTestEditOpen(false);
+                    setEditingTest(null);
+                }}
+            />
+        );
+    }
 
     return (
         <div className="container mx-auto max-w-5xl py-10 space-y-6">

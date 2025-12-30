@@ -3,7 +3,7 @@ import { fetchUserAttempts } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronDown, ChevronUp, Calendar, Trash2 } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, Calendar, Trash2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import {
     Table,
@@ -37,10 +37,10 @@ export default function TestHistory() {
     const [testDetails, setTestDetails] = useState<Record<string, any>>({}); // Cache test details for answer review
 
     useEffect(() => {
-        if (user) {
+        if (user?.id) {
             loadHistory();
         }
-    }, [user]);
+    }, [user?.id]);
 
     async function loadHistory() {
         if (!user) return;
@@ -114,7 +114,13 @@ export default function TestHistory() {
 
     return (
         <div className="container mx-auto py-8">
-            <h1 className="text-3xl font-bold mb-8">Test History</h1>
+            <div className="flex items-center justify-between mb-8">
+                <h1 className="text-3xl font-bold">Test History</h1>
+                <Button variant="outline" size="sm" onClick={() => loadHistory()} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                </Button>
+            </div>
             <Card>
                 <CardContent className="p-0">
                     <Table>

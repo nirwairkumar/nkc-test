@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { IMEInput } from '@/components/ui/IMEInput';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
@@ -572,6 +572,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         if (file) processFile(file, setInstitutionLogo);
     };
 
+    const handleClear = () => {
+        if (confirm("Are you sure you want to clear all fields? This will erase all questions and settings.")) {
+            setTitle('');
+            setDescription('');
+            setRevisionNotes('');
+            setInstitutionName('');
+            setInstitutionLogo('');
+            setTime(30);
+            setMarks(4);
+            setNegativeMarks(1);
+            setIsPublic(true);
+            setQuestions([{ ...DEFAULT_QUESTION, id: 1, options: { ...DEFAULT_QUESTION.options } }]);
+            setSelectedSections([]);
+            // Clear draft
+            localStorage.removeItem('create_test_draft');
+            toast.success("Form cleared");
+        }
+    };
+
     return (
         <div className="container mx-auto py-8">
             <div className="mb-6 flex items-center justify-between">
@@ -584,28 +603,37 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                     <h1 className="text-3xl font-bold">{isEditMode ? 'Edit Test' : 'Create New Test'}</h1>
                 </div>
 
-                {isEditMode && (
-                    <div className="flex items-center gap-2 text-sm font-medium animate-in fade-in slide-in-from-right-4 duration-300">
-                        {saveStatus === 'saving' && (
-                            <span className="text-muted-foreground flex items-center gap-1.5">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                Saving...
-                            </span>
-                        )}
-                        {saveStatus === 'saved' && (
-                            <span className="text-emerald-600 flex items-center gap-1.5">
-                                <Cloud className="w-4 h-4" />
-                                All changes saved
-                            </span>
-                        )}
-                        {saveStatus === 'error' && (
-                            <span className="text-red-500 flex items-center gap-1.5">
-                                <CloudOff className="w-4 h-4" />
-                                Save failed
-                            </span>
-                        )}
-                    </div>
-                )}
+                <div className="flex items-center gap-2">
+                    {!isEditMode && (
+                        <Button variant="outline" size="sm" onClick={handleClear} className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200">
+                            <Eraser className="w-4 h-4 mr-2" />
+                            Clear
+                        </Button>
+                    )}
+
+                    {isEditMode && (
+                        <div className="flex items-center gap-2 text-sm font-medium animate-in fade-in slide-in-from-right-4 duration-300">
+                            {saveStatus === 'saving' && (
+                                <span className="text-muted-foreground flex items-center gap-1.5">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    Saving...
+                                </span>
+                            )}
+                            {saveStatus === 'saved' && (
+                                <span className="text-emerald-600 flex items-center gap-1.5">
+                                    <Cloud className="w-4 h-4" />
+                                    All changes saved
+                                </span>
+                            )}
+                            {saveStatus === 'error' && (
+                                <span className="text-red-500 flex items-center gap-1.5">
+                                    <CloudOff className="w-4 h-4" />
+                                    Save failed
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {!isOnline && (

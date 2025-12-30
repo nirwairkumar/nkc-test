@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { fetchTests, Test, toggleTestLike, getTestLikeCount, getTestLikeStatus } from '@/lib/testsApi';
-import { BookOpen, Clock, ArrowRight, History, Loader2, Heart, Search, Share2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { BookOpen, Clock, ArrowRight, History, Loader2, Heart, Search, Share2, ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import supabase from '@/lib/supabaseClient';
 import YouTubeGenerator from '@/components/YouTubeGenerator';
@@ -209,9 +209,15 @@ export default function TestList() {
     return (
         <div className="container mx-auto py-8">
             <div className="flex flex-col mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold">Available Tests</h1>
-                    <p className="text-muted-foreground mt-2">Select a test to begin your practice</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold">Available Tests</h1>
+                        <p className="text-muted-foreground mt-2">Select a test to begin your practice</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => loadData()} disabled={loading}>
+                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </Button>
                 </div>
 
                 <YouTubeGenerator onTestGenerated={loadData} />
