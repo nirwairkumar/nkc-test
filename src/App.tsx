@@ -9,6 +9,7 @@ import PrivateRoute from "@/components/ui/PrivateRoute";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 
+import { Analytics } from "@vercel/analytics/react";
 import AITestImporter from "./pages/AITestImporter";
 
 // Lazy Load Pages
