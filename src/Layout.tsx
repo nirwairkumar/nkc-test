@@ -1,8 +1,7 @@
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
-
-import { useNavigate } from 'react-router-dom';
+import Footer from './components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Layout() {
@@ -34,15 +33,16 @@ export default function Layout() {
     const isLiveTestPage = location.pathname.startsWith('/test/');
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 flex flex-col">
             {!isLiveTestPage && (
                 <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <Navbar />
                 </div>
             )}
-            <main>
+            <main className="flex-grow">
                 <Outlet />
             </main>
+            <Footer />
         </div>
     );
 }

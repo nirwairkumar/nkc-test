@@ -120,7 +120,7 @@ export default function SupportPage() {
             </div>
 
             {/* Footer Section */}
-            <footer className="mt-16 border-t pt-8 pb-4 text-muted-foreground">
+            {/* <footer className="mt-16 border-t pt-8 pb-4 text-muted-foreground">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
                     <div>
                         <h3 className="font-semibold mb-4 text-foreground">Quick Links</h3>
@@ -155,7 +155,7 @@ export default function SupportPage() {
                 <div className="text-center text-xs border-t pt-4">
                     &copy; {new Date().getFullYear()} NKC Test Platform. All rights reserved.
                 </div>
-            </footer>
+            </footer> */}
         </div>
     );
 }

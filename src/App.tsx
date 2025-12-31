@@ -30,6 +30,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const CreateTestPage = lazy(() => import("./pages/CreateTestPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CreatorProfilePage = lazy(() => import("./pages/CreatorProfilePage"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const Layout = lazy(() => import("./Layout"));
 
 const queryClient = new QueryClient();
@@ -62,6 +64,10 @@ const App = () => (
                   <Route path="/edit-test/:id" element={<CreateTestPage />} />
                   <Route path="/creator/:id" element={<CreatorProfilePage />} />
                   <Route path="/ai-import" element={<AITestImporter onImport={(data) => console.log(data)} />} />
+
+                  {/* Legal Routes */}
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
 
 
                   {/* Protected Routes */}
