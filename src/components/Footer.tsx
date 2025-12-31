@@ -58,7 +58,7 @@ export default function Footer() {
 
                 {/* Copyright */}
                 <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-                    © 2025 TestoZa. All rights reserved.
+                    © {new Date().getFullYear()} TestoZa. All rights reserved.
                 </div>
             </div>
         </footer>
