@@ -18,8 +18,17 @@ export default function Layout() {
                 localStorage.removeItem('auth_redirect_intent');
                 navigate(redirectPath);
             }
+
+            // Force onboarding if designation is missing
+            // Check if user has metadata and if designation is missing
+            if (user.user_metadata && !user.user_metadata.designation) {
+                // Allow staying on /onboarding
+                if (location.pathname !== '/onboarding') {
+                    navigate('/onboarding', { replace: true });
+                }
+            }
         }
-    }, [user, navigate]);
+    }, [user, navigate, location.pathname]);
     // Hide navbar only on live test page (/test/:id)
     // Note: /test-intro/:id starts with /test-intro so it won't match /test/
     const isLiveTestPage = location.pathname.startsWith('/test/');

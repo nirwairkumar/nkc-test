@@ -131,6 +131,7 @@ const ProfilePage = () => {
                     bio: bio,
                     avatar_url: avatarUrl,
                     designation: designation,
+                    email: user.email,
                     updated_at: new Date().toISOString()
                 });
 
