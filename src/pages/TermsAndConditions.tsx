@@ -10,13 +10,13 @@ export default function TermsAndConditions() {
                     <CardTitle className="text-3xl font-bold tracking-tight text-primary pb-2 border-b">
                         TERMS AND CONDITIONS
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground pt-2">
+                    {/* <p className="text-sm text-muted-foreground pt-2">
                         Last Updated: {new Date().toLocaleDateString("en-IN", {
                             year: "numeric",
                             month: "long",
                             day: "numeric",
                         })}
-                    </p>
+                    </p> */}
                 </CardHeader>
                 <CardContent className="prose dark:prose-invert max-w-none pt-6 text-sm md:text-base leading-relaxed text-justify">
                     <p className="mb-4">

@@ -11,13 +11,14 @@ export default function PrivacyPolicy() {
                     <CardTitle className="text-3xl font-bold tracking-tight text-primary pb-2 border-b">
                         PRIVACY POLICY
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground pt-2">
-                        Last Updated: {new Date().toLocaleDateString("en-IN", {
+                    {/* <p className="text-sm text-muted-foreground pt-2">
+                        Last Updated:
+                        {new Date().toLocaleDateString("en-IN", {
                             year: "numeric",
                             month: "long",
                             day: "numeric",
                         })}
-                    </p>
+                    </p> */}
                 </CardHeader>
                 <CardContent className="prose dark:prose-invert max-w-none pt-6 text-sm md:text-base leading-relaxed text-justify">
                     <p className="mb-4">
