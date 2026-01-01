@@ -38,6 +38,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { fetchSections } from '@/lib/sectionsApi';
+import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
@@ -381,6 +382,28 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         reader.readAsDataURL(file);
     };
 
+    const handleJsonImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const text = event.target?.result as string;
+                const json = JSON.parse(text);
+                if (!json.title || !json.questions) throw new Error("Invalid JSON format");
+
+                // Use existing populate logic
+                populateData(json);
+                toast.success("Test imported successfully");
+            } catch (err: any) {
+                console.error(err);
+                toast.error("Failed to import: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    };
+
     const performSave = async (isAuto: boolean) => {
         const sanitizedQuestions = questions.map(q => ({
             ...q,
@@ -604,12 +627,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {!isEditMode && (
-                        <Button variant="outline" size="sm" onClick={handleClear} className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200">
-                            <Eraser className="w-4 h-4 mr-2" />
-                            Clear
-                        </Button>
-                    )}
+                    <div className="flex flex-col items-end gap-1">
+                        <label className="cursor-pointer">
+                            <input type="file" accept=".json" className="hidden" onChange={handleJsonImport} />
+                            <div className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2 cursor-pointer">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Import JSON
+                            </div>
+                        </label>
+                        <TestUploadFormatGuide />
+                    </div>
 
                     {isEditMode && (
                         <div className="flex items-center gap-2 text-sm font-medium animate-in fade-in slide-in-from-right-4 duration-300">
@@ -667,9 +694,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                 </div>
                             </label>
                         </div>
-                        <div className="w-full max-w-lg">
-                            <Input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} placeholder="Add Your Institution Name" className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0" />
-                            <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
+                        <div className="w-full max-w-lg flex items-start gap-4">
+                            <div className="flex-1 mr-2">
+                                <Input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} placeholder="Add Your Institution Name" className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0" />
+                                <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
+                            </div>
+                            <div className="flex flex-col justify-start h-full pt-1">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={handleClear}
+                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                    title="Clear All Data"
+                                >
+                                    <Eraser className="w-5 h-5" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
 

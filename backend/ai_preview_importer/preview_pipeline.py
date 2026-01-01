@@ -1,6 +1,16 @@
 from ai_preview_importer.pdf_extractor import extract_text_blocks
 from ai_preview_importer.image_extractor import extract_images
-from ai_preview_importer.ai_reasoner import analyze_page_with_ai
+# from ai_preview_importer.ai_reasoner import analyze_page_with_ai
+
+from ai_preview_importer.pdf_extractor import (
+    detect_question_anchors,
+    attach_images_to_questions,
+    format_questions_for_ai
+)
+from ai_preview_importer.ai_reasoner import analyze_page_refinement
+
+
+
 from utils.logger import get_logger
 import asyncio
 
@@ -46,18 +56,35 @@ async def run_preview_pipeline(file_bytes: bytes):
             logger.info(f"Processing Page {p_num}...")
             
             # Call AI
-            ai_questions = await analyze_page_with_ai(
-                page_data['blocks'], 
-                page_data['images'], 
-                p_num
-            )
+            # ai_questions = await analyze_page_with_ai(
+            #     page_data['blocks'], 
+            #     page_data['images'], 
+            #     p_num
+            # )
+            # 1. Detect questions deterministically
+            questions = detect_question_anchors(page_data['blocks'])
+
+            # 2. Attach images deterministically
+            attach_images_to_questions(questions, page_data['images'])
+
+            # 3. Convert to AI-ready format
+            ai_ready_questions = format_questions_for_ai(questions)
+
+            # 4. AI refinement (ONLY grammar + LaTeX)
+            # refined_questions = await analyze_page_refinement(
+            #     ai_ready_questions,
+            #     page_data['images'],
+            #     p_num
+            # )
+            refined_questions = ai_ready_questions
+
             
             # 3. Post-Process & Re-attach Images
             # The AI returns "image": "IMG_0". We need to find the actual base64 for IMG_0 on this page.
             # Local mapping for this page's images
             page_img_map = {f"IMG_{i}": img['base64'] for i, img in enumerate(page_data['images'])}
             
-            for q in ai_questions:
+            for q in refined_questions:
                 # Assign global ID
                 q['id'] = global_id_counter
                 global_id_counter += 1

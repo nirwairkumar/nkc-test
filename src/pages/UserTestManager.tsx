@@ -140,55 +140,53 @@ export default function UserTestManager() {
                     <p className="text-muted-foreground">Manage the tests you have generated.</p>
                 </div>
                 {/* ... Import buttons ... */}
-                <div className="flex gap-2 items-center">
-                    <label className="cursor-pointer">
-                        <Input
-                            type="file"
-                            accept=".json"
-                            className="hidden"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                try {
-                                    const text = await file.text();
-                                    const json = JSON.parse(text);
+                <div className="flex gap-4 items-start">
+                    <div className="flex flex-col items-end gap-1">
+                        <label className="cursor-pointer">
+                            <Input
+                                type="file"
+                                accept=".json"
+                                className="hidden"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    try {
+                                        const text = await file.text();
+                                        const json = JSON.parse(text);
 
-                                    if (!json.title || !json.questions || !Array.isArray(json.questions)) {
-                                        toast.error("Invalid JSON format. Must have 'title' and 'questions' array.");
-                                        return;
+                                        if (!json.title || !json.questions || !Array.isArray(json.questions)) {
+                                            toast.error("Invalid JSON format. Must have 'title' and 'questions' array.");
+                                            return;
+                                        }
+
+                                        const { createTest, getNextTestId } = await import('@/lib/testsApi');
+                                        const customId = await getNextTestId('M');
+
+                                        const newTest = {
+                                            ...json,
+                                            created_by: user.id,
+                                            custom_id: customId,
+                                            creator_name: user.user_metadata?.full_name || 'Anonymous',
+                                            creator_avatar: user.user_metadata?.avatar_url || '',
+                                            created_at: new Date().toISOString()
+                                        };
+
+                                        const { error } = await createTest(newTest);
+                                        if (error) throw error;
+
+                                        toast.success("Test imported successfully!");
+                                        loadUserTests();
+                                        e.target.value = '';
+                                    } catch (err: any) {
+                                        console.error("Import error:", err);
+                                        toast.error("Failed to import: " + err.message);
                                     }
-
-                                    const { createTest, getNextTestId } = await import('@/lib/testsApi');
-                                    const customId = await getNextTestId('M');
-
-                                    const newTest = {
-                                        ...json,
-                                        created_by: user.id,
-                                        custom_id: customId,
-                                        creator_name: user.user_metadata?.full_name || 'Anonymous',
-                                        creator_avatar: user.user_metadata?.avatar_url || '',
-                                        created_at: new Date().toISOString()
-                                    };
-
-                                    const { error } = await createTest(newTest);
-                                    if (error) throw error;
-
-                                    toast.success("Test imported successfully!");
-                                    loadUserTests();
-                                    e.target.value = '';
-                                } catch (err: any) {
-                                    console.error("Import error:", err);
-                                    toast.error("Failed to import: " + err.message);
-                                }
-                            }}
-                        />
-                        <Button variant="outline" size="sm" asChild>
-                            <span><Upload className="w-4 h-4 mr-2" /> Import JSON</span>
-                        </Button>
-                    </label>
-
-                    <div className="flex flex-col items-start gap-1">
-                        <Button variant="outline" onClick={loadUserTests} size="sm">Refresh</Button>
+                                }}
+                            />
+                            <Button variant="outline" size="sm" asChild>
+                                <span><Upload className="w-4 h-4 mr-2" /> Import JSON</span>
+                            </Button>
+                        </label>
                         <TestUploadFormatGuide />
                     </div>
                 </div>

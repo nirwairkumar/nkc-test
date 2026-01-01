@@ -49,10 +49,17 @@ export default function AITestImporter({ onImport }: { onImport?: (data: Questio
 
         try {
             // Direct call to Railway Backend
-            const response = await fetch("https://nkc-test-production.up.railway.app/parse", {
+            // const response = await fetch("https://nkc-test-production.up.railway.app/parse", {
+            //     method: "POST",
+            //     body: formData,
+            // });
+
+            //for local testing
+            const response = await fetch("http://localhost:8000/parse", {
                 method: "POST",
                 body: formData,
             });
+
 
             if (!response.ok) {
                 const errText = await response.text();

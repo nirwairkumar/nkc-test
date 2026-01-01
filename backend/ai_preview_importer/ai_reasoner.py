@@ -21,9 +21,11 @@ generation_config = {
   "response_mime_type": "application/json",
 }
 
-async def analyze_page_with_ai(text_blocks, images_metadata, page_num):
+async def analyze_page_refinement(structured_questions, images_metadata, page_num):
     """
-    Sends the page content to Gemini Pro for semantic analysis.
+    Sends pre-structured questions to Gemini Pro for Refinement (Math/Grammar).
+    Input: List of dicts (id, raw_question_lines, options, image_id).
+    Output: List of refined questions (SAME structure).
     """
     try:
         if not api_key:
@@ -36,29 +38,20 @@ async def analyze_page_with_ai(text_blocks, images_metadata, page_num):
         )
 
         # Prepare Input Prompt
-        # We replace actual base64 with a placeholder ID to save tokens and avoid complexity, 
-        # as the model can infer relationship from BBox and Context if we pass that metadata.
-        # Wait, the prompt says "Image Metadata". 
+        # We pass the pre-structured questions directly
+        # The prompt expects "PRE-STRUCTURED question object"
         
-        # Format the input for the AI
         input_data = {
             "page_number": page_num,
-            "text_blocks": [
-                {"id": b["block_id"], "bbox": b["bbox"], "text": b["text"]} 
-                for b in text_blocks
-            ],
-            "images": [
-                {"id": f"IMG_{i}", "bbox": img["bbox"], "width": img["width"], "height": img["height"]} 
-                for i, img in enumerate(images_metadata)
-            ]
+            "questions": structured_questions
         }
 
         user_content = f"""
-        Analyze the following page content:
+        Refine the following questions:
         {json.dumps(input_data, indent=2)}
         """
 
-        logger.info(f"Sending Page {page_num} to AI...")
+        logger.info(f"Sending Page {page_num} (Refinement) to AI...")
         response = model.generate_content(user_content)
         
         try:
@@ -67,7 +60,7 @@ async def analyze_page_with_ai(text_blocks, images_metadata, page_num):
             logger.warning(f"AI blocked response for Page {page_num}. Safety reasons likely.")
             return []
 
-        # Clean Markdown wrappers if present (Common Gemini quirk, even with JSON mode)
+        # Clean Markdown wrappers if present
         clean_text = raw_text.strip()
         if clean_text.startswith("```json"):
             clean_text = clean_text[7:]
@@ -84,21 +77,32 @@ async def analyze_page_with_ai(text_blocks, images_metadata, page_num):
             result_json = json.loads(clean_text)
         except json.JSONDecodeError:
             logger.error(f"JSON Parse Error on Page {page_num}. Raw text start: {clean_text[:100]}")
-            # Fallback: Try to find the first { and last }
+            # Fallback attempts
             start = clean_text.find("{")
             end = clean_text.rfind("}")
             if start != -1 and end != -1:
                 try:
                     result_json = json.loads(clean_text[start:end+1])
-                except:
+                except Exception as e:
+                    logger.error(f"Fallback parse failed: {e}")
                     return []
             else:
                 return []
         
-        questions = result_json.get("questions", [])
-        logger.info(f"AI extracted {len(questions)} questions from Page {page_num}")
+        # Expecting {"questions": [...]} or just [...] depending on how model behaves, 
+        # but prompt says "Return the SAME JSON structure". Input was {questions: [...]}.
         
-        return questions
+        refined_questions = result_json.get("questions", [])
+        if not refined_questions and isinstance(result_json, list):
+             refined_questions = result_json
+
+        logger.info(f"AI refined {len(refined_questions)} questions from Page {page_num}")
+        
+        return refined_questions
+
+    except Exception as e:
+        logger.error(f"AI Refinement failed for Page {page_num}: {e}")
+        return []
 
     except Exception as e:
         logger.error(f"AI Analysis failed for Page {page_num}: {e}")
