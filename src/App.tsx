@@ -42,6 +42,7 @@ const App = () => (
       <AuthProvider>
         <Toaster />
         <Sonner />
+        <Analytics />
         <TestProvider>
           <BrowserRouter>
             <Suspense fallback={
