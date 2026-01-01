@@ -19,7 +19,7 @@ import supabase from '@/lib/supabaseClient';
 import { Loader2, User, Save, Upload } from 'lucide-react';
 
 const ProfilePage = () => {
-    const { user, session } = useAuth();
+    const { user, session, isAdmin } = useAuth();
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
 
@@ -34,9 +34,14 @@ const ProfilePage = () => {
             setFullName(user.user_metadata?.full_name || '');
             setBio(user.user_metadata?.bio || '');
             setAvatarUrl(user.user_metadata?.avatar_url || '');
-            setDesignation(user.user_metadata?.designation || 'Student');
+
+            if (isAdmin) {
+                setDesignation('Admin');
+            } else {
+                setDesignation(user.user_metadata?.designation || 'Student');
+            }
         }
-    }, [user]);
+    }, [user, isAdmin]);
 
     const getInitials = (name: string) => {
         return name
@@ -49,6 +54,7 @@ const ProfilePage = () => {
 
     const getBadgeVariant = (role: string) => {
         switch (role) {
+            case 'Admin': return 'destructive'; // Red/Destructive for Admin
             case 'Teacher': return 'default'; // Bluish
             case 'Institution': return 'warning'; // Golden (assuming warning is yellowish)
             case 'Student': return 'secondary'; // Gray
@@ -60,6 +66,7 @@ const ProfilePage = () => {
     // Custom badge styling if default variants don't match user request perfectly
     const getBadgeStyle = (role: string) => {
         switch (role) {
+            case 'Admin': return { backgroundColor: '#dc2626', color: 'white' }; // Red
             case 'Teacher': return { backgroundColor: '#3b82f6', color: 'white' }; // Blue
             case 'Institution': return { backgroundColor: '#eab308', color: 'black' }; // Gold
             case 'Student': return { backgroundColor: '#6b7280', color: 'white' }; // Gray
@@ -110,13 +117,16 @@ const ProfilePage = () => {
         e.preventDefault();
         setLoading(true);
 
+        // Force Admin designation if user is admin
+        const finalDesignation = isAdmin ? 'Admin' : designation;
+
         try {
             const { error } = await supabase.auth.updateUser({
                 data: {
                     full_name: fullName,
                     bio: bio,
                     avatar_url: avatarUrl,
-                    designation: designation
+                    designation: finalDesignation
                 }
             });
 
@@ -130,7 +140,7 @@ const ProfilePage = () => {
                     full_name: fullName,
                     bio: bio,
                     avatar_url: avatarUrl,
-                    designation: designation,
+                    designation: finalDesignation,
                     email: user.email,
                     updated_at: new Date().toISOString()
                 });
@@ -190,8 +200,8 @@ const ProfilePage = () => {
 
                         <div className="text-center sm:text-left space-y-2">
                             <h2 className="text-2xl font-bold">{fullName || 'User'}</h2>
-                            <Badge style={getBadgeStyle(designation)} className="text-xs px-2 py-0.5 pointer-events-none">
-                                {designation || 'Student'}
+                            <Badge style={getBadgeStyle(isAdmin ? 'Admin' : designation)} className="text-xs px-2 py-0.5 pointer-events-none">
+                                {isAdmin ? 'Admin' : (designation || 'Student')}
                             </Badge>
                             <p className="text-muted-foreground">{user.email}</p>
                             {bio && (
@@ -239,17 +249,27 @@ const ProfilePage = () => {
 
                             <div className="space-y-2">
                                 <Label htmlFor="designation">Designation</Label>
-                                <Select value={designation} onValueChange={setDesignation}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select designation" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Student">Student</SelectItem>
-                                        <SelectItem value="Teacher">Teacher</SelectItem>
-                                        <SelectItem value="Institution">Institution</SelectItem>
-                                        <SelectItem value="Guest">Guest</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                {isAdmin ? (
+                                    <Input
+                                        value="Admin"
+                                        disabled
+                                        className="bg-slate-100 text-slate-500 cursor-not-allowed font-medium"
+                                        title="Admin designation is managed by the system."
+                                    />
+                                ) : (
+                                    <Select value={designation} onValueChange={setDesignation}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select designation" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Student">Student</SelectItem>
+                                            <SelectItem value="Teacher">Teacher</SelectItem>
+                                            <SelectItem value="Institution">Institution</SelectItem>
+                                            <SelectItem value="Guest">Guest</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                                {isAdmin && <p className="text-xs text-muted-foreground">Admin status is linked to your email.</p>}
                             </div>
 
                             <div className="space-y-2">

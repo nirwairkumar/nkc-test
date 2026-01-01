@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { BackButton } from '@/components/ui/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Trash2, Settings, Save, Plus, Pencil } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -24,6 +23,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import TestSettingsPanel from '@/components/TestSettingsPanel';
+import TestResultsPanel from '@/components/TestResultsPanel';
 
 export default function ManageTests() {
     const { loading: authLoading, isAdmin } = useAuth();
@@ -50,6 +51,10 @@ export default function ManageTests() {
     const [sectionsLoading, setSectionsLoading] = useState(true);
     const [isSectionDialogOpen, setIsSectionDialogOpen] = useState(false);
     const [editingSection, setEditingSection] = useState<{ id?: string, name: string }>({ name: '' });
+
+    // Manage & Results State
+    const [configuringTest, setConfiguringTest] = useState<any>(null);
+    const [viewingResultsTest, setViewingResultsTest] = useState<any>(null);
 
     // --- Effects ---
     useEffect(() => {
@@ -231,10 +236,14 @@ export default function ManageTests() {
                                             <span>{test.marks_per_question || '-'} Marks</span>
                                         </div>
                                     </CardContent>
-                                    <CardFooter className="pt-2 flex justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
-                                        <Button variant="outline" size="sm" className="w-full" onClick={() => openTestEditDialog(test)}>
+                                    <CardFooter className="pt-2 flex flex-wrap justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
+                                        <Button variant="outline" size="sm" className="h-8 flex-1" onClick={() => openTestEditDialog(test)}>
+                                            <Pencil className="h-3 w-3 mr-2" />
+                                            Edit
+                                        </Button>
+                                        <Button variant="secondary" size="sm" className="h-8 flex-1" onClick={() => setConfiguringTest(test)}>
                                             <Settings className="h-3 w-3 mr-2" />
-                                            Edit Test
+                                            Manage
                                         </Button>
                                         <Button
                                             variant="ghost"
@@ -305,7 +314,7 @@ export default function ManageTests() {
                 </TabsContent>
             </Tabs>
 
-            {/* TEST EDIT DIALOG */}
+            {/* TEST EDIT DIALOG - Leaving this logic even if using router, for backwards compat/safety */}
             <Dialog open={isTestEditOpen} onOpenChange={setIsTestEditOpen}>
                 <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
@@ -402,7 +411,27 @@ export default function ManageTests() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {configuringTest && (
+                <TestSettingsPanel
+                    test={configuringTest}
+                    onClose={() => setConfiguringTest(null)}
+                    onUpdate={loadTests}
+                    onViewResults={() => {
+                        setConfiguringTest(null);
+                        setViewingResultsTest(configuringTest);
+                    }}
+                />
+            )}
+
+            {viewingResultsTest && (
+                <TestResultsPanel
+                    test={viewingResultsTest}
+                    onClose={() => setViewingResultsTest(null)}
+                />
+            )}
         </div>
     );
 }
+
 
