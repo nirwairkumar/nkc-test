@@ -128,6 +128,60 @@ export const IMEInput: React.FC<IMEInputProps> = ({
         }, 0);
     };
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const newValue = e.target.value;
+        const newCursor = e.target.selectionStart || 0;
+
+        // Mobile/Fallback logic: Check if a space was just inserted in Hindi mode
+        if (typingMode === 'hi' && newValue.length > value.length) {
+            const charBefore = newValue.charAt(newCursor - 1);
+            if (charBefore === ' ') {
+                const textBefore = newValue.substring(0, newCursor);
+                // We want the word BEFORE the space. 
+                const words = textBefore.trimEnd().split(/[\s\n]/);
+                const lastWord = words[words.length - 1];
+
+                if (lastWord && /^[a-zA-Z]+$/.test(lastWord)) {
+                    // Trigger fetch
+                    fetch(`https://inputtools.google.com/request?text=${lastWord}&itc=hi-t-i0-und&num=5`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data[0] === 'SUCCESS' && data[1][0] && data[1][0][1]) {
+                                const suggestionsList = data[1][0][1];
+                                const bestMatch = suggestionsList[0];
+
+                                // Replace: ...[word] [cursor]... -> ...[bestMatch] [cursor]...
+                                // Start of word: newCursor - 1 (space) - lastWord.length
+                                const startIdx = newCursor - 1 - lastWord.length;
+
+                                const finalValue = newValue.substring(0, startIdx) + bestMatch + " " + newValue.substring(newCursor);
+
+                                onChange(finalValue);
+
+                                // Fix cursor
+                                setTimeout(() => {
+                                    if (inputRef.current) {
+                                        const newPos = startIdx + bestMatch.length + 1;
+                                        inputRef.current.setSelectionRange(newPos, newPos);
+                                    }
+                                }, 0);
+
+                                setSuggestions(suggestionsList);
+                                setLastWordPos({
+                                    start: startIdx,
+                                    end: startIdx + bestMatch.length
+                                });
+                                return;
+                            }
+                        })
+                        .catch(err => console.error(err));
+                }
+            }
+        }
+
+        onChange(newValue);
+    };
+
     return (
         <div className="w-full">
             {/* Suggestions Bar - Fixed wording to not include "Suggestions:" label as requested */}
@@ -148,7 +202,7 @@ export const IMEInput: React.FC<IMEInputProps> = ({
             <Component
                 ref={inputRef as any}
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={handleChange}
                 onKeyDown={handleKeyDown}
                 className={cn(className, typingMode === 'hi' ? "border-orange-200 focus-visible:ring-orange-200" : "")}
                 autoComplete="off"
