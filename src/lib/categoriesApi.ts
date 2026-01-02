@@ -1,33 +1,33 @@
 
 import supabase from '@/lib/supabaseClient';
 
-export interface Section {
+export interface Category {
     id: string;
     name: string;
     created_at: string;
 }
 
-export async function fetchSections() {
+export async function fetchCategories() {
     const { data, error } = await supabase
-        .from('sections')
+        .from('categories')
         .select('*')
         .order('name', { ascending: true });
     return { data, error };
 }
 
-export async function createSection(name: string) {
+export async function createCategory(name: string) {
     const { data, error } = await supabase
-        .from('sections')
+        .from('categories')
         .insert({ name })
         .select()
         .single();
     return { data, error };
 }
 
-export async function assignSectionsToTest(testId: string, sectionIds: string[]) {
+export async function assignCategoriesToTest(testId: string, categoryIds: string[]) {
     // 1. Delete existing associations
     const { error: deleteError } = await supabase
-        .from('test_sections')
+        .from('test_categories')
         .delete()
         .eq('test_id', testId);
 
@@ -36,14 +36,14 @@ export async function assignSectionsToTest(testId: string, sectionIds: string[])
     }
 
     // 2. Insert new associations
-    if (sectionIds.length > 0) {
-        const rows = sectionIds.map(sectionId => ({
+    if (categoryIds.length > 0) {
+        const rows = categoryIds.map(categoryId => ({
             test_id: testId,
-            section_id: sectionId
+            category_id: categoryId
         }));
 
         const { error: insertError } = await supabase
-            .from('test_sections')
+            .from('test_categories')
             .insert(rows);
 
         return { error: insertError };
@@ -52,20 +52,20 @@ export async function assignSectionsToTest(testId: string, sectionIds: string[])
     return { error: null };
 }
 
-export async function fetchTestSections(testId: string) {
+export async function fetchTestCategories(testId: string) {
     const { data, error } = await supabase
-        .from('test_sections')
-        .select('section_id')
+        .from('test_categories')
+        .select('category_id')
         .eq('test_id', testId);
 
     if (error) return { data: null, error };
 
-    return { data: data.map(d => d.section_id), error: null };
+    return { data: data.map(d => d.category_id), error: null };
 }
 
-export async function updateSection(id: string, name: string) {
+export async function updateCategory(id: string, name: string) {
     const { data, error } = await supabase
-        .from('sections')
+        .from('categories')
         .update({ name })
         .eq('id', id)
         .select()
@@ -73,9 +73,9 @@ export async function updateSection(id: string, name: string) {
     return { data, error };
 }
 
-export async function deleteSection(id: string) {
+export async function deleteCategory(id: string) {
     const { error } = await supabase
-        .from('sections')
+        .from('categories')
         .delete()
         .eq('id', id);
     return { error };

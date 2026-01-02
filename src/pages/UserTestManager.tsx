@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from "sonner";
 import { fetchTestsByUserId } from '@/lib/testsApi';
-import { fetchSections, createSection, fetchTestSections, assignSectionsToTest } from '@/lib/sectionsApi';
+import { fetchCategories, createCategory, fetchTestCategories, assignCategoriesToTest } from '@/lib/categoriesApi';
 import {
     Select,
     SelectContent,
@@ -49,11 +49,11 @@ export default function UserTestManager() {
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [deleteTitle, setDeleteTitle] = useState("");
 
-    // Section State
-    const [sections, setSections] = useState<any[]>([]);
-    const [selectedSection, setSelectedSection] = useState<string>("none");
-    const [isNewSectionMode, setIsNewSectionMode] = useState(false);
-    const [newSectionName, setNewSectionName] = useState("");
+    // Category State
+    const [categories, setCategories] = useState<any[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>("none");
+    const [isNewCategoryMode, setIsNewCategoryMode] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
 
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [viewingResultsTest, setViewingResultsTest] = useState<any>(null); // New State
@@ -63,13 +63,13 @@ export default function UserTestManager() {
             navigate('/login');
         } else if (user?.id) {
             loadUserTests();
-            loadSections();
+            loadCategories();
         }
     }, [user?.id, authLoading, navigate]);
 
-    const loadSections = async () => {
-        const { data } = await fetchSections();
-        if (data) setSections(data);
+    const loadCategories = async () => {
+        const { data } = await fetchCategories();
+        if (data) setCategories(data);
     };
 
     const loadUserTests = async () => {

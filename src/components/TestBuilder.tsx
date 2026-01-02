@@ -37,7 +37,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { fetchSections } from '@/lib/sectionsApi';
+import { fetchCategories } from '@/lib/categoriesApi';
+import slugify from 'slugify';
+
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
@@ -86,10 +88,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     const [negativeMarks, setNegativeMarks] = useState<number>(1);
     const [isPublic, setIsPublic] = useState(true);
 
-    // Section State
-    const [sections, setSections] = useState<any[]>([]);
-    const [selectedSections, setSelectedSections] = useState<string[]>([]);
-    const [openSectionCombobox, setOpenSectionCombobox] = useState(false);
+    // Category State
+    const [categories, setCategories] = useState<any[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [openCategoryCombobox, setOpenCategoryCombobox] = useState(false);
+
+    // Tags State
+    // Tags State
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState("");
+
+    // Custom Category ("Other") State
+    const [showOtherCategory, setShowOtherCategory] = useState(false);
+    const [customCategory, setCustomCategory] = useState("");
 
     // Questions State
     const [questions, setQuestions] = useState<QuestionState[]>([DEFAULT_QUESTION]);
@@ -125,10 +136,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         };
     }, []);
 
-    // Load Sections
+    // Load Categories
     useEffect(() => {
-        fetchSections().then(({ data }) => {
-            if (data) setSections(data);
+        fetchCategories().then(({ data }) => {
+            if (data) setCategories(data);
         });
     }, []);
 
@@ -148,8 +159,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         if (initialData) {
             populateData(initialData);
             loadedTestId.current = initialData.id;
-            // We also need to fetch sections for this test if not in initialData
-            fetchAndSetSections(initialData.id);
+            // We also need to fetch categories for this test if not in initialData
+            fetchAndSetCategories(initialData.id);
+            if (initialData.tags) setTags(initialData.tags);
             return;
         }
 
@@ -165,7 +177,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                     }
                     populateData(data);
                     loadedTestId.current = data.id;
-                    await fetchAndSetSections(data.id);
+                    await fetchAndSetCategories(data.id);
+                    if (data.tags) setTags(data.tags);
                 } else {
                     toast.error("Test not found");
                 }
@@ -183,9 +196,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 try {
                     const parsed = JSON.parse(draft);
                     populateData(parsed);
-                    // If sections were saved, restore them too
-                    if (parsed.selectedSections) {
-                        setSelectedSections(parsed.selectedSections);
+                    // If categories were saved, restore them too
+                    if (parsed.selectedCategories) {
+                        setSelectedCategories(parsed.selectedCategories);
+                    }
+                    if (parsed.tags) {
+                        setTags(parsed.tags);
                     }
                     toast.success("Your test draft has been restored. You can continue editing.");
                 } catch (e) {
@@ -222,14 +238,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                     negative_marks: negativeMarks,
                     is_public: isPublic,
                     questions,
-                    selectedSections
+                    selectedCategories
                 };
                 localStorage.setItem('create_test_draft', JSON.stringify(draftData));
             }, 1000);
             return () => clearTimeout(timer);
         }
 
-    }, [questions, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedSections, isEditMode, testId, institutionName, institutionLogo]);
+    }, [questions, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedCategories, isEditMode, testId, institutionName, institutionLogo]);
 
     const handleAutoSave = async () => {
         if (!title.trim()) return; // Silent fail if no title
@@ -245,11 +261,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         }
     };
 
-    const fetchAndSetSections = async (tid: string) => {
-        const { fetchTestSections } = await import('@/lib/sectionsApi');
-        const { data: sectionData } = await fetchTestSections(tid);
-        if (sectionData) {
-            setSelectedSections(sectionData);
+    const fetchAndSetCategories = async (tid: string) => {
+        const { fetchTestCategories } = await import('@/lib/categoriesApi');
+        const { data: catData } = await fetchTestCategories(tid);
+        if (catData) {
+            setSelectedCategories(catData);
         }
     };
 
@@ -270,6 +286,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             typingMode: 'en'
         }));
         setQuestions(mappedQuestions);
+
+        if (data.custom_category) {
+            setShowOtherCategory(true);
+            setCustomCategory(data.custom_category);
+        }
     };
 
     const handleAddQuestion = () => {
@@ -427,6 +448,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             }),
             institution_name: institutionName,
             institution_logo: institutionLogo,
+            slug: title ? slugify(title, { lower: true, strict: true }) + '-' + Math.random().toString(36).substr(2, 4) : undefined,
+            tags: tags,
+            custom_category: showOtherCategory && customCategory.trim() ? customCategory.trim() : null
         };
 
         if (isEditMode && testId) {
@@ -434,9 +458,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             if (error) throw error;
             // Only update sections if changed? For now update always to be safe
             // Ideally check dirty state, but lightweight enough
-            if (selectedSections.length > 0) {
-                const { assignSectionsToTest } = await import('@/lib/sectionsApi');
-                await assignSectionsToTest(testId, selectedSections);
+            if (selectedCategories.length > 0) {
+                const { assignCategoriesToTest } = await import('@/lib/categoriesApi');
+                await assignCategoriesToTest(testId, selectedCategories);
             }
         } else {
             // Creation logic handles its own ID generation so we can't reuse this perfectly for auto-save 'creation'
@@ -457,9 +481,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             };
             const { data, error } = await createTest(newTest);
             if (error) throw error;
-            if (selectedSections.length > 0) {
-                const { assignSectionsToTest } = await import('@/lib/sectionsApi');
-                await assignSectionsToTest(data.id, selectedSections);
+            if (selectedCategories.length > 0) {
+                const { assignCategoriesToTest } = await import('@/lib/categoriesApi');
+                await assignCategoriesToTest(data.id, selectedCategories);
             }
         }
     };
@@ -478,7 +502,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 negative_marks: negativeMarks,
                 is_public: isPublic,
                 questions,
-                selectedSections
+                selectedCategories
             };
             localStorage.setItem('create_test_draft', JSON.stringify(draftData));
 
@@ -607,11 +631,39 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             setNegativeMarks(1);
             setIsPublic(true);
             setQuestions([{ ...DEFAULT_QUESTION, id: 1, options: { ...DEFAULT_QUESTION.options } }]);
-            setSelectedSections([]);
+            setSelectedCategories([]);
+            setTags([]);
             // Clear draft
             localStorage.removeItem('create_test_draft');
             toast.success("Form cleared");
         }
+    };
+
+    // Category Helpers
+    const toggleCategory = (catId: string) => {
+        setSelectedCategories(prev =>
+            prev.includes(catId)
+                ? prev.filter(id => id !== catId)
+                : [...prev, catId]
+        );
+    };
+
+    // Tag Helpers
+    const handleAddTag = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = tagInput.trim();
+            if (val && !tags.includes(val)) {
+                setTags([...tags, val]);
+                setTagInput("");
+            } else if (tags.includes(val)) {
+                toast.error("Tag already exists");
+            }
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        setTags(tags.filter(t => t !== tagToRemove));
     };
 
     return (
@@ -719,40 +771,127 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                             <Label>Test Title</Label>
                             <Input placeholder="Enter test title..." value={title} onChange={e => setTitle(e.target.value)} />
                         </div>
-                        <div className="grid gap-2">
-                            <Label>Sections</Label>
-                            <Popover open={openSectionCombobox} onOpenChange={setOpenSectionCombobox}>
+                        <div className="flex flex-col space-y-2">
+                            <Label>Categories</Label>
+                            <Popover open={openCategoryCombobox} onOpenChange={setOpenCategoryCombobox}>
+                                {/* ... Existing Popover code ... */}
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" role="combobox" className="w-full justify-between">
-                                        {selectedSections.length > 0 ? `${selectedSections.length} selected` : "Select sections..."}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={openCategoryCombobox}
+                                        className="w-full justify-between"
+                                    >
+                                        {selectedCategories.length > 0
+                                            ? `${selectedCategories.length} selected`
+                                            : "Select categories..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-[300px] p-0">
+                                <PopoverContent className="w-[400px] p-0">
                                     <Command>
-                                        <CommandInput placeholder="Search section..." />
-                                        <CommandList>
-                                            <CommandEmpty>No section found.</CommandEmpty>
-                                            <CommandGroup>
-                                                {sections.map((section) => (
-                                                    <CommandItem key={section.id} value={section.name} onSelect={() => setSelectedSections(prev => prev.includes(section.id) ? prev.filter(id => id !== section.id) : [...prev, section.id])}>
-                                                        <Check className={cn("mr-2 h-4 w-4", selectedSections.includes(section.id) ? "opacity-100" : "opacity-0")} />
-                                                        {section.name}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
+                                        <CommandInput placeholder="Search category..." />
+                                        <CommandEmpty>
+                                            <div className="p-2 text-sm text-muted-foreground text-center">
+                                                No category found. Select "Other" to add a custom one.
+                                            </div>
+                                        </CommandEmpty>
+                                        <CommandGroup>
+                                            {categories.map((category) => (
+                                                <CommandItem
+                                                    key={category.id}
+                                                    value={category.name}
+                                                    onSelect={() => {
+                                                        toggleCategory(category.id);
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            selectedCategories.includes(category.id) ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {category.name}
+                                                </CommandItem>
+                                            ))}
+                                            <CommandItem
+                                                value="Other"
+                                                onSelect={() => {
+                                                    setShowOtherCategory(true);
+                                                    setOpenCategoryCombobox(false);
+                                                }}
+                                                className="border-t mt-1 font-medium text-blue-600"
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Other (Add Custom)
+                                            </CommandItem>
+                                        </CommandGroup>
                                     </Command>
                                 </PopoverContent>
                             </Popover>
-                            {selectedSections.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {selectedSections.map(sid => {
-                                        const sec = sections.find(s => s.id === sid);
-                                        return <Badge key={sid} variant="secondary">{sec?.name}<X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => setSelectedSections(p => p.filter(id => id !== sid))} /></Badge>;
-                                    })}
+
+                            {/* Selected Categories Badges */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {selectedCategories.map(catId => {
+                                    const cat = categories.find(c => c.id === catId);
+                                    if (!cat) return null;
+                                    return (
+                                        <Badge key={catId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
+                                            {cat.name}
+                                            <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => toggleCategory(catId)} />
+                                        </Badge>
+                                    )
+                                })}
+                            </div>
+
+                            {/* OTHER / CUSTOM CATEGORY INPUT */}
+                            {showOtherCategory && (
+                                <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <Label className="text-blue-600">Custom Category Name</Label>
+                                    <div className="flex gap-2 mt-1.5">
+                                        <Textarea
+                                            value={customCategory}
+                                            onChange={(e) => setCustomCategory(e.target.value)}
+                                            placeholder="Enter your custom category name here..."
+                                            className="min-h-[60px] resize-none"
+                                        />
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="mt-1 hover:bg-slate-100"
+                                            onClick={() => {
+                                                setShowOtherCategory(false);
+                                                setCustomCategory("");
+                                            }}
+                                            title="Remove Custom Category"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <p className="text-[11px] text-muted-foreground mt-1">
+                                        * This will be saved as a searchable tag for this test.
+                                    </p>
                                 </div>
                             )}
+                        </div>
+
+                        {/* TAGS INPUT SECTION */}
+                        <div className="space-y-2">
+                            <Label>Tags (Press Enter to add)</Label>
+                            <Input
+                                placeholder="Add a tag..."
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onKeyDown={handleAddTag}
+                            />
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {tags.map((tag, idx) => (
+                                    <Badge key={idx} variant="outline" className="pl-2 pr-1 py-1 flex items-center gap-1 bg-slate-50">
+                                        #{tag}
+                                        <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeTag(tag)} />
+                                    </Badge>
+                                ))}
+                            </div>
                         </div>
 
                         <div className="grid gap-2">

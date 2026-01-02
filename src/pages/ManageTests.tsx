@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { fetchSections, assignSectionsToTest, fetchTestSections, updateSection, deleteSection, createSection, Section } from '@/lib/sectionsApi';
+import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category } from '@/lib/categoriesApi';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -44,13 +44,14 @@ export default function ManageTests() {
     const [testsLoading, setTestsLoading] = useState(true);
     const [isTestEditOpen, setIsTestEditOpen] = useState(false);
     const [editingTest, setEditingTest] = useState<any>(null);
-    const [selectedSectionsForTest, setSelectedSectionsForTest] = useState<string[]>([]);
 
-    // Sections State
-    const [sections, setSections] = useState<Section[]>([]);
-    const [sectionsLoading, setSectionsLoading] = useState(true);
-    const [isSectionDialogOpen, setIsSectionDialogOpen] = useState(false);
-    const [editingSection, setEditingSection] = useState<{ id?: string, name: string }>({ name: '' });
+    const [selectedCategoriesForTest, setSelectedCategoriesForTest] = useState<string[]>([]);
+
+    // Categories State
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
+    const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<{ id?: string, name: string }>({ name: '' });
 
     // Manage & Results State
     const [configuringTest, setConfiguringTest] = useState<any>(null);
@@ -59,7 +60,7 @@ export default function ManageTests() {
     // --- Effects ---
     useEffect(() => {
         loadTests();
-        loadSections();
+        loadCategories();
     }, []);
 
     // --- Loading Data ---
@@ -77,11 +78,11 @@ export default function ManageTests() {
         }
     };
 
-    const loadSections = async () => {
-        setSectionsLoading(true);
-        const { data } = await fetchSections();
-        if (data) setSections(data);
-        setSectionsLoading(false);
+    const loadCategories = async () => {
+        setCategoriesLoading(true);
+        const { data } = await fetchCategories();
+        if (data) setCategories(data);
+        setCategoriesLoading(false);
     };
 
     // --- Test Actions ---
@@ -121,7 +122,7 @@ export default function ManageTests() {
                 .eq('id', editingTest.id);
 
             if (error) throw error;
-            await assignSectionsToTest(editingTest.id, selectedSectionsForTest);
+            await assignCategoriesToTest(editingTest.id, selectedCategoriesForTest);
 
             toast.success("Test updated successfully");
             setIsTestEditOpen(false);
@@ -132,56 +133,56 @@ export default function ManageTests() {
         }
     };
 
-    const toggleSectionForTest = (id: string) => {
-        setSelectedSectionsForTest(prev =>
+    const toggleCategoryForTest = (id: string) => {
+        setSelectedCategoriesForTest(prev =>
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
         );
     };
 
 
-    // --- Section Actions ---
-    const openSectionDialog = (section?: Section) => {
-        if (section) {
-            setEditingSection({ id: section.id, name: section.name });
+    // --- Category Actions ---
+    const openCategoryDialog = (category?: Category) => {
+        if (category) {
+            setEditingCategory({ id: category.id, name: category.name });
         } else {
-            setEditingSection({ name: '' });
+            setEditingCategory({ name: '' });
         }
-        setIsSectionDialogOpen(true);
+        setIsCategoryDialogOpen(true);
     };
 
-    const handleSaveSection = async () => {
-        if (!editingSection.name.trim()) return;
+    const handleSaveCategory = async () => {
+        if (!editingCategory.name.trim()) return;
 
         try {
-            if (editingSection.id) {
+            if (editingCategory.id) {
                 // Update
-                const { error } = await updateSection(editingSection.id, editingSection.name.trim());
+                const { error } = await updateCategory(editingCategory.id, editingCategory.name.trim());
                 if (error) throw error;
-                toast.success("Section updated");
+                toast.success("Category updated");
             } else {
                 // Create
-                const { error } = await createSection(editingSection.name.trim());
+                const { error } = await createCategory(editingCategory.name.trim());
                 if (error) throw error;
-                toast.success("Section created");
+                toast.success("Category created");
             }
-            setIsSectionDialogOpen(false);
-            loadSections();
+            setIsCategoryDialogOpen(false);
+            loadCategories();
         } catch (error: any) {
-            console.error("Error saving section:", error);
-            toast.error("Failed to save section");
+            console.error("Error saving category:", error);
+            toast.error("Failed to save category");
         }
     };
 
-    const handleDeleteSection = async (section: Section) => {
-        if (!confirm(`Delete section "${section.name}" ? This will vanish from all tests.`)) return;
+    const handleDeleteCategory = async (category: Category) => {
+        if (!confirm(`Delete category "${category.name}" ? This will vanish from all tests.`)) return;
 
         try {
-            const { error } = await deleteSection(section.id);
+            const { error } = await deleteCategory(category.id);
             if (error) throw error;
-            toast.success("Section deleted");
-            loadSections();
+            toast.success("Category deleted");
+            loadCategories();
         } catch (error: any) {
-            toast.error("Failed to delete section");
+            toast.error("Failed to delete category");
         }
     };
 
@@ -202,7 +203,7 @@ export default function ManageTests() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-[400px] grid-cols-2 mb-4">
                     <TabsTrigger value="tests">Manage Tests</TabsTrigger>
-                    <TabsTrigger value="sections">Manage Sections</TabsTrigger>
+                    <TabsTrigger value="categories">Manage Categories</TabsTrigger>
                 </TabsList>
 
                 {/* --- TESTS TAB --- */}
@@ -261,17 +262,17 @@ export default function ManageTests() {
                     </div>
                 </TabsContent>
 
-                {/* --- SECTIONS TAB --- */}
-                <TabsContent value="sections">
+                {/* --- CATEGORIES TAB --- */}
+                <TabsContent value="categories">
                     <Card>
                         <CardHeader>
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <CardTitle>Test Sections</CardTitle>
-                                    <CardDescription>Create and rename sections (e.g., JEE, NEET, Physics, Math).</CardDescription>
+                                    <CardTitle>Test Categories</CardTitle>
+                                    <CardDescription>Create and rename categories (e.g., JEE, NEET, Physics, Math).</CardDescription>
                                 </div>
-                                <Button onClick={() => openSectionDialog()} size="sm">
-                                    <Plus className="w-4 h-4 mr-2" /> Add Section
+                                <Button onClick={() => openCategoryDialog()} size="sm">
+                                    <Plus className="w-4 h-4 mr-2" /> Add Category
                                 </Button>
                             </div>
                         </CardHeader>
@@ -279,28 +280,28 @@ export default function ManageTests() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Section Name</TableHead>
+                                        <TableHead>Category Name</TableHead>
                                         <TableHead className="w-[150px] text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {sectionsLoading ? (
+                                    {categoriesLoading ? (
                                         <TableRow>
                                             <TableCell colSpan={2} className="text-center">Loading...</TableCell>
                                         </TableRow>
-                                    ) : sections.length === 0 ? (
+                                    ) : categories.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={2} className="text-center text-muted-foreground">No sections found.</TableCell>
+                                            <TableCell colSpan={2} className="text-center text-muted-foreground">No categories found.</TableCell>
                                         </TableRow>
                                     ) : (
-                                        sections.map(section => (
-                                            <TableRow key={section.id}>
-                                                <TableCell className="font-medium">{section.name}</TableCell>
+                                        categories.map(category => (
+                                            <TableRow key={category.id}>
+                                                <TableCell className="font-medium">{category.name}</TableCell>
                                                 <TableCell className="text-right flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => openSectionDialog(section)}>
+                                                    <Button variant="ghost" size="icon" onClick={() => openCategoryDialog(category)}>
                                                         <Pencil className="w-4 h-4 text-blue-600" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSection(section)}>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category)}>
                                                         <Trash2 className="w-4 h-4 text-red-600" />
                                                     </Button>
                                                 </TableCell>
@@ -351,21 +352,21 @@ export default function ManageTests() {
                                     />
                                 </div>
                             </div>
-                            {/* Sections Selection inside Test Edit */}
+                            {/* Categories Selection inside Test Edit */}
                             <div className="grid gap-2">
-                                <Label>Assigned Sections</Label>
+                                <Label>Assigned Categories</Label>
                                 <div className="flex flex-wrap gap-2 border p-3 rounded-md bg-slate-50 dark:bg-slate-900">
-                                    {sections.map(section => (
-                                        <div key={section.id} className="flex items-center space-x-2">
+                                    {categories.map(category => (
+                                        <div key={category.id} className="flex items-center space-x-2">
                                             <Checkbox
-                                                id={`t - sec - ${section.id} `}
-                                                checked={selectedSectionsForTest.includes(section.id)}
-                                                onCheckedChange={() => toggleSectionForTest(section.id)}
+                                                id={`t - cat - ${category.id} `}
+                                                checked={selectedCategoriesForTest.includes(category.id)}
+                                                onCheckedChange={() => toggleCategoryForTest(category.id)}
                                             />
-                                            <Label htmlFor={`t - sec - ${section.id} `}>{section.name}</Label>
+                                            <Label htmlFor={`t - cat - ${category.id} `}>{category.name}</Label>
                                         </div>
                                     ))}
-                                    {sections.length === 0 && <span className="text-xs text-muted-foreground">No sections customized. Use "Manage Sections" tab to add some.</span>}
+                                    {categories.length === 0 && <span className="text-xs text-muted-foreground">No categories customized. Use "Manage Categories" tab to add some.</span>}
                                 </div>
                             </div>
 
@@ -388,26 +389,26 @@ export default function ManageTests() {
                 </DialogContent>
             </Dialog>
 
-            {/* SECTION EDIT/ADD DIALOG */}
-            <Dialog open={isSectionDialogOpen} onOpenChange={setIsSectionDialogOpen}>
+            {/* CATEGORY EDIT/ADD DIALOG */}
+            <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{editingSection.id ? 'Edit Section' : 'Add New Section'}</DialogTitle>
+                        <DialogTitle>{editingCategory.id ? 'Edit Category' : 'Add New Category'}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="sec-name">Section Name</Label>
+                            <Label htmlFor="cat-name">Category Name</Label>
                             <Input
-                                id="sec-name"
-                                value={editingSection.name}
-                                onChange={(e) => setEditingSection({ ...editingSection, name: e.target.value })}
+                                id="cat-name"
+                                value={editingCategory.name}
+                                onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
                                 placeholder="e.g. Physics, JEE Mains"
                             />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsSectionDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSaveSection}>Save</Button>
+                        <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveCategory}>Save</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

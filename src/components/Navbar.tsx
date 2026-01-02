@@ -11,13 +11,17 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus } from 'lucide-react';
 
 
 export default function Navbar() {
     const { user, isAdmin } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isLiveTest = location.pathname.startsWith('/live');
+
+    if (isLiveTest) return null;
 
     const handleSignOut = async () => {
         await signOut();

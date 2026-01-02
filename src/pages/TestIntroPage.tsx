@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { fetchTestById, Test } from '@/lib/testsApi';
-import { Clock, HelpCircle, AlertTriangle, FileText, CheckCircle, ArrowLeft } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-
 import {
     AlertDialog,
     AlertDialogAction,
@@ -19,39 +11,104 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Loader2, Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle, FileText, CheckCircle, ArrowLeft, Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { fetchTestById, fetchTestBySlug, Test } from '@/lib/testsApi';
+import { Helmet } from 'react-helmet-async';
+import { SEOContent } from '@/components/SEOContent';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function TestIntroPage() {
-    const { id } = useParams<{ id: string }>();
+    const { id, slug } = useParams<{ id: string; slug: string }>();
     const navigate = useNavigate();
     const { user, loading: authLoading } = useAuth();
 
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showFullScreenDialog, setShowFullScreenDialog] = useState(false);
 
+    // Logic State
+    const [showFullScreenDialog, setShowFullScreenDialog] = useState(false);
     const [hasAttempted, setHasAttempted] = useState(false);
-    const [checklistDiff, setChecklistDiff] = useState(false); // User accepted checklist
+    const [checklistDiff, setChecklistDiff] = useState(false);
     const [startFormValues, setStartFormValues] = useState<Record<string, string>>({});
     const [schedulingError, setSchedulingError] = useState<string | null>(null);
 
+    // 1. Authentication Check
     useEffect(() => {
-        if (id) {
-            loadTest(id);
+        if (!authLoading && !user) {
+            // Optional: Redirect to login logic if required
         }
-    }, [id]);
+    }, [user, authLoading]);
 
-    // Check for attempt limit and schedule when test loads or user changes
+    // 2. Load Test Data
+    useEffect(() => {
+        if (slug) {
+            loadTestBySlug(slug);
+        } else if (id) {
+            loadTestById(id);
+        }
+    }, [id, slug]);
+
+    // 3. Check Permissions (Schedule & Attempts)
     useEffect(() => {
         if (test && user) {
             checkPermissions();
         }
     }, [test, user]);
 
+    const loadTestBySlug = async (testSlug: string) => {
+        setLoading(true);
+        try {
+            const { data, error } = await fetchTestBySlug(testSlug);
+            if (error) throw error;
+            if (!data) throw new Error("Test not found");
+            setTest(data);
+        } catch (err: any) {
+            console.error("Error loading test by slug:", err);
+            setError(err.message || "Failed to load test details.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadTestById = async (testId: string) => {
+        setLoading(true);
+        try {
+            const { data, error } = await fetchTestById(testId);
+            if (error) throw error;
+            if (!data) throw new Error("Test not found");
+
+            // SEO Redirect: If test has a slug, redirect to it
+            if (data.slug) {
+                navigate(`/test/${data.slug}`, { replace: true });
+                return;
+            }
+
+            setTest(data);
+        } catch (err: any) {
+            console.error("Error loading test:", err);
+            setError(err.message || "Failed to load test details.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const checkPermissions = async () => {
         if (!test || !user) return;
 
-        // 1. Schedule Check
+        // Schedule Check
         if (test.settings?.schedule?.enabled) {
             const now = new Date();
             const start = test.settings.schedule.start_time ? new Date(test.settings.schedule.start_time) : null;
@@ -67,37 +124,15 @@ export default function TestIntroPage() {
             }
         }
 
-        // 2. Attempt Limit Check
-        // console.log("Checking attempt limit:", test.settings?.attempt_limit);
+        // Attempt Limit Check
         if (test.settings?.attempt_limit === 1) {
             try {
                 const { checkUserTestAttempt } = await import('@/lib/attemptsApi');
                 const { hasAttempted, error } = await checkUserTestAttempt(user.id, test.id);
-                // console.log("Attempt Check Result:", { hasAttempted, error, userId: user.id, testId: test.id });
-
-                if (error) {
-                    console.error("Error checking attempts:", error);
-                }
-
-                if (hasAttempted) {
-                    setHasAttempted(true);
-                }
+                if (hasAttempted) setHasAttempted(true);
             } catch (err) {
                 console.error("Failed to check attempts:", err);
             }
-        }
-    };
-
-    const loadTest = async (testId: string) => {
-        try {
-            const { data, error } = await fetchTestById(testId);
-            if (error) throw error;
-            setTest(data);
-        } catch (err: any) {
-            console.error("Error loading test:", err);
-            setError(err.message || "Failed to load test details.");
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -105,50 +140,55 @@ export default function TestIntroPage() {
         if (hasAttempted) return;
         if (schedulingError) return;
 
-        // If pre-test checklist is required but not confirmed?
-        // Actually we show checklist inside a dialog or inline?
-        // Let's show the Full Screen dialog which now acts as the "Pre-Flight" check
+        // Show Checklist / Fullscreen Dialog
         setShowFullScreenDialog(true);
     };
 
     const confirmStartTest = async (enableFullScreen: boolean) => {
-        // Validate Start Form if enabled
-        if (test?.settings?.start_form?.enabled) {
-            const missing = test.settings.start_form.fields.filter(f => f.required && !startFormValues[f.label]);
+        if (!test) return;
+
+        // Validate Start Form
+        if (test.settings?.start_form?.enabled) {
+            const missing = test.settings.start_form.fields.filter((f: any) => f.required && !startFormValues[f.label]);
             if (missing.length > 0) {
-                alert(`Please fill all required fields: ${missing.map(f => f.label).join(', ')}`);
+                alert(`Please fill all required fields: ${missing.map((f: any) => f.label).join(', ')}`);
                 return;
             }
-            // Save form values to sessionStorage to be picked up by TestPage or Attempts
             sessionStorage.setItem(`start_form_${test.id}`, JSON.stringify(startFormValues));
         }
 
         setShowFullScreenDialog(false);
 
-        // Register the attempt if limited attempt is enabled (or always, for general tracking)
-        // For now let's enforce it if attempt limit is on, or Schedule is strict?
-        // Let's Just do it always to be safe and future proof
-        if (user && test) {
-            const { registerTestStart } = await import('@/lib/attemptsApi');
-            await registerTestStart(user.id, test.id);
+        // Register Attempt
+        if (user) {
+            try {
+                const { registerTestStart } = await import('@/lib/attemptsApi');
+                await registerTestStart(user.id, test.id);
+            } catch (err) {
+                console.error("Error registering start:", err);
+            }
         }
 
-        if (enableFullScreen || test?.settings?.force_fullscreen) {
-            document.documentElement.requestFullscreen().catch((err) => {
-                console.error("Error attempting to enable full-screen mode:", err);
-            });
+        // Request Fullscreen
+        if (enableFullScreen || test.settings?.force_fullscreen) {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch((err) => {
+                    console.log("Fullscreen request denied:", err);
+                });
+            }
         }
-        navigate(`/test/${id}`);
+
+        // Navigate to Live Test
+        navigate(`/live/${test.id}`);
     };
 
-    if (loading || authLoading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    if (loading) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>;
+    if (error) return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
+    if (!test) return <div className="flex justify-center items-center h-screen">Test not found.</div>;
 
-    if (error || !test) return (
-        <div className="container mx-auto py-10 text-center">
-            <h2 className="text-xl text-red-500 mb-4">Error: {error || "Test not found"}</h2>
-            <Button onClick={() => navigate(-1)}>Go Back</Button>
-        </div>
-    );
+    const questionCount = test.questions?.length || 0;
+    const totalMarks = (questionCount * (test.marks_per_question || 4));
 
     return (
         <div className="container mx-auto max-w-3xl py-2 px-4 space-y-4 relative">
@@ -206,7 +246,7 @@ export default function TestIntroPage() {
                             {test.settings?.force_fullscreen && (
                                 <li className="text-red-600 font-medium">Full Screen Mode is mandatory. Exiting may submit the test.</li>
                             )}
-                            {test.settings?.tab_switch_mode !== 'off' && test.settings?.tab_switch_mode && (
+                            {(test.settings?.tab_switch_mode !== 'off' && test.settings?.tab_switch_mode) && (
                                 <li className="text-red-600 font-medium">Switching tabs or minimizing window is PROHIBITED.</li>
                             )}
                         </ul>
@@ -272,7 +312,7 @@ export default function TestIntroPage() {
                             {test.settings?.start_form?.enabled && (
                                 <div className="space-y-3 pt-2 border-t">
                                     <p className="text-sm font-bold text-slate-900">Candidate Details</p>
-                                    {test.settings.start_form.fields.map((field, idx) => (
+                                    {test.settings.start_form.fields.map((field: any, idx: number) => (
                                         <div key={idx} className="space-y-1">
                                             <div className="flex justify-between">
                                                 <label className="text-xs font-medium">{field.label}</label>
@@ -310,6 +350,6 @@ export default function TestIntroPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div >
+        </div>
     );
 }

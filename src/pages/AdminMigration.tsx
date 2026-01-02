@@ -10,7 +10,7 @@ import { allTests as scienceTests } from '@/data/examples/science-test';
 import { BackButton } from '@/components/ui/BackButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { fetchSections, createSection, assignSectionsToTest, Section } from '@/lib/sectionsApi';
+import { fetchCategories, createCategory, assignCategoriesToTest, Category } from '@/lib/categoriesApi';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 
@@ -32,10 +32,10 @@ export default function AdminMigration() {
     const [fileStats, setFileStats] = useState<{ total: number, parsed: number } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Section States
-    const [sections, setSections] = useState<Section[]>([]);
-    const [selectedSections, setSelectedSections] = useState<string[]>([]);
-    const [newSectionName, setNewSectionName] = useState('');
+    // Category States
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [newCategoryName, setNewCategoryName] = useState('');
 
     // Test Settings State
     const [globalDescription, setGlobalDescription] = useState('');
@@ -44,28 +44,28 @@ export default function AdminMigration() {
     const [duration, setDuration] = useState<number>(180); // minutes
 
     useEffect(() => {
-        loadSections();
+        loadCategories();
     }, []);
 
-    const loadSections = async () => {
-        const { data } = await fetchSections();
-        if (data) setSections(data);
+    const loadCategories = async () => {
+        const { data } = await fetchCategories();
+        if (data) setCategories(data);
     };
 
-    const handleCreateSection = async () => {
-        if (!newSectionName.trim()) return;
-        const { data, error } = await createSection(newSectionName.trim());
+    const handleCreateCategory = async () => {
+        if (!newCategoryName.trim()) return;
+        const { data, error } = await createCategory(newCategoryName.trim());
         if (error) {
-            log(`Error creating section: ${error.message}`, 'error');
+            log(`Error creating category: ${error.message}`, 'error');
         } else {
-            log(`Section created: ${data.name}`, 'success');
-            setNewSectionName('');
-            loadSections();
+            log(`Category created: ${data.name}`, 'success');
+            setNewCategoryName('');
+            loadCategories();
         }
     };
 
-    const toggleSection = (id: string) => {
-        setSelectedSections(prev =>
+    const toggleCategory = (id: string) => {
+        setSelectedCategories(prev =>
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
         );
     };
@@ -219,16 +219,16 @@ export default function AdminMigration() {
                     log(`-> Error inserting: ${error.message}`, 'error');
                     failCount++;
                 } else if (insertedTest) {
-                    // Assign Sections
-                    if (selectedSections.length > 0) {
-                        const { error: sectionError } = await assignSectionsToTest(insertedTest.id, selectedSections);
-                        if (sectionError) {
-                            log(`-> Warning: Test created but section assignment failed: ${sectionError.message}`, 'error');
+                    // Assign Categories
+                    if (selectedCategories.length > 0) {
+                        const { error: categoryError } = await assignCategoriesToTest(insertedTest.id, selectedCategories);
+                        if (categoryError) {
+                            log(`-> Warning: Test created but category assignment failed: ${categoryError.message}`, 'error');
                         } else {
-                            log(`-> Success: Uploaded "${test.title}" with sections.`);
+                            log(`-> Success: Uploaded "${test.title}" with categories.`);
                         }
                     } else {
-                        log(`-> Success: Uploaded "${test.title}" (No sections).`);
+                        log(`-> Success: Uploaded "${test.title}" (No categories).`);
                     }
                     successCount++;
                 }
@@ -248,20 +248,20 @@ export default function AdminMigration() {
             <BackButton />
             <h1 className="text-3xl font-bold">Admin Data Migration</h1>
 
-            {/* Manage Sections */}
+            {/* Manage Categories */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Manage Sections</CardTitle>
-                    <CardDescription>Create sections to categorize tests.</CardDescription>
+                    <CardTitle>Manage Categories</CardTitle>
+                    <CardDescription>Create categories to categorize tests.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex gap-2">
                         <Input
-                            placeholder="New Section Name"
-                            value={newSectionName}
-                            onChange={(e) => setNewSectionName(e.target.value)}
+                            placeholder="New Category Name"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
                         />
-                        <Button onClick={handleCreateSection} disabled={!newSectionName.trim()}>
+                        <Button onClick={handleCreateCategory} disabled={!newCategoryName.trim()}>
                             <Plus className="h-4 w-4 mr-2" /> Add
                         </Button>
                     </div>
@@ -331,17 +331,17 @@ export default function AdminMigration() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Assign Sections (Optional)</Label>
+                            <Label>Assign Categories (Optional)</Label>
                             <div className="flex flex-wrap gap-2 mb-4">
-                                {sections.length === 0 && <span className="text-sm text-muted-foreground">No sections created yet.</span>}
-                                {sections.map(section => (
-                                    <div key={section.id} className="flex items-center space-x-2 border p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer" onClick={() => toggleSection(section.id)}>
+                                {categories.length === 0 && <span className="text-sm text-muted-foreground">No categories created yet.</span>}
+                                {categories.map(category => (
+                                    <div key={category.id} className="flex items-center space-x-2 border p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer" onClick={() => toggleCategory(category.id)}>
                                         <Checkbox
-                                            id={`section-${section.id}`}
-                                            checked={selectedSections.includes(section.id)}
-                                            onCheckedChange={() => toggleSection(section.id)}
+                                            id={`category-${category.id}`}
+                                            checked={selectedCategories.includes(category.id)}
+                                            onCheckedChange={() => toggleCategory(category.id)}
                                         />
-                                        <Label htmlFor={`section-${section.id}`} className="cursor-pointer">{section.name}</Label>
+                                        <Label htmlFor={`category-${category.id}`} className="cursor-pointer">{category.name}</Label>
                                     </div>
                                 ))}
                             </div>

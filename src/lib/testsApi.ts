@@ -18,6 +18,9 @@ export interface Test {
     created_by?: string;
     institution_name?: string;
     institution_logo?: string;
+    slug?: string;
+    tags?: string[]; // Array of strings
+    custom_category?: string;
     settings?: TestSettings;
 }
 
@@ -164,4 +167,13 @@ export async function getTestLikeStatus(testId: string, userId: string) {
         .eq('user_id', userId)
         .maybeSingle();
     return { liked: !!data, error };
+}
+
+export async function fetchTestBySlug(slug: string) {
+    const { data, error } = await supabase
+        .from('tests')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+    return { data, error };
 }
