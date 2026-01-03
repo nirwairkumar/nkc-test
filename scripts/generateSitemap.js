@@ -4,27 +4,28 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
+// Load environment variables with explicit path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load environment variables with explicit path
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-// Support both ANON_KEY and PUBLISHABLE_KEY (legacy)
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const BASE_URL = process.env.VITE_SITE_URL || 'https://nkc-test-platform.vercel.app';
-
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error("Error: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (or VITE_SUPABASE_PUBLISHABLE_KEY) must be set.");
-    process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function generateSitemap() {
     try {
-        console.log("Generating sitemap...");
+        console.log("Starting sitemap generation...");
+
+        const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+        // Support both ANON_KEY and PUBLISHABLE_KEY (legacy)
+        const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const BASE_URL = process.env.VITE_SITE_URL || 'https://nkc-test-platform.vercel.app';
+
+        // 1. Graceful Skip if Env Missing
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
+            console.warn("⚠️  [Sitemap] Skipped: Missing VITE_SUPABASE_URL or keys.");
+            // EXIT 0 to allow build to continue
+            process.exit(0);
+        }
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const pages = [
             { url: '/', changefreq: 'daily', priority: 1.0 },
@@ -32,26 +33,19 @@ async function generateSitemap() {
             // Add other static pages
         ];
 
-        // Fetch Tests
-        // Hint 'reference column "tests.created_at"' suggests ambiguity or need for qualification.
-        // We try to be explicit.
+        // 2. Fetch Tests - Correct Syntax
+        // Removed table-qualified 'tests.created_at' which caused PGRST100
         const { data: tests, error: testError } = await supabase
             .from('tests')
-            .select('id, slug, updated_at, created_at:tests.created_at')
+            .select('id, slug, updated_at, created_at')
             .eq('is_public', true);
 
         if (testError) {
-            console.error("Error fetching tests:", testError);
-            throw testError; // Throw to trigger catch block
-        }
-
-        if (tests) {
+            // Log warning but DO NOT crash
+            console.warn("⚠️  [Sitemap] Failed to fetch tests:", testError.message);
+        } else if (tests) {
             tests.forEach(test => {
-                // "created_at:tests.created_at" aliases it to "created_at" in the result if supported,
-                // or we check strictly.
-                // note: supabase-js/postgrest usually handles 'alias:column' syntax.
-                const createdAt = test.created_at;
-                const lastMod = test.updated_at || createdAt;
+                const lastMod = test.updated_at || test.created_at;
                 const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
                 pages.push({
                     url,
@@ -62,17 +56,14 @@ async function generateSitemap() {
             });
         }
 
-        // Fetch Categories
+        // 3. Fetch Categories
         const { data: categories, error: catError } = await supabase
             .from('categories')
             .select('name');
 
         if (catError) {
-            console.error("Error fetching categories:", catError);
-            throw catError;
-        }
-
-        if (categories) {
+            console.warn("⚠️  [Sitemap] Failed to fetch categories:", catError.message);
+        } else if (categories) {
             categories.forEach(cat => {
                 // Simple slugify for category name
                 const slug = cat.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
@@ -84,7 +75,7 @@ async function generateSitemap() {
             });
         }
 
-        // Generate XML
+        // 4. Generate XML
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages.map(page => `
@@ -105,20 +96,18 @@ ${pages.map(page => `
         }
 
         fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), xml);
-        console.log(`Sitemap generated at ${path.join(publicDir, 'sitemap.xml')} with ${pages.length} URLs.`);
+        console.log(`✅ [Sitemap] Generated at ${path.join(publicDir, 'sitemap.xml')} with ${pages.length} URLs.`);
 
-        // Explicitly exit with success
+        // Success
         process.exit(0);
 
     } catch (error) {
-        console.error("Fatal error generating sitemap:", error);
-        // Explicitly exit with failure code to stop build
-        process.exit(1);
+        // 5. Global Error Handling
+        // Log error but exit successfully so build doesn't fail
+        console.error("⚠️  [Sitemap] Unexpected fatal error (Build will continue):", error);
+        process.exit(0);
     }
 }
 
-// Execute and handle any unhandled rejections
-generateSitemap().catch(err => {
-    console.error("Unhandled error:", err);
-    process.exit(1);
-});
+// Execute
+generateSitemap();
