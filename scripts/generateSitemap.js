@@ -33,9 +33,11 @@ async function generateSitemap() {
         ];
 
         // Fetch Tests
+        // Hint 'reference column "tests.created_at"' suggests ambiguity or need for qualification.
+        // We try to be explicit.
         const { data: tests, error: testError } = await supabase
             .from('tests')
-            .select('id, slug, updated_at, created_at')
+            .select('id, slug, updated_at, created_at:tests.created_at')
             .eq('is_public', true);
 
         if (testError) {
@@ -45,7 +47,11 @@ async function generateSitemap() {
 
         if (tests) {
             tests.forEach(test => {
-                const lastMod = test.updated_at || test.created_at;
+                // "created_at:tests.created_at" aliases it to "created_at" in the result if supported,
+                // or we check strictly.
+                // note: supabase-js/postgrest usually handles 'alias:column' syntax.
+                const createdAt = test.created_at;
+                const lastMod = test.updated_at || createdAt;
                 const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
                 pages.push({
                     url,
