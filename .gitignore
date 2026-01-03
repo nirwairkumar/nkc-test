@@ -122,3 +122,4 @@ supabase/
 
 # frontend folder for shearing only. not in use of this project:
 frontend/
+scripts/
