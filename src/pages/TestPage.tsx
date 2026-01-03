@@ -21,7 +21,32 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import Latex from 'react-latex-next';
+import ScientificCalculator from '@/components/ScientificCalculator';
+import { Calculator } from 'lucide-react';
+
+const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
+  if (typeof value === 'number') {
+    return isFinite(value) ? value : defaultVal;
+  }
+  if (!value) return defaultVal;
+  try {
+    if (value.includes('/')) {
+      const parts = value.split('/');
+      if (parts.length === 2) {
+        const num = parseFloat(parts[0]);
+        const den = parseFloat(parts[1]);
+        if (den === 0) return defaultVal;
+        return num / den;
+      }
+    }
+    const parsed = parseFloat(value);
+    return (isNaN(parsed) || !isFinite(parsed)) ? defaultVal : parsed;
+  } catch (e) {
+    return defaultVal;
+  }
+};
 
 export default function TestPage() {
   const { id } = useParams<{ id: string }>();
@@ -42,6 +67,7 @@ export default function TestPage() {
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Resume Session State
   const [showResumeDialog, setShowResumeDialog] = useState(false);
@@ -327,9 +353,10 @@ export default function TestPage() {
     let negativeScore = 0;
     let correctCount = 0;
     let wrongCount = 0;
+    let partialCount = 0;
     let unattemptedCount = 0;
 
-    test.questions.forEach(q => {
+    test.questions.forEach((q, index) => {
       let isCorrect = false;
       const userAns = answers[q.id];
 
@@ -338,39 +365,77 @@ export default function TestPage() {
         return; // Unanswered
       }
 
+      let sectionMarks = test.marks_per_question ? parseMark(test.marks_per_question, 4) : 4;
+      let sectionNegative = test.negative_marks !== undefined ? parseMark(test.negative_marks, 1) : 1;
+
+      // Section-specific marks overrides
+      if (test.enable_section_mode && test.sections) {
+        let runningCount = 0;
+        for (const section of test.sections) {
+          // We can rely on the current question index 'index'
+          if (index >= runningCount && index < runningCount + section.questions.length) {
+            sectionMarks = parseMark(section.marks_per_question, 4);
+            sectionNegative = parseMark(section.negative_marks, 1);
+            break;
+          }
+          runningCount += section.questions.length;
+        }
+      }
+
       if (q.type === 'numerical') {
-        // Numerical Check
         const numAns = parseFloat(userAns as string);
         const range = q.correctAnswer as { min: number, max: number };
         if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
           isCorrect = true;
+          score += sectionMarks;
+          positiveScore += sectionMarks;
+          correctCount++;
+        } else {
+          score -= sectionNegative;
+          negativeScore += sectionNegative;
+          wrongCount++;
         }
       } else if (q.type === 'multiple') {
-        // Multiple Choice Check (Exact Match)
         const correctArr = (Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]).map(String).sort();
         const userArr = (Array.isArray(userAns) ? userAns : [userAns]).map(String).sort();
 
-        if (correctArr.length === userArr.length &&
-          correctArr.every((val, index) => val === userArr[index])) {
-          isCorrect = true;
+        // Check for 'any incorrect option selected'
+        const hasIncorrectSelection = userArr.some(ans => !correctArr.includes(ans));
+
+        if (hasIncorrectSelection) {
+          // Overall wrong -> Negative Mark
+          score -= sectionNegative;
+          negativeScore += sectionNegative;
+          wrongCount++;
+        } else {
+          // No incorrect options selected. Check for Partial or Full.
+          if (userArr.length === correctArr.length) {
+            // Full Correct
+            isCorrect = true;
+            score += sectionMarks;
+            positiveScore += sectionMarks;
+            correctCount++;
+          } else if (userArr.length > 0) {
+            // Partial Correct
+            const fraction = userArr.length / correctArr.length;
+            const partialScore = fraction * sectionMarks;
+            score += partialScore;
+            positiveScore += partialScore;
+            partialCount++;
+          }
         }
       } else {
-        // Single Choice Check
+        // Single Choice
         if (userAns === q.correctAnswer) {
           isCorrect = true;
+          score += sectionMarks;
+          positiveScore += sectionMarks;
+          correctCount++;
+        } else {
+          score -= sectionNegative;
+          negativeScore += sectionNegative;
+          wrongCount++;
         }
-      }
-
-      if (isCorrect) {
-        const marks = (test.marks_per_question || 4);
-        score += marks;
-        positiveScore += marks;
-        correctCount++;
-      } else {
-        const neg = (test.negative_marks !== undefined ? test.negative_marks : 1);
-        score -= neg;
-        negativeScore += neg;
-        wrongCount++;
       }
     });
 
@@ -391,6 +456,7 @@ export default function TestPage() {
         positiveScore,
         negativeScore,
         correctCount,
+        partialCount,
         wrongCount,
         unattemptedCount,
         totalQuestions: test.questions.length
@@ -398,9 +464,11 @@ export default function TestPage() {
       submittedAt: new Date().toISOString()
     };
 
-    const { error } = await saveAttempt(user.id, test.id, answers, score, metadata);
+    const finalScore = (isNaN(score) || !isFinite(score)) ? 0 : parseFloat(score.toFixed(2));
+    const { error } = await saveAttempt(user.id, test.id, answers, finalScore, metadata);
 
     if (error) {
+      console.error("Save Attempt Error:", error);
       toast.error('Failed to save results. Please try again.');
       setIsSubmitting(false);
     } else {
@@ -448,45 +516,106 @@ export default function TestPage() {
   const currentQuestion = test.questions[currentQuestionIndex];
 
   // Palette Component
-  const QuestionPalette = ({ onQuestionClick }: { onQuestionClick?: () => void }) => (
-    <div className="grid grid-cols-5 gap-2">
-      {test.questions.map((q, idx) => {
-        const isAnswered = answers[q.id] !== undefined;
-        const isMarked = markedForReview.has(q.id);
-        const isVisited = visited.has(idx);
-        const isCurrent = currentQuestionIndex === idx;
+  const QuestionPalette = ({ onQuestionClick }: { onQuestionClick?: () => void }) => {
+    // Group questions if in section mode
+    if (test.enable_section_mode && test.sections) {
+      let runningIndex = 0;
+      return (
+        <div className="space-y-4">
+          {test.sections.map((section: any, sIdx: number) => {
+            const startIndex = runningIndex;
+            const sectionQuestions = section.questions;
+            runningIndex += sectionQuestions.length;
 
-        let baseClasses = "h-10 w-10 flex items-center justify-center rounded-md border text-sm font-semibold transition-all";
-        let colorClasses = "bg-white border-slate-200 text-slate-700 hover:bg-slate-50";
+            return (
+              <div key={section.id} className="space-y-2">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{section.name}</h4>
+                <div className="grid grid-cols-5 gap-2">
+                  {sectionQuestions.map((_: any, localIdx: number) => {
+                    const globalIdx = startIndex + localIdx;
+                    const q = test.questions[globalIdx];
 
-        if (isMarked) {
-          colorClasses = "bg-yellow-400 border-yellow-500 text-black shadow-sm hover:bg-yellow-500";
-        } else if (isAnswered) {
-          colorClasses = "bg-green-500 border-green-600 text-white shadow-sm hover:bg-green-600";
-        } else if (isVisited) {
-          colorClasses = "bg-red-500 border-red-600 text-white shadow-sm hover:bg-red-600";
-        }
+                    const isAnswered = answers[q.id] !== undefined;
+                    const isMarked = markedForReview.has(q.id);
+                    const isVisited = visited.has(globalIdx);
+                    const isCurrent = currentQuestionIndex === globalIdx;
 
-        if (isCurrent) {
-          baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
-        }
+                    let baseClasses = "h-8 w-8 flex items-center justify-center rounded text-xs font-semibold transition-all";
+                    let colorClasses = "bg-white border text-slate-700 hover:bg-slate-50";
 
+                    if (isMarked) {
+                      colorClasses = "bg-yellow-400 border-yellow-500 text-black";
+                    } else if (isAnswered) {
+                      colorClasses = "bg-green-500 border-green-600 text-white";
+                    } else if (isVisited) {
+                      colorClasses = "bg-red-500 border-red-600 text-white";
+                    }
 
-        return (
-          <button
-            key={q.id}
-            onClick={() => {
-              jumpToQuestion(idx);
-              onQuestionClick?.();
-            }}
-            className={`${baseClasses} ${colorClasses}`}
-          >
-            {idx + 1}
-          </button>
-        );
-      })}
-    </div>
-  );
+                    if (isCurrent) {
+                      baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
+                    }
+
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => {
+                          jumpToQuestion(globalIdx);
+                          onQuestionClick?.();
+                        }}
+                        className={`${baseClasses} ${colorClasses}`}
+                      >
+                        {globalIdx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Default Flat Palette
+    return (
+      <div className="grid grid-cols-5 gap-2">
+        {test.questions.map((q, idx) => {
+          const isAnswered = answers[q.id] !== undefined;
+          const isMarked = markedForReview.has(q.id);
+          const isVisited = visited.has(idx);
+          const isCurrent = currentQuestionIndex === idx;
+
+          let baseClasses = "h-10 w-10 flex items-center justify-center rounded-md border text-sm font-semibold transition-all";
+          let colorClasses = "bg-white border-slate-200 text-slate-700 hover:bg-slate-50";
+
+          if (isMarked) {
+            colorClasses = "bg-yellow-400 border-yellow-500 text-black shadow-sm hover:bg-yellow-500";
+          } else if (isAnswered) {
+            colorClasses = "bg-green-500 border-green-600 text-white shadow-sm hover:bg-green-600";
+          } else if (isVisited) {
+            colorClasses = "bg-red-500 border-red-600 text-white shadow-sm hover:bg-red-600";
+          }
+
+          if (isCurrent) {
+            baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
+          }
+
+          return (
+            <button
+              key={q.id}
+              onClick={() => {
+                jumpToQuestion(idx);
+                onQuestionClick?.();
+              }}
+              className={`${baseClasses} ${colorClasses}`}
+            >
+              {idx + 1}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
@@ -502,7 +631,6 @@ export default function TestPage() {
         </div>
       )}
 
-      {/* Top Header: Timer & Submit */}
       <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-3 sticky top-0 z-10 shadow-sm flex items-center justify-between">
         <div className="font-mono text-xl font-bold flex items-center gap-2">
           <Clock className={`w-5 h-5 ${timeRemaining < 300 ? 'text-red-500 animate-pulse' : 'text-slate-600 dark:text-slate-400'}`} />
@@ -511,6 +639,19 @@ export default function TestPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {test.has_scientific_calculator && (
+            <Dialog open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden md:flex h-9 w-9 p-0 rounded-full" title="Scientific Calculator">
+                  <Calculator className="w-5 h-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-transparent border-none shadow-none">
+                <ScientificCalculator />
+              </DialogContent>
+            </Dialog>
+          )}
+
           <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -527,6 +668,38 @@ export default function TestPage() {
         {/* Main Question Area - Independently Scrollable on Desktop */}
         {/* Main Question Area - Independently Scrollable on Desktop */}
         <div className="lg:col-span-9 flex flex-col gap-0 relative lg:h-full lg:overflow-hidden">
+
+          {/* Section Tabs */}
+          {test.enable_section_mode && test.sections && (
+            <div className="flex overflow-x-auto border-b bg-white dark:bg-slate-900 scrollbar-hide">
+              {(() => {
+                let runningIndex = 0;
+                return test.sections.map((section: any, idx: number) => {
+                  const startIndex = runningIndex;
+                  const count = section.questions.length; // Assumes structure is preserved in JSON even if flat list used for render
+                  const endIndex = startIndex + count - 1;
+                  runningIndex += count;
+
+                  const isActive = currentQuestionIndex >= startIndex && currentQuestionIndex <= endIndex;
+
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setCurrentQuestionIndex(startIndex)}
+                      className={`
+                                flex-1 min-w-[100px] py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap px-4
+                                ${isActive
+                          ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                          : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                            `}
+                    >
+                      {section.name}
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+          )}
 
           {/* Mobile Palette Trigger (Top Left - Floating above Card) */}
           <div className="lg:hidden absolute top-2 left-2 z-20">
@@ -583,8 +756,45 @@ export default function TestPage() {
                 <Card className="min-h-[400px] shadow-sm border-0 bg-white dark:bg-slate-900 w-full h-auto block">
                   <CardContent className="p-6 gap-6 flex flex-col h-auto">
                     <div className="flex justify-between items-start">
-                      <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
-                      <span className="text-sm font-medium text-emerald-600">+{test.marks_per_question || 4} / -{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
+                          <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                            {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
+                              currentQuestion.type === 'numerical' ? 'Numerical' :
+                                currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {(() => {
+                        let marks = test.marks_per_question || 4;
+                        let neg = test.negative_marks !== undefined ? test.negative_marks : 1;
+                        // Use parseMark for fractions
+                        let marksVal = parseMark(marks, 4);
+                        let negVal = parseMark(neg, 1);
+
+                        // If section mode is enabled, find the specific section for this question
+                        if (test.enable_section_mode && test.sections) {
+                          let runningCount = 0;
+                          for (const section of test.sections) {
+                            if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
+                              marksVal = parseMark(section.marks_per_question, 4);
+                              negVal = parseMark(section.negative_marks, 1);
+                              break;
+                            }
+                            runningCount += section.questions.length;
+                          }
+                        }
+
+                        return (
+                          <div className="text-sm font-medium flex items-center gap-1">
+                            <span className="text-emerald-600">+{parseFloat(marksVal.toFixed(2))}</span>
+                            <span className="text-slate-400">/</span>
+                            <span className="text-red-500">-{parseFloat(negVal.toFixed(2))}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
@@ -703,8 +913,38 @@ export default function TestPage() {
               <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
                 <CardContent className="p-6 gap-6 flex flex-col h-auto">
                   <div className="flex justify-between items-start">
-                    <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
-                    <span className="text-sm font-medium text-emerald-600">+{test.marks_per_question || 4} / -{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                          {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
+                            currentQuestion.type === 'numerical' ? 'Numerical' :
+                              currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      let marks = test.marks_per_question || 4;
+                      let neg = test.negative_marks !== undefined ? test.negative_marks : 1;
+
+                      // If section mode is enabled, find the specific section for this question
+                      if (test.enable_section_mode && test.sections) {
+                        let runningCount = 0;
+                        for (const section of test.sections) {
+                          if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
+                            marks = section.marks_per_question ?? marks;
+                            neg = section.negative_marks ?? neg;
+                            break;
+                          }
+                          runningCount += section.questions.length;
+                        }
+                      }
+
+                      return (
+                        <span className="text-sm font-medium text-emerald-600">+{marks} / -{neg}</span>
+                      );
+                    })()}
                   </div>
 
                   <div className="text-lg md:text-xl font-medium leading-relaxed break-words">

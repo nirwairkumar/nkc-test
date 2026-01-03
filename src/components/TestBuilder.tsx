@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Question, createTest, fetchTestById, updateTest } from '@/lib/testsApi';
+import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { IMEInput } from '@/components/ui/IMEInput';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { AdvancedQuestionEditor } from '@/components/AdvancedQuestionEditor';
+import { Calculator } from 'lucide-react';
 import { Wifi, WifiOff } from 'lucide-react';
 import {
     Command,
@@ -112,6 +113,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
     // Online/Offline State
     const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    // Section Mode & Calculator State
+    type SectionState = TestSection & { questions: QuestionState[] };
+    const [enableSectionMode, setEnableSectionMode] = useState(false);
+    const [hasScientificCalculator, setHasScientificCalculator] = useState(false);
+    const [sections, setSections] = useState<SectionState[]>([
+        {
+            id: 'section-1',
+            name: 'Section A',
+            questions: [DEFAULT_QUESTION],
+            marks_per_question: 4,
+            negative_marks: 1,
+            question_type: 'single'
+        }
+    ]);
 
     // Auto Save State
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -280,12 +296,26 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         setNegativeMarks(data.negative_marks || 1);
         setIsPublic(data.is_public ?? true);
 
-        const mappedQuestions = (data.questions as any[]).map((q: any) => ({
-            ...q,
-            options: q.options || { A: '', B: '', C: '', D: '' },
-            typingMode: 'en'
-        }));
-        setQuestions(mappedQuestions);
+        if (data.enable_section_mode && data.sections) {
+            setEnableSectionMode(true);
+            setSections(data.sections.map((s: any) => ({
+                ...s,
+                questions: s.questions.map((q: any) => ({
+                    ...q,
+                    options: q.options || { A: '', B: '', C: '', D: '' },
+                    typingMode: 'en'
+                }))
+            })));
+        } else {
+            const mappedQuestions = (data.questions as any[]).map((q: any) => ({
+                ...q,
+                options: q.options || { A: '', B: '', C: '', D: '' },
+                typingMode: 'en'
+            }));
+            setQuestions(mappedQuestions);
+        }
+
+        setHasScientificCalculator(data.has_scientific_calculator || false);
 
         if (data.custom_category) {
             setShowOtherCategory(true);
@@ -426,13 +456,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     };
 
     const performSave = async (isAuto: boolean) => {
-        const sanitizedQuestions = questions.map(q => ({
-            ...q,
-            image: q.image ? q.image.trim() : q.image,
-            optionImages: q.optionImages ? Object.fromEntries(
-                Object.entries(q.optionImages).map(([k, v]) => [k, v ? v.trim() : v])
-            ) : undefined
-        }));
+        // Sanitize helper
+        const sanitizeQ = (q: any) => {
+            const { typingMode, ...rest } = q;
+            return {
+                ...rest,
+                image: q.image ? q.image.trim() : q.image,
+                optionImages: q.optionImages ? Object.fromEntries(
+                    Object.entries(q.optionImages).map(([k, v]) => [k, v ? (v as string).trim() : v])
+                ) : undefined
+            };
+        };
+
+        const sanitizedQuestions = questions.map(sanitizeQ);
+
+        const sanitizedSections = enableSectionMode ? sections.map(s => ({
+            ...s,
+            questions: s.questions.map(sanitizeQ)
+        })) : undefined;
 
         const testDataPayload = {
             title,
@@ -442,31 +483,31 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             marks_per_question: marks,
             negative_marks: negativeMarks,
             is_public: isPublic,
-            questions: sanitizedQuestions.map((q: any) => {
-                const { typingMode, ...rest } = q;
-                return rest;
-            }),
+            // If section mode, we can either save empty questions or flat map them. 
+            // Saving flat map ensures backward compatibility for some views (like listing count).
+            questions: enableSectionMode
+                ? sanitizedSections!.flatMap(s => s.questions)
+                : sanitizedQuestions,
             institution_name: institutionName,
             institution_logo: institutionLogo,
             slug: title ? slugify(title, { lower: true, strict: true }) + '-' + Math.random().toString(36).substr(2, 4) : undefined,
             tags: tags,
-            custom_category: showOtherCategory && customCategory.trim() ? customCategory.trim() : null
+            custom_category: showOtherCategory && customCategory.trim() ? customCategory.trim() : null,
+
+            // New Fields
+            enable_section_mode: enableSectionMode,
+            has_scientific_calculator: hasScientificCalculator,
+            sections: sanitizedSections
         };
 
         if (isEditMode && testId) {
             const { error } = await updateTest(testId, testDataPayload);
             if (error) throw error;
-            // Only update sections if changed? For now update always to be safe
-            // Ideally check dirty state, but lightweight enough
             if (selectedCategories.length > 0) {
                 const { assignCategoriesToTest } = await import('@/lib/categoriesApi');
                 await assignCategoriesToTest(testId, selectedCategories);
             }
         } else {
-            // Creation logic handles its own ID generation so we can't reuse this perfectly for auto-save 'creation'
-            // Auto-save currently ONLY works for 'isEditMode'.
-            // If we want auto-save for new tests, we'd need to create the record on first auto-save.
-            // For now, adhere to "only editing existing test" or "manual save first".
             if (isAuto) throw new Error("Auto-save not supported for new unsaved tests yet");
 
             const { getNextTestId } = await import('@/lib/testsApi');
@@ -492,73 +533,70 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         if (!user) {
             // Save current draft state before redirecting
             const draftData = {
-                title,
-                description,
-                revision_notes: revisionNotes,
-                institution_name: institutionName,
-                institution_logo: institutionLogo,
-                duration: time,
-                marks_per_question: marks,
-                negative_marks: negativeMarks,
-                is_public: isPublic,
-                questions,
-                selectedCategories
+                title, description, revision_notes: revisionNotes, institution_name: institutionName, institution_logo: institutionLogo,
+                duration: time, marks_per_question: marks, negative_marks: negativeMarks, is_public: isPublic,
+                questions, selectedCategories,
+                // Save new state too
+                enable_section_mode: enableSectionMode,
+                has_scientific_calculator: hasScientificCalculator,
+                sections
             };
             localStorage.setItem('create_test_draft', JSON.stringify(draftData));
-
-            // Set redirect intent
             localStorage.setItem('auth_redirect_intent', '/create-test');
 
             toast.error("Please login to save your test. Redirecting...");
             setTimeout(() => navigate('/login'), 1500);
             return;
         }
-        if (!title.trim()) {
-            toast.error("Test Title is required");
-            return;
-        }
-        if (questions.length === 0) {
-            toast.error("At least one question is required");
-            return;
-        }
+        if (!title.trim()) { toast.error("Test Title is required"); return; }
 
-        for (let i = 0; i < questions.length; i++) {
-            const q = questions[i];
-            const hasQuestionContent = q.question.trim() || q.image;
-            if (!hasQuestionContent) {
-                toast.error(`Question ${i + 1} must have either text or an image`);
-                return;
-            }
-            if (q.type === 'numerical') {
-                if (!q.correctAnswer || typeof q.correctAnswer !== 'object' || q.correctAnswer.min === undefined || q.correctAnswer.max === undefined) {
-                    toast.error(`Question ${i + 1} (Numerical) must have a Min and Max value`);
-                    return;
-                }
-                if (Number(q.correctAnswer.min) > Number(q.correctAnswer.max)) {
-                    toast.error(`Question ${i + 1}: Min cannot be greater than Max`);
-                    return;
-                }
-            } else {
-                for (const opt of ['A', 'B', 'C', 'D']) {
-                    const hasOptionContent = q.options[opt].trim() || (q.optionImages && q.optionImages[opt]);
-                    if (!hasOptionContent) {
-                        toast.error(`Option ${opt} for Question ${i + 1} is required`);
-                        return;
+        // Validation Logic
+        const validateQuestions = (list: any[], context = "Question") => {
+            for (let i = 0; i < list.length; i++) {
+                const q = list[i];
+                const hasQuestionContent = q.question.trim() || q.image;
+                if (!hasQuestionContent) return `${context} ${i + 1} must have either text or an image`;
+
+                if (q.type === 'numerical') {
+                    if (!q.correctAnswer || typeof q.correctAnswer !== 'object' || q.correctAnswer.min === undefined || q.correctAnswer.max === undefined) {
+                        return `${context} ${i + 1} (Numerical) must have a Min and Max value`;
+                    }
+                    if (Number(q.correctAnswer.min) > Number(q.correctAnswer.max)) {
+                        return `${context} ${i + 1}: Min cannot be greater than Max`;
+                    }
+                } else {
+                    for (const opt of ['A', 'B', 'C', 'D']) {
+                        const hasOptionContent = q.options[opt].trim() || (q.optionImages && q.optionImages[opt]);
+                        if (!hasOptionContent) return `Option ${opt} for ${context} ${i + 1} is required`;
+                    }
+                    if (!q.correctAnswer || (Array.isArray(q.correctAnswer) && q.correctAnswer.length === 0)) {
+                        return `Please select a correct answer for ${context} ${i + 1}`;
                     }
                 }
-                if (!q.correctAnswer || (Array.isArray(q.correctAnswer) && q.correctAnswer.length === 0)) {
-                    toast.error(`Please select a correct answer for Question ${i + 1}`);
-                    return;
-                }
             }
+            return null;
+        };
+
+        if (enableSectionMode) {
+            if (sections.length === 0) { toast.error("At least one section is required"); return; }
+            for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+                const section = sections[sIdx];
+                if (!section.name.trim()) { toast.error(`Section ${sIdx + 1} name is required`); return; }
+                if (section.questions.length === 0) { toast.error(`Section "${section.name}" must have at least one question`); return; }
+
+                const error = validateQuestions(section.questions, `Section "${section.name}" Question`);
+                if (error) { toast.error(error); return; }
+            }
+        } else {
+            if (questions.length === 0) { toast.error("At least one question is required"); return; }
+            const error = validateQuestions(questions);
+            if (error) { toast.error(error); return; }
         }
 
         setLoading(true);
         try {
             await performSave(false);
-            // Clear draft after successful save
             localStorage.removeItem('create_test_draft');
-
             toast.success(isEditMode ? "Test updated successfully!" : "Test created successfully!");
             if (onSuccess) onSuccess();
             else navigate('/my-tests');
@@ -637,6 +675,102 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             localStorage.removeItem('create_test_draft');
             toast.success("Form cleared");
         }
+    };
+
+    // Section Helpers
+    const toggleSectionMode = (checked: boolean) => {
+        setEnableSectionMode(checked);
+        if (checked) {
+            // Flatten -> Sections
+            if (questions.length > 0) {
+                setSections([{
+                    id: 'section-1',
+                    name: 'Section A',
+                    questions: [...questions],
+                    marks_per_question: marks,
+                    negative_marks: negativeMarks,
+                    question_type: 'single'
+                } as SectionState]);
+            }
+        } else {
+            // Sections -> Flat
+            const flatQuestions = sections.flatMap(s => s.questions);
+            if (flatQuestions.length > 0) {
+                setQuestions(flatQuestions);
+            }
+        }
+    };
+
+    const handleAddSection = () => {
+        const nextId = sections.length + 1;
+        const nextLetter = String.fromCharCode(65 + sections.length);
+        const newSection: SectionState = {
+            id: `section-${Date.now()}`,
+            name: `Section ${nextLetter}`,
+            questions: [{ ...DEFAULT_QUESTION, id: Math.random() }],
+            marks_per_question: 4,
+            negative_marks: 1,
+            question_type: 'single'
+        };
+        setSections([...sections, newSection]);
+    };
+
+    const handleRemoveSection = (index: number) => {
+        if (sections.length <= 1) {
+            toast.error("At least one section is required");
+            return;
+        }
+        const newSections = [...sections];
+        newSections.splice(index, 1);
+        setSections(newSections);
+    };
+
+    const updateSection = (index: number, field: keyof TestSection, value: any) => {
+        const newSections = [...sections];
+        newSections[index] = { ...newSections[index], [field]: value };
+        setSections(newSections);
+    };
+
+    const handleAddQuestionToSection = (sectionIndex: number) => {
+        const newSections = [...sections];
+        const section = newSections[sectionIndex];
+
+        section.questions.push({
+            ...DEFAULT_QUESTION,
+            id: Math.max(0, ...section.questions.map(q => q.id), ...questions.map(q => q.id)) + Math.random(),
+            options: { ...DEFAULT_QUESTION.options },
+            typingMode: lastTypingMode,
+            type: section.question_type as any || 'single'
+        });
+        setSections(newSections);
+    };
+
+    const handleRemoveQuestionFromSection = (sectionIndex: number, qIndex: number) => {
+        const newSections = [...sections];
+        newSections[sectionIndex].questions.splice(qIndex, 1);
+        setSections(newSections);
+    };
+
+    const updateQuestionInSection = (sectionIndex: number, qIndex: number, field: keyof QuestionState, value: any) => {
+        const newSections = [...sections];
+        const q = newSections[sectionIndex].questions[qIndex] as QuestionState;
+        // @ts-ignore
+        newSections[sectionIndex].questions[qIndex] = { ...q, [field]: value };
+        setSections(newSections);
+    };
+
+    const updateQuestionTypeInSection = (secIdx: number, qIdx: number, type: string) => {
+        const newSections = [...sections];
+        const section = newSections[secIdx];
+        const q = section.questions[qIdx] as QuestionState;
+
+        const newQ = { ...q, type: type as any };
+        if (type.startsWith('single')) newQ.correctAnswer = '';
+        else if (type === 'multiple') newQ.correctAnswer = [];
+        else if (type === 'numerical') newQ.correctAnswer = { min: 0, max: 0 };
+
+        section.questions[qIdx] = newQ;
+        setSections(newSections);
     };
 
     // Category Helpers
@@ -770,6 +904,34 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                         <div className="grid gap-2">
                             <Label>Test Title</Label>
                             <Input placeholder="Enter test title..." value={title} onChange={e => setTitle(e.target.value)} />
+                        </div>
+
+                        <div className="flex flex-col gap-4 py-2">
+                            <div className="flex items-center justify-between border p-3 rounded-lg">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base">Scientific Calculator</Label>
+                                    <div className="text-sm text-muted-foreground">
+                                        Allow students to use a scientific calculator during the test
+                                    </div>
+                                </div>
+                                <Switch
+                                    checked={hasScientificCalculator}
+                                    onCheckedChange={setHasScientificCalculator}
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between border p-3 rounded-lg">
+                                <div className="space-y-0.5">
+                                    <Label className="text-base">Section-wise Question Flow</Label>
+                                    <div className="text-sm text-muted-foreground">
+                                        Divide test into named sections with specific marking schemes
+                                    </div>
+                                </div>
+                                <Switch
+                                    checked={enableSectionMode}
+                                    onCheckedChange={toggleSectionMode}
+                                />
+                            </div>
                         </div>
                         <div className="flex flex-col space-y-2">
                             <Label>Categories</Label>
@@ -952,204 +1114,350 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
                 {/* Question List */}
                 <div className="space-y-4">
-                    <h2 className="text-xl font-semibold">Questions ({questions.length})</h2>
-                    {questions.map((q, index) => {
-                        // VISUAL GROUPING LOGIC
-                        const currentGroupId = q.groupId;
-                        const prevGroupId = index > 0 ? questions[index - 1].groupId : undefined;
-                        const nextGroupId = index < questions.length - 1 ? questions[index + 1].groupId : undefined;
-
-                        const isStartOfGroup = !!currentGroupId && currentGroupId !== prevGroupId;
-                        const isEndOfGroup = !!currentGroupId && currentGroupId !== nextGroupId;
-                        const isInGroup = !!currentGroupId;
-
-                        return (
-                            <div key={index} className={isInGroup ? "space-y-0" : "space-y-4"}>
-
-                                {/* Passage Header - Renders only at the start of a group */}
-                                {isStartOfGroup && (
-                                    <div className="rounded-t-lg border-2 border-b-0 border-blue-500 bg-blue-50/30 overflow-hidden mt-4">
-                                        <div className="bg-blue-100/80 px-4 py-3 border-b-2 border-blue-500 flex justify-between items-center">
-                                            <h3 className="text-sm font-bold text-blue-700 flex items-center gap-2">
-                                                <FileText className="w-4 h-4" /> Passage Reference
-                                            </h3>
-                                        </div>
-                                        <div className="p-4">
-                                            <RichTextEditor
-                                                value={q.passageContent || ''}
-                                                onChange={(val) => updatePassageContent(q.groupId!, val)}
-                                                placeholder="Enter the passage, story, or comprehension text here..."
-                                                className="min-h-[150px] bg-white border-blue-100 shadow-sm"
-                                            />
-                                        </div>
+                    {enableSectionMode ? (
+                        <>
+                            <div className="space-y-8">
+                                <div className="flex justify-between items-center bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-blue-900">Sections ({sections.length})</h2>
+                                        <p className="text-sm text-blue-700">Manage your test sections below. Each section can have its own marking scheme.</p>
                                     </div>
-                                )}
+                                </div>
 
-                                {/* Question Card */}
-                                <Card
-                                    className={`
-                                        relative transition-all 
-                                        ${isDragging ? 'border-dashed border-primary/50' : ''}
-                                        ${isInGroup ? 'border-2 border-blue-500 border-t-0 rounded-none shadow-none bg-blue-50/5' : 'shadow-sm'}
-                                        ${isStartOfGroup ? '' : ''}
-                                        ${isEndOfGroup ? 'rounded-b-lg border-b-2' : ''}
-                                    `}
-                                    draggable
-                                    onDragStart={(e) => handleDragStart(e, index)}
-                                    onDragOver={handleDragOver}
-                                    onDrop={(e) => { e.stopPropagation(); handleDropQuestion(e, index); }}
-                                >
-                                    <div className="drag-handle absolute left-2 top-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10 p-1"><GripVertical className="h-5 w-5" /></div>
-                                    <div className="absolute right-0 top-0"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
-                                    <CardContent className="pt-10 space-y-4">
-                                        <div className="flex gap-2">
-                                            <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
-                                            <div className="flex-1 space-y-4">
-                                                <div className="flex justify-between items-center mb-2 relative">
-                                                    {isInGroup && (
-                                                        <span className="absolute -top-5 left-0 text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 rounded-full uppercase tracking-wider border border-blue-200">
-                                                            Passage Related
-                                                        </span>
-                                                    )}
+                                {sections.map((section, sIdx) => (
+                                    <Card key={section.id} className="border-2 border-slate-200 shadow-md overflow-hidden">
+                                        <div className="bg-slate-100 px-4 py-3 border-b flex flex-wrap gap-4 items-end">
+                                            <div className="flex-1 space-y-1">
+                                                <Label className="text-xs font-bold text-slate-500 uppercase">Section Name</Label>
+                                                <Input
+                                                    value={section.name}
+                                                    onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
+                                                    className="font-bold text-lg bg-white"
+                                                    placeholder="e.g. Physics"
+                                                />
+                                            </div>
+                                            <div className="w-[120px] space-y-1">
+                                                <Label className="text-xs font-bold text-slate-500 uppercase">Marks/Q</Label>
+                                                <Input
+                                                    type="text"
+                                                    value={section.marks_per_question}
+                                                    onChange={(e) => updateSection(sIdx, 'marks_per_question', e.target.value)}
+                                                    className="bg-white"
+                                                    placeholder="4 or 2/3"
+                                                />
+                                            </div>
+                                            <div className="w-[120px] space-y-1">
+                                                <Label className="text-xs font-bold text-slate-500 uppercase">Negative</Label>
+                                                <Input
+                                                    type="text"
+                                                    value={section.negative_marks}
+                                                    onChange={(e) => updateSection(sIdx, 'negative_marks', e.target.value)}
+                                                    className="bg-white"
+                                                    placeholder="1 or 1/3"
+                                                />
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="mb-0.5 text-slate-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></Button>
+                                        </div>
 
-                                                    {/* Question Type Selector */}
-                                                    <div
-                                                        onPointerDown={(e) => e.stopPropagation()}
-                                                        onMouseDown={(e) => e.stopPropagation()}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
-                                                            <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="single">Single Choice</SelectItem>
-                                                                <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
-                                                                <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                                                <SelectItem value="numerical">Numerical</SelectItem>
-                                                                {/* Hide Comprehension option if already inside a group */}
-                                                                {!isInGroup && <SelectItem value="comprehension">Passage/Comprehension</SelectItem>}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
+                                        <CardContent className="p-4 bg-slate-50/50">
+                                            <div className="space-y-4">
+                                                {section.questions.map((q, qIdx) => {
+                                                    // Reuse Question Rendering Logic (Simplified or Inlined)
+                                                    // Due to complexity, we are duplicating the core card rendering structure here but linked to section state
+                                                    return (
+                                                        <Card key={q.id} className="relative shadow-sm border border-slate-200">
+                                                            <div className="absolute right-0 top-0"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
+                                                            <CardContent className="pt-10 space-y-4">
+                                                                <div className="flex gap-2">
+                                                                    <span className="font-bold text-lg text-muted-foreground">Q{qIdx + 1}.</span>
+                                                                    <div className="flex-1 space-y-4">
+                                                                        <div className="flex justify-between items-center mb-2">
+                                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                                <Select value={q.type || 'single'} onValueChange={(val: any) => updateQuestionTypeInSection(sIdx, qIdx, val)}>
+                                                                                    <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
+                                                                                    <SelectContent>
+                                                                                        <SelectItem value="single">Single Choice</SelectItem>
+                                                                                        <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
+                                                                                        <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                                        <SelectItem value="numerical">Numerical</SelectItem>
+                                                                                    </SelectContent>
+                                                                                </Select>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 transition-colors">
+                                                                                <Languages className="w-3.5 h-3.5 text-slate-500" />
+                                                                                <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => updateQuestionInSection(sIdx, qIdx, 'typingMode', val)}>
+                                                                                    <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-medium w-auto gap-1"><SelectValue placeholder="Lang" /></SelectTrigger>
+                                                                                    <SelectContent><SelectItem value="en">English</SelectItem><SelectItem value="hi">Hindi</SelectItem></SelectContent>
+                                                                                </Select>
+                                                                            </div>
+                                                                        </div>
 
-                                                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
-                                                        <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
-                                                        <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}>
-                                                            <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
-                                                                <SelectValue placeholder="Language" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="en">English</SelectItem>
-                                                                <SelectItem value="hi">Hindi</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
-                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestion(index, 'question', val)} className="min-h-[80px]" />
+                                                                        <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="min-h-[80px]" />
 
-                                                {/* Image Upload for Question */}
-                                                <div className="space-y-2">
-                                                    {q.image ? (
-                                                        <div className="relative group w-fit">
-                                                            <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white shadow-sm" />
-                                                            <Button
-                                                                variant="destructive"
-                                                                size="icon"
-                                                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                onClick={() => updateQuestion(index, 'image', '')}
-                                                            >
-                                                                <X className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
-                                                            <Input
-                                                                placeholder="Paste Image URL or Upload"
-                                                                value={q.image || ''}
-                                                                onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
-                                                                className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none"
-                                                            />
-                                                            <label className="cursor-pointer h-full border-l border-input">
-                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
-                                                                <div className="flex items-center justify-center h-full px-4 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 whitespace-nowrap">
-                                                                    <Upload className="w-3.5 h-3.5 mr-2" />
-                                                                    Upload
-                                                                </div>
-                                                            </label>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                                        {/* Image Upload Simplified for Section */}
+                                                                        <div className="space-y-2">
+                                                                            {q.image ? (
+                                                                                <div className="relative group w-fit">
+                                                                                    <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white" />
+                                                                                    <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-3 w-3" /></Button>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
+                                                                                    <Input placeholder="Paste Image URL" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="flex-1 border-none shadow-none text-xs bg-transparent px-3" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
 
-                                                {/* Answers */}
-                                                {q.type === 'numerical' ? (
-                                                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                                        <Label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">Correct Numerical Range</Label>
-                                                        <div className="flex gap-4">
-                                                            <div><Label className="text-xs">Min</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} /></div>
-                                                            <div><Label className="text-xs">Max</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} /></div>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        {['A', 'B', 'C', 'D'].map(optKey => {
-                                                            const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
-                                                            const handleSelect = () => {
-                                                                if (q.type === 'multiple') {
-                                                                    const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
-                                                                    const idx = current.indexOf(optKey);
-                                                                    if (idx > -1) current.splice(idx, 1); else current.push(optKey);
-                                                                    updateQuestion(index, 'correctAnswer', current.sort());
-                                                                } else {
-                                                                    updateQuestion(index, 'correctAnswer', optKey);
-                                                                }
-                                                            };
-                                                            return (
-                                                                <div key={optKey} className="flex gap-2 items-start">
-                                                                    {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
-                                                                    <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
-                                                                    <div className="flex-1 flex flex-col">
-                                                                        <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y" />
-                                                                        {q.optionImages?.[optKey] ? (
-                                                                            <div className="relative group mt-1 w-fit">
-                                                                                <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
-                                                                                <button
-                                                                                    onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
-                                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                                >
-                                                                                    <X className="w-3 h-3" />
-                                                                                </button>
+                                                                        {/* Answers */}
+                                                                        {q.type === 'numerical' ? (
+                                                                            <div className="p-4 bg-slate-50 rounded-lg">
+                                                                                <div className="flex gap-4">
+                                                                                    <div><Label className="text-xs">Min</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} /></div>
+                                                                                    <div><Label className="text-xs">Max</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} /></div>
+                                                                                </div>
                                                                             </div>
                                                                         ) : (
-                                                                            <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7 mt-1">
-                                                                                <Input placeholder="Image URL" value="" onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2 shadow-none focus-visible:ring-0" />
-                                                                                <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px] whitespace-nowrap"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                {['A', 'B', 'C', 'D'].map(optKey => {
+                                                                                    const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                                                    const handleSelect = () => {
+                                                                                        if (q.type === 'multiple') {
+                                                                                            const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                                            const idx = current.indexOf(optKey);
+                                                                                            if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                                            updateQuestionInSection(sIdx, qIdx, 'correctAnswer', current.sort());
+                                                                                        } else {
+                                                                                            updateQuestionInSection(sIdx, qIdx, 'correctAnswer', optKey);
+                                                                                        }
+                                                                                    };
+                                                                                    return (
+                                                                                        <div key={optKey} className="flex gap-2 items-start">
+                                                                                            {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
+                                                                                            <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
+                                                                                            <div className="flex-1">
+                                                                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }} className="min-h-[60px]" />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
                                                                             </div>
                                                                         )}
                                                                     </div>
                                                                 </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
+                                                            </CardContent>
+                                                        </Card>
+                                                    );
+                                                })}
+                                                <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
                                             </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                                {isEndOfGroup && (
-                                    <div className="flex justify-center -mt-2 pb-6 pt-2 bg-blue-50/20 border-x border-b border-blue-200 rounded-b-lg mb-4">
-                                        <Button
-                                            size="sm"
-                                            variant="secondary"
-                                            onClick={() => handleAddSubQuestion(index)}
-                                            className="gap-2 bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 shadow-sm"
-                                        >
-                                            <Plus className="w-4 h-4" /> Add Question to Passage
-                                        </Button>
-                                    </div>
-                                )}
+                                        </CardContent>
+                                    </Card>
+                                ))}
                             </div>
-                        );
-                    })}
-                    <Button onClick={handleAddQuestion} size="sm" variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" /> Add Question</Button>
+                            <Button onClick={handleAddSection} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="text-xl font-semibold">Questions ({questions.length})</h2>
+                            {questions.map((q, index) => {
+                                // VISUAL GROUPING LOGIC
+                                const currentGroupId = q.groupId;
+                                const prevGroupId = index > 0 ? questions[index - 1].groupId : undefined;
+                                const nextGroupId = index < questions.length - 1 ? questions[index + 1].groupId : undefined;
+
+                                const isStartOfGroup = !!currentGroupId && currentGroupId !== prevGroupId;
+                                const isEndOfGroup = !!currentGroupId && currentGroupId !== nextGroupId;
+                                const isInGroup = !!currentGroupId;
+
+                                return (
+                                    <div key={index} className={isInGroup ? "space-y-0" : "space-y-4"}>
+
+                                        {/* Passage Header - Renders only at the start of a group */}
+                                        {isStartOfGroup && (
+                                            <div className="rounded-t-lg border-2 border-b-0 border-blue-500 bg-blue-50/30 overflow-hidden mt-4">
+                                                <div className="bg-blue-100/80 px-4 py-3 border-b-2 border-blue-500 flex justify-between items-center">
+                                                    <h3 className="text-sm font-bold text-blue-700 flex items-center gap-2">
+                                                        <FileText className="w-4 h-4" /> Passage Reference
+                                                    </h3>
+                                                </div>
+                                                <div className="p-4">
+                                                    <RichTextEditor
+                                                        value={q.passageContent || ''}
+                                                        onChange={(val) => updatePassageContent(q.groupId!, val)}
+                                                        placeholder="Enter the passage, story, or comprehension text here..."
+                                                        className="min-h-[150px] bg-white border-blue-100 shadow-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Question Card */}
+                                        <Card
+                                            className={`
+                                                relative transition-all 
+                                                ${isDragging ? 'border-dashed border-primary/50' : ''}
+                                                ${isInGroup ? 'border-2 border-blue-500 border-t-0 rounded-none shadow-none bg-blue-50/5' : 'shadow-sm'}
+                                                ${isStartOfGroup ? '' : ''}
+                                                ${isEndOfGroup ? 'rounded-b-lg border-b-2' : ''}
+                                            `}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={handleDragOver}
+                                            onDrop={(e) => { e.stopPropagation(); handleDropQuestion(e, index); }}
+                                        >
+                                            <div className="drag-handle absolute left-2 top-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10 p-1"><GripVertical className="h-5 w-5" /></div>
+                                            <div className="absolute right-0 top-0"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
+                                            <CardContent className="pt-10 space-y-4">
+                                                <div className="flex gap-2">
+                                                    <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
+                                                    <div className="flex-1 space-y-4">
+                                                        <div className="flex justify-between items-center mb-2 relative">
+                                                            {isInGroup && (
+                                                                <span className="absolute -top-5 left-0 text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 rounded-full uppercase tracking-wider border border-blue-200">
+                                                                    Passage Related
+                                                                </span>
+                                                            )}
+
+                                                            {/* Question Type Selector */}
+                                                            <div
+                                                                onPointerDown={(e) => e.stopPropagation()}
+                                                                onMouseDown={(e) => e.stopPropagation()}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
+                                                                    <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="single">Single Choice</SelectItem>
+                                                                        <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
+                                                                        <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                        <SelectItem value="numerical">Numerical</SelectItem>
+                                                                        {/* Hide Comprehension option if already inside a group */}
+                                                                        {!isInGroup && <SelectItem value="comprehension">Passage/Comprehension</SelectItem>}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
+                                                                <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
+                                                                <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}>
+                                                                    <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
+                                                                        <SelectValue placeholder="Language" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="en">English</SelectItem>
+                                                                        <SelectItem value="hi">Hindi</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                        </div>
+                                                        <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestion(index, 'question', val)} className="min-h-[80px]" />
+
+                                                        {/* Image Upload for Question */}
+                                                        <div className="space-y-2">
+                                                            {q.image ? (
+                                                                <div className="relative group w-fit">
+                                                                    <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white shadow-sm" />
+                                                                    <Button
+                                                                        variant="destructive"
+                                                                        size="icon"
+                                                                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        onClick={() => updateQuestion(index, 'image', '')}
+                                                                    >
+                                                                        <X className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
+                                                                    <Input
+                                                                        placeholder="Paste Image URL or Upload"
+                                                                        value={q.image || ''}
+                                                                        onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
+                                                                        className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none"
+                                                                    />
+                                                                    <label className="cursor-pointer h-full border-l border-input">
+                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
+                                                                        <div className="flex items-center justify-center h-full px-4 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 whitespace-nowrap">
+                                                                            <Upload className="w-3.5 h-3.5 mr-2" />
+                                                                            Upload
+                                                                        </div>
+                                                                    </label>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Answers */}
+                                                        {q.type === 'numerical' ? (
+                                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                                                <Label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">Correct Numerical Range</Label>
+                                                                <div className="flex gap-4">
+                                                                    <div><Label className="text-xs">Min</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} /></div>
+                                                                    <div><Label className="text-xs">Max</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} /></div>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {['A', 'B', 'C', 'D'].map(optKey => {
+                                                                    const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                                    const handleSelect = () => {
+                                                                        if (q.type === 'multiple') {
+                                                                            const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                            const idx = current.indexOf(optKey);
+                                                                            if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                            updateQuestion(index, 'correctAnswer', current.sort());
+                                                                        } else {
+                                                                            updateQuestion(index, 'correctAnswer', optKey);
+                                                                        }
+                                                                    };
+                                                                    return (
+                                                                        <div key={optKey} className="flex gap-2 items-start">
+                                                                            {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
+                                                                            <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
+                                                                            <div className="flex-1 flex flex-col">
+                                                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y" />
+                                                                                {q.optionImages?.[optKey] ? (
+                                                                                    <div className="relative group mt-1 w-fit">
+                                                                                        <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
+                                                                                        <button
+                                                                                            onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
+                                                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                        >
+                                                                                            <X className="w-3 h-3" />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7 mt-1">
+                                                                                        <Input placeholder="Image URL" value="" onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2 shadow-none focus-visible:ring-0" />
+                                                                                        <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px] whitespace-nowrap"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                        {isEndOfGroup && (
+                                            <div className="flex justify-center -mt-2 pb-6 pt-2 bg-blue-50/20 border-x border-b border-blue-200 rounded-b-lg mb-4">
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() => handleAddSubQuestion(index)}
+                                                    className="gap-2 bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 shadow-sm"
+                                                >
+                                                    <Plus className="w-4 h-4" /> Add Question to Passage
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            <Button onClick={handleAddQuestion} size="sm" variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" /> Add Question</Button>
+                        </>
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-4 pb-20">

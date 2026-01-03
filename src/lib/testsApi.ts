@@ -1,15 +1,25 @@
 // src/lib/testsApi.ts
 import supabase from '@/lib/supabaseClient';
 
+export interface TestSection {
+    id: string;
+    name: string;
+    instructions?: string;
+    marks_per_question?: number | string;
+    negative_marks?: number | string;
+    question_type?: string;
+    questions: Question[];
+}
+
 export interface Test {
     id: string; // uuid
     title: string;
     description: string;
-    questions: Question[]; // JSONB
+    questions: Question[]; // JSONB (Used for Flat Mode)
     created_at: string;
     custom_id?: string;
-    marks_per_question?: number;
-    negative_marks?: number;
+    marks_per_question?: number | string;
+    negative_marks?: number | string;
     duration?: number; // minutes
     revision_notes?: string;
     is_public?: boolean;
@@ -22,6 +32,11 @@ export interface Test {
     tags?: string[]; // Array of strings
     custom_category?: string;
     settings?: TestSettings;
+
+    // New Features
+    has_scientific_calculator?: boolean;
+    enable_section_mode?: boolean;
+    sections?: TestSection[];
 }
 
 export interface TestSettings {

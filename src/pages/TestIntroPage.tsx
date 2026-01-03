@@ -188,7 +188,6 @@ export default function TestIntroPage() {
     if (!test) return <div className="flex justify-center items-center h-screen">Test not found.</div>;
 
     const questionCount = test.questions?.length || 0;
-    const totalMarks = (questionCount * (test.marks_per_question || 4));
 
     return (
         <div className="container mx-auto max-w-3xl py-2 px-4 space-y-4 relative">
@@ -219,17 +218,55 @@ export default function TestIntroPage() {
                             <span className="text-sm text-muted-foreground">Duration</span>
                             <span className="font-bold text-lg">{test.duration || "N/A"} mins</span>
                         </div>
-                        <div className="flex flex-col items-center justify-center text-center">
-                            <CheckCircle className="h-6 w-6 text-green-500 mb-2" />
-                            <span className="text-sm text-muted-foreground">Marks/Q</span>
-                            <span className="font-bold text-lg">{test.marks_per_question || 4}</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center text-center">
-                            <AlertTriangle className="h-6 w-6 text-red-500 mb-2" />
-                            <span className="text-sm text-muted-foreground">Negative</span>
-                            <span className="font-bold text-lg">{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
-                        </div>
+
+                        {!test.enable_section_mode ? (
+                            <>
+                                <div className="flex flex-col items-center justify-center text-center">
+                                    <CheckCircle className="h-6 w-6 text-green-500 mb-2" />
+                                    <span className="text-sm text-muted-foreground">Marks/Q</span>
+                                    <span className="font-bold text-lg">{test.marks_per_question || 4}</span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center text-center">
+                                    <AlertTriangle className="h-6 w-6 text-red-500 mb-2" />
+                                    <span className="text-sm text-muted-foreground">Negative</span>
+                                    <span className="font-bold text-lg">{test.negative_marks !== undefined ? test.negative_marks : 1}</span>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex flex-col items-center justify-center text-center col-span-2 md:col-span-2 bg-white dark:bg-slate-800 rounded border border-dashed">
+                                    <BookOpen className="h-6 w-6 text-purple-500 mb-1" />
+                                    <span className="text-sm font-medium">Section-wise Pattern</span>
+                                    <span className="text-xs text-muted-foreground">{test.sections?.length || 0} Sections</span>
+                                </div>
+                            </>
+                        )}
                     </div>
+
+                    {test.enable_section_mode && test.sections && (
+                        <div className="border rounded-md overflow-hidden my-4">
+                            <table className="w-full text-sm text-left bg-white dark:bg-slate-950">
+                                <thead className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold uppercase text-xs">
+                                    <tr>
+                                        <th className="p-3">Section</th>
+                                        <th className="p-3 text-center">Qs</th>
+                                        <th className="p-3 text-center">Marks</th>
+                                        <th className="p-3 text-center">Negative</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y dark:divide-slate-800">
+                                    {test.sections.map((sec: any) => (
+                                        <tr key={sec.id}>
+                                            <td className="p-3 font-medium">{sec.name}</td>
+                                            <td className="p-3 text-center">{sec.questions.length}</td>
+                                            <td className="p-3 text-center text-emerald-600 font-bold">+{sec.marks_per_question ?? (test.marks_per_question || 4)}</td>
+                                            <td className="p-3 text-center text-red-500">-{sec.negative_marks ?? (test.negative_marks || 1)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
 
                     <div className="space-y-3 border p-3 rounded-md">
                         <div className="flex items-center gap-2">

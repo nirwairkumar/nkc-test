@@ -35,6 +35,24 @@ interface TestResult {
   submission_time: string;
 }
 
+// Helper to parse marks
+const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
+  if (typeof value === 'number') return value;
+  if (!value) return defaultVal;
+  try {
+    if (value.includes('/')) {
+      const parts = value.split('/');
+      if (parts.length === 2) {
+        return parseFloat(parts[0]) / parseFloat(parts[1]);
+      }
+    }
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? defaultVal : parsed;
+  } catch (e) {
+    return defaultVal;
+  }
+};
+
 const ResultsPage = () => {
   const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
   const navigate = useNavigate();
@@ -62,53 +80,150 @@ const ResultsPage = () => {
     answers = {};
   }
 
-  // Calculate Stats
+  // Calculate Stats with Section Support and Partial Marking
   let totalQuestions = selectedTest?.questions?.length || 0;
+
+  // Detailed Stats
+  let calculatedScore = 0;
   let correctCount = 0;
+  let partialCount = 0;
   let wrongCount = 0;
   let skippedCount = 0;
-  let marksScored = stateData?.score || 0;
-  let totalMarks = totalQuestions * (selectedTest?.marks_per_question || 4);
+  let totalMaxMarks = 0;
+
+  // Section Wise Stats Storage
+  const sectionAnalysis: Record<string, {
+    name: string;
+    totalQ: number;
+    attempted: number;
+    correct: number;
+    partial: number;
+    wrong: number;
+    score: number;
+    maxScore: number;
+  }> = {};
+
+  // Initialize Sections if enabled
+  if (selectedTest?.enable_section_mode && selectedTest?.sections) {
+    selectedTest.sections.forEach((sec: any) => {
+      sectionAnalysis[sec.id] = {
+        name: sec.name,
+        totalQ: 0,
+        attempted: 0,
+        correct: 0,
+        partial: 0,
+        wrong: 0,
+        score: 0,
+        maxScore: 0
+      };
+    });
+  } else {
+    // Default 'General' section for flat tests
+    sectionAnalysis['default'] = { name: 'General', totalQ: 0, attempted: 0, correct: 0, partial: 0, wrong: 0, score: 0, maxScore: 0 };
+  }
 
   if (selectedTest?.questions) {
-    selectedTest.questions.forEach((q: any) => {
-      const ans = answers[q.id];
-      let isCorrect = false;
+    let runningQIndex = 0;
 
-      if (q.type === 'numerical') {
-        // Numerical Check
-        const numAns = parseFloat(ans);
-        const range = q.correctAnswer;
-        if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
-          isCorrect = true;
-        }
-      } else if (q.type === 'multiple') {
-        // Multiple Choice Check (Exact Match)
-        const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
-        const userArr = Array.isArray(ans) ? [...ans].sort() : [];
+    selectedTest.questions.forEach((q: any, index: number) => {
+      // Identify Section
+      let currentSectionId = 'default';
+      let marks = selectedTest.marks_per_question ? parseMark(selectedTest.marks_per_question, 4) : 4;
+      let neg = selectedTest.negative_marks !== undefined ? parseMark(selectedTest.negative_marks, 1) : 1;
 
-        if (correctArr.length > 0 && correctArr.length === userArr.length &&
-          correctArr.every((val, index) => val === userArr[index])) {
-          isCorrect = true;
-        }
-      } else {
-        // Single Choice Check
-        if (ans === q.correctAnswer) {
-          isCorrect = true;
+      if (selectedTest.enable_section_mode && selectedTest.sections) {
+        let rCount = 0;
+        for (const section of selectedTest.sections) {
+          if (index >= rCount && index < rCount + section.questions.length) {
+            currentSectionId = section.id;
+            marks = parseMark(section.marks_per_question, 4);
+            neg = parseMark(section.negative_marks, 1);
+            break;
+          }
+          rCount += section.questions.length;
         }
       }
 
-      if (isCorrect) {
-        correctCount++;
-      } else if (ans) {
-        wrongCount++;
-      } else {
+      // Update Max Marks
+      totalMaxMarks += marks;
+      if (sectionAnalysis[currentSectionId]) {
+        sectionAnalysis[currentSectionId].totalQ++;
+        sectionAnalysis[currentSectionId].maxScore += marks;
+      }
+
+      const ans = answers[q.id];
+      let qScore = 0;
+      let isCorrect = false;
+      let isPartial = false;
+      let isSkipped = !ans;
+      let isWrong = false;
+
+      if (isSkipped) {
         skippedCount++;
+      } else {
+        // Attempted
+        if (sectionAnalysis[currentSectionId]) sectionAnalysis[currentSectionId].attempted++;
+
+        if (q.type === 'numerical') {
+          const numAns = parseFloat(ans);
+          const range = q.correctAnswer;
+          if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+            isCorrect = true;
+            qScore = marks;
+          } else {
+            isWrong = true;
+            qScore = -neg;
+          }
+        } else if (q.type === 'multiple') {
+          const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].map(String).sort() : [];
+          const userArr = Array.isArray(ans) ? [...ans].map(String).sort() : [];
+
+          const hasIncorrect = userArr.some(a => !correctArr.includes(a));
+
+          if (hasIncorrect) {
+            isWrong = true;
+            qScore = -neg;
+          } else {
+            if (userArr.length === correctArr.length) {
+              isCorrect = true;
+              qScore = marks;
+            } else if (userArr.length > 0) {
+              isPartial = true;
+              const fraction = userArr.length / correctArr.length;
+              qScore = fraction * marks;
+            }
+          }
+        } else {
+          // Single
+          if (ans === q.correctAnswer) {
+            isCorrect = true;
+            qScore = marks;
+          } else {
+            isWrong = true;
+            qScore = -neg;
+          }
+        }
+      }
+
+      // Update Counters
+      if (isCorrect) correctCount++;
+      if (isPartial) partialCount++;
+      if (isWrong) wrongCount++;
+      calculatedScore += qScore;
+
+      // Update Section Stats
+      if (sectionAnalysis[currentSectionId]) {
+        if (isCorrect) sectionAnalysis[currentSectionId].correct++;
+        if (isPartial) sectionAnalysis[currentSectionId].partial++;
+        if (isWrong) sectionAnalysis[currentSectionId].wrong++;
+        sectionAnalysis[currentSectionId].score += qScore;
       }
     });
   }
 
-  const percentage = totalMarks > 0 ? Math.round((marksScored / totalMarks) * 100) : 0;
+  // Override total marks with actual calc if available
+  const finalScore = stateData?.score ?? calculatedScore;
+  const percentage = totalMaxMarks > 0 ? Math.round((finalScore / totalMaxMarks) * 100) : 0;
 
   const handleRetakeTest = () => {
     resetTest();
@@ -151,8 +266,8 @@ const ResultsPage = () => {
 
               <div className="flex items-end gap-4 mt-6">
                 <div>
-                  <span className="text-6xl font-bold">{marksScored}</span>
-                  <span className="text-2xl opacity-75">/{totalMarks}</span>
+                  <span className="text-6xl font-bold">{parseFloat(finalScore.toFixed(2))}</span>
+                  <span className="text-2xl opacity-75">/{totalMaxMarks}</span>
                 </div>
                 <div className="mb-2">
                   <Badge variant="secondary" className="text-lg px-3 py-1">
@@ -164,31 +279,69 @@ const ResultsPage = () => {
           </Card>
 
           <Card className="flex flex-col justify-center gap-4 p-6 shadow-md">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Correct</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg">
+                <span className="text-2xl font-bold text-green-700">{correctCount}</span>
+                <span className="text-xs font-medium text-green-600 uppercase">Correct</span>
               </div>
-              <span className="font-bold text-xl">{correctCount}</span>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-red-600">
-                <XCircle className="w-5 h-5" />
-                <span className="font-medium">Wrong</span>
+              <div className="flex flex-col items-center p-3 bg-red-50 rounded-lg">
+                <span className="text-2xl font-bold text-red-700">{wrongCount}</span>
+                <span className="text-xs font-medium text-red-600 uppercase">Wrong</span>
               </div>
-              <span className="font-bold text-xl">{wrongCount}</span>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-slate-500">
-                <AlertCircle className="w-5 h-5" />
-                <span className="font-medium">Skipped</span>
+              <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg">
+                <span className="text-2xl font-bold text-blue-700">{partialCount}</span>
+                <span className="text-xs font-medium text-blue-600 uppercase">Partial</span>
               </div>
-              <span className="font-bold text-xl">{skippedCount}</span>
+              <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+                <span className="text-2xl font-bold text-slate-700">{skippedCount}</span>
+                <span className="text-xs font-medium text-slate-600 uppercase">Skipped</span>
+              </div>
             </div>
           </Card>
         </div>
+
+        {/* Section Wise Analysis */}
+        {selectedTest?.enable_section_mode && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Target className="w-5 h-5" /> Section Analysis
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.values(sectionAnalysis).map((sec) => (
+                <Card key={sec.name} className="bg-white border-none shadow-md">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex justify-between">
+                      {sec.name}
+                      <span className="text-sm font-normal text-slate-500">{sec.totalQ} Qs</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                        <span className="text-sm font-medium">Score</span>
+                        <span className="font-bold text-emerald-600">{parseFloat(sec.score.toFixed(2))} / {sec.maxScore}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1 text-center text-xs">
+                        <div className="bg-green-100 text-green-700 p-1 rounded">
+                          <div className="font-bold">{sec.correct}</div> Correct
+                        </div>
+                        <div className="bg-red-100 text-red-700 p-1 rounded">
+                          <div className="font-bold">{sec.wrong}</div> Wrong
+                        </div>
+                        <div className="bg-blue-100 text-blue-700 p-1 rounded">
+                          <div className="font-bold">{sec.partial}</div> Partial
+                        </div>
+                      </div>
+                      <div className="text-center text-xs text-slate-400 mt-2">
+                        Attempted: {sec.attempted} / {sec.totalQ}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Detailed Analysis Accordion */}
         <Card className="shadow-lg border-t-4 border-t-primary">
