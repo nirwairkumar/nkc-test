@@ -265,43 +265,41 @@ export function ScientificCalculator({ onClose }: { onClose?: () => void }) {
                         </div>
                     )}
 
-                    <div className="grid grid-cols-4 md:grid-cols-5 gap-1.5 md:gap-2">
-                        <div className="contents md:contents">
-                            {/* Row 1 */}
-                            <CalcButton variant="memory" onClick={memClear} label="MC" />
-                            <CalcButton variant="memory" onClick={memRecall} label="MR" />
-                            <CalcButton variant="memory" onClick={memAdd} label="M+" />
-                            <CalcButton variant="memory" onClick={memSub} label="M-" />
-                            <CalcButton variant="destructive" onClick={clear} label="AC" className="md:col-start-5 row-start-1" />
+                    <div className="grid grid-cols-5 gap-1.5 md:gap-2">
+                        {/* Row 1 */}
+                        <CalcButton variant="memory" onClick={memClear} label="MC" />
+                        <CalcButton variant="memory" onClick={memRecall} label="MR" />
+                        <CalcButton variant="memory" onClick={memAdd} label="M+" />
+                        <CalcButton variant="memory" onClick={memSub} label="M-" />
+                        <CalcButton variant="destructive" onClick={clear} label="AC" />
 
-                            {/* Row 2 */}
-                            <CalcButton variant="num" onClick={() => handlePress('7')} label="7" />
-                            <CalcButton variant="num" onClick={() => handlePress('8')} label="8" />
-                            <CalcButton variant="num" onClick={() => handlePress('9')} label="9" />
-                            <CalcButton variant="op" onClick={() => handlePress('/')} label="÷" />
-                            <CalcButton variant="destructive" onClick={backspace} label="DEL" className="md:col-start-5 md:row-start-2" />
+                        {/* Row 2 */}
+                        <CalcButton variant="num" onClick={() => handlePress('7')} label="7" />
+                        <CalcButton variant="num" onClick={() => handlePress('8')} label="8" />
+                        <CalcButton variant="num" onClick={() => handlePress('9')} label="9" />
+                        <CalcButton variant="op" onClick={() => handlePress('/')} label="÷" />
+                        <CalcButton variant="destructive" onClick={backspace} label="DEL" />
 
-                            {/* Row 3 */}
-                            <CalcButton variant="num" onClick={() => handlePress('4')} label="4" />
-                            <CalcButton variant="num" onClick={() => handlePress('5')} label="5" />
-                            <CalcButton variant="num" onClick={() => handlePress('6')} label="6" />
-                            <CalcButton variant="op" onClick={() => handlePress('*')} label="×" />
-                            <CalcButton variant="sci" onClick={() => addFunc('√')} label="√" className="md:col-start-5 md:row-start-3 hidden md:block" />
+                        {/* Row 3 */}
+                        <CalcButton variant="num" onClick={() => handlePress('4')} label="4" />
+                        <CalcButton variant="num" onClick={() => handlePress('5')} label="5" />
+                        <CalcButton variant="num" onClick={() => handlePress('6')} label="6" />
+                        <CalcButton variant="op" onClick={() => handlePress('*')} label="×" />
+                        <CalcButton variant="sci" onClick={() => addFunc('√')} label="√" />
 
-                            {/* Row 4 */}
-                            <CalcButton variant="num" onClick={() => handlePress('1')} label="1" />
-                            <CalcButton variant="num" onClick={() => handlePress('2')} label="2" />
-                            <CalcButton variant="num" onClick={() => handlePress('3')} label="3" />
-                            <CalcButton variant="op" onClick={() => handlePress('-')} label="-" />
-                            <CalcButton variant="sci" onClick={() => handlePress('^')} label="xʸ" className="md:col-start-5 md:row-start-4 hidden md:block" />
+                        {/* Row 4 */}
+                        <CalcButton variant="num" onClick={() => handlePress('1')} label="1" />
+                        <CalcButton variant="num" onClick={() => handlePress('2')} label="2" />
+                        <CalcButton variant="num" onClick={() => handlePress('3')} label="3" />
+                        <CalcButton variant="op" onClick={() => handlePress('-')} label="-" />
+                        <CalcButton variant="sci" onClick={() => handlePress('^')} label="xʸ" />
 
-                            {/* Row 5 */}
-                            <CalcButton variant="num" onClick={() => handlePress('0')} label="0" />
-                            <CalcButton variant="num" onClick={() => handlePress('.')} label="." />
-                            <CalcButton variant="sci" onClick={() => handlePress('e')} label="e" className="md:hidden" />
-                            <CalcButton variant="op" onClick={() => handlePress('+')} label="+" />
-                            <CalcButton variant="primary" onClick={calculate} label="=" className="md:col-start-5 md:row-start-5 h-full" />
-                        </div>
+                        {/* Row 5 */}
+                        <CalcButton variant="num" onClick={() => handlePress('0')} label="0" />
+                        <CalcButton variant="num" onClick={() => handlePress('.')} label="." />
+                        <CalcButton variant="sci" onClick={() => handlePress('e')} label="e" />
+                        <CalcButton variant="op" onClick={() => handlePress('+')} label="+" />
+                        <CalcButton variant="primary" onClick={calculate} label="=" />
                     </div>
                 </div>
             </div>
