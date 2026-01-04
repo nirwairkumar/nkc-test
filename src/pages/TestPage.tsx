@@ -382,6 +382,10 @@ export default function TestPage() {
         }
       }
 
+      // Per-Question overrides (highest priority)
+      if (q.marks !== undefined) sectionMarks = parseMark(q.marks, sectionMarks);
+      if (q.negativeMarks !== undefined) sectionNegative = parseMark(q.negativeMarks, sectionNegative);
+
       if (q.type === 'numerical') {
         const numAns = parseFloat(userAns as string);
         const range = q.correctAnswer as { min: number, max: number };
@@ -768,24 +772,52 @@ export default function TestPage() {
                       </div>
 
                       {(() => {
-                        let marks = test.marks_per_question || 4;
-                        let neg = test.negative_marks !== undefined ? test.negative_marks : 1;
-                        // Use parseMark for fractions
-                        let marksVal = parseMark(marks, 4);
-                        let negVal = parseMark(neg, 1);
+                        // 1. Determine Fallback Pattern (Section Default or Test Default)
+                        let fallbackMarks = 4;
+                        let fallbackNeg = 1;
+                        let targetQ = currentQuestion; // Default to flat question
+                        let forceSectionMarks = false;
 
-                        // If section mode is enabled, find the specific section for this question
                         if (test.enable_section_mode && test.sections) {
+                          // Check Marking Model (Default to 'section-wise' if undefined)
+                          const markingModel = test.section_marking_model || 'section-wise';
+                          if (markingModel === 'section-wise') {
+                            forceSectionMarks = true;
+                          }
+
                           let runningCount = 0;
                           for (const section of test.sections) {
                             if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
-                              marksVal = parseMark(section.marks_per_question, 4);
-                              negVal = parseMark(section.negative_marks, 1);
+                              fallbackMarks = parseMark(section.marks_per_question, 4);
+                              fallbackNeg = parseMark(section.negative_marks, 1);
+
+                              // Source the question from the section data directly
+                              const localIdx = currentQuestionIndex - runningCount;
+                              if (section.questions[localIdx]) {
+                                targetQ = section.questions[localIdx];
+                              }
                               break;
                             }
                             runningCount += section.questions.length;
                           }
+                        } else {
+                          fallbackMarks = parseMark(test.marks_per_question, 4);
+                          fallbackNeg = parseMark(test.negative_marks, 1);
                         }
+
+                        // 2. Resolve Final Marks
+                        // If forceSectionMarks is true, ignore question-level marks (unless they are somehow mandatory, but here we enforce the model)
+                        // Actually, parseMark(undefined, fallback) returns fallback.
+                        // If forceSectionMarks, we pass 'undefined' effectively to ensure fallback is used?
+                        // Or we just use fallbackMarks directly.
+
+                        const marksVal = forceSectionMarks
+                          ? fallbackMarks
+                          : parseMark(targetQ.marks, fallbackMarks);
+
+                        const negVal = forceSectionMarks
+                          ? fallbackNeg
+                          : parseMark(targetQ.negativeMarks, fallbackNeg);
 
                         return (
                           <div className="text-sm font-medium flex items-center gap-1">
@@ -795,11 +827,13 @@ export default function TestPage() {
                           </div>
                         );
                       })()}
+
                     </div>
 
                     <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
                       <Latex>{currentQuestion.question}</Latex>
                     </div>
+
 
                     {currentQuestion.image && (
                       <div className="my-4">
@@ -1188,6 +1222,6 @@ export default function TestPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   );
 }

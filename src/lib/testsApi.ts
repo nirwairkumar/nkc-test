@@ -37,6 +37,7 @@ export interface Test {
     has_scientific_calculator?: boolean;
     enable_section_mode?: boolean;
     sections?: TestSection[];
+    section_marking_model?: 'section-wise' | 'question-wise'; // 'section-wise' is default
 }
 
 export interface TestSettings {
@@ -70,6 +71,8 @@ export interface Question {
     options?: { [key: string]: string }; // Optional for numerical
     optionImages?: { [key: string]: string };
     correctAnswer: string | string[] | { min: number, max: number }; // Dynamic type
+    marks?: number | string;
+    negativeMarks?: number | string;
 }
 
 export async function createTest(testData: Partial<Test>) {

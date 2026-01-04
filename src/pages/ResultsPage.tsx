@@ -144,6 +144,10 @@ const ResultsPage = () => {
         }
       }
 
+      // Per-Question overrides
+      if (q.marks !== undefined) marks = parseMark(q.marks, marks);
+      if (q.negativeMarks !== undefined) neg = parseMark(q.negativeMarks, neg);
+
       // Update Max Marks
       totalMaxMarks += marks;
       if (sectionAnalysis[currentSectionId]) {
@@ -394,7 +398,11 @@ const ResultsPage = () => {
                         <div className="flex-1 font-medium text-sm line-clamp-1">
                           <Latex>{q.question}</Latex>
                         </div>
-                        <div className="mr-2">
+                        <div className="mr-2 flex items-center gap-3">
+                          {/* Marks Display */}
+                          <span className={`text-sm font-bold ${isCorrect ? 'text-green-600' : isWrong ? 'text-red-500' : 'text-slate-400'}`}>
+                            {isCorrect ? `+${typeof q.marks !== 'undefined' ? q.marks : 4}` : isWrong ? `-${typeof q.negativeMarks !== 'undefined' ? q.negativeMarks : 1}` : '0'}
+                          </span>
                           {isCorrect && <Badge className="bg-green-600">Correct</Badge>}
                           {isWrong && <Badge variant="destructive">Wrong</Badge>}
                           {isSkipped && <Badge variant="secondary">Skipped</Badge>}
