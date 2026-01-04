@@ -689,8 +689,9 @@ export default function TestPage() {
                     <button
                       key={section.id}
                       onClick={() => setCurrentQuestionIndex(startIndex)}
+                      title={section.name}
                       className={`
-                                flex-1 min-w-[100px] py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap px-4
+                                flex-1 min-w-[100px] max-w-[160px] py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap px-4 truncate
                                 ${isActive
                           ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
                           : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}
@@ -705,11 +706,11 @@ export default function TestPage() {
           )}
 
           {/* Mobile Palette Trigger (Top Left - Floating above Card) */}
-          <div className="lg:hidden absolute top-2 left-2 z-20">
+          <div className="lg:hidden absolute top-0 left-0 z-20 p-2">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button size="icon" className="h-10 w-10 rounded-full shadow-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
-                  <Menu className="h-5 w-5" />
+                <Button size="icon" variant="ghost" className="h-9 w-9 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <Menu className="h-5 w-5 text-slate-500" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[80%] sm:w-[380px] flex flex-col h-full">
@@ -733,7 +734,7 @@ export default function TestPage() {
 
           {currentQuestion.passageContent ? (
             /* SPLIT VIEW FOR COMPREHENSION */
-            <div className="flex-1 h-full flex flex-col lg:flex-row gap-4 lg:overflow-hidden pb-4 p-1 pt-14 lg:pt-1">
+            <div className="flex-1 h-full flex flex-col lg:flex-row gap-2 lg:gap-4 lg:overflow-hidden pb-4 p-1 pt-10 lg:pt-1">
               {/* Passage Pane (Desktop) */}
               <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-800 shadow-sm custom-scrollbar">
                 <div className="p-4 border-b dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
@@ -757,7 +758,7 @@ export default function TestPage() {
                 </div>
 
                 <Card className="min-h-[400px] shadow-sm border-0 bg-white dark:bg-slate-900 w-full h-auto block">
-                  <CardContent className="p-6 gap-6 flex flex-col h-auto">
+                  <CardContent className="p-3 md:p-6 gap-6 flex flex-col h-auto">
                     <div className="flex justify-between items-start">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
@@ -942,9 +943,9 @@ export default function TestPage() {
             </div>
           ) : (
             /* STANDARD VIEW */
-            <div className="flex-1 h-full flex flex-col gap-6 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-2 pb-24 p-1 pt-14 lg:pt-1">
+            <div className="flex-1 h-full flex flex-col gap-6 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-2 pb-24 p-1 pt-10 lg:pt-1">
               <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
-                <CardContent className="p-6 gap-6 flex flex-col h-auto">
+                <CardContent className="p-3 md:p-6 gap-6 flex flex-col h-auto">
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
