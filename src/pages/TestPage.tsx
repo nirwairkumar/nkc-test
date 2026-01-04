@@ -644,16 +644,20 @@ export default function TestPage() {
         </div>
         <div className="flex items-center gap-2">
           {test.has_scientific_calculator && (
-            <Dialog open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="hidden md:flex h-9 w-9 p-0 rounded-full" title="Scientific Calculator">
-                  <Calculator className="w-5 h-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-transparent border-none shadow-none">
-                <ScientificCalculator />
-              </DialogContent>
-            </Dialog>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:flex h-9 w-9 p-0 rounded-full"
+                title="Scientific Calculator"
+                onClick={() => setIsCalculatorOpen(true)}
+              >
+                <Calculator className="w-5 h-5" />
+              </Button>
+              {isCalculatorOpen && (
+                <ScientificCalculator onClose={() => setIsCalculatorOpen(false)} />
+              )}
+            </>
           )}
 
           <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>

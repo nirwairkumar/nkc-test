@@ -1,138 +1,349 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { DialogClose } from '@/components/ui/dialog';
-import { Delete, History, RotateCcw, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function ScientificCalculator() {
+export function ScientificCalculator({ onClose }: { onClose?: () => void }) {
     const [display, setDisplay] = useState('0');
+    const [expression, setExpression] = useState(''); // Stores the full math string for evaluation
     const [memory, setMemory] = useState<number>(0);
-    const [showScientific, setShowScientific] = useState(true);
-    const [isDegree, setIsDegree] = useState(true); // Degree vs Radian
+    const [isDegrees, setIsDegrees] = useState(true);
+    const [isScientific, setIsScientific] = useState(false); // Default to Basic
+    const [isShift, setIsShift] = useState(false);
+    const [error, setError] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
-    // Helper to evaluate safe math
-    const calculate = () => {
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    // --- Key Handlers ---
+
+    // Append number or operator
+    const handlePress = useCallback((val: string) => {
+        if (error) {
+            setDisplay(val);
+            setExpression(val);
+            setError(false);
+            return;
+        }
+
+        if (display === '0' && !['.', '+', '-', '*', '/', '^'].includes(val)) {
+            setDisplay(val);
+            setExpression(val);
+        } else {
+            // Prevent multiple operators in a row roughly
+            const lastChar = display.slice(-1);
+            if (['+', '-', '*', '/', '^'].includes(lastChar) && ['+', '-', '*', '/', '^'].includes(val)) {
+                setDisplay(display.slice(0, -1) + val);
+                setExpression(expression.slice(0, -1) + val);
+            } else {
+                setDisplay(display + val);
+                setExpression(expression + val);
+            }
+        }
+    }, [display, expression, error]);
+
+    // Clear All
+    const clear = useCallback(() => {
+        setDisplay('0');
+        setExpression('');
+        setError(false);
+    }, []);
+
+    // Backspace
+    const backspace = useCallback(() => {
+        if (error) {
+            clear();
+            return;
+        }
+        if (display.length === 1) {
+            setDisplay('0');
+            setExpression('');
+        } else {
+            setDisplay(display.slice(0, -1));
+            setExpression(expression.slice(0, -1));
+        }
+    }, [display, expression, error, clear]);
+
+    // Calculate Result
+    const calculate = useCallback(() => {
         try {
-            // Replace visual symbols with JS math
-            let expression = display
-                .replace(/×/g, '*')
-                .replace(/÷/g, '/')
+            // Prepare expression for Evaluation
+            let evalStr = expression
                 .replace(/π/g, 'Math.PI')
                 .replace(/e/g, 'Math.E')
                 .replace(/\^/g, '**')
-                .replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)'); // Basic sqrt handle
+                .replace(/×/g, '*')
+                .replace(/÷/g, '/');
 
-            // Handle Scientific Functions
-            // Note: This simple replace doesn't handle nested parentheses perfectly for functions like sin(cos(x))
-            // But for a basic implementation without a parser library, it works for simple cases.
-            // We'll wrap common functions.
+            // Handle Trig functions with Degree conversion
+            const toRad = isDegrees ? `*(Math.PI/180)` : '';
 
-            const trigFactor = isDegree ? `* (Math.PI / 180)` : '';
+            // Standard Trig replacements
+            evalStr = evalStr.replace(/sin\(/g, `Math.sin(${isDegrees ? '(Math.PI/180)*' : ''}`);
+            evalStr = evalStr.replace(/cos\(/g, `Math.cos(${isDegrees ? '(Math.PI/180)*' : ''}`);
+            evalStr = evalStr.replace(/tan\(/g, `Math.tan(${isDegrees ? '(Math.PI/180)*' : ''}`);
 
-            // We need a safer eval or a proper parser. 
-            // For this snippet, we will use Function constructor which is slightly safer than direct eval but still allows arbitrary code.
-            // Since this is client-side only and user input is controlled via buttons (mostly), it's acceptable for a mock tool.
-            // However, to support functions like sin(30), we need to rewrite them to Math.sin(...)
+            // Inverse Trig placehodlers (simplified for this context)
+            evalStr = evalStr.replace(/asin\(/g, `Math.asin(`);
 
-            expression = expression
-                .replace(/sin\(/g, `Math.sin(${isDegree ? '(Math.PI/180)*' : ''}`)
-                .replace(/cos\(/g, `Math.cos(${isDegree ? '(Math.PI/180)*' : ''}`)
-                .replace(/tan\(/g, `Math.tan(${isDegree ? '(Math.PI/180)*' : ''}`)
+            // Other functions
+            evalStr = evalStr
                 .replace(/log\(/g, 'Math.log10(')
-                .replace(/ln\(/g, 'Math.log(');
+                .replace(/ln\(/g, 'Math.log(')
+                .replace(/√\(/g, 'Math.sqrt(');
 
+            // Safe Eval
             // eslint-disable-next-line no-new-func
-            const result = new Function('return ' + expression)();
+            const result = new Function('return ' + evalStr)();
 
-            // Format result
-            const formatted = parseFloat(result.toFixed(8)).toString();
+            if (!isFinite(result) || isNaN(result)) {
+                throw new Error("Invalid");
+            }
+
+            const formatted = parseFloat(result.toFixed(10)).toString();
             setDisplay(formatted);
+            setExpression(formatted);
         } catch (e) {
             setDisplay('Error');
-            setTimeout(() => setDisplay('0'), 1500);
+            setError(true);
         }
-    };
-
-    const handlePress = (val: string) => {
-        if (display === '0' || display === 'Error') {
-            setDisplay(val);
-        } else {
-            setDisplay(display + val);
-        }
-    };
-
-    const clear = () => setDisplay('0');
-    const backspace = () => {
-        if (display.length === 1 || display === 'Error') setDisplay('0');
-        else setDisplay(display.slice(0, -1));
-    };
+    }, [expression, isDegrees]);
 
     const addFunc = (func: string) => {
         const val = func + '(';
-        if (display === '0') setDisplay(val);
-        else setDisplay(display + val);
+        if (display === '0') {
+            setDisplay(val);
+            setExpression(val);
+        } else {
+            setDisplay(display + val);
+            setExpression(expression + val);
+        }
     };
 
-    return (
-        <Card className="w-full max-w-[360px] p-4 shadow-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 relative">
-            <DialogClose className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition-colors">
-                <X className="w-4 h-4" />
-            </DialogClose>
-            <div className="bg-slate-100 dark:bg-slate-900 p-4 rounded-lg mb-4 text-right">
-                <div className="text-xs text-slate-500 mb-1 h-4">{isDegree ? 'DEG' : 'RAD'}</div>
-                <div className="text-3xl font-mono tracking-wider overflow-x-auto whitespace-nowrap scrollbar-hide">
-                    {display}
+    const memClear = () => setMemory(0);
+    const memRecall = () => {
+        if (display === '0') {
+            setDisplay(memory.toString());
+            setExpression(memory.toString());
+        } else {
+            setDisplay(display + memory.toString());
+            setExpression(expression + memory.toString());
+        }
+    };
+    const memAdd = () => {
+        try {
+            const val = parseFloat(display);
+            if (!isNaN(val)) setMemory(memory + val);
+        } catch { }
+    };
+    const memSub = () => {
+        try {
+            const val = parseFloat(display);
+            if (!isNaN(val)) setMemory(memory - val);
+        } catch { }
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key >= '0' && e.key <= '9') handlePress(e.key);
+            if (e.key === '.') handlePress('.');
+            if (e.key === '+') handlePress('+');
+            if (e.key === '-') handlePress('-');
+            if (e.key === '*') handlePress('*');
+            if (e.key === '/') handlePress('/');
+            if (e.key === '^') handlePress('^');
+            if (e.key === '=' || e.key === 'Enter') { e.preventDefault(); calculate(); }
+            if (e.key === 'Backspace') backspace();
+            if (e.key === 'Escape') { if (onClose) onClose(); }
+            if (e.key === '(') handlePress('(');
+            if (e.key === ')') handlePress(')');
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handlePress, calculate, backspace, clear, onClose]);
+
+    if (!mounted) return null;
+
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            {/* 1. Use an absolute distinct backdrop sibling to avoid bubbling issues */}
+            <div
+                className="absolute inset-0 bg-black/10 backdrop-blur-[1px] animate-in fade-in duration-200"
+                onClick={onClose}
+            />
+
+            {/* 2. Calculator Body - Sibling to backdrop */}
+            {/* Added animate-in directly to this container */}
+            <div
+                className="relative z-10 w-full max-w-[340px] md:max-w-[400px] max-h-[90vh] overflow-y-auto bg-[#222] rounded-xl shadow-2xl border border-slate-700 flex flex-col animate-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+            >
+
+                {/* Header */}
+                <div className="bg-[#333] px-3 py-2 flex justify-between items-center cursor-move border-b border-slate-600 shrink-0 select-none">
+                    <span className="text-xs font-bold text-slate-400 tracking-wider">SCIENTIFIC CALCULATOR</span>
+                    <button
+                        onClick={onClose}
+                        className="text-slate-400 hover:text-white transition-colors"
+                        aria-label="Close Calculator"
+                        type="button"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Display */}
+                <div className="bg-[#2a2a2a] p-5 text-right relative border-b border-slate-600 shrink-0">
+                    <div className="absolute top-2 left-3 flex gap-2 text-[10px] font-bold tracking-wider opacity-70 select-none">
+                        <span className={cn("px-1 rounded bg-[#444] text-cyan-400", isDegrees ? "opacity-100" : "opacity-30")}>DEG</span>
+                        <span className={cn("px-1 rounded bg-[#444] text-cyan-400", !isDegrees ? "opacity-100" : "opacity-30")}>RAD</span>
+                        {memory !== 0 && <span className="text-yellow-400">M</span>}
+                        {isShift && <span className="text-orange-400">SHIFT</span>}
+                    </div>
+
+                    <div className="h-16 flex items-end justify-end overflow-hidden">
+                        <span className="text-3xl md:text-4xl font-mono text-white font-light tracking-wide break-all">
+                            {display}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Controls */}
+                <div className="bg-[#333] p-2 flex justify-between items-center text-[10px] md:text-xs shrink-0 select-none">
+                    <div className="flex bg-[#222] rounded p-0.5 border border-slate-600">
+                        <button
+                            className={cn("px-3 py-1 rounded transition-colors", !isScientific ? "bg-slate-600 text-white font-bold" : "text-slate-400 hover:text-slate-200")}
+                            onClick={() => setIsScientific(false)}
+                            type="button"
+                        >
+                            BASIC
+                        </button>
+                        <button
+                            className={cn("px-3 py-1 rounded transition-colors", isScientific ? "bg-blue-600 text-white font-bold" : "text-slate-400 hover:text-slate-200")}
+                            onClick={() => setIsScientific(true)}
+                            type="button"
+                        >
+                            SCI
+                        </button>
+                    </div>
+
+                    <button
+                        className={cn("px-3 py-1.5 rounded border font-bold transition-all", isDegrees ? "bg-[#222] border-slate-600 text-slate-300" : "bg-cyan-900/50 border-cyan-500 text-cyan-200")}
+                        onClick={() => setIsDegrees(!isDegrees)}
+                        type="button"
+                    >
+                        {isDegrees ? 'DEG' : 'RAD'}
+                    </button>
+                </div>
+
+                {/* Keypad */}
+                <div className="p-3 bg-[#111] grid gap-2 flex-1">
+                    {isScientific && (
+                        <div className="grid grid-cols-5 gap-1.5 mb-1">
+                            <CalcButton variant="sci" onClick={() => setIsShift(!isShift)} active={isShift} label="Shift" />
+                            <CalcButton variant="sci" onClick={() => addFunc(isShift ? 'asin' : 'sin')} label={isShift ? 'sin⁻¹' : 'sin'} />
+                            <CalcButton variant="sci" onClick={() => addFunc(isShift ? 'acos' : 'cos')} label={isShift ? 'cos⁻¹' : 'cos'} />
+                            <CalcButton variant="sci" onClick={() => addFunc(isShift ? 'atan' : 'tan')} label={isShift ? 'tan⁻¹' : 'tan'} />
+                            <CalcButton variant="sci" onClick={() => handlePress('^')} label="^" />
+
+                            <CalcButton variant="sci" onClick={() => addFunc('log')} label="log" />
+                            <CalcButton variant="sci" onClick={() => addFunc('ln')} label="ln" />
+                            <CalcButton variant="sci" onClick={() => handlePress('(')} label="(" />
+                            <CalcButton variant="sci" onClick={() => handlePress(')')} label=")" />
+                            <CalcButton variant="sci" onClick={() => addFunc('√')} label="√" />
+
+                            <CalcButton variant="sci" onClick={() => handlePress('π')} label="π" />
+                            <CalcButton variant="sci" onClick={() => handlePress('e')} label="e" />
+                            <CalcButton variant="sci" onClick={() => handlePress('Math.abs(')} label="abs" />
+                            <CalcButton variant="sci" onClick={() => handlePress('1/')} label="1/x" />
+                            <CalcButton variant="sci" onClick={() => handlePress('!')} label="n!" disabled />
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-4 md:grid-cols-5 gap-1.5 md:gap-2">
+                        <div className="contents md:contents">
+                            {/* Row 1 */}
+                            <CalcButton variant="memory" onClick={memClear} label="MC" />
+                            <CalcButton variant="memory" onClick={memRecall} label="MR" />
+                            <CalcButton variant="memory" onClick={memAdd} label="M+" />
+                            <CalcButton variant="memory" onClick={memSub} label="M-" />
+                            <CalcButton variant="destructive" onClick={clear} label="AC" className="md:col-start-5 row-start-1" />
+
+                            {/* Row 2 */}
+                            <CalcButton variant="num" onClick={() => handlePress('7')} label="7" />
+                            <CalcButton variant="num" onClick={() => handlePress('8')} label="8" />
+                            <CalcButton variant="num" onClick={() => handlePress('9')} label="9" />
+                            <CalcButton variant="op" onClick={() => handlePress('/')} label="÷" />
+                            <CalcButton variant="destructive" onClick={backspace} label="DEL" className="md:col-start-5 md:row-start-2" />
+
+                            {/* Row 3 */}
+                            <CalcButton variant="num" onClick={() => handlePress('4')} label="4" />
+                            <CalcButton variant="num" onClick={() => handlePress('5')} label="5" />
+                            <CalcButton variant="num" onClick={() => handlePress('6')} label="6" />
+                            <CalcButton variant="op" onClick={() => handlePress('*')} label="×" />
+                            <CalcButton variant="sci" onClick={() => addFunc('√')} label="√" className="md:col-start-5 md:row-start-3 hidden md:block" />
+
+                            {/* Row 4 */}
+                            <CalcButton variant="num" onClick={() => handlePress('1')} label="1" />
+                            <CalcButton variant="num" onClick={() => handlePress('2')} label="2" />
+                            <CalcButton variant="num" onClick={() => handlePress('3')} label="3" />
+                            <CalcButton variant="op" onClick={() => handlePress('-')} label="-" />
+                            <CalcButton variant="sci" onClick={() => handlePress('^')} label="xʸ" className="md:col-start-5 md:row-start-4 hidden md:block" />
+
+                            {/* Row 5 */}
+                            <CalcButton variant="num" onClick={() => handlePress('0')} label="0" />
+                            <CalcButton variant="num" onClick={() => handlePress('.')} label="." />
+                            <CalcButton variant="sci" onClick={() => handlePress('e')} label="e" className="md:hidden" />
+                            <CalcButton variant="op" onClick={() => handlePress('+')} label="+" />
+                            <CalcButton variant="primary" onClick={calculate} label="=" className="md:col-start-5 md:row-start-5 h-full" />
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div className="grid grid-cols-5 gap-2">
-                {/* Row 1 */}
-                <Button variant="secondary" size="sm" onClick={() => setIsDegree(!isDegree)} className="text-xs">
-                    {isDegree ? 'RAD' : 'DEG'}
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => addFunc('sin')}>sin</Button>
-                <Button variant="secondary" size="sm" onClick={() => addFunc('cos')}>cos</Button>
-                <Button variant="secondary" size="sm" onClick={() => addFunc('tan')}>tan</Button>
-                <Button variant="destructive" size="sm" onClick={clear}>AC</Button>
-
-                {/* Row 2 */}
-                <Button variant="secondary" size="sm" onClick={() => addFunc('log')}>log</Button>
-                <Button variant="secondary" size="sm" onClick={() => addFunc('ln')}>ln</Button>
-                <Button variant="secondary" size="sm" onClick={() => handlePress('(')}>(</Button>
-                <Button variant="secondary" size="sm" onClick={() => handlePress(')')}>)</Button>
-                <Button variant="secondary" size="sm" onClick={backspace}><Delete className="w-4 h-4" /></Button>
-
-                {/* Row 3 */}
-                <Button variant="secondary" size="sm" onClick={() => handlePress('^')}>^</Button>
-                <Button variant="secondary" size="sm" onClick={() => addFunc('√')}>√</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('7')}>7</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('8')}>8</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('9')}>9</Button>
-
-                {/* Row 4 */}
-                <Button variant="secondary" size="sm" onClick={() => handlePress('π')}>π</Button>
-                <Button variant="secondary" size="sm" onClick={() => handlePress('e')}>e</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('4')}>4</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('5')}>5</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('6')}>6</Button>
-
-                {/* Row 5 */}
-                <Button variant="secondary" size="sm" onClick={() => handlePress('.')}>.</Button>
-                <Button variant="secondary" size="sm" onClick={() => handlePress('/')}>÷</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('1')}>1</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('2')}>2</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('3')}>3</Button>
-
-                {/* Row 6 */}
-                <Button variant="secondary" size="sm" onClick={() => handlePress('*')}>×</Button>
-                <Button variant="secondary" size="sm" onClick={() => handlePress('-')}>-</Button>
-                <Button variant="secondary" size="sm" onClick={() => handlePress('+')}>+</Button>
-                <Button variant="outline" size="sm" onClick={() => handlePress('0')}>0</Button>
-                <Button variant="default" size="sm" onClick={calculate} className="bg-emerald-600 hover:bg-emerald-700">=</Button>
-            </div>
-        </Card>
+        </div>,
+        document.body
     );
 }
 
-// Ensure it's exported as default too if needed, but named is safer
+// Button Component
+type CalcButtonProps = {
+    label: string;
+    onClick: () => void;
+    variant?: 'num' | 'op' | 'sci' | 'memory' | 'primary' | 'destructive';
+    className?: string;
+    active?: boolean;
+    disabled?: boolean;
+};
+
+const CalcButton = ({ label, onClick, variant = 'num', className, active, disabled }: CalcButtonProps) => {
+    const baseStyles = "relative flex items-center justify-center rounded text-sm md:text-base font-medium transition-all active:scale-95 select-none h-10 md:h-11";
+
+    const variants = {
+        num: "bg-[#3a3a3a] text-white hover:bg-[#4a4a4a] shadow-[0_2px_0_#2a2a2a]",
+        op: "bg-[#FF9F0A] text-white hover:bg-[#ffb03b] shadow-[0_2px_0_#c47800] text-lg",
+        sci: "bg-[#282828] text-slate-300 hover:bg-[#333] hover:text-white border border-[#333] text-xs md:text-sm",
+        memory: "bg-[#1c1c1c] text-slate-400 hover:text-white border border-[#333] text-xs",
+        primary: "bg-blue-600 text-white hover:bg-blue-500 shadow-[0_2px_0_#1e40af] text-xl font-bold",
+        destructive: "bg-red-900/40 text-red-200 hover:bg-red-900/60 border border-red-900/50 text-xs uppercase"
+    };
+
+    const activeStyle = active ? "ring-2 ring-white/50 bg-[#444]" : "";
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className={cn(baseStyles, variants[variant], activeStyle, className, disabled && "opacity-30 cursor-not-allowed")}
+            type="button"
+        >
+            {label}
+        </button>
+    );
+};
+
 export default ScientificCalculator;
