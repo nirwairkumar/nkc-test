@@ -53,6 +53,13 @@ const parseMark = (value: string | number | undefined, defaultVal: number = 0): 
   }
 };
 
+const getDisplayMark = (value: string | number | undefined, defaultVal: number = 0): string | number => {
+  if (value === undefined || value === null || value === '') return defaultVal;
+  if (typeof value === 'string' && value.includes('/')) return value;
+  const num = parseFloat(value as string);
+  return isNaN(num) ? defaultVal : num;
+};
+
 const ResultsPage = () => {
   const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
   const navigate = useNavigate();
@@ -101,6 +108,8 @@ const ResultsPage = () => {
     wrong: number;
     score: number;
     maxScore: number;
+    marksPerQuestion: string | number;
+    negativeMarks: string | number;
   }> = {};
 
   // Initialize Sections if enabled
@@ -114,12 +123,27 @@ const ResultsPage = () => {
         partial: 0,
         wrong: 0,
         score: 0,
-        maxScore: 0
+        maxScore: 0,
+        score: 0,
+        maxScore: 0,
+        marksPerQuestion: getDisplayMark(sec.marks_per_question, 4),
+        negativeMarks: getDisplayMark(sec.negative_marks, 1)
       };
     });
   } else {
     // Default 'General' section for flat tests
-    sectionAnalysis['default'] = { name: 'General', totalQ: 0, attempted: 0, correct: 0, partial: 0, wrong: 0, score: 0, maxScore: 0 };
+    sectionAnalysis['default'] = {
+      name: 'General',
+      totalQ: 0,
+      attempted: 0,
+      correct: 0,
+      partial: 0,
+      wrong: 0,
+      score: 0,
+      maxScore: 0,
+      marksPerQuestion: 4,
+      negativeMarks: 1
+    };
   }
 
   if (selectedTest?.questions) {
@@ -318,6 +342,10 @@ const ResultsPage = () => {
                       {sec.name}
                       <span className="text-sm font-normal text-slate-500">{sec.totalQ} Qs</span>
                     </CardTitle>
+                    <CardDescription className="flex justify-between text-xs mt-1">
+                      <span>Mark/Q: <span className="text-green-600 font-medium">+{sec.marksPerQuestion}</span></span>
+                      <span>Neg Mark: <span className="text-red-500 font-medium">-{sec.negativeMarks}</span></span>
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -360,6 +388,37 @@ const ResultsPage = () => {
               {selectedTest?.questions?.map((q: any, index: number) => {
                 const ans = answers[q.id];
 
+                // Determine marks for this question (Section Aware)
+                let marks = selectedTest.marks_per_question ? parseMark(selectedTest.marks_per_question, 4) : 4;
+                let neg = selectedTest.negative_marks !== undefined ? parseMark(selectedTest.negative_marks, 1) : 1;
+
+                // For Display
+                let marksDisplay: string | number = selectedTest.marks_per_question ? getDisplayMark(selectedTest.marks_per_question, 4) : 4;
+                let negDisplay: string | number = selectedTest.negative_marks !== undefined ? getDisplayMark(selectedTest.negative_marks, 1) : 1;
+
+                if (selectedTest.enable_section_mode && selectedTest.sections) {
+                  let rCount = 0;
+                  for (const section of selectedTest.sections) {
+                    if (index >= rCount && index < rCount + section.questions.length) {
+                      marks = parseMark(section.marks_per_question, 4);
+                      neg = parseMark(section.negative_marks, 1);
+                      marksDisplay = getDisplayMark(section.marks_per_question, 4);
+                      negDisplay = getDisplayMark(section.negative_marks, 1);
+                      break;
+                    }
+                    rCount += section.questions.length;
+                  }
+                }
+
+                if (q.marks !== undefined) {
+                  marks = parseMark(q.marks, marks);
+                  marksDisplay = getDisplayMark(q.marks, marks);
+                }
+                if (q.negativeMarks !== undefined) {
+                  neg = parseMark(q.negativeMarks, neg);
+                  negDisplay = getDisplayMark(q.negativeMarks, neg);
+                }
+
                 let isCorrect = false;
                 if (q.type === 'numerical') {
                   const numAns = parseFloat(ans);
@@ -401,7 +460,7 @@ const ResultsPage = () => {
                         <div className="mr-2 flex items-center gap-3">
                           {/* Marks Display */}
                           <span className={`text-sm font-bold ${isCorrect ? 'text-green-600' : isWrong ? 'text-red-500' : 'text-slate-400'}`}>
-                            {isCorrect ? `+${typeof q.marks !== 'undefined' ? q.marks : 4}` : isWrong ? `-${typeof q.negativeMarks !== 'undefined' ? q.negativeMarks : 1}` : '0'}
+                            {isCorrect ? `+${marksDisplay}` : isWrong ? `-${negDisplay}` : '0'}
                           </span>
                           {isCorrect && <Badge className="bg-green-600">Correct</Badge>}
                           {isWrong && <Badge variant="destructive">Wrong</Badge>}

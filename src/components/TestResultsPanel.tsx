@@ -49,6 +49,24 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const [loading, setLoading] = useState(true);
     const [showRank, setShowRank] = useState(false);
 
+    // Calculate Total Marks
+    let totalMaxMarks = 0;
+    if (test.enable_section_mode && test.sections) {
+        test.sections.forEach((sec: any) => {
+            if (sec.questions) {
+                sec.questions.forEach((q: any) => {
+                    const m = q.marks !== undefined ? parseFloat(q.marks) : (sec.marks_per_question ? parseFloat(sec.marks_per_question) : 4);
+                    totalMaxMarks += isNaN(m) ? 0 : m;
+                });
+            }
+        });
+    } else if (test.questions) {
+        test.questions.forEach((q: any) => {
+            const m = q.marks !== undefined ? parseFloat(q.marks) : (test.marks_per_question ? parseFloat(test.marks_per_question) : 4);
+            totalMaxMarks += isNaN(m) ? 0 : m;
+        });
+    }
+
     useEffect(() => {
         if (test?.id) {
             fetchResults();
@@ -216,7 +234,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                 ...formValues,
                 format(dateObj, 'yyyy-MM-dd'),
                 format(dateObj, 'hh:mm:ss a'),
-                test.questions.length * (test.marks_per_question || 4),
+                totalMaxMarks,
                 stats.correctCount || 0,
                 stats.wrongCount || 0,
                 stats.unattemptedCount || 0,
@@ -323,8 +341,17 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     // Determine Primary Display Name from Metadata
                                                     const formData = attempt.metadata?.startFormData || {};
                                                     const formKeys = Object.keys(formData);
-                                                    const primaryKey = formKeys.find(k => k.toLowerCase().includes('name')) || formKeys[0];
-                                                    const primaryValue = primaryKey ? formData[primaryKey] : 'Anonymous Candidate';
+                                                    const primaryKey = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
+
+                                                    // Logic: Start Form Name -> Profile Name -> Email -> Anonymous
+                                                    let primaryValue = 'Anonymous Candidate';
+                                                    if (primaryKey && formData[primaryKey]) {
+                                                        primaryValue = formData[primaryKey];
+                                                    } else if (attempt.user?.full_name) {
+                                                        primaryValue = attempt.user.full_name;
+                                                    } else if (attempt.user?.email) {
+                                                        primaryValue = attempt.user.email;
+                                                    }
 
                                                     // Remaining details
                                                     const otherDetails = Object.entries(formData).filter(([k]) => k !== primaryKey);
@@ -345,8 +372,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                 })()}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant={attempt.score >= (test.questions.length * (test.marks_per_question || 4) * 0.4) ? "default" : "destructive"}>
-                                                    {attempt.score} / {test.questions.length * (test.marks_per_question || 4)}
+                                                <Badge variant={attempt.score >= (totalMaxMarks * 0.4) ? "default" : "destructive"}>
+                                                    {attempt.score} / {totalMaxMarks}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs">

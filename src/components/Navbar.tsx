@@ -42,7 +42,7 @@ export default function Navbar() {
         <header className="w-full">
             <div className="container mx-auto flex h-16 items-center justify-between px-1 sm:px-4">
                 <Link to="/" className="text-xl font-bold text-primary">
-                    TestTaker
+                    TestoZa
                 </Link>
 
 

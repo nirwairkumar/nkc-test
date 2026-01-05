@@ -189,6 +189,24 @@ export default function TestIntroPage() {
 
     const questionCount = test.questions?.length || 0;
 
+    // Calculate Total Marks
+    let totalMaxMarks = 0;
+    if (test.enable_section_mode && test.sections) {
+        test.sections.forEach((sec: any) => {
+            if (sec.questions) {
+                sec.questions.forEach((q: any) => {
+                    const m = q.marks !== undefined ? parseFloat(q.marks) : (sec.marks_per_question ? parseFloat(sec.marks_per_question) : 4);
+                    totalMaxMarks += isNaN(m) ? 0 : m;
+                });
+            }
+        });
+    } else if (test.questions) {
+        test.questions.forEach((q: any) => {
+            const m = q.marks !== undefined ? parseFloat(q.marks) : (test.marks_per_question ? parseFloat(test.marks_per_question) : 4);
+            totalMaxMarks += isNaN(m) ? 0 : m;
+        });
+    }
+
     return (
         <div className="container mx-auto max-w-3xl py-2 px-4 space-y-4 relative">
             <Button
@@ -217,6 +235,11 @@ export default function TestIntroPage() {
                             <Clock className="h-6 w-6 text-orange-500 mb-2" />
                             <span className="text-sm text-muted-foreground">Duration</span>
                             <span className="font-bold text-lg">{test.duration || "N/A"} mins</span>
+                        </div>
+                        <div className="flex flex-col items-center justify-center text-center">
+                            <Trophy className="h-6 w-6 text-emerald-600 mb-2" />
+                            <span className="text-sm text-muted-foreground">Total Marks</span>
+                            <span className="font-bold text-lg">{totalMaxMarks}</span>
                         </div>
 
                         {test.enable_section_mode && (
@@ -271,8 +294,13 @@ export default function TestIntroPage() {
                         <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
                             <li>The test contains <strong>{test.questions?.length}</strong> questions.</li>
                             <li>Total duration of the test is <strong>{test.duration} minutes</strong>.</li>
-                            <li>Each correct answer awards <strong>+{test.marks_per_question || 4} marks</strong>.</li>
-                            <li>Each wrong answer deducts <strong>{test.negative_marks !== undefined ? test.negative_marks : 1} marks</strong>.</li>
+                            <li>Total Marks: <strong>{totalMaxMarks}</strong></li>
+                            {!test.enable_section_mode && (
+                                <>
+                                    <li>Each correct answer awards <strong>+{test.marks_per_question || 4} marks</strong>.</li>
+                                    <li>Each wrong answer deducts <strong>{test.negative_marks !== undefined ? test.negative_marks : 1} marks</strong>.</li>
+                                </>
+                            )}
                             <li>Once you start, the timer will begin and cannot be paused.</li>
                             {test.settings?.force_fullscreen && (
                                 <li className="text-red-600 font-medium">Full Screen Mode is mandatory. Exiting may submit the test.</li>
@@ -381,6 +409,6 @@ export default function TestIntroPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
+        </div >
     );
 }
