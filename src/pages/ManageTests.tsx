@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,12 @@ export default function ManageTests() {
     const [editingTest, setEditingTest] = useState<any>(null);
 
     const [selectedCategoriesForTest, setSelectedCategoriesForTest] = useState<string[]>([]);
+
+    // Search State
+    const [searchQuery, setSearchQuery] = useState("");
+    const [placeholderIndex, setPlaceholderIndex] = useState(0);
+    const placeholders = ["Search by Title...", "Search by ID...", "Search by Creator...", "Search by Tags..."];
+
     const [viewingCreator, setViewingCreator] = useState<any>(null); // For Creator Info Dialog
 
     // Categories State
@@ -62,6 +68,13 @@ export default function ManageTests() {
     useEffect(() => {
         loadTests();
         loadCategories();
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+        }, 3000);
+        return () => clearInterval(interval);
     }, []);
 
     // --- Loading Data ---
@@ -222,6 +235,23 @@ export default function ManageTests() {
     };
 
 
+    const filteredTests = tests.filter(test => {
+        if (!searchQuery) return true;
+        const lowerQuery = searchQuery.toLowerCase();
+
+        // Match Title
+        if (test.title.toLowerCase().includes(lowerQuery)) return true;
+        // Match ID
+        if (test.custom_id?.toLowerCase().includes(lowerQuery)) return true;
+        // Match Creator (if available in future, using ID for now or any profile data loaded)
+        // Since we lazy load profiles, we can only search by what's in 'test' object or if we fetching profiles eagerly (which we reverted).
+        // The user asked for "search particular test". Title and ID are most critical. 
+        // We can add simple tag search if tags exist.
+        if (test.tags?.some((t: string) => t.toLowerCase().includes(lowerQuery))) return true;
+
+        return false;
+    });
+
     if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
     if (!isAdmin) return null;
 
@@ -243,19 +273,32 @@ export default function ManageTests() {
 
                 {/* --- TESTS TAB --- */}
                 <TabsContent value="tests" className="space-y-4">
-                    <div className="flex justify-end">
-                        <Button variant="outline" onClick={loadTests} size="sm">Refresh Tests</Button>
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                        {/* Search Bar */}
+                        <div className="relative w-full md:w-72">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder={placeholders[placeholderIndex]}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-9 h-9 bg-background"
+                            />
+                        </div>
+                        <Button variant="outline" onClick={loadTests} size="sm" className="whitespace-nowrap">
+                            <RefreshCw className={`h-4 w-4 mr-2 ${testsLoading ? 'animate-spin' : ''}`} />
+                            Refresh Tests
+                        </Button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {testsLoading ? (
                             <div className="col-span-full text-center py-10">Loading tests...</div>
-                        ) : tests.length === 0 ? (
+                        ) : filteredTests.length === 0 ? (
                             <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
-                                No tests found.
+                                {searchQuery ? "No matching tests found." : "No tests found."}
                             </div>
                         ) : (
-                            tests.map(test => (
+                            filteredTests.map(test => (
                                 <Card key={test.id} className="relative group hover:shadow-md transition-shadow flex flex-col h-full">
                                     <CardHeader className="pb-2">
                                         <div className="flex justify-between items-start gap-2">
@@ -524,5 +567,3 @@ export default function ManageTests() {
         </div>
     );
 }
-
-

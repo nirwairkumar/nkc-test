@@ -96,12 +96,33 @@ export async function updateTest(id: string, updates: Partial<Test>) {
     return { data, error };
 }
 
-export async function fetchTests() {
-    const { data, error } = await supabase
+export async function fetchTests(options?: {
+    page?: number;
+    limit?: number;
+    searchQuery?: string;
+    excludeIds?: string[]; // To avoid showing duplicates in feed/featured
+}) {
+    const { page = 1, limit = 100, searchQuery = '', excludeIds = [] } = options || {};
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    let query = supabase
         .from('tests')
         .select('*')
-        .or('is_public.eq.true,is_public.is.null') // Show public tests OR older tests with null status
-        .order('created_at', { ascending: false });
+        .or('is_public.eq.true,is_public.is.null'); // Show public tests OR older tests with null status
+
+    if (searchQuery) {
+        query = query.ilike('title', `%${searchQuery}%`);
+    }
+
+    if (excludeIds.length > 0) {
+        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
+    }
+
+    const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
     return { data, error };
 }
 
