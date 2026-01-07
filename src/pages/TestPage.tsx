@@ -742,7 +742,7 @@ export default function TestPage() {
                     <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px]">Passage</span>
                   </h3>
                 </div>
-                <div className="p-6 text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                <div className="p-6 text-base leading-relaxed text-slate-800 dark:text-slate-200 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
                   <Latex>{currentQuestion.passageContent}</Latex>
                 </div>
               </div>
@@ -752,7 +752,7 @@ export default function TestPage() {
                 {/* Mobile Passage (Collapsed/Scrollable) */}
                 <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
                   <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Passage Reference</div>
-                  <div className="text-sm leading-relaxed max-h-48 overflow-y-auto bg-slate-50 p-3 rounded border">
+                  <div className="text-sm leading-relaxed max-h-48 overflow-y-auto bg-slate-50 p-3 rounded border [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
                     <Latex>{currentQuestion.passageContent}</Latex>
                   </div>
                 </div>
@@ -959,24 +959,51 @@ export default function TestPage() {
                     </div>
 
                     {(() => {
-                      let marks = test.marks_per_question || 4;
-                      let neg = test.negative_marks !== undefined ? test.negative_marks : 1;
+                      // Helper: Prefer the raw value if present, else fallback.
+                      // We don't parse to number here so fractions like "1/4" are preserved.
+                      const getDisplayVal = (val: any, fallback: string | number) => {
+                        if (val !== undefined && val !== null && val !== '') return val;
+                        return fallback;
+                      };
 
-                      // If section mode is enabled, find the specific section for this question
+                      // 1. Determine Base Defaults
+                      let marks = getDisplayVal(test.marks_per_question, 4);
+                      let neg = getDisplayVal(test.negative_marks, 1);
+
+                      // 2. Override with Section Defaults if applicable
                       if (test.enable_section_mode && test.sections) {
                         let runningCount = 0;
                         for (const section of test.sections) {
                           if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
-                            marks = section.marks_per_question ?? marks;
-                            neg = section.negative_marks ?? neg;
+                            marks = getDisplayVal(section.marks_per_question, 4);
+                            neg = getDisplayVal(section.negative_marks, 1);
+
+                            // Get specific question from section to check for overrides
+                            const localIdx = currentQuestionIndex - runningCount;
+                            if (section.questions[localIdx]) {
+                              const qMarks = section.questions[localIdx].marks;
+                              const qNeg = section.questions[localIdx].negativeMarks;
+                              if (qMarks !== undefined && qMarks !== '') marks = qMarks;
+                              if (qNeg !== undefined && qNeg !== '') neg = qNeg;
+                            }
                             break;
                           }
                           runningCount += section.questions.length;
                         }
+                      } else {
+                        // 3. Flat Mode - Check per-question overrides
+                        const qMarks = currentQuestion.marks;
+                        const qNeg = currentQuestion.negativeMarks;
+                        if (qMarks !== undefined && qMarks !== '') marks = qMarks;
+                        if (qNeg !== undefined && qNeg !== '') neg = qNeg;
                       }
 
                       return (
-                        <span className="text-sm font-medium text-emerald-600">+{marks} / -{neg}</span>
+                        <div className="text-sm font-medium flex items-center gap-1">
+                          <span className="text-emerald-600">+{marks}</span>
+                          <span className="text-slate-400">/</span>
+                          <span className="text-red-500">-{neg}</span>
+                        </div>
                       );
                     })()}
                   </div>

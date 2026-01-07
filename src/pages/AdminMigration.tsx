@@ -7,7 +7,7 @@ import supabase from '@/lib/supabaseClient';
 import { CheckCircle, Plus } from 'lucide-react';
 import { allTests as mathTests } from '@/data/examples/math-test';
 import { allTests as scienceTests } from '@/data/examples/science-test';
-import { BackButton } from '@/components/ui/BackButton';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchCategories, createCategory, assignCategoriesToTest, Category } from '@/lib/categoriesApi';
@@ -245,7 +245,7 @@ export default function AdminMigration() {
 
     return (
         <div className="container mx-auto max-w-4xl py-10 space-y-6">
-            <BackButton />
+
             <h1 className="text-3xl font-bold">Admin Data Migration</h1>
 
             {/* Manage Categories */}

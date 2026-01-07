@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
                 </CardHeader>
                 <CardContent className="prose dark:prose-invert max-w-none pt-6 text-sm md:text-base leading-relaxed text-justify">
                     <p className="mb-4">
-                        This Privacy Policy describes how TestoZa (“we”, “our”, or “us”) collects, uses, stores, and protects personal information of users who access or use our website, applications, and services (collectively referred to as the “Platform”). By accessing or using the Platform, you acknowledge that you have read, understood, and agreed to this Privacy Policy.
+                        This Privacy Policy describes how TestoZa collects, uses, stores, and protects personal information of users who access or use our website, applications, and services (collectively referred to as the “Platform”). By accessing or using the Platform, you acknowledge that you have read, understood, and agreed to this Privacy Policy.
                     </p>
 
                     <p className="mb-4">

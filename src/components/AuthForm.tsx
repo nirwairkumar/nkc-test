@@ -26,7 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { signInWithEmail, signUpWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { BackButton } from '@/components/ui/BackButton';
+
 
 const formSchema = z.object({
     email: z.string().email(),
@@ -162,9 +162,7 @@ export default function AuthForm() {
 
     return (
         <div className="flex flex-col justify-center items-center min-h-[80vh]">
-            <div className="w-[350px] mb-4">
-                <BackButton />
-            </div>
+
             <Card className="w-[350px]">
                 <CardHeader>
                     <CardTitle>

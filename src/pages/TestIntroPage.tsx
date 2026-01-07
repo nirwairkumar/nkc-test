@@ -295,12 +295,7 @@ export default function TestIntroPage() {
                             <li>The test contains <strong>{test.questions?.length}</strong> questions.</li>
                             <li>Total duration of the test is <strong>{test.duration} minutes</strong>.</li>
                             <li>Total Marks: <strong>{totalMaxMarks}</strong></li>
-                            {!test.enable_section_mode && (
-                                <>
-                                    <li>Each correct answer awards <strong>+{test.marks_per_question || 4} marks</strong>.</li>
-                                    <li>Each wrong answer deducts <strong>{test.negative_marks !== undefined ? test.negative_marks : 1} marks</strong>.</li>
-                                </>
-                            )}
+
                             <li>Once you start, the timer will begin and cannot be paused.</li>
                             {test.settings?.force_fullscreen && (
                                 <li className="text-red-600 font-medium">Full Screen Mode is mandatory. Exiting may submit the test.</li>

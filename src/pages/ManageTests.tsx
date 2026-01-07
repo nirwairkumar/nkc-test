@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { BackButton } from '@/components/ui/BackButton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Trash2, Settings, Save, Plus, Pencil, FileText } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,7 @@ export default function ManageTests() {
     const [editingTest, setEditingTest] = useState<any>(null);
 
     const [selectedCategoriesForTest, setSelectedCategoriesForTest] = useState<string[]>([]);
+    const [viewingCreator, setViewingCreator] = useState<any>(null); // For Creator Info Dialog
 
     // Categories State
     const [categories, setCategories] = useState<Category[]>([]);
@@ -67,7 +68,11 @@ export default function ManageTests() {
     const loadTests = async () => {
         setTestsLoading(true);
         try {
-            const { data, error } = await supabase.from('tests').select('*').order('created_at', { ascending: false });
+            // Reverted to simple select to prevent join errors
+            const { data, error } = await supabase
+                .from('tests')
+                .select('*')
+                .order('created_at', { ascending: false });
             if (error) throw error;
             setTests(data || []);
         } catch (error) {
@@ -75,6 +80,36 @@ export default function ManageTests() {
             toast.error("Failed to load tests");
         } finally {
             setTestsLoading(false);
+        }
+    };
+
+    // Helper to count tests by a creator
+    const getCreatorTestCount = (creatorId: string) => {
+        return tests.filter(t => t.created_by === creatorId).length;
+    };
+
+    const handleViewCreator = async (creatorId: string) => {
+        if (!creatorId) {
+            toast.error("No creator ID found for this test.");
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', creatorId)
+                .single();
+
+            if (error) throw error;
+
+            setViewingCreator({
+                ...data, // Profile data
+                testCount: getCreatorTestCount(creatorId)
+            });
+        } catch (error) {
+            console.error("Error fetching creator:", error);
+            toast.error("Could not fetch creator details.");
         }
     };
 
@@ -192,7 +227,7 @@ export default function ManageTests() {
 
     return (
         <div className="container mx-auto max-w-5xl py-10 space-y-6">
-            <BackButton />
+
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -221,40 +256,54 @@ export default function ManageTests() {
                             </div>
                         ) : (
                             tests.map(test => (
-                                <Card key={test.id} className="relative group hover:shadow-md transition-shadow">
+                                <Card key={test.id} className="relative group hover:shadow-md transition-shadow flex flex-col h-full">
                                     <CardHeader className="pb-2">
                                         <div className="flex justify-between items-start gap-2">
-                                            <CardTitle className="text-lg line-clamp-1" title={test.title}>{test.title}</CardTitle>
-                                            <Badge variant="secondary" className="font-mono text-xs">
-                                                {test.custom_id || 'NO-ID'}
-                                            </Badge>
+                                            <CardTitle className="text-lg line-clamp-2 leading-tight min-h-[3.5rem]" title={test.title}>
+                                                {test.title}
+                                            </CardTitle>
                                         </div>
                                     </CardHeader>
-                                    <CardContent className="pb-2">
-                                        <div className="text-xs text-muted-foreground flex gap-4">
-                                            <span>{test.questions?.length || 0} Qs</span>
-                                            <span>{test.duration || 0} mins</span>
-                                            <span>{test.marks_per_question || '-'} Marks</span>
+                                    <CardContent className="pb-2 flex-grow">
+                                        <div className="text-xs text-muted-foreground flex flex-wrap gap-3 items-center">
+                                            <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border font-mono text-[10px]">
+                                                ID: {test.custom_id || 'N/A'}
+                                            </span>
+                                            <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {test.questions?.length || 0} Qs</span>
+                                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {test.duration || 0} m</span>
                                         </div>
                                     </CardContent>
-                                    <CardFooter className="pt-2 flex flex-wrap justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
-                                        <Button variant="outline" size="sm" className="h-8 flex-1" onClick={() => openTestEditDialog(test)}>
-                                            <Pencil className="h-3 w-3 mr-2" />
-                                            Edit
-                                        </Button>
-                                        <Button variant="secondary" size="sm" className="h-8 flex-1" onClick={() => setConfiguringTest(test)}>
-                                            <Settings className="h-3 w-3 mr-2" />
-                                            Manage
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={() => handleDeleteTest(test.id, test.title)}
-                                            title="Delete Test"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                    <CardFooter className="pt-2 flex flex-col gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
+                                        <div className="flex flex-wrap justify-between gap-2 w-full">
+                                            <Button variant="outline" size="sm" className="h-8 flex-1" onClick={() => openTestEditDialog(test)}>
+                                                <Pencil className="h-3 w-3 mr-2" />
+                                                Edit
+                                            </Button>
+                                            <Button variant="secondary" size="sm" className="h-8 flex-1" onClick={() => setConfiguringTest(test)}>
+                                                <Settings className="h-3 w-3 mr-2" />
+                                                Manage
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                onClick={() => handleDeleteTest(test.id, test.title)}
+                                                title="Delete Test"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+
+                                        {/* Creator Info Trigger */}
+                                        <div className="w-full flex justify-start pt-1">
+                                            <div
+                                                className="group/info relative flex items-center gap-1 text-[10px] text-slate-400 hover:text-blue-600 cursor-pointer transition-colors"
+                                                onClick={() => handleViewCreator(test.created_by)}
+                                            >
+                                                <Info className="w-3 h-3" />
+                                                <span>Creator Info</span>
+                                            </div>
+                                        </div>
                                     </CardFooter>
                                 </Card>
                             ))
@@ -431,6 +480,47 @@ export default function ManageTests() {
                     onClose={() => setViewingResultsTest(null)}
                 />
             )}
+
+            {/* Creator Info Dialog */}
+            <Dialog open={!!viewingCreator} onOpenChange={(open) => !open && setViewingCreator(null)}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Creator Details</DialogTitle>
+                        <DialogDescription>Information about the test creator.</DialogDescription>
+                    </DialogHeader>
+                    {viewingCreator && (
+                        <div className="flex flex-col items-center gap-4 py-4">
+                            <Avatar className="h-20 w-20 border-2 border-slate-200">
+                                <AvatarImage src={viewingCreator.avatar_url} />
+                                <AvatarFallback className="text-xl bg-slate-100">{viewingCreator.full_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div className="text-center space-y-1">
+                                <h3 className="font-bold text-xl">{viewingCreator.full_name}</h3>
+                                <Badge variant="secondary">{viewingCreator.designation || 'Member'}</Badge>
+                                <p className="text-sm text-muted-foreground">{viewingCreator.email}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 w-full mt-2">
+                                <div className="bg-slate-50 p-3 rounded-lg text-center border">
+                                    <div className="text-2xl font-bold">{viewingCreator.testCount}</div>
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Tests Created</div>
+                                </div>
+                                <div className="bg-slate-50 p-3 rounded-lg text-center border flex flex-col items-center justify-center">
+                                    <span className="text-sm font-medium">Status</span>
+                                    <span className="text-xs text-green-600 font-bold flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Active</span>
+                                </div>
+                            </div>
+
+                            {viewingCreator.bio && (
+                                <div className="w-full bg-slate-50 p-3 rounded-lg border mt-2">
+                                    <h4 className="text-xs font-semibold text-slate-500 mb-1">BIO</h4>
+                                    <p className="text-sm text-slate-700 italic">"{viewingCreator.bio}"</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

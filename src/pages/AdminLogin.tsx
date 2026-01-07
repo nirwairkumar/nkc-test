@@ -18,7 +18,7 @@ import { signInWithEmail } from '@/hooks/useAuthActions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BackButton } from '@/components/ui/BackButton';
+
 import supabase from '@/lib/supabaseClient';
 
 const formSchema = z.object({
@@ -98,9 +98,7 @@ export default function AdminLogin() {
 
     return (
         <div className="flex flex-col justify-center items-center min-h-[80vh]">
-            <div className="w-[350px] mb-4">
-                <BackButton />
-            </div>
+
             <Card className="w-[350px] border-red-200 shadow-red-100">
                 <CardHeader>
                     <CardTitle className="text-red-900">Admin Login</CardTitle>

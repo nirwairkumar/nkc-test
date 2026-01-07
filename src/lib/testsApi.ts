@@ -73,6 +73,7 @@ export interface Question {
     correctAnswer: string | string[] | { min: number, max: number }; // Dynamic type
     marks?: number | string;
     negativeMarks?: number | string;
+    typingMode?: 'en' | 'hi';
 }
 
 export async function createTest(testData: Partial<Test>) {

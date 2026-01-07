@@ -214,7 +214,6 @@ export default function UserTestManager() {
                                 <div className="text-xs text-muted-foreground flex gap-4">
                                     <span>{test.questions?.length || 0} Qs</span>
                                     <span>{test.duration || 0} mins</span>
-                                    <span>{test.marks_per_question || '-'} Marks</span>
                                 </div>
                             </CardContent>
                             <CardFooter className="pt-2 flex flex-wrap justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50 items-center">

@@ -37,7 +37,7 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                 // Fetch tests for this category
                 const { data: testData, error: testError } = await supabase
                     .from('test_categories')
-                    .select('test_id, tests(id, title, slug, questions, duration, marks_per_question)')
+                    .select('test_id, tests(id, title, slug, questions, duration)')
                     .eq('category_id', catData.id);
 
                 if (testData) {
