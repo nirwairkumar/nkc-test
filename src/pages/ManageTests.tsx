@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,13 @@ export default function ManageTests() {
     const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<{ id?: string, name: string }>({ name: '' });
 
+    // Users State
+    const [users, setUsers] = useState<any[]>([]);
+    const [usersLoading, setUsersLoading] = useState(true);
+    const [userSearchQuery, setUserSearchQuery] = useState("");
+    const [viewingUser, setViewingUser] = useState<any>(null); // For User Details Dialog
+    const [userDetails, setUserDetails] = useState<any>({ createdTests: [], attempts: [] });
+
     // Manage & Results State
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [viewingResultsTest, setViewingResultsTest] = useState<any>(null);
@@ -68,6 +75,7 @@ export default function ManageTests() {
     useEffect(() => {
         loadTests();
         loadCategories();
+        loadUsers();
     }, []);
 
     useEffect(() => {
@@ -132,6 +140,75 @@ export default function ManageTests() {
         if (data) setCategories(data);
         setCategoriesLoading(false);
     };
+
+    const loadUsers = async () => {
+        setUsersLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setUsers(data || []);
+        } catch (error) {
+            console.error("Error loading users:", error);
+            toast.error("Failed to load users");
+        } finally {
+            setUsersLoading(false);
+        }
+    };
+
+    const handleViewUserDetails = async (user: any) => {
+        setViewingUser(user);
+        setUserDetails({ createdTests: [], attempts: [] }); // Reset
+
+        try {
+            // 1. Fetch Created Tests
+            const { data: createdTests } = await supabase
+                .from('tests')
+                .select('id, title, created_at, questions')
+                .eq('created_by', user.id)
+                .order('created_at', { ascending: false });
+
+            // 2. Fetch Attempts (History)
+            // Note: We need test titles. For optimization, we fetch attempts then join or fetch test info.
+            const { data: attempts } = await supabase
+                .from('user_tests')
+                .select('id, test_id, score, created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            // Fetch test titles for attempts if needed (or just show IDs/Dates)
+            // Let's do a quick enrichment if attempts exist
+            let enrichedAttempts = attempts || [];
+            if (attempts && attempts.length > 0) {
+                const testIds = Array.from(new Set(attempts.map(a => a.test_id)));
+                const { data: testInfos } = await supabase.from('tests').select('id, title').in('id', testIds);
+                const testMap = new Map(testInfos?.map(t => [t.id, t.title]));
+                enrichedAttempts = attempts.map(a => ({ ...a, test_title: testMap.get(a.test_id) || 'Unknown Test' }));
+            }
+
+            setUserDetails({
+                createdTests: createdTests || [],
+                attempts: enrichedAttempts
+            });
+
+        } catch (error) {
+            console.error("Error fetching user details", error);
+            toast.error("Could not load full user details");
+        }
+    };
+
+    const filteredUsers = users.filter(user => {
+        if (!userSearchQuery) return true;
+        const q = userSearchQuery.toLowerCase();
+        return (
+            (user.full_name?.toLowerCase() || '').includes(q) ||
+            (user.email?.toLowerCase() || '').includes(q) ||
+            (user.id?.toLowerCase() || '').includes(q)
+        );
+    });
 
     // --- Test Actions ---
     const handleDeleteTest = async (testId: string, testTitle: string) => {
@@ -266,9 +343,10 @@ export default function ManageTests() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-[400px] grid-cols-2 mb-4">
+                <TabsList className="grid w-full md:w-[600px] grid-cols-3 mb-4">
                     <TabsTrigger value="tests">Manage Tests</TabsTrigger>
                     <TabsTrigger value="categories">Manage Categories</TabsTrigger>
+                    <TabsTrigger value="users">Users</TabsTrigger>
                 </TabsList>
 
                 {/* --- TESTS TAB --- */}
@@ -286,7 +364,7 @@ export default function ManageTests() {
                         </div>
                         <Button variant="outline" onClick={loadTests} size="sm" className="whitespace-nowrap">
                             <RefreshCw className={`h-4 w-4 mr-2 ${testsLoading ? 'animate-spin' : ''}`} />
-                            Refresh Tests
+                            <span className="hidden md:inline">Refresh Tests</span>
                         </Button>
                     </div>
 
@@ -300,7 +378,17 @@ export default function ManageTests() {
                         ) : (
                             filteredTests.map(test => (
                                 <Card key={test.id} className="relative group hover:shadow-md transition-shadow flex flex-col h-full">
-                                    <CardHeader className="pb-2">
+                                    <div
+                                        className="absolute top-2 left-2 z-10 text-slate-400 hover:text-blue-600 cursor-pointer"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleViewCreator(test.created_by);
+                                        }}
+                                        title="Creator Info"
+                                    >
+                                        <Info className="w-4 h-4" />
+                                    </div>
+                                    <CardHeader className="pb-2 pt-6">
                                         <div className="flex justify-between items-start gap-2">
                                             <CardTitle className="text-lg line-clamp-2 leading-tight min-h-[3.5rem]" title={test.title}>
                                                 {test.title}
@@ -309,11 +397,11 @@ export default function ManageTests() {
                                     </CardHeader>
                                     <CardContent className="pb-2 flex-grow">
                                         <div className="text-xs text-muted-foreground flex flex-wrap gap-3 items-center">
-                                            <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border font-mono text-[10px]">
-                                                ID: {test.custom_id || 'N/A'}
-                                            </span>
                                             <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {test.questions?.length || 0} Qs</span>
                                             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {test.duration || 0} m</span>
+                                            <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border font-mono text-[10px] ml-auto">
+                                                ID: {test.custom_id || 'N/A'}
+                                            </span>
                                         </div>
                                     </CardContent>
                                     <CardFooter className="pt-2 flex flex-col gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
@@ -337,16 +425,7 @@ export default function ManageTests() {
                                             </Button>
                                         </div>
 
-                                        {/* Creator Info Trigger */}
-                                        <div className="w-full flex justify-start pt-1">
-                                            <div
-                                                className="group/info relative flex items-center gap-1 text-[10px] text-slate-400 hover:text-blue-600 cursor-pointer transition-colors"
-                                                onClick={() => handleViewCreator(test.created_by)}
-                                            >
-                                                <Info className="w-3 h-3" />
-                                                <span>Creator Info</span>
-                                            </div>
-                                        </div>
+
                                     </CardFooter>
                                 </Card>
                             ))
@@ -395,6 +474,76 @@ export default function ManageTests() {
                                                     </Button>
                                                     <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category)}>
                                                         <Trash2 className="w-4 h-4 text-red-600" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- USERS TAB --- */}
+                <TabsContent value="users">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <CardTitle>Registered Users</CardTitle>
+                                    <CardDescription>View and manage all users on the platform.</CardDescription>
+                                </div>
+                                <div className="relative w-full md:w-64">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search users..."
+                                        value={userSearchQuery}
+                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50px]"></TableHead>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Joined</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {usersLoading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-8">Loading users...</TableCell>
+                                        </TableRow>
+                                    ) : filteredUsers.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                                No users found.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredUsers.map(user => (
+                                            <TableRow key={user.id}>
+                                                <TableCell>
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={user.avatar_url} />
+                                                        <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                </TableCell>
+                                                <TableCell className="font-medium">{user.full_name || 'N/A'}</TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell className="text-muted-foreground text-xs">
+                                                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleViewUserDetails(user)}>
+                                                        View Profile
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -564,6 +713,107 @@ export default function ManageTests() {
                     )}
                 </DialogContent>
             </Dialog>
-        </div>
+
+            {/* USER DETAILS DIALOG (Admin View) */}
+            <Dialog open={!!viewingUser} onOpenChange={(open) => !open && setViewingUser(null)}>
+                <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>User Profile</DialogTitle>
+                    </DialogHeader>
+                    {viewingUser && (
+                        <div className="space-y-6">
+                            {/* Header Info */}
+                            <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border">
+                                <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
+                                    <AvatarImage src={viewingUser.avatar_url} />
+                                    <AvatarFallback className="text-xl">{viewingUser.full_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 text-center md:text-left space-y-1">
+                                    <h2 className="text-2xl font-bold">{viewingUser.full_name}</h2>
+                                    <p className="text-muted-foreground">{viewingUser.email}</p>
+                                    <div className="flex items-center justify-center md:justify-start gap-2 pt-1 text-xs text-slate-500 font-mono">
+                                        ID: {viewingUser.id}
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="text-center p-2 bg-white dark:bg-black rounded border min-w-[80px]">
+                                        <div className="text-2xl font-bold">{userDetails.createdTests?.length || 0}</div>
+                                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">Tests Created</div>
+                                    </div>
+                                    <div className="text-center p-2 bg-white dark:bg-black rounded border min-w-[80px]">
+                                        <div className="text-2xl font-bold">{userDetails.attempts?.length || 0}</div>
+                                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">Tests Taken</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Tabs defaultValue="created" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="created" className="flex items-center gap-2">
+                                        <BookOpen className="w-4 h-4" /> Created Tests
+                                    </TabsTrigger>
+                                    <TabsTrigger value="history" className="flex items-center gap-2">
+                                        <GraduationCap className="w-4 h-4" /> Attempt History
+                                    </TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="created" className="mt-4 border rounded-md p-0 overflow-hidden">
+                                    {userDetails.createdTests.length === 0 ? (
+                                        <div className="p-8 text-center text-muted-foreground">No tests created by this user.</div>
+                                    ) : (
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-slate-50/50">
+                                                    <TableHead>Test Title</TableHead>
+                                                    <TableHead>Created</TableHead>
+                                                    <TableHead>Questions</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {userDetails.createdTests.map((t: any) => (
+                                                    <TableRow key={t.id}>
+                                                        <TableCell className="font-medium">{t.title}</TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleDateString()}</TableCell>
+                                                        <TableCell>{t.questions?.length || 0}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    )}
+                                </TabsContent>
+
+                                <TabsContent value="history" className="mt-4 border rounded-md p-0 overflow-hidden">
+                                    {userDetails.attempts.length === 0 ? (
+                                        <div className="p-8 text-center text-muted-foreground">No tests taken by this user.</div>
+                                    ) : (
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-slate-50/50">
+                                                    <TableHead>Test Name</TableHead>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>Score</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {userDetails.attempts.map((a: any) => (
+                                                    <TableRow key={a.id}>
+                                                        <TableCell className="font-medium">{a.test_title}</TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString()}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="outline">{a.score}</Badge>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    )}
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+        </div >
     );
 }

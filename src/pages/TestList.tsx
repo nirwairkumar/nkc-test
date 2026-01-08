@@ -8,8 +8,9 @@ import ExploreFilters from '@/components/home/ExploreFilters';
 // Lazy Load Components
 const FeaturedTests = React.lazy(() => import('@/components/home/FeaturedTests'));
 const TestFeed = React.lazy(() => import('@/components/home/TestFeed'));
-
 const UserRecentTests = React.lazy(() => import('@/components/home/UserRecentTests'));
+const SearchResults = React.lazy(() => import('@/components/home/SearchResults'));
+
 // Heavy Widgets
 const YouTubeGenerator = React.lazy(() => import('@/components/YouTubeGenerator'));
 const TestSettingsPanel = React.lazy(() => import('@/components/TestSettingsPanel'));
@@ -42,13 +43,13 @@ export default function TestList() {
 
     const handleRefresh = () => {
         setLoading(true);
-        window.location.reload(); // Simplest way to refresh all independent sub-components
+        window.location.reload();
     };
 
     return (
         <div className="container mx-auto py-8">
             <div className="flex flex-col mb-8 gap-4">
-                {/* 1. Header (Original Style) */}
+                {/* 1. Header */}
                 <HomeHero
                     isLoading={loading}
                     onRefresh={handleRefresh}
@@ -59,14 +60,14 @@ export default function TestList() {
                     <YouTubeGenerator onTestGenerated={() => { }} />
                 </Suspense>
 
-                {/* 3. Your Recent Tests (Lazy) */}
-                {user && (
+                {/* 3. Your Recent Tests (Lazy) - Only when NOT searching */}
+                {user && !searchQuery && (
                     <Suspense fallback={<SectionSkeleton />}>
                         <UserRecentTests user={user} onManageTest={onManageTest} />
                     </Suspense>
                 )}
 
-                {/* 4. Explore Tests / Search (Original Style) */}
+                {/* 4. Explore Tests / Search */}
                 <ExploreFilters
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
@@ -75,19 +76,28 @@ export default function TestList() {
                 />
             </div>
 
+            {/* SEARCH RESULTS MODE */}
+            {searchQuery ? (
+                <Suspense fallback={<SectionSkeleton />}>
+                    <SearchResults
+                        searchQuery={searchQuery}
+                        user={user}
+                        onManageTest={onManageTest}
+                    />
+                </Suspense>
+            ) : (
+                <>
+                    {/* 6. Featured Tests */}
+                    <Suspense fallback={<SectionSkeleton />}>
+                        <FeaturedTests user={user} onManageTest={onManageTest} />
+                    </Suspense>
 
-
-            {/* 6. Featured Tests (Top Priority) */}
-            <Suspense fallback={<SectionSkeleton />}>
-                {!searchQuery && (
-                    <FeaturedTests user={user} onManageTest={onManageTest} />
-                )}
-            </Suspense>
-
-            {/* 7. Infinite Feed (Lazy) */}
-            <SuspenseFallbackWrapper>
-                <TestFeed user={user} onManageTest={onManageTest} />
-            </SuspenseFallbackWrapper>
+                    {/* 7. Infinite Feed */}
+                    <SuspenseFallbackWrapper>
+                        <TestFeed user={user} onManageTest={onManageTest} />
+                    </SuspenseFallbackWrapper>
+                </>
+            )}
 
             {/* Manage Test Panel */}
             {configuringTest && (

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import {
     Sheet,
@@ -45,6 +46,7 @@ interface TestResultsPanelProps {
 }
 
 export default function TestResultsPanel({ test, onClose }: TestResultsPanelProps) {
+    const { isAdmin } = useAuth();
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showRank, setShowRank] = useState(false);
@@ -109,19 +111,32 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         }
     };
 
-    const handleDelete = async (attemptId: string) => {
-        if (!confirm('Are you sure you want to delete this result? This action cannot be undone.')) return;
+    const handleDelete = async (attemptId: string, userId: string) => {
+        if (!confirm('Are you sure you want to delete this result? This will allow the student to attempt the test again.')) return;
 
         try {
-            const { error } = await supabase
+            // 1. Delete from user_tests (The Result)
+            const { error: attemptError } = await supabase
                 .from('user_tests')
                 .delete()
                 .eq('id', attemptId);
 
-            if (error) throw error;
+            if (attemptError) throw attemptError;
+
+            // 2. Delete from test_registrations (The "Has Attempted" Flag)
+            // This enables the student to take the test again if single attempt was enforced.
+            const { error: regError } = await supabase
+                .from('test_registrations')
+                .delete()
+                .eq('test_id', test.id)
+                .eq('user_id', userId);
+
+            if (regError) {
+                console.warn("Could not delete registration, but result was deleted.", regError);
+            }
 
             setResults(prev => prev.filter(r => r.id !== attemptId));
-            toast.success('Result deleted successfully');
+            toast.success('Result deleted. Student can re-attempt.');
         } catch (error) {
             console.error('Error deleting result:', error);
             toast.error('Failed to delete result');
@@ -208,6 +223,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         // 3. Define Final Headers
         const headers = [];
         if (showRank) headers.push("Rank");
+
+        // PRIVACY: Only show Profile Name/Email if Admin
+        if (isAdmin) {
+            headers.push("Profile Name", "Email");
+        }
+
         headers.push(...dynamicHeaders);
         headers.push(
             "Date",
@@ -229,6 +250,11 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
             const rowData = [];
             if (showRank) rowData.push(index + 1);
+
+            // PRIVACY
+            if (isAdmin) {
+                rowData.push(r.user?.full_name || 'N/A', r.user?.email || 'N/A');
+            }
 
             rowData.push(
                 ...formValues,
@@ -347,9 +373,9 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     let primaryValue = 'Anonymous Candidate';
                                                     if (primaryKey && formData[primaryKey]) {
                                                         primaryValue = formData[primaryKey];
-                                                    } else if (attempt.user?.full_name) {
+                                                    } else if (isAdmin && attempt.user?.full_name) {
                                                         primaryValue = attempt.user.full_name;
-                                                    } else if (attempt.user?.email) {
+                                                    } else if (isAdmin && attempt.user?.email) {
                                                         primaryValue = attempt.user.email;
                                                     }
 
@@ -359,7 +385,15 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     return (
                                                         <div>
                                                             <div className="font-medium text-base">{primaryValue}</div>
-                                                            {/* Hide Auth ID/Email and show only other form data */}
+                                                            {/* If Admin, show real Profile details if not main display */}
+                                                            {isAdmin && (
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {attempt.user?.full_name && <div>{attempt.user.full_name}</div>}
+                                                                    {attempt.user?.email && <div>{attempt.user.email}</div>}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Show Start Form details */}
                                                             {otherDetails.length > 0 && (
                                                                 <div className="mt-1 text-xs text-slate-500 space-y-0.5">
                                                                     {otherDetails.map(([k, v]) => (
@@ -393,7 +427,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                    onClick={() => handleDelete(attempt.id)}
+                                                    onClick={() => handleDelete(attempt.id, attempt.user_id)}
+                                                    title="Delete Result (Allows Re-attempt)"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>

@@ -295,15 +295,70 @@ export default function TestIntroPage() {
                             <li>The test contains <strong>{test.questions?.length}</strong> questions.</li>
                             <li>Total duration of the test is <strong>{test.duration} minutes</strong>.</li>
                             <li>Total Marks: <strong>{totalMaxMarks}</strong></li>
-
                             <li>Once you start, the timer will begin and cannot be paused.</li>
                             {test.settings?.force_fullscreen && (
                                 <li className="text-red-600 font-medium">Full Screen Mode is mandatory. Exiting may submit the test.</li>
                             )}
-                            {(test.settings?.tab_switch_mode !== 'off' && test.settings?.tab_switch_mode) && (
-                                <li className="text-red-600 font-medium">Switching tabs or minimizing window is PROHIBITED.</li>
-                            )}
                         </ul>
+
+                        {/* Advance Rules Section */}
+                        {(test.settings && (
+                            (test.settings.attempt_limit && test.settings.attempt_limit > 0) ||
+                            test.settings.start_form?.enabled ||
+                            test.settings.schedule?.enabled ||
+                            (test.settings.tab_switch_mode && test.settings.tab_switch_mode !== 'off') ||
+                            test.settings.show_results_immediate === false ||
+                            test.settings.strict_timer ||
+                            test.settings.shuffle_questions
+                        )) && (
+                                <>
+                                    <Separator className="my-3" />
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                                        <h4 className="font-semibold text-sm text-amber-700">Advance Rules</h4>
+                                    </div>
+                                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground mt-2">
+                                        {test.settings.attempt_limit && test.settings.attempt_limit > 0 && (
+                                            <li><strong>Attempt Limit:</strong> Only {test.settings.attempt_limit} attempt(s) allowed.</li>
+                                        )}
+
+                                        {test.settings.start_form?.enabled && (
+                                            <li>
+                                                <strong>Candidate Details:</strong> You must fill {test.settings.start_form.fields.map(f => `<${f.label}>`).join(' and ')} before starting.
+                                            </li>
+                                        )}
+
+                                        {test.settings.schedule?.enabled && (
+                                            <li>
+                                                <strong>Scheduled:</strong> Test is live from {new Date(test.settings.schedule.start_time!).toLocaleString()} to {new Date(test.settings.schedule.end_time!).toLocaleString()}.
+                                            </li>
+                                        )}
+
+                                        {test.settings.tab_switch_mode === 'strict' && (
+                                            <li className="text-red-600 font-medium">
+                                                <strong>Tab Switching:</strong> Strictly PROHIBITED. Test will auto-submit if you switch tabs.
+                                            </li>
+                                        )}
+                                        {test.settings.tab_switch_mode === 'warning' && (
+                                            <li className="text-amber-600 font-medium">
+                                                <strong>Tab Switching:</strong> Restricted. You will be warned/penalized for switching tabs.
+                                            </li>
+                                        )}
+
+                                        {test.settings.show_results_immediate === false && (
+                                            <li><strong>Result Visibility:</strong> Score/Result will NOT be shown immediately after submission.</li>
+                                        )}
+
+                                        {test.settings.strict_timer && (
+                                            <li><strong>Timer:</strong> Synchronized with Server Time.</li>
+                                        )}
+
+                                        {test.settings.shuffle_questions && (
+                                            <li><strong>Randomization:</strong> Questions are randomized for each candidate.</li>
+                                        )}
+                                    </ul>
+                                </>
+                            )}
                     </div>
 
                     {test.revision_notes && (
