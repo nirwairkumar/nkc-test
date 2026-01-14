@@ -31,7 +31,7 @@ export default function CreateTestPage() {
 
     if (showImporter) {
         return (
-            <div className="container mx-auto py-8">
+            <div className="container mx-auto py-6">
                 <Button variant="ghost" onClick={() => setShowImporter(false)} className="mb-4">
                     Back to Editor
                 </Button>

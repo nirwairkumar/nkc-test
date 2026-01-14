@@ -124,8 +124,6 @@ const ResultsPage = () => {
         wrong: 0,
         score: 0,
         maxScore: 0,
-        score: 0,
-        maxScore: 0,
         marksPerQuestion: getDisplayMark(sec.marks_per_question, 4),
         negativeMarks: getDisplayMark(sec.negative_marks, 1)
       };
@@ -271,7 +269,7 @@ const ResultsPage = () => {
   const testId = selectedTest?.id;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header Actions */}
         <div className="flex justify-between items-center">

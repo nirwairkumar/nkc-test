@@ -182,7 +182,7 @@ const ProfilePage = () => {
     }
 
     return (
-        <div className="container max-w-2xl py-10">
+        <div className="container max-w-2xl py-6">
             <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
 
             <div className="grid gap-8">

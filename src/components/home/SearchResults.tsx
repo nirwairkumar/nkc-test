@@ -9,10 +9,12 @@ import { fetchTests, Test } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import supabase from '@/lib/supabaseClient';
+import FolderCard from '@/components/home/FolderCard';
 
 export default function SearchResults({ searchQuery, user, onManageTest }: { searchQuery: string, user: any, onManageTest: (test: any) => void }) {
     const [tests, setTests] = useState<Test[]>([]);
     const [profiles, setProfiles] = useState<any[]>([]);
+    const [matchedFolders, setMatchedFolders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Metadata for cards
@@ -108,6 +110,38 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
                 }
             });
             setProfiles(Array.from(creators.values()));
+
+            // 3. Match Categories (Folders)
+            // Case A: Name match
+            const directCatMatch = catData?.filter((c: any) => c.name.toLowerCase().includes(query)) || [];
+
+            // Case B: Test match -> Show its categories
+            // Collect category IDs from filtered tests
+            const relatedCatIds = new Set<string>();
+            filtered.forEach(t => {
+                const cats = map[t.id];
+                if (cats) cats.forEach(c => relatedCatIds.add(c));
+            });
+
+            // Merge
+            const relatedCats = catData?.filter((c: any) => relatedCatIds.has(c.id)) || [];
+
+            // Combine and Dedup
+            const combinedCatsMap = new Map();
+            [...directCatMatch, ...relatedCats].forEach(c => combinedCatsMap.set(c.id, c));
+
+            // Calculate counts for these categories
+            const finalCats = Array.from(combinedCatsMap.values()).map(c => {
+                // Count tests in this category (globally or just matched? Requirement says "Folder card must show... Total test count inside it". Usually global count).
+                // We can compute global count from `mapData`.
+                let count = 0;
+                if (mapData) {
+                    count = mapData.filter((m: any) => m.category_id === c.id).length;
+                }
+                return { ...c, count };
+            });
+
+            setMatchedFolders(finalCats);
         }
         setLoading(false);
     };
@@ -137,10 +171,25 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     Search Results
                     <span className="text-sm font-normal text-muted-foreground ml-2">
-                        ({tests.length} tests, {profiles.length} creators)
+                        ({matchedFolders.length > 0 ? `${matchedFolders.length} folders, ` : ''}{tests.length} tests, {profiles.length} creators)
                     </span>
                 </h2>
             </div>
+
+            {/* 0. Categories First */}
+            {matchedFolders.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 px-1 text-slate-700 dark:text-slate-300">
+                        Categories
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {matchedFolders.map(cat => (
+                            <FolderCard key={cat.id} categoryName={cat.name} testCount={cat.count} />
+                        ))}
+                    </div>
+                    <div className="h-px bg-slate-200 dark:bg-slate-800 my-6" />
+                </div>
+            )}
 
             {/* 1. Profiles First */}
             {profiles.length > 0 && (

@@ -14,6 +14,7 @@ const SearchResults = React.lazy(() => import('@/components/home/SearchResults')
 // Heavy Widgets
 const YouTubeGenerator = React.lazy(() => import('@/components/YouTubeGenerator'));
 const TestSettingsPanel = React.lazy(() => import('@/components/TestSettingsPanel'));
+const CategoryFolderCards = React.lazy(() => import('@/components/home/CategoryFolderCards'));
 
 // Skeletons
 function SectionSkeleton() {
@@ -47,7 +48,7 @@ export default function TestList() {
     };
 
     return (
-        <div className="container mx-auto py-8">
+        <div className="container mx-auto py-6">
             <div className="flex flex-col mb-8 gap-4">
                 {/* 1. Header */}
                 <HomeHero
@@ -87,6 +88,11 @@ export default function TestList() {
                 </Suspense>
             ) : (
                 <>
+                    {/* 5. Category Folders */}
+                    <Suspense fallback={<SectionSkeleton />}>
+                        <CategoryFolderCards />
+                    </Suspense>
+
                     {/* 6. Featured Tests */}
                     <Suspense fallback={<SectionSkeleton />}>
                         <FeaturedTests user={user} onManageTest={onManageTest} />
