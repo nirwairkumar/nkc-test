@@ -14,12 +14,26 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
 import supabase from '@/lib/supabaseClient';
-import { Loader2, User, Save, Upload } from 'lucide-react';
+import { Loader2, User, Save, Upload, Users, Eye, EyeOff } from 'lucide-react';
+import { toggleCreatorMode, updateFollowingVisibility, getFollowerCount, getFollowingCount } from '@/lib/socialApi';
+import { Profile } from '@/lib/types';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
     const { user, session, isAdmin } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
 
@@ -28,6 +42,13 @@ const ProfilePage = () => {
     const [bio, setBio] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
     const [designation, setDesignation] = useState('');
+
+    // Social State
+    const [isCreator, setIsCreator] = useState(false);
+    const [followingVisibility, setFollowingVisibility] = useState<'public' | 'private'>('public');
+    const [followerCount, setFollowerCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
+    const [showCreatorDialog, setShowCreatorDialog] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -40,8 +61,34 @@ const ProfilePage = () => {
             } else {
                 setDesignation(user.user_metadata?.designation || 'Student');
             }
+
+            // Fetch additional profile data
+            fetchProfileSettings();
+            fetchSocialCounts();
         }
     }, [user, isAdmin]);
+
+    const fetchProfileSettings = async () => {
+        if (!user) return;
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('is_creator, following_visibility')
+            .eq('id', user.id)
+            .single();
+
+        if (data) {
+            setIsCreator(data.is_creator || false);
+            setFollowingVisibility(data.following_visibility as 'public' | 'private' || 'public');
+        }
+    };
+
+    const fetchSocialCounts = async () => {
+        if (!user) return;
+        const { count: followers } = await getFollowerCount(user.id);
+        const { count: following } = await getFollowingCount(user.id);
+        setFollowerCount(followers || 0);
+        setFollowingCount(following || 0);
+    };
 
     const getInitials = (name: string) => {
         return name
@@ -142,6 +189,8 @@ const ProfilePage = () => {
                     avatar_url: avatarUrl,
                     designation: finalDesignation,
                     email: user.email,
+                    is_creator: isCreator, // Persist creator status just in case
+                    following_visibility: followingVisibility,
                     updated_at: new Date().toISOString()
                 });
 
@@ -173,6 +222,33 @@ const ProfilePage = () => {
         }
     };
 
+    const handleEnableCreator = async () => {
+        try {
+            const { error } = await toggleCreatorMode(user!.id, true);
+            if (error) throw error;
+            setIsCreator(true);
+            setShowCreatorDialog(false);
+            toast.success("You are now a Creator! Redirecting to Manage Tests...");
+            setTimeout(() => navigate('/my-tests'), 1500);
+        } catch (error: any) {
+            toast.error("Failed to enable Creator Profile: " + error.message);
+        }
+    };
+
+    const handleVisibilityChange = async (checked: boolean) => {
+        const newVisibility = checked ? 'public' : 'private';
+        setFollowingVisibility(newVisibility);
+        try {
+            const { error } = await updateFollowingVisibility(user!.id, newVisibility);
+            if (error) throw error;
+            toast.success(`Following list is now ${newVisibility}`);
+        } catch (error: any) {
+            toast.error("Failed to update visibility");
+            // Revert on error
+            setFollowingVisibility(checked ? 'private' : 'public');
+        }
+    };
+
     if (!user) {
         return (
             <div className="flex h-screen items-center justify-center">
@@ -194,21 +270,105 @@ const ProfilePage = () => {
                                 <AvatarImage src={avatarUrl} alt={fullName} />
                                 <AvatarFallback className="text-2xl">{getInitials(fullName || user.email || 'U')}</AvatarFallback>
                             </Avatar>
-                            {/* Hover Overlay for upload info not needed if we have a dedicated input below, but nicer UX could be here.
-                                Keeping it simple as requested for now with a section below. */}
                         </div>
 
-                        <div className="text-center sm:text-left space-y-2">
-                            <h2 className="text-2xl font-bold">{fullName || 'User'}</h2>
-                            <Badge style={getBadgeStyle(isAdmin ? 'Admin' : designation)} className="text-xs px-2 py-0.5 pointer-events-none">
-                                {isAdmin ? 'Admin' : (designation || 'Student')}
-                            </Badge>
+                        <div className="text-center sm:text-left space-y-2 flex-1">
+                            <div className="flex flex-col sm:flex-row items-center sm:items-baseline gap-2">
+                                <h2 className="text-2xl font-bold">{fullName || 'User'}</h2>
+                                <Badge style={getBadgeStyle(isAdmin ? 'Admin' : designation)} className="text-xs px-2 py-0.5 pointer-events-none">
+                                    {isAdmin ? 'Admin' : (designation || 'Student')}
+                                </Badge>
+                                {isCreator && <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100">Creator</Badge>}
+                            </div>
                             <p className="text-muted-foreground">{user.email}</p>
+
+                            <div className="flex items-center justify-center sm:justify-start gap-4 mt-3">
+                                <div className="text-center sm:text-left">
+                                    <p className="font-bold text-lg">{followingCount}</p>
+                                    <p className="text-xs text-muted-foreground">Following</p>
+                                </div>
+                                {isCreator && (
+                                    <div className="text-center sm:text-left">
+                                        <p className="font-bold text-lg">{followerCount}</p>
+                                        <p className="text-xs text-muted-foreground">Followers</p>
+                                    </div>
+                                )}
+                            </div>
+
                             {bio && (
                                 <p className="text-sm text-slate-600 mt-2 max-w-sm whitespace-pre-wrap">
                                     {bio}
                                 </p>
                             )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Creator Mode & Settings */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Account Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {!isCreator ? (
+                            <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
+                                <div>
+                                    <h3 className="font-semibold">Enable Creator Profile</h3>
+                                    <p className="text-sm text-muted-foreground">Unlock followers and publish public tests.</p>
+                                </div>
+                                <Dialog open={showCreatorDialog} onOpenChange={setShowCreatorDialog}>
+                                    <DialogTrigger asChild>
+                                        <Button>Enable Creator Profile</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Become a Creator?</DialogTitle>
+                                            <DialogDescription>
+                                                By enabling Creator Profile, your profile will become public. Users can follow you, and your followers will be notified when you publish new tests.
+                                                <br /><br />
+                                                Your followers count and follow button will be visible on your public profile.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setShowCreatorDialog(false)}>Cancel</Button>
+                                            <Button onClick={handleEnableCreator}>Confirm & Enable</Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50 border-green-200">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                                        <Users className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-green-800">Creator Profile Active</h3>
+                                        <p className="text-sm text-green-600">You can manage your tests and grow your audience.</p>
+                                    </div>
+                                </div>
+                                <Button variant="outline" className="bg-white text-green-700 border-green-200 hover:bg-green-50" onClick={() => navigate('/my-tests')}>
+                                    Your Tests
+                                </Button>
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <Label className="text-base">Following Visibility</Label>
+                                <p className="text-sm text-muted-foreground">
+                                    {followingVisibility === 'public'
+                                        ? 'Everyone can see who you follow.'
+                                        : 'Only you can see who you follow.'}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-muted-foreground mr-2">{followingVisibility === 'public' ? 'Public' : 'Private'}</span>
+                                <Switch
+                                    checked={followingVisibility === 'public'}
+                                    onCheckedChange={handleVisibilityChange}
+                                />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

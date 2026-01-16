@@ -538,6 +538,31 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 const { assignCategoriesToTest } = await import('@/lib/categoriesApi');
                 await assignCategoriesToTest(data.id, selectedCategories);
             }
+
+            // --- NOTIFICATION LOGIC ---
+            if (isPublic) {
+                // Fire and forget notification process to avoid blocking UI
+                (async () => {
+                    try {
+                        const { getFollowers, createNotification } = await import('@/lib/socialApi');
+                        const { data: followers } = await getFollowers(user.id);
+                        if (followers && followers.length > 0) {
+                            const notifications = followers.map(f =>
+                                createNotification(
+                                    f.follower_id,
+                                    `New Test: ${title}`,
+                                    `${user.user_metadata?.full_name || 'A creator'} published a new test.`,
+                                    `/test-intro/${data.id}`
+                                )
+                            );
+                            await Promise.all(notifications);
+                            console.log(`Sent notifications to ${followers.length} followers.`);
+                        }
+                    } catch (notifError) {
+                        console.error("Failed to send notifications:", notifError);
+                    }
+                })();
+            }
         }
     };
 

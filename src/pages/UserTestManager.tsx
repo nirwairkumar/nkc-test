@@ -58,14 +58,32 @@ export default function UserTestManager() {
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [viewingResultsTest, setViewingResultsTest] = useState<any>(null); // New State
 
+    // Creator Check State
+    const [isCreator, setIsCreator] = useState<boolean | null>(null);
+    const [checkingCreator, setCheckingCreator] = useState(true);
+
     useEffect(() => {
         if (!authLoading && !user) {
             navigate('/login');
         } else if (user?.id) {
+            checkCreatorStatus();
             loadUserTests();
             loadCategories();
         }
     }, [user?.id, authLoading, navigate]);
+
+    const checkCreatorStatus = async () => {
+        if (!user) return;
+        setCheckingCreator(true);
+        const { data } = await supabase
+            .from('profiles')
+            .select('is_creator')
+            .eq('id', user.id)
+            .single();
+
+        if (data) setIsCreator(data.is_creator);
+        setCheckingCreator(false);
+    };
 
     const loadCategories = async () => {
         const { data } = await fetchCategories();
@@ -111,8 +129,44 @@ export default function UserTestManager() {
         setIsTestEditOpen(true);
     };
 
-    if (authLoading) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
+    if (authLoading || checkingCreator) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
     if (!user) return null;
+
+    // Non-creator lock screen
+    if (isCreator === false) {
+        return (
+            <div className="relative h-[80vh] w-full overflow-hidden flex flex-col items-center justify-center">
+                {/* Blurred Background Content */}
+                <div className="absolute inset-0 blur-sm opacity-50 pointer-events-none select-none overflow-hidden flex flex-col items-center pt-20">
+                    <div className="container max-w-5xl opacity-50 grayscale">
+                        <div className="flex justify-between items-center mb-8">
+                            <h1 className="text-3xl font-bold">Your Tests</h1>
+                            <Button disabled>Import JSON</Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {[1, 2, 3].map(i => (
+                                <Card key={i} className="h-40 bg-slate-50"></Card>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Overlay Content */}
+                <div className="relative z-10 bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-2xl border text-center max-w-md mx-4">
+                    <div className="h-16 w-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Edit className="h-8 w-8" />
+                    </div>
+                    <h2 className="text-2xl font-bold mb-2">Become a Creator</h2>
+                    <p className="text-muted-foreground mb-6">
+                        To manage and publish tests, you need to enable your **Creator Profile**. Using this feature, you can build a following and share your exams.
+                    </p>
+                    <Button size="lg" className="w-full" onClick={() => navigate('/profile')}>
+                        Go to Profile & Enable
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     if (isTestEditOpen) {
         return (

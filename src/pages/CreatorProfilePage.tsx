@@ -9,6 +9,8 @@ import { Loader2, ArrowRight, Clock, FileText } from 'lucide-react';
 import { Test, fetchTestsByUserId } from '@/lib/testsApi';
 import TestLikeButton from '@/components/TestLikeButton';
 import { useAuth } from '@/contexts/AuthContext';
+import { FollowButton } from '@/components/ui/FollowButton';
+import { getFollowerCount, getFollowingCount } from '@/lib/socialApi';
 
 interface CreatorProfile {
     id: string;
@@ -16,6 +18,8 @@ interface CreatorProfile {
     bio: string;
     avatar_url: string;
     designation: string;
+    is_creator: boolean;
+    following_visibility: 'public' | 'private';
 }
 
 export default function CreatorProfilePage() {
@@ -25,10 +29,13 @@ export default function CreatorProfilePage() {
     const [profile, setProfile] = useState<CreatorProfile | null>(null);
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
+    const [followerCount, setFollowerCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
 
     useEffect(() => {
         if (id) {
             loadCreatorData(id);
+            loadSocialCounts(id);
         }
     }, [id]);
 
@@ -63,6 +70,20 @@ export default function CreatorProfilePage() {
             setLoading(false);
         }
     }
+
+    async function loadSocialCounts(creatorId: string) {
+        const { count: followers } = await getFollowerCount(creatorId);
+        setFollowerCount(followers || 0);
+
+        // We fetch following count, but visibility depends on profile setting
+        const { count: following } = await getFollowingCount(creatorId);
+        setFollowingCount(following || 0);
+    }
+
+    const handleFollowChange = (isFollowing: boolean) => {
+        // Optimistically update count
+        setFollowerCount(prev => isFollowing ? prev + 1 : prev - 1);
+    };
 
     const getInitials = (name?: string) => {
         if (!name) return 'U';
@@ -111,19 +132,42 @@ export default function CreatorProfilePage() {
                         <AvatarImage src={profile.avatar_url} />
                         <AvatarFallback className="text-4xl">{getInitials(profile.full_name)}</AvatarFallback>
                     </Avatar>
-                    <div className="text-center md:text-left space-y-2">
-                        <h1 className="text-3xl font-bold">{profile.full_name}</h1>
-                        <Badge style={getBadgeStyle(profile.designation)} className="text-xs px-2 py-0.5 pointer-events-none">
-                            {profile.designation || 'Student'}
-                        </Badge>
+                    <div className="text-center md:text-left space-y-2 flex-1">
+                        <div className="flex flex-col md:flex-row items-center gap-4 justify-center md:justify-start">
+                            <h1 className="text-3xl font-bold">{profile.full_name}</h1>
+                            <FollowButton targetUserId={profile.id} onFollowChange={handleFollowChange} />
+                        </div>
+
+                        <div className="flex items-center justify-center md:justify-start gap-2">
+                            <Badge style={getBadgeStyle(profile.designation)} className="text-xs px-2 py-0.5 pointer-events-none">
+                                {profile.designation || 'Student'}
+                            </Badge>
+                            {profile.is_creator && <Badge variant="secondary" className="bg-purple-100 text-purple-700">Creator</Badge>}
+                        </div>
+
                         {profile.bio && (
                             <p className="text-muted-foreground max-w-lg mx-auto md:mx-0 whitespace-pre-wrap text-left">
                                 {profile.bio}
                             </p>
                         )}
-                        <div className="flex items-center gap-2 text-sm text-slate-500 justify-center md:justify-start pt-2">
-                            <FileText className="w-4 h-4" />
-                            <span>{tests.length} Public Tests</span>
+
+                        <div className="flex items-center gap-6 justify-center md:justify-start pt-4">
+                            <div className="text-center md:text-left">
+                                <p className="font-bold text-xl">{followerCount}</p>
+                                <p className="text-xs text-muted-foreground">Followers</p>
+                            </div>
+
+                            {(profile.following_visibility === 'public' || profile.id === user?.id) && (
+                                <div className="text-center md:text-left">
+                                    <p className="font-bold text-xl">{followingCount}</p>
+                                    <p className="text-xs text-muted-foreground">Following</p>
+                                </div>
+                            )}
+
+                            <div className="text-center md:text-left">
+                                <p className="font-bold text-xl">{tests.length}</p>
+                                <p className="text-xs text-muted-foreground">Tests</p>
+                            </div>
                         </div>
                     </div>
                 </CardContent>

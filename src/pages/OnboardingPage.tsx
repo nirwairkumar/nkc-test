@@ -67,11 +67,14 @@ export default function OnboardingPage() {
 
             // Sync to profiles table
             if (user?.email) {
+                const isCreatorDefault = values.designation === 'Teacher' || values.designation === 'Institution';
+
                 const { error: profileError } = await supabase.from('profiles').upsert({
                     id: user.id,
                     full_name: values.name,
                     designation: values.designation,
                     email: user.email,
+                    is_creator: isCreatorDefault,
                     updated_at: new Date().toISOString(),
                 });
                 if (profileError) {

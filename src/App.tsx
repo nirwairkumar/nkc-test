@@ -27,6 +27,7 @@ const AdminMigration = lazy(() => import("./pages/AdminMigration"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const ManageTests = lazy(() => import("./pages/ManageTests"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const UserTestManager = lazy(() => import("./pages/UserTestManager"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -59,6 +60,7 @@ const App = () => (
                     <Route path="/" element={<TestList />} />
                     <Route path="/login" element={<AuthForm />} />
                     <Route path="/onboarding" element={<OnboardingPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/update-password" element={<UpdatePassword />} />
                     <Route path="/admin-migration" element={<AdminMigration />} />
                     <Route path="/admin-login" element={<AdminLogin />} />
