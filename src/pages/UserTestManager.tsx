@@ -208,20 +208,36 @@ export default function UserTestManager() {
                                         const text = await file.text();
                                         const json = JSON.parse(text);
 
-                                        if (!json.title || !json.questions || !Array.isArray(json.questions)) {
-                                            toast.error("Invalid JSON format. Must have 'title' and 'questions' array.");
+                                        const isValidFlat = json.questions && Array.isArray(json.questions);
+                                        const isValidSection = json.enable_section_mode && json.sections && Array.isArray(json.sections);
+
+                                        if (!json.title || (!isValidFlat && !isValidSection)) {
+                                            toast.error("Invalid JSON format. Must have 'title' and 'questions' array (or 'sections' if mode is enabled).");
                                             return;
                                         }
 
                                         const { createTest, getNextTestId } = await import('@/lib/testsApi');
                                         const customId = await getNextTestId('M');
 
+                                        // Sanitize JSON: Remove fields that don't exist in the DB (schema mismatch)
+                                        // The JSON template includes marks_per_question/negative_marks for the generator, 
+                                        // but the current 'tests' table apparently doesn't have these columns.
+                                        const {
+                                            marks_per_question,
+                                            negative_marks,
+                                            id, // Don't import ID, let DB generate it
+                                            created_at, // Don't import timestamp
+                                            ...safeJson
+                                        } = json;
+
                                         const newTest = {
-                                            ...json,
+                                            ...safeJson,
                                             created_by: user.id,
                                             custom_id: customId,
                                             creator_name: user.user_metadata?.full_name || 'Anonymous',
                                             creator_avatar: user.user_metadata?.avatar_url || '',
+                                            // Ensure critical fields are present if missing in JSON (though validation passed)
+                                            is_public: safeJson.is_public !== undefined ? safeJson.is_public : true,
                                             created_at: new Date().toISOString()
                                         };
 

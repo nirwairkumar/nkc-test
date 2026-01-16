@@ -10,12 +10,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import supabase from '@/lib/supabaseClient';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 export default function FeaturedTests({ user, onManageTest }: { user: any, onManageTest: (test: any) => void }) {
     const [tests, setTests] = useState<Test[]>([]);
     const [loading, setLoading] = useState(true);
     const [categories, setCategories] = useState<any[]>([]);
     const [testCategoryMap, setTestCategoryMap] = useState<Record<string, string[]>>({});
+    const [verifiedCreators, setVerifiedCreators] = useState<Record<string, boolean>>({});
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -39,6 +41,23 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
             }
             setTestCategoryMap(map);
             setLoading(false);
+
+            // Fetch Verified Status
+            if (testData && testData.length > 0) {
+                const creatorIds = Array.from(new Set(testData.map((t: any) => t.created_by).filter(Boolean)));
+                if (creatorIds.length > 0) {
+                    const { data: creatorData } = await supabase
+                        .from('profiles')
+                        .select('id, is_verified_creator')
+                        .in('id', creatorIds);
+
+                    if (creatorData) {
+                        const vMap: Record<string, boolean> = {};
+                        creatorData.forEach((p: any) => vMap[p.id] = p.is_verified_creator);
+                        setVerifiedCreators(vMap);
+                    }
+                }
+            }
         }
         loadData();
     }, []);
@@ -103,9 +122,12 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
                                         <AvatarImage src={test.creator_avatar} />
                                         <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}</AvatarFallback>
                                     </Avatar>
-                                    <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">
-                                        {test.creator_name || 'Creator'}
-                                    </span>
+                                    <div className="flex items-center gap-1 min-w-0">
+                                        {verifiedCreators[test.created_by as string] && <VerifiedBadge size={14} />}
+                                        <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">
+                                            {test.creator_name || 'Creator'}
+                                        </span>
+                                    </div>
                                 </div>
                                 <TestCardCategoryList categoryIds={testCategoryMap[test.id]} allCategories={categories} customCategory={test.custom_category} />
                             </div>

@@ -11,6 +11,7 @@ import TestLikeButton from '@/components/TestLikeButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { FollowButton } from '@/components/ui/FollowButton';
 import { getFollowerCount, getFollowingCount } from '@/lib/socialApi';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 interface CreatorProfile {
     id: string;
@@ -19,6 +20,7 @@ interface CreatorProfile {
     avatar_url: string;
     designation: string;
     is_creator: boolean;
+    is_verified_creator?: boolean;
     following_visibility: 'public' | 'private';
 }
 
@@ -134,15 +136,26 @@ export default function CreatorProfilePage() {
                     </Avatar>
                     <div className="text-center md:text-left space-y-2 flex-1">
                         <div className="flex flex-col md:flex-row items-center gap-4 justify-center md:justify-start">
-                            <h1 className="text-3xl font-bold">{profile.full_name}</h1>
+                            <div className="flex items-center gap-2">
+                                {profile.is_verified_creator && <VerifiedBadge size={20} />}
+                                <h1 className="text-3xl font-bold">{profile.full_name}</h1>
+                            </div>
                             <FollowButton targetUserId={profile.id} onFollowChange={handleFollowChange} />
                         </div>
 
                         <div className="flex items-center justify-center md:justify-start gap-2">
-                            <Badge style={getBadgeStyle(profile.designation)} className="text-xs px-2 py-0.5 pointer-events-none">
-                                {profile.designation || 'Student'}
-                            </Badge>
-                            {profile.is_creator && <Badge variant="secondary" className="bg-purple-100 text-purple-700">Creator</Badge>}
+                            {profile.is_verified_creator ? (
+                                <p className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                                    Testoza Authorized Partner
+                                </p>
+                            ) : (
+                                <>
+                                    <Badge style={getBadgeStyle(profile.designation)} className="text-xs px-2 py-0.5 pointer-events-none">
+                                        {profile.designation || 'Student'}
+                                    </Badge>
+                                    {profile.is_creator && <Badge variant="secondary" className="bg-purple-100 text-purple-700">Creator</Badge>}
+                                </>
+                            )}
                         </div>
 
                         {profile.bio && (

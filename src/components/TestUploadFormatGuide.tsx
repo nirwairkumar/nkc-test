@@ -7,6 +7,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { FileText, Download, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp, Sparkles, Copy, UploadCloud } from 'lucide-react';
 import { toast } from 'sonner';
@@ -51,6 +52,10 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
 5. Convert all mathematical expressions into LaTeX.
 6. Preserve original wording (do NOT rewrite).
 7. Attach diagrams/images to the correct question using base64 or URL placeholder.
+8. FOR PASSAGE/COMPREHENSION QUESTIONS:
+   - Extract the passage text ONCE.
+   - For EVERY question belonging to that passage, include a "passageContent" field.
+   - Set "passageContent" to the FULL passage text for each question in the group.
 
 --------------------------------------------------
 MATH & FORMATTING RULES:
@@ -109,12 +114,71 @@ FAIL-SAFE RULES:
 - If ANY field is missing → set it to null (never omit keys).
 - If a question contains multiple statements or expressions,
   format them on separate physical lines.
+- For Passage questions, ensure "passageContent" is IDENTICAL for all questions in the set.
 
 --------------------------------------------------
 FINAL OUTPUT RULE:
 RETURN ONLY RAW JSON.
 NO TEXT BEFORE OR AFTER.
 
+`;
+
+    const jsonTemplateSection = `ROLE:
+You are an AI document parser specialized in multi-section exams.
+
+GOAL:
+Convert the PROVIDED PDF/IMAGE into a VALID JSON test file with MULTIPLE SECTIONS.
+
+CRITICAL BEHAVIOR RULES:
+- Identify SECTION HEADERS (e.g., "Part A: Physics", "Section II").
+- Group questions under their respective sections.
+- Identify marking schemes if they differ per section.
+- Handle PASSAGES/COMPREHENSION:
+  - If a group of questions shares a passage, include the "passageContent" field in EACH question object.
+
+STRICT JSON OUTPUT FORMAT (SECTION MODE):
+{
+  "title": "Exam Title",
+  "description": "Auto-generated",
+  "duration": 180,
+  "enable_section_mode": true,
+  "section_marking_model": "section-wise",
+  "sections": [
+    {
+      "id": "sec_1",
+      "name": "Physics",
+      "instructions": "Section instructions...",
+      "marks_per_question": 4,
+      "negative_marks": 1,
+      "questions": [
+        {
+          "id": 1,
+          "type": "single",
+          "question": "Question text...",
+          "options": { "A": "...", "B": "..." },
+          "correctAnswer": "A"
+        }
+      ]
+    },
+    {
+      "id": "sec_2",
+      "name": "English",
+      "questions": [
+        {
+          "id": 10,
+          "type": "single",
+          "question": "Theme of the passage?",
+          "passageContent": "Passage text...",
+          "options": { "A": "...", "B": "..." },
+          "correctAnswer": "A"
+        }
+      ]
+    }
+  ]
+}
+--------------------------------------------------
+FINAL OUTPUT RULE:
+RETURN ONLY RAW JSON. NO TEXT BEFORE OR AFTER.
 `;
 
     const handleDownload = () => {
@@ -160,20 +224,50 @@ NO TEXT BEFORE OR AFTER.
                             </p>
 
                             <div className="relative group">
-                                <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
-                                    {jsonTemplate.trim()}
-                                </pre>
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(jsonTemplate.trim());
-                                        toast.success("AI Prompt copied!");
-                                    }}
-                                >
-                                    <Copy className="h-3 w-3 mr-2" /> Copy Prompt
-                                </Button>
+                                <Tabs defaultValue="flat" className="w-full">
+                                    <TabsList className="mb-2 grid w-full grid-cols-2">
+                                        <TabsTrigger value="flat">Standard (Flat)</TabsTrigger>
+                                        <TabsTrigger value="section">Section-Wise</TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent value="flat" className="mt-0">
+                                        <div className="relative">
+                                            <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
+                                                {jsonTemplate.trim()}
+                                            </pre>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(jsonTemplate.trim());
+                                                    toast.success("Standard Prompt copied!");
+                                                }}
+                                            >
+                                                <Copy className="h-3 w-3 mr-2" /> Copy Prompt
+                                            </Button>
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="section" className="mt-0">
+                                        <div className="relative">
+                                            <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
+                                                {jsonTemplateSection.trim()}
+                                            </pre>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(jsonTemplateSection.trim());
+                                                    toast.success("Section Prompt copied!");
+                                                }}
+                                            >
+                                                <Copy className="h-3 w-3 mr-2" /> Copy Prompt
+                                            </Button>
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
                             </div>
                         </div>
                     </div>
@@ -336,6 +430,29 @@ NO TEXT BEFORE OR AFTER.
      "A": "base64_string_here..." // Optional: Images for options
   },
   "correctAnswer": "A"
+}`}
+                                        </pre>
+                                    </div>
+
+                                    <div>
+                                        <h5 className="font-bold mb-2">5. Passage / Comprehension Question</h5>
+                                        <p className="text-muted-foreground mb-2">For questions based on a passage, add the <code>passageContent</code> field to <strong>every</strong> question in the group.</p>
+                                        <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                                            {`{
+  "id": 5,
+  "type": "single",
+  "question": "What is the main theme of the passage?",
+  "passageContent": "Start of the passage... [Full Text] ... End of passage.",
+  "options": { "A": "Nature", "B": "Technology", "C": "History", "D": "Space" },
+  "correctAnswer": "A"
+},
+{
+  "id": 6,
+  "type": "single",
+  "question": "According to the author, what is true?",
+  "passageContent": "Start of the passage... [Full Text] ... End of passage.",
+  "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
+  "correctAnswer": "B"
 }`}
                                         </pre>
                                     </div>

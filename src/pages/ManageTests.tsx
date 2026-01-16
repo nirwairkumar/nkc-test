@@ -25,9 +25,10 @@ import {
 } from "@/components/ui/table";
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 export default function ManageTests() {
-    const { loading: authLoading, isAdmin } = useAuth();
+    const { user, loading: authLoading, isAdmin } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -210,6 +211,53 @@ export default function ManageTests() {
         );
     });
 
+    // --- Verified Creator Actions ---
+    const handleVerifyUser = async (userToVerify: any) => {
+        if (!confirm(`Are you sure you want to verify "${userToVerify.full_name}" as an Authorized Partner?`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    is_verified_creator: true,
+                    verified_role: 'authorized_partner',
+                    verified_at: new Date().toISOString(),
+                    verified_by_admin_id: user?.id
+                })
+                .eq('id', userToVerify.id);
+
+            if (error) throw error;
+            toast.success(`${userToVerify.full_name} is now a Verified Creator!`);
+            loadUsers();
+        } catch (error: any) {
+            console.error("Error verifying user:", error);
+            toast.error("Failed to verify user: " + error.message);
+        }
+    };
+
+    const handleRevokeVerification = async (userToRevoke: any) => {
+        if (!confirm(`Are you sure you want to REVOKE verification for "${userToRevoke.full_name}"?`)) return;
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    is_verified_creator: false,
+                    verified_role: null,
+                    verified_at: null,
+                    verified_by_admin_id: null
+                })
+                .eq('id', userToRevoke.id);
+
+            if (error) throw error;
+            toast.success(`Verification revoked for ${userToRevoke.full_name}`);
+            loadUsers();
+        } catch (error: any) {
+            console.error("Error revoking verification:", error);
+            toast.error("Failed to revoke verification: " + error.message);
+        }
+    };
+
     // --- Test Actions ---
     const handleDeleteTest = async (testId: string, testTitle: string) => {
         if (!confirm(`Are you sure you want to delete "${testTitle}" ?\n\nThis will permanently delete the test and all associated questions.`)) {
@@ -343,10 +391,11 @@ export default function ManageTests() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full md:w-[600px] grid-cols-3 mb-4">
+                <TabsList className="grid w-full md:w-[800px] grid-cols-4 mb-4">
                     <TabsTrigger value="tests">Manage Tests</TabsTrigger>
-                    <TabsTrigger value="categories">Manage Categories</TabsTrigger>
+                    <TabsTrigger value="categories">Categories</TabsTrigger>
                     <TabsTrigger value="users">Users</TabsTrigger>
+                    <TabsTrigger value="verified_creators">Verified</TabsTrigger>
                 </TabsList>
 
                 {/* --- TESTS TAB --- */}
@@ -545,6 +594,105 @@ export default function ManageTests() {
                                                     <Button variant="ghost" size="sm" onClick={() => handleViewUserDetails(user)}>
                                                         View Profile
                                                     </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- VERIFIED CREATORS TAB --- */}
+                <TabsContent value="verified_creators">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <CardTitle>Manage Verified Creators</CardTitle>
+                                    <CardDescription>Grant or revoke "Authorized Partner" status.</CardDescription>
+                                </div>
+                                <div className="relative w-full md:w-64">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search users..."
+                                        value={userSearchQuery}
+                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                        className="pl-9"
+                                    />
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50px]"></TableHead>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Verified Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {usersLoading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-8">Loading users...</TableCell>
+                                        </TableRow>
+                                    ) : filteredUsers.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                                No users found.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        filteredUsers.map(user => (
+                                            <TableRow key={user.id}>
+                                                <TableCell>
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={user.avatar_url} />
+                                                        <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                </TableCell>
+                                                <TableCell className="font-medium flex items-center gap-2">
+                                                    {user.full_name || 'N/A'}
+                                                    {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                </TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">{user.designation || 'Student'}</Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {user.is_verified_creator ? (
+                                                        <span className="text-green-600 font-semibold text-xs flex items-center gap-1">
+                                                            <CheckCircle className="w-3 h-3" /> YES
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs">No</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {user.is_verified_creator ? (
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => handleRevokeVerification(user)}
+                                                            className="h-7 text-xs"
+                                                        >
+                                                            Remove Verified Status
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            variant="default" // "Make Verified Creator"
+                                                            size="sm"
+                                                            onClick={() => handleVerifyUser(user)}
+                                                            className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+                                                        >
+                                                            Make Verified Creator
+                                                        </Button>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         ))

@@ -30,6 +30,7 @@ import { Loader2, User, Save, Upload, Users, Eye, EyeOff } from 'lucide-react';
 import { toggleCreatorMode, updateFollowingVisibility, getFollowerCount, getFollowingCount } from '@/lib/socialApi';
 import { Profile } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 const ProfilePage = () => {
     const { user, session, isAdmin } = useAuth();
@@ -45,6 +46,7 @@ const ProfilePage = () => {
 
     // Social State
     const [isCreator, setIsCreator] = useState(false);
+    const [isVerifiedCreator, setIsVerifiedCreator] = useState(false);
     const [followingVisibility, setFollowingVisibility] = useState<'public' | 'private'>('public');
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
@@ -72,12 +74,13 @@ const ProfilePage = () => {
         if (!user) return;
         const { data, error } = await supabase
             .from('profiles')
-            .select('is_creator, following_visibility')
+            .select('is_creator, is_verified_creator, following_visibility')
             .eq('id', user.id)
             .single();
 
         if (data) {
             setIsCreator(data.is_creator || false);
+            setIsVerifiedCreator(data.is_verified_creator || false);
             setFollowingVisibility(data.following_visibility as 'public' | 'private' || 'public');
         }
     };
@@ -274,11 +277,21 @@ const ProfilePage = () => {
 
                         <div className="text-center sm:text-left space-y-2 flex-1">
                             <div className="flex flex-col sm:flex-row items-center sm:items-baseline gap-2">
-                                <h2 className="text-2xl font-bold">{fullName || 'User'}</h2>
-                                <Badge style={getBadgeStyle(isAdmin ? 'Admin' : designation)} className="text-xs px-2 py-0.5 pointer-events-none">
-                                    {isAdmin ? 'Admin' : (designation || 'Student')}
-                                </Badge>
-                                {isCreator && <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100">Creator</Badge>}
+                                <div className="flex items-center gap-1.5">
+                                    {isVerifiedCreator && <VerifiedBadge size={20} />}
+                                    <h2 className="text-2xl font-bold">{fullName || 'User'}</h2>
+                                </div>
+
+                                {isVerifiedCreator ? (
+                                    <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Testoza Authorized Partner</p>
+                                ) : (
+                                    <>
+                                        <Badge style={getBadgeStyle(isAdmin ? 'Admin' : designation)} className="text-xs px-2 py-0.5 pointer-events-none">
+                                            {isAdmin ? 'Admin' : (designation || 'Student')}
+                                        </Badge>
+                                        {isCreator && <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100">Creator</Badge>}
+                                    </>
+                                )}
                             </div>
                             <p className="text-muted-foreground">{user.email}</p>
 

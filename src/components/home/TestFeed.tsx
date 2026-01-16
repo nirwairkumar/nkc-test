@@ -9,6 +9,7 @@ import { fetchTests, Test } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import supabase from '@/lib/supabaseClient';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -16,6 +17,7 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
     const [tests, setTests] = useState<Test[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [testCategoryMap, setTestCategoryMap] = useState<Record<string, string[]>>({});
+    const [verifiedCreators, setVerifiedCreators] = useState<Record<string, boolean>>({});
 
     const [page, setPage] = useState(2);
     const [hasMore, setHasMore] = useState(true);
@@ -57,6 +59,36 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
     useEffect(() => {
         loadMoreTests();
     }, [page]);
+
+    // Fetch Verified Creators
+    useEffect(() => {
+        const fetchVerifiedStatus = async () => {
+            const creatorIds = Array.from(new Set(tests.map(t => t.created_by).filter(Boolean)));
+            if (creatorIds.length === 0) return;
+
+            const idsToFetch = creatorIds.filter(id => verifiedCreators[id as string] === undefined);
+            if (idsToFetch.length === 0) return;
+
+            const { data } = await supabase
+                .from('profiles')
+                .select('id, is_verified_creator')
+                .in('id', idsToFetch);
+
+            if (data) {
+                setVerifiedCreators(prev => {
+                    const next = { ...prev };
+                    data.forEach((p: any) => {
+                        next[p.id] = p.is_verified_creator;
+                    });
+                    return next;
+                });
+            }
+        };
+
+        if (tests.length > 0) {
+            fetchVerifiedStatus();
+        }
+    }, [tests]);
 
     const loadMoreTests = async () => {
         if (loading || !hasMore) return;
@@ -117,7 +149,10 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
                                                 <AvatarImage src={test.creator_avatar} />
                                                 <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}</AvatarFallback>
                                             </Avatar>
-                                            <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">{test.creator_name || 'Creator'}</span>
+                                            <div className="flex items-center gap-1 min-w-0">
+                                                {verifiedCreators[test.created_by as string] && <VerifiedBadge size={14} />}
+                                                <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">{test.creator_name || 'Creator'}</span>
+                                            </div>
                                         </div>
                                         <TestCardCategoryList categoryIds={testCategoryMap[test.id]} allCategories={categories} customCategory={test.custom_category} />
                                     </div>
