@@ -36,6 +36,9 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const CreatorProfilePage = lazy(() => import("./pages/CreatorProfilePage"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
+
+
 const Layout = lazy(() => import("./Layout"));
 
 const queryClient = new QueryClient();
@@ -74,6 +77,7 @@ const App = () => (
                     {/* Legal Routes */}
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                    <Route path="/about" element={<AboutPage />} />
 
 
                     {/* Protected Routes */}

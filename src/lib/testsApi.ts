@@ -135,7 +135,7 @@ export async function getNextTestId(prefix: 'M' | 'YT'): Promise<string> {
         .select('custom_id')
         .not('custom_id', 'is', null);
 
-    let maxNum = 100; // Start from 100 so first is 101
+    let maxNum = 149; // Start from 149 so first is 150
 
     if (data && data.length > 0) {
         data.forEach(row => {

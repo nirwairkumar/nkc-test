@@ -214,7 +214,9 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
                             "C": "...",
                             "D": "..."
                         },
-                        "correctAnswer": "A"
+                        "correctAnswer": "A",
+                        "marks": 1,
+                        "negativeMarks": 0
                     }
                 ]
             }
@@ -253,7 +255,9 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
                                 "C": "...",
                                 "D": "..."
                             },
-                            "correctAnswer": "A"
+                            "correctAnswer": "A",
+                            "marks": 1,
+                            "negativeMarks": 0
                         }
                     ]
                 }
@@ -316,8 +320,6 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
                 revision_notes: data.revision_notes,
                 questions: data.questions,
                 duration: Math.ceil(data.questions.length * 1),
-                marks_per_question: 1,
-                negative_marks: 0,
                 custom_id: customId,
                 created_by: userId,
                 creator_name: creatorName,
