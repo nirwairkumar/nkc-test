@@ -1,5 +1,6 @@
 
 import supabase from '@/lib/supabaseClient';
+import { createNotification } from './socialApi';
 
 export interface SupportMessage {
     name: string;

@@ -186,15 +186,19 @@ export default function UserTestManager() {
     }
 
     return (
-        <div className="container mx-auto max-w-5xl py-10 space-y-6">
+        <div className="container mx-auto max-w-5xl py-6 space-y-6">
             {/* ... Header ... */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold">Your Tests</h1>
-                    <p className="text-muted-foreground">Manage the tests you have generated.</p>
+                    <h1 className="text-2xl font-bold text-slate-900">Your Tests</h1>
+                    <p className="text-muted-foreground text-sm">Manage the tests you have generated.</p>
                 </div>
                 {/* ... Import buttons ... */}
-                <div className="flex gap-4 items-start">
+                <div className="flex gap-3 items-center">
+                    <Button onClick={() => { setEditingTest(null); setIsTestEditOpen(true); }}>
+                        <Plus className="w-4 h-4 mr-2" /> Create Test
+                    </Button>
+
                     <div className="flex flex-col items-end gap-1">
                         <label className="cursor-pointer">
                             <Input
@@ -253,7 +257,7 @@ export default function UserTestManager() {
                                     }
                                 }}
                             />
-                            <Button variant="outline" size="sm" asChild>
+                            <Button variant="outline" asChild>
                                 <span><Upload className="w-4 h-4 mr-2" /> Import JSON</span>
                             </Button>
                         </label>
@@ -274,14 +278,14 @@ export default function UserTestManager() {
                         <Card key={test.id} className="relative group hover:shadow-md transition-shadow">
                             <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start gap-2">
-                                    <CardTitle className="text-lg line-clamp-1" title={test.title}>{test.title}</CardTitle>
-                                    <Badge variant="secondary" className="font-mono text-xs">
-                                        {test.custom_id || 'NO-ID'}
-                                    </Badge>
+                                    <CardTitle className="text-lg line-clamp-1 text-amber-900" title={test.title}>{test.title}</CardTitle>
                                 </div>
                             </CardHeader>
                             <CardContent className="pb-2">
-                                <div className="text-xs text-muted-foreground flex gap-4">
+                                <div className="text-xs text-muted-foreground flex items-center gap-3">
+                                    <Badge variant="outline" className="font-mono text-[10px] py-0 h-5 border-slate-300 text-slate-500">
+                                        {test.custom_id || 'NO-ID'}
+                                    </Badge>
                                     <span>{test.questions?.length || 0} Qs</span>
                                     <span>{test.duration || 0} mins</span>
                                 </div>

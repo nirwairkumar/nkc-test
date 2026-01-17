@@ -5,13 +5,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Star } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import { createNotification } from '@/lib/socialApi';
 
 interface FeedbackFormProps {
     testId: string;
     studentName?: string;
+    creatorId?: string;
+    testTitle?: string;
+    testCustomId?: string;
 }
 
-export function FeedbackForm({ testId, studentName }: FeedbackFormProps) {
+export function FeedbackForm({ testId, studentName, creatorId, testTitle, testCustomId }: FeedbackFormProps) {
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [comment, setComment] = useState('');
@@ -26,20 +30,73 @@ export function FeedbackForm({ testId, studentName }: FeedbackFormProps) {
 
         setIsSubmitting(true);
         try {
+            // Fetch Creator Details (Receiver)
+            let receiverName = '';
+            let receiverEmail = '';
+            if (creatorId) {
+                const { data: creatorProfile } = await supabase
+                    .from('profiles')
+                    .select('full_name, email')
+                    .eq('id', creatorId)
+                    .single();
+                if (creatorProfile) {
+                    receiverName = creatorProfile.full_name || '';
+                    receiverEmail = creatorProfile.email || '';
+                }
+            }
+
+            // Get Current User Details (Sender)
+            const { data: { user } } = await supabase.auth.getUser();
+            const senderId = user?.id || '';
+            const senderName = user?.user_metadata?.full_name || studentName || 'Anonymous';
+            const senderEmail = user?.email || '';
+
             const { error } = await supabase
                 .from('feedback')
                 .insert({
                     test_id: testId,
                     rating: rating,
                     comment: comment,
-                    // user_id is optional, or we can assume anonymous if not logged in
-                    // If we want to capture student name, we'd need a column for it or put it in comment
+                    // New Fields
+                    custom_test_id: testCustomId || testId,
+                    sender_name: senderName,
+                    sender_email: senderEmail,
+                    receiver_name: receiverName,
+                    receiver_email: receiverEmail
                 });
 
             if (error) throw error;
 
+
+
             setIsSubmitted(true);
             toast.success("Thank you for your feedback!");
+
+            // Notify Creator
+            if (creatorId) {
+                // Get current user details for the notification link
+                const notifTitle = `New Feedback: ${testTitle || 'Test'}`;
+                const msg = `User Rated: ${rating}/5 stars. ${comment ? ` Comment: "${comment.substring(0, 50)}${comment.length > 50 ? '...' : ''}"` : ''}`;
+
+                // Encode details into a custom protocol link
+                const params = new URLSearchParams({
+                    testId: testCustomId || testId, // Use custom ID if valid, else fallback
+                    testTitle: testTitle || 'Test',
+                    senderId: senderId,
+                    senderName: senderName,
+                    rating: rating.toString(),
+                    comment: comment ? comment.substring(0, 500) : ''
+                });
+
+                const customLink = `feedback://details?${params.toString()}`;
+
+                // Pass structured metadata for DB columns + link for legacy/popup support
+                await createNotification(creatorId, notifTitle, msg, customLink, {
+                    customTestId: testCustomId || testId,
+                    senderName,
+                    senderEmail
+                });
+            }
         } catch (error: any) {
             console.error(error);
             toast.error("Failed to submit feedback");
@@ -47,6 +104,7 @@ export function FeedbackForm({ testId, studentName }: FeedbackFormProps) {
             setIsSubmitting(false);
         }
     };
+
 
     if (isSubmitted) {
         return (
@@ -78,8 +136,8 @@ export function FeedbackForm({ testId, studentName }: FeedbackFormProps) {
                         >
                             <Star
                                 className={`w-8 h-8 ${star <= (hoverRating || rating)
-                                        ? "fill-yellow-400 text-yellow-500"
-                                        : "text-slate-300"
+                                    ? "fill-yellow-400 text-yellow-500"
+                                    : "text-slate-300"
                                     }`}
                             />
                         </button>

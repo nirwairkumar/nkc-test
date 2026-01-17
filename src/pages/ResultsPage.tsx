@@ -564,7 +564,13 @@ const ResultsPage = () => {
         {/* Feedback Section */}
         {testId && (
           <div className="max-w-2xl mx-auto">
-            <FeedbackForm testId={testId} />
+            <FeedbackForm
+              testId={testId}
+              studentName={contextStudentName}
+              creatorId={selectedTest?.created_by}
+              testTitle={selectedTest?.title}
+              testCustomId={selectedTest?.custom_id}
+            />
           </div>
         )}
 

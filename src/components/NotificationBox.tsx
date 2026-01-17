@@ -11,7 +11,7 @@ import NotificationList from './NotificationList';
 import { useNotifications } from '@/hooks/useNotifications';
 
 export default function NotificationBox() {
-    const { notifications, unreadCount, handleDelete, handleClearAll } = useNotifications();
+    const { notifications, unreadCount, handleDelete, handleClearAll, markAsRead } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
 
     return (
@@ -40,6 +40,7 @@ export default function NotificationBox() {
                     notifications={notifications}
                     onDelete={handleDelete}
                     onClearAll={handleClearAll}
+                    onMarkAsRead={markAsRead}
                     maxHeight={300}
                 />
             </PopoverContent>

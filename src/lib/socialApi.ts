@@ -116,9 +116,27 @@ export async function updateFollowingVisibility(userId: string, visibility: 'pub
 
 // --- Notifications ---
 // Basic stub for now, more logic needed when creating test
-export async function createNotification(userId: string, title: string, message: string, link?: string) {
+export async function createNotification(
+    userId: string,
+    title: string,
+    message: string,
+    link?: string,
+    metadata?: {
+        customTestId?: string;
+        senderName?: string;
+        senderEmail?: string;
+    }
+) {
     const { error } = await supabase
         .from('notifications')
-        .insert({ user_id: userId, title, message, link });
+        .insert({
+            user_id: userId,
+            title,
+            message,
+            link,
+            custom_test_id: metadata?.customTestId,
+            sender_name: metadata?.senderName,
+            sender_email: metadata?.senderEmail
+        });
     return { error };
 }

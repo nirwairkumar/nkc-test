@@ -11,6 +11,10 @@ export interface Notification {
     link?: string;
     created_at: string;
     read: boolean;
+    // New fields
+    custom_test_id?: string;
+    sender_name?: string;
+    sender_email?: string;
 }
 
 export function useNotifications() {
@@ -80,11 +84,31 @@ export function useNotifications() {
         const { error } = await supabase
             .from('notifications')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('user_id', user?.id);
 
         if (error) {
             toast.error("Failed to delete notification");
             fetchNotifications();
+        }
+    };
+
+    const markAsRead = async (id: string) => {
+        // Optimistic update
+        setNotifications((prev) => prev.map(n => n.id === id ? { ...n, read: true } : n));
+
+        // Recalculate unread count
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', id)
+            .eq('user_id', user?.id);
+
+        if (error) {
+            console.error("Failed to mark as read", error);
+            fetchNotifications(); // Revert on error
         }
     };
 
@@ -109,6 +133,7 @@ export function useNotifications() {
         unreadCount,
         loading,
         handleDelete,
-        handleClearAll
+        handleClearAll,
+        markAsRead
     };
 }
