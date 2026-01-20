@@ -12,8 +12,7 @@ const AboutPage = () => {
                 <p>
                     It allows teachers and institutes to easily create quizzes, class tests, and chapter-wise revision tests for their students. Tests can be shared privately within a class or made public, enabling other students to benefit and allowing institutes to showcase the quality of their academic content.
                 </p>
-                <p>
-                    Students can use AI-powered tools to convert class notes, assignments, or study material into revision tests, helping them revise faster through active recall instead of passive reading.
+                <p> Students can use AI-powered tools to convert class notes, assignments, or study material into revision tests, helping them revise faster through active recall instead of passive reading.
                 </p>
 
                 <div>
