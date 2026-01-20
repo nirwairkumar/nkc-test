@@ -310,11 +310,47 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 }))
             })));
         } else {
-            const mappedQuestions = (data.questions as any[]).map((q: any) => ({
-                ...q,
-                options: q.options || { A: '', B: '', C: '', D: '' },
-                typingMode: 'en'
-            }));
+            const mappedQuestions = (data.questions as any[]).map((q: any) => {
+                // Handle basic mapping (questionText -> question)
+                let mappedQ = {
+                    ...q,
+                    question: q.question || q.questionText || '',
+                    typingMode: 'en'
+                };
+
+                // Handle Options Conversion (Nested AI Object -> Flat Frontend Structure)
+                // AI Schema: options: { A: { text: "...", image: "..." } }
+                // Frontend Schema: options: { A: "..." }, optionImages: { A: "..." }
+
+                let flatOptions: { [key: string]: string } = {};
+                let flatOptionImages: { [key: string]: string } = q.optionImages || {};
+
+                if (q.options && typeof q.options === 'object') {
+                    Object.keys(q.options).forEach(key => {
+                        const val = q.options[key];
+                        if (val && typeof val === 'object' && val.text !== undefined) {
+                            // It's the AI nested format
+                            flatOptions[key] = val.text || '';
+                            if (val.image) {
+                                flatOptionImages[key] = val.image;
+                            }
+                        } else {
+                            // It's already flat or something else
+                            flatOptions[key] = String(val || '');
+                        }
+                    });
+
+                    // If flatOptionImages has content, attach it
+                    if (Object.keys(flatOptionImages).length > 0) {
+                        mappedQ.optionImages = flatOptionImages;
+                    }
+                } else if (!q.options) {
+                    flatOptions = { A: '', B: '', C: '', D: '' };
+                }
+
+                mappedQ.options = flatOptions;
+                return mappedQ;
+            });
             setQuestions(mappedQuestions);
         }
 
@@ -429,6 +465,84 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         const openMatch = url.match(openRegex);
         if (openMatch && openMatch[1]) return `https://drive.google.com/uc?export=view&id=${openMatch[1]}`;
         return url;
+    };
+
+    // Helper to get next option letter
+    const getNextOptionLabel = (currentOptions: { [key: string]: string }) => {
+        const keys = Object.keys(currentOptions).sort();
+        if (keys.length === 0) return 'A';
+        const lastKey = keys[keys.length - 1];
+        return String.fromCharCode(lastKey.charCodeAt(0) + 1);
+    };
+
+    // Standard Mode Option Handlers
+    const handleAddOption = (qIndex: number) => {
+        const newQuestions = [...questions];
+        const q = newQuestions[qIndex];
+        const nextLabel = getNextOptionLabel(q.options);
+        q.options = { ...q.options, [nextLabel]: '' };
+        setQuestions(newQuestions);
+    };
+
+    const handleRemoveOption = (qIndex: number, optKey: string) => {
+        const newQuestions = [...questions];
+        const q = newQuestions[qIndex];
+
+        // Remove from options
+        const newOptions = { ...q.options };
+        delete newOptions[optKey];
+        q.options = newOptions;
+
+        // Remove from images
+        if (q.optionImages && q.optionImages[optKey]) {
+            const newImages = { ...q.optionImages };
+            delete newImages[optKey];
+            q.optionImages = newImages;
+        }
+
+        // Remove from correct answer if selected
+        if (q.type === 'multiple' && Array.isArray(q.correctAnswer)) {
+            q.correctAnswer = q.correctAnswer.filter((k: string) => k !== optKey);
+        } else if (q.correctAnswer === optKey) {
+            q.correctAnswer = '';
+        }
+
+        setQuestions(newQuestions);
+    };
+
+    // Section Mode Option Handlers
+    const handleAddOptionToSection = (sIdx: number, qIdx: number) => {
+        const newSections = [...sections];
+        const q = newSections[sIdx].questions[qIdx];
+        const nextLabel = getNextOptionLabel(q.options);
+        q.options = { ...q.options, [nextLabel]: '' };
+        setSections(newSections);
+    };
+
+    const handleRemoveOptionFromSection = (sIdx: number, qIdx: number, optKey: string) => {
+        const newSections = [...sections];
+        const q = newSections[sIdx].questions[qIdx];
+
+        // Remove from options
+        const newOptions = { ...q.options };
+        delete newOptions[optKey];
+        q.options = newOptions;
+
+        // Remove from images
+        if (q.optionImages && q.optionImages[optKey]) {
+            const newImages = { ...q.optionImages };
+            delete newImages[optKey];
+            q.optionImages = newImages;
+        }
+
+        // Remove from correct answer if selected
+        if (q.type === 'multiple' && Array.isArray(q.correctAnswer)) {
+            q.correctAnswer = q.correctAnswer.filter((k: string) => k !== optKey);
+        } else if (q.correctAnswer === optKey) {
+            q.correctAnswer = '';
+        }
+
+        setSections(newSections);
     };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
@@ -602,7 +716,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                         return `${context} ${i + 1}: Min cannot be greater than Max`;
                     }
                 } else {
-                    for (const opt of ['A', 'B', 'C', 'D']) {
+                    for (const opt of Object.keys(q.options)) {
                         const hasOptionContent = q.options[opt].trim() || (q.optionImages && q.optionImages[opt]);
                         if (!hasOptionContent) return `Option ${opt} for ${context} ${i + 1} is required`;
                     }
@@ -1402,7 +1516,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                     </div>
                                                                                 ) : (
                                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                        {['A', 'B', 'C', 'D'].map(optKey => {
+                                                                                        {Object.keys(q.options).sort().map(optKey => {
                                                                                             const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
                                                                                             const handleSelect = () => {
                                                                                                 if (q.type === 'multiple') {
@@ -1415,11 +1529,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                                 }
                                                                                             };
                                                                                             return (
-                                                                                                <div key={optKey} className="flex gap-2 items-start">
+                                                                                                <div key={optKey} className="flex gap-2 items-start relative group/option">
                                                                                                     {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
                                                                                                     <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
                                                                                                     <div className="flex-1 flex flex-col">
-                                                                                                        <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }} className="min-h-[60px] resize-y" />
+                                                                                                        <div className="relative">
+                                                                                                            <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }} className="min-h-[60px] resize-y pr-8" />
+                                                                                                            <Button
+                                                                                                                variant="ghost"
+                                                                                                                size="icon"
+                                                                                                                className="absolute top-1 right-1 h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover/option:opacity-100 transition-opacity"
+                                                                                                                onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
+                                                                                                                title="Remove Option"
+                                                                                                            >
+                                                                                                                <X className="w-3.5 h-3.5" />
+                                                                                                            </Button>
+                                                                                                        </div>
                                                                                                         {q.optionImages?.[optKey] ? (
                                                                                                             <div className="relative group mt-1 w-fit">
                                                                                                                 <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
@@ -1440,6 +1565,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                                 </div>
                                                                                             );
                                                                                         })}
+                                                                                        <Button variant="outline" size="sm" className="h-full min-h-[60px] border-dashed text-muted-foreground hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-colors" onClick={() => handleAddOptionToSection(sIdx, qIdx)}>
+                                                                                            <Plus className="w-4 h-4" />
+                                                                                        </Button>
                                                                                     </div>
                                                                                 )}
                                                                             </div>
@@ -1635,7 +1763,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                             </div>
                                                         ) : (
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {['A', 'B', 'C', 'D'].map(optKey => {
+                                                                {Object.keys(q.options).sort().map(optKey => {
                                                                     const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
                                                                     const handleSelect = () => {
                                                                         if (q.type === 'multiple') {
@@ -1648,11 +1776,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                         }
                                                                     };
                                                                     return (
-                                                                        <div key={optKey} className="flex gap-2 items-start">
+                                                                        <div key={optKey} className="flex gap-2 items-start relative group/option">
                                                                             {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
                                                                             <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
                                                                             <div className="flex-1 flex flex-col">
-                                                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y" />
+                                                                                <div className="relative">
+                                                                                    <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y pr-8" />
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="icon"
+                                                                                        className="absolute top-1 right-1 h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover/option:opacity-100 transition-opacity"
+                                                                                        onClick={() => handleRemoveOption(index, optKey)}
+                                                                                        title="Remove Option"
+                                                                                    >
+                                                                                        <X className="w-3.5 h-3.5" />
+                                                                                    </Button>
+                                                                                </div>
                                                                                 {q.optionImages?.[optKey] ? (
                                                                                     <div className="relative group mt-1 w-fit">
                                                                                         <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
@@ -1673,6 +1812,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                         </div>
                                                                     );
                                                                 })}
+                                                                <Button variant="outline" size="sm" className="h-full min-h-[60px] border-dashed text-muted-foreground hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-colors" onClick={() => handleAddOption(index)}>
+                                                                    <Plus className="w-4 h-4" />
+                                                                </Button>
                                                             </div>
                                                         )}
                                                     </div>

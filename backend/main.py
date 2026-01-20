@@ -1,10 +1,15 @@
+from dotenv import load_dotenv
+import os
+
+# Load env variables FIRST, before importing other modules that might rely on them
+load_dotenv()
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from utils.logger import get_logger
 from ai_preview_importer.preview_pipeline import run_preview_pipeline
 from answer_resolution.answer_pipeline import resolve_answers
 import uvicorn
-import os
 
 # Initialize Logger
 logger = get_logger("main")

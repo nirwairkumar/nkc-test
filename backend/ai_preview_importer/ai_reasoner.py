@@ -18,38 +18,40 @@ generation_config = {
   "top_p": 0.95,
   "top_k": 40,
   "max_output_tokens": 8192,
-  "response_mime_type": "application/json",
 }
 
-async def analyze_page_refinement(structured_questions, images_metadata, page_num):
+async def analyze_page_refinement(raw_blocks, images, candidates, page_num):
     """
-    Sends pre-structured questions to Gemini Pro for Refinement (Math/Grammar).
-    Input: List of dicts (id, raw_question_lines, options, image_id).
-    Output: List of refined questions (SAME structure).
+    Sends raw content to Gemini for FULL Exam Reconstruction.
+    Input: Raw text blocks, images, and optional candidates.
+    Output: List of RECONSTRUCTED questions (JSON).
     """
     try:
         if not api_key:
              raise ValueError("API Key missing. Cannot run AI analysis.")
 
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash", 
-            generation_config=generation_config,
-            system_instruction=MASTER_PROMPT
+            model_name="gemini-3.0-pro-preview", 
+            generation_config=generation_config
         )
 
-        # Prepare Input Prompt
-        # We pass the pre-structured questions directly
-        # The prompt expects "PRE-STRUCTURED question object"
-        
+        # Prepare Input Data according to PROMPT requirements
         input_data = {
             "page_number": page_num,
-            "questions": structured_questions
+            "raw_text_blocks": raw_blocks,
+            "image_metadata": [{"id": f"IMG_{i}", "bbox": img.get('bbox')} for i, img in enumerate(images)],
+            "candidates_from_regex": candidates
         }
 
+        # Combine System Prompt with User Prompt for compatibility with older SDKs
         user_content = f"""
-        Refine the following questions:
-        {json.dumps(input_data, indent=2)}
-        """
+{MASTER_PROMPT}
+
+--------------------------------------------------
+
+Reconstruct the exam from the following raw data:
+{json.dumps(input_data, indent=2)}
+"""
 
         logger.info(f"Sending Page {page_num} (Refinement) to AI...")
         response = model.generate_content(user_content)
@@ -60,52 +62,39 @@ async def analyze_page_refinement(structured_questions, images_metadata, page_nu
             logger.warning(f"AI blocked response for Page {page_num}. Safety reasons likely.")
             return []
 
-        # Clean Markdown wrappers if present
+        logger.info(f"AI Response received for Page {page_num}. Length: {len(raw_text)}")
+        
+        # DEBUG: Log the first 500 chars to see what's happening if it fails
+        logger.debug(f"Raw AI Output (Snippet): {raw_text[:500]}...")
+
+        # Clean Markdown wrappers
         clean_text = raw_text.strip()
         if clean_text.startswith("```json"):
             clean_text = clean_text[7:]
         elif clean_text.startswith("```"):
             clean_text = clean_text[3:]
-        
         if clean_text.endswith("```"):
             clean_text = clean_text[:-3]
-        
         clean_text = clean_text.strip()
 
         # Parse Response
         try:
             result_json = json.loads(clean_text)
         except json.JSONDecodeError:
-            logger.error(f"JSON Parse Error on Page {page_num}. Raw text start: {clean_text[:100]}")
-            # Fallback attempts
-            start = clean_text.find("{")
-            end = clean_text.rfind("}")
-            if start != -1 and end != -1:
-                try:
-                    result_json = json.loads(clean_text[start:end+1])
-                except Exception as e:
-                    logger.error(f"Fallback parse failed: {e}")
-                    return []
-            else:
-                return []
-        
-        # Expecting {"questions": [...]} or just [...] depending on how model behaves, 
-        # but prompt says "Return the SAME JSON structure". Input was {questions: [...]}.
+            logger.error(f"JSON Parse Error on Page {page_num}. Dumping raw text for debugging.")
+            logger.error(raw_text) # Dump full text
+            return []
         
         refined_questions = result_json.get("questions", [])
-        if not refined_questions and isinstance(result_json, list):
-             refined_questions = result_json
-
-        logger.info(f"AI refined {len(refined_questions)} questions from Page {page_num}")
+        
+        # Log success details
+        logger.info(f"Successfully extracted {len(refined_questions)} questions from JSON for Page {page_num}")
         
         return refined_questions
 
     except Exception as e:
-        logger.error(f"AI Refinement failed for Page {page_num}: {e}")
-        return []
-
-    except Exception as e:
-        logger.error(f"AI Analysis failed for Page {page_num}: {e}")
-        # Return empty list or re-raise depending on strictness. 
-        # For now, return empty to allow other pages to process.
+        logger.error(f"AI Analysis failed for Page {page_num}: {str(e)}")
+        # If we have the raw text, log it
+        if 'raw_text' in locals():
+             logger.error(f"Failed Content: {raw_text}")
         return []
