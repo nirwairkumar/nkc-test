@@ -61,22 +61,53 @@ async def run_preview_pipeline(file_bytes: bytes):
             #     page_data['images'], 
             #     p_num
             # )
-            # 1. Detect questions deterministically
-            questions = detect_question_anchors(page_data['blocks'])
+            # 1. Detect candidates deterministically (as hints for the AI)
+            candidate_questions = detect_question_anchors(page_data['blocks'])
+            formatted_candidates = format_questions_for_ai(candidate_questions)
 
-            # 2. Attach images deterministically
-            attach_images_to_questions(questions, page_data['images'])
-
-            # 3. Convert to AI-ready format
-            ai_ready_questions = format_questions_for_ai(questions)
-
-            # 4. AI refinement (ONLY grammar + LaTeX)
-            # refined_questions = await analyze_page_refinement(
-            #     ai_ready_questions,
-            #     page_data['images'],
-            #     p_num
-            # )
-            refined_questions = ai_ready_questions
+            # 2. AI Reconstruction (The Heavy Lifter)
+            # We pass RAW blocks + candidates + images
+            refined_questions = await analyze_page_refinement(
+                page_data['blocks'],      # Raw text
+                page_data['images'],      # Extracted images
+                formatted_candidates,     # Hints/Candidates
+                p_num
+            )
+            
+            # -------------------------------------------------------------------------
+            # FAIL-SAFE MECHANISM (MANDATORY)
+            # -------------------------------------------------------------------------
+            use_fallback = False
+            
+            if not refined_questions or not isinstance(refined_questions, list):
+                logger.warning(f"PAGE {p_num}: AI returned empty/invalid. FALLING BACK to deterministic.")
+                use_fallback = True
+            elif len(refined_questions) == 0:
+                 logger.warning(f"PAGE {p_num}: AI returned 0 questions. FALLING BACK to deterministic.")
+                 use_fallback = True
+            
+            if use_fallback:
+                # Normalization: deterministic candidates use 'raw_question_lines' (list)
+                # AI output uses 'questionText' (string). We must convert.
+                refined_questions = []
+                for fc in formatted_candidates:
+                    # Convert list of lines to single string
+                    q_text = " ".join(fc.get('raw_question_lines', []))
+                    
+                    # Create a structure compatible with the loop below
+                    fallback_q = {
+                        "questionText": q_text,
+                        "options": fc.get('options', {}),
+                        "image": fc.get('image_id'), # Deterministic extractor assigns 'image_id'
+                        "optionImages": {}, # Deterministic doesn't extract option images typically
+                        "correctAnswer": None,
+                        "needsAnswer": True,
+                        "type": "single" # Default assumption
+                    }
+                    refined_questions.append(fallback_q)
+                
+                logger.info(f"PAGE {p_num}: Recovered {len(refined_questions)} questions from fallback.")
+            # -------------------------------------------------------------------------
 
             
             # 3. Post-Process & Re-attach Images
@@ -112,6 +143,10 @@ async def run_preview_pipeline(file_bytes: bytes):
         can_confirm = unanswered_count == 0
 
         logger.info(f"Pipeline Complete. Generated {len(final_questions)} questions.")
+
+        if len(final_questions) == 0:
+             logger.error("CRITICAL: Pipeline produced 0 questions despite fallback mechanisms.")
+             raise ValueError("Pipeline failure: Zero questions generated. Check PDF formatting or Regex anchors.")
 
         return {
             "questions": final_questions,
