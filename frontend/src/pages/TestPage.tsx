@@ -654,9 +654,10 @@ export default function TestPage() {
               >
                 <Calculator className="w-5 h-5" />
               </Button>
-              {isCalculatorOpen && (
-                <ScientificCalculator onClose={() => setIsCalculatorOpen(false)} />
-              )}
+              <ScientificCalculator
+                onClose={() => setIsCalculatorOpen(false)}
+                className={isCalculatorOpen ? '' : 'hidden'}
+              />
             </>
           )}
 

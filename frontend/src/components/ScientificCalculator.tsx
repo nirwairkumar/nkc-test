@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function ScientificCalculator({ onClose }: { onClose?: () => void }) {
+export function ScientificCalculator({ onClose, className }: { onClose?: () => void, className?: string }) {
     const [display, setDisplay] = useState('0');
     const [expression, setExpression] = useState(''); // Stores the full math string for evaluation
     const [memory, setMemory] = useState<number>(0);
@@ -170,7 +170,7 @@ export function ScientificCalculator({ onClose }: { onClose?: () => void }) {
     if (!mounted) return null;
 
     return ReactDOM.createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className={cn("fixed inset-0 z-[9999] flex items-center justify-center p-4", className)}>
             {/* 1. Use an absolute distinct backdrop sibling to avoid bubbling issues */}
             <div
                 className="absolute inset-0 bg-black/10 backdrop-blur-[1px] animate-in fade-in duration-200"

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/</loc>
+        <lastmod>2026-01-19T17:01:30.188Z</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/login</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/general-knowledge-2</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/science</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/maths</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/history</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/jee</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/cat</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/gate</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/bpse-abc</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/jee-mains</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/jee-advance</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/neet-ug</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://nkc-test-platform.vercel.app/tests/iit-jam</loc>
+        <lastmod>2026-01-19T17:01:30.189Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+</urlset>
