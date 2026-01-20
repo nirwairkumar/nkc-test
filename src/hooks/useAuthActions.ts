@@ -1,0 +1,54 @@
+// src/hooks/useAuthActions.ts
+import supabase from '@/lib/supabaseClient';
+
+export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string) {
+    return supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                full_name: name, // Standard Supabase metadata field
+                designation: designation, // No default - strictly required or null
+            }
+        }
+    });
+}
+
+
+export async function sendMagicLoginLink(email: string) {
+    const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+            emailRedirectTo: window.location.origin,
+        },
+    });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+}
+
+export async function signInWithEmail(email: string, password: string) {
+    return supabase.auth.signInWithPassword({ email, password });
+}
+
+export async function signInWithGoogle() {
+    return supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${window.location.origin}`,
+        }
+    });
+}
+
+
+export async function signOut() {
+    return supabase.auth.signOut();
+}
+
+export async function resetPasswordForEmail(email: string) {
+    return supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/update-password`,
+    });
+}
+

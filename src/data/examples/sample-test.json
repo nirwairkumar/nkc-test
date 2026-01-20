@@ -1,0 +1,62 @@
+{
+    "title": "Sample General Knowledge Test",
+    "description": "This is a sample test imported from a JSON file to demonstrate the bulk upload format.",
+    "duration": 15,
+    "marks_per_question": 2,
+    "negative_marks": 0.5,
+    "is_public": true,
+    "questions": [
+        {
+            "id": 1,
+            "type": "single",
+            "question": "Which planet is known as the Red Planet?",
+            "options": {
+                "A": "Earth",
+                "B": "Mars",
+                "C": "Jupiter",
+                "D": "Venus"
+            },
+            "correctAnswer": "B",
+            "typingMode": "en"
+        },
+        {
+            "id": 2,
+            "type": "multiple",
+            "question": "Select all prime numbers less than 10:",
+            "options": {
+                "A": "2",
+                "B": "4",
+                "C": "5",
+                "D": "9"
+            },
+            "correctAnswer": [
+                "A",
+                "C"
+            ],
+            "typingMode": "en"
+        },
+        {
+            "id": 3,
+            "type": "numerical",
+            "question": "Calculated value of 5 * 5?",
+            "correctAnswer": {
+                "min": 25,
+                "max": 25
+            },
+            "typingMode": "en"
+        },
+        {
+            "id": 4,
+            "type": "single",
+            "question": "What is the capital of India?",
+            "options": {
+                "A": "Mumbai",
+                "B": "New Delhi",
+                "C": "Kolkata",
+                "D": "Chennai"
+            },
+            "correctAnswer": "B",
+            "typingMode": "en"
+        }
+    ]
+}
