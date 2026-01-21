@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import HomeHero from '@/components/home/HomeHero';
 import ExploreFilters from '@/components/home/ExploreFilters';
+import TestCard from '@/components/TestCard';
 
 // Lazy Load Components
 const FeaturedTests = React.lazy(() => import('@/components/home/FeaturedTests'));
@@ -15,6 +16,7 @@ const SearchResults = React.lazy(() => import('@/components/home/SearchResults')
 const YouTubeGenerator = React.lazy(() => import('@/components/YouTubeGenerator'));
 const TestSettingsPanel = React.lazy(() => import('@/components/TestSettingsPanel'));
 const CategoryFolderCards = React.lazy(() => import('@/components/home/CategoryFolderCards'));
+const TestLinkPaster = React.lazy(() => import('@/components/TestLinkPaster'));
 
 // Skeletons
 function SectionSkeleton() {
@@ -27,6 +29,7 @@ export default function TestList() {
     const placeholders = ["Search by Title...", "Search by Tag...", "Search by Category..."];
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [loading, setLoading] = useState(false); // Global loading for refresh
+    const [generatedTest, setGeneratedTest] = useState<any>(null);
     const { user } = useAuth();
     const navigate = useNavigate();
 
@@ -38,6 +41,16 @@ export default function TestList() {
         return () => clearInterval(interval);
     }, []);
 
+    // Clear generated test after 30 seconds
+    useEffect(() => {
+        if (generatedTest) {
+            const timer = setTimeout(() => {
+                setGeneratedTest(null);
+            }, 30000);
+            return () => clearTimeout(timer);
+        }
+    }, [generatedTest]);
+
     const onManageTest = (test: any) => {
         setConfiguringTest(test);
     };
@@ -46,6 +59,16 @@ export default function TestList() {
         setLoading(true);
         window.location.reload();
     };
+
+    const handleTestGenerated = (test?: any) => {
+        if (test) {
+            setGeneratedTest(test);
+            // Optionally scroll to it?
+        } else {
+            // refresh or something if needed
+            handleRefresh();
+        }
+    }
 
     return (
         <div className="container mx-auto py-6">
@@ -56,9 +79,9 @@ export default function TestList() {
                     onRefresh={handleRefresh}
                 />
 
-                {/* 2. YouTube Generator (Lazy) */}
+                {/* 2. Test Link Paster (Replaces YouTube Generator) */}
                 <Suspense fallback={<div className="h-32 w-full bg-slate-50 animate-pulse rounded-lg"></div>}>
-                    <YouTubeGenerator onTestGenerated={() => { }} />
+                    <TestLinkPaster />
                 </Suspense>
 
                 {/* 3. Your Recent Tests (Lazy) - Only when NOT searching */}
@@ -98,10 +121,44 @@ export default function TestList() {
                         <FeaturedTests user={user} onManageTest={onManageTest} />
                     </Suspense>
 
-                    {/* 7. Infinite Feed */}
+                    {/* 7. Infinite Feed (Now first) */}
                     <SuspenseFallbackWrapper>
                         <TestFeed user={user} onManageTest={onManageTest} />
                     </SuspenseFallbackWrapper>
+
+                    {/* 8. YouTube Generator (Moved to very bottom) */}
+                    <div className="my-8 mt-16">
+                        {/* <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent inline-block">
+                                Generate Tests from YouTube
+                            </h3>
+                            <p className="text-muted-foreground mt-1">
+                                Don't see what you're looking for? Create a test instantly from any video.
+                            </p>
+                        </div> */}
+                        <Suspense fallback={<SectionSkeleton />}>
+                            <YouTubeGenerator onTestGenerated={handleTestGenerated} />
+                        </Suspense>
+
+                        {/* Temporary Generated Test Display */}
+                        {generatedTest && (
+                            <div className="mt-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-lg font-semibold text-green-600 flex items-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        New Test Generated! (Disappears in 30s)
+                                    </h3>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <TestCard
+                                        test={generatedTest}
+                                        onManage={onManageTest}
+                                        user={user}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
 
@@ -130,3 +187,4 @@ function SuspenseFallbackWrapper({ children }: { children: React.ReactNode }) {
         </Suspense>
     );
 }
+

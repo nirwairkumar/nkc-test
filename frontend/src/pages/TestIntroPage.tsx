@@ -86,11 +86,33 @@ export default function TestIntroPage() {
     const loadTestById = async (testId: string) => {
         setLoading(true);
         try {
-            const { data, error } = await fetchTestById(testId);
-            if (error) throw error;
+            // Check if testId is a UUID
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(testId);
+
+            let data, error;
+
+            if (isUUID) {
+                const res = await fetchTestById(testId);
+                data = res.data;
+                error = res.error;
+            } else {
+                // Try Custom ID
+                const { fetchTestByCustomId } = await import('@/lib/testsApi');
+                const res = await fetchTestByCustomId(testId);
+                data = res.data;
+                error = res.error;
+            }
+
+            if (error) {
+                // If invalid UUID but wasn't found as custom ID, it might still return error.
+                throw error;
+            }
             if (!data) throw new Error("Test not found");
 
             // SEO Redirect: If test has a slug, redirect to it
+            // Only redirect if we loaded by ID (UUID), to keep URLs clean. 
+            // If we loaded by Custom ID, we might also want to redirect to slug OR keep custom ID url.
+            // Let's redirect to slug if it exists for canonical reasons.
             if (data.slug) {
                 navigate(`/test/${data.slug}`, { replace: true });
                 return;

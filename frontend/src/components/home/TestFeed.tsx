@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Loader2, Edit } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestLikeButton from '@/components/TestLikeButton';
 import { fetchTests, Test } from '@/lib/testsApi';
@@ -11,7 +11,7 @@ import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import supabase from '@/lib/supabaseClient';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 12;
 
 export default function TestFeed({ user, onManageTest }: { user: any, onManageTest: (test: any) => void }) {
     const [tests, setTests] = useState<Test[]>([]);
@@ -23,19 +23,7 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
 
-    const observer = useRef<IntersectionObserver | null>(null);
     const navigate = useNavigate();
-
-    const lastTestElementRef = useCallback((node: HTMLDivElement) => {
-        if (loading) return;
-        if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                setPage(prevPage => prevPage + 1);
-            }
-        });
-        if (node) observer.current.observe(node);
-    }, [loading, hasMore]);
 
     useEffect(() => {
         // Load initial metadata like categories
@@ -55,10 +43,6 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
         loadMetadata();
         loadMoreTests();
     }, []);
-
-    useEffect(() => {
-        loadMoreTests();
-    }, [page]);
 
     // Fetch Verified Creators
     useEffect(() => {
@@ -102,6 +86,7 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
                 return [...prev, ...newTests];
             });
             if (data.length < ITEMS_PER_PAGE) setHasMore(false);
+            setPage(prev => prev + 1);
         } else {
             setHasMore(false);
         }
@@ -120,10 +105,9 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
             <h3 className="text-xl font-semibold mb-4 text-slate-700 dark:text-slate-300">More Tests</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tests.map((test, index) => {
-                    const isLast = tests.length === index + 1;
                     return (
-                        <div key={test.id} ref={isLast ? lastTestElementRef : null}>
-                            <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full">
+                        <div key={test.id}>
+                            <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800">
                                 <div className="absolute top-2 right-2 z-10">
                                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test.id)}>
                                         <Share2 className="h-4 w-4" />
@@ -185,9 +169,17 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
                 })}
             </div>
 
-            {loading && (
-                <div className="py-8 flex justify-center">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+            {hasMore && (
+                <div className="mt-8 flex justify-center">
+                    <Button
+                        variant="outline"
+                        onClick={() => loadMoreTests()}
+                        disabled={loading}
+                        className="min-w-[150px]"
+                    >
+                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
+                        {loading ? 'Loading...' : 'View More Tests'}
+                    </Button>
                 </div>
             )}
 
