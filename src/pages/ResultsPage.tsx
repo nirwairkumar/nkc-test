@@ -453,7 +453,8 @@ const ResultsPage = () => {
                           {index + 1}
                         </div>
                         <div className="flex-1 font-medium text-sm line-clamp-1">
-                          <Latex>{q.question}</Latex>
+                          {/* @ts-ignore */}
+                          <Latex strict={false} trust={true}>{q.question}</Latex>
                         </div>
                         <div className="mr-2 flex items-center gap-3">
                           {/* Marks Display */}
@@ -469,7 +470,8 @@ const ResultsPage = () => {
                     <AccordionContent className="px-4 pb-4">
                       <div className="space-y-4 pt-2">
                         <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3">
-                          <Latex>{q.question}</Latex>
+                          {/* @ts-ignore */}
+                          <Latex strict={false} trust={true}>{q.question}</Latex>
                         </div>
 
                         {/* Question Image */}
@@ -511,7 +513,8 @@ const ResultsPage = () => {
                                         ? (ans as string[]).join(', ') // Multi
                                         : `${ans}) ` // Single
                                     }
-                                    {q.type !== 'numerical' && !Array.isArray(ans) && <Latex>{q.options[ans]}</Latex>}
+                                    {/* @ts-ignore */}
+                                    {q.type !== 'numerical' && !Array.isArray(ans) && <Latex strict={false} trust={true}>{q.options[ans]}</Latex>}
                                   </span>
                                   {q.type !== 'numerical' && !Array.isArray(ans) && q.optionImages?.[ans] && (
                                     <img
@@ -538,7 +541,8 @@ const ResultsPage = () => {
                                 ) : (
                                   `${q.correctAnswer}) `
                                 )}
-                                {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <Latex>{q.options[q.correctAnswer as string]}</Latex>}
+                                {/* @ts-ignore */}
+                                {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <Latex strict={false} trust={true}>{q.options[q.correctAnswer as string]}</Latex>}
                               </span>
                               {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                 <img

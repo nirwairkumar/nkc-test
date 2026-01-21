@@ -744,7 +744,8 @@ export default function TestPage() {
                   </h3>
                 </div>
                 <div className="p-6 text-base leading-relaxed text-slate-800 dark:text-slate-200 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
-                  <Latex>{currentQuestion.passageContent}</Latex>
+                  {/* @ts-ignore */}
+                  <Latex strict={false} trust={true}>{currentQuestion.passageContent}</Latex>
                 </div>
               </div>
 
@@ -754,7 +755,8 @@ export default function TestPage() {
                 <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
                   <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Passage Reference</div>
                   <div className="text-sm leading-relaxed max-h-48 overflow-y-auto bg-slate-50 p-3 rounded border [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
-                    <Latex>{currentQuestion.passageContent}</Latex>
+                    {/* @ts-ignore */}
+                    <Latex strict={false} trust={true}>{currentQuestion.passageContent}</Latex>
                   </div>
                 </div>
 
@@ -832,7 +834,8 @@ export default function TestPage() {
                     </div>
 
                     <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
-                      <Latex>{currentQuestion.question}</Latex>
+                      {/* @ts-ignore */}
+                      <Latex strict={false} trust={true}>{currentQuestion.question}</Latex>
                     </div>
 
 
