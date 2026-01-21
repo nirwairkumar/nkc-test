@@ -209,6 +209,7 @@ export async function getTestLikeStatus(testId: string, userId: string) {
     return { liked: !!data, error };
 }
 
+
 export async function fetchTestBySlug(slug: string) {
     const { data, error } = await supabase
         .from('tests')
@@ -217,3 +218,13 @@ export async function fetchTestBySlug(slug: string) {
         .single();
     return { data, error };
 }
+
+export async function fetchTestByCustomId(customId: string) {
+    const { data, error } = await supabase
+        .from('tests')
+        .select('*')
+        .eq('custom_id', customId)
+        .single();
+    return { data, error };
+}
+

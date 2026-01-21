@@ -17,7 +17,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated: () => void }) {
+
+export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated: (test?: any) => void }) {
     const [url, setUrl] = useState('');
     const [language, setLanguage] = useState('English');
     const [loading, setLoading] = useState(false);
@@ -49,7 +50,7 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
         try {
             // Updated status messages to reflect video processing
             setStatus('Watching Video(this takes 50-60 seconds)...');
-            await generateTestFromYouTube(
+            const newTest = await generateTestFromYouTube(
                 url,
                 user.id,
                 user.user_metadata?.full_name || 'AI Generator',
@@ -61,7 +62,7 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
             setStatus('Finalizing...');
             toast.success(`Test generated successfully in ${language}!`);
             setUrl('');
-            onTestGenerated();
+            onTestGenerated(newTest);
         } catch (error: any) {
             if (error.message === 'Process cancelled') {
                 toast.info("Generation processed stopped.");
