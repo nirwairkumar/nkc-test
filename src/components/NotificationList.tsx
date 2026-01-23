@@ -22,16 +22,15 @@ interface NotificationListProps {
     onClearAll: () => void;
     onMarkAsRead: (id: string) => void;
     maxHeight?: string | number;
+    onClose?: () => void;
 }
 
-export default function NotificationList({ notifications, onDelete, onClearAll, onMarkAsRead, maxHeight = "300px" }: NotificationListProps) {
+export default function NotificationList({ notifications, onDelete, onClearAll, onMarkAsRead, maxHeight = "300px", onClose }: NotificationListProps) {
     const [selectedFeedback, setSelectedFeedback] = React.useState<{
         testId: string;
         testTitle: string;
         senderId: string;
         senderName: string;
-        rating: string;
-        comment: string;
         rating: string;
         comment: string;
     } | null>(null);
@@ -146,9 +145,15 @@ export default function NotificationList({ notifications, onDelete, onClearAll, 
                                                     {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                                                 </p>
                                                 {notification.link && !notification.link.startsWith('feedback://') && !notification.link.startsWith('support://') && (
-                                                    <a href={notification.link} className="text-xs text-blue-600 hover:underline block mt-1">
-                                                        View Details
-                                                    </a>
+                                                    notification.link.startsWith('/') ? (
+                                                        <Link to={notification.link} className="text-xs text-blue-600 hover:underline block mt-1" onClick={() => onClose && onClose()}>
+                                                            View Details
+                                                        </Link>
+                                                    ) : (
+                                                        <a href={notification.link} className="text-xs text-blue-600 hover:underline block mt-1" target="_blank" rel="noreferrer">
+                                                            View Details
+                                                        </a>
+                                                    )
                                                 )}
                                             </div>
                                             {/* Top-right delete button for non-swipe users */}

@@ -42,6 +42,7 @@ export default function NotificationBox() {
                     onClearAll={handleClearAll}
                     onMarkAsRead={markAsRead}
                     maxHeight={300}
+                    onClose={() => setIsOpen(false)}
                 />
             </PopoverContent>
         </Popover>

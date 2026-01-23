@@ -25,6 +25,10 @@ const AuthForm = lazy(() => import("@/components/AuthForm"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const AdminMigration = lazy(() => import("./pages/AdminMigration"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const AdminPricing = lazy(() => import("./pages/AdminPricing"));
+const AdminPromoCodes = lazy(() => import("./pages/AdminPromoCodes"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
+const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 const ManageTests = lazy(() => import("./pages/ManageTests"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
@@ -37,6 +41,7 @@ const CreatorProfilePage = lazy(() => import("./pages/CreatorProfilePage"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 
 
 const Layout = lazy(() => import("./Layout"));
@@ -67,6 +72,10 @@ const App = () => (
                     <Route path="/update-password" element={<UpdatePassword />} />
                     <Route path="/admin-migration" element={<AdminMigration />} />
                     <Route path="/admin-login" element={<AdminLogin />} />
+                    <Route path="/admin-pricing" element={<AdminPricing />} />
+                    <Route path="/admin-promo-codes" element={<AdminPromoCodes />} />
+                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/premium" element={<PremiumPage />} />
                     <Route path="/manage-tests" element={<ManageTests />} />
                     <Route path="/support" element={<SupportPage />} />
                     <Route path="/create-test" element={<CreateTestPage />} />
@@ -154,6 +163,14 @@ const App = () => (
                       element={
                         <PrivateRoute>
                           <ProfilePage />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <PrivateRoute>
+                          <SettingsPage />
                         </PrivateRoute>
                       }
                     />
