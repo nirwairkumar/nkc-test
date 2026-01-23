@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ import { fetchCategories } from '@/lib/categoriesApi';
 import slugify from 'slugify';
 
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
+import PremiumGuard from '@/components/premium/PremiumGuard';
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
@@ -80,6 +82,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     const testId = initialData?.id || paramId;
     const isEditMode = !!testId;
 
+    const { isPremium, loading: premiumLoading } = usePremiumStatus();
     const [loading, setLoading] = useState(false);
 
     // Test Metadata State
@@ -1069,7 +1072,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 <Card>
                     <div className="flex items-center justify-center gap-6 p-6 pb-0">
                         <div className="relative group shrink-0">
-                            {institutionLogo && (
+                            {institutionLogo && isPremium && (
                                 <button
                                     onClick={(e) => { e.preventDefault(); setInstitutionLogo(''); }}
                                     className="absolute -top-2 -right-2 z-20 bg-destructive text-white rounded-full p-1 shadow-md hover:bg-destructive/90"
@@ -1078,20 +1081,52 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                 </button>
                             )}
                             <label
-                                className="cursor-pointer block"
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
+                                className={`block ${isPremium ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
+                                onDragOver={isPremium ? handleDragOver : undefined}
+                                onDragLeave={isPremium ? handleDragLeave : undefined}
+                                onDrop={isPremium ? handleDrop : undefined}
+                                onClick={(e) => {
+                                    if (!isPremium) {
+                                        e.preventDefault();
+                                        toast("Upgrade to Premium to add your logo", {
+                                            action: { label: "View Plans", onClick: () => navigate('/pricing') }
+                                        });
+                                    }
+                                }}
                             >
-                                <input type="file" className="hidden" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f, setInstitutionLogo); }} />
+                                <input type="file" className="hidden" accept="image/*" disabled={!isPremium} onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f, setInstitutionLogo); }} />
                                 <div className={`w-16 h-16 rounded-lg border-2 border-dashed flex flex-col items-center justify-center transition-all relative overflow-hidden ${isDragging ? 'border-primary bg-primary/10' : institutionLogo ? 'border-primary/50' : 'border-slate-300'}`}>
-                                    {institutionLogo ? <img src={institutionLogo} alt="Logo" className="w-full h-full object-contain" /> : <Upload className="w-5 h-5 text-slate-400" />}
+                                    {institutionLogo ? (
+                                        <img src={institutionLogo} alt="Logo" className="w-full h-full object-contain" />
+                                    ) : (
+                                        <Upload className="w-5 h-5 text-slate-400" />
+                                    )}
+                                    {!isPremium && !institutionLogo && (
+                                        <div className="absolute inset-0 bg-slate-100/80 flex items-center justify-center">
+                                            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wide">Locked</span>
+                                        </div>
+                                    )}
                                 </div>
                             </label>
                         </div>
                         <div className="w-full max-w-lg flex items-start gap-4">
-                            <div className="flex-1 mr-2">
-                                <Input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} placeholder="Add Your Institution Name" className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0" />
+                            <div className="flex-1 mr-2 relative group-input">
+                                <Input
+                                    value={institutionName}
+                                    onChange={(e) => setInstitutionName(e.target.value)}
+                                    placeholder={isPremium ? "Add Your Institution Name" : "Add Institution Name (Premium)"}
+                                    className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0 disabled:opacity-100 disabled:cursor-not-allowed"
+                                    disabled={!isPremium}
+                                    title={!isPremium ? "Upgrade to Premium to set Institution Name" : ""}
+                                />
+                                {!isPremium && (
+                                    <div
+                                        className="absolute inset-0 cursor-pointer"
+                                        onClick={() => toast("Upgrade to Premium to set Institution Name", {
+                                            action: { label: "View Plans", onClick: () => navigate('/pricing') }
+                                        })}
+                                    />
+                                )}
                                 <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
                             </div>
                             <div className="flex flex-col justify-start h-full pt-1">

@@ -30,14 +30,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const formSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(6, {
-        message: 'Password must be at least 6 characters.',
-    }).optional(),
+    password: z.string().optional(), // Validation handled manually or via refinement to allow empty for "forgot" view
     confirmPassword: z.string().optional(),
     name: z.string().optional(),
     designation: z.enum(["Student", "Teacher", "Institution", "Guest"]).optional(),
 }).refine((data) => {
-    // If name is present (signup mode), check passwords match
+    // Signup passwords match check
     if (data.name && data.password !== data.confirmPassword) {
         return false;
     }
@@ -81,6 +79,11 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
+                if (values.password.length < 6) {
+                    toast.error("Password must be at least 6 characters");
+                    setIsLoading(false);
+                    return;
+                }
                 const { error, data } = await signInWithEmail(values.email, values.password);
                 if (error) throw error;
                 toast.success('Successfully logged in!');
@@ -99,13 +102,23 @@ export default function AuthForm() {
                     //  const from = location.state?.from?.pathname || '/';
 
                     const intent = localStorage.getItem('auth_redirect_intent');
+                    const stateFrom = location.state?.from;
+                    // Handle both string paths (from PrivateRoute) and location objects
+                    const from = intent || (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
 
-                    const from = intent || location.state?.from?.pathname || '/';
+                    // Clear intent after use
+                    if (intent) localStorage.removeItem('auth_redirect_intent');
+
                     navigate(from, { replace: true });
                 }
             } else if (view === 'signup') {
                 if (!values.name || !values.password) {
                     toast.error("All fields are required");
+                    setIsLoading(false);
+                    return;
+                }
+                if (values.password.length < 6) {
+                    toast.error("Password must be at least 6 characters");
                     setIsLoading(false);
                     return;
                 }
@@ -154,10 +167,9 @@ export default function AuthForm() {
         }
     };
 
-    const toggleView = () => {
+    const toggleView = (newView: 'login' | 'signup' | 'forgot') => {
         form.reset();
-        if (view === 'login') setView('signup');
-        else setView('login');
+        setView(newView);
     }
 
     return (
@@ -321,14 +333,15 @@ export default function AuthForm() {
                             <>
                                 <Button
                                     variant="link"
+                                    type="button"
                                     className="p-0 h-auto font-normal text-muted-foreground hover:text-primary"
-                                    onClick={() => setView('forgot')}
+                                    onClick={() => toggleView('forgot')}
                                 >
                                     Forgot Password?
                                 </Button>
                                 <div className="text-muted-foreground">
                                     Don't have an account?{' '}
-                                    <Button variant="link" className="p-0 h-auto" onClick={() => setView('signup')}>
+                                    <Button variant="link" type="button" className="p-0 h-auto" onClick={() => toggleView('signup')}>
                                         Sign Up
                                     </Button>
                                 </div>
@@ -337,13 +350,13 @@ export default function AuthForm() {
                         {view === 'signup' && (
                             <div className="text-muted-foreground">
                                 Already have an account?{' '}
-                                <Button variant="link" className="p-0 h-auto" onClick={() => setView('login')}>
+                                <Button variant="link" type="button" className="p-0 h-auto" onClick={() => toggleView('login')}>
                                     Login
                                 </Button>
                             </div>
                         )}
                         {view === 'forgot' && (
-                            <Button variant="link" className="p-0 h-auto" onClick={() => setView('login')}>
+                            <Button variant="link" type="button" className="p-0 h-auto" onClick={() => toggleView('login')}>
                                 Back to Login
                             </Button>
                         )}

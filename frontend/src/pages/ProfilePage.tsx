@@ -477,6 +477,7 @@ const ProfilePage = () => {
                         </form>
                     </CardContent>
                 </Card>
+
             </div>
         </div>
     );
