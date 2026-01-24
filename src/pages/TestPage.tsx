@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Latex from 'react-latex-next';
 import ScientificCalculator from '@/components/ScientificCalculator';
 import { Calculator } from 'lucide-react';
@@ -67,12 +68,16 @@ export default function TestPage() {
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Resume Session State
   const [showResumeDialog, setShowResumeDialog] = useState(false);
   const [resumeData, setResumeData] = useState<any>(null);
   const [isRefresh, setIsRefresh] = useState(false);
+
+
+  const [isTimeHidden, setIsTimeHidden] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -308,6 +313,8 @@ export default function TestPage() {
     });
   };
 
+
+
   const handleClearResponse = (questionId: number) => {
     if (isTimeUp) return;
     setAnswers(prev => {
@@ -335,6 +342,13 @@ export default function TestPage() {
 
   const handleSaveAndNext = () => {
     handleNext();
+  };
+
+  const handleSaveAndMarkReview = () => {
+    if (test) {
+      setMarkedForReview(prev => new Set(prev).add(test.questions[currentQuestionIndex].id));
+      handleNext();
+    }
   };
 
   const attemptSubmit = () => {
@@ -544,15 +558,28 @@ export default function TestPage() {
                     const isVisited = visited.has(globalIdx);
                     const isCurrent = currentQuestionIndex === globalIdx;
 
-                    let baseClasses = "h-8 w-8 flex items-center justify-center rounded text-xs font-semibold transition-all";
-                    let colorClasses = "bg-white border text-slate-700 hover:bg-slate-50";
+                    let baseClasses = "h-10 w-10 flex items-center justify-center text-sm font-semibold transition-all relative rounded-md border";
+                    let colorClasses = "bg-white border-slate-300 text-slate-700 hover:bg-slate-50";
 
-                    if (isMarked) {
-                      colorClasses = "bg-yellow-400 border-yellow-500 text-black";
-                    } else if (isAnswered) {
-                      colorClasses = "bg-green-500 border-green-600 text-white";
-                    } else if (isVisited) {
+                    // 1. Answered & Marked (Purple Square + Green Dot)
+                    if (isAnswered && isMarked) {
+                      colorClasses = "bg-purple-600 border-purple-700 text-white";
+                    }
+                    // 2. Marked for Review (Purple Square)
+                    else if (isMarked) {
+                      colorClasses = "bg-purple-600 border-purple-700 text-white";
+                    }
+                    // 3. Answered (Green Box)
+                    else if (isAnswered) {
+                      colorClasses = "bg-green-500 border-green-600 text-white clip-polygon-answer";
+                    }
+                    // 4. Not Answered (Red Box)
+                    else if (isVisited) {
                       colorClasses = "bg-red-500 border-red-600 text-white";
+                    }
+                    // 5. Not Visited (White Box - Default)
+                    else {
+                      colorClasses = "bg-white border-slate-300 text-slate-700 hover:bg-slate-50";
                     }
 
                     if (isCurrent) {
@@ -569,6 +596,11 @@ export default function TestPage() {
                         className={`${baseClasses} ${colorClasses}`}
                       >
                         {globalIdx + 1}
+                        {isAnswered && isMarked && (
+                          <div className="absolute -bottom-1 -right-1">
+                            <CheckCircle className="w-3 h-3 text-green-500 fill-white" />
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -576,53 +608,90 @@ export default function TestPage() {
               </div>
             );
           })}
+
+          {/* End of Test Indicator */}
+          <div className="pt-4 pb-2">
+            <div className="flex items-center gap-2">
+              <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+              <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">End of Test</span>
+              <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+            </div>
+          </div>
         </div>
       );
     }
 
     // Default Flat Palette
     return (
-      <div className="grid grid-cols-5 gap-2">
-        {test.questions.map((q, idx) => {
-          const isAnswered = answers[q.id] !== undefined;
-          const isMarked = markedForReview.has(q.id);
-          const isVisited = visited.has(idx);
-          const isCurrent = currentQuestionIndex === idx;
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-5 gap-2">
+          {test.questions.map((q, idx) => {
+            const isAnswered = answers[q.id] !== undefined;
+            const isMarked = markedForReview.has(q.id);
+            const isVisited = visited.has(idx);
+            const isCurrent = currentQuestionIndex === idx;
 
-          let baseClasses = "h-10 w-10 flex items-center justify-center rounded-md border text-sm font-semibold transition-all";
-          let colorClasses = "bg-white border-slate-200 text-slate-700 hover:bg-slate-50";
+            let baseClasses = "h-11 w-11 flex items-center justify-center text-base font-semibold transition-all relative rounded-md border";
+            let colorClasses = "bg-white border-slate-300 text-slate-700 hover:bg-slate-50";
 
-          if (isMarked) {
-            colorClasses = "bg-yellow-400 border-yellow-500 text-black shadow-sm hover:bg-yellow-500";
-          } else if (isAnswered) {
-            colorClasses = "bg-green-500 border-green-600 text-white shadow-sm hover:bg-green-600";
-          } else if (isVisited) {
-            colorClasses = "bg-red-500 border-red-600 text-white shadow-sm hover:bg-red-600";
-          }
+            // 1. Answered & Marked (Purple Square + Green Dot)
+            if (isAnswered && isMarked) {
+              colorClasses = "bg-purple-600 border-purple-700 text-white shadow-sm hover:bg-purple-700";
+            }
+            // 2. Marked for Review (Purple Square)
+            else if (isMarked) {
+              colorClasses = "bg-purple-600 border-purple-700 text-white shadow-sm hover:bg-purple-700";
+            }
+            // 3. Answered (Green Box)
+            else if (isAnswered) {
+              colorClasses = "bg-green-500 border-green-600 text-white shadow-sm hover:bg-green-600";
+            }
+            // 4. Not Answered (Red Box)
+            else if (isVisited) {
+              colorClasses = "bg-red-500 border-red-600 text-white shadow-sm hover:bg-red-600";
+            }
+            // 5. Not Visited (White Box)
+            else {
+              colorClasses = "bg-white border-slate-300 text-slate-700 hover:bg-slate-50";
+            }
 
-          if (isCurrent) {
-            baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
-          }
+            if (isCurrent) {
+              baseClasses += " ring-2 ring-blue-600 border-blue-600 z-10";
+            }
 
-          return (
-            <button
-              key={q.id}
-              onClick={() => {
-                jumpToQuestion(idx);
-                onQuestionClick?.();
-              }}
-              className={`${baseClasses} ${colorClasses}`}
-            >
-              {idx + 1}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={q.id}
+                onClick={() => {
+                  jumpToQuestion(idx);
+                  onQuestionClick?.();
+                }}
+                className={`${baseClasses} ${colorClasses}`}
+              >
+                {idx + 1}
+                {isAnswered && isMarked && (
+                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full">
+                    <CheckCircle className="w-4 h-4 text-green-500 fill-white" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {/* End of Test Indicator */}
+        <div className="pt-2 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">End of Test</span>
+            <div className="h-px bg-slate-200 dark:bg-slate-700 flex-1"></div>
+          </div>
+        </div>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
+    <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
       {/* Institution Branding Bar */}
       {(test.institution_name || test.institution_logo) && (
         <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2 flex items-center justify-center gap-3">
@@ -637,10 +706,29 @@ export default function TestPage() {
 
       <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-3 sticky top-0 z-10 shadow-sm flex items-center justify-between">
         <div className="font-mono text-xl font-bold flex items-center gap-2">
-          <Clock className={`w-5 h-5 ${timeRemaining < 300 ? 'text-red-500 animate-pulse' : 'text-slate-600 dark:text-slate-400'}`} />
-          <span className={timeRemaining < 300 ? 'text-red-600' : 'text-slate-800 dark:text-slate-200'}>
-            {formatTime(timeRemaining)}
-          </span>
+          {(() => {
+            const isCriticalTime = timeRemaining < 300;
+            const shouldShow = !isTimeHidden || isCriticalTime;
+
+            return (
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-md">
+                <Clock className={`w-5 h-5 ${isCriticalTime ? 'text-red-500 animate-pulse' : 'text-slate-600 dark:text-slate-400'}`} />
+                <span className={`min-w-[80px] text-center ${isCriticalTime ? 'text-red-600' : 'text-slate-800 dark:text-slate-200'}`}>
+                  {shouldShow ? formatTime(timeRemaining) : '** : **'}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 ml-1 text-slate-500 hover:text-slate-700"
+                  onClick={() => setIsTimeHidden(!isTimeHidden)}
+                  disabled={isCriticalTime}
+                  title={isCriticalTime ? "Time cannot be hidden (less than 5m left)" : (isTimeHidden ? "Show Time" : "Hide Time")}
+                >
+                  {shouldShow ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </Button>
+              </div>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-2">
           {test.has_scientific_calculator && (
@@ -667,15 +755,26 @@ export default function TestPage() {
         </div>
       </div>
 
-      <div className="flex-1 w-full px-2 lg:px-4 py-2 grid grid-cols-1 lg:grid-cols-12 gap-4 relative lg:h-full lg:overflow-hidden">
-        {/* Main Question Area */}
-        {/* Main Question Area - Independently Scrollable on Desktop */}
-        {/* Main Question Area - Independently Scrollable on Desktop */}
-        <div className="lg:col-span-9 flex flex-col gap-0 relative lg:h-full lg:overflow-hidden">
-
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-row relative">
+        {/* Main Question Area (Left Panel) */}
+        <div className={`
+          flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 relative transition-all duration-300 ease-in-out
+        `}>
+          {/* Collapse Toggle Button (Desktop Only) */}
+          <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-50 translate-x-1/2">
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={() => setIsPaletteCollapsed(!isPaletteCollapsed)}
+              className="h-8 w-8 rounded-full shadow-md border border-slate-200 bg-white hover:bg-slate-100 text-slate-600"
+              title={isPaletteCollapsed ? "Expand Palette" : "Collapse Palette"}
+            >
+              {isPaletteCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Button>
+          </div>
           {/* Section Tabs */}
           {test.enable_section_mode && test.sections && (
-            <div className="flex overflow-x-auto border-b bg-white dark:bg-slate-900 scrollbar-hide">
+            <div className="flex-none flex gap-2 p-2 overflow-x-auto bg-white dark:bg-slate-900 scrollbar-hide">
               {(() => {
                 let runningIndex = 0;
                 return test.sections.map((section: any, idx: number) => {
@@ -692,13 +791,25 @@ export default function TestPage() {
                       onClick={() => setCurrentQuestionIndex(startIndex)}
                       title={section.name}
                       className={`
-                                flex-1 min-w-[100px] max-w-[160px] py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap px-4 truncate
+                                flex items-center justify-between gap-2 px-4 py-2 text-sm font-bold border transition-colors whitespace-nowrap min-w-[140px]
                                 ${isActive
-                          ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
-                          : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                          ? 'bg-[#0073E6] text-white border-[#0073E6]'
+                          : 'bg-white text-[#0073E6] border-slate-300 hover:bg-blue-50'}
                             `}
                     >
-                      {section.name}
+                      <span className="truncate">{section.name}</span>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Info
+                              className={`w-4 h-4 cursor-pointer hover:scale-110 active:scale-95 transition-transform ${isActive ? 'text-white/80' : 'text-[#0073E6]/70'}`}
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-2 text-sm max-w-[200px]" side="top">
+                            <p className="font-semibold text-center">{section.name}</p>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                     </button>
                   );
                 });
@@ -706,25 +817,38 @@ export default function TestPage() {
             </div>
           )}
 
-          {/* Mobile Palette Trigger (Top Left - Floating above Card) */}
-          <div className="lg:hidden absolute top-0 left-0 z-20 p-2">
+          {/* Mobile Palette Trigger (Floating Action Button) */}
+          <div className="lg:hidden fixed bottom-[55px] right-0 z-50">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-9 w-9 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800">
-                  <Menu className="h-5 w-5 text-slate-500" />
+                <Button
+                  size="icon"
+                  className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-transform hover:scale-105"
+                >
+                  <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[80%] sm:w-[380px] flex flex-col h-full">
+              <SheetContent side="right" className="w-[80%] sm:w-[380px] flex flex-col h-full">
                 <SheetHeader>
                   <SheetTitle>Questions</SheetTitle>
                 </SheetHeader>
                 <div className="py-4 flex-1 overflow-y-auto pb-6">
                   {/* Legend - Above Palette */}
-                  <div className="grid grid-cols-2 gap-y-2 mb-6 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 border border-green-600 rounded"></div> Answered</div>
-                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div> Review</div>
-                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 border border-red-600 rounded"></div> Unanswered</div>
-                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white border border-slate-200 rounded"></div> Not Visited</div>
+                  <div className="mb-4">
+                    <div className="grid grid-cols-2 gap-y-2 mb-2 text-[10px] text-muted-foreground">
+                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-white border border-slate-200 rounded-md text-[9px] flex items-center justify-center font-bold">1</div> Not Visited</div>
+                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-red-500 border border-red-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white">2</div> Not Answered</div>
+                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-green-500 border border-green-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white">3</div> Answered</div>
+                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white">4</div> Review</div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white relative">
+                          5
+                          <div className="absolute -bottom-1 -right-1 bg-white rounded-full"><CheckCircle className="w-2.5 h-2.5 text-green-500 fill-white" /></div>
+                        </div>
+                        <span className="ml-2">Ans & Review</span>
+                      </div>
+                    </div>
+                    <hr className="border-slate-200 dark:border-slate-700" />
                   </div>
 
                   <QuestionPalette onQuestionClick={() => setIsMobileMenuOpen(false)} />
@@ -735,7 +859,8 @@ export default function TestPage() {
 
           {currentQuestion.passageContent ? (
             /* SPLIT VIEW FOR COMPREHENSION */
-            <div className="flex-1 h-full flex flex-col lg:flex-row gap-2 lg:gap-4 lg:overflow-hidden pb-4 p-1 pt-10 lg:pt-1">
+            /* SPLIT VIEW FOR COMPREHENSION */
+            <div className="flex-1 w-full overflow-hidden flex flex-col lg:flex-row gap-2 lg:gap-4 pb-0 p-1 pt-1 lg:pt-1">
               {/* Passage Pane (Desktop) */}
               <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-800 shadow-sm custom-scrollbar">
                 <div className="p-4 border-b dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
@@ -761,17 +886,16 @@ export default function TestPage() {
                 </div>
 
                 <Card className="min-h-[400px] shadow-sm border-0 bg-white dark:bg-slate-900 w-full h-auto block">
-                  <CardContent className="p-3 md:p-6 gap-6 flex flex-col h-auto">
-                    <div className="flex justify-between items-start">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
-                          <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
-                            {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
-                              currentQuestion.type === 'numerical' ? 'Numerical' :
-                                currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
-                          </span>
-                        </div>
+                  <CardContent className="p-3 md:p-4 gap-2 flex flex-col h-auto">
+                    {/* Question Header */}
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">Question {currentQuestionIndex + 1}</span>
+                        <span className="inline-flex items-center rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 border border-slate-200">
+                          {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
+                            currentQuestion.type === 'numerical' ? 'Numerical' :
+                              currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
+                        </span>
                       </div>
 
                       {(() => {
@@ -782,7 +906,6 @@ export default function TestPage() {
                         let forceSectionMarks = false;
 
                         if (test.enable_section_mode && test.sections) {
-                          // Check Marking Model (Default to 'section-wise' if undefined)
                           const markingModel = test.section_marking_model || 'section-wise';
                           if (markingModel === 'section-wise') {
                             forceSectionMarks = true;
@@ -793,8 +916,6 @@ export default function TestPage() {
                             if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
                               fallbackMarks = parseMark(section.marks_per_question, 4);
                               fallbackNeg = parseMark(section.negative_marks, 1);
-
-                              // Source the question from the section data directly
                               const localIdx = currentQuestionIndex - runningCount;
                               if (section.questions[localIdx]) {
                                 targetQ = section.questions[localIdx];
@@ -808,12 +929,6 @@ export default function TestPage() {
                           fallbackNeg = parseMark(test.negative_marks, 1);
                         }
 
-                        // 2. Resolve Final Marks
-                        // If forceSectionMarks is true, ignore question-level marks (unless they are somehow mandatory, but here we enforce the model)
-                        // Actually, parseMark(undefined, fallback) returns fallback.
-                        // If forceSectionMarks, we pass 'undefined' effectively to ensure fallback is used?
-                        // Or we just use fallbackMarks directly.
-
                         const marksVal = forceSectionMarks
                           ? fallbackMarks
                           : parseMark(targetQ.marks, fallbackMarks);
@@ -823,58 +938,59 @@ export default function TestPage() {
                           : parseMark(targetQ.negativeMarks, fallbackNeg);
 
                         return (
-                          <div className="text-sm font-medium flex items-center gap-1">
-                            <span className="text-emerald-600">+{parseFloat(marksVal.toFixed(2))}</span>
-                            <span className="text-slate-400">/</span>
-                            <span className="text-red-500">-{parseFloat(negVal.toFixed(2))}</span>
+                          <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                            <span className="text-emerald-700">+{parseFloat(marksVal.toFixed(2))}</span>
+                            <span className="text-slate-300">|</span>
+                            <span className="text-red-600">-{parseFloat(negVal.toFixed(2))}</span>
                           </div>
                         );
                       })()}
-
                     </div>
 
-                    <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
-                      {/* @ts-ignore */}
-                      <Latex strict={false} trust={true}>{currentQuestion.question}</Latex>
+                    {/* Divider */}
+                    <hr className="border-slate-200 mb-3" />
+
+                    {/* Question Text */}
+                    {/* Question Text */}
+                    <div className="text-lg md:text-xl text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]">
+                      <div className="overflow-x-auto max-w-full">
+                        {/* @ts-ignore */}
+                        <Latex strict={false} trust={true}>{currentQuestion.question}</Latex>
+                      </div>
                     </div>
 
-
+                    {/* Question Image */}
                     {currentQuestion.image && (
-                      <div className="my-4">
+                      <div className="mb-8 flex justify-center">
                         <img
                           src={currentQuestion.image.trim()}
                           alt={`Question ${currentQuestionIndex + 1}`}
                           referrerPolicy="no-referrer"
-                          className="max-w-full max-h-[400px] rounded-lg border object-contain mx-auto"
+                          className="max-w-full max-h-[400px] rounded-lg border border-slate-200 shadow-sm object-contain bg-white"
                           onError={(e) => {
                             const target = e.currentTarget;
                             target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              const errorMsg = document.createElement('div');
-                              errorMsg.className = "text-center p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-600 space-y-2";
-                              errorMsg.innerHTML = `<p>Image failed to load.</p><a href="${currentQuestion.image?.trim()}" target="_blank" rel="noopener noreferrer" class="underline font-bold">Click here to view image</a>`;
-                              parent.appendChild(errorMsg);
-                            }
                           }}
                         />
                       </div>
                     )}
 
-                    <div className="space-y-3 mt-4">
+                    {/* Options Area */}
+                    <div className="space-y-4 mt-6">
+                      <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
                       {currentQuestion.type === 'numerical' ? (
                         <div className="max-w-xs">
-                          <Label className="mb-2 block">Your Answer</Label>
+                          <Label className="mb-2 block text-slate-600">Your Answer</Label>
                           <Input
                             type="number"
                             step="any"
-                            placeholder="Enter your answer"
+                            placeholder="Enter value"
                             value={answers[currentQuestion.id] || ''}
                             onChange={(e) => {
                               const val = e.target.value;
                               setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
                             }}
-                            className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800"
+                            className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12"
                           />
                         </div>
                       ) : (
@@ -904,34 +1020,32 @@ export default function TestPage() {
                                   handleAnswerSelect(currentQuestion.id, key);
                                 }
                               }}
-                              className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                                       ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
-                                                   `}
-
+                              className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all group relative
+                                                 ${isSelected
+                                  ? 'border-blue-500 bg-blue-50/50 shadow-sm ring-1 ring-blue-500/20'
+                                  : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'}
+                                             `}
                             >
-                              <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
-                                                       ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
-                                                       ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'}
-                                                   `}>
-                                {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
-                                <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
+                              <div className={`h-7 w-7 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors mt-0.5
+                                                 ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
+                                                 ${isSelected
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-blue-400 group-hover:text-blue-600'}
+                                             `}>
+                                {currentQuestion.type === 'multiple' && isSelected ? <CheckCircle className="w-4 h-4" /> : key}
                               </div>
 
                               <div className="flex-1 flex flex-col gap-2">
-                                {text && <div className="text-base break-words pt-1"><Latex>{text}</Latex></div>}
+                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-normal break-words pt-0.5"><Latex>{text}</Latex></div>}
                                 {optionImage && (
                                   <img
                                     src={optionImage.trim()}
                                     alt={`Option ${key}`}
                                     referrerPolicy="no-referrer"
-                                    className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
+                                    className="max-w-[200px] max-h-[200px] rounded-md border border-slate-200 object-contain bg-white"
                                     onError={(e) => {
                                       const target = e.currentTarget;
                                       target.style.display = 'none';
-                                      const parent = target.parentElement;
-                                      if (parent) {
-                                        // Simple error handler
-                                      }
                                     }}
                                   />
                                 )}
@@ -947,42 +1061,36 @@ export default function TestPage() {
             </div>
           ) : (
             /* STANDARD VIEW */
-            <div className="flex-1 h-full flex flex-col gap-6 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-2 pb-24 p-1 pt-10 lg:pt-1">
+            /* STANDARD VIEW */
+            <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col gap-2 lg:gap-6 lg:pr-2 pb-4 p-1 pt-1 lg:pt-1">
               <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
-                <CardContent className="p-3 md:p-6 gap-6 flex flex-col h-auto">
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-muted-foreground">Question {currentQuestionIndex + 1}</span>
-                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
-                          {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
-                            currentQuestion.type === 'numerical' ? 'Numerical' :
-                              currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
-                        </span>
-                      </div>
+                <CardContent className="p-3 md:p-4 gap-2 flex flex-col h-auto">
+                  {/* Question Header */}
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">Question {currentQuestionIndex + 1}</span>
+                      <span className="inline-flex items-center rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 border border-slate-200">
+                        {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
+                          currentQuestion.type === 'numerical' ? 'Numerical' :
+                            currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
+                      </span>
                     </div>
 
                     {(() => {
-                      // Helper: Prefer the raw value if present, else fallback.
-                      // We don't parse to number here so fractions like "1/4" are preserved.
                       const getDisplayVal = (val: any, fallback: string | number) => {
                         if (val !== undefined && val !== null && val !== '') return val;
                         return fallback;
                       };
 
-                      // 1. Determine Base Defaults
                       let marks = getDisplayVal(test.marks_per_question, 4);
                       let neg = getDisplayVal(test.negative_marks, 1);
 
-                      // 2. Override with Section Defaults if applicable
                       if (test.enable_section_mode && test.sections) {
                         let runningCount = 0;
                         for (const section of test.sections) {
                           if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
                             marks = getDisplayVal(section.marks_per_question, 4);
                             neg = getDisplayVal(section.negative_marks, 1);
-
-                            // Get specific question from section to check for overrides
                             const localIdx = currentQuestionIndex - runningCount;
                             if (section.questions[localIdx]) {
                               const qMarks = section.questions[localIdx].marks;
@@ -995,7 +1103,6 @@ export default function TestPage() {
                           runningCount += section.questions.length;
                         }
                       } else {
-                        // 3. Flat Mode - Check per-question overrides
                         const qMarks = currentQuestion.marks;
                         const qNeg = currentQuestion.negativeMarks;
                         if (qMarks !== undefined && qMarks !== '') marks = qMarks;
@@ -1003,55 +1110,59 @@ export default function TestPage() {
                       }
 
                       return (
-                        <div className="text-sm font-medium flex items-center gap-1">
-                          <span className="text-emerald-600">+{marks}</span>
-                          <span className="text-slate-400">/</span>
-                          <span className="text-red-500">-{neg}</span>
+                        <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                          <span className="text-emerald-700">+{marks}</span>
+                          <span className="text-slate-300">|</span>
+                          <span className="text-red-600">-{neg}</span>
                         </div>
                       );
                     })()}
                   </div>
 
-                  <div className="text-lg md:text-xl font-medium leading-relaxed break-words">
-                    <Latex>{currentQuestion.question}</Latex>
+                  {/* Divider */}
+                  <hr className="border-slate-200 mb-3" />
+
+                  {/* Question Text */}
+                  {/* Question Text */}
+                  <div className="text-lg md:text-xl text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]">
+                    <div className="overflow-x-auto max-w-full">
+                      {/* @ts-ignore */}
+                      <Latex strict={false} trust={true}>{currentQuestion.question}</Latex>
+                    </div>
                   </div>
 
+                  {/* Question Image */}
                   {currentQuestion.image && (
-                    <div className="my-4">
+                    <div className="mb-8 flex justify-center">
                       <img
                         src={currentQuestion.image.trim()}
                         alt={`Question ${currentQuestionIndex + 1}`}
                         referrerPolicy="no-referrer"
-                        className="max-w-full max-h-[400px] rounded-lg border object-contain mx-auto"
+                        className="max-w-full max-h-[400px] rounded-lg border border-slate-200 shadow-sm object-contain bg-white"
                         onError={(e) => {
                           const target = e.currentTarget;
                           target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            const errorMsg = document.createElement('div');
-                            errorMsg.className = "text-center p-4 border border-red-200 bg-red-50 rounded-lg text-sm text-red-600 space-y-2";
-                            errorMsg.innerHTML = `<p>Image failed to load.</p><a href="${currentQuestion.image?.trim()}" target="_blank" rel="noopener noreferrer" class="underline font-bold">Click here to view image</a>`;
-                            parent.appendChild(errorMsg);
-                          }
                         }}
                       />
                     </div>
                   )}
 
-                  <div className="space-y-3 mt-4">
+                  {/* Options Area */}
+                  <div className="space-y-4 mt-6">
+                    <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
                     {currentQuestion.type === 'numerical' ? (
                       <div className="max-w-xs">
-                        <Label className="mb-2 block">Your Answer</Label>
+                        <Label className="mb-2 block text-slate-600">Your Answer</Label>
                         <Input
                           type="number"
                           step="any"
-                          placeholder="Enter your answer"
+                          placeholder="Enter value"
                           value={answers[currentQuestion.id] || ''}
                           onChange={(e) => {
                             const val = e.target.value;
                             setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
                           }}
-                          className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800"
+                          className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12"
                         />
                       </div>
                     ) : (
@@ -1081,29 +1192,31 @@ export default function TestPage() {
                                 handleAnswerSelect(currentQuestion.id, key);
                               }
                             }}
-                            className={`flex items-start gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all
-                                                 ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}
+                            className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all group relative
+                                                 ${isSelected
+                                ? 'border-blue-500 bg-blue-50/50 shadow-sm ring-1 ring-blue-500/20'
+                                : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'}
                                              `}
                           >
-                            <div className={`h-8 w-8 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors
+                            {/* Option Key (A, B, C...) */}
+                            <div className={`h-7 w-7 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors mt-0.5
                                                  ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
-                                                 ${isSelected ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'}
+                                                 ${isSelected
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-blue-400 group-hover:text-blue-600'}
                                              `}>
-                              {currentQuestion.type === 'multiple' && isSelected && <CheckCircle className="w-5 h-5 absolute" />}
-                              <span className={currentQuestion.type === 'multiple' && isSelected ? 'opacity-0' : ''}>{key}</span>
+                              {currentQuestion.type === 'multiple' && isSelected ? <CheckCircle className="w-4 h-4" /> : key}
                             </div>
 
+                            {/* Option Text/Image */}
                             <div className="flex-1 flex flex-col gap-2">
-                              {text && <div className="text-base break-words pt-1"><Latex>{text}</Latex></div>}
+                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-normal break-words pt-0.5"><Latex>{text}</Latex></div>}
                               {optionImage && (
                                 <img
                                   src={optionImage.trim()}
                                   alt={`Option ${key}`}
                                   referrerPolicy="no-referrer"
-                                  className="max-w-[200px] max-h-[200px] rounded-md border object-contain"
-                                  onError={(e) => {
-                                    // Simple Error Handler
-                                  }}
+                                  className="max-w-[200px] max-h-[200px] rounded-md border border-slate-200 object-contain bg-white"
                                 />
                               )}
                             </div>
@@ -1119,81 +1232,120 @@ export default function TestPage() {
 
           {/* Bottom Controls */}
           {/* Fixed Bottom for Mobile, Absolute for Desktop Column */}
-          <div className="fixed lg:absolute bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-2 rounded-b-lg transition-all">
+          {/* Bottom Controls - Static at bottom of Left Panel */}
+          <div className="flex-none z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-2 transition-all">
             <div className="flex items-center justify-between gap-2 md:gap-4">
-
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentQuestionIndex === 0}
-                size="sm"
-                className="md:w-auto md:px-3 md:py-1 h-9"
-              >
-                <ChevronLeft className="w-6 h-6 md:w-4 md:h-4 md:mr-1" />
-                <span className="hidden md:inline">Previous</span>
-              </Button>
-
-              <div className="flex gap-2 md:gap-3">
+              <div className="flex gap-2 md:gap-3 justify-between w-full">
+                {/* Previous (Back Icon) */}
                 <Button
                   variant="outline"
-                  onClick={() => handleClearResponse(currentQuestion.id)}
-                  disabled={!answers[currentQuestion.id]}
-                  size="sm"
-                  className="text-muted-foreground border-dashed md:border-solid md:text-slate-600 md:hover:text-slate-900 h-9"
+                  onClick={handlePrevious}
+                  disabled={currentQuestionIndex === 0}
+                  size="icon"
+                  className="h-9 w-9"
+                  title="Previous Question"
                 >
-                  <span className="hidden md:inline mr-2">Clear</span>
-                  <span className="md:hidden">Clear</span>
+                  <ChevronLeft className="w-6 h-6" />
                 </Button>
 
-                <Button
-                  variant={markedForReview.has(currentQuestion.id) ? "secondary" : "ghost"}
-                  onClick={() => toggleMarkForReview(currentQuestion.id)}
-                  className={`
+                <div className="flex gap-2">
+                  {/* Clear Response */}
+                  <Button
+                    variant="outline"
+                    onClick={() => handleClearResponse(currentQuestion.id)}
+                    disabled={!answers[currentQuestion.id]}
+                    size="sm"
+                    className="text-muted-foreground border-dashed md:border-solid md:text-slate-600 md:hover:text-slate-900 h-9"
+                  >
+                    <span className="hidden md:inline">Clear</span>
+                    <span className="md:hidden">Clear</span>
+                  </Button>
+
+                  {/* Mark for Review (Purple - Toggle) */}
+                  <Button
+                    variant={markedForReview.has(currentQuestion.id) ? "secondary" : "ghost"}
+                    onClick={() => toggleMarkForReview(currentQuestion.id)}
+                    className={`
                             ${markedForReview.has(currentQuestion.id)
-                      ? "border-yellow-200 bg-yellow-50 text-yellow-800"
-                      : "text-slate-600 hover:text-slate-900"}
+                        ? "border-purple-200 bg-purple-50 text-purple-800"
+                        : "text-slate-600 hover:text-slate-900"}
                         `}
-                  title="Mark for Review"
-                  size="sm"
-                >
-                  <Flag className={`w-4 h-4 ${markedForReview.has(currentQuestion.id) ? "md:mr-2 fill-yellow-500 text-yellow-500" : ""}`} />
-                  <span className={`hidden ${markedForReview.has(currentQuestion.id) ? "md:inline" : ""}`}>
-                    Marked
-                  </span>
-                </Button>
+                    title="Mark for Review"
+                    size="sm"
+                  >
+                    <Flag className={`w-4 h-4 ${markedForReview.has(currentQuestion.id) ? "md:mr-2 fill-purple-500 text-purple-500" : ""}`} />
+                    <span className={`hidden ${markedForReview.has(currentQuestion.id) ? "md:inline" : ""}`}>
+                      Review
+                    </span>
+                    <span className={`hidden ${!markedForReview.has(currentQuestion.id) ? "md:inline" : ""}`}>
+                      Review
+                    </span>
+                  </Button>
 
-                <Button
-                  onClick={handleSaveAndNext}
-                  size="sm"
-                  className="px-3 md:px-4 md:py-1 h-9"
-                  disabled={currentQuestionIndex === test.questions.length - 1}
-                >
-                  <span className="hidden md:inline mr-2">Save & Next</span>
-                  <span className="md:hidden">Save & Next</span>
-                  <ChevronRight className="w-4 h-4 ml-0.5 md:ml-0" />
-                </Button>
+                  {/* Save & Mark for Review (Purple + Green intent) */}
+                  <Button
+                    onClick={handleSaveAndMarkReview}
+                    size="sm"
+                    disabled={currentQuestionIndex === test.questions.length - 1 || !answers[currentQuestion.id]}
+                    className={`
+                    px-3 md:px-4 md:py-1 h-9 text-white transition-all
+                    ${!answers[currentQuestion.id]
+                        ? "bg-purple-300 dark:bg-purple-900/50 cursor-not-allowed opacity-70"
+                        : "bg-purple-600 hover:bg-purple-700"}
+                  `}
+                  >
+                    <span className="hidden md:inline">Ans & Review</span>
+                    <span className="md:hidden">Ans & Rev</span>
+                  </Button>
+
+                  {/* Save & Next (Blue) */}
+                  <Button
+                    onClick={handleSaveAndNext}
+                    size="sm"
+                    className="bg-[#0073E6] hover:bg-[#005fb8] text-white px-3 md:px-4 md:py-1 h-9"
+                    disabled={currentQuestionIndex === test.questions.length - 1}
+                  >
+                    <span className="hidden md:inline mr-2">Save & Next</span>
+                    <span className="md:hidden">Save & Next</span>
+                    <ChevronRight className="w-4 h-4 ml-0.5 md:ml-0" />
+                  </Button>
+
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Spacer to prevent content from being hidden behind sticky bar */}
-          <div className="block h-6 md:h-6"></div>
+          {/* Spacer removed as bottom bar is static */}
         </div>
 
-        {/* Right Side Palette (Desktop) - Independently Scrollable */}
-        <div className="hidden lg:block lg:col-span-3 lg:h-full lg:overflow-hidden">
+        {/* Right Side Palette (Desktop) - Independently Scrollable (Right Panel) */}
+        <div className={`
+            flex-none h-full overflow-hidden border-l dark:border-slate-800 transition-all duration-300 ease-in-out
+            ${isPaletteCollapsed ? 'w-0 opacity-0 pointer-events-none border-l-0' : 'w-80 opacity-100 hidden lg:flex flex-col'}
+        `}>
 
           <Card className="h-full flex flex-col shadow-md border-t-4 border-t-slate-500 dark:border-t-slate-600 bg-white dark:bg-slate-900 border-x dark:border-x-slate-800 border-b dark:border-b-slate-800">
             <CardContent className="p-4 flex-1 overflow-y-auto overflow-x-hidden">
-              <h3 className="font-semibold mb-4 text-sm uppercase tracking-wide text-muted-foreground">Question Palette</h3>
-              <QuestionPalette />
+              <h3 className="font-semibold mb-2 text-sm uppercase tracking-wide text-muted-foreground">Question Palette</h3>
 
-              <div className="grid grid-cols-2 gap-2 mt-6 text-xs text-muted-foreground">
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500 border border-green-600 rounded"></div> Answered</div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div> Review</div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 border border-red-600 rounded"></div> Unanswered</div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 bg-white border border-slate-200 rounded"></div> Not Visited</div>
+              <div className="mb-4">
+                <div className="grid grid-cols-2 gap-2 mb-2 text-[10px] text-muted-foreground">
+                  <div className="flex items-center gap-2"><div className="w-5 h-5 bg-white border border-slate-200 rounded-md text-[9px] flex items-center justify-center font-bold">1</div> Not Visited</div>
+                  <div className="flex items-center gap-2"><div className="w-5 h-5 bg-red-500 border border-red-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white clip-polygon-answer">2</div> Not Ans</div>
+                  <div className="flex items-center gap-2"><div className="w-5 h-5 bg-green-500 border border-green-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white">3</div> Answered</div>
+                  <div className="flex items-center gap-2"><div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white">4</div> Review</div>
+                  <div className="flex items-center gap-2 relative">
+                    <div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white relative">
+                      5
+                      <div className="absolute -bottom-1 -right-1 bg-white rounded-full"><CheckCircle className="w-2.5 h-2.5 text-green-500 fill-white" /></div>
+                    </div>
+                    <span className="ml-2 leading-tight">Ans & Review</span>
+                  </div>
+                </div>
+                <hr className="border-slate-200 dark:border-slate-700" />
               </div>
+
+              <QuestionPalette />
             </CardContent>
           </Card>
         </div>
