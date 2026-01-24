@@ -141,7 +141,7 @@ export default function SettingsPage() {
                         </CardContent>
                         <CardFooter className="bg-slate-50/50 border-t px-6 py-4">
                             <p className="text-xs text-muted-foreground">
-                                For billing support or refunds, please contact <a href="mailto:support@testoza.com" className="underline text-primary">support@testoza.com</a>.
+                                For billing support or refunds, please contact <a href="mailto:support@testoza.com" className="underline text-primary">ziptrip.info.mail@gmail.com</a>.
                             </p>
                         </CardFooter>
                     </Card>
