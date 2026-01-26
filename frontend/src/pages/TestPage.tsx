@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,7 +25,6 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Latex from 'react-latex-next';
 import ScientificCalculator from '@/components/ScientificCalculator';
-import { Calculator } from 'lucide-react';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -70,6 +69,70 @@ export default function TestPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  // Palette Resize State
+  const [paletteWidth, setPaletteWidth] = useState(320);
+  const isResizingRef = useRef(false);
+
+  // 1. Browser Back Button Prevention
+  // 1. Browser Back Button Prevention
+  useEffect(() => {
+    if (!test?.settings?.block_back_button) return;
+
+    // Push current state to history stack
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = (e: PopStateEvent) => {
+      // Prevent back navigation
+      window.history.pushState(null, "", window.location.href);
+      toast.warning("Back navigation is disabled during the test.");
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [test?.settings?.block_back_button]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingRef.current) return;
+
+      const newWidth = window.innerWidth - e.clientX;
+      const minWidth = 240;
+      const maxWidth = window.innerWidth * 0.25; // Max 25% of screen width
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        setPaletteWidth(newWidth);
+      } else if (newWidth > maxWidth) {
+        setPaletteWidth(maxWidth);
+      } else if (newWidth < minWidth) {
+        setPaletteWidth(minWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isResizingRef.current) {
+        isResizingRef.current = false;
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  const startResizing = () => {
+    isResizingRef.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
 
   // Resume Session State
   const [showResumeDialog, setShowResumeDialog] = useState(false);
@@ -174,7 +237,19 @@ export default function TestPage() {
   };
 
   // Proctoring State
-  const [warnings, setWarnings] = useState(0);
+  // Warning State - Initialize from saved state to persist across refreshes
+  const [warnings, setWarnings] = useState<number>(() => {
+    if (!test?.id || !user?.id) return 0;
+    const saved = localStorage.getItem(`test_warnings_${user.id}_${test.id}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
+  // Persist warnings whenever they change
+  useEffect(() => {
+    if (test?.id && user?.id) {
+      localStorage.setItem(`test_warnings_${user.id}_${test.id}`, warnings.toString());
+    }
+  }, [warnings, test?.id, user?.id]);
   const MAX_WARNINGS = 2; // Auto-submit on 3rd violation
 
   // Proctoring: Full Screen & Tab Switching & Action Blocking
@@ -341,12 +416,28 @@ export default function TestPage() {
   };
 
   const handleSaveAndNext = () => {
+    // UPDATED: Allow last question save
+    if (test && currentQuestionIndex === test.questions.length - 1) {
+      toast.info("This is the last question. Please click Submit Test at the top right.");
+      // We do not return here, we let it proceed if we wanted to just save, but the button is "Save & Next"
+      // Since there is no "Next", we just save (which is done by state update).
+      // Actually, handleNext() just changes index.
+      return;
+    }
     handleNext();
   };
 
   const handleSaveAndMarkReview = () => {
     if (test) {
+      // UPDATED: Allow marking for review even on last question
       setMarkedForReview(prev => new Set(prev).add(test.questions[currentQuestionIndex].id));
+
+      // If it's the last question, just save and showing toast, don't try to go next
+      if (currentQuestionIndex === test.questions.length - 1) {
+        toast.success("Question marked for review.");
+        return;
+      }
+
       handleNext();
     }
   };
@@ -558,7 +649,7 @@ export default function TestPage() {
                     const isVisited = visited.has(globalIdx);
                     const isCurrent = currentQuestionIndex === globalIdx;
 
-                    let baseClasses = "h-10 w-10 flex items-center justify-center text-sm font-semibold transition-all relative rounded-md border";
+                    let baseClasses = "h-8 w-8 flex items-center justify-center text-xs font-semibold transition-all relative rounded-md border";
                     let colorClasses = "bg-white border-slate-300 text-slate-700 hover:bg-slate-50";
 
                     // 1. Answered & Marked (Purple Square + Green Dot)
@@ -631,7 +722,7 @@ export default function TestPage() {
             const isVisited = visited.has(idx);
             const isCurrent = currentQuestionIndex === idx;
 
-            let baseClasses = "h-11 w-11 flex items-center justify-center text-base font-semibold transition-all relative rounded-md border";
+            let baseClasses = "h-8 w-8 flex items-center justify-center text-xs font-semibold transition-all relative rounded-md border";
             let colorClasses = "bg-white border-slate-300 text-slate-700 hover:bg-slate-50";
 
             // 1. Answered & Marked (Purple Square + Green Dot)
@@ -731,6 +822,19 @@ export default function TestPage() {
           })()}
         </div>
         <div className="flex items-center gap-2">
+          {/* Warning Counter - Yellow Icon + Count */}
+          {test?.settings?.tab_switch_mode !== 'off' && (
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+              <TriangleAlert className={`w-4 h-4 ${warnings > 0 ? 'fill-amber-100 text-amber-600' : 'text-slate-400'}`} />
+              <span>
+                {test.settings.tab_switch_mode === 'strict'
+                  ? `${warnings}/1`
+                  : `${warnings}/3`
+                }
+              </span>
+            </div>
+          )}
+
           {test.has_scientific_calculator && (
             <>
               <Button
@@ -1036,7 +1140,7 @@ export default function TestPage() {
                               </div>
 
                               <div className="flex-1 flex flex-col gap-2">
-                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-normal break-words pt-0.5"><Latex>{text}</Latex></div>}
+                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex>{text}</Latex></div>}
                                 {optionImage && (
                                   <img
                                     src={optionImage.trim()}
@@ -1210,7 +1314,7 @@ export default function TestPage() {
 
                             {/* Option Text/Image */}
                             <div className="flex-1 flex flex-col gap-2">
-                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-normal break-words pt-0.5"><Latex>{text}</Latex></div>}
+                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex>{text}</Latex></div>}
                               {optionImage && (
                                 <img
                                   src={optionImage.trim()}
@@ -1286,7 +1390,7 @@ export default function TestPage() {
                   <Button
                     onClick={handleSaveAndMarkReview}
                     size="sm"
-                    disabled={currentQuestionIndex === test.questions.length - 1 || !answers[currentQuestion.id]}
+                    disabled={!answers[currentQuestion.id]}
                     className={`
                     px-3 md:px-4 md:py-1 h-9 text-white transition-all
                     ${!answers[currentQuestion.id]
@@ -1303,7 +1407,7 @@ export default function TestPage() {
                     onClick={handleSaveAndNext}
                     size="sm"
                     className="bg-[#0073E6] hover:bg-[#005fb8] text-white px-3 md:px-4 md:py-1 h-9"
-                    disabled={currentQuestionIndex === test.questions.length - 1}
+                    disabled={false}  // Enabled for all, handler checks if last
                   >
                     <span className="hidden md:inline mr-2">Save & Next</span>
                     <span className="md:hidden">Save & Next</span>
@@ -1319,9 +1423,17 @@ export default function TestPage() {
         </div>
 
         {/* Right Side Palette (Desktop) - Independently Scrollable (Right Panel) */}
-        <div className={`
+        {!isPaletteCollapsed && (
+          <div
+            className="hidden lg:block w-1 hover:bg-blue-400 cursor-col-resize z-50 transition-colors bg-transparent active:bg-blue-600"
+            onMouseDown={startResizing}
+          />
+        )}
+        <div
+          style={{ width: isPaletteCollapsed ? 0 : paletteWidth }}
+          className={`
             flex-none h-full overflow-hidden border-l dark:border-slate-800 transition-all duration-300 ease-in-out
-            ${isPaletteCollapsed ? 'w-0 opacity-0 pointer-events-none border-l-0' : 'w-80 opacity-100 hidden lg:flex flex-col'}
+            ${isPaletteCollapsed ? 'opacity-0 pointer-events-none border-l-0' : 'opacity-100 hidden lg:flex flex-col'}
         `}>
 
           <Card className="h-full flex flex-col shadow-md border-t-4 border-t-slate-500 dark:border-t-slate-600 bg-white dark:bg-slate-900 border-x dark:border-x-slate-800 border-b dark:border-b-slate-800">
@@ -1356,11 +1468,29 @@ export default function TestPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Submit Test?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have answered {Object.keys(answers).length} out of {test.questions.length} questions.
-              {markedForReview.size > 0 && ` There are ${markedForReview.size} questions marked for review.`}
-              <br /><br />
-              Are you sure you want to finish the test? You cannot change your answers after submitting.
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 pt-2">
+                <p>Are you sure you want to finish the test? You cannot change your answers after submitting.</p>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-slate-50 p-3 rounded-md border text-center">
+                    <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Total Questions</div>
+                    <div className="text-xl font-bold text-slate-800">{test.questions.length}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-md border border-green-100 text-center">
+                    <div className="text-xs text-green-600 uppercase font-bold tracking-wider mb-1">Answered</div>
+                    <div className="text-xl font-bold text-green-700">{Object.keys(answers).length}</div>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-md border border-purple-100 text-center">
+                    <div className="text-xs text-purple-600 uppercase font-bold tracking-wider mb-1">Marked for Review</div>
+                    <div className="text-xl font-bold text-purple-700">{markedForReview.size}</div>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-md border border-red-100 text-center">
+                    <div className="text-xs text-red-600 uppercase font-bold tracking-wider mb-1">Unanswered</div>
+                    <div className="text-xl font-bold text-red-700">{test.questions.length - Object.keys(answers).length}</div>
+                  </div>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

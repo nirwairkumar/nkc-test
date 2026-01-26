@@ -198,7 +198,7 @@ RETURN ONLY RAW JSON. NO TEXT BEFORE OR AFTER.
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="link" className="text-xs text-muted-foreground h-auto p-0 underline decoration-dashed underline-offset-4 hover:text-primary">
-                    How do I format the file? (Guide)
+                    format the file. (Guide)
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

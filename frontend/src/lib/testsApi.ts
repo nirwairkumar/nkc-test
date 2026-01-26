@@ -58,6 +58,7 @@ export interface TestSettings {
         enabled: boolean;
         fields: { label: string; required: boolean }[];
     };
+    block_back_button?: boolean;
 }
 
 
