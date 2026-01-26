@@ -318,9 +318,7 @@ export default function TestIntroPage() {
                             <li>Total duration of the test is <strong>{test.duration} minutes</strong>.</li>
                             <li>Total Marks: <strong>{totalMaxMarks}</strong></li>
                             <li>Once you start, the timer will begin and cannot be paused.</li>
-                            {test.settings?.force_fullscreen && (
-                                <li className="text-red-600 font-medium">Full Screen Mode is mandatory. Exiting may submit the test.</li>
-                            )}
+
                         </ul>
 
                         {/* Advance Rules Section */}
@@ -331,7 +329,8 @@ export default function TestIntroPage() {
                             (test.settings.tab_switch_mode && test.settings.tab_switch_mode !== 'off') ||
                             test.settings.show_results_immediate === false ||
                             test.settings.strict_timer ||
-                            test.settings.shuffle_questions
+                            test.settings.shuffle_questions ||
+                            test.settings.force_fullscreen
                         )) && (
                                 <>
                                     <Separator className="my-3" />
@@ -361,9 +360,15 @@ export default function TestIntroPage() {
                                                 <strong>Tab Switching:</strong> Strictly PROHIBITED. Test will auto-submit if you switch tabs.
                                             </li>
                                         )}
-                                        {test.settings.tab_switch_mode === 'warning' && (
+                                        {test.settings.tab_switch_mode === 'warming' && (
                                             <li className="text-amber-600 font-medium">
-                                                <strong>Tab Switching:</strong> Restricted. You will be warned/penalized for switching tabs.
+                                                <strong>Tab Switching:</strong> Strictly PROHIBITED. Test may auto-submit if you switch tabs.
+                                            </li>
+                                        )}
+
+                                        {test.settings.force_fullscreen && (
+                                            <li className="text-red-600 font-medium">
+                                                <strong>Full Screen:</strong> Mandatory. Exiting full screen may submit the test.
                                             </li>
                                         )}
 

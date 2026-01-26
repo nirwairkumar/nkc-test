@@ -137,6 +137,14 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                             </div>
                                             <Switch checked={settings.disable_actions} onCheckedChange={(c) => updateSetting('disable_actions', c)} />
                                         </div>
+                                        <div className="flex items-center justify-between border p-4 rounded-lg">
+                                            <div className="space-y-0.5">
+                                                <Label>Block Back Button</Label>
+                                                <p className="text-xs text-muted-foreground">Prevent accidental navigation</p>
+                                            </div>
+                                            {/* @ts-ignore - Setting might not be typed yet */}
+                                            <Switch checked={settings.block_back_button || false} onCheckedChange={(c) => updateSetting('block_back_button', c)} />
+                                        </div>
                                     </div>
                                 </div>
                             </TabsContent>

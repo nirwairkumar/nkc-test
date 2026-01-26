@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput } from '@/components/ui/IMEInput';
@@ -102,7 +102,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     const [openCategoryCombobox, setOpenCategoryCombobox] = useState(false);
 
     // Tags State
-    // Tags State
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState("");
 
@@ -140,6 +139,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     // Auto Save State
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    // UX State for Image Inputs
+    const [expandedImageInputs, setExpandedImageInputs] = useState<Record<string, boolean>>({});
+
+    const toggleImageInput = (id: string | number) => {
+        setExpandedImageInputs(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
 
     useEffect(() => {
         const handleOnline = () => {
@@ -1013,15 +1022,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     };
 
     return (
-        <div className="container mx-auto py-8">
-            <div className="mb-6 flex items-center justify-between">
+        <div className="container mx-auto py-4 px-0 sm:px-6">
+            <div className="mb-6 flex flex-wrap gap-y-4 items-center justify-between px-4 sm:px-0">
                 <div className="flex items-center gap-4">
                     {onCancel && (
                         <Button variant="ghost" size="icon" onClick={onCancel}>
                             <ArrowLeft className="w-5 h-5" />
                         </Button>
                     )}
-                    <h1 className="text-3xl font-bold">{isEditMode ? 'Edit Test' : 'Create New Test'}</h1>
+                    <h1 className="text-2xl font-bold text-slate-800">{isEditMode ? 'Edit Test' : 'Create New Test'}</h1>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -1069,7 +1078,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             )}
 
             <div className="grid gap-6">
-                <Card>
+                <Card className="rounded-none sm:rounded-xl border-x-0 sm:border">
                     <div className="flex items-center justify-center gap-6 p-6 pb-0">
                         <div className="relative group shrink-0">
                             {institutionLogo && isPremium && (
@@ -1099,7 +1108,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                     {institutionLogo ? (
                                         <img src={institutionLogo} alt="Logo" className="w-full h-full object-contain" />
                                     ) : (
-                                        <Upload className="w-5 h-5 text-slate-400" />
+                                        <>
+                                            <Upload className="w-5 h-5 text-slate-400" />
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Logo</span>
+                                        </>
                                     )}
                                     {!isPremium && !institutionLogo && (
                                         <div className="absolute inset-0 bg-slate-100/80 flex items-center justify-center">
@@ -1143,165 +1155,170 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                         </div>
                     </div>
 
-                    <CardHeader><CardTitle className="text-lg">Test Details</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label>Test Title</Label>
-                            <Input placeholder="Enter test title..." value={title} onChange={e => setTitle(e.target.value)} />
-                        </div>
+                    <CardHeader className="pb-3"><CardTitle className="text-lg">Test Details</CardTitle></CardHeader>
+                    <CardContent className="space-y-4 px-6 pb-6 pt-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Left Column: Title & Description */}
+                            <div className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label className="text-slate-600 font-semibold">Test Title</Label>
+                                    <Input placeholder="Enter test title..." value={title} onChange={e => setTitle(e.target.value)} className="text-slate-800 placeholder:text-slate-400" />
+                                </div>
 
-
-                        <div className="flex flex-col space-y-2">
-                            <Label>Categories</Label>
-                            <Popover open={openCategoryCombobox} onOpenChange={setOpenCategoryCombobox}>
-                                {/* ... Existing Popover code ... */}
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={openCategoryCombobox}
-                                        className="w-full justify-between"
-                                    >
-                                        {selectedCategories.length > 0
-                                            ? `${selectedCategories.length} selected`
-                                            : "Select categories..."}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[400px] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Search category..." />
-                                        <CommandEmpty>
-                                            <div className="p-2 text-sm text-muted-foreground text-center">
-                                                No category found. Select "Other" to add a custom one.
-                                            </div>
-                                        </CommandEmpty>
-                                        <CommandGroup>
-                                            {categories.map((category) => (
-                                                <CommandItem
-                                                    key={category.id}
-                                                    value={category.name}
-                                                    onSelect={() => {
-                                                        toggleCategory(category.id);
-                                                    }}
-                                                >
-                                                    <Check
-                                                        className={cn(
-                                                            "mr-2 h-4 w-4",
-                                                            selectedCategories.includes(category.id) ? "opacity-100" : "opacity-0"
-                                                        )}
-                                                    />
-                                                    {category.name}
-                                                </CommandItem>
-                                            ))}
-                                            <CommandItem
-                                                value="Other"
-                                                onSelect={() => {
-                                                    setShowOtherCategory(true);
-                                                    setOpenCategoryCombobox(false);
-                                                }}
-                                                className="border-t mt-1 font-medium text-blue-600"
-                                            >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Other (Add Custom)
-                                            </CommandItem>
-                                        </CommandGroup>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-
-                            {/* Selected Categories Badges */}
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {selectedCategories.map(catId => {
-                                    const cat = categories.find(c => c.id === catId);
-                                    if (!cat) return null;
-                                    return (
-                                        <Badge key={catId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1">
-                                            {cat.name}
-                                            <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => toggleCategory(catId)} />
-                                        </Badge>
-                                    )
-                                })}
-                            </div>
-
-                            {/* OTHER / CUSTOM CATEGORY INPUT */}
-                            {showOtherCategory && (
-                                <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <Label className="text-blue-600">Custom Category Name</Label>
-                                    <div className="flex gap-2 mt-1.5">
-                                        <Textarea
-                                            value={customCategory}
-                                            onChange={(e) => setCustomCategory(e.target.value)}
-                                            placeholder="Enter your custom category name here..."
-                                            className="min-h-[60px] resize-none"
-                                        />
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="mt-1 hover:bg-slate-100"
-                                            onClick={() => {
-                                                setShowOtherCategory(false);
-                                                setCustomCategory("");
-                                            }}
-                                            title="Remove Custom Category"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
+                                <div className="grid gap-2">
+                                    <div className="flex justify-between items-center">
+                                        <Label className="text-slate-600 font-semibold">Description (Short)</Label>
+                                        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
+                                            <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
+                                            <Select value={descriptionLanguage} onValueChange={(val: 'en' | 'hi') => setDescriptionLanguage(val)}>
+                                                <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
+                                                    <SelectValue placeholder="Language" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="en">English</SelectItem>
+                                                    <SelectItem value="hi">Hindi</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground mt-1">
-                                        * This will be saved as a searchable tag for this test.
-                                    </p>
+                                    <IMEInput
+                                        typingMode={descriptionLanguage}
+                                        value={description}
+                                        onChange={setDescription}
+                                        placeholder="Brief description of the test"
+                                        className="text-slate-800 placeholder:text-slate-400"
+                                    />
                                 </div>
-                            )}
-                        </div>
+                            </div>
 
-                        {/* TAGS INPUT SECTION */}
-                        <div className="space-y-2">
-                            <Label>Tags (Press Enter to add)</Label>
-                            <Input
-                                placeholder="Add a tag..."
-                                value={tagInput}
-                                onChange={(e) => setTagInput(e.target.value)}
-                                onKeyDown={handleAddTag}
-                            />
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {tags.map((tag, idx) => (
-                                    <Badge key={idx} variant="outline" className="pl-2 pr-1 py-1 flex items-center gap-1 bg-slate-50">
-                                        #{tag}
-                                        <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeTag(tag)} />
-                                    </Badge>
-                                ))}
+                            {/* Right Column: Categories & Tags */}
+                            <div className="space-y-4">
+                                <div className="flex flex-col space-y-2">
+                                    <Label className="text-slate-600 font-semibold">Categories</Label>
+                                    <Popover open={openCategoryCombobox} onOpenChange={setOpenCategoryCombobox}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={openCategoryCombobox}
+                                                className="w-full justify-between text-slate-700 border-slate-200"
+                                            >
+                                                {selectedCategories.length > 0
+                                                    ? `${selectedCategories.length} selected`
+                                                    : "Select categories..."}
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-slate-400" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[300px] sm:w-[400px] p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Search category..." />
+                                                <CommandEmpty>
+                                                    <div className="p-2 text-sm text-muted-foreground text-center">
+                                                        No category found. Select "Other" to add a custom one.
+                                                    </div>
+                                                </CommandEmpty>
+                                                <CommandGroup>
+                                                    {categories.map((category) => (
+                                                        <CommandItem
+                                                            key={category.id}
+                                                            value={category.name}
+                                                            onSelect={() => {
+                                                                toggleCategory(category.id);
+                                                            }}
+                                                        >
+                                                            <Check
+                                                                className={cn(
+                                                                    "mr-2 h-4 w-4",
+                                                                    selectedCategories.includes(category.id) ? "opacity-100" : "opacity-0"
+                                                                )}
+                                                            />
+                                                            {category.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                    <CommandItem
+                                                        value="Other"
+                                                        onSelect={() => {
+                                                            setShowOtherCategory(true);
+                                                            setOpenCategoryCombobox(false);
+                                                        }}
+                                                        className="border-t mt-1 font-medium text-blue-600"
+                                                    >
+                                                        <Plus className="mr-2 h-4 w-4" />
+                                                        Other (Add Custom)
+                                                    </CommandItem>
+                                                </CommandGroup>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+
+                                    {/* Selected Categories Badges */}
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {selectedCategories.map(catId => {
+                                            const cat = categories.find(c => c.id === catId);
+                                            if (!cat) return null;
+                                            return (
+                                                <Badge key={catId} variant="secondary" className="pl-2 pr-1 py-1 flex items-center gap-1 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200">
+                                                    {cat.name}
+                                                    <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => toggleCategory(catId)} />
+                                                </Badge>
+                                            )
+                                        })}
+                                    </div>
+
+                                    {/* OTHER / CUSTOM CATEGORY INPUT */}
+                                    {showOtherCategory && (
+                                        <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <Label className="text-blue-600">Custom Category Name</Label>
+                                            <div className="flex gap-2 mt-1.5">
+                                                <Textarea
+                                                    value={customCategory}
+                                                    onChange={(e) => setCustomCategory(e.target.value)}
+                                                    placeholder="Enter your custom category name here..."
+                                                    className="min-h-[60px] resize-none"
+                                                />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="mt-1 hover:bg-slate-100"
+                                                    onClick={() => {
+                                                        setShowOtherCategory(false);
+                                                        setCustomCategory("");
+                                                    }}
+                                                    title="Remove Custom Category"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground mt-1">
+                                                * This will be saved as a searchable tag for this test.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-slate-600 font-semibold">Tags (Press Enter to add)</Label>
+                                    <Input
+                                        placeholder="Add a tag..."
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        onKeyDown={handleAddTag}
+                                        className="text-slate-800 placeholder:text-slate-400"
+                                    />
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {tags.map((tag, idx) => (
+                                            <Badge key={idx} variant="outline" className="pl-2 pr-1 py-1 flex items-center gap-1 bg-slate-50 text-slate-600 border-slate-200">
+                                                #{tag}
+                                                <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeTag(tag)} />
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div className="grid gap-2">
-                            <div className="flex justify-between items-center">
-                                <Label>Description (Short)</Label>
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
-                                    <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
-                                    <Select value={descriptionLanguage} onValueChange={(val: 'en' | 'hi') => setDescriptionLanguage(val)}>
-                                        <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
-                                            <SelectValue placeholder="Language" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="en">English</SelectItem>
-                                            <SelectItem value="hi">Hindi</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <IMEInput
-                                as="textarea"
-                                typingMode={descriptionLanguage}
-                                value={description}
-                                onChange={setDescription}
-                                placeholder="Brief description of the test"
-                                className="min-h-[80px]"
-                            />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label>Test Summary & Instructions (Rich Text)</Label>
+                            <Label className="text-slate-600 font-semibold">Test Summary & Instructions (Rich Text)</Label>
                             <RichTextEditor
                                 value={revisionNotes}
                                 onChange={setRevisionNotes}
@@ -1310,12 +1327,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                         </div>
 
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                            <div><Label>Time (mins)</Label><Input type="number" value={time} onChange={e => setTime(parseInt(e.target.value))} /></div>
+                            <div><Label className="text-slate-600 font-semibold">Time (mins)</Label><Input type="number" value={time} onChange={e => setTime(parseInt(e.target.value))} className="text-slate-800" /></div>
                             <div>
-                                <Label>Visibility</Label>
+                                <Label className="text-slate-600 font-semibold">Visibility</Label>
                                 <div className="flex items-center space-x-2 h-10 border rounded-md px-3 bg-white">
                                     <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-                                    <Label className="cursor-pointer" onClick={() => setIsPublic(!isPublic)}>{isPublic ? 'Public' : 'Private'}</Label>
+                                    <Label className="cursor-pointer text-slate-700" onClick={() => setIsPublic(!isPublic)}>{isPublic ? 'Public' : 'Private'}</Label>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1.5">
@@ -1332,16 +1349,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                 </Label>
                                 <div className="flex items-center space-x-2 h-10 border rounded-md px-3 bg-white w-full">
                                     <Switch checked={hasScientificCalculator} onCheckedChange={setHasScientificCalculator} />
-                                    <Label className="cursor-pointer text-sm font-medium" onClick={() => setHasScientificCalculator(!hasScientificCalculator)}>
+                                    <Label className="cursor-pointer text-sm font-medium text-slate-700" onClick={() => setHasScientificCalculator(!hasScientificCalculator)}>
                                         {hasScientificCalculator ? 'On' : 'Off'}
                                     </Label>
                                 </div>
                             </div>
                             <div>
-                                <Label>section-wise-questions</Label>
+                                <Label className="text-slate-600 font-semibold">section-wise-questions</Label>
                                 <div className="flex items-center space-x-2 h-10 border rounded-md px-3 bg-white">
                                     <Switch checked={enableSectionMode} onCheckedChange={toggleSectionMode} />
-                                    <Label className="cursor-pointer" onClick={() => toggleSectionMode(!enableSectionMode)}>{enableSectionMode ? 'On' : 'Off'}</Label>
+                                    <Label className="cursor-pointer text-slate-700" onClick={() => toggleSectionMode(!enableSectionMode)}>{enableSectionMode ? 'On' : 'Off'}</Label>
                                 </div>
                             </div>
                         </div>
@@ -1384,7 +1401,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                     const style = SECTION_STYLES[sIdx % SECTION_STYLES.length];
 
                                     return (
-                                        <Card key={section.id} className={`border-2 shadow-md overflow-hidden ${style.border}`}>
+                                        <Card key={section.id} className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2`}>
                                             <div className={`${style.header} px-4 py-3 border-b flex flex-wrap gap-4 items-end transition-colors`}>
                                                 <div className="flex-1 space-y-1">
                                                     <Label className="text-xs font-bold text-slate-500 uppercase">Section Name</Label>
@@ -1436,186 +1453,301 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                         const isInGroup = !!currentGroupId;
 
                                                         return (
-                                                            <div key={q.id} className={isInGroup ? "mb-0" : "mb-4"}>
+                                                            <div key={q.id} className={isInGroup ? "mb-0" : "mb-6"}>
                                                                 {/* Passage Header - Renders only at the start of a group inside section */}
                                                                 {isStartOfGroup && (
-                                                                    <div className="rounded-t-lg border-2 border-b-0 border-blue-500 bg-blue-50/30 overflow-hidden mt-4">
-                                                                        <div className="bg-blue-100/80 px-4 py-3 border-b-2 border-blue-500 flex justify-between items-center">
-                                                                            <h3 className="text-sm font-bold text-blue-700 flex items-center gap-2">
-                                                                                <FileText className="w-4 h-4" /> Passage Reference
+                                                                    <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
+                                                                        <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
+                                                                            <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
+                                                                                <FileText className="w-4 h-4" /> Comprehension Passage
                                                                             </h3>
                                                                         </div>
-                                                                        <div className="p-4">
+                                                                        <div className="p-6">
                                                                             <RichTextEditor
                                                                                 value={q.passageContent || ''}
                                                                                 onChange={(val) => updatePassageContentInSection(sIdx, q.groupId!, val)}
-                                                                                placeholder="Enter the passage, story, or comprehension text here..."
-                                                                                className="min-h-[150px] bg-white border-blue-100 shadow-sm"
+                                                                                placeholder="Write or paste the passage text here..."
+                                                                                className="min-h-[150px] bg-white border-indigo-100 shadow-sm rounded-lg"
                                                                             />
                                                                         </div>
                                                                     </div>
                                                                 )}
 
                                                                 <Card className={`
-                                                                relative transition-all 
-                                                                ${isInGroup ? 'border-2 border-blue-500 border-t-0 rounded-none shadow-none bg-blue-50/5' : 'shadow-sm border border-slate-200'}
-                                                                ${isStartOfGroup ? '' : 'border-t-0'}
-                                                                ${isEndOfGroup ? 'rounded-b-lg border-b-2 mb-4' : ''}
-                                                            `}>
-                                                                    <div className="absolute right-0 top-0"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
-                                                                    <CardContent className="pt-10 space-y-4">
-                                                                        <div className="flex gap-2">
-                                                                            <span className="font-bold text-lg text-muted-foreground">Q{qIdx + 1}.</span>
-                                                                            <div className="flex-1 space-y-4">
-                                                                                <div className="flex justify-between items-center mb-2 relative">
-                                                                                    {isInGroup && (
-                                                                                        <span className="absolute -top-5 left-0 text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 rounded-full uppercase tracking-wider border border-blue-200">
-                                                                                            Passage Related
-                                                                                        </span>
-                                                                                    )}
-                                                                                    <div onClick={(e) => e.stopPropagation()}>
-                                                                                        <Select value={q.type || 'single'} onValueChange={(val: any) => updateQuestionTypeInSection(sIdx, qIdx, val)}>
-                                                                                            <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
-                                                                                            <SelectContent>
-                                                                                                <SelectItem value="single">Single Choice</SelectItem>
-                                                                                                <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
-                                                                                                <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                                                                                <SelectItem value="numerical">Numerical</SelectItem>
-                                                                                                {!isInGroup && <SelectItem value="comprehension">Passage/Comprehension</SelectItem>}
-                                                                                            </SelectContent>
-                                                                                        </Select>
+                                                                    group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
+                                                                    ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
+                                                                    ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
+                                                                `}>
+
+                                                                    {/* Header Bar */}
+                                                                    <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-wrap gap-4 items-center justify-between">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                                                                <GripVertical className="h-4 w-4" />
+                                                                            </div>
+                                                                            <span className="font-bold text-slate-400 text-sm">Q{qIdx + 1}</span>
+
+                                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                                <Select value={q.type || 'single'} onValueChange={(val: any) => updateQuestionTypeInSection(sIdx, qIdx, val)}>
+                                                                                    <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
+                                                                                        <SelectValue placeholder="Type" />
+                                                                                    </SelectTrigger>
+                                                                                    <SelectContent>
+                                                                                        <SelectItem value="single">Single Choice</SelectItem>
+                                                                                        <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                                        <SelectItem value="numerical">Numerical</SelectItem>
+                                                                                        {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
+                                                                                    </SelectContent>
+                                                                                </Select>
+                                                                            </div>
+
+                                                                            {isInGroup && (
+                                                                                <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase">
+                                                                                    Passage Q
+                                                                                </Badge>
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div className="flex items-center gap-3">
+                                                                            {sectionMarkingModel === 'question-wise' && (
+                                                                                <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
+                                                                                    <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
+                                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            value={q.marks || ''}
+                                                                                            onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'marks', e.target.value)}
+                                                                                            className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
+                                                                                            placeholder="4"
+                                                                                        />
                                                                                     </div>
-                                                                                    {sectionMarkingModel === 'question-wise' && (
-                                                                                        <div className="flex items-center gap-2">
-                                                                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 transition-colors">
-                                                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">M:</span>
-                                                                                                <Input
-                                                                                                    type="text"
-                                                                                                    value={q.marks || ''}
-                                                                                                    onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'marks', e.target.value)}
-                                                                                                    className="h-5 w-10 min-w-0 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-medium text-center"
-                                                                                                    placeholder="4"
-                                                                                                />
-                                                                                            </div>
-                                                                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 transition-colors">
-                                                                                                <span className="text-[10px] font-bold text-slate-500 uppercase">N:</span>
-                                                                                                <Input
-                                                                                                    type="text"
-                                                                                                    value={q.negativeMarks || ''}
-                                                                                                    onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'negativeMarks', e.target.value)}
-                                                                                                    className="h-5 w-10 min-w-0 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-medium text-center"
-                                                                                                    placeholder="1"
-                                                                                                />
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    )}
-                                                                                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 transition-colors">
-                                                                                        <Languages className="w-3.5 h-3.5 text-slate-500" />
-                                                                                        <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => updateQuestionInSection(sIdx, qIdx, 'typingMode', val)}>
-                                                                                            <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-medium w-auto gap-1"><SelectValue placeholder="Lang" /></SelectTrigger>
-                                                                                            <SelectContent><SelectItem value="en">English</SelectItem><SelectItem value="hi">Hindi</SelectItem></SelectContent>
-                                                                                        </Select>
+                                                                                    <div className="flex items-center gap-1.5 pl-1">
+                                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            value={q.negativeMarks || ''}
+                                                                                            onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'negativeMarks', e.target.value)}
+                                                                                            className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
+                                                                                            placeholder="1"
+                                                                                        />
                                                                                     </div>
                                                                                 </div>
+                                                                            )}
 
-                                                                                <div></div>
-                                                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="min-h-[80px]" />
+                                                                            <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
+                                                                                <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
+                                                                                <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => updateQuestionInSection(sIdx, qIdx, 'typingMode', val)}>
+                                                                                    <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-semibold text-slate-600 w-auto gap-1">
+                                                                                        <SelectValue placeholder="Lang" />
+                                                                                    </SelectTrigger>
+                                                                                    <SelectContent>
+                                                                                        <SelectItem value="en">English</SelectItem>
+                                                                                        <SelectItem value="hi">Hindi</SelectItem>
+                                                                                    </SelectContent>
+                                                                                </Select>
+                                                                            </div>
 
-                                                                                <div className="space-y-2">
-                                                                                    {q.image ? (
-                                                                                        <div className="relative group w-fit">
-                                                                                            <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white" />
-                                                                                            <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-3 w-3" /></Button>
+                                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}>
+                                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                                            </Button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="p-6 space-y-6">
+                                                                        <div className="space-y-3">
+                                                                            <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
+                                                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
+                                                                                <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
+                                                                                    <div className="group/info relative cursor-help">
+                                                                                        <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                                                                                        <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                                                            Markdown and MathJax/KaTeX support
+                                                                                            <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
                                                                                         </div>
-                                                                                    ) : (
-                                                                                        <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
-                                                                                            <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="flex-1 border-none shadow-none text-xs bg-transparent px-3" />
-                                                                                            <label className="cursor-pointer h-full border-l border-input">
-                                                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
-                                                                                                <div className="flex items-center justify-center h-full px-4 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 whitespace-nowrap">
-                                                                                                    <Upload className="w-3.5 h-3.5 mr-2" />
-                                                                                                    Upload
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Image Section */}
+                                                                            <div className="space-y-2">
+                                                                                {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
+                                                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                                        {q.image ? (
+                                                                                            <div className="relative group/img w-fit mt-2">
+                                                                                                <img src={q.image} alt="Question" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                                                <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-4 w-4" /></Button>
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <div className="flex items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                                                <div className="flex-1 flex gap-2 items-center px-2">
+                                                                                                    <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                                        <ImageIcon className="w-4 h-4 text-slate-500" />
+                                                                                                    </div>
+                                                                                                    <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm" />
                                                                                                 </div>
-                                                                                            </label>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-
-                                                                                {/* Answers */}
-                                                                                {q.type === 'numerical' ? (
-                                                                                    <div className="p-4 bg-slate-50 rounded-lg">
-                                                                                        <div className="flex gap-4">
-                                                                                            <div><Label className="text-xs">Min</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} /></div>
-                                                                                            <div><Label className="text-xs">Max</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} /></div>
-                                                                                        </div>
+                                                                                                <div className="h-6 w-px bg-slate-300 mx-2"></div>
+                                                                                                <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
+                                                                                                    <Upload className="w-3.5 h-3.5 mr-1" />Upload
+                                                                                                </label>
+                                                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                    <X className="w-4 h-4" />
+                                                                                                </Button>
+                                                                                            </div>
+                                                                                        )}
                                                                                     </div>
                                                                                 ) : (
-                                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                        {Object.keys(q.options).sort().map(optKey => {
-                                                                                            const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
-                                                                                            const handleSelect = () => {
-                                                                                                if (q.type === 'multiple') {
-                                                                                                    const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
-                                                                                                    const idx = current.indexOf(optKey);
-                                                                                                    if (idx > -1) current.splice(idx, 1); else current.push(optKey);
-                                                                                                    updateQuestionInSection(sIdx, qIdx, 'correctAnswer', current.sort());
-                                                                                                } else {
-                                                                                                    updateQuestionInSection(sIdx, qIdx, 'correctAnswer', optKey);
-                                                                                                }
-                                                                                            };
-                                                                                            return (
-                                                                                                <div key={optKey} className="flex gap-2 items-start relative group/option">
-                                                                                                    {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
-                                                                                                    <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
-                                                                                                    <div className="flex-1 flex flex-col">
-                                                                                                        <div className="relative">
-                                                                                                            <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }} className="min-h-[60px] resize-y pr-8" />
+                                                                                    <button
+                                                                                        onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}
+                                                                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
+                                                                                    >
+                                                                                        <ImageIcon className="w-3.5 h-3.5" />
+                                                                                        Add diagram / image (optional)
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="h-px bg-slate-100 w-full my-2"></div>
+
+                                                                        {/* Answers */}
+                                                                        <div>
+                                                                            <div className="flex items-center justify-between mb-3">
+                                                                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Options</Label>
+                                                                                {q.type === 'multiple' && <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Select all correct options</span>}
+                                                                            </div>
+
+                                                                            {q.type === 'numerical' ? (
+                                                                                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
+
+                                                                                    <div className="flex gap-4 items-center mt-2">
+                                                                                        <div className="text-left">
+                                                                                            <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
+                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
+                                                                                        </div>
+                                                                                        <div className="h-px w-8 bg-slate-300 mt-5"></div>
+                                                                                        <div className="text-left">
+                                                                                            <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
+                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="grid grid-cols-1 gap-3">
+                                                                                    {Object.keys(q.options).sort().map(optKey => {
+                                                                                        const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                                                        const handleSelect = () => {
+                                                                                            if (q.type === 'multiple') {
+                                                                                                const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                                                const idx = current.indexOf(optKey);
+                                                                                                if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                                                updateQuestionInSection(sIdx, qIdx, 'correctAnswer', current.sort());
+                                                                                            } else {
+                                                                                                updateQuestionInSection(sIdx, qIdx, 'correctAnswer', optKey);
+                                                                                            }
+                                                                                        };
+                                                                                        return (
+                                                                                            <div key={optKey} className={`
+                                                                                                group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
+                                                                                                ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
+                                                                                                focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
+                                                                                            `}>
+                                                                                                <button onClick={handleSelect} className={`
+                                                                                                    mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm
+                                                                                                    ${q.type === 'single' ? 'rounded-full' : 'rounded-lg'}
+                                                                                                    ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'}
+                                                                                                `}>
+                                                                                                    {q.type === 'multiple' && isSelected ? <Check className="w-5 h-5" /> : optKey}
+                                                                                                </button>
+
+                                                                                                <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
+                                                                                                    <div className="relative">
+                                                                                                        <IMEInput
+                                                                                                            as="textarea"
+                                                                                                            typingMode={q.typingMode}
+                                                                                                            placeholder={`Option ${optKey}`}
+                                                                                                            value={q.options[optKey]}
+                                                                                                            onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }}
+                                                                                                            className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-8 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                                        />
+
+                                                                                                        {/* Right Side Actions - Overlay on Text Area */}
+                                                                                                        <div className="absolute top-0 right-0 flex flex-col gap-1 z-10">
                                                                                                             <Button
                                                                                                                 variant="ghost"
                                                                                                                 size="icon"
-                                                                                                                className="absolute top-1 right-1 h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover/option:opacity-100 transition-opacity"
+                                                                                                                className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover/option:opacity-100 transition-all rounded-md"
                                                                                                                 onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
                                                                                                                 title="Remove Option"
                                                                                                             >
                                                                                                                 <X className="w-3.5 h-3.5" />
                                                                                                             </Button>
+                                                                                                            <Button
+                                                                                                                variant="ghost"
+                                                                                                                size="icon"
+                                                                                                                className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : 'opacity-0 group-hover/option:opacity-100'}`}
+                                                                                                                onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}
+                                                                                                                title="Add Image"
+                                                                                                            >
+                                                                                                                <ImageIcon className="w-3.5 h-3.5" />
+                                                                                                            </Button>
                                                                                                         </div>
-                                                                                                        {q.optionImages?.[optKey] ? (
-                                                                                                            <div className="relative group mt-1 w-fit">
-                                                                                                                <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
-                                                                                                                <button
-                                                                                                                    onClick={() => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (q.optionImages) delete q.optionImages[optKey]; setSections(newSections); }}
-                                                                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                                                                >
-                                                                                                                    <X className="w-3 h-3" />
-                                                                                                                </button>
-                                                                                                            </div>
-                                                                                                        ) : (
-                                                                                                            <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7 mt-1">
-                                                                                                                <Input placeholder="Image URL" value="" onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2 shadow-none focus-visible:ring-0" />
-                                                                                                                <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px] whitespace-nowrap"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = base64; setSections(newSections); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
-                                                                                                            </div>
-                                                                                                        )}
                                                                                                     </div>
+
+                                                                                                    {/* Option Image Section (Appears Below) */}
+                                                                                                    {(q.optionImages?.[optKey] || expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`]) && (
+                                                                                                        <div className="relative group/optimg w-fit">
+                                                                                                            {q.optionImages?.[optKey] ? (
+                                                                                                                <div className="relative group/optimg w-fit">
+                                                                                                                    <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
+                                                                                                                    <button
+                                                                                                                        onClick={() => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (q.optionImages) delete q.optionImages[optKey]; setSections(newSections); }}
+                                                                                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
+                                                                                                                    >
+                                                                                                                        <X className="w-3 h-3" />
+                                                                                                                    </button>
+                                                                                                                </div>
+                                                                                                            ) : (
+                                                                                                                <div className="flex items-center gap-1">
+                                                                                                                    <Input
+                                                                                                                        placeholder="Image URL"
+                                                                                                                        className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
+                                                                                                                        onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }}
+                                                                                                                    />
+                                                                                                                    <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200">
+                                                                                                                        <Upload className="w-3 h-3" />
+                                                                                                                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; nq[index].optionImages![optKey] = base64; setSections(newSections); })} />
+                                                                                                                    </label>
+                                                                                                                </div>
+                                                                                                            )}
+                                                                                                        </div>
+                                                                                                    )}
                                                                                                 </div>
-                                                                                            );
-                                                                                        })}
-                                                                                        <Button variant="outline" size="sm" className="h-full min-h-[60px] border-dashed text-muted-foreground hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-colors" onClick={() => handleAddOptionToSection(sIdx, qIdx)}>
-                                                                                            <Plus className="w-4 h-4" />
-                                                                                        </Button>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })}
+                                                                                    {/* Add Option Button */}
+                                                                                    <div className="flex justify-center pt-2">
+                                                                                        <button
+                                                                                            onClick={() => handleAddOptionToSection(sIdx, qIdx)}
+                                                                                            className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all text-xs font-semibold uppercase tracking-wide"
+                                                                                        >
+                                                                                            <Plus className="w-4 h-4" /> Add Option
+                                                                                        </button>
                                                                                     </div>
-                                                                                )}
-                                                                            </div>
+                                                                                </div>
+                                                                            )}
                                                                         </div>
-                                                                    </CardContent>
+                                                                    </div>
                                                                 </Card>
                                                                 {isEndOfGroup && (
-                                                                    <div className="flex justify-center -mt-2 pb-6 pt-2 bg-blue-50/20 border-x border-b border-blue-200 rounded-b-lg mb-4">
+                                                                    <div className="flex justify-center -mt-6 relative z-0">
+                                                                        <div className="h-6 w-px bg-indigo-200 absolute -top-6"></div>
                                                                         <Button
                                                                             size="sm"
                                                                             variant="secondary"
                                                                             onClick={() => handleAddSubQuestionToSection(sIdx, qIdx)}
-                                                                            className="gap-2 bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 shadow-sm"
+                                                                            className="gap-2 bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 shadow-sm rounded-full px-4 mt-2"
                                                                         >
                                                                             <Plus className="w-4 h-4" /> Add Question to Passage
                                                                         </Button>
@@ -1624,7 +1756,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                             </div>
                                                         );
                                                     })}
-                                                    <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
+                                                    <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -1635,7 +1767,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                         </>
                     ) : (
                         <>
-                            <h2 className="text-xl font-semibold">Questions ({questions.length})</h2>
+                            <div className="flex items-end justify-between mb-2">
+                                <h2 className="text-xl font-bold text-slate-800">Questions ({questions.length})</h2>
+                                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Standard Mode</span>
+                            </div>
+
                             {questions.map((q, index) => {
                                 // VISUAL GROUPING LOGIC
                                 const currentGroupId = q.groupId;
@@ -1647,22 +1783,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                 const isInGroup = !!currentGroupId;
 
                                 return (
-                                    <div key={index} className={isInGroup ? "space-y-0" : "space-y-4"}>
+                                    <div key={index} className={isInGroup ? "space-y-0" : "space-y-6"}>
 
-                                        {/* Passage Header - Renders only at the start of a group */}
+                                        {/* Passage Header */}
                                         {isStartOfGroup && (
-                                            <div className="rounded-t-lg border-2 border-b-0 border-blue-500 bg-blue-50/30 overflow-hidden mt-4">
-                                                <div className="bg-blue-100/80 px-4 py-3 border-b-2 border-blue-500 flex justify-between items-center">
-                                                    <h3 className="text-sm font-bold text-blue-700 flex items-center gap-2">
-                                                        <FileText className="w-4 h-4" /> Passage Reference
+                                            <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-6">
+                                                <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
+                                                    <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
+                                                        <FileText className="w-4 h-4" /> Comprehension Passage
                                                     </h3>
                                                 </div>
-                                                <div className="p-4">
+                                                <div className="p-6">
                                                     <RichTextEditor
                                                         value={q.passageContent || ''}
                                                         onChange={(val) => updatePassageContent(q.groupId!, val)}
-                                                        placeholder="Enter the passage, story, or comprehension text here..."
-                                                        className="min-h-[150px] bg-white border-blue-100 shadow-sm"
+                                                        placeholder="Write or paste the passage text here..."
+                                                        className="min-h-[150px] bg-white border-indigo-100 shadow-sm rounded-lg"
                                                     />
                                                 </div>
                                             </div>
@@ -1671,209 +1807,343 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                         {/* Question Card */}
                                         <Card
                                             className={`
-                                                relative transition-all 
-                                                ${isDragging ? 'border-dashed border-primary/50' : ''}
-                                                ${isInGroup ? 'border-2 border-blue-500 border-t-0 rounded-none shadow-none bg-blue-50/5' : 'shadow-sm'}
-                                                ${isStartOfGroup ? '' : ''}
-                                                ${isEndOfGroup ? 'rounded-b-lg border-b-2' : ''}
+                                                group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
+                                                ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
+                                                ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
+                                                ${isDragging ? 'border-dashed border-primary/50 opacity-60' : ''}
                                             `}
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, index)}
                                             onDragOver={handleDragOver}
                                             onDrop={(e) => { e.stopPropagation(); handleDropQuestion(e, index); }}
                                         >
-                                            <div className="drag-handle absolute left-2 top-2 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 z-10 p-1"><GripVertical className="h-5 w-5" /></div>
-                                            <div className="absolute right-0 top-0"><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}><Trash2 className="w-4 h-4" /></Button></div>
-                                            <CardContent className="p-4 space-y-4">
 
+                                            {/* Header Bar: Metadata & Actions */}
+                                            <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-wrap gap-4 items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                                        <GripVertical className="h-4 w-4" />
+                                                    </div>
+                                                    <span className="font-bold text-slate-400 text-sm">#{index + 1}</span>
 
-                                                <div className="flex gap-2">
-                                                    <span className="font-bold text-lg text-muted-foreground">Q{index + 1}.</span>
-                                                    <div className="flex-1 space-y-4">
-                                                        <div className="flex justify-between items-center mb-2 relative">
-                                                            {isInGroup && (
-                                                                <span className="absolute -top-5 left-0 text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 rounded-full uppercase tracking-wider border border-blue-200">
-                                                                    Passage Related
-                                                                </span>
-                                                            )}
+                                                    {/* Type Selector Pill */}
+                                                    <div onClick={(e) => e.stopPropagation()}>
+                                                        <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
+                                                            <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
+                                                                <SelectValue placeholder="Type" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="single">Single Choice</SelectItem>
+                                                                <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                <SelectItem value="numerical">Numerical</SelectItem>
+                                                                {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
 
-                                                            {/* Question Type Selector */}
-                                                            <div
-                                                                onPointerDown={(e) => e.stopPropagation()}
-                                                                onMouseDown={(e) => e.stopPropagation()}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
-                                                                    <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
-                                                                    <SelectContent>
-                                                                        <SelectItem value="single">Single Choice</SelectItem>
-                                                                        <SelectItem value="single-advance">Single Choice 2.0</SelectItem>
-                                                                        <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                                                        <SelectItem value="numerical">Numerical</SelectItem>
-                                                                        {/* Hide Comprehension option if already inside a group */}
-                                                                        {!isInGroup && <SelectItem value="comprehension">Passage/Comprehension</SelectItem>}
-                                                                    </SelectContent>
-                                                                </Select>
-                                                            </div>
+                                                    {isInGroup && (
+                                                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase">
+                                                            Passage Q
+                                                        </Badge>
+                                                    )}
+                                                </div>
 
+                                                <div className="flex items-center gap-3">
+                                                    {/* Quick Settings Pills */}
+                                                    <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
+                                                        <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
+                                                            <Input
+                                                                type="text"
+                                                                value={q.marks || ''}
+                                                                onChange={(e) => updateQuestion(index, 'marks', e.target.value)}
+                                                                className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
+                                                                placeholder="4"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 pl-1">
+                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
+                                                            <Input
+                                                                type="text"
+                                                                value={q.negativeMarks || ''}
+                                                                onChange={(e) => updateQuestion(index, 'negativeMarks', e.target.value)}
+                                                                className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
+                                                                placeholder="1"
+                                                            />
+                                                        </div>
+                                                    </div>
 
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors group">
-                                                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Marks:</span>
-                                                                    <Input
-                                                                        type="text"
-                                                                        value={q.marks || ''}
-                                                                        onChange={(e) => updateQuestion(index, 'marks', e.target.value)}
-                                                                        className="h-5 w-10 min-w-0 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-medium text-center"
-                                                                        placeholder="4"
-                                                                    />
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors group">
-                                                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Neg:</span>
-                                                                    <Input
-                                                                        type="text"
-                                                                        value={q.negativeMarks || ''}
-                                                                        onChange={(e) => updateQuestion(index, 'negativeMarks', e.target.value)}
-                                                                        className="h-5 w-10 min-w-0 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-medium text-center"
-                                                                        placeholder="1"
-                                                                    />
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md border bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
-                                                                    <Languages className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
-                                                                    <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}>
-                                                                        <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 focus:ring-offset-0 text-xs font-medium text-slate-700 dark:text-slate-300 w-auto gap-1">
-                                                                            <SelectValue placeholder="Language" />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent>
-                                                                            <SelectItem value="en">English</SelectItem>
-                                                                            <SelectItem value="hi">Hindi</SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
+                                                    <div className="h-6 w-px bg-slate-200 mx-1"></div>
+
+                                                    <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
+                                                        <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
+                                                        <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}>
+                                                            <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-semibold text-slate-600 w-auto gap-1">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="en">English</SelectItem>
+                                                                <SelectItem value="hi">Hindi</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}>
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-6 space-y-6">
+                                                {/* Question Input Area */}
+                                                <div className="space-y-3">
+                                                    <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
+                                                        <IMEInput
+                                                            as="textarea"
+                                                            typingMode={q.typingMode}
+                                                            placeholder="Type your question here..."
+                                                            value={q.question}
+                                                            onChange={(val: string) => updateQuestion(index, 'question', val)}
+                                                            className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
+                                                        />
+                                                        <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
+                                                            <div className="group/info relative cursor-help">
+                                                                <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                                                                <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                                    Markdown and MathJax/KaTeX support
+                                                                    <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestion(index, 'question', val)} className="min-h-[80px]" />
+                                                    </div>
 
-                                                        {/* Image Upload for Question */}
-                                                        <div className="space-y-2">
-                                                            {q.image ? (
-                                                                <div className="relative group w-fit">
-                                                                    <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-white shadow-sm" />
-                                                                    <Button
-                                                                        variant="destructive"
-                                                                        size="icon"
-                                                                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                        onClick={() => updateQuestion(index, 'image', '')}
-                                                                    >
-                                                                        <X className="h-3 w-3" />
-                                                                    </Button>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-9">
-                                                                    <Input
-                                                                        placeholder="Paste Image URL or Upload"
-                                                                        value={q.image || ''}
-                                                                        onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
-                                                                        className="flex-1 border-none shadow-none focus-visible:ring-0 h-full text-xs bg-transparent px-3 rounded-none"
-                                                                    />
-                                                                    <label className="cursor-pointer h-full border-l border-input">
-                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
-                                                                        <div className="flex items-center justify-center h-full px-4 bg-slate-100 hover:bg-slate-200 transition-colors text-xs font-medium text-slate-700 whitespace-nowrap">
-                                                                            <Upload className="w-3.5 h-3.5 mr-2" />
-                                                                            Upload
+                                                    {/* Image Section - Collapsible */}
+                                                    <div>
+                                                        {(q.image || expandedImageInputs[`q-${index}`]) ? (
+                                                            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                {q.image ? (
+                                                                    <div className="relative group/img w-fit mt-2">
+                                                                        <img src={q.image} alt="Question Diagram" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                        <Button
+                                                                            variant="destructive"
+                                                                            size="icon"
+                                                                            className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100"
+                                                                            onClick={() => updateQuestion(index, 'image', '')}
+                                                                        >
+                                                                            <X className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                        <div className="flex-1 flex gap-2 items-center px-2">
+                                                                            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                <ImageIcon className="w-4 h-4 text-slate-500" />
+                                                                            </div>
+                                                                            <Input
+                                                                                placeholder="Paste image URL here..."
+                                                                                value={q.image || ''}
+                                                                                onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
+                                                                                className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm"
+                                                                            />
                                                                         </div>
-                                                                    </label>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Answers */}
-                                                        {q.type === 'numerical' ? (
-                                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                                                <Label className="text-xs font-semibold uppercase text-slate-500 mb-2 block">Correct Numerical Range</Label>
-                                                                <div className="flex gap-4">
-                                                                    <div><Label className="text-xs">Min</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} /></div>
-                                                                    <div><Label className="text-xs">Max</Label><Input type="number" step="any" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} /></div>
-                                                                </div>
+                                                                        <div className="h-6 w-px bg-slate-300 mx-2"></div>
+                                                                        <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
+                                                                            <Upload className="w-3.5 h-3.5" />
+                                                                            Upload
+                                                                        </label>
+                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`q-${index}`)}>
+                                                                            <X className="w-4 h-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         ) : (
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {Object.keys(q.options).sort().map(optKey => {
-                                                                    const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
-                                                                    const handleSelect = () => {
-                                                                        if (q.type === 'multiple') {
-                                                                            const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
-                                                                            const idx = current.indexOf(optKey);
-                                                                            if (idx > -1) current.splice(idx, 1); else current.push(optKey);
-                                                                            updateQuestion(index, 'correctAnswer', current.sort());
-                                                                        } else {
-                                                                            updateQuestion(index, 'correctAnswer', optKey);
-                                                                        }
-                                                                    };
-                                                                    return (
-                                                                        <div key={optKey} className="flex gap-2 items-start relative group/option">
-                                                                            {q.type === 'multiple' && <div onClick={handleSelect} className="mt-2 cursor-pointer">{isSelected ? <CheckSquare className="w-6 h-6 text-primary" /> : <Square className="w-6 h-6 text-slate-400" />}</div>}
-                                                                            <div onClick={handleSelect} className={`mt-1 w-8 h-8 flex items-center justify-center border font-bold cursor-pointer transition-all ${isSelected ? 'bg-green-100 border-green-500 text-green-700' : 'bg-slate-50 hover:bg-slate-100'} ${q.type === 'multiple' ? 'rounded-md' : 'rounded-full'}`}>{optKey}</div>
-                                                                            <div className="flex-1 flex flex-col">
-                                                                                <div className="relative">
-                                                                                    <IMEInput as="textarea" typingMode={q.typingMode} placeholder={`Option ${optKey}`} value={q.options[optKey]} onChange={(val: string) => updateOption(index, optKey, val)} className="min-h-[60px] resize-y pr-8" />
+                                                            <button
+                                                                onClick={() => toggleImageInput(`q-${index}`)}
+                                                                className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
+                                                            >
+                                                                <ImageIcon className="w-3.5 h-3.5" />
+                                                                Add diagram / image (optional)
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Separator */}
+                                                <div className="h-px bg-slate-100 w-full my-2"></div>
+
+                                                {/* Options Area */}
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Options</Label>
+                                                        {q.type === 'multiple' && <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Select all correct options</span>}
+                                                    </div>
+
+                                                    {q.type === 'numerical' ? (
+                                                        <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
+
+                                                            <div className="flex gap-4 items-center mt-2">
+                                                                <div className="text-left">
+                                                                    <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
+                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
+                                                                </div>
+                                                                <div className="h-px w-8 bg-slate-300 mt-5"></div>
+                                                                <div className="text-left">
+                                                                    <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
+                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            {Object.keys(q.options).sort().map(optKey => {
+                                                                const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                                const handleSelect = () => {
+                                                                    if (q.type === 'multiple') {
+                                                                        const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                        const idx = current.indexOf(optKey);
+                                                                        if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                        updateQuestion(index, 'correctAnswer', current.sort());
+                                                                    } else {
+                                                                        updateQuestion(index, 'correctAnswer', optKey);
+                                                                    }
+                                                                };
+
+                                                                return (
+                                                                    <div key={optKey}
+                                                                        className={`
+                                                                            group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
+                                                                            ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
+                                                                            focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
+                                                                         `}>
+
+                                                                        {/* Option Label/Selector */}
+                                                                        <button
+                                                                            onClick={handleSelect}
+                                                                            className={`
+                                                                                mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm
+                                                                                ${q.type === 'single' ? 'rounded-full' : 'rounded-lg'}
+                                                                                ${isSelected
+                                                                                    ? 'bg-emerald-500 text-white shadow-emerald-200'
+                                                                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'}
+                                                                            `}
+                                                                        >
+                                                                            {q.type === 'multiple' && isSelected ? <Check className="w-5 h-5" /> : optKey}
+                                                                        </button>
+
+                                                                        <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
+                                                                            {/* Option Text Input */}
+                                                                            <div className="relative">
+                                                                                <IMEInput
+                                                                                    as="textarea"
+                                                                                    typingMode={q.typingMode}
+                                                                                    placeholder={`Type option ${optKey}...`}
+                                                                                    value={q.options[optKey]}
+                                                                                    onChange={(val: string) => updateOption(index, optKey, val)}
+                                                                                    className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-8 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                    onKeyDown={(e: React.KeyboardEvent) => {
+                                                                                        // Auto focus logic skipped for now
+                                                                                    }}
+                                                                                />
+
+                                                                                {/* Right Side Actions - Overlay on Text Area */}
+                                                                                <div className="absolute top-0 right-0 flex flex-col gap-1 z-10 pointer-events-auto">
                                                                                     <Button
                                                                                         variant="ghost"
                                                                                         size="icon"
-                                                                                        className="absolute top-1 right-1 h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover/option:opacity-100 transition-opacity"
+                                                                                        className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover/option:opacity-100 transition-all rounded-md"
                                                                                         onClick={() => handleRemoveOption(index, optKey)}
                                                                                         title="Remove Option"
                                                                                     >
                                                                                         <X className="w-3.5 h-3.5" />
                                                                                     </Button>
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="icon"
+                                                                                        className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`q-${index}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : 'opacity-0 group-hover/option:opacity-100'}`}
+                                                                                        onClick={() => toggleImageInput(`q-${index}-opt-${optKey}`)}
+                                                                                        title="Add Image"
+                                                                                    >
+                                                                                        <ImageIcon className="w-3.5 h-3.5" />
+                                                                                    </Button>
                                                                                 </div>
-                                                                                {q.optionImages?.[optKey] ? (
-                                                                                    <div className="relative group mt-1 w-fit">
-                                                                                        <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded bg-white" />
-                                                                                        <button
-                                                                                            onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
-                                                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                                        >
-                                                                                            <X className="w-3 h-3" />
-                                                                                        </button>
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <div className="flex items-center border border-t-0 border-input rounded-b-md bg-slate-50/50 overflow-hidden h-7 mt-1">
-                                                                                        <Input placeholder="Image URL" value="" onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }} className="flex-1 border-none bg-transparent h-full text-[10px] px-2 shadow-none focus-visible:ring-0" />
-                                                                                        <label className="cursor-pointer h-full border-l border-input flex items-center px-2 bg-slate-100 hover:bg-slate-200 text-[10px] whitespace-nowrap"><input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} /><Upload className="w-3 h-3 mr-1" />Upload</label>
-                                                                                    </div>
-                                                                                )}
                                                                             </div>
+
+                                                                            {/* Option Image Section (Appears Below) */}
+                                                                            {(q.optionImages?.[optKey] || expandedImageInputs[`q-${index}-opt-${optKey}`]) && (
+                                                                                <div className="relative group/optimg w-fit">
+                                                                                    {q.optionImages?.[optKey] ? (
+                                                                                        <>
+                                                                                            <img src={q.optionImages[optKey]} alt="" className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
+                                                                                            <button
+                                                                                                onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
+                                                                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
+                                                                                            >
+                                                                                                <X className="w-3 h-3" />
+                                                                                            </button>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <div className="flex items-center gap-1 mt-1">
+                                                                                            <Input
+                                                                                                placeholder="Image URL"
+                                                                                                className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
+                                                                                                onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }}
+                                                                                            />
+                                                                                            <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200">
+                                                                                                <Upload className="w-3 h-3" />
+                                                                                                <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} />
+                                                                                            </label>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
                                                                         </div>
-                                                                    );
-                                                                })}
-                                                                <Button variant="outline" size="sm" className="h-full min-h-[60px] border-dashed text-muted-foreground hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50/30 transition-colors" onClick={() => handleAddOption(index)}>
-                                                                    <Plus className="w-4 h-4" />
-                                                                </Button>
+                                                                    </div>
+                                                                );
+                                                            })}
+
+                                                            {/* Add Option Button */}
+                                                            <div className="flex justify-center pt-2">
+                                                                <button
+                                                                    onClick={() => handleAddOption(index)}
+                                                                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all text-xs font-semibold uppercase tracking-wide"
+                                                                >
+                                                                    <Plus className="w-4 h-4" /> Add Option
+                                                                </button>
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </CardContent>
+                                            </div>
                                         </Card>
-                                        {
-                                            isEndOfGroup && (
-                                                <div className="flex justify-center -mt-2 pb-6 pt-2 bg-blue-50/20 border-x border-b border-blue-200 rounded-b-lg mb-4">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="secondary"
-                                                        onClick={() => handleAddSubQuestion(index)}
-                                                        className="gap-2 bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 shadow-sm"
-                                                    >
-                                                        <Plus className="w-4 h-4" /> Add Question to Passage
-                                                    </Button>
-                                                </div>
-                                            )
-                                        }
+
+                                        {/* Add Sub-Question for Passage */}
+                                        {isEndOfGroup && (
+                                            <div className="flex justify-center -mt-6 relative z-0">
+                                                <div className="h-6 w-px bg-indigo-200 absolute -top-6"></div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() => handleAddSubQuestion(index)}
+                                                    className="gap-2 bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 shadow-sm rounded-full px-4 mt-2"
+                                                >
+                                                    <Plus className="w-4 h-4" /> Add Question to Passage
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
-                            <Button onClick={handleAddQuestion} size="sm" variant="outline" className="w-full"><Plus className="w-4 h-4 mr-2" /> Add Question</Button>
+
+                            <Button
+                                onClick={handleAddQuestion}
+                                size="lg"
+                                variant="outline"
+                                className="w-full py-8 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/30 transition-all duration-300 text-base font-semibold"
+                            >
+                                <Plus className="w-6 h-6 mr-2" /> Add New Question
+                            </Button>
                         </>
                     )}
                 </div>
