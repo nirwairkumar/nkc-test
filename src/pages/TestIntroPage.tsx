@@ -24,7 +24,8 @@ import { Loader2, Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { fetchTestById, fetchTestBySlug, Test } from '@/lib/testsApi';
-import { Helmet } from 'react-helmet-async';
+// import { Helmet } from 'react-helmet-async'; // Replaced by SEO component
+import { SEO } from '@/components/SEO';
 import { SEOContent } from '@/components/SEOContent';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -217,20 +218,26 @@ export default function TestIntroPage() {
         test.sections.forEach((sec: any) => {
             if (sec.questions) {
                 sec.questions.forEach((q: any) => {
-                    const m = q.marks !== undefined ? parseFloat(q.marks) : (sec.marks_per_question ? parseFloat(sec.marks_per_question) : 4);
+                    const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
                     totalMaxMarks += isNaN(m) ? 0 : m;
                 });
             }
         });
     } else if (test.questions) {
         test.questions.forEach((q: any) => {
-            const m = q.marks !== undefined ? parseFloat(q.marks) : (test.marks_per_question ? parseFloat(test.marks_per_question) : 4);
+            const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (test.marks_per_question ? parseFloat(String(test.marks_per_question)) : 4);
             totalMaxMarks += isNaN(m) ? 0 : m;
         });
     }
 
     return (
         <div className="container mx-auto max-w-3xl py-2 px-4 space-y-4 relative">
+            <SEO
+                title={test.title}
+                description={test.description}
+                image={test.og_image} // Fallback handled in component
+                url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
+            />
             <Button
                 variant="ghost"
                 className="fixed top-20 left-0 h-10 w-12 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-none rounded-r-lg shadow-md z-50 transition-transform hover:translate-x-1"
@@ -289,7 +296,7 @@ export default function TestIntroPage() {
                                         let sectionTotal = 0;
                                         if (sec.questions) {
                                             sec.questions.forEach((q: any) => {
-                                                const m = q.marks !== undefined ? parseFloat(q.marks) : (sec.marks_per_question ? parseFloat(sec.marks_per_question) : 4);
+                                                const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
                                                 sectionTotal += isNaN(m) ? 0 : m;
                                             });
                                         }
