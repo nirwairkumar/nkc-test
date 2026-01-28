@@ -21,7 +21,7 @@ export async function onRequest(context) {
     // 2. Fetch Test Data from Supabase
     // We use the REST API to avoid needing the JS client library here
     const supabaseUrl = env.VITE_SUPABASE_URL;
-    const supabaseKey = env.VITE_SUPABASE_ANON_KEY;
+    const supabaseKey = env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
         console.error("Missing Supabase env vars");
