@@ -33,11 +33,11 @@ export default function TestCard({
     const handleShare = (e: React.MouseEvent, test: any) => {
         e.stopPropagation();
         // Use slug if available for cleaner URL, otherwise ID
-        const identifier = test.slug || test.id;
         // Verify if the route should be /test/slug or /test-intro/id
         // Based on App.tsx, /test/:slug maps to TestIntroPage, and /test-intro/:id also maps there.
-        // So we can prefer /test/slug if slug exists, else /test-intro/id.
-        const path = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+        // Use /share/ proxy for rich previews
+        const identifier = test.slug || test.id;
+        const path = `/share/${identifier}`;
         const url = `${window.location.origin}${path}`;
 
         navigator.clipboard.writeText(url);
