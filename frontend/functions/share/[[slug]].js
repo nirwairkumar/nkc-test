@@ -70,6 +70,7 @@ export async function onRequest(context) {
             const parts = [];
             if (cats.length > 0) parts.push(`Categories: ${cats.join(', ')}`);
             if (test.creator_name) parts.push(`Creator: ${test.creator_name}`);
+            parts.push("Answer Ace Lab");
 
             if (parts.length > 0) {
                 description = `${descText} | ${parts.join(' | ')}`;
