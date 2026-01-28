@@ -237,6 +237,7 @@ export default function TestIntroPage() {
                 description={test.description}
                 image={test.og_image} // Fallback handled in component
                 url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
+                categories={[...(test.tags || []), ...(test.custom_category ? [test.custom_category] : [])]}
             />
             <Button
                 variant="ghost"
