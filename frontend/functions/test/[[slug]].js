@@ -65,6 +65,8 @@ export async function onRequest(context) {
             // Simplest strategy: Replace specific known static tags from index.html
 
             const title = test.title || "Answer Ace Lab";
+            // Check if title is generic default, if so try to find something better or leave it.
+            // User wanted <Test-title> only.
 
             // Format description with categories if possible
             let description = test.description || "Attempt this online mock test on Answer Ace Lab.";
@@ -91,7 +93,7 @@ export async function onRequest(context) {
             return new HTMLRewriter()
                 .on("title", {
                     element(element) {
-                        element.setInnerContent(`${title} | ${siteName}`);
+                        element.setInnerContent(title);
                     },
                 })
                 .on('meta[name="description"]', {
