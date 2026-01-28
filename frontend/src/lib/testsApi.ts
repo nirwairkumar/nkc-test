@@ -29,6 +29,7 @@ export interface Test {
     institution_name?: string;
     institution_logo?: string;
     slug?: string;
+    og_image?: string; // Open Graph Image URL
     tags?: string[]; // Array of strings
     custom_category?: string;
     settings?: TestSettings;

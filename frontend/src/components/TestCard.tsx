@@ -30,9 +30,16 @@ export default function TestCard({
 }: TestCardProps) {
     const navigate = useNavigate();
 
-    const handleShare = (e: React.MouseEvent, testId: string) => {
+    const handleShare = (e: React.MouseEvent, test: any) => {
         e.stopPropagation();
-        const url = `${window.location.origin}/test-intro/${testId}`;
+        // Use slug if available for cleaner URL, otherwise ID
+        const identifier = test.slug || test.id;
+        // Verify if the route should be /test/slug or /test-intro/id
+        // Based on App.tsx, /test/:slug maps to TestIntroPage, and /test-intro/:id also maps there.
+        // So we can prefer /test/slug if slug exists, else /test-intro/id.
+        const path = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+        const url = `${window.location.origin}${path}`;
+
         navigator.clipboard.writeText(url);
         toast.success("Test link copied!");
     };
@@ -40,7 +47,7 @@ export default function TestCard({
     return (
         <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800">
             <div className="absolute top-2 right-2 z-10">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test.id)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test)}>
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>
