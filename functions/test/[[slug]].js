@@ -13,12 +13,11 @@ export async function onRequest(context) {
 
     // Supabase Config
     const supabaseUrl = env.VITE_SUPABASE_URL;
-    const supabaseKey = env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-        // Pass through if config missing, but log error headers
         const res = new Response(response.body, response);
-        res.headers.set('X-SEO-Error', 'Missing-Env-Vars');
+        res.headers.set('X-SEO-Debug', 'Missing-Keys');
         return res;
     }
 
