@@ -11,7 +11,7 @@ export async function onRequest(context) {
 
     // Supabase Config
     const supabaseUrl = env.VITE_SUPABASE_URL;
-    const supabaseKey = env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
         return new Response("Configuration Error", { status: 500 });
