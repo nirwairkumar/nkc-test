@@ -68,16 +68,34 @@ export async function onRequest(context) {
             // Check if title is generic default, if so try to find something better or leave it.
             // User wanted <Test-title> only.
 
-            // Format description with categories if possible
-            let description = test.description || "Attempt this online mock test on Answer Ace Lab.";
+            // Format description: Description | Categories: A, B | Creator: C | Platform Link
+            let description = test.description || "Attempt this online mock test.";
+            // Truncate description if too long
+            if (description.length > 200) {
+                description = description.substring(0, 197) + "...";
+            }
+
+            const parts = [];
+
+            // Categories
             const categories = [];
             if (test.tags && Array.isArray(test.tags)) categories.push(...test.tags);
             if (test.custom_category) categories.push(test.custom_category);
-
             if (categories.length > 0) {
-                description += ` | Categories: ${categories.join(', ')}`;
+                parts.push(`Categories: ${categories.join(', ')}`);
             }
-            description += " | Answer Ace Lab";
+
+            // Creator
+            if (test.creator_name) {
+                parts.push(`Creator: ${test.creator_name}`);
+            }
+
+            // Platform Link
+            parts.push("testoza.pages.dev");
+
+            if (parts.length > 0) {
+                description += ` | ${parts.join(' | ')}`;
+            }
 
             const image = test.og_image || "https://testoza.pages.dev/default-og.png"; // Fallback
             const siteName = "Answer Ace Lab";
