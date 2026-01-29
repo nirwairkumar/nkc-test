@@ -341,7 +341,6 @@ export default function UserTestManager() {
                     onClose={() => setConfiguringTest(null)}
                     onUpdate={loadUserTests}
                     onViewResults={() => {
-                        setConfiguringTest(null);
                         setViewingResultsTest(configuringTest);
                     }}
                 />

@@ -288,7 +288,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
     return (
         <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-[800px] sm:w-[640px] overflow-y-auto sm:max-w-xl">
+            <SheetContent className="w-full sm:max-w-full md:max-w-4xl overflow-y-auto">
                 <SheetHeader className="mb-6">
                     <SheetTitle>Test Results: {test.title}</SheetTitle>
                     <SheetDescription>
@@ -336,108 +336,110 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
                 ) : (
                     <div className="space-y-4">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    {showRank && <TableHead className="w-[60px]">Rank</TableHead>}
-                                    <TableHead>Student</TableHead>
-                                    <TableHead>Score</TableHead>
-                                    <TableHead>Stats</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead className="w-[50px]"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {displayedResults.length === 0 ? (
+                        <div className="overflow-x-auto">
+                            <Table className="min-w-[600px]">
+                                <TableHeader>
                                     <TableRow>
-                                        <TableCell colSpan={showRank ? 6 : 5} className="text-center py-8 text-muted-foreground">
-                                            No submissions yet.
-                                        </TableCell>
+                                        {showRank && <TableHead className="w-[60px]">Rank</TableHead>}
+                                        <TableHead>Student</TableHead>
+                                        <TableHead>Score</TableHead>
+                                        <TableHead>Stats</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
-                                ) : (
-                                    displayedResults.map((attempt, index) => (
-                                        <TableRow key={attempt.id}>
-                                            {showRank && (
-                                                <TableCell className="font-bold text-muted-foreground">
-                                                    #{index + 1}
-                                                </TableCell>
-                                            )}
-                                            <TableCell>
-                                                {(() => {
-                                                    // Determine Primary Display Name from Metadata
-                                                    const formData = attempt.metadata?.startFormData || {};
-                                                    const formKeys = Object.keys(formData);
-                                                    const primaryKey = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
-
-                                                    // Logic: Start Form Name -> Profile Name -> Email -> Anonymous
-                                                    let primaryValue = 'Anonymous Candidate';
-                                                    if (primaryKey && formData[primaryKey]) {
-                                                        primaryValue = formData[primaryKey];
-                                                    } else if (isAdmin && attempt.user?.full_name) {
-                                                        primaryValue = attempt.user.full_name;
-                                                    } else if (isAdmin && attempt.user?.email) {
-                                                        primaryValue = attempt.user.email;
-                                                    }
-
-                                                    // Remaining details
-                                                    const otherDetails = Object.entries(formData).filter(([k]) => k !== primaryKey);
-
-                                                    return (
-                                                        <div>
-                                                            <div className="font-medium text-base">{primaryValue}</div>
-                                                            {/* If Admin, show real Profile details if not main display */}
-                                                            {isAdmin && (
-                                                                <div className="text-xs text-muted-foreground">
-                                                                    {attempt.user?.full_name && <div>{attempt.user.full_name}</div>}
-                                                                    {attempt.user?.email && <div>{attempt.user.email}</div>}
-                                                                </div>
-                                                            )}
-
-                                                            {/* Show Start Form details */}
-                                                            {otherDetails.length > 0 && (
-                                                                <div className="mt-1 text-xs text-slate-500 space-y-0.5">
-                                                                    {otherDetails.map(([k, v]) => (
-                                                                        <div key={k}><span className="text-muted-foreground">{k}:</span> {String(v)}</div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })()}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={attempt.score >= (totalMaxMarks * 0.4) ? "default" : "destructive"}>
-                                                    {attempt.score} / {totalMaxMarks}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-xs">
-                                                {attempt.metadata?.stats ? (
-                                                    <div className="space-y-0.5">
-                                                        <div className="text-green-600">Correct: {attempt.metadata.stats.correctCount}</div>
-                                                        <div className="text-red-600">Wrong: {attempt.metadata.stats.wrongCount}</div>
-                                                        <div className="text-gray-500">Skip: {attempt.metadata.stats.unattemptedCount}</div>
-                                                    </div>
-                                                ) : '-'}
-                                            </TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">
-                                                {format(new Date(attempt.created_at), 'MMM d, p')}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                    onClick={() => handleDelete(attempt.id, attempt.user_id)}
-                                                    title="Delete Result (Allows Re-attempt)"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                </TableHeader>
+                                <TableBody>
+                                    {displayedResults.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={showRank ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                                                No submissions yet.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                    ) : (
+                                        displayedResults.map((attempt, index) => (
+                                            <TableRow key={attempt.id}>
+                                                {showRank && (
+                                                    <TableCell className="font-bold text-muted-foreground">
+                                                        #{index + 1}
+                                                    </TableCell>
+                                                )}
+                                                <TableCell>
+                                                    {(() => {
+                                                        // Determine Primary Display Name from Metadata
+                                                        const formData = attempt.metadata?.startFormData || {};
+                                                        const formKeys = Object.keys(formData);
+                                                        const primaryKey = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
+
+                                                        // Logic: Start Form Name -> Profile Name -> Email -> Anonymous
+                                                        let primaryValue = 'Anonymous Candidate';
+                                                        if (primaryKey && formData[primaryKey]) {
+                                                            primaryValue = formData[primaryKey];
+                                                        } else if (isAdmin && attempt.user?.full_name) {
+                                                            primaryValue = attempt.user.full_name;
+                                                        } else if (isAdmin && attempt.user?.email) {
+                                                            primaryValue = attempt.user.email;
+                                                        }
+
+                                                        // Remaining details
+                                                        const otherDetails = Object.entries(formData).filter(([k]) => k !== primaryKey);
+
+                                                        return (
+                                                            <div>
+                                                                <div className="font-medium text-base">{primaryValue}</div>
+                                                                {/* If Admin, show real Profile details if not main display */}
+                                                                {isAdmin && (
+                                                                    <div className="text-xs text-muted-foreground">
+                                                                        {attempt.user?.full_name && <div>{attempt.user.full_name}</div>}
+                                                                        {attempt.user?.email && <div>{attempt.user.email}</div>}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Show Start Form details */}
+                                                                {otherDetails.length > 0 && (
+                                                                    <div className="mt-1 text-xs text-slate-500 space-y-0.5">
+                                                                        {otherDetails.map(([k, v]) => (
+                                                                            <div key={k}><span className="text-muted-foreground">{k}:</span> {String(v)}</div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={attempt.score >= (totalMaxMarks * 0.4) ? "default" : "destructive"}>
+                                                        {attempt.score} / {totalMaxMarks}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-xs">
+                                                    {attempt.metadata?.stats ? (
+                                                        <div className="space-y-0.5">
+                                                            <div className="text-green-600">Correct: {attempt.metadata.stats.correctCount}</div>
+                                                            <div className="text-red-600">Wrong: {attempt.metadata.stats.wrongCount}</div>
+                                                            <div className="text-gray-500">Skip: {attempt.metadata.stats.unattemptedCount}</div>
+                                                        </div>
+                                                    ) : '-'}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {format(new Date(attempt.created_at), 'MMM d, p')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                        onClick={() => handleDelete(attempt.id, attempt.user_id)}
+                                                        title="Delete Result (Allows Re-attempt)"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </div>
                 )}
             </SheetContent>
