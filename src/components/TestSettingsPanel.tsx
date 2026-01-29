@@ -81,7 +81,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 <div className="flex-1 overflow-hidden">
                     <Tabs defaultValue="proctoring" className="h-full flex flex-col">
                         <div className="px-6 pt-4">
-                            <TabsList className="grid w-full grid-cols-3">
+                            <TabsList className="flex flex-col h-auto w-full md:grid md:grid-cols-3">
                                 <TabsTrigger value="proctoring" className="flex gap-2"><Shield className="w-4 h-4" /> Proctoring & Security</TabsTrigger>
                                 <TabsTrigger value="access" className="flex gap-2"><Lock className="w-4 h-4" /> Access & Control</TabsTrigger>
                                 <TabsTrigger value="results" className="flex gap-2"><Eye className="w-4 h-4" /> Results & Timing</TabsTrigger>
