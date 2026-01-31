@@ -23,6 +23,7 @@ export interface Test {
     duration?: number; // minutes
     revision_notes?: string;
     is_public?: boolean;
+    visibility?: 'public' | 'unlisted' | 'private';
     creator_name?: string;
     creator_avatar?: string;
     created_by?: string;
@@ -111,7 +112,8 @@ export async function fetchTests(options?: {
     let query = supabase
         .from('tests')
         .select('*')
-        .or('is_public.eq.true,is_public.is.null'); // Show public tests OR older tests with null status
+        .select('*')
+        .eq('visibility', 'public'); // Strict: Only show Public tests in feed. Unlisted/Private are hidden.
 
     if (searchQuery) {
         query = query.ilike('title', `%${searchQuery}%`);

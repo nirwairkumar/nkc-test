@@ -3,12 +3,23 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Edit } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Edit, MoreVertical, Globe, Link as LinkIcon, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestLikeButton from '@/components/TestLikeButton';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
+import { updateTest } from '@/lib/testsApi';
+import { useState } from 'react';
 
 interface TestCardProps {
     test: any;
@@ -30,6 +41,8 @@ export default function TestCard({
 }: TestCardProps) {
     const navigate = useNavigate();
 
+    const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(test.visibility || (test.is_public ? 'public' : 'private'));
+
     const handleShare = (e: React.MouseEvent, test: any) => {
         e.stopPropagation();
         // Use slug if available for cleaner URL, otherwise ID
@@ -41,9 +54,87 @@ export default function TestCard({
         toast.success("Test link copied!");
     };
 
+    const handleVisibilityChange = async (newVisibility: 'public' | 'unlisted' | 'private') => {
+        const isPublic = newVisibility === 'public';
+        const previousVisibility = visibility;
+
+        // Optimistic update
+        setVisibility(newVisibility);
+
+        try {
+            const { error } = await updateTest(test.id, {
+                visibility: newVisibility,
+                is_public: isPublic // Sync legacy field
+            });
+
+            if (error) throw error;
+
+            toast.success(`Visibility set to ${newVisibility === 'unlisted' ? 'Link Only' : newVisibility.charAt(0).toUpperCase() + newVisibility.slice(1)}`);
+
+            // Update the local test object if it's being used elsewhere without reload
+            if (test) {
+                test.visibility = newVisibility;
+                test.is_public = isPublic;
+            }
+
+        } catch (error: any) {
+            console.error("Failed to update visibility:", error);
+            toast.error("Failed to update visibility");
+            setVisibility(previousVisibility); // Revert
+        }
+    };
+
+    const getVisibilityIcon = () => {
+        switch (visibility) {
+            case 'public': return <Globe className="h-3 w-3" />;
+            case 'unlisted': return <LinkIcon className="h-3 w-3" />;
+            case 'private': return <Lock className="h-3 w-3" />;
+            default: return <Globe className="h-3 w-3" />;
+        }
+    };
+
+    const getVisibilityColor = () => {
+        switch (visibility) {
+            case 'public': return 'text-green-600 bg-green-50 border-green-200';
+            case 'unlisted': return 'text-blue-600 bg-blue-50 border-blue-200';
+            case 'private': return 'text-slate-600 bg-slate-50 border-slate-200';
+            default: return 'text-slate-500';
+        }
+    };
+
     return (
         <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800">
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-10 flex gap-1">
+                {user?.id === test.created_by && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                    <Globe className="mr-2 h-4 w-4" /> Visibility
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent>
+                                    <DropdownMenuItem onClick={() => handleVisibilityChange('public')}>
+                                        <Globe className="mr-2 h-4 w-4" /> Public
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleVisibilityChange('unlisted')}>
+                                        <LinkIcon className="mr-2 h-4 w-4" /> Link Only
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleVisibilityChange('private')}>
+                                        <Lock className="mr-2 h-4 w-4" /> Private
+                                    </DropdownMenuItem>
+                                </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                            <DropdownMenuItem onClick={(e) => handleShare(e, test)}>
+                                <LinkIcon className="mr-2 h-4 w-4" /> Share Link
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test)}>
                     <Share2 className="h-4 w-4" />
                 </Button>
@@ -59,6 +150,12 @@ export default function TestCard({
                         </div>
                         {test.custom_id && (
                             <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">#{test.custom_id}</span>
+                        )}
+                        {user?.id === test.created_by && (
+                            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getVisibilityColor()}`}>
+                                {getVisibilityIcon()}
+                                <span className="uppercase">{visibility === 'unlisted' ? 'Link' : visibility}</span>
+                            </div>
                         )}
                     </div>
                 </div>
