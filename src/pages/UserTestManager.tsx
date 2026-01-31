@@ -20,7 +20,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, MoreVertical, Globe, Link as LinkIcon, Lock } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+    DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { updateTest } from '@/lib/testsApi';
 import TestBuilder from '@/components/TestBuilder';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
@@ -127,6 +138,54 @@ export default function UserTestManager() {
     const openTestEditor = (test: any) => {
         setEditingTest(test);
         setIsTestEditOpen(true);
+    };
+
+    const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'unlisted' | 'private') => {
+        const isPublic = newVisibility === 'public';
+        const oldVisibility = test.visibility;
+
+        // Optimistic update
+        setTests(prev => prev.map(t => t.id === test.id ? { ...t, visibility: newVisibility, is_public: isPublic } : t));
+
+        try {
+            const { error } = await updateTest(test.id, {
+                visibility: newVisibility,
+                is_public: isPublic
+            });
+
+            if (error) throw error;
+            toast.success(`Visibility updated to ${newVisibility}`);
+        } catch (error: any) {
+            console.error("Failed to update visibility:", error);
+            toast.error("Failed to update visibility");
+            // Revert
+            setTests(prev => prev.map(t => t.id === test.id ? { ...t, visibility: oldVisibility, is_public: test.is_public } : t));
+        }
+    };
+
+    const handleShare = (test: any) => {
+        const path = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+        const url = `${window.location.origin}${path}`;
+        navigator.clipboard.writeText(url);
+        toast.success("Test link copied!");
+    };
+
+    const getVisibilityIcon = (visibility: string) => {
+        switch (visibility) {
+            case 'public': return <Globe className="h-3 w-3" />;
+            case 'unlisted': return <LinkIcon className="h-3 w-3" />;
+            case 'private': return <Lock className="h-3 w-3" />;
+            default: return <Globe className="h-3 w-3" />;
+        }
+    };
+
+    const getVisibilityColor = (visibility: string) => {
+        switch (visibility) {
+            case 'public': return 'text-green-600 bg-green-50 border-green-200';
+            case 'unlisted': return 'text-blue-600 bg-blue-50 border-blue-200';
+            case 'private': return 'text-slate-600 bg-slate-50 border-slate-200';
+            default: return 'text-slate-500';
+        }
     };
 
     if (authLoading || checkingCreator) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
@@ -278,7 +337,37 @@ export default function UserTestManager() {
                         <Card key={test.id} className="relative group hover:shadow-md transition-shadow">
                             <CardHeader className="pb-2">
                                 <div className="flex justify-between items-start gap-2">
-                                    <CardTitle className="text-lg line-clamp-1 text-amber-900" title={test.title}>{test.title}</CardTitle>
+                                    <div className="flex-1 min-w-0">
+                                        <CardTitle className="text-lg line-clamp-1 text-amber-900" title={test.title}>{test.title}</CardTitle>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground">
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger>
+                                                    <Globe className="mr-2 h-4 w-4" /> Visibility
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuSubContent>
+                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'public')}>
+                                                        <Globe className="mr-2 h-4 w-4" /> Public
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'unlisted')}>
+                                                        <LinkIcon className="mr-2 h-4 w-4" /> Link Only
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'private')}>
+                                                        <Lock className="mr-2 h-4 w-4" /> Private
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuItem onClick={() => handleShare(test)}>
+                                                <LinkIcon className="mr-2 h-4 w-4" /> Share Link
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </CardHeader>
                             <CardContent className="pb-2">
@@ -286,6 +375,10 @@ export default function UserTestManager() {
                                     <Badge variant="outline" className="font-mono text-[10px] py-0 h-5 border-slate-300 text-slate-500">
                                         {test.custom_id || 'NO-ID'}
                                     </Badge>
+                                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getVisibilityColor(test.visibility || (test.is_public ? 'public' : 'private'))}`}>
+                                        {getVisibilityIcon(test.visibility || (test.is_public ? 'public' : 'private'))}
+                                        <span className="uppercase">{(test.visibility === 'unlisted' ? 'Link' : test.visibility) || (test.is_public ? 'Public' : 'Private')}</span>
+                                    </div>
                                     <span>{test.questions?.length || 0} Qs</span>
                                     <span>{test.duration || 0} mins</span>
                                 </div>
