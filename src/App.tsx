@@ -33,6 +33,7 @@ const ManageTests = lazy(() => import("./pages/ManageTests"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const UserTestManager = lazy(() => import("./pages/UserTestManager"));
+const MaterialsManager = lazy(() => import("./pages/MaterialsManager"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const CreateTestPage = lazy(() => import("./pages/CreateTestPage"));
@@ -42,6 +43,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
 
 
 const Layout = lazy(() => import("./Layout"));
@@ -90,11 +92,20 @@ const App = () => (
 
 
                     {/* Protected Routes */}
+
                     <Route
                       path="/my-tests"
                       element={
                         <PrivateRoute>
                           <UserTestManager />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/materials"
+                      element={
+                        <PrivateRoute>
+                          <MaterialsManager />
                         </PrivateRoute>
                       }
                     />
@@ -147,6 +158,14 @@ const App = () => (
                       element={
                         <PrivateRoute>
                           <TestHistory />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/test-submitted"
+                      element={
+                        <PrivateRoute>
+                          <TestSubmissionSuccess />
                         </PrivateRoute>
                       }
                     />

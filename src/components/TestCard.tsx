@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Edit, MoreVertical, Globe, Link as LinkIcon, Lock } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Edit, MoreVertical, Globe, Link as LinkIcon, Lock, GraduationCap, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestLikeButton from '@/components/TestLikeButton';
 import { toast } from 'sonner';
@@ -17,8 +17,10 @@ import {
     DropdownMenuSub,
     DropdownMenuSubTrigger,
     DropdownMenuSubContent,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { updateTest } from '@/lib/testsApi';
+import { fetchClasses } from '@/lib/classesApi';
 import { useState } from 'react';
 
 interface TestCardProps {
@@ -42,6 +44,48 @@ export default function TestCard({
     const navigate = useNavigate();
 
     const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(test.visibility || (test.is_public ? 'public' : 'private'));
+
+    const [classes, setClasses] = useState<any[]>([]);
+    const [loadingClasses, setLoadingClasses] = useState(false);
+
+    // Handle Supabase response which might be object or array for 'classes' join
+    const getClassName = (testObj: any) => {
+        if (!testObj.classes) return null;
+        if (Array.isArray(testObj.classes)) return testObj.classes[0]?.name || null;
+        return testObj.classes.name || null;
+    };
+
+    const [classInfo, setClassInfo] = useState<{ id: string | null, name: string | null }>({
+        id: test.class_id || null,
+        name: getClassName(test)
+    });
+
+    const loadClasses = async () => {
+        if (classes.length > 0 || !user) return;
+        setLoadingClasses(true);
+        console.log("Loading classes for user:", user.id);
+        try {
+            const { data } = await fetchClasses(user.id);
+            if (data) setClasses(data);
+        } catch (e) {
+            console.error("Failed to load classes", e);
+        } finally {
+            setLoadingClasses(false);
+        }
+    };
+
+    const handleClassChange = async (classId: string | null, className: string | null) => {
+        const prevInfo = classInfo;
+        setClassInfo({ id: classId, name: className }); // Optimistic
+
+        const { error } = await updateTest(test.id, { class_id: classId });
+        if (error) {
+            toast.error("Failed to update class assignment");
+            setClassInfo(prevInfo); // Revert
+        } else {
+            toast.success(classId ? `Assigned to ${className}` : "Removed from class");
+        }
+    };
 
     const handleShare = (e: React.MouseEvent, test: any) => {
         e.stopPropagation();
@@ -103,16 +147,16 @@ export default function TestCard({
     };
 
     return (
-        <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800">
+        <Card className="flex flex-col hover:shadow-lg transition-shadow relative h-full border-slate-200 dark:border-slate-800">
             <div className="absolute top-2 right-2 z-10 flex gap-1">
                 {user?.id === test.created_by && (
-                    <DropdownMenu>
+                    <DropdownMenu onOpenChange={(open) => { if (open) loadClasses(); }}>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm">
                                 <MoreVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger>
                                     <Globe className="mr-2 h-4 w-4" /> Visibility
@@ -129,9 +173,38 @@ export default function TestCard({
                                     </DropdownMenuItem>
                                 </DropdownMenuSubContent>
                             </DropdownMenuSub>
+
                             <DropdownMenuItem onClick={(e) => handleShare(e, test)}>
                                 <LinkIcon className="mr-2 h-4 w-4" /> Share Link
                             </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                    {loadingClasses ? (
+                                        <DropdownMenuItem disabled>Loading...</DropdownMenuItem>
+                                    ) : classes.length === 0 ? (
+                                        <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
+                                    ) : (
+                                        <>
+                                            <DropdownMenuItem onClick={() => handleClassChange(null, null)}>
+                                                <span className="opacity-50">None</span>
+                                                {classInfo.id === null && <Check className="ml-auto h-4 w-4" />}
+                                            </DropdownMenuItem>
+                                            {classes.map(cls => (
+                                                <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(cls.id, cls.name)}>
+                                                    {cls.name}
+                                                    {classInfo.id === cls.id && <Check className="ml-auto h-4 w-4" />}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </>
+                                    )}
+                                </DropdownMenuSubContent>
+                            </DropdownMenuSub>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
@@ -150,6 +223,13 @@ export default function TestCard({
                         </div>
                         {test.custom_id && (
                             <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">#{test.custom_id}</span>
+                        )}
+                        {/* @ts-ignore */}
+                        {classInfo.name && (
+                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                <GraduationCap className="h-3 w-3" />
+                                <span className="uppercase">{classInfo.name}</span>
+                            </div>
                         )}
                         {user?.id === test.created_by && (
                             <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getVisibilityColor()}`}>

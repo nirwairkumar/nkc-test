@@ -33,6 +33,7 @@ export interface Test {
     og_image?: string; // Open Graph Image URL
     tags?: string[]; // Array of strings
     custom_category?: string;
+    class_id?: string; // Optional Class Assignment
     settings?: TestSettings;
 
     // New Features
@@ -111,8 +112,7 @@ export async function fetchTests(options?: {
 
     let query = supabase
         .from('tests')
-        .select('*')
-        .select('*')
+        .select('*, classes(name)')
         .eq('visibility', 'public'); // Strict: Only show Public tests in feed. Unlisted/Private are hidden.
 
     if (searchQuery) {
