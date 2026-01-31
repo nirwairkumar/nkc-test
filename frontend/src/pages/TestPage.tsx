@@ -588,11 +588,8 @@ export default function TestPage() {
 
       // Handle Result Visibility
       if (test.settings?.show_results_immediate === false) {
-        // Navigate to home or a simpler success page if results are hidden
-        navigate('/dashboard', { state: { message: "Test submitted successfully. Results will be published later." } });
-        // Note: Assuming /dashboard exists or similar (UserTestManager is at / ?)
-        // Let's go to root '/' which seems to be the main list or dashboard
-        navigate('/');
+        // Navigate to thank you page when results are hidden
+        navigate('/test-submitted', { replace: true });
       } else {
         navigate('/results', {
           state: {

@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from "sonner";
-import { fetchTestsByUserId } from '@/lib/testsApi';
+import { fetchTestsByUserId, updateTest } from '@/lib/testsApi';
+import { fetchClasses } from '@/lib/classesApi';
 import { fetchCategories, createCategory, fetchTestCategories, assignCategoriesToTest } from '@/lib/categoriesApi';
 import {
     Select,
@@ -20,7 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Plus, Upload, MoreVertical, Globe, Link as LinkIcon, Lock } from 'lucide-react';
+import { Plus, Upload, MoreVertical, Globe, Link as LinkIcon, Lock, GraduationCap, Check } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,7 +32,7 @@ import {
     DropdownMenuSubContent,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { updateTest } from '@/lib/testsApi';
+
 import TestBuilder from '@/components/TestBuilder';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
@@ -73,6 +74,8 @@ export default function UserTestManager() {
     const [isCreator, setIsCreator] = useState<boolean | null>(null);
     const [checkingCreator, setCheckingCreator] = useState(true);
 
+    const [classes, setClasses] = useState<any[]>([]); // Classes State
+
     useEffect(() => {
         if (!authLoading && !user) {
             navigate('/login');
@@ -80,6 +83,7 @@ export default function UserTestManager() {
             checkCreatorStatus();
             loadUserTests();
             loadCategories();
+            loadClasses();
         }
     }, [user?.id, authLoading, navigate]);
 
@@ -96,6 +100,12 @@ export default function UserTestManager() {
         setCheckingCreator(false);
     };
 
+    const loadClasses = async () => {
+        if (!user) return;
+        const { data } = await fetchClasses(user.id);
+        if (data) setClasses(data);
+    };
+
     const loadCategories = async () => {
         const { data } = await fetchCategories();
         if (data) setCategories(data);
@@ -105,7 +115,10 @@ export default function UserTestManager() {
         if (!user) return;
         setTestsLoading(true);
         try {
+            // Include classes in fetch
             const { data, error } = await fetchTestsByUserId(user.id);
+            // Note: Update fetchTestsByUserId in testsApi to include classes if not already? 
+            // Actually fetchTestsByUserId usually returns *, we might need to assume it returns class_id
             if (error) throw error;
             setTests(data || []);
         } catch (error) {
@@ -168,6 +181,22 @@ export default function UserTestManager() {
         const url = `${window.location.origin}${path}`;
         navigator.clipboard.writeText(url);
         toast.success("Test link copied!");
+    };
+
+    const handleClassChange = async (test: any, classId: string | null) => {
+        const oldClassId = test.class_id;
+        // Optimistic update
+        setTests(prev => prev.map(t => t.id === test.id ? { ...t, class_id: classId } : t));
+
+        const { error } = await updateTest(test.id, { class_id: classId });
+        if (error) {
+            console.error("Failed to update class:", error);
+            toast.error("Failed to update class assignment");
+            // Revert
+            setTests(prev => prev.map(t => t.id === test.id ? { ...t, class_id: oldClassId } : t));
+        } else {
+            toast.success(classId ? "Class assigned" : "Class removed");
+        }
     };
 
     const getVisibilityIcon = (visibility: string) => {
@@ -366,6 +395,32 @@ export default function UserTestManager() {
                                             <DropdownMenuItem onClick={() => handleShare(test)}>
                                                 <LinkIcon className="mr-2 h-4 w-4" /> Share Link
                                             </DropdownMenuItem>
+
+                                            <DropdownMenuSeparator />
+
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger>
+                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
+                                                </DropdownMenuSubTrigger>
+                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                    {classes.length === 0 ? (
+                                                        <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
+                                                    ) : (
+                                                        <>
+                                                            <DropdownMenuItem onClick={() => handleClassChange(test, null)}>
+                                                                <span className="opacity-50">None</span>
+                                                                {!test.class_id && <Check className="ml-auto h-4 w-4" />}
+                                                            </DropdownMenuItem>
+                                                            {classes.map(cls => (
+                                                                <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id)}>
+                                                                    {cls.name}
+                                                                    {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
+                                                                </DropdownMenuItem>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuSub>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -375,6 +430,12 @@ export default function UserTestManager() {
                                     <Badge variant="outline" className="font-mono text-[10px] py-0 h-5 border-slate-300 text-slate-500">
                                         {test.custom_id || 'NO-ID'}
                                     </Badge>
+                                    {test.class_id && classes.find(c => c.id === test.class_id) && (
+                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                            <GraduationCap className="h-3 w-3" />
+                                            <span className="uppercase">{classes.find(c => c.id === test.class_id)?.name}</span>
+                                        </div>
+                                    )}
                                     <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getVisibilityColor(test.visibility || (test.is_public ? 'public' : 'private'))}`}>
                                         {getVisibilityIcon(test.visibility || (test.is_public ? 'public' : 'private'))}
                                         <span className="uppercase">{(test.visibility === 'unlisted' ? 'Link' : test.visibility) || (test.is_public ? 'Public' : 'Private')}</span>

@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText } from 'lucide-react';
+import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap } from 'lucide-react';
+import { ClassItem, fetchClasses } from '@/lib/classesApi';
 
 interface TestSettingsPanelProps {
     test: Test;
@@ -32,18 +33,33 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         ...test.settings // Merge existing settings
     });
 
+    // Manage class_id separately as it's not part of TestSettings jsonb
+    const [classId, setClassId] = useState<string | null>(test.class_id || null);
+
     const [loading, setLoading] = useState(false);
+    const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
 
     useEffect(() => {
         if (test.settings) {
             setSettings(prev => ({ ...prev, ...test.settings }));
+        }
+        setClassId(test.class_id || null);
+
+        if (test.created_by) {
+            fetchClasses(test.created_by).then(({ data }) => {
+                if (data) setAvailableClasses(data);
+            });
         }
     }, [test]);
 
     const handleSave = async () => {
         setLoading(true);
         try {
-            const { error } = await updateTest(test.id, { settings });
+            const { error } = await updateTest(test.id, {
+                settings: settings,
+                class_id: classId
+            });
+
             if (error) throw error;
             toast.success("Test settings updated successfully");
             onUpdate();
@@ -56,7 +72,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         }
     };
 
-    const updateSetting = <K extends keyof TestSettings>(key: K, value: TestSettings[K]) => {
+    const updateSetting = (key: string, value: any) => {
         setSettings(prev => ({ ...prev, [key]: value }));
     };
 
@@ -145,6 +161,30 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             </div>
                         </div>
                     )}
+                </div>
+
+                <div className="flex flex-col gap-4 border p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-base flex items-center gap-2"><GraduationCap className="w-4 h-4 text-purple-600" /> Assign to Class</Label>
+                            <p className="text-sm text-muted-foreground">Group this test under a specific class.</p>
+                        </div>
+                    </div>
+                    {/* Class Selector */}
+                    <Select
+                        value={classId || "none"}
+                        onValueChange={(val) => setClassId(val === "none" ? null : val)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a class..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">No Class (General)</SelectItem>
+                            {availableClasses.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="flex items-center justify-between border p-4 rounded-lg">
