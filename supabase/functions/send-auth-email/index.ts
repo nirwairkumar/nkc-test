@@ -1,41 +1,15 @@
-import { Resend } from "npm:resend@2.0.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { Resend } from "npm:resend@2.0.0"
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-const AUTH_HOOK_SECRET = Deno.env.get("AUTH_HOOK_SECRET")!;
-
-const resend = new Resend(RESEND_API_KEY);
-
-interface AuthEmailPayload {
-    email: string;
-    type: "signup" | "recovery";
-    action_link: string;
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function verifySignature(
-    payload: string,
-    signature: string,
-    secret: string
-): Promise<boolean> {
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-        "raw",
-        encoder.encode(secret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-    );
-
-    const signatureBuffer = await crypto.subtle.sign(
-        "HMAC",
-        key,
-        encoder.encode(payload)
-    );
-
-    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
-    return expectedSignature === signature;
+interface AuthEmailPayload {
+    email: string
+    type: "signup" | "recovery"
+    action_link: string
 }
 
 function getConfirmationEmailTemplate(actionLink: string): string {
@@ -81,7 +55,7 @@ function getConfirmationEmailTemplate(actionLink: string): string {
         </table>
       </body>
     </html>
-  `;
+  `
 }
 
 function getRecoveryEmailTemplate(actionLink: string): string {
@@ -127,83 +101,72 @@ function getRecoveryEmailTemplate(actionLink: string): string {
         </table>
       </body>
     </html>
-  `;
+  `
 }
 
-Deno.serve(async (req) => {
-    if (req.method !== "POST") {
-        return new Response(JSON.stringify({ error: "Method not allowed" }), {
-            status: 405,
-            headers: { "Content-Type": "application/json" },
-        });
+serve(async (req) => {
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders })
     }
 
     try {
-        const signature = req.headers.get("x-supabase-signature");
-        const rawBody = await req.text();
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
-        if (!signature) {
-            return new Response(JSON.stringify({ error: "Missing signature" }), {
-                status: 401,
-                headers: { "Content-Type": "application/json" },
-            });
+        const { email, type, action_link } = await req.json() as AuthEmailPayload
+
+        if (!email || !type || !action_link) {
+            return new Response(
+                JSON.stringify({ error: "Missing required fields" }),
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
         }
 
-        const isValid = await verifySignature(rawBody, signature, AUTH_HOOK_SECRET);
+        console.log("Processing email:", { email, type })
 
-        if (!isValid) {
-            return new Response(JSON.stringify({ error: "Invalid signature" }), {
-                status: 401,
-                headers: { "Content-Type": "application/json" },
-            });
-        }
-
-        const payload: AuthEmailPayload = JSON.parse(rawBody);
-        const { email, type, action_link } = payload;
-
-        let subject: string;
-        let html: string;
+        let subject: string
+        let html: string
 
         if (type === "signup") {
-            subject = "Confirm your email address";
-            html = getConfirmationEmailTemplate(action_link);
+            subject = "Confirm your email address"
+            html = getConfirmationEmailTemplate(action_link)
         } else if (type === "recovery") {
-            subject = "Reset your password";
-            html = getRecoveryEmailTemplate(action_link);
+            subject = "Reset your password"
+            html = getRecoveryEmailTemplate(action_link)
         } else {
+            console.error("Unsupported email type:", type)
             return new Response(
                 JSON.stringify({ error: "Unsupported email type" }),
-                {
-                    status: 400,
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
+                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
         }
 
+        console.log("Sending email via Resend...")
         const { data, error } = await resend.emails.send({
             from: "Testoza <testoza@nymintra.com>",
             to: email,
             subject,
             html,
-        });
+        })
 
         if (error) {
-            console.error("Resend error:", error);
-            return new Response(JSON.stringify({ error: "Failed to send email" }), {
-                status: 500,
-                headers: { "Content-Type": "application/json" },
-            });
+            console.error("Resend error:", error)
+            return new Response(
+                JSON.stringify({ error: "Failed to send email", details: error }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
         }
 
-        return new Response(JSON.stringify({ success: true, messageId: data?.id }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-        });
+        console.log("Email sent successfully:", data?.id)
+        return new Response(
+            JSON.stringify({ success: true, messageId: data?.id }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+        )
+
     } catch (error) {
-        console.error("Error processing request:", error);
-        return new Response(JSON.stringify({ error: "Internal server error" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-        });
+        console.error("Error processing request:", error)
+        return new Response(
+            JSON.stringify({ error: error.message }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        )
     }
-});
+})

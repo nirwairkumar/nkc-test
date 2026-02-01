@@ -30,7 +30,7 @@ export default function Layout() {
     }, [user, navigate, location.pathname]);
     // Hide navbar only on live test page (/test/:id)
     // Also hiding on /test-intro/:id as requested
-    const isLiveTestPage = location.pathname.startsWith('/test/') || location.pathname.startsWith('/test-intro/') || location.pathname.startsWith('/live/');
+    const isLiveTestPage = location.pathname.startsWith('/test/') || location.pathname.startsWith('/test-intro/') || location.pathname.startsWith('/live/') || location.pathname.startsWith('/test-submitted');
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">

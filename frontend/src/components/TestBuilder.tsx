@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput } from '@/components/ui/IMEInput';
@@ -142,6 +142,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
     // UX State for Image Inputs
     const [expandedImageInputs, setExpandedImageInputs] = useState<Record<string, boolean>>({});
+    const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({});
 
     const toggleImageInput = (id: string | number) => {
         setExpandedImageInputs(prev => ({
@@ -1021,6 +1022,26 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         setTags(tags.filter(t => t !== tagToRemove));
     };
 
+    // Show loading screen while fetching test data
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+                <div className="text-center space-y-6 animate-in fade-in zoom-in duration-500">
+                    <div className="relative">
+                        <div className="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
+                            <PenLine className="w-10 h-10 text-blue-600 animate-pulse" />
+                        </div>
+                        <div className="absolute inset-0 w-20 h-20 mx-auto border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                    </div>
+                    <div className="space-y-2">
+                        <h3 className="text-xl font-semibold text-slate-700">Loading your test...</h3>
+                        <p className="text-sm text-slate-500">Please wait while we fetch your test data</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto py-4 px-0 sm:px-6">
             <div className="mb-6 flex flex-wrap gap-y-4 items-center justify-between px-4 sm:px-0">
@@ -1714,9 +1735,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                                                         className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
                                                                                                                         onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }}
                                                                                                                     />
-                                                                                                                    <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200">
-                                                                                                                        <Upload className="w-3 h-3" />
-                                                                                                                        <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; nq[index].optionImages![optKey] = base64; setSections(newSections); })} />
+                                                                                                                    <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
+                                                                                                                        {uploadingImages[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? (
+                                                                                                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                                                                                                        ) : (
+                                                                                                                            <Upload className="w-3 h-3" />
+                                                                                                                        )}
+                                                                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                                                                                            const uploadKey = `sec-${sIdx}-q-${qIdx}-opt-${optKey}`;
+                                                                                                                            setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
+                                                                                                                            handleFileUpload(e, (base64) => {
+                                                                                                                                const newSections = [...sections];
+                                                                                                                                const q = newSections[sIdx].questions[qIdx];
+                                                                                                                                if (!q.optionImages) q.optionImages = {};
+                                                                                                                                q.optionImages[optKey] = base64;
+                                                                                                                                setSections(newSections);
+                                                                                                                                setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
+                                                                                                                            });
+                                                                                                                        }} />
                                                                                                                     </label>
                                                                                                                 </div>
                                                                                                             )}
@@ -2090,9 +2126,23 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                                 className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
                                                                                                 onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }}
                                                                                             />
-                                                                                            <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200">
-                                                                                                <Upload className="w-3 h-3" />
-                                                                                                <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, (base64) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = base64; setQuestions(nq); })} />
+                                                                                            <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
+                                                                                                {uploadingImages[`q-${index}-opt-${optKey}`] ? (
+                                                                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                                                                ) : (
+                                                                                                    <Upload className="w-3 h-3" />
+                                                                                                )}
+                                                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                                                                    const uploadKey = `q-${index}-opt-${optKey}`;
+                                                                                                    setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
+                                                                                                    handleFileUpload(e, (base64) => {
+                                                                                                        const nq = [...questions];
+                                                                                                        if (!nq[index].optionImages) nq[index].optionImages = {};
+                                                                                                        nq[index].optionImages![optKey] = base64;
+                                                                                                        setQuestions(nq);
+                                                                                                        setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
+                                                                                                    });
+                                                                                                }} />
                                                                                             </label>
                                                                                         </div>
                                                                                     )}

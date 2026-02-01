@@ -66,10 +66,10 @@ MATH & FORMATTING RULES:
 - Do NOT simplify expressions.
 
 TEXT & LINE-BREAK RULES:
-- DO NOT use escaped newline characters (\\n).
-- Use REAL line breaks inside JSON strings.
-- Multi-line questions must appear as visually separated lines.
-- Do NOT use <br>, HTML tags, or markdown.
+- DO NOT use escaped newline characters (\\n) or real line breaks.
+- Use <br> tags for line breaks in questions and options.
+- Multi-line questions should use <br> tags to separate lines.
+- Do NOT use other HTML tags or markdown.
 
 --------------------------------------------------
 STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
