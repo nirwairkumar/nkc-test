@@ -819,8 +819,8 @@ export default function TestPage() {
           })()}
         </div>
         <div className="flex items-center gap-2">
-          {/* Warning Counter - Yellow Icon + Count */}
-          {test?.settings?.tab_switch_mode !== 'off' && (
+          {/* Warning Counter - Yellow Icon + Count (Only show to creator) */}
+          {test?.settings?.tab_switch_mode !== 'off' && user?.id === test?.created_by && (
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
               <TriangleAlert className={`w-4 h-4 ${warnings > 0 ? 'fill-amber-100 text-amber-600' : 'text-slate-400'}`} />
               <span>

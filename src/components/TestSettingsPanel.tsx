@@ -8,8 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap } from 'lucide-react';
+import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown } from 'lucide-react';
 import { ClassItem, fetchClasses } from '@/lib/classesApi';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
 
 interface TestSettingsPanelProps {
     test: Test;
@@ -39,6 +42,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const [loading, setLoading] = useState(false);
     const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
 
+    // Premium status check
+    const { isPremium, loading: premiumLoading } = usePremiumStatus();
+    const navigate = useNavigate();
+
     useEffect(() => {
         if (test.settings) {
             setSettings(prev => ({ ...prev, ...test.settings }));
@@ -53,6 +60,17 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     }, [test]);
 
     const handleSave = async () => {
+        if (!isPremium) {
+            toast.error("Premium feature required", {
+                description: "Upgrade to Premium to manage test settings",
+                action: {
+                    label: "Upgrade Now",
+                    onClick: () => navigate('/pricing')
+                }
+            });
+            return;
+        }
+
         setLoading(true);
         try {
             const { error } = await updateTest(test.id, {
@@ -72,6 +90,18 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         }
     };
 
+    const showPremiumToast = () => {
+        if (!isPremium) {
+            toast.error("Premium feature required", {
+                description: "Upgrade to Premium to unlock all test management features",
+                action: {
+                    label: "Upgrade Now",
+                    onClick: () => navigate('/pricing')
+                }
+            });
+        }
+    };
+
     const updateSetting = (key: string, value: any) => {
         setSettings(prev => ({ ...prev, [key]: value }));
     };
@@ -79,15 +109,19 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const renderProctoring = () => (
         <div className="space-y-6">
             <div className="space-y-4">
-                <div className="flex items-center justify-between border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                <div className={`flex items-center justify-between border p-4 rounded-lg bg-slate-50 dark:bg-slate-900 ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="space-y-0.5">
                         <Label className="text-base flex items-center gap-2"><Maximize className="w-4 h-4 text-blue-500" /> Force Full Screen</Label>
                         <p className="text-sm text-muted-foreground">User must enter full screen to start. Exiting triggers a warning.</p>
                     </div>
-                    <Switch checked={settings.force_fullscreen} onCheckedChange={(c) => updateSetting('force_fullscreen', c)} />
+                    <Switch
+                        checked={settings.force_fullscreen}
+                        onCheckedChange={(c) => isPremium ? updateSetting('force_fullscreen', c) : showPremiumToast()}
+                        disabled={!isPremium}
+                    />
                 </div>
 
-                <div className="flex flex-col gap-3 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                <div className={`flex flex-col gap-3 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900 ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Tab Switch Detection</Label>
@@ -96,42 +130,78 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     </div>
                     <div className="flex gap-4 pt-2 flex-wrap">
                         <div className="flex items-center space-x-2">
-                            <input type="radio" id="ts_off" name="tab_switch" checked={settings.tab_switch_mode === 'off'} onChange={() => updateSetting('tab_switch_mode', 'off')} className="accent-primary" />
-                            <Label htmlFor="ts_off" className="font-normal cursor-pointer">Off (Allowed)</Label>
+                            <input
+                                type="radio"
+                                id="ts_off"
+                                name="tab_switch"
+                                checked={settings.tab_switch_mode === 'off'}
+                                onChange={() => isPremium ? updateSetting('tab_switch_mode', 'off') : showPremiumToast()}
+                                disabled={!isPremium}
+                                className="accent-primary"
+                            />
+                            <Label htmlFor="ts_off" className={`font-normal ${isPremium ? 'cursor-pointer' : 'cursor-not-allowed'}`}>Off (Allowed)</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <input type="radio" id="ts_warn" name="tab_switch" checked={settings.tab_switch_mode === 'warming'} onChange={() => updateSetting('tab_switch_mode', 'warming')} className="accent-primary" />
-                            <Label htmlFor="ts_warn" className="font-normal cursor-pointer">Warning then Submit</Label>
+                            <input
+                                type="radio"
+                                id="ts_warn"
+                                name="tab_switch"
+                                checked={settings.tab_switch_mode === 'warming'}
+                                onChange={() => isPremium ? updateSetting('tab_switch_mode', 'warming') : showPremiumToast()}
+                                disabled={!isPremium}
+                                className="accent-primary"
+                            />
+                            <Label htmlFor="ts_warn" className={`font-normal ${isPremium ? 'cursor-pointer' : 'cursor-not-allowed'}`}>Warning then Submit</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <input type="radio" id="ts_strict" name="tab_switch" checked={settings.tab_switch_mode === 'strict'} onChange={() => updateSetting('tab_switch_mode', 'strict')} className="accent-red-500" />
-                            <Label htmlFor="ts_strict" className="font-normal cursor-pointer text-red-600">Strict (Instant Submit)</Label>
+                            <input
+                                type="radio"
+                                id="ts_strict"
+                                name="tab_switch"
+                                checked={settings.tab_switch_mode === 'strict'}
+                                onChange={() => isPremium ? updateSetting('tab_switch_mode', 'strict') : showPremiumToast()}
+                                disabled={!isPremium}
+                                className="accent-red-500"
+                            />
+                            <Label htmlFor="ts_strict" className={`font-normal ${isPremium ? 'cursor-pointer text-red-600' : 'cursor-not-allowed'}`}>Strict (Instant Submit)</Label>
                         </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between border p-4 rounded-lg">
+                    <div className={`flex items-center justify-between border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                         <div className="space-y-0.5">
                             <Label>Disable Copy/Paste</Label>
                             <p className="text-xs text-muted-foreground">Prevent clipboard actions</p>
                         </div>
-                        <Switch checked={settings.disable_copy_paste} onCheckedChange={(c) => updateSetting('disable_copy_paste', c)} />
+                        <Switch
+                            checked={settings.disable_copy_paste}
+                            onCheckedChange={(c) => isPremium ? updateSetting('disable_copy_paste', c) : showPremiumToast()}
+                            disabled={!isPremium}
+                        />
                     </div>
-                    <div className="flex items-center justify-between border p-4 rounded-lg">
+                    <div className={`flex items-center justify-between border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                         <div className="space-y-0.5">
                             <Label>Disable Right Match</Label>
                             <p className="text-xs text-muted-foreground">Prevent context menu</p>
                         </div>
-                        <Switch checked={settings.disable_actions} onCheckedChange={(c) => updateSetting('disable_actions', c)} />
+                        <Switch
+                            checked={settings.disable_actions}
+                            onCheckedChange={(c) => isPremium ? updateSetting('disable_actions', c) : showPremiumToast()}
+                            disabled={!isPremium}
+                        />
                     </div>
-                    <div className="flex items-center justify-between border p-4 rounded-lg">
+                    <div className={`flex items-center justify-between border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                         <div className="space-y-0.5">
                             <Label>Block Back Button</Label>
                             <p className="text-xs text-muted-foreground">Prevent accidental navigation</p>
                         </div>
                         {/* @ts-ignore - Setting might not be typed yet */}
-                        <Switch checked={settings.block_back_button || false} onCheckedChange={(c) => updateSetting('block_back_button', c)} />
+                        <Switch
+                            checked={settings.block_back_button || false}
+                            onCheckedChange={(c) => isPremium ? updateSetting('block_back_button', c) : showPremiumToast()}
+                            disabled={!isPremium}
+                        />
                     </div>
                 </div>
             </div>
@@ -141,29 +211,43 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const renderAccess = () => (
         <div className="space-y-6">
             <div className="space-y-4">
-                <div className="flex flex-col gap-4 border p-4 rounded-lg">
+                <div className={`flex flex-col gap-4 border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><Calendar className="w-4 h-4 text-green-600" /> Scheduled Access</Label>
                             <p className="text-sm text-muted-foreground">Restrict test availability window.</p>
                         </div>
-                        <Switch checked={settings.schedule?.enabled} onCheckedChange={(c) => updateSetting('schedule', { ...settings.schedule, enabled: c })} />
+                        <Switch
+                            checked={settings.schedule?.enabled}
+                            onCheckedChange={(c) => isPremium ? updateSetting('schedule', { ...settings.schedule, enabled: c }) : showPremiumToast()}
+                            disabled={!isPremium}
+                        />
                     </div>
                     {settings.schedule?.enabled && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-0 md:pl-6 border-l-0 md:border-l-2 ml-0 md:ml-2">
                             <div className="grid gap-2">
                                 <Label>Start Date & Time</Label>
-                                <Input type="datetime-local" value={settings.schedule?.start_time || ''} onChange={(e) => updateSetting('schedule', { ...settings.schedule!, start_time: e.target.value })} />
+                                <Input
+                                    type="datetime-local"
+                                    value={settings.schedule?.start_time || ''}
+                                    onChange={(e) => isPremium ? updateSetting('schedule', { ...settings.schedule!, start_time: e.target.value }) : showPremiumToast()}
+                                    disabled={!isPremium}
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label>End Date & Time</Label>
-                                <Input type="datetime-local" value={settings.schedule?.end_time || ''} onChange={(e) => updateSetting('schedule', { ...settings.schedule!, end_time: e.target.value })} />
+                                <Input
+                                    type="datetime-local"
+                                    value={settings.schedule?.end_time || ''}
+                                    onChange={(e) => isPremium ? updateSetting('schedule', { ...settings.schedule!, end_time: e.target.value }) : showPremiumToast()}
+                                    disabled={!isPremium}
+                                />
                             </div>
                         </div>
                     )}
                 </div>
 
-                <div className="flex flex-col gap-4 border p-4 rounded-lg">
+                <div className={`flex flex-col gap-4 border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><GraduationCap className="w-4 h-4 text-purple-600" /> Assign to Class</Label>
@@ -173,7 +257,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     {/* Class Selector */}
                     <Select
                         value={classId || "none"}
-                        onValueChange={(val) => setClassId(val === "none" ? null : val)}
+                        onValueChange={(val) => isPremium ? setClassId(val === "none" ? null : val) : showPremiumToast()}
+                        disabled={!isPremium}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Select a class..." />
@@ -187,18 +272,22 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     </Select>
                 </div>
 
-                <div className="flex items-center justify-between border p-4 rounded-lg">
+                <div className={`flex items-center justify-between border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="space-y-0.5">
                         <Label>Attempt Limit</Label>
                         <p className="text-sm text-muted-foreground">Restrict users to a single attempt.</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <span className="text-sm font-medium">{settings.attempt_limit === 1 ? 'Single Attempt' : 'Unlimited'}</span>
-                        <Switch checked={settings.attempt_limit === 1} onCheckedChange={(c) => updateSetting('attempt_limit', c ? 1 : undefined)} />
+                        <Switch
+                            checked={settings.attempt_limit === 1}
+                            onCheckedChange={(c) => isPremium ? updateSetting('attempt_limit', c ? 1 : undefined) : showPremiumToast()}
+                            disabled={!isPremium}
+                        />
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-4 border p-4 rounded-lg">
+                <div className={`flex flex-col gap-4 border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><FormInput className="w-4 h-4" /> Start Form</Label>
@@ -207,6 +296,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         <Switch
                             checked={settings.start_form?.enabled}
                             onCheckedChange={(c) => {
+                                if (!isPremium) {
+                                    showPremiumToast();
+                                    return;
+                                }
                                 const newState = { ...settings.start_form, enabled: c, fields: settings.start_form?.fields || [] };
                                 updateSetting('start_form', newState);
                                 if (!c && !settings.show_results_immediate) {
@@ -214,6 +307,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     toast.info("Result Visibility enabled automatically since Start Form was disabled.");
                                 }
                             }}
+                            disabled={!isPremium}
                         />
                     </div>
                     {settings.start_form?.enabled && (
@@ -221,29 +315,59 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             <p className="text-xs text-muted-foreground">Custom fields (label, required):</p>
                             {settings.start_form?.fields.map((field, idx) => (
                                 <div key={idx} className="flex gap-2 items-center">
-                                    <Input value={field.label} onChange={(e) => {
-                                        const newFields = [...(settings.start_form?.fields || [])];
-                                        newFields[idx].label = e.target.value;
-                                        updateSetting('start_form', { ...settings.start_form!, fields: newFields });
-                                    }} placeholder="Field Label (e.g. Roll No)" />
-                                    <div className="flex items-center gap-2 bg-slate-100 p-2 rounded">
-                                        <input type="checkbox" checked={field.required} onChange={(e) => {
+                                    <Input
+                                        value={field.label}
+                                        onChange={(e) => {
+                                            if (!isPremium) return;
                                             const newFields = [...(settings.start_form?.fields || [])];
-                                            newFields[idx].required = e.target.checked;
+                                            newFields[idx].label = e.target.value;
                                             updateSetting('start_form', { ...settings.start_form!, fields: newFields });
-                                        }} />
+                                        }}
+                                        placeholder="Field Label (e.g. Roll No)"
+                                        disabled={!isPremium}
+                                    />
+                                    <div className="flex items-center gap-2 bg-slate-100 p-2 rounded">
+                                        <input
+                                            type="checkbox"
+                                            checked={field.required}
+                                            onChange={(e) => {
+                                                if (!isPremium) return;
+                                                const newFields = [...(settings.start_form?.fields || [])];
+                                                newFields[idx].required = e.target.checked;
+                                                updateSetting('start_form', { ...settings.start_form!, fields: newFields });
+                                            }}
+                                            disabled={!isPremium}
+                                        />
                                         <span className="text-xs">Req</span>
                                     </div>
-                                    <Button variant="ghost" size="sm" onClick={() => {
-                                        const newFields = settings.start_form?.fields.filter((_, i) => i !== idx);
-                                        updateSetting('start_form', { ...settings.start_form!, fields: newFields });
-                                    }}><span className="text-red-500">×</span></Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            if (!isPremium) {
+                                                showPremiumToast();
+                                                return;
+                                            }
+                                            const newFields = settings.start_form?.fields.filter((_, i) => i !== idx);
+                                            updateSetting('start_form', { ...settings.start_form!, fields: newFields });
+                                        }}
+                                        disabled={!isPremium}
+                                    ><span className="text-red-500">×</span></Button>
                                 </div>
                             ))}
-                            <Button size="sm" variant="outline" onClick={() => {
-                                const newFields = [...(settings.start_form?.fields || []), { label: '', required: true }];
-                                updateSetting('start_form', { ...settings.start_form!, fields: newFields });
-                            }}>+ Add Field</Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    if (!isPremium) {
+                                        showPremiumToast();
+                                        return;
+                                    }
+                                    const newFields = [...(settings.start_form?.fields || []), { label: '', required: true }];
+                                    updateSetting('start_form', { ...settings.start_form!, fields: newFields });
+                                }}
+                                disabled={!isPremium}
+                            >+ Add Field</Button>
                         </div>
                     )}
                 </div>
@@ -254,7 +378,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const renderResults = () => (
         <div className="space-y-6">
             <div className="space-y-4">
-                <div className="flex items-center justify-between border p-4 rounded-lg">
+                <div className={`flex items-center justify-between border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="space-y-0.5">
                         <Label className="flex items-center gap-2"><Eye className="w-4 h-4" /> Result Visibility</Label>
                         <p className="text-sm text-muted-foreground">Show detailed analysis immediately after submit.</p>
@@ -262,6 +386,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <Switch
                         checked={settings.show_results_immediate}
                         onCheckedChange={(c) => {
+                            if (!isPremium) {
+                                showPremiumToast();
+                                return;
+                            }
                             updateSetting('show_results_immediate', c);
                             if (!c) {
                                 const currentFields = settings.start_form?.fields || [];
@@ -274,23 +402,32 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                 toast.info("Start Form enabled automatically for security.");
                             }
                         }}
+                        disabled={!isPremium}
                     />
                 </div>
 
-                <div className="flex items-center justify-between border p-4 rounded-lg">
+                <div className={`flex items-center justify-between border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="space-y-0.5">
                         <Label className="flex items-center gap-2"><Clock className="w-4 h-4" /> Strict Timer (Server Side)</Label>
                         <p className="text-sm text-muted-foreground">Prevents timer reset on reload. Uses start timestamp.</p>
                     </div>
-                    <Switch checked={settings.strict_timer} onCheckedChange={(c) => updateSetting('strict_timer', c)} />
+                    <Switch
+                        checked={settings.strict_timer}
+                        onCheckedChange={(c) => isPremium ? updateSetting('strict_timer', c) : showPremiumToast()}
+                        disabled={!isPremium}
+                    />
                 </div>
 
-                <div className="flex items-center justify-between border p-4 rounded-lg">
+                <div className={`flex items-center justify-between border p-4 rounded-lg ${!isPremium ? 'opacity-60' : ''}`}>
                     <div className="space-y-0.5">
                         <Label>Randomize Questions</Label>
                         <p className="text-sm text-muted-foreground">Shuffle question order for every student.</p>
                     </div>
-                    <Switch checked={settings.shuffle_questions} onCheckedChange={(c) => updateSetting('shuffle_questions', c)} />
+                    <Switch
+                        checked={settings.shuffle_questions}
+                        onCheckedChange={(c) => isPremium ? updateSetting('shuffle_questions', c) : showPremiumToast()}
+                        disabled={!isPremium}
+                    />
                 </div>
             </div>
         </div>
