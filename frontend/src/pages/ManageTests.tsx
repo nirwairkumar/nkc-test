@@ -5,8 +5,18 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+    DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -72,11 +82,15 @@ export default function ManageTests() {
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [viewingResultsTest, setViewingResultsTest] = useState<any>(null);
 
+    // Three-dot menu state
+    const [allClasses, setAllClasses] = useState<any[]>([]);
+
     // --- Effects ---
     useEffect(() => {
         loadTests();
         loadCategories();
         loadUsers();
+        loadAllClasses();
     }, []);
 
     useEffect(() => {
@@ -210,6 +224,69 @@ export default function ManageTests() {
             (user.id?.toLowerCase() || '').includes(q)
         );
     });
+
+    // --- Three-dot Menu Handlers ---
+    const loadAllClasses = async () => {
+        try {
+            const { data, error } = await supabase.from('classes').select('*');
+            if (error) throw error;
+            setAllClasses(data || []);
+        } catch (error) {
+            console.error("Error loading classes:", error);
+        }
+    };
+
+    const handleShare = (test: any) => {
+        const path = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+        const url = `${window.location.origin}${path}`;
+        navigator.clipboard.writeText(url);
+        toast.success("Test link copied!");
+    };
+
+    const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'unlisted' | 'private') => {
+        const isPublic = newVisibility === 'public';
+
+        try {
+            const { error } = await supabase
+                .from('tests')
+                .update({ visibility: newVisibility, is_public: isPublic })
+                .eq('id', test.id);
+
+            if (error) throw error;
+
+            toast.success(`Visibility set to ${newVisibility === 'unlisted' ? 'Link Only' : newVisibility.charAt(0).toUpperCase() + newVisibility.slice(1)}`);
+            loadTests(); // Refresh to show updated data
+        } catch (error: any) {
+            console.error("Failed to update visibility:", error);
+            toast.error("Failed to update visibility");
+        }
+    };
+
+    const handleClassChange = async (test: any, classId: string | null, className: string | null) => {
+        try {
+            const { error } = await supabase
+                .from('tests')
+                .update({ class_id: classId })
+                .eq('id', test.id);
+
+            if (error) throw error;
+
+            toast.success(classId ? `Assigned to ${className}` : "Removed from class");
+            loadTests(); // Refresh to show updated data
+        } catch (error: any) {
+            console.error("Failed to update class assignment:", error);
+            toast.error("Failed to update class assignment");
+        }
+    };
+
+    const getVisibilityIcon = (visibility: string) => {
+        switch (visibility) {
+            case 'public': return <Globe className="h-4 w-4" />;
+            case 'unlisted': return <LinkIcon className="h-4 w-4" />;
+            case 'private': return <Lock className="h-4 w-4" />;
+            default: return <Globe className="h-4 w-4" />;
+        }
+    };
 
     // --- Verified Creator Actions ---
     const handleVerifyUser = async (userToVerify: any) => {
@@ -425,59 +502,158 @@ export default function ManageTests() {
                                 {searchQuery ? "No matching tests found." : "No tests found."}
                             </div>
                         ) : (
-                            filteredTests.map(test => (
-                                <Card key={test.id} className="relative group hover:shadow-md transition-shadow flex flex-col h-full">
-                                    <div
-                                        className="absolute top-2 left-2 z-10 text-slate-400 hover:text-blue-600 cursor-pointer"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleViewCreator(test.created_by);
-                                        }}
-                                        title="Creator Info"
-                                    >
-                                        <Info className="w-4 h-4" />
-                                    </div>
-                                    <CardHeader className="pb-2 pt-6">
-                                        <div className="flex justify-between items-start gap-2">
-                                            <CardTitle className="text-lg line-clamp-2 leading-tight min-h-[3.5rem]" title={test.title}>
-                                                {test.title}
-                                            </CardTitle>
+                            filteredTests.map(test => {
+                                const currentVisibility = test.visibility || (test.is_public ? 'public' : 'private');
+                                const className = test.classes?.name || null;
+
+                                return (
+                                    <Card key={test.id} className="relative group hover:shadow-md transition-shadow flex flex-col h-full">
+                                        {/* Top Icons Row */}
+                                        <div className="absolute top-2 left-2 right-2 z-10 flex justify-between items-start">
+                                            {/* Creator Info Icon - Left */}
+                                            <div
+                                                className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewCreator(test.created_by);
+                                                }}
+                                                title="Creator Info"
+                                            >
+                                                <Info className="w-4 h-4" />
+                                            </div>
+
+                                            {/* Three-dot Menu - Right */}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-56">
+                                                    {/* Visibility Submenu */}
+                                                    <DropdownMenuSub>
+                                                        <DropdownMenuSubTrigger>
+                                                            {getVisibilityIcon(currentVisibility)}
+                                                            <span className="ml-2">Visibility</span>
+                                                        </DropdownMenuSubTrigger>
+                                                        <DropdownMenuSubContent>
+                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'public')}>
+                                                                <Globe className="mr-2 h-4 w-4" /> Public
+                                                                {currentVisibility === 'public' && <Check className="ml-auto h-4 w-4" />}
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'unlisted')}>
+                                                                <LinkIcon className="mr-2 h-4 w-4" /> Link Only
+                                                                {currentVisibility === 'unlisted' && <Check className="ml-auto h-4 w-4" />}
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'private')}>
+                                                                <Lock className="mr-2 h-4 w-4" /> Private
+                                                                {currentVisibility === 'private' && <Check className="ml-auto h-4 w-4" />}
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuSub>
+
+                                                    {/* Share Link */}
+                                                    <DropdownMenuItem onClick={() => handleShare(test)}>
+                                                        <LinkIcon className="mr-2 h-4 w-4" /> Share Link
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuSeparator />
+
+                                                    {/* Class Assignment Submenu */}
+                                                    <DropdownMenuSub>
+                                                        <DropdownMenuSubTrigger>
+                                                            <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
+                                                        </DropdownMenuSubTrigger>
+                                                        <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                            {allClasses.length === 0 ? (
+                                                                <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
+                                                            ) : (
+                                                                <>
+                                                                    <DropdownMenuItem onClick={() => handleClassChange(test, null, null)}>
+                                                                        <span className="opacity-50">None</span>
+                                                                        {!test.class_id && <Check className="ml-auto h-4 w-4" />}
+                                                                    </DropdownMenuItem>
+                                                                    {allClasses.map(cls => (
+                                                                        <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id, cls.name)}>
+                                                                            {cls.name}
+                                                                            {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
+                                                                        </DropdownMenuItem>
+                                                                    ))}
+                                                                </>
+                                                            )}
+                                                        </DropdownMenuSubContent>
+                                                    </DropdownMenuSub>
+
+                                                    <DropdownMenuSeparator />
+
+                                                    {/* Edit Action */}
+                                                    <DropdownMenuItem onClick={() => openTestEditDialog(test)}>
+                                                        <Pencil className="mr-2 h-4 w-4" /> Edit Test
+                                                    </DropdownMenuItem>
+
+                                                    {/* Manage Action */}
+                                                    <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
+                                                        <Settings className="mr-2 h-4 w-4" /> Manage Settings
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuSeparator />
+
+                                                    {/* Delete Action */}
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleDeleteTest(test.id, test.title)}
+                                                        className="text-destructive focus:text-destructive"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Test
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
-                                    </CardHeader>
-                                    <CardContent className="pb-2 flex-grow">
-                                        <div className="text-xs text-muted-foreground flex flex-wrap gap-3 items-center">
-                                            <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {test.questions?.length || 0} Qs</span>
-                                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {test.duration || 0} m</span>
-                                            <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border font-mono text-[10px] ml-auto">
-                                                ID: {test.custom_id || 'N/A'}
-                                            </span>
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="pt-2 flex flex-col gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
-                                        <div className="flex flex-wrap justify-between gap-2 w-full">
-                                            <Button variant="outline" size="sm" className="h-8 flex-1" onClick={() => openTestEditDialog(test)}>
-                                                <Pencil className="h-3 w-3 mr-2" />
-                                                Edit
-                                            </Button>
-                                            <Button variant="secondary" size="sm" className="h-8 flex-1" onClick={() => setConfiguringTest(test)}>
-                                                <Settings className="h-3 w-3 mr-2" />
-                                                Manage
+
+                                        <CardHeader className="pb-2 pt-6">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <CardTitle className="text-lg line-clamp-2 leading-tight min-h-[3.5rem]" title={test.title}>
+                                                    {test.title}
+                                                </CardTitle>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="pb-2 flex-grow">
+                                            <div className="text-xs text-muted-foreground flex flex-wrap gap-3 items-center">
+                                                <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {test.questions?.length || 0} Qs</span>
+                                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {test.duration || 0} m</span>
+                                                <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border font-mono text-[10px] ml-auto">
+                                                    ID: {test.custom_id || 'N/A'}
+                                                </span>
+                                            </div>
+                                            {className && (
+                                                <div className="mt-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200 w-fit">
+                                                    <GraduationCap className="h-3 w-3" />
+                                                    <span className="uppercase">{className}</span>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                        <CardFooter className="pt-2 flex gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8 flex-1"
+                                                onClick={() => navigate(`/test-intro/${test.id}`)}
+                                            >
+                                                <ArrowRight className="h-3 w-3 mr-2" />
+                                                View
                                             </Button>
                                             <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                onClick={() => handleDeleteTest(test.id, test.title)}
-                                                title="Delete Test"
+                                                variant="secondary"
+                                                size="sm"
+                                                className="h-8 flex-1"
+                                                onClick={() => setViewingResultsTest(test)}
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <FileText className="h-3 w-3 mr-2" />
+                                                Results
                                             </Button>
-                                        </div>
-
-
-                                    </CardFooter>
-                                </Card>
-                            ))
+                                        </CardFooter>
+                                    </Card>
+                                );
+                            })
                         )}
                     </div>
                 </TabsContent>
