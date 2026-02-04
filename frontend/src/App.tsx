@@ -15,6 +15,7 @@ import AITestImporter from "./pages/AITestImporter";
 // Lazy Load Pages
 import { HelmetProvider } from 'react-helmet-async';
 
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const TestList = lazy(() => import("./pages/TestList"));
 const TestPage = lazy(() => import("./pages/TestPage"));
@@ -67,7 +68,8 @@ const App = () => (
               }>
                 <Routes>
                   <Route element={<Layout />}>
-                    <Route path="/" element={<TestList />} />
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/dashboard" element={<TestList />} />
                     <Route path="/login" element={<AuthForm />} />
                     <Route path="/onboarding" element={<OnboardingPage />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
