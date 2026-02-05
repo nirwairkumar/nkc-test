@@ -1,6 +1,15 @@
-from ai_preview_importer.pdf_extractor import extract_text_blocks
-from ai_preview_importer.image_extractor import extract_images
-# from ai_preview_importer.ai_reasoner import analyze_page_with_ai
+# Use enhanced extractors for better accuracy
+try:
+    from ai_preview_importer.pdf_extractor_enhanced import extract_text_blocks
+    from ai_preview_importer.image_extractor_enhanced import extract_images
+    logger = __import__('utils.logger', fromlist=['get_logger']).get_logger(__name__)
+    logger.info("Using ENHANCED extractors (multi-tool approach)")
+except ImportError:
+    # Fallback to original extractors
+    from ai_preview_importer.pdf_extractor import extract_text_blocks
+    from ai_preview_importer.image_extractor import extract_images
+    logger = __import__('utils.logger', fromlist=['get_logger']).get_logger(__name__)
+    logger.warning("Enhanced extractors not available. Using original extractors")
 
 from ai_preview_importer.pdf_extractor import (
     detect_question_anchors,

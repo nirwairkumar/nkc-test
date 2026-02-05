@@ -1,11 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, Suspense, lazy } from 'react';
 import CreateTestsHero from '@/components/landing/CreateTestsHero';
-import UploadMaterialsSection from '@/components/landing/UploadMaterialsSection';
-import FileToTestSection from '@/components/landing/FileToTestSection';
-import TestCollectionSection from '@/components/landing/TestCollectionSection';
-import YouTubeGeneratorSection from '@/components/landing/YouTubeGeneratorSection';
-import PlatformStatsSection from '@/components/landing/PlatformStatsSection';
 import { SEO } from '@/components/SEO';
+
+// Lazy load heavy sections
+const UploadMaterialsSection = lazy(() => import('@/components/landing/UploadMaterialsSection'));
+const FileToTestSection = lazy(() => import('@/components/landing/FileToTestSection'));
+const TestCollectionSection = lazy(() => import('@/components/landing/TestCollectionSection'));
+const YouTubeGeneratorSection = lazy(() => import('@/components/landing/YouTubeGeneratorSection'));
+const PlatformStatsSection = lazy(() => import('@/components/landing/PlatformStatsSection'));
+
+// Loading component
+const SectionLoader = () => (
+    <div className="w-full h-96 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50">
+        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+    </div>
+);
 
 export default function LandingPage() {
     useEffect(() => {
@@ -49,24 +58,34 @@ export default function LandingPage() {
 
                 {/* Feature Sections with scroll animations */}
                 <div id="features" className="landing-section">
-                    <UploadMaterialsSection />
+                    <Suspense fallback={<SectionLoader />}>
+                        <UploadMaterialsSection />
+                    </Suspense>
                 </div>
 
                 <div className="landing-section">
-                    <FileToTestSection />
+                    <Suspense fallback={<SectionLoader />}>
+                        <FileToTestSection />
+                    </Suspense>
                 </div>
 
                 <div className="landing-section">
-                    <TestCollectionSection />
+                    <Suspense fallback={<SectionLoader />}>
+                        <TestCollectionSection />
+                    </Suspense>
                 </div>
 
                 <div className="landing-section">
-                    <YouTubeGeneratorSection />
+                    <Suspense fallback={<SectionLoader />}>
+                        <YouTubeGeneratorSection />
+                    </Suspense>
                 </div>
 
                 {/* Platform Statistics - Promotional */}
                 <div className="landing-section">
-                    <PlatformStatsSection />
+                    <Suspense fallback={<SectionLoader />}>
+                        <PlatformStatsSection />
+                    </Suspense>
                 </div>
 
                 {/* Final CTA Section */}

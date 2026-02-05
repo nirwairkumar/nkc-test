@@ -1,8 +1,29 @@
+# Core Backend
 fastapi
 uvicorn
 python-multipart
-pymupdf
-Pillow
-google-generativeai
 python-dotenv
 pydantic
+
+# PDF Processing - Core
+pymupdf  # PyMuPDF for PDF text/image extraction
+Pillow   # Image processing
+
+# PDF Processing - Advanced
+pdfplumber  # Better table and layout detection
+pypdf2      # Alternative PDF parser
+pdf2image   # Convert PDF pages to images for OCR
+
+# OCR (Optical Character Recognition)
+pytesseract  # Tesseract OCR wrapper
+opencv-python  # Image preprocessing for better OCR
+
+# AI/ML
+google-generativeai  # Gemini AI
+
+# Text Processing
+python-Levenshtein  # Fuzzy string matching for answer detection
+regex  # Advanced regex patterns
+
+# Utilities
+numpy  # Numerical operations for image processing
