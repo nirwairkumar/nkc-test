@@ -229,7 +229,7 @@ export async function generateTestFromYouTube(url: string, userId: string, creat
             // MULTIMODAL FALLBACK - ONLY FOR NORMAL VIDEOS
             prompt = `
                 You are an expert exam setter.
-                Analyze the visual video content efficiently.
+                Analyze the visual video content efficiently fron the ${url}.
                 1. Create a short description (Subject/Topic).
                 2. **IMPORTANT**: Generate ALL content (Description, Revision Notes, Questions, Options) in **${language}**.
                 3. Create **structured revision notes** (Markdown supported) that help a student revise before exams.
