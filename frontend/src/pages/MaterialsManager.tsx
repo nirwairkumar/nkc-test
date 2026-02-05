@@ -32,13 +32,19 @@ export default function MaterialsManager() {
     const [fileTitle, setFileTitle] = useState('');
     const [selectedClassId, setSelectedClassId] = useState<string>('none');
 
-    // Link Add State
+    // Link Add State (Video)
     const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
     const [linkTitle, setLinkTitle] = useState('');
     const [linkThumbnail, setLinkThumbnail] = useState('');
     const [processingLink, setProcessingLink] = useState(false);
     const [fetchingTitle, setFetchingTitle] = useState(false);
+
+    // External Link Add State
+    const [isExternalLinkDialogOpen, setIsExternalLinkDialogOpen] = useState(false);
+    const [externalLinkUrl, setExternalLinkUrl] = useState('');
+    const [externalLinkTitle, setExternalLinkTitle] = useState('');
+    const [processingExternalLink, setProcessingExternalLink] = useState(false);
 
     // Class Management State
     const [isClassDialogOpen, setIsClassDialogOpen] = useState(false);
@@ -88,7 +94,7 @@ export default function MaterialsManager() {
             setNewClassName('');
             setIsClassDialogOpen(false);
             // Auto-select the new class if a dialog is open
-            if (isFileDialogOpen || isLinkDialogOpen) {
+            if (isFileDialogOpen || isLinkDialogOpen || isExternalLinkDialogOpen) {
                 setSelectedClassId(data.id);
             }
         }
@@ -159,9 +165,9 @@ export default function MaterialsManager() {
         setProcessingLink(true);
         try {
             const classId = selectedClassId === 'none' ? undefined : selectedClassId;
-            const { error } = await addLinkMaterial(linkUrl, linkTitle, user.id, linkThumbnail, classId);
+            const { error } = await addLinkMaterial(linkUrl, linkTitle, user.id, 'link', linkThumbnail, classId);
             if (error) throw error;
-            toast.success("Link added successfully!");
+            toast.success("Video link added successfully!");
             setIsLinkDialogOpen(false);
             setLinkUrl('');
             setLinkTitle('');
@@ -174,6 +180,39 @@ export default function MaterialsManager() {
             setProcessingLink(false);
         }
     };
+
+    // --- External Link Handlers ---
+    const handleExternalLinkUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setExternalLinkUrl(e.target.value);
+    };
+
+    const handleAddExternalLink = async () => {
+        if (!user || !externalLinkUrl || !externalLinkTitle) return;
+        setProcessingExternalLink(true);
+        try {
+            const classId = selectedClassId === 'none' ? undefined : selectedClassId;
+            // Use 'external' type
+            const { error } = await addLinkMaterial(externalLinkUrl, externalLinkTitle, user.id, 'external', undefined, classId);
+            if (error) throw error;
+            toast.success("External link added successfully!");
+            setIsExternalLinkDialogOpen(false);
+            setExternalLinkUrl('');
+            setExternalLinkTitle('');
+            setSelectedClassId('none');
+            loadData();
+        } catch (error: any) {
+            // Fallback if migration hasn't run: try adding as 'link' but we prefer 'external'
+            // If the error is regarding check constraint, user needs to run migration.
+            if (error.message?.includes('violates check constraint')) {
+                toast.error("Database update required. Please run the migration script.");
+            } else {
+                toast.error("Failed to add link: " + error.message);
+            }
+        } finally {
+            setProcessingExternalLink(false);
+        }
+    };
+
 
     // --- Delete Handler ---
     const handleDelete = async (id: string, filePath?: string) => {
@@ -189,7 +228,8 @@ export default function MaterialsManager() {
     };
 
     const files = materials.filter(m => m.type === 'file');
-    const links = materials.filter(m => m.type === 'link');
+    const videoLinks = materials.filter(m => m.type === 'link');
+    const externalLinks = materials.filter(m => m.type === 'external');
 
     if (!user) return null;
 
@@ -205,13 +245,15 @@ export default function MaterialsManager() {
             </div>
 
             <Tabs defaultValue="documents" className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-2 mb-8">
+                <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-8">
                     <TabsTrigger value="documents">Documents</TabsTrigger>
-                    <TabsTrigger value="links">Links & Videos</TabsTrigger>
+                    <TabsTrigger value="links">Video Links</TabsTrigger>
+                    <TabsTrigger value="external">External Links</TabsTrigger>
                 </TabsList>
 
                 {/* DOCUMENTS TAB */}
                 <TabsContent value="documents" className="space-y-4">
+                    {/* ... Existing Files Content ... */}
                     <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-dashed">
                         <div>
                             <h3 className="font-semibold text-slate-700">Upload Documents</h3>
@@ -265,28 +307,28 @@ export default function MaterialsManager() {
                     )}
                 </TabsContent>
 
-                {/* LINKS TAB */}
+                {/* LINKS TAB (VIDEOS) */}
                 <TabsContent value="links" className="space-y-4">
                     <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-dashed">
                         <div>
-                            <h3 className="font-semibold text-slate-700">Add Links</h3>
-                            <p className="text-sm text-slate-500">YouTube videos or external resources.</p>
+                            <h3 className="font-semibold text-slate-700">Add Video Links</h3>
+                            <p className="text-sm text-slate-500">YouTube videos or other video resources.</p>
                         </div>
                         <Button onClick={() => setIsLinkDialogOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Link
+                            <Plus className="mr-2 h-4 w-4" /> Add Video
                         </Button>
                     </div>
 
                     {loading ? (
                         <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-primary" /></div>
-                    ) : links.length === 0 ? (
+                    ) : videoLinks.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground bg-slate-50/50 rounded-lg">
                             <Youtube className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                            No links added yet.
+                            No video links added yet.
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {links.map(link => (
+                            {videoLinks.map(link => (
                                 <Card key={link.id} className="hover:shadow-md transition-shadow overflow-hidden group">
                                     <div className="relative aspect-video bg-slate-100">
                                         {link.thumbnail_url ? (
@@ -319,6 +361,62 @@ export default function MaterialsManager() {
                                         )}
                                         <p className="text-xs text-muted-foreground mt-1">{new Date(link.created_at).toLocaleDateString()}</p>
                                     </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+
+                {/* EXTERNAL LINKS TAB */}
+                <TabsContent value="external" className="space-y-4">
+                    <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-dashed">
+                        <div>
+                            <h3 className="font-semibold text-slate-700">Add External Links</h3>
+                            <p className="text-sm text-slate-500">Articles, Websites, References, etc.</p>
+                        </div>
+                        <Button onClick={() => setIsExternalLinkDialogOpen(true)} className="bg-pink-600 hover:bg-pink-700 text-white">
+                            <LinkIcon className="mr-2 h-4 w-4" /> Add External Link
+                        </Button>
+                    </div>
+
+                    {loading ? (
+                        <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-primary" /></div>
+                    ) : externalLinks.length === 0 ? (
+                        <div className="text-center py-12 text-muted-foreground bg-slate-50/50 rounded-lg">
+                            <ExternalLink className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                            No external links added yet.
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {externalLinks.map(link => (
+                                <Card key={link.id} className="hover:shadow-md transition-shadow relative group border-l-4 border-l-pink-500">
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDelete(link.id)}>
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                    <CardContent className="p-4 flex items-start gap-4">
+                                        <div className="h-12 w-12 flex items-center justify-center bg-pink-100 text-pink-600 rounded-lg flex-shrink-0">
+                                            <LinkIcon className="h-6 w-6" />
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-semibold truncate pr-2" title={link.title}>{link.title}</h4>
+                                            {/* @ts-ignore - joined data */}
+                                            {link.classes?.name && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mb-1 mt-1">
+                                                    {/* @ts-ignore */}
+                                                    {link.classes.name}
+                                                </span>
+                                            )}
+
+                                            <div className="mt-2 text-xs text-muted-foreground truncate">{link.url}</div>
+
+                                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center text-sm font-medium text-pink-600 hover:text-pink-700 hover:underline">
+                                                Visit Link <ExternalLink className="ml-1 h-3 w-3" />
+                                            </a>
+                                        </div>
+                                    </CardContent>
                                 </Card>
                             ))}
                         </div>
@@ -407,12 +505,12 @@ export default function MaterialsManager() {
                 </DialogContent>
             </Dialog>
 
-            {/* ADD LINK DIALOG */}
+            {/* ADD VIDEO LINK DIALOG */}
             <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add Link</DialogTitle>
-                        <DialogDescription>Add a YouTube video or external website link.</DialogDescription>
+                        <DialogTitle>Add Video Link</DialogTitle>
+                        <DialogDescription>Add a YouTube video or other video resources.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                         <div className="grid w-full items-center gap-1.5">
@@ -429,8 +527,7 @@ export default function MaterialsManager() {
                         )}
                         <div className="grid w-full items-center gap-1.5">
                             <Label htmlFor="linkTitle">Title</Label>
-                            <Input id="linkTitle" value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="Video or Page Title" />
-                            <p className="text-xs text-muted-foreground">You can edit the title if needed.</p>
+                            <Input id="linkTitle" value={linkTitle} onChange={(e) => setLinkTitle(e.target.value)} placeholder="Video Title" />
                         </div>
                         <div className="grid w-full items-center gap-1.5">
                             <Label>Assign to Class (Optional)</Label>
@@ -454,6 +551,50 @@ export default function MaterialsManager() {
                         <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>Cancel</Button>
                         <Button onClick={handleAddLink} disabled={!linkUrl || !linkTitle || processingLink}>
                             {processingLink && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Link
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ADD EXTERNAL LINK DIALOG */}
+            <Dialog open={isExternalLinkDialogOpen} onOpenChange={setIsExternalLinkDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add External Link</DialogTitle>
+                        <DialogDescription>Add link to a website, article, or resource.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="extUrl">URL</Label>
+                            <Input id="extUrl" value={externalLinkUrl} onChange={handleExternalLinkUrlChange} placeholder="https://example.com/article" />
+                        </div>
+                        <div className="grid w-full items-center gap-1.5">
+                            <Label htmlFor="extTitle">Title</Label>
+                            <Input id="extTitle" value={externalLinkTitle} onChange={(e) => setExternalLinkTitle(e.target.value)} placeholder="Resource Title" />
+                        </div>
+                        <div className="grid w-full items-center gap-1.5">
+                            <Label>Assign to Class (Optional)</Label>
+                            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a class..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">No Class</SelectItem>
+                                    {classes.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <div className="flex justify-end">
+                                <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setIsClassDialogOpen(true)}>+ Create New Class</Button>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsExternalLinkDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAddExternalLink} disabled={!externalLinkUrl || !externalLinkTitle || processingExternalLink} className="bg-pink-600 hover:bg-pink-700 text-white">
+                            {processingExternalLink && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Link
                         </Button>
                     </DialogFooter>
