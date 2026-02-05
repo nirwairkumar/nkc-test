@@ -182,10 +182,11 @@ export default function CreatorProfilePage() {
             )}
 
             <Tabs defaultValue="tests" className="w-full">
-                <TabsList className="w-full max-w-md grid grid-cols-3 mb-8 mx-auto md:mx-0">
+                <TabsList className="w-full max-w-lg grid grid-cols-4 mb-8 mx-auto md:mx-0">
                     <TabsTrigger value="tests">Tests ({filteredTests.length})</TabsTrigger>
                     <TabsTrigger value="files">Files ({files.length})</TabsTrigger>
-                    <TabsTrigger value="links">Links ({links.length})</TabsTrigger>
+                    <TabsTrigger value="links">Videos ({links.length})</TabsTrigger>
+                    <TabsTrigger value="external">Links ({publicMaterials.filter(m => m.type === 'external').length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tests" className="space-y-6">
@@ -243,7 +244,7 @@ export default function CreatorProfilePage() {
 
                 <TabsContent value="links" className="space-y-6">
                     {links.length === 0 ? (
-                        <div className="text-center py-10 opacity-60">No links found for this selection.</div>
+                        <div className="text-center py-10 opacity-60">No video links found for this selection.</div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {links.map(mat => (
@@ -278,6 +279,40 @@ export default function CreatorProfilePage() {
                                                     </Badge>
                                                 )}
                                             </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="external" className="space-y-6">
+                    {publicMaterials.filter(m => m.type === 'external').length === 0 ? (
+                        <div className="text-center py-10 opacity-60">No external links found for this selection.</div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {publicMaterials.filter(m => m.type === 'external').map(mat => (
+                                <Card key={mat.id} className="group hover:shadow-md transition-all border-l-4 border-l-pink-500">
+                                    <CardContent className="p-4 flex items-start gap-4">
+                                        <div className="h-12 w-12 flex items-center justify-center bg-pink-100 text-pink-600 rounded-lg flex-shrink-0">
+                                            <ExternalLink className="h-6 w-6" />
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-semibold truncate pr-2">{mat.title}</h4>
+                                            {/* @ts-ignore */}
+                                            {mat.classes?.name && (
+                                                <Badge variant="outline" className="text-[10px] h-5 px-1 bg-purple-50 text-purple-700 border-purple-200 mt-1 mb-1">
+                                                    {/* @ts-ignore */}
+                                                    {mat.classes.name}
+                                                </Badge>
+                                            )}
+                                            <p className="text-xs text-muted-foreground truncate mb-2">{mat.url}</p>
+                                            <a href={mat.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-xs font-medium text-pink-600 hover:underline">
+                                                Visit Resource
+                                                <ExternalLink className="h-3 w-3 ml-1" />
+                                            </a>
                                         </div>
                                     </CardContent>
                                 </Card>

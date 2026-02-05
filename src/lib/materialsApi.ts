@@ -4,7 +4,7 @@ export interface Material {
     id: string;
     user_id: string;
     title: string;
-    type: 'file' | 'link';
+    type: 'file' | 'link' | 'external';
     url: string;
     thumbnail_url?: string;
     created_at: string;
@@ -50,11 +50,11 @@ export const uploadFileMaterial = async (file: File, title: string, userId: stri
     }).select().single();
 };
 
-export const addLinkMaterial = async (url: string, title: string, userId: string, thumbnailUrl?: string, classId?: string) => {
+export const addLinkMaterial = async (url: string, title: string, userId: string, type: 'link' | 'external' = 'link', thumbnailUrl?: string, classId?: string) => {
     return await supabase.from('materials').insert({
         user_id: userId,
         title: title,
-        type: 'link',
+        type: type, // 'link' for video, 'external' for other links
         url: url,
         thumbnail_url: thumbnailUrl,
         class_id: classId || null
