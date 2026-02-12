@@ -7,7 +7,10 @@ load_dotenv()
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from utils.logger import get_logger
-from ai_preview_importer.preview_pipeline import run_preview_pipeline
+
+# Import enhanced pipeline (with feature flag to switch between old/new)
+from ai_preview_importer.preview_pipeline_v2 import run_preview_pipeline_with_feature_flag
+
 from answer_resolution.answer_pipeline import resolve_answers
 import uvicorn
 
@@ -50,8 +53,8 @@ async def parse_document(file: UploadFile = File(...)):
         file_bytes = await file.read()
         logger.info(f"File size: {len(file_bytes)} bytes")
         
-        # 1. Run Preview Pipeline
-        result = await run_preview_pipeline(file_bytes)
+        # 1. Run Enhanced Preview Pipeline (with feature flag)
+        result = await run_preview_pipeline_with_feature_flag(file_bytes)
         
         # 2. Run Answer Resolution (Phase 2)
         # We enrich the questions in place

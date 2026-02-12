@@ -1,0 +1,12 @@
+fastapi
+pydantic
+pydantic-settings
+supabase
+python-multipart
+email-validator
+httpx
+python-jose
+passlib
+google-generativeai
+youtube-transcript-api
+python-dotenv
