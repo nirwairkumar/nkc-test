@@ -173,7 +173,11 @@ export default function TestPage() {
   // Mark current question as visited
   // Save progress to localStorage
   useEffect(() => {
-    if (!user || !test || isSubmitting || isTimeUp || !id) return;
+    // Attempt tracking requires user logic currently, skip for anonymous for now or use simplified local storage
+    if (!test || isSubmitting || isTimeUp || !id) return;
+
+    // Only persist if user is logged in
+    if (!user) return;
 
     // Create session object
     const sessionData = {
@@ -190,7 +194,9 @@ export default function TestPage() {
 
   // Check for saved session on mount
   useEffect(() => {
-    if (!user || !id) return;
+    if (!id) return;
+    // Only check persistence if user is logged in
+    if (!user) return;
     const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
     const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
 
@@ -229,9 +235,11 @@ export default function TestPage() {
   };
 
   const cancelResume = () => {
-    if (!user || !id) return;
-    localStorage.removeItem(`test_session_${user.id}_${id}`);
-    sessionStorage.removeItem(`test_active_${user.id}_${id}`);
+    if (!id) return;
+    if (user) {
+      localStorage.removeItem(`test_session_${user.id}_${id}`);
+      sessionStorage.removeItem(`test_active_${user.id}_${id}`);
+    }
     setShowResumeDialog(false);
     toast.info("Starting fresh test session.");
   };
@@ -239,7 +247,8 @@ export default function TestPage() {
   // Proctoring State
   // Warning State - Initialize from saved state to persist across refreshes
   const [warnings, setWarnings] = useState<number>(() => {
-    if (!test?.id || !user?.id) return 0;
+    if (!test?.id) return 0;
+    if (!user?.id) return 0; // Don't persist warnings for anonymous
     const saved = localStorage.getItem(`test_warnings_${user.id}_${test.id}`);
     return saved ? parseInt(saved, 10) : 0;
   });
@@ -447,7 +456,7 @@ export default function TestPage() {
   };
 
   const confirmSubmit = async () => {
-    if (!test || !user) return;
+    if (!test) return;
     setIsSubmitting(true);
     setShowSubmitDialog(false);
     if (timerRef.current) clearInterval(timerRef.current);
@@ -574,6 +583,34 @@ export default function TestPage() {
     };
 
     const finalScore = (isNaN(score) || !isFinite(score)) ? 0 : parseFloat(score.toFixed(2));
+
+    // ANONYMOUS SUBMISSION
+    if (!user) {
+      toast.info('Test Submitted (Anonymous Mode). Result not saved to history.');
+
+      // Exit Full Screen if active
+      if (document.fullscreenElement) {
+        try {
+          await document.exitFullscreen();
+        } catch (err) {
+          console.error("Error exiting full screen:", err);
+        }
+      }
+
+      navigate('/results', {
+        state: {
+          test: test,
+          answers: answers,
+          score: score,
+          totalQuestions: test.questions.length,
+          marksPerQuestion: test.marks_per_question || 4,
+          negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1
+        },
+        replace: true
+      });
+      return;
+    }
+
     const { error } = await saveAttempt(user.id, test.id, answers, finalScore, metadata);
 
     if (error) {

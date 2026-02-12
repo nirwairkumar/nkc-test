@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
     AlertDialog,
@@ -33,6 +33,7 @@ import remarkGfm from 'remark-gfm';
 export default function TestIntroPage() {
     const { id, slug } = useParams<{ id: string; slug: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, loading: authLoading } = useAuth();
 
     const [test, setTest] = useState<Test | null>(null);
@@ -45,6 +46,7 @@ export default function TestIntroPage() {
     const [checklistDiff, setChecklistDiff] = useState(false);
     const [startFormValues, setStartFormValues] = useState<Record<string, string>>({});
     const [schedulingError, setSchedulingError] = useState<string | null>(null);
+    const [showAuthWarning, setShowAuthWarning] = useState(false);
 
     // 1. Authentication Check
     useEffect(() => {
@@ -164,7 +166,18 @@ export default function TestIntroPage() {
         if (hasAttempted) return;
         if (schedulingError) return;
 
+        // Auth Check for Anonymous Start
+        if (!user) {
+            setShowAuthWarning(true);
+            return;
+        }
+
         // Show Checklist / Fullscreen Dialog
+        setShowFullScreenDialog(true);
+    };
+
+    const handleAnonymousContinue = () => {
+        setShowAuthWarning(false);
         setShowFullScreenDialog(true);
     };
 
@@ -514,6 +527,41 @@ export default function TestIntroPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <Dialog open={showAuthWarning} onOpenChange={setShowAuthWarning}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Start Test Anonymously?</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-sm text-amber-800 flex gap-2">
+                            <Info className="h-5 w-5 shrink-0" />
+                            <p>You are not logged in. Your test results and history will <strong>NOT</strong> be saved if you proceed anonymously.</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <Button className="w-full" onClick={() => navigate('/login', { state: { from: location.pathname } })}>
+                                Login to Save Progress
+                            </Button>
+                            <Button variant="outline" className="w-full" onClick={() => navigate('/login', { state: { isSignup: true, from: location.pathname } })}>
+                                Create Account
+                            </Button>
+                            <div className="relative my-2">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-background px-2 text-muted-foreground">
+                                        Or
+                                    </span>
+                                </div>
+                            </div>
+                            <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleAnonymousContinue}>
+                                Continue Anonymously
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }
