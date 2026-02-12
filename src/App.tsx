@@ -122,19 +122,11 @@ const App = () => (
                     {/* SEO & Test Routes */}
                     <Route
                       path="/test-intro/:id"
-                      element={
-                        <PrivateRoute>
-                          <TestIntroPage />
-                        </PrivateRoute>
-                      }
+                      element={<TestIntroPage />}
                     />
                     <Route
                       path="/test/:slug"
-                      element={
-                        <PrivateRoute>
-                          <TestIntroPage />
-                        </PrivateRoute>
-                      }
+                      element={<TestIntroPage />}
                     />
                     <Route
                       path="/tests/:category"
@@ -146,11 +138,7 @@ const App = () => (
                     {/* Live Test Taking Page */}
                     <Route
                       path="/live/:id"
-                      element={
-                        <PrivateRoute>
-                          <TestPage />
-                        </PrivateRoute>
-                      }
+                      element={<TestPage />}
                     />
                     {/* Legacy/Compat: Redirect /test/:id to /live/:id if it's a UUID, but we can't easily differentiate in routing config alone without regex.
                         Since we claimed /test/:slug, if a UUID is passed, it might match :slug. 
