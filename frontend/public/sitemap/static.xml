@@ -2,105 +2,105 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/</loc>
+        <loc>https://testoza.com/</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>1</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/login</loc>
+        <loc>https://testoza.com/login</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/general-knowledge-2</loc>
+        <loc>https://testoza.com/tests/general-knowledge-2</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/science</loc>
+        <loc>https://testoza.com/tests/science</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/maths</loc>
+        <loc>https://testoza.com/tests/maths</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/history</loc>
+        <loc>https://testoza.com/tests/history</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/jee</loc>
+        <loc>https://testoza.com/tests/jee</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/cat</loc>
+        <loc>https://testoza.com/tests/cat</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/gate</loc>
+        <loc>https://testoza.com/tests/gate</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/jee-mains</loc>
+        <loc>https://testoza.com/tests/jee-mains</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/jee-advance</loc>
+        <loc>https://testoza.com/tests/jee-advance</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/neet-ug</loc>
+        <loc>https://testoza.com/tests/neet-ug</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/iit-jam</loc>
+        <loc>https://testoza.com/tests/iit-jam</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/ntse</loc>
+        <loc>https://testoza.com/tests/ntse</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/ssc</loc>
+        <loc>https://testoza.com/tests/ssc</loc>
         <lastmod>2026-02-12T06:11:30.875Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>

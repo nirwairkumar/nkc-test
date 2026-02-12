@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <sitemap>
+        <loc>https://testoza.com/sitemap/static.xml</loc>
+    </sitemap>
+    <sitemap>
+        <loc>https://testoza.com/sitemap/tests.xml</loc>
+    </sitemap>
+    <sitemap>
+        <loc>https://testoza.com/sitemap/categories.xml</loc>
+    </sitemap>
+    <sitemap>
+        <loc>https://testoza.com/sitemap/tags.xml</loc>
+    </sitemap>
+    <sitemap>
+        <loc>https://testoza.com/sitemap/creators.xml</loc>
+    </sitemap>
+</sitemapindex>
