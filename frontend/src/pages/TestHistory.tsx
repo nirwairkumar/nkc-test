@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { fetchUserAttempts } from '@/lib/attemptsApi';
+import { fetchUserAttempts, deleteAttempt } from '@/lib/attemptsApi';
+import { fetchTestById } from '@/lib/testsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronDown, ChevronUp, Calendar, Trash2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
@@ -14,19 +15,16 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { fetchTestById } from '@/lib/testsApi';
-import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import Latex from 'react-latex-next';
 
-// Extend the attempt type to include test title which we might need to join or fetch
 interface Attempt {
     id: string;
     test_id: string;
     score: number;
     created_at: string;
     answers: any;
-    test_title?: string; // We'll populate this
+    test_title?: string;
 }
 
 export default function TestHistory() {
@@ -34,7 +32,7 @@ export default function TestHistory() {
     const [attempts, setAttempts] = useState<Attempt[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedAttempt, setExpandedAttempt] = useState<string | null>(null);
-    const [testDetails, setTestDetails] = useState<Record<string, any>>({}); // Cache test details for answer review
+    const [testDetails, setTestDetails] = useState<Record<string, any>>({});
 
     useEffect(() => {
         if (user?.id) {
@@ -44,20 +42,54 @@ export default function TestHistory() {
 
     async function loadHistory() {
         if (!user) return;
+        setLoading(true);
         try {
             const { data, error } = await fetchUserAttempts(user.id);
             if (error) throw error;
 
-            // Fetch test titles for these attempts (optimize by fetching unique test IDs)
-            // Fetch test titles for these attempts (optimize by fetching unique test IDs)
-            const uniqueTestIds = Array.from(new Set(data?.map(a => a.test_id).filter(id => id) || []));
+            // Hybrid Loading: Prefer Enriched Data (Fast), Fallback to Fetch (Robust)
             const details: Record<string, any> = {};
+            const uniqueTestIdsToFetch = new Set<string>();
 
-            await Promise.all(uniqueTestIds.map(async (tid) => {
-                if (!tid) return;
+            // Helper to handle potential string/JSON mismatch
+            const ensureParsed = (val: any) => {
+                if (!val) return [];
+                if (Array.isArray(val)) return val;
+                if (typeof val === 'string') {
+                    try { return JSON.parse(val); } catch (e) { return []; }
+                }
+                return [];
+            };
+
+            if (data && Array.isArray(data)) {
+                data.forEach((attempt: any) => {
+                    if (attempt.test_id) {
+                        // Check if backend provided enriched details (due to our admin fix)
+                        if (attempt.test_title && attempt.test_questions) {
+                            details[attempt.test_id] = {
+                                id: attempt.test_id,
+                                title: attempt.test_title,
+                                questions: ensureParsed(attempt.test_questions),
+                                settings: attempt.test_settings
+                            };
+                        } else {
+                            // Mark for fetching if details are missing
+                            uniqueTestIdsToFetch.add(attempt.test_id);
+                        }
+                    }
+                });
+            }
+
+            // Fetch missing details only
+            await Promise.all(Array.from(uniqueTestIdsToFetch).map(async (tid) => {
                 try {
                     const { data: t } = await fetchTestById(tid);
-                    if (t) details[tid] = t;
+                    if (t) {
+                        details[tid] = {
+                            ...t,
+                            questions: ensureParsed(t.questions) // Ensure parsed here too
+                        };
+                    }
                 } catch (e) {
                     console.error(`Failed to fetch test ${tid}`, e);
                 }
@@ -65,21 +97,23 @@ export default function TestHistory() {
 
             setTestDetails(details);
 
-            const attemptsWithTitles = data?.map(attempt => ({
+            const attemptsWithTitles = data?.map((attempt: any) => ({
                 ...attempt,
-                test_title: details[attempt.test_id]?.title || 'Unknown Test'
+                test_title: details[attempt.test_id]?.title || attempt.test_title || 'Unknown Test',
+                answers: typeof attempt.answers === 'string' ? JSON.parse(attempt.answers) : attempt.answers // Ensure answers parsed
             })) || [];
 
             setAttempts(attemptsWithTitles);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to load history', err);
+            const message = err.response?.data?.detail || err.message || 'Unknown error occurred';
+            toast.error(`Failed to load history: ${message}`);
         } finally {
             setLoading(false);
         }
     }
 
     const toggleExpand = (id: string, e: React.MouseEvent) => {
-        // Prevent toggle if clicking buttons
         if ((e.target as HTMLElement).closest('button')) return;
         setExpandedAttempt(expandedAttempt === id ? null : id);
     };
@@ -88,23 +122,15 @@ export default function TestHistory() {
         if (!confirm('Are you sure you want to delete this test record? This action cannot be undone.')) return;
 
         try {
-            // Delete from user_tests
-            const { error } = await supabase
-                .from('user_tests')
-                .delete()
-                .eq('id', attemptId);
-
+            const { error } = await deleteAttempt(attemptId);
             if (error) throw error;
 
             toast.success('Test record deleted successfully');
-
-            // Remove from local state
             setAttempts(prev => prev.filter(a => a.id !== attemptId));
             if (expandedAttempt === attemptId) setExpandedAttempt(null);
-
         } catch (error: any) {
             console.error('Error deleting test:', error);
-            toast.error('Failed to delete test record: ' + (error.message || 'Unknown error'));
+            toast.error('Failed to delete test record');
         }
     };
 
@@ -182,122 +208,122 @@ export default function TestHistory() {
                                                 <TableCell colSpan={4} className="bg-muted/30 p-4">
                                                     <div className="space-y-4">
                                                         <h4 className="font-semibold">Detailed Answers</h4>
-                                                        {testDetails[attempt.test_id]?.questions?.map((q: any, idx: number) => {
-                                                            // Helper to safely extract answer from mixed formats
-                                                            const getAnswer = (answers: any, qId: number) => {
-                                                                if (!answers) return null;
-                                                                if (Array.isArray(answers)) {
-                                                                    return answers.find((a: any) => a.questionId === qId)?.selectedAnswer;
-                                                                }
-                                                                return answers[qId];
-                                                            };
-
-                                                            const userAnswer = getAnswer(attempt.answers, q.id);
-
-                                                            // Calculate correctness logic similar to ResultsPage
-                                                            let isCorrect = false;
-                                                            if (q.type === 'numerical') {
-                                                                const numAns = parseFloat(userAnswer);
-                                                                const range = q.correctAnswer;
-                                                                if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
-                                                                    isCorrect = true;
-                                                                }
-                                                            } else if (q.type === 'multiple') {
-                                                                const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
-                                                                const userArr = Array.isArray(userAnswer) ? [...userAnswer].sort() : [];
-                                                                if (correctArr.length > 0 && correctArr.length === userArr.length &&
-                                                                    correctArr.every((val, index) => val === userArr[index])) {
-                                                                    isCorrect = true;
-                                                                }
-                                                            } else {
-                                                                if (userAnswer === q.correctAnswer) {
-                                                                    isCorrect = true;
-                                                                }
-                                                            }
-
-                                                            const renderRichAnswer = (ansKey: any, isUser: boolean) => {
-                                                                if (ansKey === null || ansKey === undefined) return isUser ? <span className="text-muted-foreground italic">Not answered</span> : null;
-
-                                                                // Helper to render a single key (e.g. "A") with its content
-                                                                const renderSingleKey = (key: string) => {
-                                                                    const optText = q.options ? (Array.isArray(q.options) ? q.options[parseInt(key)] : q.options[key]) : null;
-                                                                    const optImg = q.optionImages ? q.optionImages[key] : null;
-
-                                                                    return (
-                                                                        <div key={key} className="flex items-start gap-2 mt-1">
-                                                                            <span className="font-semibold whitespace-nowrap min-w-[1.5rem]">{key})</span>
-                                                                            <div className="flex flex-col gap-1">
-                                                                                {optText && <span><Latex>{optText}</Latex></span>}
-                                                                                {optImg && (
-                                                                                    <img
-                                                                                        src={optImg.trim()}
-                                                                                        alt="Option"
-                                                                                        className="max-h-[80px] w-auto h-auto object-contain border rounded bg-white"
-                                                                                    />
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
+                                                        {testDetails[attempt.test_id] ? (
+                                                            testDetails[attempt.test_id]?.questions?.map((q: any, idx: number) => {
+                                                                const getAnswer = (answers: any, qId: number) => {
+                                                                    if (!answers) return null;
+                                                                    if (Array.isArray(answers)) {
+                                                                        return answers.find((a: any) => a.questionId === qId)?.selectedAnswer;
+                                                                    }
+                                                                    return answers[qId];
                                                                 };
 
-                                                                // Numerical Type
+                                                                const userAnswer = getAnswer(attempt.answers, q.id);
+
+                                                                // Calculate correctness (Logic from User's snippet)
+                                                                let isCorrect = false;
                                                                 if (q.type === 'numerical') {
-                                                                    if (typeof ansKey === 'object') {
-                                                                        return <span>{ansKey.min} - {ansKey.max}</span>;
+                                                                    const numAns = parseFloat(userAnswer);
+                                                                    const range = q.correctAnswer;
+                                                                    if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
+                                                                        isCorrect = true;
                                                                     }
-                                                                    return <span>{ansKey}</span>;
+                                                                } else if (q.type === 'multiple') {
+                                                                    const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
+                                                                    const userArr = Array.isArray(userAnswer) ? [...userAnswer].sort() : [];
+                                                                    if (correctArr.length > 0 && correctArr.length === userArr.length &&
+                                                                        correctArr.every((val, index) => val === userArr[index])) {
+                                                                        isCorrect = true;
+                                                                    }
+                                                                } else {
+                                                                    if (userAnswer === q.correctAnswer) {
+                                                                        isCorrect = true;
+                                                                    }
                                                                 }
 
-                                                                // Multiple/Single Choice
-                                                                // Check if it's an array (Multiple Choice)
-                                                                if (Array.isArray(ansKey)) {
-                                                                    return (
-                                                                        <div className="flex flex-col gap-2">
-                                                                            {ansKey.map((k: string) => renderSingleKey(k))}
-                                                                        </div>
-                                                                    );
-                                                                }
+                                                                const renderRichAnswer = (ansKey: any, isUser: boolean) => {
+                                                                    if (ansKey === null || ansKey === undefined) return isUser ? <span className="text-muted-foreground italic">Not answered</span> : null;
 
-                                                                // Single Key
-                                                                return renderSingleKey(String(ansKey));
-                                                            };
+                                                                    const renderSingleKey = (key: string) => {
+                                                                        const optText = q.options ? (Array.isArray(q.options) ? q.options[parseInt(key)] : q.options[key]) : null;
+                                                                        const optImg = q.optionImages ? q.optionImages[key] : null;
 
-                                                            return (
-                                                                <div key={q.id} className={`p-4 rounded-lg border ${isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}`}>
-                                                                    <div className="mb-3">
-                                                                        <span className="font-bold mr-2 text-slate-500">{idx + 1}.</span>
-                                                                        <span className="font-medium"><Latex>{q.question}</Latex></span>
-                                                                        {q.image && (
-                                                                            <div className="mt-2">
-                                                                                <img src={q.image} alt="Question" className="max-h-[150px] rounded border" />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                                        <div className={`p-3 rounded border ${isCorrect ? 'bg-green-100/50 border-green-200' : 'bg-red-100/50 border-red-200'}`}>
-                                                                            <span className={`block text-xs font-bold uppercase mb-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                                                                                Your Answer
-                                                                            </span>
-                                                                            <div className={isCorrect ? 'text-green-900' : 'text-red-900'}>
-                                                                                {renderRichAnswer(userAnswer, true)}
-                                                                            </div>
-                                                                        </div>
-
-                                                                        {!isCorrect && (
-                                                                            <div className="p-3 rounded border bg-blue-50 border-blue-100">
-                                                                                <span className="block text-xs font-bold uppercase mb-2 text-blue-700">
-                                                                                    Correct Answer
-                                                                                </span>
-                                                                                <div className="text-blue-900">
-                                                                                    {renderRichAnswer(q.correctAnswer, false)}
+                                                                        return (
+                                                                            <div key={key} className="flex items-start gap-2 mt-1">
+                                                                                <span className="font-semibold whitespace-nowrap min-w-[1.5rem]">{key})</span>
+                                                                                <div className="flex flex-col gap-1">
+                                                                                    {optText && <span><Latex>{optText}</Latex></span>}
+                                                                                    {optImg && (
+                                                                                        <img
+                                                                                            src={optImg.trim()}
+                                                                                            alt="Option"
+                                                                                            className="max-h-[80px] w-auto h-auto object-contain border rounded bg-white"
+                                                                                        />
+                                                                                    )}
                                                                                 </div>
                                                                             </div>
-                                                                        )}
+                                                                        );
+                                                                    };
+
+                                                                    if (q.type === 'numerical') {
+                                                                        if (typeof ansKey === 'object') {
+                                                                            return <span>{ansKey.min} - {ansKey.max}</span>;
+                                                                        }
+                                                                        return <span>{ansKey}</span>;
+                                                                    }
+
+                                                                    if (Array.isArray(ansKey)) {
+                                                                        return (
+                                                                            <div className="flex flex-col gap-2">
+                                                                                {ansKey.map((k: string) => renderSingleKey(k))}
+                                                                            </div>
+                                                                        );
+                                                                    }
+
+                                                                    return renderSingleKey(String(ansKey));
+                                                                };
+
+                                                                return (
+                                                                    <div key={q.id} className={`p-4 rounded-lg border ${isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}`}>
+                                                                        <div className="mb-3">
+                                                                            <span className="font-bold mr-2 text-slate-500">{idx + 1}.</span>
+                                                                            <span className="font-medium"><Latex>{q.question}</Latex></span>
+                                                                            {q.image && (
+                                                                                <div className="mt-2">
+                                                                                    <img src={q.image} alt="Question" className="max-h-[150px] rounded border" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                                            <div className={`p-3 rounded border ${isCorrect ? 'bg-green-100/50 border-green-200' : 'bg-red-100/50 border-red-200'}`}>
+                                                                                <span className={`block text-xs font-bold uppercase mb-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                                                                                    Your Answer
+                                                                                </span>
+                                                                                <div className={isCorrect ? 'text-green-900' : 'text-red-900'}>
+                                                                                    {renderRichAnswer(userAnswer, true)}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {!isCorrect && (
+                                                                                <div className="p-3 rounded border bg-blue-50 border-blue-100">
+                                                                                    <span className="block text-xs font-bold uppercase mb-2 text-blue-700">
+                                                                                        Correct Answer
+                                                                                    </span>
+                                                                                    <div className="text-blue-900">
+                                                                                        {renderRichAnswer(q.correctAnswer, false)}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            )
-                                                        })}
+                                                                )
+                                                            })
+                                                        ) : (
+                                                            <div className="p-4 text-center text-muted-foreground">
+                                                                Details for this test are no longer available.
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>

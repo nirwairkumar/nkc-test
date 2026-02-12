@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import apiClient from '@/lib/apiClient';
 
 export interface Material {
     id: string;
@@ -13,69 +13,60 @@ export interface Material {
 }
 
 export const fetchMaterials = async (userId: string) => {
-    return await supabase
-        .from('materials')
-        .select(`
-            *,
-            classes ( name ) 
-        `) // Join to get class name if needed
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+    try {
+        const response = await apiClient.get(`/materials/user/${userId}`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 };
 
 export const uploadFileMaterial = async (file: File, title: string, userId: string, classId?: string) => {
-    // 1. Upload to Storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', title);
+        formData.append('user_id', userId);
+        if (classId) formData.append('class_id', classId);
 
-    const { error: uploadError } = await supabase.storage
-        .from('materials')
-        .upload(fileName, file);
-
-    if (uploadError) return { error: uploadError };
-
-    // 2. Get Public URL
-    const { data: { publicUrl } } = supabase.storage
-        .from('materials')
-        .getPublicUrl(fileName);
-
-    // 3. Insert into DB
-    return await supabase.from('materials').insert({
-        user_id: userId,
-        title: title,
-        type: 'file',
-        url: publicUrl,
-        file_path: fileName,
-        class_id: classId || null
-    }).select().single();
+        const response = await apiClient.post('/materials/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 };
 
 export const addLinkMaterial = async (url: string, title: string, userId: string, type: 'link' | 'external' = 'link', thumbnailUrl?: string, classId?: string) => {
-    return await supabase.from('materials').insert({
-        user_id: userId,
-        title: title,
-        type: type, // 'link' for video, 'external' for other links
-        url: url,
-        thumbnail_url: thumbnailUrl,
-        class_id: classId || null
-    }).select().single();
+    try {
+        const response = await apiClient.post('/materials/link', {
+            user_id: userId,
+            title,
+            url,
+            type,
+            thumbnail_url: thumbnailUrl,
+            class_id: classId
+        });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 };
 
 export const deleteMaterial = async (id: string, filePath?: string) => {
-    // 1. Delete from Storage if it's a file
-    if (filePath) {
-        const { error: storageError } = await supabase.storage
-            .from('materials')
-            .remove([filePath]);
-
-        if (storageError) console.error("Failed to delete file from storage:", storageError);
+    try {
+        const params = filePath ? { file_path: filePath } : {};
+        const response = await apiClient.delete(`/materials/${id}`, { params });
+        return { error: null };
+    } catch (error: any) {
+        return { error };
     }
-
-    // 2. Delete from DB
-    return await supabase.from('materials').delete().eq('id', id);
 };
 
-// Helper: Extract YouTube info + Title via NoEmbed
+// Helper: Extract YouTube info + Title via NoEmbed (Kept Client side as it uses public API)
 export const getYouTubeInfo = async (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);

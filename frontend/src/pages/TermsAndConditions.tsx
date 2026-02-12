@@ -1,9 +1,11 @@
 import React from "react";
+import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function TermsAndConditions() {
     return (
         <div className="container mx-auto py-10 px-4 max-w-4xl">
+            <SEO title="Terms & Conditions - TestoZa" description="Terms and Conditions for using TestoZa online test platform." />
 
             <Card>
                 <CardHeader>

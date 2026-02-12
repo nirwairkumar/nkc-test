@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { SEO } from '@/components/SEO';
 import { useForm } from 'react-hook-form';
 import supabase from '@/lib/supabaseClient';
+import apiClient from '@/lib/apiClient';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { signInWithEmail, signUpWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
+import { signUpWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 
@@ -84,32 +86,48 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
-                const { error, data } = await signInWithEmail(values.email, values.password);
-                if (error) throw error;
-                toast.success('Successfully logged in!');
 
-                // Check for admin status to auto-redirect
-                const { data: adminRecord } = await supabase
-                    .from('admins')
-                    .select('email')
-                    .eq('email', values.email)
-                    .single();
+                try {
+                    const response = await apiClient.post('/login', {
+                        email: values.email,
+                        password: values.password
+                    });
 
-                if (adminRecord) {
-                    navigate('/admin-migration');
-                } else {
+                    const { session } = response.data; // Backend returns the full Supabase response which has 'session'
 
-                    //  const from = location.state?.from?.pathname || '/';
+                    if (!session || !session.access_token || !session.refresh_token) {
+                        throw new Error("Invalid session received from backend");
+                    }
+
+                    // CRITICAL FIX: Manually set the session on the frontend client
+                    // This updates the AuthContext and local storage
+                    const { error: sessionError } = await supabase.auth.setSession({
+                        access_token: session.access_token,
+                        refresh_token: session.refresh_token,
+                    });
+
+                    if (sessionError) throw sessionError;
+
+                    toast.success('Successfully logged in via Backend!');
+
+                    // Let the AuthContext update (it listens to onAuthStateChange)
+                    // We might need a small delay or just rely on the navigate
 
                     const intent = localStorage.getItem('auth_redirect_intent');
                     const stateFrom = location.state?.from;
-                    // Handle both string paths (from PrivateRoute) and location objects
                     const from = intent || (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
-
-                    // Clear intent after use
                     if (intent) localStorage.removeItem('auth_redirect_intent');
 
-                    navigate(from, { replace: true });
+                    // Short timeout to ensure state propagation
+                    setTimeout(() => {
+                        navigate(from, { replace: true });
+                    }, 100);
+
+                } catch (err: any) {
+                    console.error("Login failed", err);
+                    toast.error(err.response?.data?.detail || err.message || 'Login failed');
+                    setIsLoading(false);
+                    return;
                 }
             } else if (view === 'signup') {
                 if (!values.name || !values.password) {
@@ -137,7 +155,7 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
-                toast.success('Sign up successful! Please check your email for confirmation. If you do not receive the confirmation email, your account is already exist.', {
+                toast.success('Sign up successful!', {
                     duration: 5000,
                 });
                 setView('login');
@@ -174,7 +192,10 @@ export default function AuthForm() {
 
     return (
         <div className="flex flex-col justify-center items-center min-h-[80vh]">
-
+            <SEO
+                title={`${view === 'login' ? 'Login' : view === 'signup' ? 'Sign Up' : 'Reset Password'} - TestoZa`}
+                noindex={true}
+            />
             <Card className="w-[350px]">
                 <CardHeader>
                     <CardTitle>

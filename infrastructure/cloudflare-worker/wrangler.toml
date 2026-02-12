@@ -1,0 +1,55 @@
+# Cloudflare Worker Configuration for TestoZa SEO
+# Deploy with: wrangler deploy --env production
+
+name = "testoza-seo-worker"
+main = "worker.js"
+compatibility_date = "2026-02-12"
+
+# Environment variables (non-sensitive)
+[vars]
+FRONTEND_URL = "https://testoza.com"
+CACHE_TTL_SITEMAP = "3600"
+CACHE_TTL_STATIC = "86400"
+CACHE_TTL_HTML = "300"
+
+# Production environment
+[env.production]
+# Route pattern - handles all requests to testoza.com
+route = { pattern = "testoza.com/*", zone_name = "testoza.com" }
+
+[env.production.vars]
+API_BASE_URL = "https://your-railway-app.up.railway.app"  # Update with your Railway URL
+FRONTEND_URL = "https://testoza.com"
+
+# Secrets (set via wrangler secret put)
+# SITEMAP_INVALIDATE_SECRET
+# REDIS_URL (if using Redis)
+
+# KV Namespace for persistent caching (optional)
+# [[env.production.kv_namespaces]]
+# binding = "SITEMAP_CACHE"
+# id = "your-kv-namespace-id"
+
+# R2 bucket for sitemap storage (optional)
+# [[env.production.r2_buckets]]
+# binding = "SITEMAP_BUCKET"
+# bucket_name = "testoza-sitemaps"
+
+# Analytics
+analytics_engine_datasets = [
+  { binding = "SEO_ANALYTICS", dataset = "testoza-seo-metrics" }
+]
+
+# Logs
+[env.production.logpush]
+binding = "LOGPUSH"
+
+# Build settings
+[build]
+command = ""
+
+# Minification
+minify = true
+
+# Source maps
+sourcemap = false

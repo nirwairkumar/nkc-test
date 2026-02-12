@@ -124,6 +124,7 @@ export default function TestIntroPage() {
             console.error("Error loading test:", err);
             setError(err.message || "Failed to load test details.");
         } finally {
+            console.log("Load Test Finished. Loading: false");
             setLoading(false);
         }
     };
@@ -208,6 +209,7 @@ export default function TestIntroPage() {
 
     if (loading) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>;
     if (error) return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
+    console.log("TestIntroPage Render. Test:", test);
     if (!test) return <div className="flex justify-center items-center h-screen">Test not found.</div>;
 
     const questionCount = test.questions?.length || 0;
@@ -238,6 +240,24 @@ export default function TestIntroPage() {
                 image={test.og_image} // Fallback handled in component
                 url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
                 categories={[...(test.tags || []), ...(test.custom_category ? [test.custom_category] : [])]}
+                schemas={[
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "Quiz",
+                        "name": test.title,
+                        "description": test.description || "Online Test",
+                        "url": `${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`,
+                        "educationLevel": "Intermediate",
+                        "hasPart": test.questions?.map((q) => ({
+                            "@type": "Question",
+                            "name": q.question.substring(0, 150),
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Answer available in test results"
+                            }
+                        })) || []
+                    }
+                ]}
             />
             <Button
                 variant="ghost"

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight } from 'lucide-react';
-import AnimatedBackground from './AnimatedBackground';
+import AnimatedBackground from '@/components/background/AnimatedBackground';
 
 export default function CreateTestsHero() {
     const navigate = useNavigate();
@@ -25,7 +25,7 @@ export default function CreateTestsHero() {
                         Create Tests
                         <br />
                         <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
-                            In Seconds
+                            In Minute
                         </span>
                     </h1>
 

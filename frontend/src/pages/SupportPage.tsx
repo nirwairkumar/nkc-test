@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,6 +48,43 @@ export default function SupportPage() {
 
     return (
         <div className="container mx-auto py-6 px-4 max-w-4xl">
+            <SEO
+                title="Help & Support - TestoZa"
+                description="Get help with TestoZa. Contact our support team for any issues or suggestions regarding online test creation."
+                keywords={["testoza support", "contact us", "help center", "customer care"]}
+                schemas={[
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "FAQPage",
+                        "mainEntity": [
+                            {
+                                "@type": "Question",
+                                "name": "Is TestoZa free to use?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Yes! You can create and take unlimited tests for free. We also offer premium features for advanced analytics and branding."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "How do I create a test from PDF?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Go to \"Create Test\", select \"Import from PDF\", upload your question paper, and our AI will automatically extract questions for you."
+                                }
+                            },
+                            {
+                                "@type": "Question",
+                                "name": "Can I sell my tests?",
+                                "acceptedAnswer": {
+                                    "@type": "Answer",
+                                    "text": "Currently, all tests are free. We are working on a marketplace feature that will allow verified educators to sell premium test series."
+                                }
+                            }
+                        ]
+                    }
+                ]}
+            />
             <h1 className="text-3xl font-bold text-center mb-8">Help & Support</h1>
 
             <div className="max-w-2xl mx-auto">
@@ -117,6 +155,37 @@ export default function SupportPage() {
                         </form>
                     </CardContent>
                 </Card>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="max-w-3xl mx-auto mt-12 mb-8">
+                <h2 className="text-2xl font-bold text-center mb-6">Frequently Asked Questions</h2>
+                <div className="space-y-4">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Is TestoZa free to use?</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Yes! You can create and take unlimited tests for free. We also offer premium features for advanced analytics and branding.</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">How do I create a test from PDF?</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Go to "Create Test", select "Import from PDF", upload your question paper, and our AI will automatically extract questions for you.</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Can I sell my tests?</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Currently, all tests are free. We are working on a marketplace feature that will allow verified educators to sell premium test series.</p>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             {/* Footer Section */}

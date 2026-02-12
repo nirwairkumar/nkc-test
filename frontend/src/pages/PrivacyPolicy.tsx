@@ -1,10 +1,12 @@
 import React from "react";
+import { SEO } from "@/components/SEO";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function PrivacyPolicy() {
     return (
         <div className="container mx-auto py-10 px-4 max-w-4xl">
+            <SEO title="Privacy Policy - TestoZa" description="Privacy Policy for TestoZa. Learn how we collect, use, and protect your data." />
 
             <Card>
                 <CardHeader>

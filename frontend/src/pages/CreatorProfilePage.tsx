@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabaseClient';
+import { SEO } from '@/components/SEO';
+import apiClient from '@/lib/apiClient';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, User, BookOpen, Clock, FileText, ExternalLink, Youtube, GraduationCap, Download } from 'lucide-react';
 import TestCard from '@/components/TestCard';
-import { Test, fetchTests } from '@/lib/testsApi';
-import { Material, fetchMaterials } from '@/lib/materialsApi';
-import { ClassItem, fetchClasses } from '@/lib/classesApi';
-import { fetchCategories, fetchTestCategories } from '@/lib/categoriesApi';
+import { Test } from '@/lib/testsApi';
+import { Material } from '@/lib/materialsApi';
+import { ClassItem } from '@/lib/classesApi';
+import { fetchCategories } from '@/lib/categoriesApi';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
 interface CreatorProfile {
     id: string;
@@ -64,45 +67,19 @@ export default function CreatorProfilePage() {
     const loadCreatorData = async () => {
         setLoading(true);
         try {
-            // PERFORMANCE OPTIMIZATION: Parallelize all API calls for 3-5x faster loading
-            // Instead of waiting for each call sequentially, run them all at once
-            const [
-                profileResult,
-                testsResult,
-                classesResult,
-                materialsResult,
-                categoriesResult
-            ] = await Promise.all([
-                // 1. Fetch Profile
-                supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', creatorId)
-                    .single(),
+            // REFACTORED: Single API call to Python Backend
+            const response = await apiClient.get(`/creators/${creatorId}`);
+            const { profile, tests, classes, materials } = response.data;
 
-                // 2. Fetch Tests (Only Public) with categories
-                supabase
-                    .from('tests')
-                    .select('*, classes(name), test_categories(category_id)')
-                    .eq('created_by', creatorId)
-                    .eq('visibility', 'public'),
+            if (profile) setCreator(profile);
+            setTests(tests || []);
+            setClasses(classes || []);
+            setMaterials(materials || []);
 
-                // 3. Fetch Classes
-                fetchClasses(creatorId!),
-
-                // 4. Fetch Materials
-                fetchMaterials(creatorId!),
-
-                // 5. Fetch Categories
-                fetchCategories()
-            ]);
-
-            // Set all data at once
-            if (profileResult.data) setCreator(profileResult.data);
-            setTests(testsResult.data || []);
-            setClasses(classesResult.data || []);
-            setMaterials(materialsResult.data || []);
-            setCategories(categoriesResult.data || []);
+            // Categories might still need to be fetched globally or added to the backend endpoint
+            // For now, let's keep fetchCategories as is or fetch it separately if it's not in the response
+            const catRes = await fetchCategories();
+            setCategories(catRes.data || []);
 
         } catch (error) {
             console.error("Failed to load creator data", error);
@@ -119,6 +96,18 @@ export default function CreatorProfilePage() {
         ? tests
         : tests.filter(t => t.class_id === selectedClassId);
 
+    // YouTube-style lazy loading hook for filtered tests
+    const {
+        registerSkeleton,
+        isItemRendered,
+        renderedCount,
+        totalCount,
+        isComplete
+    } = useYouTubeStyleRender(filteredTests, loading, {
+        rootMargin: '100px',
+        threshold: 0.1
+    });
+
     const filteredMaterials = selectedClassId === 'all'
         ? materials
         : materials.filter(m => m.class_id === selectedClassId);
@@ -130,6 +119,11 @@ export default function CreatorProfilePage() {
 
     return (
         <div className="container mx-auto max-w-6xl py-8 px-4">
+            <SEO
+                title={`${creator.full_name} - Test Creator Profile | TestoZa`}
+                description={`View tests and materials created by ${creator.full_name} on TestoZa. ${creator.bio ? creator.bio.substring(0, 150) + "..." : "Explore their educational content."}`}
+                keywords={[creator.full_name, "test creator", "online teacher", "testoza profile"]}
+            />
             {/* Header */}
             <div className="flex flex-col md:flex-row gap-6 items-center md:items-start mb-10">
                 <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white shadow-lg">
@@ -194,15 +188,38 @@ export default function CreatorProfilePage() {
                         <div className="text-center py-10 opacity-60">No tests found for this selection.</div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredTests.map(test => (
-                                <TestCard
-                                    key={test.id}
-                                    test={test}
-                                    user={null}
-                                    categoryIds={test.test_categories?.map((tc: any) => tc.category_id) || []}
-                                    allCategories={categories}
-                                />
-                            ))}
+                            {filteredTests.map(test => {
+                                const testId = test.id;
+                                const isRendered = isItemRendered(testId);
+                                
+                                if (!isRendered) {
+                                    return (
+                                        <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                            <TestCardSkeleton />
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div key={testId} className="animate-in fade-in duration-500">
+                                        <TestCard
+                                            test={test}
+                                            user={null}
+                                            categoryIds={test.categories?.map((tc: any) => tc.category_id || tc.id) || []}
+                                            allCategories={categories}
+                                        />
+                                    </div>
+                                );
+                            })}
+                            
+                            {/* Progress indicator */}
+                            {!isComplete && filteredTests.length > 0 && (
+                                <div className="col-span-full py-4 text-center">
+                                    <span className="text-sm text-muted-foreground">
+                                        {renderedCount} of {totalCount} tests loaded
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     )}
                 </TabsContent>

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import supabase from '@/lib/supabaseClient';
+
 import { CheckCircle, Plus } from 'lucide-react';
 import { allTests as mathTests } from '@/data/examples/math-test';
 import { allTests as scienceTests } from '@/data/examples/science-test';
@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchCategories, createCategory, assignCategoriesToTest, Category } from '@/lib/categoriesApi';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
+
 
 export default function AdminMigration() {
     const { user, loading: authLoading, isAdmin } = useAuth();
@@ -169,9 +170,10 @@ export default function AdminMigration() {
     };
 
     const uploadData = async (tests: any[], customId?: string) => {
-        log('Starting database upload...');
+        log('Starting database upload (via API)...');
         let successCount = 0;
         let failCount = 0;
+        const { fetchTests, createTest } = await import('@/lib/testsApi');
 
         for (const test of tests) {
             try {
@@ -183,11 +185,11 @@ export default function AdminMigration() {
 
                 log(`Processing "${test.title}"...`);
 
-                const { data: existing } = await supabase
-                    .from('tests')
-                    .select('id')
-                    .eq('title', test.title)
-                    .single();
+                // Check Existence via Search
+                // fetchTests(page, limit, search)
+                const { data: searchRes } = await fetchTests({ page: 1, limit: 50, searchQuery: test.title });
+                // /api/tests/feed returns { tests: [] } usually
+                const existing = searchRes?.tests?.find((t: any) => t.title.toLowerCase() === test.title.toLowerCase());
 
                 if (existing) {
                     log(`-> Skipped: Test "${test.title}" already exists.`, 'error');
@@ -195,28 +197,26 @@ export default function AdminMigration() {
                     continue;
                 }
 
-                const { data: insertedTest, error } = await supabase
-                    .from('tests')
-                    .insert({
-                        title: test.title,
-                        description: test.description || globalDescription || '',
-                        questions: test.questions.map((q: any) => ({
-                            ...q,
-                            image: q.image ? q.image.trim() : q.image,
-                            optionImages: q.optionImages ? Object.fromEntries(
-                                Object.entries(q.optionImages).map(([k, v]) => [k, (v as string)?.trim()])
-                            ) : undefined
-                        })),
-                        custom_id: customId || null,
-                        marks_per_question: test.marks_per_question || marksPerQuestion,
-                        negative_marks: test.negative_marks !== undefined ? test.negative_marks : negativeMarks,
-                        duration: test.duration || duration
-                    })
-                    .select()
-                    .single();
+                const payload = {
+                    title: test.title,
+                    description: test.description || globalDescription || '',
+                    questions: test.questions.map((q: any) => ({
+                        ...q,
+                        image: q.image ? q.image.trim() : q.image,
+                        optionImages: q.optionImages ? Object.fromEntries(
+                            Object.entries(q.optionImages).map(([k, v]) => [k, (v as string)?.trim()])
+                        ) : undefined
+                    })),
+                    custom_id: customId || null,
+                    marks_per_question: test.marks_per_question || marksPerQuestion,
+                    negative_marks: test.negative_marks !== undefined ? test.negative_marks : negativeMarks,
+                    duration: test.duration || duration
+                };
+
+                const { data: insertedTest, error } = await createTest(payload);
 
                 if (error) {
-                    log(`-> Error inserting: ${error.message}`, 'error');
+                    log(`-> Error inserting: ${error.message || 'Unknown error'}`, 'error');
                     failCount++;
                 } else if (insertedTest) {
                     // Assign Categories

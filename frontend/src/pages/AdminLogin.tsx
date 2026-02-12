@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SEO } from '@/components/SEO';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -98,7 +99,7 @@ export default function AdminLogin() {
 
     return (
         <div className="flex flex-col justify-center items-center min-h-[80vh]">
-
+            <SEO title="Admin Login - TestoZa" noindex={true} />
             <Card className="w-[350px] border-red-200 shadow-red-100">
                 <CardHeader>
                     <CardTitle className="text-red-900">Admin Login</CardTitle>

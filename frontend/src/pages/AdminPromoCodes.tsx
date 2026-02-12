@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import supabase from '@/lib/supabaseClient';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -57,11 +57,8 @@ export default function AdminPromoCodes() {
 
     const fetchPromos = async () => {
         setLoading(true);
-        // Admin RLS policy allows this select
-        const { data, error } = await supabase
-            .from('promo_codes')
-            .select('*')
-            .order('created_at', { ascending: false });
+        const { fetchPromos } = await import('@/lib/pricingApi');
+        const { data, error } = await fetchPromos();
 
         if (error) {
             toast.error('Failed to fetch promo codes');
@@ -90,18 +87,15 @@ export default function AdminPromoCodes() {
             is_active: formData.is_active
         };
 
+        const { createPromo, updatePromo } = await import('@/lib/pricingApi');
+
         try {
             if (isEditing) {
-                const { error } = await supabase
-                    .from('promo_codes')
-                    .update(payload)
-                    .eq('id', isEditing);
+                const { error } = await updatePromo(isEditing, payload);
                 if (error) throw error;
                 toast.success('Promo Code updated');
             } else {
-                const { error } = await supabase
-                    .from('promo_codes')
-                    .insert(payload);
+                const { error } = await createPromo(payload);
                 if (error) throw error;
                 toast.success('Promo Code created');
             }
@@ -117,7 +111,8 @@ export default function AdminPromoCodes() {
         if (!confirm('Are you sure you want to delete this promo code? This action cannot be undone if it has history.')) return;
 
         try {
-            const { error } = await supabase.from('promo_codes').delete().eq('id', id);
+            const { deletePromo } = await import('@/lib/pricingApi');
+            const { error } = await deletePromo(id);
             if (error) throw error;
             toast.success('Promo Code deleted');
             fetchPromos();

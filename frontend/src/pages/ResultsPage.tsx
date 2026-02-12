@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTest } from '@/contexts/TestContext';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Trophy,
   RotateCcw,
@@ -457,10 +456,35 @@ const ResultsPage = () => {
                           <Latex strict={false} trust={true}>{q.question}</Latex>
                         </div>
                         <div className="mr-2 flex items-center gap-3">
-                          {/* Marks Display */}
-                          <span className={`text-sm font-bold ${isCorrect ? 'text-green-600' : isWrong ? 'text-red-500' : 'text-slate-400'}`}>
-                            {isCorrect ? `+${marksDisplay}` : isWrong ? `-${negDisplay}` : '0'}
-                          </span>
+                          {/* Marks Display: Obtained / Total */}
+                          {(() => {
+                            let obtainedMark = 0;
+                            if (isSkipped) {
+                              obtainedMark = 0;
+                            } else if (isCorrect) {
+                              obtainedMark = typeof marks === 'number' ? marks : parseFloat(marks as any);
+                            } else if (isWrong) {
+                              obtainedMark = -(typeof neg === 'number' ? neg : parseFloat(neg as any));
+                            } else {
+                              // Partial Case (Multiple Choice)
+                              if (q.type === 'multiple') {
+                                const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].map(String).sort() : [];
+                                const userArr = Array.isArray(ans) ? [...ans].map(String).sort() : [];
+                                const fraction = correctArr.length > 0 ? userArr.length / correctArr.length : 0;
+                                obtainedMark = fraction * (typeof marks === 'number' ? marks : parseFloat(marks as any));
+                              }
+                            }
+
+                            // Format for display
+                            const displayObtained = parseFloat(obtainedMark.toFixed(2));
+                            const displayTotal = marksDisplay;
+
+                            return (
+                              <span className={`text-sm font-bold ${obtainedMark > 0 ? 'text-green-600' : obtainedMark < 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                                {displayObtained} / {displayTotal}
+                              </span>
+                            );
+                          })()}
                           {isCorrect && <Badge className="bg-green-600">Correct</Badge>}
                           {isWrong && <Badge variant="destructive">Wrong</Badge>}
                           {isSkipped && <Badge variant="secondary">Skipped</Badge>}

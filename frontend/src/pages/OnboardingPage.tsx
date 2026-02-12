@@ -23,7 +23,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { updateProfile } from '@/lib/usersApi';
 import supabase from '@/lib/supabaseClient';
+
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -56,35 +58,41 @@ export default function OnboardingPage() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         try {
-            const { error } = await supabase.auth.updateUser({
+            if (!user?.email) {
+                toast.error('User not found');
+                return;
+            }
+
+            const isCreatorDefault = values.designation === 'Teacher' || values.designation === 'Institution';
+
+            // 1. Update Auth User Metadata (Critical for preventing onboarding loop)
+            const { error: authError } = await supabase.auth.updateUser({
                 data: {
                     full_name: values.name,
-                    designation: values.designation,
+                    designation: values.designation
                 }
             });
 
-            if (error) throw error;
+            if (authError) {
+                console.error('Error updating auth metadata:', authError);
+                throw authError;
+            }
 
-            // Sync to profiles table
-            if (user?.email) {
-                const isCreatorDefault = values.designation === 'Teacher' || values.designation === 'Institution';
+            // 2. Sync to profiles table via Backend API
+            const { error: profileError } = await updateProfile(user.id, {
+                full_name: values.name,
+                designation: values.designation,
+                is_creator: isCreatorDefault as any
+            });
 
-                const { error: profileError } = await supabase.from('profiles').upsert({
-                    id: user.id,
-                    full_name: values.name,
-                    designation: values.designation,
-                    email: user.email,
-                    is_creator: isCreatorDefault,
-                    updated_at: new Date().toISOString(),
-                });
-                if (profileError) {
-                    console.error('Error syncing public profile:', profileError);
-                    // We don't block the user if profile sync fails, but we log it
-                }
+            if (profileError) {
+                console.error('Error syncing public profile:', profileError);
+                throw profileError;
             }
 
             toast.success('Profile updated successfully!');
             navigate('/', { replace: true });
+            // Reload to refresh the auth context with updated metadata
             window.location.reload();
         } catch (error: any) {
             toast.error(error.message || 'Failed to update profile');
@@ -102,9 +110,6 @@ export default function OnboardingPage() {
             <Card className="w-[400px]">
                 <CardHeader>
                     <CardTitle>Welcome to Testoza</CardTitle>
-                    {/* <CardDescription>
-                        Please complete your profile to continue.
-                    </CardDescription> */}
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>

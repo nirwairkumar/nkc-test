@@ -48,13 +48,30 @@ export default function LandingPage() {
     return (
         <>
             <SEO
-                title="TestoZa - Create Tests in Seconds with AI"
+                title="TestoZa - Create Tests in Minute with AI"
                 description="Transform your content into engaging tests with AI-powered tools. Upload PDFs, images, or YouTube videos and generate tests instantly. Access thousands of tests across multiple subjects."
             />
 
             <div className="min-h-screen">
                 {/* Hero Section - No animation class needed, has its own */}
                 <CreateTestsHero />
+
+                {/* SEO Content Section */}
+                <section className="bg-white dark:bg-slate-950 py-12 border-b border-slate-100 dark:border-slate-800">
+                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-slate-900 dark:text-white">
+                            The Best Free Online Test Maker & AI Quiz Generator
+                        </h2>
+                        <div className="prose dark:prose-invert max-w-none">
+                            <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+                                TestoZa is the ultimate <strong>online test platform</strong> for teachers, students, and institutes.
+                                Our <strong>AI test generator</strong> allows you to create quizzes from PDFs, text, and YouTube videos in seconds.
+                                Whether you need a <strong>mock test for JEE, NEET, GATE</strong>, or a simple class quiz, TestoZa provides
+                                comprehensive tools to assess knowledge effectively.
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
                 {/* Feature Sections with scroll animations */}
                 <div id="features" className="landing-section">

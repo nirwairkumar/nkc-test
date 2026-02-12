@@ -1,5 +1,6 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import HomeHero from '@/components/home/HomeHero';
@@ -72,6 +73,11 @@ export default function TestList() {
 
     return (
         <div className="container mx-auto py-6">
+            <SEO
+                title="Explore Free Mock Tests Online - TestoZa"
+                description="Find free online mock tests for JEE, NEET, GATE, UPSC, SSC, and more. Practice with real exam-like interface on TestoZa."
+                keywords={["online mock tests", "practice tests free", "jee mains mock test", "neet practice questions", "gate test series"]}
+            />
             <div className="flex flex-col mb-8 gap-4">
                 {/* 1. Header */}
                 <HomeHero

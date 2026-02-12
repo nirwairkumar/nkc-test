@@ -1,29 +1,19 @@
+import apiClient from '@/lib/apiClient';
 
-import supabase from '@/lib/supabaseClient';
-import { createNotification } from './socialApi';
-
-export interface SupportMessage {
-    name: string;
-    email: string;
-    phone?: string;
-    message: string;
+export async function submitFeedback(data: any) {
+    try {
+        const response = await apiClient.post('/support/feedback', data);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error };
+    }
 }
 
-export async function sendSupportMessage(msg: SupportMessage) {
-    // Get current user if authenticated (optional)
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // Include user_id if authenticated, otherwise null (allows anonymous submissions)
-    const payload = {
-        ...msg,
-        user_id: user?.id || null
-    };
-
-    const { data, error } = await supabase
-        .from('support_messages')
-        .insert([payload])
-        .select()
-        .single();
-
-    return { data, error };
+export async function sendSupportMessage(data: { name: string; email: string; phone?: string; message: string }) {
+    try {
+        const response = await apiClient.post('/support/message', data);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error };
+    }
 }

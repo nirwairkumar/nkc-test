@@ -22,7 +22,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { fetchAllTests, createTest, deleteTest, updateTest, fetchTestsByCreator } from '@/lib/testsApi';
+import { fetchUsers, fetchUserDetails, verifyCreator, revokeVerification } from '@/lib/usersApi';
 import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category } from '@/lib/categoriesApi';
+import { fetchUserAttempts } from '@/lib/attemptsApi';
+import { fetchAllClasses } from '@/lib/classesApi';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
@@ -60,8 +67,14 @@ export default function ManageTests() {
 
     // Search State
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const [placeholderIndex, setPlaceholderIndex] = useState(0);
     const placeholders = ["Search by Title...", "Search by ID...", "Search by Creator...", "Search by Tags..."];
+
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+
 
     const [viewingCreator, setViewingCreator] = useState<any>(null); // For Creator Info Dialog
 
@@ -85,9 +98,94 @@ export default function ManageTests() {
     // Three-dot menu state
     const [allClasses, setAllClasses] = useState<any[]>([]);
 
+    const observerTarget = React.useRef(null);
+
+    // --- Loading Data ---
+    // --- Loading Data ---
+    const abortControllerRef = React.useRef<AbortController | null>(null);
+
+    const loadTests = React.useCallback(async (reset = false) => {
+        // Cancel previous request if any
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        // Create new controller for this request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        const pageToLoad = reset ? 1 : page;
+
+        setTestsLoading(true);
+        try {
+            // Using backend API for all tests (Admin view)
+            const { data, meta, error } = await fetchAllTests({
+                page: pageToLoad,
+                limit: 12,
+                searchQuery: debouncedSearchQuery,
+                signal: controller.signal
+            });
+
+            if (error) throw error;
+
+            if (reset) {
+                setTests(data || []);
+                setPage(2);
+                setHasMore(meta?.has_more ?? (data ? data.length === 12 : false));
+            } else {
+                setTests(prev => [...prev, ...(data || [])]);
+                setPage(prev => prev + 1);
+                setHasMore(meta?.has_more ?? (data ? data.length === 12 : false));
+            }
+        } catch (error: any) {
+            if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED' || error.message === 'canceled') {
+                console.log('Request canceled');
+                return; // Don't show error or update loading state heavily
+            }
+            console.error('Error loading tests:', error);
+            toast.error("Failed to load tests");
+        } finally {
+            // Only turn off loading if this is the current request (not aborted)
+            if (abortControllerRef.current === controller) {
+                setTestsLoading(false);
+                abortControllerRef.current = null;
+            }
+        }
+    }, [page, debouncedSearchQuery]);
+
     // --- Effects ---
     useEffect(() => {
-        loadTests();
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        loadTests(true);
+    }, [debouncedSearchQuery]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !testsLoading) {
+                    loadTests(false);
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [hasMore, testsLoading, loadTests]);
+
+    useEffect(() => {
         loadCategories();
         loadUsers();
         loadAllClasses();
@@ -100,24 +198,8 @@ export default function ManageTests() {
         return () => clearInterval(interval);
     }, []);
 
-    // --- Loading Data ---
-    const loadTests = async () => {
-        setTestsLoading(true);
-        try {
-            // Reverted to simple select to prevent join errors
-            const { data, error } = await supabase
-                .from('tests')
-                .select('*')
-                .order('created_at', { ascending: false });
-            if (error) throw error;
-            setTests(data || []);
-        } catch (error) {
-            console.error('Error loading tests:', error);
-            toast.error("Failed to load tests");
-        } finally {
-            setTestsLoading(false);
-        }
-    };
+
+
 
     // Helper to count tests by a creator
     const getCreatorTestCount = (creatorId: string) => {
@@ -383,6 +465,26 @@ export default function ManageTests() {
         }
     };
 
+    const handleTestUpdate = (updatedTest: any) => {
+        if (!updatedTest) {
+            loadTests();
+            return;
+        }
+
+        // Update tests list locally
+        setTests(prev => prev.map(t => t.id === updatedTest.id ? updatedTest : t));
+
+        // Update configuringTest if matches (to show latest data immediately if re-opened)
+        if (configuringTest?.id === updatedTest.id) {
+            setConfiguringTest(updatedTest);
+        }
+
+        // Update viewingResultsTest if matches
+        if (viewingResultsTest?.id === updatedTest.id) {
+            setViewingResultsTest(updatedTest);
+        }
+    };
+
     const toggleCategoryForTest = (id: string) => {
         setSelectedCategoriesForTest(prev =>
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -437,22 +539,18 @@ export default function ManageTests() {
     };
 
 
-    const filteredTests = tests.filter(test => {
-        if (!searchQuery) return true;
-        const lowerQuery = searchQuery.toLowerCase();
-
-        // Match Title
-        if (test.title.toLowerCase().includes(lowerQuery)) return true;
-        // Match ID
-        if (test.custom_id?.toLowerCase().includes(lowerQuery)) return true;
-        // Match Creator (if available in future, using ID for now or any profile data loaded)
-        // Since we lazy load profiles, we can only search by what's in 'test' object or if we fetching profiles eagerly (which we reverted).
-        // The user asked for "search particular test". Title and ID are most critical. 
-        // We can add simple tag search if tags exist.
-        if (test.tags?.some((t: string) => t.toLowerCase().includes(lowerQuery))) return true;
-
-        return false;
+    // YouTube-style lazy loading hook for tests
+    const {
+        registerSkeleton,
+        isItemRendered,
+        renderedCount,
+        totalCount,
+        isComplete
+    } = useYouTubeStyleRender(tests, testsLoading, {
+        rootMargin: '100px',
+        threshold: 0.1
     });
+
 
     if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
     if (!isAdmin) return null;
@@ -488,174 +586,230 @@ export default function ManageTests() {
                                 className="pl-9 h-9 bg-background"
                             />
                         </div>
-                        <Button variant="outline" onClick={loadTests} size="sm" className="whitespace-nowrap">
+                        <Button variant="outline" onClick={() => loadTests(true)} size="sm" className="whitespace-nowrap">
                             <RefreshCw className={`h-4 w-4 mr-2 ${testsLoading ? 'animate-spin' : ''}`} />
                             <span className="hidden md:inline">Refresh Tests</span>
                         </Button>
+
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {testsLoading ? (
-                            <div className="col-span-full text-center py-10">Loading tests...</div>
-                        ) : filteredTests.length === 0 ? (
+                        {tests.length === 0 && !testsLoading ? (
                             <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
                                 {searchQuery ? "No matching tests found." : "No tests found."}
                             </div>
                         ) : (
-                            filteredTests.map(test => {
-                                const currentVisibility = test.visibility || (test.is_public ? 'public' : 'private');
-                                const className = test.classes?.name || null;
+                            <>
+                                {tests.map((test) => {
+                                    const testId = test.id;
+                                    const isRendered = isItemRendered(testId);
+                                    const currentVisibility = test.visibility || (test.is_public ? 'public' : 'private');
+                                    const className = test.classes?.name || null;
 
-                                return (
-                                    <Card key={test.id} className="relative group hover:shadow-md transition-shadow flex flex-col h-full">
-                                        {/* Top Icons Row */}
-                                        <div className="absolute top-2 left-2 right-2 z-10 flex justify-between items-start">
-                                            {/* Creator Info Icon - Left */}
-                                            <div
-                                                className="text-slate-400 hover:text-blue-600 cursor-pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleViewCreator(test.created_by);
-                                                }}
-                                                title="Creator Info"
-                                            >
-                                                <Info className="w-4 h-4" />
+                                    if (!isRendered) {
+                                        return (
+                                            <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                                <TestCardSkeleton />
                                             </div>
+                                        );
+                                    }
 
-                                            {/* Three-dot Menu - Right */}
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-56">
-                                                    {/* Visibility Submenu */}
-                                                    <DropdownMenuSub>
-                                                        <DropdownMenuSubTrigger>
-                                                            {getVisibilityIcon(currentVisibility)}
-                                                            <span className="ml-2">Visibility</span>
-                                                        </DropdownMenuSubTrigger>
-                                                        <DropdownMenuSubContent>
-                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'public')}>
-                                                                <Globe className="mr-2 h-4 w-4" /> Public
-                                                                {currentVisibility === 'public' && <Check className="ml-auto h-4 w-4" />}
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'unlisted')}>
-                                                                <LinkIcon className="mr-2 h-4 w-4" /> Link Only
-                                                                {currentVisibility === 'unlisted' && <Check className="ml-auto h-4 w-4" />}
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'private')}>
-                                                                <Lock className="mr-2 h-4 w-4" /> Private
-                                                                {currentVisibility === 'private' && <Check className="ml-auto h-4 w-4" />}
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuSubContent>
-                                                    </DropdownMenuSub>
+                                    return (
+                                        <div
+                                            key={test.id}
+                                            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full overflow-hidden"
+                                        >
+                                            {/* --- Identity Accent --- */}
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
 
-                                                    {/* Share Link */}
-                                                    <DropdownMenuItem onClick={() => handleShare(test)}>
-                                                        <LinkIcon className="mr-2 h-4 w-4" /> Share Link
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuSeparator />
-
-                                                    {/* Class Assignment Submenu */}
-                                                    <DropdownMenuSub>
-                                                        <DropdownMenuSubTrigger>
-                                                            <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
-                                                        </DropdownMenuSubTrigger>
-                                                        <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                                            {allClasses.length === 0 ? (
-                                                                <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
-                                                            ) : (
-                                                                <>
-                                                                    <DropdownMenuItem onClick={() => handleClassChange(test, null, null)}>
-                                                                        <span className="opacity-50">None</span>
-                                                                        {!test.class_id && <Check className="ml-auto h-4 w-4" />}
-                                                                    </DropdownMenuItem>
-                                                                    {allClasses.map(cls => (
-                                                                        <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id, cls.name)}>
-                                                                            {cls.name}
-                                                                            {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
-                                                                        </DropdownMenuItem>
-                                                                    ))}
-                                                                </>
-                                                            )}
-                                                        </DropdownMenuSubContent>
-                                                    </DropdownMenuSub>
-
-                                                    <DropdownMenuSeparator />
-
-                                                    {/* Edit Action */}
-                                                    <DropdownMenuItem onClick={() => openTestEditDialog(test)}>
-                                                        <Pencil className="mr-2 h-4 w-4" /> Edit Test
-                                                    </DropdownMenuItem>
-
-                                                    {/* Manage Action */}
-                                                    <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
-                                                        <Settings className="mr-2 h-4 w-4" /> Manage Settings
-                                                    </DropdownMenuItem>
-
-                                                    <DropdownMenuSeparator />
-
-                                                    {/* Delete Action */}
-                                                    <DropdownMenuItem
-                                                        onClick={() => handleDeleteTest(test.id, test.title)}
-                                                        className="text-destructive focus:text-destructive"
+                                            {/* --- Zone A: Header --- */}
+                                            <div className="flex justify-between items-start mb-4 gap-3 pl-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <h3
+                                                        className="text-[1.05rem] font-semibold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2 mb-1 group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors"
+                                                        title={test.title}
                                                     >
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete Test
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-
-                                        <CardHeader className="pb-2 pt-6">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <CardTitle className="text-lg line-clamp-2 leading-tight min-h-[3.5rem]" title={test.title}>
-                                                    {test.title}
-                                                </CardTitle>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent className="pb-2 flex-grow">
-                                            <div className="text-xs text-muted-foreground flex flex-wrap gap-3 items-center">
-                                                <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {test.questions?.length || 0} Qs</span>
-                                                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {test.duration || 0} m</span>
-                                                <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border font-mono text-[10px] ml-auto">
-                                                    ID: {test.custom_id || 'N/A'}
-                                                </span>
-                                            </div>
-                                            {className && (
-                                                <div className="mt-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200 w-fit">
-                                                    <GraduationCap className="h-3 w-3" />
-                                                    <span className="uppercase">{className}</span>
+                                                        {test.title}
+                                                    </h3>
+                                                    {/* --- Zone B: Metadata (Clean Row) --- */}
+                                                    <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1.5">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <FileText className="w-3.5 h-3.5 opacity-70" />
+                                                            {test.questions?.length || 0} Qs
+                                                        </span>
+                                                        <span className="text-slate-300">•</span>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Clock className="w-3.5 h-3.5 opacity-70" />
+                                                            {test.duration || 0}m
+                                                        </span>
+                                                        <span className="text-slate-300">•</span>
+                                                        <span className="text-xs text-slate-400 font-normal tracking-wide">
+                                                            #{test.custom_id || 'N/A'}
+                                                        </span>
+                                                    </div>
                                                 </div>
+
+                                                {/* Top Actions: Menu & Info */}
+                                                <div className="flex items-center gap-0.5 shrink-0 -mr-1 -mt-1">
+                                                    <div
+                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 cursor-pointer rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleViewCreator(test.created_by);
+                                                        }}
+                                                        title="Creator Info"
+                                                    >
+                                                        <Info className="w-4 h-4" />
+                                                    </div>
+
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-56">
+                                                            {/* Visibility Submenu */}
+                                                            <DropdownMenuSub>
+                                                                <DropdownMenuSubTrigger>
+                                                                    {getVisibilityIcon(currentVisibility)}
+                                                                    <span className="ml-2">Visibility</span>
+                                                                </DropdownMenuSubTrigger>
+                                                                <DropdownMenuSubContent>
+                                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'public')}>
+                                                                        <Globe className="mr-2 h-4 w-4" /> Public
+                                                                        {currentVisibility === 'public' && <Check className="ml-auto h-4 w-4" />}
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'unlisted')}>
+                                                                        <LinkIcon className="mr-2 h-4 w-4" /> Link Only
+                                                                        {currentVisibility === 'unlisted' && <Check className="ml-auto h-4 w-4" />}
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'private')}>
+                                                                        <Lock className="mr-2 h-4 w-4" /> Private
+                                                                        {currentVisibility === 'private' && <Check className="ml-auto h-4 w-4" />}
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuSubContent>
+                                                            </DropdownMenuSub>
+
+                                                            {/* Share Link */}
+                                                            <DropdownMenuItem onClick={() => handleShare(test)}>
+                                                                <LinkIcon className="mr-2 h-4 w-4" /> Share Link
+                                                            </DropdownMenuItem>
+
+                                                            <DropdownMenuSeparator />
+
+                                                            {/* Class Assignment Submenu */}
+                                                            <DropdownMenuSub>
+                                                                <DropdownMenuSubTrigger>
+                                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
+                                                                </DropdownMenuSubTrigger>
+                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                                    {allClasses.length === 0 ? (
+                                                                        <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
+                                                                    ) : (
+                                                                        <>
+                                                                            <DropdownMenuItem onClick={() => handleClassChange(test, null, null)}>
+                                                                                <span className="opacity-50">None</span>
+                                                                                {!test.class_id && <Check className="ml-auto h-4 w-4" />}
+                                                                            </DropdownMenuItem>
+                                                                            {allClasses.map(cls => (
+                                                                                <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id, cls.name)}>
+                                                                                    {cls.name}
+                                                                                    {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
+                                                                                </DropdownMenuItem>
+                                                                            ))}
+                                                                        </>
+                                                                    )}
+                                                                </DropdownMenuSubContent>
+                                                            </DropdownMenuSub>
+
+                                                            <DropdownMenuSeparator />
+
+                                                            {/* Edit Action */}
+                                                            <DropdownMenuItem onClick={() => openTestEditDialog(test)}>
+                                                                <Pencil className="mr-2 h-4 w-4" /> Edit Test
+                                                            </DropdownMenuItem>
+
+                                                            {/* Manage Action */}
+                                                            <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
+                                                                <Settings className="mr-2 h-4 w-4" /> Manage Settings
+                                                            </DropdownMenuItem>
+
+                                                            <DropdownMenuSeparator />
+
+                                                            {/* Delete Action */}
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleDeleteTest(test.id, test.title)}
+                                                                className="text-destructive focus:text-destructive"
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Test
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </div>
+
+                                            {/* --- Zone C: Tags --- */}
+                                            <div className="pl-2 flex-grow mb-4">
+                                                {className && (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-100/50 dark:border-indigo-800/30">
+                                                        <GraduationCap className="w-3 h-3 opacity-70" />
+                                                        {className}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* --- Zone D: Actions --- */}
+                                            <div className="flex items-center justify-end gap-3 mt-auto pt-3 border-t border-slate-50 dark:border-slate-800/50 pl-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 text-xs font-medium px-4 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                                                    onClick={() => setViewingResultsTest(test)}
+                                                >
+                                                    Results
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="h-8 text-xs font-medium px-5 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-300 rounded-md"
+                                                    onClick={() => navigate(`/test-intro/${test.id}`)}
+                                                >
+                                                    View
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                                {hasMore && (
+                                    <div
+                                        className="col-span-full py-8 flex justify-center"
+                                        ref={observerTarget}
+                                    >
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => loadTests(false)}
+                                            disabled={testsLoading}
+                                            className="w-full md:w-auto min-w-[200px]"
+                                        >
+                                            {testsLoading ? (
+                                                <>
+                                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                    Loading More...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Plus className="h-4 w-4 mr-2" />
+                                                    View More Tests
+                                                </>
                                             )}
-                                        </CardContent>
-                                        <CardFooter className="pt-2 flex gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 flex-1"
-                                                onClick={() => navigate(`/test-intro/${test.id}`)}
-                                            >
-                                                <ArrowRight className="h-3 w-3 mr-2" />
-                                                View
-                                            </Button>
-                                            <Button
-                                                variant="secondary"
-                                                size="sm"
-                                                className="h-8 flex-1"
-                                                onClick={() => setViewingResultsTest(test)}
-                                            >
-                                                <FileText className="h-3 w-3 mr-2" />
-                                                Results
-                                            </Button>
-                                        </CardFooter>
-                                    </Card>
-                                );
-                            })
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
+
                 </TabsContent>
 
                 {/* --- CATEGORIES TAB --- */}
@@ -1137,6 +1291,19 @@ export default function ManageTests() {
                     )}
                 </DialogContent>
             </Dialog>
+
+            {configuringTest && (
+                <TestSettingsPanel
+                    test={configuringTest}
+                    onClose={() => setConfiguringTest(null)}
+                    onUpdate={handleTestUpdate}
+                    onViewResults={() => {
+                        setConfiguringTest(null);
+                        setViewingResultsTest(configuringTest);
+                    }}
+                    overridePremium={true}
+                />
+            )}
 
         </div >
     );

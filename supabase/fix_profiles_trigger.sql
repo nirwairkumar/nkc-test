@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   full_name TEXT,
   avatar_url TEXT,
+  designation TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -26,11 +27,12 @@ USING (auth.uid() = id);
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url)
+  INSERT INTO public.profiles (id, full_name, avatar_url, designation)
   VALUES (
     new.id, 
     new.raw_user_meta_data->>'full_name', 
-    new.raw_user_meta_data->>'avatar_url'
+    new.raw_user_meta_data->>'avatar_url',
+    new.raw_user_meta_data->>'designation'
   );
   RETURN new;
 END;

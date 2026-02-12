@@ -62,8 +62,8 @@ const DEFAULT_QUESTION: QuestionState = {
     correctAnswer: '',
 
     typingMode: 'en',
-    marks: '4',
-    negativeMarks: '1'
+    marks: '1',
+    negativeMarks: '0'
 };
 
 interface TestBuilderProps {
@@ -92,8 +92,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     const [institutionName, setInstitutionName] = useState('');
     const [institutionLogo, setInstitutionLogo] = useState('');
     const [time, setTime] = useState<number>(30);
-    const [marks, setMarks] = useState<number>(4);
-    const [negativeMarks, setNegativeMarks] = useState<number>(1);
+    const [marks, setMarks] = useState<number>(1);
+    const [negativeMarks, setNegativeMarks] = useState<number>(0);
     const [isPublic, setIsPublic] = useState(true);
 
     // Category State
@@ -130,8 +130,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             id: 'section-1',
             name: 'Section A',
             questions: [DEFAULT_QUESTION],
-            marks_per_question: 4,
-            negative_marks: 1,
+            marks_per_question: 1,
+            negative_marks: 0,
             question_type: 'single'
         }
     ]);
@@ -170,6 +170,49 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         };
     }, []);
 
+    // Smooth scroll behavior on page load
+    useEffect(() => {
+        // Blur any focused element (prevents cursor on option D)
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
+        // First, scroll to top instantly
+        window.scrollTo({ top: 0, behavior: 'instant' });
+
+        // Then, after a brief delay, smoothly scroll to the first question
+        const timer = setTimeout(() => {
+            const firstQuestion = document.querySelector('[data-question-card]');
+            if (firstQuestion) {
+                // Custom smooth scroll with slower speed
+                const targetPosition = firstQuestion.getBoundingClientRect().top + window.pageYOffset;
+                const startPosition = window.pageYOffset;
+                const distance = targetPosition - startPosition;
+                const duration = 1500; // 1.5 seconds for slower scroll
+                let start: number | null = null;
+
+                const animation = (currentTime: number) => {
+                    if (start === null) start = currentTime;
+                    const timeElapsed = currentTime - start;
+                    const progress = Math.min(timeElapsed / duration, 1);
+
+                    // Linear easing for constant slow speed
+
+                    window.scrollTo(0, startPosition + distance * progress);
+
+                    if (timeElapsed < duration) {
+                        requestAnimationFrame(animation);
+                    }
+                };
+
+                requestAnimationFrame(animation);
+            }
+        }, 1000); // 1 second delay to show the top of the page
+
+        return () => clearTimeout(timer);
+    }, []); // Only run once on mount
+
+
     // Load Categories
     useEffect(() => {
         fetchCategories().then(({ data }) => {
@@ -179,28 +222,45 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
     // Track loaded ID to prevent re-fetching/resetting on parent re-renders
     const loadedTestId = React.useRef<string | null>(null);
+    const lastInitialDataRef = React.useRef<any>(null);
 
     // Load Existing Test Data
     useEffect(() => {
+        console.log("[TestBuilder] useEffect triggered. initialData:", initialData, "lastInitialDataRef:", lastInitialDataRef.current);
+        
         const targetId = initialData?.id || (isEditMode ? testId : null);
+        console.log("[TestBuilder] targetId:", targetId, "loadedTestId.current:", loadedTestId.current);
 
         // If we already loaded this test ID, don't reload/reset state
         if (targetId && loadedTestId.current === targetId) {
+            console.log("[TestBuilder] Skipping: already loaded this test ID");
             return;
         }
 
         // If initialData is provided directly, populate from it
-        if (initialData) {
+        // Check if it's actually new data (not the same reference or deep equal)
+        const isNewInitialData = initialData && 
+            JSON.stringify(initialData) !== JSON.stringify(lastInitialDataRef.current);
+        
+        if (initialData && isNewInitialData) {
+            console.log("[TestBuilder] Received new initialData, populating...", initialData);
             populateData(initialData);
-            loadedTestId.current = initialData.id;
+            loadedTestId.current = initialData.id || 'imported-data';
+            lastInitialDataRef.current = initialData;
             // We also need to fetch categories for this test if not in initialData
-            fetchAndSetCategories(initialData.id);
+            if (initialData.id) {
+                fetchAndSetCategories(initialData.id);
+            }
             if (initialData.tags) setTags(initialData.tags);
+            console.log("[TestBuilder] Data populated successfully");
             return;
+        } else if (initialData && !isNewInitialData) {
+            console.log("[TestBuilder] initialData unchanged, skipping population");
         }
 
         // Otherwise fetch from ID
         if (isEditMode && testId && user) {
+            console.log("[TestBuilder] Fetching test data for edit mode, testId:", testId);
             setLoading(true);
             fetchTestById(testId).then(async ({ data, error }) => {
                 if (data) {
@@ -293,7 +353,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         }
     };
 
-    const fetchAndSetCategories = async (tid: string) => {
+const fetchAndSetCategories = async (tid: string) => {
+        if (!tid) return; // Skip if no test ID (e.g., imported data)
         const { fetchTestCategories } = await import('@/lib/categoriesApi');
         const { data: catData } = await fetchTestCategories(tid);
         if (catData) {
@@ -301,8 +362,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         }
     };
 
-    const populateData = (data: any) => {
-        setTitle(data.title);
+const populateData = (data: any) => {
+        console.log("[TestBuilder] populateData called with:", data);
+        
+        if (!data) {
+            console.error("[TestBuilder] populateData received null/undefined data");
+            return;
+        }
+        
+        if (!data.questions || !Array.isArray(data.questions)) {
+            console.error("[TestBuilder] populateData received data without questions array:", data);
+            return;
+        }
+        
+        console.log("[TestBuilder] Setting title:", data.title);
+        setTitle(data.title || '');
         setDescription(data.description || '');
         setRevisionNotes(data.revision_notes || '');
         setInstitutionName(data.institution_name || '');
@@ -313,6 +387,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         setIsPublic(data.is_public ?? true);
 
         if (data.enable_section_mode && data.sections) {
+            console.log("[TestBuilder] Processing section mode with", data.sections.length, "sections");
             setEnableSectionMode(true);
             setSections(data.sections.map((s: any) => ({
                 ...s,
@@ -323,12 +398,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 }))
             })));
         } else {
-            const mappedQuestions = (data.questions as any[]).map((q: any) => {
+            console.log("[TestBuilder] Processing", data.questions.length, "questions");
+            const mappedQuestions = (data.questions as any[]).map((q: any, index: number) => {
+                console.log(`[TestBuilder] Processing question ${index + 1}:`, q);
+                
                 // Handle basic mapping (questionText -> question)
                 let mappedQ = {
                     ...q,
                     question: q.question || q.questionText || '',
-                    typingMode: 'en'
+                    typingMode: 'en' as const
                 };
 
                 // Handle Options Conversion (Nested AI Object -> Flat Frontend Structure)
@@ -362,9 +440,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                 }
 
                 mappedQ.options = flatOptions;
+                console.log(`[TestBuilder] Question ${index + 1} processed:`, mappedQ);
                 return mappedQ;
             });
+            console.log("[TestBuilder] Setting questions:", mappedQuestions);
             setQuestions(mappedQuestions);
+            console.log("[TestBuilder] Questions set successfully");
         }
 
         setHasScientificCalculator(data.has_scientific_calculator || false);
@@ -375,6 +456,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             setShowOtherCategory(true);
             setCustomCategory(data.custom_category);
         }
+        
+        // Show success message when importing data
+        if (data.questions && data.questions.length > 0) {
+            toast.success(`Successfully imported ${data.questions.length} question${data.questions.length > 1 ? 's' : ''}!`);
+        }
+        
+        console.log("[TestBuilder] populateData completed successfully");
     };
 
     const handleAddQuestion = () => {
@@ -851,8 +939,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                     id: 'section-1',
                     name: 'Section A',
                     questions: [...questions],
-                    marks_per_question: 4,
-                    negative_marks: 1,
+                    marks_per_question: 1,
+                    negative_marks: 0,
                     question_type: 'single'
                 } as SectionState]);
             }
@@ -872,8 +960,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             id: `section-${Date.now()}`,
             name: `Section ${nextLetter}`,
             questions: [{ ...DEFAULT_QUESTION, id: Math.random() }],
-            marks_per_question: 4,
-            negative_marks: 1,
+            marks_per_question: 1,
+            negative_marks: 0,
             question_type: 'single'
         };
         setSections([...sections, newSection]);
@@ -910,8 +998,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             options: { A: '', B: '', C: '', D: '' },
             correctAnswer: '',
             typingMode: lastTypingMode,
-            marks: lastQuestion ? lastQuestion.marks : (section.marks_per_question?.toString() || '4'),
-            negativeMarks: lastQuestion ? lastQuestion.negativeMarks : (section.negative_marks?.toString() || '1')
+            marks: lastQuestion ? lastQuestion.marks : (section.marks_per_question?.toString() || '1'),
+            negativeMarks: lastQuestion ? lastQuestion.negativeMarks : (section.negative_marks?.toString() || '0')
         };
         section.questions.push(newQ);
         setSections(newSections);
@@ -933,8 +1021,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             options: { A: '', B: '', C: '', D: '' },
             correctAnswer: '',
             typingMode: lastTypingMode,
-            marks: parentQ.marks || '4',
-            negativeMarks: parentQ.negativeMarks || '1'
+            marks: parentQ.marks || '1',
+            negativeMarks: parentQ.negativeMarks || '0'
         };
 
         // Insert after the last question of this group
@@ -1539,7 +1627,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                             value={q.marks || ''}
                                                                                             onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'marks', e.target.value)}
                                                                                             className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
-                                                                                            placeholder="4"
+                                                                                            placeholder="1"
                                                                                         />
                                                                                     </div>
                                                                                     <div className="flex items-center gap-1.5 pl-1">
@@ -1549,7 +1637,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                             value={q.negativeMarks || ''}
                                                                                             onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'negativeMarks', e.target.value)}
                                                                                             className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
-                                                                                            placeholder="1"
+                                                                                            placeholder="0"
                                                                                         />
                                                                                     </div>
                                                                                 </div>
@@ -1674,11 +1762,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                                 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
                                                                                             `}>
                                                                                                 <button onClick={handleSelect} className={`
-                                                                                                    mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm
-                                                                                                    ${q.type === 'single' ? 'rounded-full' : 'rounded-lg'}
-                                                                                                    ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'}
+                                                                                                    mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
+                                                                                                    ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-white border border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600'}
                                                                                                 `}>
-                                                                                                    {q.type === 'multiple' && isSelected ? <Check className="w-5 h-5" /> : optKey}
+                                                                                                    {isSelected ? (
+                                                                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                                                                                        </svg>
+                                                                                                    ) : (
+                                                                                                        optKey
+                                                                                                    )}
                                                                                                 </button>
 
                                                                                                 <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
@@ -1689,28 +1782,28 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                                             placeholder={`Option ${optKey}`}
                                                                                                             value={q.options[optKey]}
                                                                                                             onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }}
-                                                                                                            className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-8 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                                            className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-16 focus:ring-0 w-full resize-none placeholder:text-slate-300"
                                                                                                         />
 
                                                                                                         {/* Right Side Actions - Overlay on Text Area */}
-                                                                                                        <div className="absolute top-0 right-0 flex flex-col gap-1 z-10">
+                                                                                                        <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10">
                                                                                                             <Button
                                                                                                                 variant="ghost"
                                                                                                                 size="icon"
-                                                                                                                className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover/option:opacity-100 transition-all rounded-md"
-                                                                                                                onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
-                                                                                                                title="Remove Option"
-                                                                                                            >
-                                                                                                                <X className="w-3.5 h-3.5" />
-                                                                                                            </Button>
-                                                                                                            <Button
-                                                                                                                variant="ghost"
-                                                                                                                size="icon"
-                                                                                                                className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : 'opacity-0 group-hover/option:opacity-100'}`}
+                                                                                                                className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
                                                                                                                 onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}
                                                                                                                 title="Add Image"
                                                                                                             >
                                                                                                                 <ImageIcon className="w-3.5 h-3.5" />
+                                                                                                            </Button>
+                                                                                                            <Button
+                                                                                                                variant="ghost"
+                                                                                                                size="icon"
+                                                                                                                className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
+                                                                                                                onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
+                                                                                                                title="Remove Option"
+                                                                                                            >
+                                                                                                                <X className="w-3.5 h-3.5" />
                                                                                                             </Button>
                                                                                                         </div>
                                                                                                     </div>
@@ -1842,6 +1935,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
                                         {/* Question Card */}
                                         <Card
+                                            data-question-card={index === 0 ? "true" : undefined}
                                             className={`
                                                 group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
                                                 ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
@@ -1894,7 +1988,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                 value={q.marks || ''}
                                                                 onChange={(e) => updateQuestion(index, 'marks', e.target.value)}
                                                                 className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
-                                                                placeholder="4"
+                                                                placeholder="1"
                                                             />
                                                         </div>
                                                         <div className="flex items-center gap-1.5 pl-1">
@@ -1904,7 +1998,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                 value={q.negativeMarks || ''}
                                                                 onChange={(e) => updateQuestion(index, 'negativeMarks', e.target.value)}
                                                                 className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
-                                                                placeholder="1"
+                                                                placeholder="0"
                                                             />
                                                         </div>
                                                     </div>
@@ -2084,24 +2178,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                                                 />
 
                                                                                 {/* Right Side Actions - Overlay on Text Area */}
-                                                                                <div className="absolute top-0 right-0 flex flex-col gap-1 z-10 pointer-events-auto">
+                                                                                <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10 pointer-events-auto">
                                                                                     <Button
                                                                                         variant="ghost"
                                                                                         size="icon"
-                                                                                        className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover/option:opacity-100 transition-all rounded-md"
-                                                                                        onClick={() => handleRemoveOption(index, optKey)}
-                                                                                        title="Remove Option"
-                                                                                    >
-                                                                                        <X className="w-3.5 h-3.5" />
-                                                                                    </Button>
-                                                                                    <Button
-                                                                                        variant="ghost"
-                                                                                        size="icon"
-                                                                                        className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`q-${index}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : 'opacity-0 group-hover/option:opacity-100'}`}
+                                                                                        className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`q-${index}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
                                                                                         onClick={() => toggleImageInput(`q-${index}-opt-${optKey}`)}
                                                                                         title="Add Image"
                                                                                     >
                                                                                         <ImageIcon className="w-3.5 h-3.5" />
+                                                                                    </Button>
+                                                                                    <Button
+                                                                                        variant="ghost"
+                                                                                        size="icon"
+                                                                                        className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
+                                                                                        onClick={() => handleRemoveOption(index, optKey)}
+                                                                                        title="Remove Option"
+                                                                                    >
+                                                                                        <X className="w-3.5 h-3.5" />
                                                                                     </Button>
                                                                                 </div>
                                                                             </div>

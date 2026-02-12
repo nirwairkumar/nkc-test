@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import apiClient from '@/lib/apiClient';
 
 export interface ClassItem {
     id: string;
@@ -7,25 +7,42 @@ export interface ClassItem {
     created_at: string;
 }
 
+// For admin usage
+export const fetchAllClasses = async () => {
+    try {
+        // We need an endpoint for this. classes.py has /user/{uid}.
+        // We should add GET /all to classes.py or just use a trick.
+        // Let's assume we add GET /all to classes.py
+        const response = await apiClient.get('/classes/all');
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+};
+
 export const fetchClasses = async (userId: string) => {
-    return await supabase
-        .from('classes')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name', { ascending: true });
+    try {
+        const response = await apiClient.get(`/classes/user/${userId}`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 };
 
 export const createClass = async (name: string, userId: string) => {
-    return await supabase
-        .from('classes')
-        .insert({ name, user_id: userId })
-        .select()
-        .single();
+    try {
+        const response = await apiClient.post('/classes/', { name, user_id: userId });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 };
 
 export const deleteClass = async (id: string) => {
-    return await supabase
-        .from('classes')
-        .delete()
-        .eq('id', id);
+    try {
+        const response = await apiClient.delete(`/classes/${id}`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 };

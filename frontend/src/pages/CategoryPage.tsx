@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { fetchCategories } from '@/lib/categoriesApi';
+import { fetchTests } from '@/lib/testsApi';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,6 +12,8 @@ import TestLikeButton from '@/components/TestLikeButton';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import { toSlug } from '@/lib/slugUtils';
 import { toast } from 'sonner';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
 interface CategoryPageProps { }
 
@@ -24,6 +27,18 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
     const [currentCategoryId, setCurrentCategoryId] = useState<string | null>(null);
     const [allCategories, setAllCategories] = useState<any[]>([]);
 
+    // YouTube-style lazy loading hook
+    const {
+        registerSkeleton,
+        isItemRendered,
+        renderedCount,
+        totalCount,
+        isComplete
+    } = useYouTubeStyleRender(tests, loading, {
+        rootMargin: '100px',
+        threshold: 0.1
+    });
+
     useEffect(() => {
         if (category) {
             loadCategoryTests(category);
@@ -33,55 +48,32 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
     const loadCategoryTests = async (slugOrName: string) => {
         setLoading(true);
         try {
-            const { data: allCats } = await supabase.from('categories').select('id, name');
+            const { data: allCats } = await fetchCategories();
             if (allCats) setAllCategories(allCats);
 
-            const matchedCat = allCats?.find(c => toSlug(c.name) === slugOrName);
+            // Find match
+            const matchedCat = allCats?.find((c: any) => toSlug(c.name) === slugOrName);
 
             if (matchedCat) {
                 setCategoryName(matchedCat.name);
                 setCurrentCategoryId(matchedCat.id);
-                // Fetch tests for this category
-                const { data: testData } = await supabase
-                    .from('test_categories')
-                    .select('test_id, tests(*)')
-                    .eq('category_id', matchedCat.id);
-
-                if (testData) {
-                    // Filter valid tests and ensure objects + visibility check
-                    const validTests = testData
-                        .map(t => t.tests)
-                        .filter(t => {
-                            if (!t || typeof t !== 'object') return false;
-                            // Visibility Check: Show if public OR if created by current user
-                            const isPublic = t.is_public !== false; // Default to true if undefined
-                            const isCreator = user && t.created_by === user.id;
-                            return isPublic || isCreator;
-                        });
-                    setTests(validTests);
-                }
+                // Fetch tests
+                const { data: testData } = await fetchTests({
+                    categoryId: matchedCat.id,
+                    limit: 100
+                });
+                setTests(testData || []);
             } else {
-                // Fallback: Try name direct match
-                const directMatch = allCats?.find(c => c.name.toLowerCase() === slugOrName.replace(/-/g, ' ').toLowerCase());
+                // Fallback: Name direct match
+                const directMatch = allCats?.find((c: any) => c.name.toLowerCase() === slugOrName.replace(/-/g, ' ').toLowerCase());
                 if (directMatch) {
                     setCategoryName(directMatch.name);
                     setCurrentCategoryId(directMatch.id);
-                    const { data: testData } = await supabase
-                        .from('test_categories')
-                        .select('test_id, tests(*)')
-                        .eq('category_id', directMatch.id);
-                    if (testData) {
-                        const validTests = testData
-                            .map(t => t.tests)
-                            .filter(t => {
-                                if (!t || typeof t !== 'object') return false;
-                                // Visibility Check
-                                const isPublic = t.is_public !== false;
-                                const isCreator = user && t.created_by === user.id;
-                                return isPublic || isCreator;
-                            });
-                        setTests(validTests);
-                    }
+                    const { data: testData } = await fetchTests({
+                        categoryId: directMatch.id,
+                        limit: 100
+                    });
+                    setTests(testData || []);
                 } else {
                     setCategoryName(slugOrName.replace(/-/g, ' '));
                     setTests([]);
@@ -99,15 +91,46 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
 
     return (
         <div className="container mx-auto py-6 px-4">
-            <Helmet>
-                <title>{categoryName ? `${categoryName} Mock Tests | Testoza` : 'Test Category | Testoza'}</title>
-                <meta name="description" content={`Prepare for ${categoryName || 'exams'} with our curated mock tests. Best online test series for ${categoryName || 'students'}.`} />
-                <link rel="canonical" href={window.location.href} />
-            </Helmet>
+            <SEO
+                title={categoryName ? `${categoryName} Mock Tests | TestoZa` : 'Test Category | TestoZa'}
+                description={`Prepare for ${categoryName || 'exams'} with our curated mock tests. Best online test series for ${categoryName || 'students'}.`}
+                url={window.location.href}
+                schemas={[
+                    {
+                        "@context": "https://schema.org",
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                            {
+                                "@type": "ListItem",
+                                "position": 1,
+                                "name": "Simulated Exams",
+                                "item": "https://testoza.com/tests"
+                            },
+                            {
+                                "@type": "ListItem",
+                                "position": 2,
+                                "name": categoryName || "Category",
+                                "item": window.location.href
+                            }
+                        ]
+                    }
+                ]}
+            />
 
             <div className="mt-6 mb-8">
                 <h1 className="text-2xl font-bold capitalize mb-2">{categoryName} Practice Tests</h1>
-                <p className="text-muted-foreground text-sm">Browse our collection of {categoryName} mock tests and exams.</p>
+                <p className="text-muted-foreground text-sm mb-4">
+                    Browse our extensive collection of {categoryName} mock tests and practice exams.
+                    Designed to help you crack your exams with better scores.
+                </p>
+                <div className="prose dark:prose-invert max-w-none">
+                    <h2 className="text-lg font-semibold mt-4">Why Take {categoryName} Mock Tests on TestoZa?</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Our AI-powered platform generates high-quality {categoryName} questions from study materials,
+                        providing you with a realistic exam environment. Practice with instant feedback,
+                        detailed analytics, and performance tracking to improve your speed and accuracy.
+                    </p>
+                </div>
             </div>
 
             {tests.length === 0 ? (
@@ -118,8 +141,20 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tests.map((test: any) => {
                         if (!test) return null;
+                        
+                        const testId = test.id || Math.random();
+                        const isRendered = isItemRendered(testId);
+                        
+                        if (!isRendered) {
+                            return (
+                                <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                    <TestCardSkeleton />
+                                </div>
+                            );
+                        }
+
                         return (
-                            <Card key={test.id || Math.random()} className="flex flex-col hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group border-slate-200 dark:border-slate-800 h-full">
+                            <Card key={testId} className="flex flex-col hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group border-slate-200 dark:border-slate-800 h-full animate-in fade-in duration-500">
                                 <div className="absolute top-2 right-2 z-10">
                                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => {
                                         e.stopPropagation();
@@ -174,6 +209,15 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                             </Card>
                         );
                     })}
+                    
+                    {/* Progress indicator */}
+                    {!isComplete && tests.length > 0 && (
+                        <div className="col-span-full py-4 text-center">
+                            <span className="text-sm text-muted-foreground">
+                                {renderedCount} of {totalCount} tests loaded
+                            </span>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

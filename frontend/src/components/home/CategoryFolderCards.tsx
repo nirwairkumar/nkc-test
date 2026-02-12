@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+
 import FolderCard from './FolderCard';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -16,35 +16,20 @@ export default function CategoryFolderCards() {
 
     const loadCategories = async () => {
         try {
-            // Fetch Categories
-            const { data: catData, error: catError } = await supabase
-                .from('categories')
-                .select('*')
-                .order('name');
+            const { fetchCategoryStats } = await import('@/lib/categoriesApi');
+            const { data, error } = await fetchCategoryStats();
 
-            if (catError) throw catError;
+            if (error) throw error;
 
-            // Fetch Mapping to count tests
-            // Note: For large scale, we should use a `.count()` query per category or a view.
-            // But for now, let's fetch all mappings or use a group by if RPC is available, 
-            // otherwise fetch all mappings (lightweight enough for <10k tests) or iterate.
-            // Let's simpler: Fetch all test_categories ID pairs.
-            const { data: mapData, error: mapError } = await supabase
-                .from('test_categories')
-                .select('category_id');
+            setCategories(data || []);
 
-            if (mapError) throw mapError;
-
+            // Map counts for compatibility with existing Render logic
             const countMap: Record<string, number> = {};
-            mapData?.forEach((m: any) => {
-                countMap[m.category_id] = (countMap[m.category_id] || 0) + 1;
+            (data || []).forEach((c: any) => {
+                countMap[c.id] = c.count || 0;
             });
-
-            // Filter categories with 0 tests? User said "Category exists but has 0 tests -> still show folder"
-            // So we keep all.
-
-            setCategories(catData || []);
             setCounts(countMap);
+
         } catch (err) {
             console.error('Error loading folders:', err);
         } finally {

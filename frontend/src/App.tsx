@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
@@ -51,6 +51,13 @@ const Layout = lazy(() => import("./Layout"));
 
 const queryClient = new QueryClient();
 
+
+
+const AIImportRoute = () => {
+  const navigate = useNavigate();
+  return <AITestImporter onImport={(data) => navigate('/create-test', { state: { importedData: data } })} />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -85,7 +92,7 @@ const App = () => (
                     <Route path="/create-test" element={<CreateTestPage />} />
                     <Route path="/edit-test/:id" element={<CreateTestPage />} />
                     <Route path="/creator/:id" element={<CreatorProfilePage />} />
-                    <Route path="/ai-import" element={<AITestImporter onImport={(data) => console.log(data)} />} />
+                    <Route path="/generate-with-ai" element={<AIImportRoute />} />
 
                     {/* Legal Routes */}
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />

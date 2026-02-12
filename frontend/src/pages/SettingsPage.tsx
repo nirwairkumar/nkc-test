@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import supabase from '@/lib/supabaseClient';
+
 import { useNavigate } from 'react-router-dom';
 import { Crown, Key, UserIcon, Loader2 } from 'lucide-react';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -34,9 +34,8 @@ export default function SettingsPage() {
 
         setLoading(true);
         try {
-            const { error } = await supabase.auth.updateUser({
-                password: newPassword
-            });
+            const { updatePassword } = await import('@/lib/usersApi');
+            const { error } = await updatePassword(newPassword);
 
             if (error) throw error;
             toast.success("Password updated successfully!");
