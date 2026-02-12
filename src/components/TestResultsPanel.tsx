@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { fetchAttemptsForTest, deleteAttempt, deleteRegistration } from '@/lib/attemptsApi';
+import { fetchUsersByIds } from '@/lib/usersApi';
 import {
     Sheet,
     SheetContent,
@@ -51,6 +52,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const [loading, setLoading] = useState(true);
     const [showRank, setShowRank] = useState(false);
 
+    // ... (Total Marks calc unchanged) ...
     // Calculate Total Marks
     let totalMaxMarks = 0;
     if (test.enable_section_mode && test.sections) {
@@ -79,25 +81,18 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         setLoading(true);
         try {
             // Fetch attempts for this test
-            // We join with user metadata ideally, but for now we might rely on ID or simple join
-            const { data, error } = await supabase
-                .from('user_tests')
-                .select('*')
-                .eq('test_id', test.id)
-                .order('score', { ascending: false });
+            const { data, error } = await fetchAttemptsForTest(test.id);
 
             if (error) throw error;
+            if (!data) return;
 
-            // Should probably fetch user names if not included? 
-            // For MVP assuming we might not have easy join access without View, 
-            // let's try to fetch user profiles or just show IDs/Time.
-            // Actually, let's fetch profiles if we can.
-            const userIds = Array.from(new Set(data.map(d => d.user_id)));
+            // Fetch user profiles
+            const userIds = Array.from(new Set(data.map((d: any) => d.user_id))) as string[];
             if (userIds.length > 0) {
-                const { data: users } = await supabase.from('profiles').select('id, full_name, email').in('id', userIds);
+                const { data: users } = await fetchUsersByIds(userIds);
                 if (users) {
-                    const userMap = new Map(users.map(u => [u.id, u]));
-                    data.forEach(d => {
+                    const userMap = new Map(users.map((u: any) => [u.id, u]));
+                    data.forEach((d: any) => {
                         d.user = userMap.get(d.user_id);
                     });
                 }
@@ -116,20 +111,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
         try {
             // 1. Delete from user_tests (The Result)
-            const { error: attemptError } = await supabase
-                .from('user_tests')
-                .delete()
-                .eq('id', attemptId);
+            const { error: attemptError } = await deleteAttempt(attemptId);
 
             if (attemptError) throw attemptError;
 
             // 2. Delete from test_registrations (The "Has Attempted" Flag)
-            // This enables the student to take the test again if single attempt was enforced.
-            const { error: regError } = await supabase
-                .from('test_registrations')
-                .delete()
-                .eq('test_id', test.id)
-                .eq('user_id', userId);
+            const { error: regError } = await deleteRegistration(test.id, userId);
 
             if (regError) {
                 console.warn("Could not delete registration, but result was deleted.", regError);

@@ -60,18 +60,17 @@ export function useNotifications() {
     const fetchNotifications = async () => {
         if (!user) return;
         setLoading(true);
-        const { data, error } = await supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(50); // Increased limit slightly
-
-        if (error) {
+        try {
+            const { default: apiClient } = await import('@/lib/apiClient');
+            const response = await apiClient.get(`/social/notifications/${user.id}`, {
+                params: { limit: 50 }
+            });
+            if (response.data) {
+                setNotifications(response.data);
+                setUnreadCount(response.data.filter((n: any) => !n.read).length); // Recalc unread
+            }
+        } catch (error) {
             console.error('Error fetching notifications:', error);
-        } else if (data) {
-            setNotifications(data);
-            setUnreadCount(data.length);
         }
         setLoading(false);
     };
@@ -81,13 +80,10 @@ export function useNotifications() {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
         setUnreadCount((prev) => Math.max(0, prev - 1));
 
-        const { error } = await supabase
-            .from('notifications')
-            .delete()
-            .eq('id', id)
-            .eq('user_id', user?.id);
-
-        if (error) {
+        try {
+            const { default: apiClient } = await import('@/lib/apiClient');
+            await apiClient.delete(`/social/notifications/${id}?user_id=${user?.id}`);
+        } catch (error) {
             toast.error("Failed to delete notification");
             fetchNotifications();
         }
@@ -96,19 +92,14 @@ export function useNotifications() {
     const markAsRead = async (id: string) => {
         // Optimistic update
         setNotifications((prev) => prev.map(n => n.id === id ? { ...n, read: true } : n));
-
-        // Recalculate unread count
         setUnreadCount((prev) => Math.max(0, prev - 1));
 
-        const { error } = await supabase
-            .from('notifications')
-            .update({ read: true })
-            .eq('id', id)
-            .eq('user_id', user?.id);
-
-        if (error) {
+        try {
+            const { default: apiClient } = await import('@/lib/apiClient');
+            await apiClient.put(`/social/notifications/${id}/read?user_id=${user?.id}`);
+        } catch (error) {
             console.error("Failed to mark as read", error);
-            fetchNotifications(); // Revert on error
+            fetchNotifications();
         }
     };
 
@@ -117,12 +108,10 @@ export function useNotifications() {
         setUnreadCount(0);
         if (!user) return;
 
-        const { error } = await supabase
-            .from('notifications')
-            .delete()
-            .eq('user_id', user.id);
-
-        if (error) {
+        try {
+            const { default: apiClient } = await import('@/lib/apiClient');
+            await apiClient.delete(`/social/notifications/clear/${user.id}`);
+        } catch (error) {
             toast.error("Failed to clear notifications");
             fetchNotifications();
         }

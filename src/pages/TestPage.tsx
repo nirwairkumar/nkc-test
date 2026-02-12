@@ -586,6 +586,15 @@ export default function TestPage() {
       localStorage.removeItem(`test_session_${user.id}_${test.id}`);
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
 
+      // Exit Full Screen if active
+      if (document.fullscreenElement) {
+        try {
+          await document.exitFullscreen();
+        } catch (err) {
+          console.error("Error exiting full screen:", err);
+        }
+      }
+
       // Handle Result Visibility
       if (test.settings?.show_results_immediate === false) {
         // Navigate to thank you page when results are hidden
@@ -619,7 +628,16 @@ export default function TestPage() {
   if (!test) return <div className="p-8 text-center">Test not found.</div>;
   if (!test.questions || test.questions.length === 0) return <div className="p-8 text-center">This test has no questions.</div>;
 
+  // Safety Check for Question Index (e.g. from bad Resume Data)
+  if (currentQuestionIndex >= test.questions.length) {
+    setCurrentQuestionIndex(0);
+    return <div className="p-8 text-center">Resetting question index...</div>;
+  }
+
   const currentQuestion = test.questions[currentQuestionIndex];
+  if (!currentQuestion) return <div className="p-8 text-center">Error loading question.</div>;
+
+  console.log("TestPage Render. ID:", id, "Test:", test?.title, "Q:", currentQuestion?.id);
 
   // Palette Component
   const QuestionPalette = ({ onQuestionClick }: { onQuestionClick?: () => void }) => {
@@ -819,12 +837,12 @@ export default function TestPage() {
           })()}
         </div>
         <div className="flex items-center gap-2">
-          {/* Warning Counter - Yellow Icon + Count (Only show to creator) */}
-          {test?.settings?.tab_switch_mode !== 'off' && user?.id === test?.created_by && (
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
-              <TriangleAlert className={`w-4 h-4 ${warnings > 0 ? 'fill-amber-100 text-amber-600' : 'text-slate-400'}`} />
+          {/* Warning Counter - Security Violations */}
+          {(test?.settings?.tab_switch_mode !== 'off' || test?.settings?.force_fullscreen) && (
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+              <TriangleAlert className={`w-4 h-4 ${warnings > 0 ? 'fill-red-100 text-red-600' : 'fill-amber-100 text-amber-600'}`} />
               <span>
-                {test.settings.tab_switch_mode === 'strict'
+                {test.settings?.tab_switch_mode === 'strict'
                   ? `${warnings}/1`
                   : `${warnings}/3`
                 }

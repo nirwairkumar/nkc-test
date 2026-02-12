@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import supabase from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,7 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
-import supabase from '@/lib/supabaseClient';
+
 import { Loader2, User, Save, Upload, Users, Eye, EyeOff } from 'lucide-react';
 import { toggleCreatorMode, updateFollowingVisibility, getFollowerCount, getFollowingCount } from '@/lib/socialApi';
 import { Profile } from '@/lib/types';
@@ -72,13 +73,16 @@ const ProfilePage = () => {
 
     const fetchProfileSettings = async () => {
         if (!user) return;
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('is_creator, is_verified_creator, following_visibility')
-            .eq('id', user.id)
-            .single();
+        const { fetchUserDetails } = await import('@/lib/usersApi');
+        const { data, error } = await fetchUserDetails(user.id);
 
         if (data) {
+            // Prioritize DB Profile Data over Auth Metadata
+            if (data.full_name) setFullName(data.full_name);
+            if (data.bio) setBio(data.bio);
+            if (data.avatar_url) setAvatarUrl(data.avatar_url);
+            if (data.designation && !isAdmin) setDesignation(data.designation);
+
             setIsCreator(data.is_creator || false);
             setIsVerifiedCreator(data.is_verified_creator || false);
             setFollowingVisibility(data.following_visibility as 'public' | 'private' || 'public');
@@ -134,22 +138,11 @@ const ProfilePage = () => {
             }
 
             const file = event.target.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user!.id}-${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            const { uploadAvatar } = await import('@/lib/usersApi');
+            const { publicUrl, error } = await uploadAvatar(user!.id, file);
 
-            // Upload to Supabase Storage
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            // Get Public URL
-            const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-            const publicUrl = data.publicUrl;
+            if (error) throw error;
+            if (!publicUrl) throw new Error('Failed to get public URL');
 
             setAvatarUrl(publicUrl);
             toast.success('Profile picture uploaded!');
@@ -171,6 +164,7 @@ const ProfilePage = () => {
         const finalDesignation = isAdmin ? 'Admin' : designation;
 
         try {
+            // Update Auth Session (Optional but recommended for instant UI feedback)
             const { error } = await supabase.auth.updateUser({
                 data: {
                     full_name: fullName,
@@ -182,41 +176,23 @@ const ProfilePage = () => {
 
             if (error) throw error;
 
-            // Sync with public profiles table
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: user.id,
-                    full_name: fullName,
-                    bio: bio,
-                    avatar_url: avatarUrl,
-                    designation: finalDesignation,
-                    email: user.email,
-                    is_creator: isCreator, // Persist creator status just in case
-                    following_visibility: followingVisibility,
-                    updated_at: new Date().toISOString()
-                });
+            // Update Database Profile via API
+            const { updateProfile } = await import('@/lib/usersApi');
+            const { error: apiError } = await updateProfile(user.id, {
+                full_name: fullName,
+                bio: bio,
+                avatar_url: avatarUrl,
+                designation: finalDesignation,
+                email: user.email,
+                is_creator: isCreator,
+                following_visibility: followingVisibility,
+                updated_at: new Date().toISOString()
+            });
 
-            if (profileError) {
-                console.error("Error syncing public profile:", profileError);
-                toast.error(`Public Profile Sync Failed: ${profileError.message}`);
-            } else {
-                // Sync with tests table (Update creator_name and creator_avatar for all tests by this user)
-                const { error: testsError } = await supabase
-                    .from('tests')
-                    .update({
-                        creator_name: fullName,
-                        creator_avatar: avatarUrl
-                    })
-                    .eq('created_by', user.id);
+            if (apiError) throw apiError;
 
-                if (testsError) {
-                    console.error("Error syncing tests:", testsError);
-                    toast.warning("Profile updated, but failed to sync with your tests.");
-                } else {
-                    toast.success('Profile and Tests updated successfully!');
-                }
-            }
+            toast.success('Profile updated successfully!');
+
         } catch (error: any) {
             console.error('Error updating profile:', error);
             toast.error(error.message || 'Failed to update profile');

@@ -8,85 +8,59 @@ import TestLikeButton from '@/components/TestLikeButton';
 import { fetchTests, Test } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
-import supabase from '@/lib/supabaseClient';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
 const ITEMS_PER_PAGE = 12;
 
 export default function TestFeed({ user, onManageTest }: { user: any, onManageTest: (test: any) => void }) {
     const [tests, setTests] = useState<Test[]>([]);
-    const [categories, setCategories] = useState<any[]>([]);
-    const [testCategoryMap, setTestCategoryMap] = useState<Record<string, string[]>>({});
-    const [verifiedCreators, setVerifiedCreators] = useState<Record<string, boolean>>({});
 
-    const [page, setPage] = useState(2);
+    const [page, setPage] = useState(1); // Backend handles pagination logic, start at 1
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
 
+    // YouTube-style lazy loading hook
+    const {
+        registerSkeleton,
+        isItemRendered,
+        renderedCount,
+        totalCount,
+        isComplete
+    } = useYouTubeStyleRender(tests, loading, {
+        rootMargin: '100px',
+        threshold: 0.1
+    });
+
     useEffect(() => {
-        // Load initial metadata like categories
-        const loadMetadata = async () => {
-            const { data: catData } = await supabase.from('categories').select('*');
-            const { data: mapData } = await supabase.from('test_categories').select('*');
-            if (catData) setCategories(catData);
-            const map: Record<string, string[]> = {};
-            if (mapData) {
-                mapData.forEach((m: any) => {
-                    if (!map[m.test_id]) map[m.test_id] = [];
-                    map[m.test_id].push(m.category_id);
-                });
-            }
-            setTestCategoryMap(map);
-        };
-        loadMetadata();
-        loadMoreTests();
+        // Initial Load
+        loadMoreTests(1);
     }, []);
 
-    // Fetch Verified Creators
-    useEffect(() => {
-        const fetchVerifiedStatus = async () => {
-            const creatorIds = Array.from(new Set(tests.map(t => t.created_by).filter(Boolean)));
-            if (creatorIds.length === 0) return;
-
-            const idsToFetch = creatorIds.filter(id => verifiedCreators[id as string] === undefined);
-            if (idsToFetch.length === 0) return;
-
-            const { data } = await supabase
-                .from('profiles')
-                .select('id, is_verified_creator')
-                .in('id', idsToFetch);
-
-            if (data) {
-                setVerifiedCreators(prev => {
-                    const next = { ...prev };
-                    data.forEach((p: any) => {
-                        next[p.id] = p.is_verified_creator;
-                    });
-                    return next;
-                });
-            }
-        };
-
-        if (tests.length > 0) {
-            fetchVerifiedStatus();
-        }
-    }, [tests]);
-
-    const loadMoreTests = async () => {
-        if (loading || !hasMore) return;
+    const loadMoreTests = async (pageNum: number = page) => {
+        if (loading) return; // removed !hasMore check for initial load flexibility, but acceptable
         setLoading(true);
 
-        const { data } = await fetchTests({ page: page, limit: ITEMS_PER_PAGE });
+        const { data, meta } = await fetchTests({ page: pageNum, limit: ITEMS_PER_PAGE });
 
         if (data && data.length > 0) {
             setTests(prev => {
-                const newTests = data.filter(d => !prev.find(p => p.id === d.id));
+                // Avoid duplicates if any
+                if (pageNum === 1) return data;
+                const newTests = data.filter((d: Test) => !prev.find(p => p.id === d.id));
                 return [...prev, ...newTests];
             });
-            if (data.length < ITEMS_PER_PAGE) setHasMore(false);
-            setPage(prev => prev + 1);
+
+            if (meta?.has_more !== undefined) {
+                setHasMore(meta.has_more);
+            } else {
+                if (data.length < ITEMS_PER_PAGE) setHasMore(false);
+            }
+
+            setPage(pageNum + 1);
         } else {
             setHasMore(false);
         }
@@ -104,10 +78,22 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
         <div className="mb-8">
             <h3 className="text-xl font-semibold mb-4 text-slate-700 dark:text-slate-300">More Tests</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {tests.map((test, index) => {
+                {tests.map((test: any) => {
+                    const testId = test.id;
+                    const isRendered = isItemRendered(testId);
+                    const categories = test.categories || [];
+                    
+                    if (!isRendered) {
+                        return (
+                            <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                <TestCardSkeleton />
+                            </div>
+                        );
+                    }
+
                     return (
                         <div key={test.id}>
-                            <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800">
+                            <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800 animate-in fade-in duration-500">
                                 <div className="absolute top-2 right-2 z-10">
                                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test.id)}>
                                         <Share2 className="h-4 w-4" />
@@ -134,11 +120,29 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
                                                 <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex items-center gap-1 min-w-0">
-                                                {verifiedCreators[test.created_by as string] && <VerifiedBadge size={14} />}
+                                                {/* Backend returns 'creator_verified' boolean now */}
+                                                {test.creator_verified && <VerifiedBadge size={14} />}
                                                 <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">{test.creator_name || 'Creator'}</span>
                                             </div>
                                         </div>
-                                        <TestCardCategoryList categoryIds={testCategoryMap[test.id]} allCategories={categories} customCategory={test.custom_category} />
+
+                                        {/* Inline Categories Rendering */}
+                                        <div className="flex items-center gap-1 overflow-hidden justify-end">
+                                            {categories.slice(0, 2).map((cat: any) => (
+                                                <span key={cat.id} className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100 whitespace-nowrap">
+                                                    {cat.name}
+                                                </span>
+                                            ))}
+                                            {categories.length > 2 && (
+                                                <span className="text-[10px] px-1.5 py-0.5 bg-slate-50 text-slate-500 rounded-full border border-slate-100">+{categories.length - 2}</span>
+                                            )}
+                                            {test.custom_category && (
+                                                <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded-full border border-purple-100 whitespace-nowrap">
+                                                    {test.custom_category}
+                                                </span>
+                                            )}
+                                        </div>
+
                                     </div>
                                 </CardContent>
                                 <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
@@ -167,6 +171,15 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
                         </div>
                     );
                 })}
+                
+                {/* Progress indicator */}
+                {!isComplete && (
+                    <div className="col-span-full py-4 text-center">
+                        <span className="text-sm text-muted-foreground">
+                            {renderedCount} of {totalCount} tests loaded
+                        </span>
+                    </div>
+                )}
             </div>
 
             {hasMore && (

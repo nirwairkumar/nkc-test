@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Star } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
+
 import { toast } from 'sonner';
 import { createNotification } from '@/lib/socialApi';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FeedbackFormProps {
     testId: string;
@@ -16,6 +17,7 @@ interface FeedbackFormProps {
 }
 
 export function FeedbackForm({ testId, studentName, creatorId, testTitle, testCustomId }: FeedbackFormProps) {
+    const { user } = useAuth();
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [comment, setComment] = useState('');
@@ -34,36 +36,34 @@ export function FeedbackForm({ testId, studentName, creatorId, testTitle, testCu
             let receiverName = '';
             let receiverEmail = '';
             if (creatorId) {
-                const { data: creatorProfile } = await supabase
-                    .from('profiles')
-                    .select('full_name, email')
-                    .eq('id', creatorId)
-                    .single();
+                const { fetchUserDetails } = await import('@/lib/usersApi');
+                const { data: creatorProfile } = await fetchUserDetails(creatorId);
+
+
                 if (creatorProfile) {
                     receiverName = creatorProfile.full_name || '';
                     receiverEmail = creatorProfile.email || '';
                 }
             }
 
-            // Get Current User Details (Sender)
-            const { data: { user } } = await supabase.auth.getUser();
+            // Get Current User Details (Sender) from Auth Context
             const senderId = user?.id || '';
             const senderName = user?.user_metadata?.full_name || studentName || 'Anonymous';
             const senderEmail = user?.email || '';
 
-            const { error } = await supabase
-                .from('feedback')
-                .insert({
-                    test_id: testId,
-                    rating: rating,
-                    comment: comment,
-                    // New Fields
-                    custom_test_id: testCustomId || testId,
-                    sender_name: senderName,
-                    sender_email: senderEmail,
-                    receiver_name: receiverName,
-                    receiver_email: receiverEmail
-                });
+            const feedbackData = {
+                test_id: testId,
+                rating: rating,
+                comment: comment,
+                custom_test_id: testCustomId || testId,
+                sender_name: senderName,
+                sender_email: senderEmail,
+                receiver_name: receiverName,
+                receiver_email: receiverEmail
+            };
+
+            const { submitFeedback } = await import('@/lib/supportApi');
+            const { error } = await submitFeedback(feedbackData);
 
             if (error) throw error;
 

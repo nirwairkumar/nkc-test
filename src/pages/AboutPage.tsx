@@ -1,9 +1,15 @@
 
 import React from 'react';
+import { SEO } from '@/components/SEO';
 
 const AboutPage = () => {
     return (
         <div className="container mx-auto py-10 px-4 max-w-4xl">
+            <SEO
+                title="About TestoZa - AI-Powered Online Test Platform"
+                description="TestoZa is a modern online assessment platform for teachers and students. Create quizzes, class tests, and revision tests instantly with AI."
+                keywords={["about testoza", "online test platform", "assessment tool", "AI quiz maker", "education technology"]}
+            />
             <h1 className="text-3xl font-bold mb-6">About <span className="text-primary">TestoZa</span></h1>
             <div className="space-y-6 text-muted-foreground leading-relaxed">
                 <p>

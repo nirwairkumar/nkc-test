@@ -9,43 +9,57 @@ interface SEOProps {
     type?: string;
     categories?: string[];
     siteName?: string;
+    keywords?: string[];
+    canonicalUrl?: string;
+    schemas?: any[];     // Array of JSON-LD schema objects
+    noindex?: boolean;   // For admin/private pages
 }
 
-const DEFAULT_IMAGE = "https://testoza.pages.dev/default-og.png"; // Fallback image provided in requirements
+const DEFAULT_IMAGE = "https://testoza.com/default-og.png";
+const SITE_URL = "https://testoza.com";
+const DEFAULT_SITE_NAME = "TestoZa";
 
 export const SEO: React.FC<SEOProps> = ({
     title,
-    description = "Attempt this mock test on Answer Ace Lab with real exam experience.",
+    description = "Create online tests instantly with TestoZa. AI-powered quiz maker from PDF, text, or YouTube. Free mock tests for JEE, NEET, GATE, and more.",
     url,
     image,
     type = 'website',
     categories = [],
-    siteName = "Answer Ace Lab"
+    siteName = DEFAULT_SITE_NAME,
+    keywords = [],
+    canonicalUrl,
+    schemas = [],
+    noindex = false
 }) => {
-    const fullTitle = title ? `${title} | ${siteName}` : siteName;
+    const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - AI Test Maker`;
     const metaImage = image || DEFAULT_IMAGE;
 
-    // Ensure URL is absolute if provided, otherwise use current location
-    const metaUrl = url || window.location.href;
+    // Ensure URL is absolute if provided, otherwise use current location if available (client-side)
+    const metaUrl = url ? (url.startsWith('http') ? url : `${SITE_URL}${url}`) : window.location.href;
+    const finalCanonicalUrl = canonicalUrl || metaUrl;
 
-    // Format description: "Description | Categories: A, B | Site Name"
-    let finalDescription = description || "Attempt this mock test.";
-
-    // Clean up generic description if present to avoid duplication
-    if (finalDescription === "Attempt this mock test on Answer Ace Lab with real exam experience.") {
-        // Keep it as base
-    }
-
+    // Build description including categories if relevant
+    let finalDescription = description;
     if (categories && categories.length > 0) {
-        finalDescription += ` | Categories: ${categories.join(', ')}`;
+        finalDescription += ` | Topics: ${categories.join(', ')}`;
     }
-    finalDescription += ` | ${siteName}`;
+
+    // Default keywords if none provided
+    const matchKeywords = keywords.length > 0
+        ? keywords.join(', ')
+        : "online test maker, AI quiz generator, create test from PDF, free mock tests, exam preparation, TestoZa";
 
     return (
         <Helmet>
             {/* Standard Meta Tags */}
             <title>{fullTitle}</title>
             <meta name="description" content={finalDescription} />
+            <meta name="keywords" content={matchKeywords} />
+            <meta name="author" content="TestoZa Team" />
+            <link rel="canonical" href={finalCanonicalUrl} />
+
+            {noindex && <meta name="robots" content="noindex, nofollow" />}
 
             {/* Open Graph Tags */}
             <meta property="og:title" content={title || siteName} />
@@ -60,6 +74,13 @@ export const SEO: React.FC<SEOProps> = ({
             <meta name="twitter:title" content={title || siteName} />
             <meta name="twitter:description" content={finalDescription} />
             <meta name="twitter:image" content={metaImage} />
+
+            {/* Structured Data (JSON-LD) */}
+            {schemas.map((schema, index) => (
+                <script key={index} type="application/ld+json">
+                    {JSON.stringify(schema)}
+                </script>
+            ))}
         </Helmet>
     );
 };

@@ -1,53 +1,40 @@
-import { useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
+import { useAuth } from '@/contexts/AuthContext';
 
+/**
+ * Hook to check premium status.
+ * Now uses cached data from AuthContext for instant access.
+ * Premium status is verified once during login, not on every component mount.
+ */
 export function usePremiumStatus() {
-    const [isPremium, setIsPremium] = useState<boolean>(false);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [expiryDate, setExpiryDate] = useState<Date | null>(null);
-    const [planId, setPlanId] = useState<string | null>(null);
+    const {
+        isPremium,
+        premiumLoading: loading,
+        isGlobalUnlock,
+        hasActivePlans
+    } = useAuth();
 
-    useEffect(() => {
-        const checkPremiumStatus = async () => {
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
+    // Determine the reason for premium access
+    let reason = '';
+    if (loading) {
+        reason = 'loading';
+    } else if (isGlobalUnlock) {
+        reason = 'global_unlock';
+    } else if (!hasActivePlans) {
+        reason = 'no_active_plans';
+    } else if (isPremium) {
+        reason = 'active_subscription';
+    } else {
+        reason = 'no_subscription';
+    }
 
-                if (!user) {
-                    setLoading(false);
-                    return;
-                }
-
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('is_premium, premium_expiry, plan_id')
-                    .eq('id', user.id)
-                    .single();
-
-                if (error) {
-                    console.error('Error fetching premium status:', error);
-                    setLoading(false);
-                    return;
-                }
-
-                if (profile?.is_premium && profile?.premium_expiry) {
-                    const expiry = new Date(profile.premium_expiry);
-                    const now = new Date();
-
-                    if (expiry > now) {
-                        setIsPremium(true);
-                        setExpiryDate(expiry);
-                        setPlanId(profile.plan_id);
-                    }
-                }
-            } catch (err) {
-                console.error('Unexpected error checking premium:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkPremiumStatus();
-    }, []);
-
-    return { isPremium, loading, expiryDate, planId };
+    return {
+        isPremium,
+        loading,
+        expiryDate: null, // Legacy support, can be removed if not used
+        planId: null, // Legacy support, can be removed if not used
+        isGlobalUnlock,
+        hasActivePlans,
+        reason
+    };
 }
+

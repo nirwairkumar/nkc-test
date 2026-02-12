@@ -6,22 +6,33 @@ import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, FileText, User } fr
 import { useNavigate } from 'react-router-dom';
 import TestLikeButton from '@/components/TestLikeButton';
 import { fetchTests, Test } from '@/lib/testsApi';
+import { fetchCategoryStats } from '@/lib/categoriesApi';
 import { toast } from 'sonner';
-import TestCardCategoryList from '@/components/home/TestCardCategoryList';
-import supabase from '@/lib/supabaseClient';
 import FolderCard from '@/components/home/FolderCard';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
 export default function SearchResults({ searchQuery, user, onManageTest }: { searchQuery: string, user: any, onManageTest: (test: any) => void }) {
     const [tests, setTests] = useState<Test[]>([]);
     const [profiles, setProfiles] = useState<any[]>([]);
     const [matchedFolders, setMatchedFolders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Metadata for cards
-    const [categories, setCategories] = useState<any[]>([]);
-    const [testCategoryMap, setTestCategoryMap] = useState<Record<string, string[]>>({});
+    const abortControllerRef = React.useRef<AbortController | null>(null);
 
     const navigate = useNavigate();
+
+    // YouTube-style lazy loading hook
+    const {
+        registerSkeleton,
+        isItemRendered,
+        renderedCount,
+        totalCount,
+        isComplete
+    } = useYouTubeStyleRender(tests, loading, {
+        rootMargin: '100px',
+        threshold: 0.1
+    });
 
     useEffect(() => {
         loadSearchResults();
@@ -29,121 +40,81 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
 
     const loadSearchResults = async () => {
         setLoading(true);
-        // Load metadata
-        const { data: catData } = await supabase.from('categories').select('*');
-        const { data: mapData } = await supabase.from('test_categories').select('*');
-        if (catData) setCategories(catData);
-        const map: Record<string, string[]> = {};
-        if (mapData) {
-            mapData.forEach((m: any) => {
-                if (!map[m.test_id]) map[m.test_id] = [];
-                map[m.test_id].push(m.category_id);
-            });
+
+        // Cancel previous request if any
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
         }
-        setTestCategoryMap(map);
+        // Create new controller for this request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
 
-        // Fetch Tests Matching Query
-        // Note: fetchTests supports partial title match via 'searchQuery'
-        // But for ID, we need to handle it. Our API modification handled Title.
-        // We should check if API handles custom_id too.
-        // Let's modify client side filtering for now if API is limited, OR trust the API.
-        // Current API: ilike title. 
-        // We need to fetch MORE and filter client side for better ID/Tag/Profile match?
-        // Or update API. Let's update API usage here.
-        // We will fetch a larger set and filter? Or ask for search improvement.
-        // User said: "when I am searching for id it is not coming properly".
-        // The API only updated title. We should probably update the API to search multiple fields or do it here.
-        // Let's rely on a broader fetch + strong client filtering for immediate fix if API is restricted.
-        // Actually, fetching everything is expensive. 
-        // Let's fetch with the existing API (title search) AND maybe specific ID search?
+        try {
+            // 1. Fetch Tests (Backend Search: Title, CustomID)
+            // 2. Fetch Category Stats (Enriched with counts) - Run in parallel
+            const [testsRes, statsRes] = await Promise.all([
+                fetchTests({ page: 1, limit: 100, searchQuery: searchQuery, signal: controller.signal }),
+                fetchCategoryStats()
+            ]);
 
-        // Search Strategy:
-        // 1. Fetch results using existing API (matches title).
-        // 2. Fetch results matching exact ID (if query looks like ID or just generic).
-        // 3. Profiles: Extract from results? Or separate query?
+            const allData = testsRes.data;
+            const stats = statsRes.data || [];
 
-        // Let's try to pass searchQuery to fetchTests.
-        // Ideally we update `fetchTests` to search more columns, but for now let's do:
-        const { data } = await fetchTests({ page: 1, limit: 100, searchQuery: searchQuery });
+            if (allData) {
+                const query = searchQuery.toLowerCase();
 
-        // Also Filter client side for tags/custom_id if API missed them (API only checks title currently).
-        // Wait, if API only checks title, we miss tags/id.
-        // We should probably fetch generic (no search query) and filter? No, that's too heavy.
-        // Let's assume we can fetch by TITLE match from API.
-        // AND we want to search ID.
-        // Let's fetch all recent tests (limit 200?) and filter client side for accurate multi-field search?
-        // Or update API. Updating API is better.
-        // But to be safe and quick:
+                // 3. Filter Tests (Client-side refinement)
+                // Backend handles primary search. We trust it for now.
+                const filtered = allData;
+                setTests(filtered);
 
-        // Let's fetch by plain list and filter client side to ensure "Profile" and "ID" work perfectly.
-        const { data: allData } = await fetchTests({ page: 1, limit: 300 });
-
-        if (allData) {
-            const query = searchQuery.toLowerCase();
-
-            // 1. Filter Tests
-            const filtered = allData.filter(t => {
-                const titleMatch = t.title.toLowerCase().includes(query);
-                const idMatch = t.custom_id?.toLowerCase().includes(query);
-                const creatorMatch = t.creator_name?.toLowerCase().includes(query);
-                const tagsMatch = t.tags?.some(tag => tag.toLowerCase().includes(query));
-
-                // If query starts with #, strict ID search
-                if (query.startsWith('#')) return t.custom_id?.toLowerCase().includes(query);
-
-                return titleMatch || idMatch || creatorMatch || tagsMatch;
-            });
-            setTests(filtered);
-
-            // 2. Extract Matching Profiles
-            // (From the filtered results OR from allData to find creators matching name)
-            const creators = new Map();
-            allData.forEach(t => {
-                if (t.created_by && t.creator_name) {
-                    if (t.creator_name.toLowerCase().includes(query)) {
-                        creators.set(t.created_by, {
-                            id: t.created_by,
-                            name: t.creator_name,
-                            avatar: t.creator_avatar
-                        });
+                // 4. Extract Matching Profiles (from the tests we found)
+                const creators = new Map();
+                allData.forEach((t: Test) => {
+                    if (t.created_by && t.creator_name) {
+                        if (t.creator_name.toLowerCase().includes(query)) {
+                            creators.set(t.created_by, {
+                                id: t.created_by,
+                                name: t.creator_name,
+                                avatar: t.creator_avatar
+                            });
+                        }
                     }
-                }
-            });
-            setProfiles(Array.from(creators.values()));
+                });
+                setProfiles(Array.from(creators.values()));
 
-            // 3. Match Categories (Folders)
-            // Case A: Name match
-            const directCatMatch = catData?.filter((c: any) => c.name.toLowerCase().includes(query)) || [];
 
-            // Case B: Test match -> Show its categories
-            // Collect category IDs from filtered tests
-            const relatedCatIds = new Set<string>();
-            filtered.forEach(t => {
-                const cats = map[t.id];
-                if (cats) cats.forEach(c => relatedCatIds.add(c));
-            });
+                // 5. Match Categories (Folders)
+                const directCatMatch = stats.filter((c: any) => c.name.toLowerCase().includes(query));
 
-            // Merge
-            const relatedCats = catData?.filter((c: any) => relatedCatIds.has(c.id)) || [];
+                // Collect category IDs from found tests (Enriched categories)
+                const relatedCatIds = new Set<string>();
+                filtered.forEach((t: Test) => {
+                    const cats = t.categories; // Backend Enriched
+                    if (cats) cats.forEach((c: any) => relatedCatIds.add(c.id));
+                });
 
-            // Combine and Dedup
-            const combinedCatsMap = new Map();
-            [...directCatMatch, ...relatedCats].forEach(c => combinedCatsMap.set(c.id, c));
+                // Merge
+                const relatedCats = stats.filter((c: any) => relatedCatIds.has(c.id));
 
-            // Calculate counts for these categories
-            const finalCats = Array.from(combinedCatsMap.values()).map(c => {
-                // Count tests in this category (globally or just matched? Requirement says "Folder card must show... Total test count inside it". Usually global count).
-                // We can compute global count from `mapData`.
-                let count = 0;
-                if (mapData) {
-                    count = mapData.filter((m: any) => m.category_id === c.id).length;
-                }
-                return { ...c, count };
-            });
+                // Combine and Dedup
+                const combinedCatsMap = new Map();
+                [...directCatMatch, ...relatedCats].forEach(c => combinedCatsMap.set(c.id, c));
 
-            setMatchedFolders(finalCats);
+                // Stats already has count
+                setMatchedFolders(Array.from(combinedCatsMap.values()));
+            }
+        } catch (error: any) {
+            if (error.name === 'CanceledError' || error.message === 'canceled') {
+                return;
+            }
+            console.error("Search failed", error);
+        } finally {
+            if (abortControllerRef.current === controller) {
+                setLoading(false);
+                abortControllerRef.current = null;
+            }
         }
-        setLoading(false);
     };
 
     const handleShare = (e: React.MouseEvent, testId: string) => {
@@ -157,7 +128,7 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
         return <div className="py-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
 
-    if (tests.length === 0 && profiles.length === 0) {
+    if (tests.length === 0 && profiles.length === 0 && matchedFolders.length === 0) {
         return (
             <div className="text-center py-12">
                 <p className="text-muted-foreground text-lg">No results found for "{searchQuery}"</p>
@@ -214,55 +185,106 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
 
             {/* 2. Tests Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {tests.map((test) => (
-                    <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full">
-                        <div className="absolute top-2 right-2 z-10">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test.id)}>
-                                <Share2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <CardHeader className="p-3 pb-2">
-                            <CardTitle className="text-lg font-bold text-red-900 md:text-xl pr-8 leading-tight line-clamp-2">{test.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-1 p-3 pt-0">
-                            <div className="flex flex-col justify-end mt-auto gap-1">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                        <Clock className="mr-1 h-4 w-4" />{test.questions?.length || 0} Qs • {test.duration || 30}m
+                {tests.map((test: any) => {
+                    const testId = test.id;
+                    const isRendered = isItemRendered(testId);
+                    const categories = test.categories || [];
+
+                    if (!isRendered) {
+                        return (
+                            <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                <TestCardSkeleton />
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full animate-in fade-in duration-500">
+                            <div className="absolute top-2 right-2 z-10">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test.id)}>
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <CardHeader className="p-3 pb-2">
+                                <CardTitle className="text-lg font-bold text-red-900 md:text-xl pr-8 leading-tight line-clamp-2">{test.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex-1 p-3 pt-0">
+                                <div className="flex flex-col justify-end mt-auto gap-1">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center text-sm text-muted-foreground">
+                                            <Clock className="mr-1 h-4 w-4" />{test.questions?.length || 0} Qs • {test.duration || 30}m
+                                        </div>
+                                        {test.custom_id && (
+                                            <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">#{test.custom_id}</span>
+                                        )}
                                     </div>
-                                    {test.custom_id && (
-                                        <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">#{test.custom_id}</span>
-                                    )}
                                 </div>
-                            </div>
-                            <div className="flex items-center justify-between mt-1.5 gap-2 h-8">
-                                <TestCardCategoryList categoryIds={testCategoryMap[test.id]} allCategories={categories} customCategory={test.custom_category} />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                            <div className="flex-none"><TestLikeButton testId={test.id} userId={user?.id} /></div>
-                            {user?.id === test.created_by ? (
-                                <div className="flex-1 flex gap-2">
-                                    <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground px-2" onClick={() => onManageTest(test)}>
-                                        <Settings className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Manage</span>
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => navigate(`/edit-test/${test.id}`)}>
-                                        <Edit className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Edit</span>
-                                    </Button>
-                                    <Button size="sm" className="flex-1 h-8 px-3" onClick={() => navigate(`/test-intro/${test.id}`)}>
-                                        Open <ArrowRight className="ml-2 h-3 w-3" />
-                                    </Button>
+                                <div className="flex items-center justify-between mt-1.5 gap-2 h-8">
+                                    <div className="flex items-center gap-2 shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full pr-2 transition-colors py-0.5" onClick={() => navigate(`/creator/${test.created_by}`)}>
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarImage src={test.creator_avatar} />
+                                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex items-center gap-1 min-w-0">
+                                            {test.creator_verified && <VerifiedBadge size={14} />}
+                                            <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">
+                                                {test.creator_name || 'Creator'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Inline Categories Rendering */}
+                                    <div className="flex items-center gap-1 overflow-hidden justify-end">
+                                        {categories.slice(0, 2).map((cat: any) => (
+                                            <span key={cat.id} className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded-full border border-blue-100 whitespace-nowrap">
+                                                {cat.name}
+                                            </span>
+                                        ))}
+                                        {categories.length > 2 && (
+                                            <span className="text-[10px] px-1.5 py-0.5 bg-slate-50 text-slate-500 rounded-full border border-slate-100">+{categories.length - 2}</span>
+                                        )}
+                                        {test.custom_category && (
+                                            <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded-full border border-purple-100 whitespace-nowrap">
+                                                {test.custom_category}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            ) : (
-                                <div className="flex-1">
-                                    <Button size="sm" className="w-full h-8 text-sm" onClick={() => navigate(`/test-intro/${test.id}`)}>
-                                        Open <ArrowRight className="ml-2 h-3 w-3" />
-                                    </Button>
-                                </div>
-                            )}
-                        </CardFooter>
-                    </Card>
-                ))}
+                            </CardContent>
+                            <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
+                                <div className="flex-none"><TestLikeButton testId={test.id} userId={user?.id} /></div>
+                                {user?.id === test.created_by ? (
+                                    <div className="flex-1 flex gap-2">
+                                        <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground px-2" onClick={() => onManageTest(test)}>
+                                            <Settings className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Manage</span>
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => navigate(`/edit-test/${test.id}`)}>
+                                            <Edit className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Edit</span>
+                                        </Button>
+                                        <Button size="sm" className="flex-1 h-8 px-3" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                                            Open <ArrowRight className="ml-2 h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex-1">
+                                        <Button size="sm" className="w-full h-8 text-sm" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                                            Open <ArrowRight className="ml-2 h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardFooter>
+                        </Card>
+                    );
+                })}
+
+                {/* Progress indicator */}
+                {!isComplete && tests.length > 0 && (
+                    <div className="col-span-full py-4 text-center">
+                        <span className="text-sm text-muted-foreground">
+                            {renderedCount} of {totalCount} tests loaded
+                        </span>
+                    </div>
+                )}
             </div>
         </div>
     );

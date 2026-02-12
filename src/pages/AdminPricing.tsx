@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import supabase from '@/lib/supabaseClient';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit, Trash2, CheckCircle, XCircle, DollarSign, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckCircle, XCircle, DollarSign, Calendar, Globe, Users, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 
@@ -26,6 +26,11 @@ export default function AdminPricing() {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Global Premium Unlock State
+    const [globalUnlock, setGlobalUnlock] = useState(false);
+    const [globalUnlockLoading, setGlobalUnlockLoading] = useState(false);
+    const [premiumUsersCount, setPremiumUsersCount] = useState(0);
+
     // Form State
     const [isEditing, setIsEditing] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Plan>>({
@@ -44,16 +49,16 @@ export default function AdminPricing() {
                 navigate('/admin-login');
             } else {
                 fetchPlans();
+                fetchGlobalSettings();
+                fetchPremiumUsersCount();
             }
         }
     }, [authLoading, isAdmin, navigate]);
 
     const fetchPlans = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('plans')
-            .select('*')
-            .order('price', { ascending: true });
+        const { fetchPlans } = await import('@/lib/pricingApi');
+        const { data, error } = await fetchPlans();
 
         if (error) {
             toast.error('Failed to fetch plans');
@@ -62,6 +67,60 @@ export default function AdminPricing() {
             setPlans(data || []);
         }
         setLoading(false);
+    };
+
+    const fetchGlobalSettings = async () => {
+        const { fetchPremiumSettings } = await import('@/lib/pricingApi');
+        const { data, error } = await fetchPremiumSettings();
+
+        if (error) {
+            console.error('Failed to fetch global settings:', error);
+        } else {
+            setGlobalUnlock(data?.unlock_all_premium || false);
+        }
+    };
+
+    const fetchPremiumUsersCount = async () => {
+        try {
+            const { fetchUsers } = await import('@/lib/usersApi');
+            const { data, error } = await fetchUsers();
+
+            if (!error && data) {
+                const premiumUsers = data.filter((user: any) => {
+                    if (user.is_premium && user.premium_expiry) {
+                        const expiry = new Date(user.premium_expiry);
+                        return expiry > new Date();
+                    }
+                    return false;
+                });
+                setPremiumUsersCount(premiumUsers.length);
+            }
+        } catch (err) {
+            console.error('Error fetching premium users count:', err);
+        }
+    };
+
+    const handleGlobalUnlockToggle = async (checked: boolean) => {
+        const message = checked
+            ? 'Are you sure you want to unlock all premium features for everyone? This will allow all users to access premium features without a subscription.'
+            : 'Are you sure you want to disable global premium unlock? Users will need active subscriptions to access premium features.';
+
+        if (!confirm(message)) {
+            return;
+        }
+
+        setGlobalUnlockLoading(true);
+        const { updatePremiumSettings } = await import('@/lib/pricingApi');
+        const { error } = await updatePremiumSettings(checked);
+
+        if (error) {
+            toast.error('Failed to update global unlock setting');
+            console.error(error);
+        } else {
+            setGlobalUnlock(checked);
+            toast.success(checked ? 'Premium features unlocked for all users' : 'Premium features locked - subscription required');
+        }
+        setGlobalUnlockLoading(false);
     };
 
     const handleSave = async () => {
@@ -77,22 +136,19 @@ export default function AdminPricing() {
             description: formData.description,
             price: formData.price, // Stored in paise
             duration_days: formData.duration_days,
-            features: featuresArray, // Postgres array or jsonb? Schema said jsonb.
+            features: featuresArray,
             is_active: formData.is_active
         };
 
+        const { createPlan, updatePlan } = await import('@/lib/pricingApi');
+
         try {
             if (isEditing) {
-                const { error } = await supabase
-                    .from('plans')
-                    .update(payload)
-                    .eq('id', isEditing);
+                const { error } = await updatePlan(isEditing, payload);
                 if (error) throw error;
                 toast.success('Plan updated');
             } else {
-                const { error } = await supabase
-                    .from('plans')
-                    .insert(payload);
+                const { error } = await createPlan(payload);
                 if (error) throw error;
                 toast.success('Plan created');
             }
@@ -107,7 +163,8 @@ export default function AdminPricing() {
         if (!confirm('Are you sure you want to delete this plan?')) return;
 
         try {
-            const { error } = await supabase.from('plans').delete().eq('id', id);
+            const { deletePlan } = await import('@/lib/pricingApi');
+            const { error } = await deletePlan(id);
             if (error) throw error;
             toast.success('Plan deleted');
             fetchPlans();
@@ -145,6 +202,91 @@ export default function AdminPricing() {
                 <h1 className="text-3xl font-bold">Manage Pricing Plans</h1>
                 <Button variant="outline" onClick={() => navigate('/admin-migration')}>Back to Migration</Button>
             </div>
+
+            {/* Global Premium Access Control */}
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Globe className="w-6 h-6 text-primary" />
+                        <CardTitle className="text-2xl">Global Premium Access Control</CardTitle>
+                    </div>
+                    <CardDescription>
+                        Control premium feature access for all users globally
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {/* Toggle Section */}
+                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border-2 border-primary/30">
+                        <div className="space-y-1">
+                            <Label className="text-lg font-semibold">Unlock All Premium Features</Label>
+                            <p className="text-sm text-muted-foreground">
+                                {globalUnlock
+                                    ? 'All users can access premium features without subscription'
+                                    : 'Users need active subscriptions to access premium features'}
+                            </p>
+                        </div>
+                        <Switch
+                            checked={globalUnlock}
+                            onCheckedChange={handleGlobalUnlockToggle}
+                            disabled={globalUnlockLoading}
+                            className="data-[state=checked]:bg-green-500"
+                        />
+                    </div>
+
+                    {/* Warning Message */}
+                    {globalUnlock && (
+                        <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-500 mt-0.5 flex-shrink-0" />
+                            <div className="space-y-1">
+                                <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
+                                    Global Premium Unlock is Active
+                                </p>
+                                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                                    All users currently have access to premium features without requiring a subscription.
+                                    This bypasses all payment verification.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Statistics */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-background rounded-lg border">
+                            <div className="flex items-center gap-2 mb-2">
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <Label className="text-sm text-muted-foreground">Active Plans</Label>
+                            </div>
+                            <p className="text-2xl font-bold">
+                                {plans.filter(p => p.is_active).length}
+                            </p>
+                        </div>
+                        <div className="p-4 bg-background rounded-lg border">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Users className="w-4 h-4 text-blue-500" />
+                                <Label className="text-sm text-muted-foreground">Premium Users</Label>
+                            </div>
+                            <p className="text-2xl font-bold">
+                                {premiumUsersCount}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Info Message */}
+                    {!globalUnlock && plans.filter(p => p.is_active).length === 0 && (
+                        <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                            <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-500 mt-0.5 flex-shrink-0" />
+                            <div className="space-y-1">
+                                <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                                    No Active Plans - Premium Features Unlocked
+                                </p>
+                                <p className="text-sm text-blue-700 dark:text-blue-300">
+                                    Since there are no active subscription plans, all users can access premium features by default.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Editor Column */}

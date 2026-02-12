@@ -1,61 +1,76 @@
-// src/lib/attemptsApi.ts
-import supabase from '@/lib/supabaseClient';
+import apiClient from '@/lib/apiClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export async function saveAttempt(user_id: string, test_id: string, answers: any, score?: number, metadata?: any) {
-    const { data, error } = await supabase
-        .from('user_tests')
-        .insert([{ user_id, test_id, answers, score, metadata }])
-        .select();
-    return { data, error };
+    try {
+        const response = await apiClient.post('/attempts/save', {
+            user_id,
+            test_id,
+            answers,
+            score,
+            metadata
+        });
+        return { data: response.data?.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 }
 
 export async function fetchUserAttempts(user_id: string) {
-    const { data, error } = await supabase
-        .from('user_tests')
-        .select('id, test_id, score, created_at, answers')
-        .eq('user_id', user_id)
-        .order('created_at', { ascending: false });
-    return { data, error };
+    try {
+        const response = await apiClient.get(`/attempts/user/${user_id}`);
+        // The backend returns the enriched list directly
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
 }
 
 export async function checkUserTestAttempt(user_id: string, test_id: string) {
-    // 1. Check immutable registrations first
-    const { data: regData } = await supabase
-        .from('test_registrations')
-        .select('id')
-        .eq('user_id', user_id)
-        .eq('test_id', test_id)
-        .limit(1);
-
-    if (regData && regData.length > 0) {
-        return { hasAttempted: true, error: null };
+    try {
+        const response = await apiClient.get(`/attempts/check/${user_id}/${test_id}`);
+        return { hasAttempted: response.data?.hasAttempted, error: null };
+    } catch (error: any) {
+        // Default to safe false if error, or pass error
+        return { hasAttempted: false, error };
     }
-
-    // 2. Fallback to existing user_tests (for old records or redundancy)
-    const { data, error } = await supabase
-        .from('user_tests')
-        .select('id')
-        .eq('user_id', user_id)
-        .eq('test_id', test_id)
-        .limit(1);
-
-    return { hasAttempted: data && data.length > 0, error };
 }
 
 export async function registerTestStart(user_id: string, test_id: string) {
-    // Check if already registered
-    const { data: existing } = await supabase
-        .from('test_registrations')
-        .select('id')
-        .eq('user_id', user_id)
-        .eq('test_id', test_id)
-        .maybeSingle();
+    try {
+        const response = await apiClient.post('/attempts/register', {
+            user_id,
+            test_id
+        });
+        return { success: response.data?.success, error: null };
+    } catch (error: any) {
+        return { success: false, error };
+    }
+}
 
-    if (existing) return { success: true };
+export async function fetchAttemptsForTest(testId: string) {
+    try {
+        const response = await apiClient.get(`/attempts/test/${testId}`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
 
-    const { error } = await supabase
-        .from('test_registrations')
-        .insert([{ user_id, test_id }]);
+export async function deleteAttempt(attemptId: string) {
+    try {
+        await apiClient.delete(`/attempts/${attemptId}`);
+        return { error: null };
+    } catch (error: any) {
+        return { error };
+    }
+}
 
-    return { success: !error, error };
+export async function deleteRegistration(testId: string, userId: string) {
+    try {
+        await apiClient.delete(`/attempts/registration/${testId}/${userId}`);
+        return { error: null };
+    } catch (error: any) {
+        return { error };
+    }
 }

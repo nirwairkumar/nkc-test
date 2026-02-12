@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import supabase from '@/lib/supabaseClient';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,11 +14,13 @@ export default function UpdatePassword() {
 
     useEffect(() => {
         // Ensure user is authenticated (via the reset link token)
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (!session) {
-                toast.error('Invalid or expired reset session. Please request a new password reset.');
-                navigate('/login');
-            }
+        import('@/lib/supabaseClient').then(({ supabase }) => {
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                if (!session) {
+                    toast.error('Invalid or expired reset session. Please request a new password reset.');
+                    navigate('/login');
+                }
+            });
         });
     }, [navigate]);
 
@@ -26,7 +28,8 @@ export default function UpdatePassword() {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await supabase.auth.updateUser({ password });
+        const { updatePassword } = await import('@/lib/usersApi');
+        const { error } = await updatePassword(password);
 
         if (error) {
             toast.error(error.message);

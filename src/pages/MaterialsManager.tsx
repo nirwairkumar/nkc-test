@@ -52,10 +52,10 @@ export default function MaterialsManager() {
     const [creatingClass, setCreatingClass] = useState(false);
 
     useEffect(() => {
-        if (user) {
+        if (user?.id) {
             loadData();
         }
-    }, [user]);
+    }, [user?.id]);
 
     const loadData = async () => {
         if (!user) return;
@@ -134,7 +134,9 @@ export default function MaterialsManager() {
             setSelectedClassId('none');
             loadData(); // Reload to get updated list
         } catch (error: any) {
-            toast.error("Upload failed: " + error.message);
+            console.error(error);
+            const msg = error.response?.data?.detail || error.message || "Upload failed";
+            toast.error("Upload failed: " + msg);
         } finally {
             setUploading(false);
         }

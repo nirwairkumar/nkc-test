@@ -1,4 +1,309 @@
+# TestoZa Production SEO Robots Configuration
+# Domain: https://testoza.com
+# Last Updated: 2026-02-12
+# Optimized for Cloudflare + Railway Infrastructure
+
+# ============================================
+# DEFAULT CRAWLER RULES
+# ============================================
 User-agent: *
 Allow: /
 
-Sitemap: https://testoza.pages.dev/sitemap.xml
+# Crawl rate optimization (helps server performance)
+Crawl-delay: 1
+
+# ============================================
+# SITEMAP DECLARATION
+# ============================================
+# Main sitemap index - lists all sub-sitemaps
+Sitemap: https://testoza.com/sitemap/index.xml
+
+# Individual sitemaps (also referenced in index)
+Sitemap: https://testoza.com/sitemap/static.xml
+Sitemap: https://testoza.com/sitemap/tests.xml
+Sitemap: https://testoza.com/sitemap/categories.xml
+Sitemap: https://testoza.com/sitemap/tags.xml
+Sitemap: https://testoza.com/sitemap/creators.xml
+
+# ============================================
+# PRIVATE ROUTES - DO NOT INDEX
+# These pages require authentication or are not for public indexing
+# ============================================
+
+# Test Taking Routes (Private)
+Disallow: /live/
+Disallow: /test-session/
+Disallow: /attempt/
+
+# Admin Routes (Private)
+Disallow: /admin
+Disallow: /admin-*
+Disallow: /manage-tests
+Disallow: /admin-migration
+Disallow: /admin-pricing
+Disallow: /admin-promo-codes
+
+# User Dashboard Routes (Private)
+Disallow: /dashboard
+Disallow: /my-tests
+Disallow: /history
+Disallow: /results
+Disallow: /profile
+Disallow: /settings
+Disallow: /notifications
+
+# Content Creation Routes (Private)
+Disallow: /create-test
+Disallow: /edit-test/
+Disallow: /generate-with-ai
+Disallow: /materials
+Disallow: /upload-materials
+
+# Utility Routes (Private)
+Disallow: /update-password
+Disallow: /onboarding
+Disallow: /test-submitted
+Disallow: /payment/
+Disallow: /checkout/
+
+# API Routes (Should not be crawled)
+Disallow: /api/
+Disallow: /api/*
+
+# ============================================
+# QUERY PARAMETER HANDLING
+# ============================================
+
+# Block URLs with query parameters by default
+# This prevents duplicate content issues
+Disallow: /*?*
+
+# Allow specific query parameters that are needed for functionality
+Allow: /*?page=*          # Pagination
+Allow: /*?category=*      # Category filtering
+Allow: /*?tag=*           # Tag filtering
+Allow: /*?search=*        # Search results
+Allow: /*?utm_*           # UTM tracking (Google Analytics)
+Allow: /*?ref=*           # Referral tracking
+
+# ============================================
+# FILE TYPE RESTRICTIONS
+# ============================================
+
+# Block JSON and XML API responses
+Disallow: /*.json$
+Disallow: /*.xml$
+
+# Allow sitemap XML files
+Allow: /sitemap*.xml$
+Allow: /*sitemap*.xml$
+
+# Block internal/build files
+Disallow: /*.js.map$
+Disallow: /*.css.map$
+Disallow: /_next/
+Disallow: /static/internal/
+
+# ============================================
+# GOOGLE-SPECIFIC RULES
+# ============================================
+User-agent: Googlebot
+Allow: /
+
+# Faster crawl rate for Google
+Crawl-delay: 0.5
+
+# Image crawling
+User-agent: Googlebot-Image
+Allow: /assets/
+Allow: /images/
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.webp$
+Allow: /*.svg$
+
+# Video crawling (if you host videos)
+User-agent: Googlebot-Video
+Allow: /videos/
+Allow: /*.mp4$
+
+# News crawling (if you add a blog/news section)
+User-agent: Googlebot-News
+Allow: /blog/
+Allow: /news/
+Allow: /articles/
+
+# Mobile crawler
+User-agent: Googlebot-Mobile
+Allow: /
+
+# ============================================
+# BING-SPECIFIC RULES
+# ============================================
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: BingPreview
+Allow: /
+
+User-agent: msnbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: msnbot-media
+Allow: /
+
+# ============================================
+# SOCIAL MEDIA CRAWLERS
+# Optimized for sharing previews
+# ============================================
+
+# Facebook
+User-agent: facebookexternalhit
+Allow: /
+Crawl-delay: 0
+
+User-agent: Facebot
+Allow: /
+
+# Twitter
+User-agent: Twitterbot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Twitterbot/1.0
+Allow: /
+
+# LinkedIn
+User-agent: LinkedInBot
+Allow: /
+Crawl-delay: 0
+
+# Pinterest
+User-agent: Pinterestbot
+Allow: /
+Allow: /*.jpg$
+Allow: /*.png$
+
+# WhatsApp
+User-agent: WhatsApp
+Allow: /
+Crawl-delay: 0
+
+User-agent: WhatsApp/2.19.81
+Allow: /
+
+# Slack
+User-agent: Slackbot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Slackbot-LinkExpanding
+Allow: /
+
+# Discord
+User-agent: Discordbot
+Allow: /
+Crawl-delay: 0
+
+# Telegram
+User-agent: TelegramBot
+Allow: /
+Crawl-delay: 0
+
+# Instagram
+User-agent: Instagram
+Allow: /
+
+# ============================================
+# SEO TOOLS CRAWLERS
+# ============================================
+
+# Ahrefs
+User-agent: AhrefsBot
+Allow: /
+Crawl-delay: 2
+
+# SEMrush
+User-agent: SemrushBot
+Allow: /
+Crawl-delay: 2
+
+# Moz
+User-agent: rogerbot
+Allow: /
+Crawl-delay: 2
+
+# Screaming Frog
+User-agent: Screaming Frog SEO Spider
+Allow: /
+Crawl-delay: 2
+
+# ============================================
+# ARCHIVE/RESEARCH CRAWLERS
+# ============================================
+
+# Internet Archive
+User-agent: ia_archiver
+Allow: /
+
+# Common Crawl
+User-agent: CCBot
+Allow: /
+Crawl-delay: 5
+
+# ============================================
+# AI/LLM CRAWLERS
+# Control AI training data collection
+# ============================================
+
+# OpenAI GPTBot
+User-agent: GPTBot
+Allow: /
+Crawl-delay: 5
+
+# OpenAI ChatGPT-User
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic Claude
+User-agent: Claude-Web
+Allow: /
+Crawl-delay: 5
+
+User-agent: ClaudeBot
+Allow: /
+Crawl-delay: 5
+
+# Google Bard/AI
+User-agent: Google-Extended
+Allow: /
+
+# Cohere AI
+User-agent: cohere-ai
+Disallow: /
+
+# ============================================
+# KNOWN BAD/MALICIOUS BOTS (Block)
+# ============================================
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MauiBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+# ============================================
+# HOST DIRECTIVES (Optional)
+# Uncomment if using separate mobile site
+# ============================================
+# Host: testoza.com

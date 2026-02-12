@@ -1,43 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabaseClient';
-import { Trash2, Settings, Loader2, Edit, Heart } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Loader2, Edit, Plus, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { toast } from "sonner";
-import { fetchTestsByUserId, updateTest } from '@/lib/testsApi';
+import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
 import { fetchClasses } from '@/lib/classesApi';
-import { fetchCategories, createCategory, fetchTestCategories, assignCategoriesToTest } from '@/lib/categoriesApi';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Plus, Upload, MoreVertical, Globe, Link as LinkIcon, Lock, GraduationCap, Check } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSub,
-    DropdownMenuSubTrigger,
-    DropdownMenuSubContent,
-    DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { fetchUserDetails } from '@/lib/usersApi';
+import { fetchCategories } from '@/lib/categoriesApi';
+import { Globe, Link as LinkIcon, Lock, GraduationCap, Search } from 'lucide-react';
 
 import TestBuilder from '@/components/TestBuilder';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
-import { FileText } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -49,9 +27,27 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// YouTube-style lazy loading imports
+import { UserTestCard } from '@/components/UserTestCard';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+
 export default function UserTestManager() {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+
+    // Search State
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+    const abortControllerRef = React.useRef<AbortController | null>(null);
+
+    // Debounce Search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     // Tests State
     const [tests, setTests] = useState<any[]>([]);
@@ -68,34 +64,48 @@ export default function UserTestManager() {
     const [newCategoryName, setNewCategoryName] = useState("");
 
     const [configuringTest, setConfiguringTest] = useState<any>(null);
-    const [viewingResultsTest, setViewingResultsTest] = useState<any>(null); // New State
+    const [viewingResultsTest, setViewingResultsTest] = useState<any>(null);
 
     // Creator Check State
     const [isCreator, setIsCreator] = useState<boolean | null>(null);
     const [checkingCreator, setCheckingCreator] = useState(true);
 
-    const [classes, setClasses] = useState<any[]>([]); // Classes State
+    const [classes, setClasses] = useState<any[]>([]);
+
+    // YouTube-style lazy loading - each card loads individually when visible
+    const {
+        registerSkeleton,
+        isItemRendered,
+        getRenderedItem,
+        renderedCount,
+        totalCount,
+        isComplete
+    } = useYouTubeStyleRender(tests, testsLoading, {
+        rootMargin: '100px',
+        threshold: 0.1
+    });
 
     useEffect(() => {
         if (!authLoading && !user) {
             navigate('/login');
         } else if (user?.id) {
             checkCreatorStatus();
-            loadUserTests();
             loadCategories();
             loadClasses();
         }
     }, [user?.id, authLoading, navigate]);
 
+    // Load tests on search
+    useEffect(() => {
+        if (user?.id) {
+            loadUserTests();
+        }
+    }, [user?.id, debouncedSearchQuery]);
+
     const checkCreatorStatus = async () => {
         if (!user) return;
         setCheckingCreator(true);
-        const { data } = await supabase
-            .from('profiles')
-            .select('is_creator')
-            .eq('id', user.id)
-            .single();
-
+        const { data } = await fetchUserDetails(user.id);
         if (data) setIsCreator(data.is_creator);
         setCheckingCreator(false);
     };
@@ -111,23 +121,33 @@ export default function UserTestManager() {
         if (data) setCategories(data);
     };
 
-    const loadUserTests = async () => {
+    const loadUserTests = React.useCallback(async () => {
         if (!user) return;
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         setTestsLoading(true);
         try {
-            // Include classes in fetch
-            const { data, error } = await fetchTestsByUserId(user.id);
-            // Note: Update fetchTestsByUserId in testsApi to include classes if not already? 
-            // Actually fetchTestsByUserId usually returns *, we might need to assume it returns class_id
+            const { data, error } = await fetchTestsByUserId(user.id, {
+                searchQuery: debouncedSearchQuery,
+                signal: controller.signal
+            });
             if (error) throw error;
             setTests(data || []);
-        } catch (error) {
+        } catch (error: any) {
+            if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
             console.error('Error loading tests:', error);
             toast.error("Failed to load your tests");
         } finally {
-            setTestsLoading(false);
+            if (abortControllerRef.current === controller) {
+                setTestsLoading(false);
+            }
         }
-    };
+    }, [user, debouncedSearchQuery]);
 
     const handleDeleteTest = (testId: string, testTitle: string) => {
         setDeleteId(testId);
@@ -137,7 +157,7 @@ export default function UserTestManager() {
     const confirmDelete = async () => {
         if (!deleteId) return;
         try {
-            const { error } = await supabase.from('tests').delete().eq('id', deleteId);
+            const { error } = await deleteTest(deleteId);
             if (error) throw error;
             setTests(prev => prev.filter(t => t.id !== deleteId));
             toast.success(`Test "${deleteTitle}" deleted`);
@@ -276,13 +296,25 @@ export default function UserTestManager() {
     return (
         <div className="container mx-auto max-w-5xl py-6 space-y-6">
             {/* ... Header ... */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Your Tests</h1>
                     <p className="text-muted-foreground text-sm">Manage the tests you have generated.</p>
                 </div>
                 {/* ... Import buttons ... */}
-                <div className="flex gap-3 items-center">
+                <div className="flex gap-3 items-center flex-wrap">
+                    {/* Search Input */}
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search tests..."
+                            className="pl-9 bg-white"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
                     <Button onClick={() => { setEditingTest(null); setIsTestEditOpen(true); }}>
                         <Plus className="w-4 h-4 mr-2" /> Create Test
                     </Button>
@@ -311,9 +343,6 @@ export default function UserTestManager() {
                                         const { createTest, getNextTestId } = await import('@/lib/testsApi');
                                         const customId = await getNextTestId('M');
 
-                                        // Sanitize JSON: Remove fields that don't exist in the DB (schema mismatch)
-                                        // The JSON template includes marks_per_question/negative_marks for the generator, 
-                                        // but the current 'tests' table apparently doesn't have these columns.
                                         const {
                                             marks_per_question,
                                             negative_marks,
@@ -328,7 +357,6 @@ export default function UserTestManager() {
                                             custom_id: customId,
                                             creator_name: user.user_metadata?.full_name || 'Anonymous',
                                             creator_avatar: user.user_metadata?.avatar_url || '',
-                                            // Ensure critical fields are present if missing in JSON (though validation passed)
                                             is_public: safeJson.is_public !== undefined ? safeJson.is_public : true,
                                             created_at: new Date().toISOString()
                                         };
@@ -356,121 +384,58 @@ export default function UserTestManager() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {testsLoading ? (
-                    <div className="col-span-full text-center py-10"><Loader2 className="animate-spin mx-auto" /></div>
+                    <div className="col-span-full text-center py-10">
+                        <Loader2 className="animate-spin mx-auto h-8 w-8" />
+                        <p className="text-muted-foreground mt-2 text-sm">Loading your tests...</p>
+                    </div>
                 ) : tests.length === 0 ? (
                     <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
                         You haven't generated any tests yet.
                     </div>
                 ) : (
-                    tests.map(test => (
-                        <Card key={test.id} className="relative group hover:shadow-md transition-shadow">
-                            <CardHeader className="pb-2">
-                                <div className="flex justify-between items-start gap-2">
-                                    <div className="flex-1 min-w-0">
-                                        <CardTitle className="text-lg line-clamp-1 text-amber-900" title={test.title}>{test.title}</CardTitle>
-                                    </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 text-muted-foreground hover:text-foreground">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuSub>
-                                                <DropdownMenuSubTrigger>
-                                                    <Globe className="mr-2 h-4 w-4" /> Visibility
-                                                </DropdownMenuSubTrigger>
-                                                <DropdownMenuSubContent>
-                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'public')}>
-                                                        <Globe className="mr-2 h-4 w-4" /> Public
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'unlisted')}>
-                                                        <LinkIcon className="mr-2 h-4 w-4" /> Link Only
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => handleVisibilityChange(test, 'private')}>
-                                                        <Lock className="mr-2 h-4 w-4" /> Private
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuSubContent>
-                                            </DropdownMenuSub>
-                                            <DropdownMenuItem onClick={() => handleShare(test)}>
-                                                <LinkIcon className="mr-2 h-4 w-4" /> Share Link
-                                            </DropdownMenuItem>
+                    <>
+                        {/* YouTube-style: Each card loads individually when visible */}
+                        {tests.map((test) => {
+                            const testId = test.id;
+                            const isRendered = isItemRendered(testId);
 
-                                            <DropdownMenuSeparator />
-
-                                            <DropdownMenuSub>
-                                                <DropdownMenuSubTrigger>
-                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
-                                                </DropdownMenuSubTrigger>
-                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                                    {classes.length === 0 ? (
-                                                        <DropdownMenuItem disabled>No classes found</DropdownMenuItem>
-                                                    ) : (
-                                                        <>
-                                                            <DropdownMenuItem onClick={() => handleClassChange(test, null)}>
-                                                                <span className="opacity-50">None</span>
-                                                                {!test.class_id && <Check className="ml-auto h-4 w-4" />}
-                                                            </DropdownMenuItem>
-                                                            {classes.map(cls => (
-                                                                <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id)}>
-                                                                    {cls.name}
-                                                                    {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
-                                                                </DropdownMenuItem>
-                                                            ))}
-                                                        </>
-                                                    )}
-                                                </DropdownMenuSubContent>
-                                            </DropdownMenuSub>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pb-2">
-                                <div className="text-xs text-muted-foreground flex items-center gap-3">
-                                    <Badge variant="outline" className="font-mono text-[10px] py-0 h-5 border-slate-300 text-slate-500">
-                                        {test.custom_id || 'NO-ID'}
-                                    </Badge>
-                                    {test.class_id && classes.find(c => c.id === test.class_id) && (
-                                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
-                                            <GraduationCap className="h-3 w-3" />
-                                            <span className="uppercase">{classes.find(c => c.id === test.class_id)?.name}</span>
-                                        </div>
-                                    )}
-                                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getVisibilityColor(test.visibility || (test.is_public ? 'public' : 'private'))}`}>
-                                        {getVisibilityIcon(test.visibility || (test.is_public ? 'public' : 'private'))}
-                                        <span className="uppercase">{(test.visibility === 'unlisted' ? 'Link' : test.visibility) || (test.is_public ? 'Public' : 'Private')}</span>
+                            if (isRendered) {
+                                return (
+                                    <UserTestCard
+                                        key={testId}
+                                        test={test}
+                                        classes={classes}
+                                        onEdit={openTestEditor}
+                                        onConfigure={setConfiguringTest}
+                                        onDelete={handleDeleteTest}
+                                        onVisibilityChange={handleVisibilityChange}
+                                        onShare={handleShare}
+                                        onClassChange={handleClassChange}
+                                        getVisibilityColor={getVisibilityColor}
+                                        getVisibilityIcon={getVisibilityIcon}
+                                    />
+                                );
+                            } else {
+                                return (
+                                    <div
+                                        key={testId}
+                                        ref={(el) => registerSkeleton(testId, el)}
+                                    >
+                                        <TestCardSkeleton />
                                     </div>
-                                    <span>{test.questions?.length || 0} Qs</span>
-                                    <span>{test.duration || 0} mins</span>
-                                </div>
-                            </CardContent>
-                            <CardFooter className="pt-2 flex flex-wrap justify-between gap-2 border-t bg-slate-50/50 dark:bg-slate-900/50 items-center">
-                                <div className="flex items-center gap-1 text-muted-foreground mr-auto pl-1" title="Likes">
-                                    <Heart className="h-4 w-4" />
-                                    <span className="text-sm font-medium">
-                                        {test.test_likes?.[0]?.count || 0}
-                                    </span>
-                                </div>
-                                <Button variant="outline" size="sm" className="h-8" onClick={() => openTestEditor(test)}>
-                                    <Edit className="h-3 w-3 mr-2" />
-                                    Edit
-                                </Button>
-                                <Button variant="secondary" size="sm" className="h-8" onClick={() => setConfiguringTest(test)}>
-                                    <Settings className="h-3 w-3 mr-2" />
-                                    Manage
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-slate-100"
-                                    onClick={() => handleDeleteTest(test.id, test.title)}
-                                    title="Delete Test"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))
+                                );
+                            }
+                        })}
+                    </>
+                )}
+
+                {/* Progress indicator */}
+                {!testsLoading && !isComplete && (
+                    <div className="col-span-full py-4 text-center">
+                        <span className="text-sm text-muted-foreground">
+                            {renderedCount} of {totalCount} tests loaded
+                        </span>
+                    </div>
                 )}
             </div>
 

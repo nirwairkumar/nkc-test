@@ -17,11 +17,12 @@ import { Badge } from '@/components/ui/badge';
 interface TestSettingsPanelProps {
     test: Test;
     onClose: () => void;
-    onUpdate: () => void;
+    onUpdate: (updatedTest?: Test) => void;
     onViewResults: () => void;
+    overridePremium?: boolean;
 }
 
-export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResults }: TestSettingsPanelProps) {
+export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResults, overridePremium }: TestSettingsPanelProps) {
     const [settings, setSettings] = useState<TestSettings>({
         attempt_limit: undefined,
         strict_timer: false,
@@ -60,7 +61,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     }, [test]);
 
     const handleSave = async () => {
-        if (!isPremium) {
+        // If overridePremium (admin) is true, skip check
+        if (!isPremium && !overridePremium) {
             toast.error("Premium feature required", {
                 description: "Upgrade to Premium to manage test settings",
                 action: {
@@ -73,14 +75,14 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
         setLoading(true);
         try {
-            const { error } = await updateTest(test.id, {
+            const { data, error } = await updateTest(test.id, {
                 settings: settings,
                 class_id: classId
             });
 
             if (error) throw error;
             toast.success("Test settings updated successfully");
-            onUpdate();
+            onUpdate(data?.[0]); // Pass updated test back to parent
             onClose();
         } catch (err: any) {
             console.error("Failed to save settings", err);
@@ -91,7 +93,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     };
 
     const showPremiumToast = () => {
-        if (!isPremium) {
+        if (!isPremium && !overridePremium) {
             toast.error("Premium feature required", {
                 description: "Upgrade to Premium to unlock all test management features",
                 action: {
@@ -106,7 +108,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         setSettings(prev => ({ ...prev, [key]: value }));
     };
 
-    const renderProctoring = () => (
+    const renderProctoring = (mode: string) => (
         <div className="space-y-6">
             <div className="space-y-4">
                 <div className="flex items-center justify-between border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
@@ -131,35 +133,35 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         <div className="flex items-center space-x-2">
                             <input
                                 type="radio"
-                                id="ts_off"
-                                name="tab_switch"
+                                id={`ts_off_${mode}`}
+                                name={`tab_switch_${mode}`}
                                 checked={settings.tab_switch_mode === 'off'}
                                 onChange={() => updateSetting('tab_switch_mode', 'off')}
                                 className="accent-primary"
                             />
-                            <Label htmlFor="ts_off" className="font-normal cursor-pointer">Off (Allowed)</Label>
+                            <Label htmlFor={`ts_off_${mode}`} className="font-normal cursor-pointer">Off (Allowed)</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <input
                                 type="radio"
-                                id="ts_warn"
-                                name="tab_switch"
+                                id={`ts_warn_${mode}`}
+                                name={`tab_switch_${mode}`}
                                 checked={settings.tab_switch_mode === 'warming'}
                                 onChange={() => updateSetting('tab_switch_mode', 'warming')}
                                 className="accent-primary"
                             />
-                            <Label htmlFor="ts_warn" className="font-normal cursor-pointer">Warning then Submit</Label>
+                            <Label htmlFor={`ts_warn_${mode}`} className="font-normal cursor-pointer">2 warning then Submit</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <input
                                 type="radio"
-                                id="ts_strict"
-                                name="tab_switch"
+                                id={`ts_strict_${mode}`}
+                                name={`tab_switch_${mode}`}
                                 checked={settings.tab_switch_mode === 'strict'}
                                 onChange={() => updateSetting('tab_switch_mode', 'strict')}
                                 className="accent-red-500"
                             />
-                            <Label htmlFor="ts_strict" className="font-normal cursor-pointer text-red-600">Strict (Instant Submit)</Label>
+                            <Label htmlFor={`ts_strict_${mode}`} className="font-normal cursor-pointer text-red-600">Strict (Instant Submit)</Label>
                         </div>
                     </div>
                 </div>
@@ -201,7 +203,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         </div>
     );
 
-    const renderAccess = () => (
+    const renderAccess = (mode: string) => (
         <div className="space-y-6">
             <div className="space-y-4">
                 <div className="flex flex-col gap-4 border p-4 rounded-lg">
@@ -344,7 +346,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         </div>
     );
 
-    const renderResults = () => (
+    const renderResults = (mode: string) => (
         <div className="space-y-6">
             <div className="space-y-4">
                 <div className="flex items-center justify-between border p-4 rounded-lg">
@@ -404,7 +406,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10 dark:bg-slate-950">
                         <div className="flex flex-col gap-2">
                             <CardTitle className="text-lg">Test Environment Settings</CardTitle>
-                            {!isPremium && (
+                            {!isPremium && !overridePremium && (
                                 <Badge variant="default" className="bg-gradient-to-r from-amber-500 to-orange-600 text-white border-none flex items-center gap-1 w-fit">
                                     <Crown className="w-3 h-3" />
                                     Premium Feature
@@ -419,17 +421,17 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <div className="p-4 space-y-8 pb-32">
                         <section>
                             <h3 className="font-bold flex items-center gap-2 mb-4 text-primary bg-primary/5 p-2 rounded"><Shield className="w-5 h-5" /> Proctoring & Security</h3>
-                            {renderProctoring()}
+                            {renderProctoring('mobile')}
                         </section>
 
                         <section>
                             <h3 className="font-bold flex items-center gap-2 mb-4 text-primary bg-primary/5 p-2 rounded"><Lock className="w-5 h-5" /> Access & Control</h3>
-                            {renderAccess()}
+                            {renderAccess('mobile')}
                         </section>
 
                         <section>
                             <h3 className="font-bold flex items-center gap-2 mb-4 text-primary bg-primary/5 p-2 rounded"><Eye className="w-5 h-5" /> Results & Timing</h3>
-                            {renderResults()}
+                            {renderResults('mobile')}
                         </section>
                     </div>
 
@@ -450,7 +452,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <CardTitle>Test Environment Settings</CardTitle>
-                                {!isPremium && (
+                                {!isPremium && !overridePremium && (
                                     <Badge variant="default" className="bg-gradient-to-r from-amber-500 to-orange-600 text-white border-none flex items-center gap-1">
                                         <Crown className="w-3 h-3" />
                                         Premium Feature
@@ -478,15 +480,15 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
                             <div className="flex-1 overflow-y-auto p-6">
                                 <TabsContent value="proctoring" className="space-y-6 mt-0">
-                                    {renderProctoring()}
+                                    {renderProctoring('desktop')}
                                 </TabsContent>
 
                                 <TabsContent value="access" className="space-y-6 mt-0">
-                                    {renderAccess()}
+                                    {renderAccess('desktop')}
                                 </TabsContent>
 
                                 <TabsContent value="results" className="space-y-6 mt-0">
-                                    {renderResults()}
+                                    {renderResults('desktop')}
                                 </TabsContent>
                             </div>
                         </Tabs>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import supabase from '@/lib/supabaseClient';
+import { SEO } from '@/components/SEO';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Crown, Loader2, ShieldCheck } from 'lucide-react';
@@ -15,6 +16,7 @@ interface Plan {
     price: number;
     duration_days: number;
     features: string[];
+    is_active?: boolean;
 }
 
 export default function PremiumPage() {
@@ -30,16 +32,15 @@ export default function PremiumPage() {
     }, []);
 
     const fetchPlans = async () => {
-        const { data, error } = await supabase
-            .from('plans')
-            .select('*')
-            .eq('is_active', true)
-            .order('price', { ascending: true });
+        const { fetchPlans } = await import('@/lib/pricingApi');
+        const { data, error } = await fetchPlans();
 
         if (error) {
             console.error('Error fetching plans:', error);
         } else {
-            setPlans(data || []);
+            // Filter active
+            const activePlans = (data || []).filter((p: Plan) => p.is_active || (p as any).is_active === undefined); // flexible
+            setPlans(activePlans);
         }
         setLoadingPlans(false);
     };
@@ -53,13 +54,12 @@ export default function PremiumPage() {
         setProcessingId(plan.id);
 
         try {
-            // 1. Create Order via Edge Function
+            // 1. Create Order via API
             // Note: We now send planId instead of amount
-            const { data, error } = await supabase.functions.invoke('create-order', {
-                body: {
-                    planId: plan.id,
-                    userId: user.id
-                }
+            const { createOrder } = await import('@/lib/paymentApi');
+            const { data, error } = await createOrder({
+                planId: plan.id,
+                userId: user.id
             });
 
             if (error) throw new Error(error.message || 'Failed to initiate payment');
@@ -77,14 +77,13 @@ export default function PremiumPage() {
                     toast.loading("Verifying Payment...");
 
                     // 3. Verify Payment
-                    const verifyRes = await supabase.functions.invoke('verify-payment', {
-                        body: {
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
-                            userId: user.id,
-                            planId: plan.id
-                        }
+                    const { verifyPayment } = await import('@/lib/paymentApi');
+                    const verifyRes = await verifyPayment({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        userId: user.id,
+                        planId: plan.id
                     });
 
                     if (verifyRes.error) {
@@ -127,6 +126,11 @@ export default function PremiumPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4">
+            <SEO
+                title="Premium Features - TestoZa Pro"
+                description="Unlock the full power of TestoZa with Premium. Advanced analytics, unlimited tests, priority support, and more."
+                keywords={["testoza premium", "pro features", "advanced analytics", "unlimited tests"]}
+            />
             <div className="container mx-auto max-w-6xl space-y-12">
 
                 {/* Header */}
