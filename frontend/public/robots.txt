@@ -16,14 +16,16 @@ Crawl-delay: 1
 # SITEMAP DECLARATION
 # ============================================
 # Main sitemap index - lists all sub-sitemaps
-Sitemap: https://testoza.com/sitemap/index.xml
+#Sitemap: https://testoza.com/sitemap/index.xml
 
 # Individual sitemaps (also referenced in index)
-Sitemap: https://testoza.com/sitemap/static.xml
-Sitemap: https://testoza.com/sitemap/tests.xml
-Sitemap: https://testoza.com/sitemap/categories.xml
-Sitemap: https://testoza.com/sitemap/tags.xml
-Sitemap: https://testoza.com/sitemap/creators.xml
+#Sitemap: https://testoza.com/sitemap/static.xml
+#Sitemap: https://testoza.com/sitemap/tests.xml
+#Sitemap: https://testoza.com/sitemap/categories.xml
+#Sitemap: https://testoza.com/sitemap/tags.xml
+#Sitemap: https://testoza.com/sitemap/creators.xml
+# Main sitemap
+Sitemap: https://testoza.com/sitemap.xml
 
 # ============================================
 # PRIVATE ROUTES - DO NOT INDEX
