@@ -1,4 +1,13 @@
+/* Font Import with display=swap for better loading performance */
 @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
+
+/* Critical CSS - Inline for above-the-fold content */
+/* Prevent FOIT (Flash of Invisible Text) */
+@font-face {
+  font-family: 'Mukta';
+  font-display: swap;
+  src: local('Mukta');
+}
 
 @tailwind base;
 @tailwind components;
