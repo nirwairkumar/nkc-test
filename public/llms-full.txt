@@ -1,0 +1,650 @@
+# Testoza - AI-Powered Online Examination Platform
+
+> **Transform your assessment process with intelligent test creation, military-grade proctoring security, and complete institutional branding.** Testoza is the all-in-one platform for educators, coaching institutes, schools, colleges, and corporations who demand professional-grade online examinations with uncompromising security and seamless user experience.
+
+---
+
+## Overview
+
+Testoza is a comprehensive online testing platform that leverages artificial intelligence to revolutionize how tests are created, administered, and monitored. Built for the modern educational landscape, Testoza serves teachers, students, coaching institutes, and corporate training departments with tools that make assessment creation effortless while maintaining the highest standards of exam integrity.
+
+### Mission
+
+To democratize access to professional-grade testing tools, enabling educators worldwide to create secure, engaging, and insightful assessments without technical complexity.
+
+### Target Audience
+
+- **Educational Institutions**: Schools, colleges, and universities
+- **Coaching Centers**: JEE, NEET, GATE, UPSC, and competitive exam preparation
+- **Corporate Trainers**: Employee assessment and certification programs
+- **Individual Educators**: Teachers and tutors creating custom tests
+- **Students**: Self-assessment and practice test creation
+
+---
+
+## Core Features
+
+### 1. AI-Powered Test Generation
+
+Testoza's flagship feature transforms any content into structured assessments within seconds:
+
+**Content Sources:**
+- PDF documents (textbooks, notes, research papers)
+- Image files (scanned documents, handwritten notes, diagrams)
+- Plain text input
+- YouTube video transcripts
+- URLs and web content
+
+**AI Capabilities:**
+- Automatic question extraction and generation
+- Intelligent difficulty assessment
+- Topic-wise question distribution
+- Context-aware question creation
+- Support for technical and non-technical subjects
+- Mathematical formula and equation recognition
+
+**Question Types Generated:**
+- Single Correct Multiple Choice Questions (MCQ)
+- Multiple Correct Multiple Select Questions
+- Fill in the Blanks
+- True/False statements
+- Mixed format assessments
+
+### 2. Advanced Proctoring & Security
+
+Testoza implements a comprehensive multi-layered security architecture to prevent cheating and ensure exam integrity:
+
+#### Tab Switching Prevention
+- Real-time detection of browser tab switches
+- Automatic warning system with violation logging
+- Configurable tolerance thresholds
+- Session termination on repeated violations
+
+#### Copy-Paste Blocking
+- Complete disable of copy (Ctrl+C, Cmd+C)
+- Complete disable of paste (Ctrl+V, Cmd+V)
+- Context menu disable (right-click)
+- Keyboard shortcut interception
+
+#### Full-Screen Enforcement
+- Mandatory full-screen mode during tests
+- Exit attempt detection and warnings
+- Automatic return to full-screen
+- Session termination options for violations
+
+#### Developer Tools Blocking
+- F12 key disable
+- Ctrl+Shift+I / Cmd+Option+I blocking
+- Inspect Element access prevention
+- Browser console access blocking
+
+#### Screenshot & Print Prevention
+- Print Screen key disable
+- Screenshot detection mechanisms
+- Browser print function blocking (Ctrl+P)
+- Screen recording detection capabilities
+
+#### Additional Security Measures
+- Browser back button disable during tests
+- Navigation prevention
+- Automatic logout on suspicious activities
+- IP-based session validation
+- Device fingerprinting
+- Time-based access controls
+
+### 3. Institutional Branding & White-Labeling
+
+Create a seamless branded experience for your organization:
+
+**Visual Customization:**
+- Upload custom organization logos
+- Brand color scheme integration
+- Custom favicon support
+- Branded email templates
+- Custom certificate backgrounds
+
+**Test Interface Branding:**
+- Logo display on test pages
+- Custom welcome messages
+- Branded result pages
+- Organization name in test URLs
+- Custom domain support (Enterprise)
+
+**Certificate Generation:**
+- Automated certificate creation
+- Custom certificate templates
+- Student name and score integration
+- Organization seal and signatures
+- PDF certificate download
+- Shareable certificate links
+
+### 4. Test Management & Administration
+
+Comprehensive tools for test creators:
+
+**Test Creation:**
+- Intuitive drag-and-drop interface
+- Question bank management
+- Section-wise test organization
+- Time limit configuration
+- Attempt limit settings
+- Passing score definition
+
+**Test Settings:**
+- Public vs. Private test access
+- Password protection
+- Access code requirements
+- Date-based availability
+- One-time vs. multiple attempts
+- Retake configuration
+
+**Question Management:**
+- Rich text editor for questions
+- Image and media embedding
+- LaTeX support for mathematical expressions
+- Question categorization and tagging
+- Difficulty level assignment
+- Explanation and solution addition
+
+### 5. Analytics & Reporting
+
+Deep insights into test performance:
+
+**Individual Reports:**
+- Detailed score breakdown
+- Time spent per question
+- Correct/incorrect analysis
+- Comparison with average performance
+- Improvement suggestions
+
+**Aggregated Analytics:**
+- Class/cohort performance overview
+- Question-wise difficulty analysis
+- Topic-wise strength and weakness identification
+- Time distribution patterns
+- Attempt success rates
+
+**Export Options:**
+- PDF report generation
+- Excel/CSV data export
+- Printable result sheets
+- Email report distribution
+
+### 6. Sharing & Distribution
+
+Flexible options for test distribution:
+
+**Public Tests:**
+- Shareable public URLs
+- Social media integration
+- Embed code for websites
+- QR code generation
+
+**Private Tests:**
+- Access code protection
+- Email invitation system
+- User-specific access grants
+- Batch enrollment
+
+**Monetization:**
+- Paid test creation
+- Payment gateway integration
+- Subscription model support
+- Revenue analytics
+
+---
+
+## How It Works
+
+### For Test Creators
+
+1. **Sign Up/Login**: Create a free account or log in to your existing Testoza account
+2. **Choose Creation Method**:
+   - **AI Generation**: Upload PDF, image, or paste text/YouTube URL
+   - **Manual Creation**: Build questions one by one using the editor
+   - **Template**: Start from pre-built test templates
+3. **Configure Test Settings**:
+   - Set time limits and attempt restrictions
+   - Enable/disable proctoring features
+   - Apply institutional branding
+   - Set passing scores
+4. **Add Questions**:
+   - Review AI-generated questions
+   - Edit, add, or remove questions
+   - Upload images and media
+   - Add explanations
+5. **Preview & Publish**:
+   - Test the exam experience
+   - Set access permissions (public/private)
+   - Generate share links or access codes
+6. **Monitor & Analyze**:
+   - Track real-time attempts
+   - View detailed analytics
+   - Download reports
+   - Generate certificates
+
+### For Test Takers
+
+1. **Access Test**: Click shared link or enter access code
+2. **Enter Details**: Provide required information (name, email, roll number)
+3. **Security Check**: System verifies browser compatibility and enables security features
+4. **Take Test**: Answer questions within time limit
+5. **Submit**: Automatic or manual submission
+6. **View Results**: Immediate score display with detailed analysis
+7. **Download Certificate**: If enabled, download branded certificate
+
+---
+
+## Security Architecture
+
+Testoza's security is built on multiple layers:
+
+### Client-Side Security
+- JavaScript-based event interception
+- DOM manipulation prevention
+- Keyboard shortcut blocking
+- Clipboard access control
+
+### Server-Side Validation
+- Request validation and sanitization
+- Session authentication
+- Anti-tampering measures
+- Rate limiting
+
+### Network Security
+- HTTPS encryption (TLS 1.3)
+- Secure cookie handling
+- CORS policy enforcement
+- DDoS protection
+
+### Data Protection
+- Encrypted data storage
+- GDPR compliance
+- Regular security audits
+- Backup and recovery systems
+
+---
+
+## Platform Specifications
+
+**Supported Browsers:**
+- Google Chrome (recommended)
+- Mozilla Firefox
+- Microsoft Edge
+- Safari
+- Opera
+
+**Device Support:**
+- Desktop/Laptop (primary)
+- Tablet (supported)
+- Mobile (basic support, proctoring limited)
+
+**File Formats:**
+- PDF (text and scanned)
+- Images: PNG, JPG, JPEG, WebP
+- Text: Plain text, Markdown
+- Video: YouTube URLs
+
+**Technical Requirements:**
+- Stable internet connection (minimum 1 Mbps)
+- Modern web browser
+- JavaScript enabled
+- Webcam (for advanced proctoring features)
+- Microphone (optional)
+
+---
+
+## Use Cases
+
+### Education
+- **Schools**: Regular assessments, unit tests, quizzes
+- **Colleges**: Semester exams, mid-terms, entrance tests
+- **Coaching Institutes**: Mock tests, practice sessions, daily quizzes
+- **Online Courses**: Certification exams, module assessments
+
+### Corporate
+- **Employee Training**: Skill assessments, certification tests
+- **Recruitment**: Pre-employment tests, skill evaluation
+- **Compliance**: Mandatory training assessments
+- **Performance Reviews**: 360-degree feedback, competency tests
+
+### Government & Non-Profit
+- **Civil Services**: Mock tests, preparation assessments
+- **Certification Bodies**: Professional certification exams
+- **NGOs**: Training assessments, volunteer evaluations
+
+---
+
+## Frequently Asked Questions (FAQ)
+
+### How does Testoza use AI to create tests?
+
+Testoza employs advanced artificial intelligence to analyze uploaded content and generate relevant test questions automatically. When you upload a PDF, image, or provide text/YouTube video, our AI:
+
+1. **Content Analysis**: Extracts key concepts, facts, and important information from the source material
+2. **Question Generation**: Creates diverse question types (MCQ, Multiple Select, Fill in Blanks, True/False) based on the content
+3. **Difficulty Assessment**: Intelligently categorizes questions by difficulty level (Easy, Medium, Hard) based on content complexity
+4. **Context Preservation**: Ensures generated questions accurately reflect the source material without hallucination
+5. **Answer Validation**: Generates correct answers along with plausible distractors for multiple-choice questions
+6. **Mathematical Recognition**: Special handling for mathematical content, formulas, and scientific notation
+
+The AI supports multiple content formats including PDFs (both text-based and scanned), images with text, plain text input, and YouTube video transcripts. Users can review and edit all AI-generated questions before publishing.
+
+### Is Testoza proctoring secure?
+
+Yes, Testoza implements military-grade security measures to ensure exam integrity:
+
+**Browser-Level Protection:**
+- Tab switching detection with automatic warnings and logging
+- Copy-paste functionality completely disabled (keyboard shortcuts and right-click menu)
+- Full-screen enforcement with exit prevention
+- Developer tools blocking (F12, Ctrl+Shift+I, Inspect Element)
+- Browser console access prevention
+- Back button and navigation disable during active tests
+
+**System-Level Security:**
+- Screenshot and print screen prevention
+- Print functionality blocking
+- Clipboard monitoring and control
+- Keyboard shortcut interception
+- Right-click context menu disable
+
+**Monitoring Features:**
+- Real-time violation detection and logging
+- Automatic session termination on repeated violations
+- IP-based session validation
+- Device fingerprinting for authenticity
+- Suspicious activity pattern detection
+
+**Additional Safeguards:**
+- Secure HTTPS connection (TLS 1.3)
+- Encrypted data transmission and storage
+- Anti-tampering measures
+- Rate limiting to prevent brute force attempts
+- Regular security audits and updates
+
+These measures make Testoza suitable for high-stakes examinations, competitive tests, and professional certifications where cheating prevention is critical.
+
+### Can institutions use their own branding?
+
+Absolutely! Testoza offers comprehensive white-labeling and branding capabilities:
+
+**Visual Branding:**
+- Upload your organization's logo to display on all test pages
+- Customize color schemes to match your brand identity
+- Add custom favicon for browser tab recognition
+- Use branded email templates for test invitations and results
+
+**Test Interface Customization:**
+- Display your logo prominently on test start, during, and result pages
+- Add custom welcome messages for test takers
+- Brand certificate backgrounds with your organization's design
+- Show your organization name in test URLs and shareable links
+
+**Certificate Generation:**
+- Create custom certificate templates with your branding
+- Automatic insertion of student names, scores, and completion dates
+- Add organization seals, signatures, and accreditation marks
+- Generate downloadable PDF certificates
+- Create shareable certificate links for social media
+
+**Enterprise Features:**
+- Custom domain support (your-institute.testoza.com or your own domain)
+- Dedicated test portals with full branding
+- White-label mobile-responsive interface
+- Branded result dashboards
+- Custom email domain integration
+
+These features allow schools, colleges, coaching institutes, and corporations to maintain complete brand consistency while using Testoza's powerful testing infrastructure.
+
+### What types of questions can I create?
+
+Testoza supports multiple question formats to suit various assessment needs:
+
+**1. Multiple Choice Questions (MCQ)**
+- Single correct answer
+- Up to 6 options per question
+- Image support in questions and options
+- Mathematical formula rendering (LaTeX support)
+
+**2. Multiple Select Questions**
+- Multiple correct answers possible
+- Partial scoring options
+- "Select all that apply" format
+- Clear visual distinction from single-select
+
+**3. Fill in the Blanks**
+- Single or multiple blanks per question
+- Case-sensitive answer options
+- Exact match or partial credit
+- Support for numerical and text answers
+
+**4. True/False Questions**
+- Binary choice format
+- Quick assessment building
+- Ideal for concept verification
+
+**Question Enhancement Features:**
+- Rich text editor with formatting options
+- Image, diagram, and chart embedding
+- Mathematical equation support (LaTeX/MathJax)
+- Code snippet inclusion for technical tests
+- Audio and video embedding
+- Question explanations and solution steps
+- Difficulty level tagging (Easy, Medium, Hard)
+- Topic/category classification
+- Time allocation per question (optional)
+
+### How does the PDF-to-Test feature work?
+
+Testoza's PDF-to-Test feature uses advanced AI to convert any PDF document into a structured test:
+
+**Upload Process:**
+1. Upload PDF file (supports text-based and scanned/image PDFs)
+2. Select number of questions desired
+3. Choose question types (MCQ, Multiple Select, Fill in Blanks, True/False)
+4. Set difficulty distribution (Easy:Medium:Hard ratio)
+
+**AI Processing:**
+1. **Text Extraction**: OCR technology extracts text from scanned documents
+2. **Content Analysis**: AI identifies key concepts, definitions, facts, and relationships
+3. **Question Synthesis**: Generates questions based on important content sections
+4. **Answer Generation**: Creates correct answers and plausible distractors
+5. **Quality Scoring**: Ranks questions by relevance and clarity
+
+**Review & Edit:**
+- View all generated questions in an editable interface
+- Modify question text, options, and correct answers
+- Add images or media to enhance questions
+- Reorder questions via drag-and-drop
+- Delete unsuitable questions
+- Add new manual questions alongside AI-generated ones
+
+**Output:**
+- Ready-to-publish test with full proctoring and branding options
+- Editable question bank for future use
+- Exportable question sets
+
+This feature works best with educational content, textbooks, notes, articles, and study materials.
+
+### What analytics and reports are available?
+
+Testoza provides comprehensive analytics at multiple levels:
+
+**Individual Test Reports:**
+- Overall score and percentage
+- Time taken vs. time allocated
+- Question-wise correct/incorrect status
+- Time spent per question
+- Topic-wise performance breakdown
+- Comparison with test average
+- Percentile ranking (if applicable)
+- Strength and weakness analysis
+- Improvement recommendations
+
+**Aggregated Analytics (for test creators):**
+- Total attempts and completion rates
+- Average score and distribution
+- Pass/fail statistics
+- Question difficulty analysis (based on correct answer rates)
+- Time distribution patterns
+- Topic-wise class performance
+- Most challenging questions identification
+- Easy questions that many got wrong (potential errors)
+
+**Visual Analytics:**
+- Score distribution histograms
+- Performance trend graphs
+- Radar charts for topic-wise skills
+- Time analysis charts
+- Comparison charts (class vs. individual)
+
+**Export Options:**
+- PDF individual reports
+- Excel/CSV batch data export
+- Printable result sheets
+- Automated email reports
+- API access for integration (Enterprise)
+
+**Real-Time Monitoring:**
+- Live attempt tracking
+- Real-time violation logging
+- Current active test takers
+- Completion status dashboard
+
+### Is there a limit on test attempts or participants?
+
+Testoza offers flexible limits based on your plan:
+
+**Free Tier:**
+- Up to 3 active tests at a time
+- Unlimited test attempts for participants
+- Basic proctoring features
+- Standard analytics
+- Testoza branding
+
+**Premium/Paid Plans:**
+- Unlimited active tests
+- Unlimited test attempts
+- Advanced proctoring (all security features)
+- Detailed analytics and reports
+- Full branding customization
+- Certificate generation
+- Priority support
+
+**Enterprise Plans:**
+- Everything in Premium
+- Custom participant limits (negotiable)
+- API access
+- Custom domain
+- Dedicated support
+- SLA guarantees
+- Advanced integrations
+
+**Technical Limits:**
+- Maximum 500 questions per test (to ensure performance)
+- Maximum 10 MB file size for PDF uploads
+- Supported image formats: PNG, JPG, JPEG, WebP
+- Test duration: Up to 24 hours per test
+
+For specific requirements or high-volume usage, contact sales for custom enterprise solutions.
+
+### Can I monetize my tests?
+
+Yes, Testoza supports test monetization features:
+
+**Payment Integration:**
+- Integration with popular payment gateways (Razorpay, Stripe)
+- One-time payment per test
+- Subscription-based access models
+- Bundle pricing for multiple tests
+
+**Monetization Models:**
+- **Pay-per-test**: Students pay to attempt specific tests
+- **Subscription**: Monthly/annual access to all tests
+- **Course bundles**: Package multiple tests as a course
+- **Certification programs**: Charge for certification exams
+
+**Revenue Management:**
+- Automated payment processing
+- Revenue dashboard and analytics
+- Withdrawal to bank account
+- Payment receipt generation
+- Tax invoice support (GST ready)
+
+**Access Control:**
+- Payment verification before test access
+- Automatic enrollment post-payment
+- Refund management
+- Coupon and discount code support
+- Early bird and promotional pricing
+
+This feature is particularly useful for coaching institutes selling mock test series, educators selling practice tests, and certification bodies conducting paid examinations.
+
+### How do I share tests with students?
+
+Testoza offers multiple flexible sharing options:
+
+**1. Public Link**
+- Generate a shareable URL
+- Anyone with the link can attempt the test
+- Ideal for open assessments and practice tests
+- Share via WhatsApp, email, social media
+
+**2. Access Code System**
+- Generate unique access codes
+- Students enter code to unlock test
+- Track which codes have been used
+- Bulk code generation for classes
+
+**3. Email Invitations**
+- Send direct email invitations
+- Auto-generate student accounts
+- Personalized test links
+- Automated reminders
+
+**4. Direct Enrollment**
+- Manually add student emails
+- Students see test in their dashboard
+- No link/code sharing needed
+
+**5. Embed on Website**
+- Get embed code for your website
+- Students can start test from your site
+- Maintains your branding
+
+**6. QR Code**
+- Generate QR code for test
+- Scan to start (mobile-friendly)
+- Print on physical materials
+
+**Sharing Controls:**
+- Set expiration dates for links
+- Limit number of attempts per link
+- Password protect tests
+- Enable/disable sharing options
+- Track link performance and usage
+
+---
+
+## Contact & Support
+
+**Website:** https://testoza.com
+**Support Email:** support@testoza.com
+**Help Center:** https://testoza.com/help
+
+**Social Media:**
+- Twitter/X: @testoza
+- LinkedIn: Testoza Official
+- YouTube: Testoza Tutorials
+
+---
+
+## Technical Documentation
+
+For API documentation, webhook integrations, and advanced technical specifications, visit: https://testoza.com/docs
+
+---
+
+*Last Updated: February 2026*
+*Version: 2.0*

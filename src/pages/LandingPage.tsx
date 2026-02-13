@@ -8,6 +8,7 @@ const FileToTestSection = lazy(() => import('@/components/landing/FileToTestSect
 const TestCollectionSection = lazy(() => import('@/components/landing/TestCollectionSection'));
 const YouTubeGeneratorSection = lazy(() => import('@/components/landing/YouTubeGeneratorSection'));
 const PlatformStatsSection = lazy(() => import('@/components/landing/PlatformStatsSection'));
+const ManualCreateSection = lazy(() => import('@/components/landing/ManualCreateSection'));
 
 // Loading component
 const SectionLoader = () => (
@@ -74,6 +75,12 @@ export default function LandingPage() {
                 </section>
 
                 {/* Feature Sections with scroll animations */}
+                <div className="landing-section">
+                    <Suspense fallback={<SectionLoader />}>
+                        <ManualCreateSection />
+                    </Suspense>
+                </div>
+
                 <div id="features" className="landing-section">
                     <Suspense fallback={<SectionLoader />}>
                         <UploadMaterialsSection />

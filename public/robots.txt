@@ -260,29 +260,54 @@ Crawl-delay: 5
 # ============================================
 # AI/LLM CRAWLERS
 # Control AI training data collection
+# Allow access to llms.txt for AI context
 # ============================================
 
 # OpenAI GPTBot
 User-agent: GPTBot
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Crawl-delay: 5
+
+# OpenAI Search Bot
+User-agent: OAI-SearchBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 Crawl-delay: 5
 
 # OpenAI ChatGPT-User
 User-agent: ChatGPT-User
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 
 # Anthropic Claude
 User-agent: Claude-Web
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 Crawl-delay: 5
 
 User-agent: ClaudeBot
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
 Crawl-delay: 5
 
 # Google Bard/AI
 User-agent: Google-Extended
 Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+Allow: /llms-full.txt
+Crawl-delay: 5
 
 # Cohere AI
 User-agent: cohere-ai
