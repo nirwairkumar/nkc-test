@@ -1,0 +1,16 @@
+node_modules/
+.DS_Store
+*.log
+.env
+.gemini/
+*_remotes.txt
+*_status.txt
+frontend/node_modules/
+backend/__pycache__/
+dist/
+build/
+.next/
+out/
+frontend/dist/
+backend/dist/
+frontend/vite.config.ts.timestamp-*

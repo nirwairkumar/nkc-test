@@ -227,7 +227,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
     // Load Existing Test Data
     useEffect(() => {
         console.log("[TestBuilder] useEffect triggered. initialData:", initialData, "lastInitialDataRef:", lastInitialDataRef.current);
-        
+
         const targetId = initialData?.id || (isEditMode ? testId : null);
         console.log("[TestBuilder] targetId:", targetId, "loadedTestId.current:", loadedTestId.current);
 
@@ -239,9 +239,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
 
         // If initialData is provided directly, populate from it
         // Check if it's actually new data (not the same reference or deep equal)
-        const isNewInitialData = initialData && 
+        const isNewInitialData = initialData &&
             JSON.stringify(initialData) !== JSON.stringify(lastInitialDataRef.current);
-        
+
         if (initialData && isNewInitialData) {
             console.log("[TestBuilder] Received new initialData, populating...", initialData);
             populateData(initialData);
@@ -353,7 +353,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         }
     };
 
-const fetchAndSetCategories = async (tid: string) => {
+    const fetchAndSetCategories = async (tid: string) => {
         if (!tid) return; // Skip if no test ID (e.g., imported data)
         const { fetchTestCategories } = await import('@/lib/categoriesApi');
         const { data: catData } = await fetchTestCategories(tid);
@@ -362,19 +362,19 @@ const fetchAndSetCategories = async (tid: string) => {
         }
     };
 
-const populateData = (data: any) => {
+    const populateData = (data: any) => {
         console.log("[TestBuilder] populateData called with:", data);
-        
+
         if (!data) {
             console.error("[TestBuilder] populateData received null/undefined data");
             return;
         }
-        
+
         if (!data.questions || !Array.isArray(data.questions)) {
             console.error("[TestBuilder] populateData received data without questions array:", data);
             return;
         }
-        
+
         console.log("[TestBuilder] Setting title:", data.title);
         setTitle(data.title || '');
         setDescription(data.description || '');
@@ -401,7 +401,7 @@ const populateData = (data: any) => {
             console.log("[TestBuilder] Processing", data.questions.length, "questions");
             const mappedQuestions = (data.questions as any[]).map((q: any, index: number) => {
                 console.log(`[TestBuilder] Processing question ${index + 1}:`, q);
-                
+
                 // Handle basic mapping (questionText -> question)
                 let mappedQ = {
                     ...q,
@@ -456,12 +456,12 @@ const populateData = (data: any) => {
             setShowOtherCategory(true);
             setCustomCategory(data.custom_category);
         }
-        
+
         // Show success message when importing data
         if (data.questions && data.questions.length > 0) {
             toast.success(`Successfully imported ${data.questions.length} question${data.questions.length > 1 ? 's' : ''}!`);
         }
-        
+
         console.log("[TestBuilder] populateData completed successfully");
     };
 
@@ -1522,30 +1522,7 @@ const populateData = (data: any) => {
                                                     />
                                                 </div>
 
-                                                {sectionMarkingModel === 'section-wise' && (
-                                                    <>
-                                                        <div className="w-24 space-y-1">
-                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Marks/Q</Label>
-                                                            <Input
-                                                                type="text"
-                                                                value={section.marks_per_question || ''}
-                                                                onChange={(e) => updateSection(sIdx, 'marks_per_question', e.target.value)}
-                                                                className="bg-white"
-                                                                placeholder={marks.toString()}
-                                                            />
-                                                        </div>
-                                                        <div className="w-24 space-y-1">
-                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Negative</Label>
-                                                            <Input
-                                                                type="text"
-                                                                value={section.negative_marks || ''}
-                                                                onChange={(e) => updateSection(sIdx, 'negative_marks', e.target.value)}
-                                                                className="bg-white"
-                                                                placeholder={negativeMarks.toString()}
-                                                            />
-                                                        </div>
-                                                    </>
-                                                )}
+
                                                 <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="mb-0.5 text-slate-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></Button>
                                             </div>
 
@@ -1618,30 +1595,28 @@ const populateData = (data: any) => {
                                                                         </div>
 
                                                                         <div className="flex items-center gap-3">
-                                                                            {sectionMarkingModel === 'question-wise' && (
-                                                                                <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
-                                                                                    <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
-                                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
-                                                                                        <Input
-                                                                                            type="text"
-                                                                                            value={q.marks || ''}
-                                                                                            onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'marks', e.target.value)}
-                                                                                            className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
-                                                                                            placeholder="1"
-                                                                                        />
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-1.5 pl-1">
-                                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
-                                                                                        <Input
-                                                                                            type="text"
-                                                                                            value={q.negativeMarks || ''}
-                                                                                            onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'negativeMarks', e.target.value)}
-                                                                                            className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
-                                                                                            placeholder="0"
-                                                                                        />
-                                                                                    </div>
+                                                                            <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
+                                                                                <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
+                                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
+                                                                                    <Input
+                                                                                        type="text"
+                                                                                        value={q.marks || ''}
+                                                                                        onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'marks', e.target.value)}
+                                                                                        className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
+                                                                                        placeholder="1"
+                                                                                    />
                                                                                 </div>
-                                                                            )}
+                                                                                <div className="flex items-center gap-1.5 pl-1">
+                                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
+                                                                                    <Input
+                                                                                        type="text"
+                                                                                        value={q.negativeMarks || ''}
+                                                                                        onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'negativeMarks', e.target.value)}
+                                                                                        className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
+                                                                                        placeholder="0"
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
 
                                                                             <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
                                                                                 <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
@@ -1732,12 +1707,12 @@ const populateData = (data: any) => {
                                                                                     <div className="flex gap-4 items-center mt-2">
                                                                                         <div className="text-left">
                                                                                             <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
-                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
+                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
                                                                                         </div>
                                                                                         <div className="h-px w-8 bg-slate-300 mt-5"></div>
                                                                                         <div className="text-left">
                                                                                             <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
-                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
+                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
