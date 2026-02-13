@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare } from "lucide-react";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -24,7 +25,7 @@ interface Question {
     options?: { [key: string]: string } | null;
     optionImages?: { [key: string]: string | null };
     correctAnswer?: string | string[] | { min: number; max: number } | null;
-    needsAnswer?: boolean; // Legacy support
+    needsAnswer?: boolean;
     marks?: number;
     negativeMarks?: number;
     diagramPage?: number | null;
@@ -43,23 +44,185 @@ interface ParseResponse {
 }
 
 type ProcessMode = 'extract' | 'generate';
+type FileType = 'pdf' | 'image';
+type UploadType = 'document' | 'image' | null;
+
+interface SelectedFile {
+    file: File;
+    id: string;
+    type: FileType;
+    preview?: string;
+}
 
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
-    const [file, setFile] = useState<File | null>(null);
+    const [files, setFiles] = useState<SelectedFile[]>([]);
+    const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
     const [mode, setMode] = useState<ProcessMode | null>(null);
     const [loading, setLoading] = useState(false);
     const [generatingMore, setGeneratingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [parsedData, setParsedData] = useState<ParseResponse | null>(null);
     const [progress, setProgress] = useState('');
+    const [showCamera, setShowCamera] = useState(false);
+    const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+    const [uploadType, setUploadType] = useState<UploadType>(null);
+    
+    const documentInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const answerKeyInputRef = useRef<HTMLInputElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
-            setError(null);
-            setParsedData(null);
-            setMode(null);
+    const generateId = () => Math.random().toString(36).substring(2, 9);
+
+    const getFileType = (filename: string): FileType => {
+        const ext = filename.toLowerCase();
+        if (ext.endsWith('.pdf')) return 'pdf';
+        return 'image';
+    };
+
+    const createPreview = (file: File): Promise<string> => {
+        return new Promise((resolve) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.readAsDataURL(file);
+            } else {
+                resolve('');
+            }
+        });
+    };
+
+    const handleDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(e.target.files || []);
+        if (selectedFiles.length === 0) return;
+
+        const newFiles: SelectedFile[] = [];
+        for (const file of selectedFiles) {
+            const preview = await createPreview(file);
+            newFiles.push({
+                file,
+                id: generateId(),
+                type: getFileType(file.name),
+                preview
+            });
         }
+
+        setFiles(newFiles); // Documents replace existing files
+        setUploadType('document');
+        setError(null);
+        setParsedData(null);
+        setMode(null);
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(e.target.files || []);
+        if (selectedFiles.length === 0) return;
+
+        const newFiles: SelectedFile[] = [];
+        for (const file of selectedFiles) {
+            const preview = await createPreview(file);
+            newFiles.push({
+                file,
+                id: generateId(),
+                type: 'image',
+                preview
+            });
+        }
+
+        setFiles(prev => [...prev, ...newFiles]); // Images are additive
+        setUploadType('image');
+        setError(null);
+        setParsedData(null);
+        setMode(null);
+    };
+
+    const handleAnswerKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setAnswerKeyFile(e.target.files[0]);
+            setError(null);
+        }
+    };
+
+    const removeFile = (id: string) => {
+        setFiles(prev => {
+            const newFiles = prev.filter(f => f.id !== id);
+            if (newFiles.length === 0) {
+                setUploadType(null);
+            }
+            return newFiles;
+        });
+        setParsedData(null);
+        setMode(null);
+    };
+
+    const clearAllFiles = () => {
+        setFiles([]);
+        setAnswerKeyFile(null);
+        setUploadType(null);
+        setError(null);
+        setParsedData(null);
+        setMode(null);
+    };
+
+    const openCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                } 
+            });
+            setCameraStream(stream);
+            setShowCamera(true);
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (err) {
+            setError("Could not access camera. Please ensure you have granted camera permissions.");
+        }
+    };
+
+    const closeCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            setCameraStream(null);
+        }
+        setShowCamera(false);
+    };
+
+    const captureImage = () => {
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const file = new File([blob], `camera_capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            setFiles(prev => [...prev, {
+                                file,
+                                id: generateId(),
+                                type: 'image',
+                                preview: e.target?.result as string
+                            }]);
+                            setUploadType('image');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }, 'image/jpeg', 0.9);
+            }
+        }
+        closeCamera();
     };
 
     // Helper to check if an option is correct based on question type
@@ -93,8 +256,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleProcess = async (selectedMode: ProcessMode, isContinue: boolean = false) => {
-        if (!file && !isContinue) {
-            setError("Please select a file first.");
+        if (files.length === 0 && !isContinue) {
+            setError("Please select at least one file first.");
             return;
         }
 
@@ -107,8 +270,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         setError(null);
 
         const formData = new FormData();
-        if (file) {
-            formData.append("file", file);
+        
+        // Add all files
+        files.forEach((fileObj, index) => {
+            formData.append(`files`, fileObj.file);
+        });
+
+        // Add answer key if provided
+        if (answerKeyFile) {
+            formData.append("answer_key", answerKeyFile);
         }
 
         // If continuing, send existing question IDs to avoid duplicates
@@ -231,7 +401,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 id: q.id || index + 1,
                 type: q.type || 'single',
                 question: q.question,
-                questionText: q.question, // For compatibility
+                questionText: q.question,
                 options: processedOptions,
                 correctAnswer: q.correctAnswer,
                 image: q.image,
@@ -248,7 +418,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
         const importPayload: any = {
             questions: questions,
-            duration: questions.length, // 1 minute per question as default
+            duration: questions.length,
             marks_per_question: 1,
             negative_marks: 0,
         };
@@ -278,77 +448,312 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         </div>
     );
 
-    // Step 1: File Upload
-    if (!file) {
+    // Error Boundary Component
+    class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
+        constructor(props: any) {
+            super(props);
+            this.state = { hasError: false, error: null };
+        }
+
+        static getDerivedStateFromError(error: any) {
+            return { hasError: true, error };
+        }
+
+        componentDidCatch(error: any, errorInfo: any) {
+            console.error("Preview Error:", error, errorInfo);
+        }
+
+        render() {
+            if (this.state.hasError) {
+                return (
+                    <div className="p-4 border border-red-500 bg-red-50 text-red-700 rounded-md">
+                        <h3 className="font-bold">Something went wrong rendering the preview</h3>
+                        <pre className="text-xs mt-2 overflow-auto max-h-40">{String(this.state.error)}</pre>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2 border-red-200 hover:bg-red-100"
+                            onClick={() => this.setState({ hasError: false })}
+                        >
+                            Try Again
+                        </Button>
+                    </div>
+                );
+            }
+
+            return this.props.children;
+        }
+    }
+
+    // Step 1: File Upload - Separate sections for Documents and Images
+    if (files.length === 0) {
         return (
-            <div className="container mx-auto p-4 max-w-3xl">
+            <div className="container mx-auto p-4 max-w-4xl">
                 <SEO
-                    title="AI Test Generator from PDF - TestoZa"
-                    description="Generate tests from PDF documents using AI. Extract exact questions or generate new ones."
-                    keywords={["ai test generator", "pdf to quiz", "exam maker ai"]}
+                    title="AI Test Generator - TestoZa"
+                    description="Generate tests from PDF documents and images using AI. Extract exact questions or generate new ones."
+                    keywords={["ai test generator", "pdf to quiz", "image to quiz", "exam maker ai"]}
                 />
                 <div className="text-center space-y-6 py-12">
                     <div className="space-y-2">
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                            Import from PDF
+                            Import Test Questions
                         </h1>
                         <p className="text-muted-foreground">
-                            Upload an exam paper or study material to create a test
+                            Upload exam papers, question images, or study material to create a test
                         </p>
                     </div>
 
-                    <Card className="max-w-md mx-auto border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer">
-                        <CardContent className="p-8">
-                            <label className="cursor-pointer block space-y-4">
-                                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                                    <FileText className="w-8 h-8 text-primary" />
+                    {/* Two separate upload sections */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                        {/* Document Upload Section */}
+                        <Card className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
+                            <CardContent className="p-8">
+                                <div className="space-y-4">
+                                    <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-lg">Upload Document</p>
+                                        <p className="text-sm text-muted-foreground">PDF, DOC, PPT files</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-muted-foreground">
+                                            Best for exam papers, textbooks, notes
+                                        </p>
+                                        <Button 
+                                            variant="outline" 
+                                            onClick={() => documentInputRef.current?.click()}
+                                            className="gap-2 w-full"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            Choose Document
+                                        </Button>
+                                    </div>
+                                    <Input
+                                        ref={documentInputRef}
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.ppt,.pptx"
+                                        onChange={handleDocumentChange}
+                                        className="hidden"
+                                    />
                                 </div>
-                                <div>
-                                    <p className="font-semibold">Choose PDF File</p>
-                                    <p className="text-sm text-muted-foreground">Supports exam papers, textbooks, notes</p>
+                            </CardContent>
+                        </Card>
+
+                        {/* Images Upload Section */}
+                        <Card className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
+                            <CardContent className="p-8">
+                                <div className="space-y-4">
+                                    <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <FileImage className="w-8 h-8 text-green-600 dark:text-green-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-lg">Upload Images</p>
+                                        <p className="text-sm text-muted-foreground">JPG, PNG, WEBP</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-muted-foreground">
+                                            Best for question photos, screenshots
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={() => imageInputRef.current?.click()}
+                                                className="gap-2 flex-1"
+                                            >
+                                                <ImageIcon className="w-4 h-4" />
+                                                Browse
+                                            </Button>
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={openCamera}
+                                                className="gap-2 flex-1"
+                                            >
+                                                <Camera className="w-4 h-4" />
+                                                Camera
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <Input
+                                        ref={imageInputRef}
+                                        type="file"
+                                        accept=".png,.jpg,.jpeg,.webp"
+                                        multiple
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                    />
                                 </div>
-                                <Input
-                                    type="file"
-                                    accept=".pdf"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
-                                <Button variant="outline" className="pointer-events-none">
-                                    Browse Files
-                                </Button>
-                            </label>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="max-w-2xl mx-auto bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+                        <p className="font-medium mb-2">💡 Tips:</p>
+                        <ul className="space-y-1 text-left list-disc list-inside">
+                            <li>Use <strong>Documents</strong> for full exam papers, PDFs, or presentations</li>
+                            <li>Use <strong>Images</strong> for question photos, screenshots, or individual question images</li>
+                            <li>You can select multiple images at once</li>
+                            <li>Add an answer key to help AI match correct answers automatically</li>
+                        </ul>
+                    </div>
                 </div>
+
+                {/* Camera Dialog */}
+                <Dialog open={showCamera} onOpenChange={setShowCamera}>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Capture Image</DialogTitle>
+                            <DialogDescription>
+                                Position your document in the camera view and click capture
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="relative">
+                            <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                className="w-full rounded-lg"
+                            />
+                            <canvas ref={canvasRef} className="hidden" />
+                        </div>
+                        <div className="flex justify-center gap-2">
+                            <Button variant="outline" onClick={closeCamera}>
+                                Cancel
+                            </Button>
+                            <Button onClick={captureImage} className="gap-2">
+                                <Camera className="w-4 h-4" />
+                                Capture
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     }
 
-    // Step 2: Mode Selection (after file is selected, before processing)
+    // Step 2: Mode Selection (after files are selected, before processing)
     if (!loading && !generatingMore && !parsedData) {
+        const hasPDF = files.some(f => f.type === 'pdf');
+        const hasImages = files.some(f => f.type === 'image');
+        
         return (
-            <div className="container mx-auto p-4 max-w-3xl">
+            <div className="container mx-auto p-4 max-w-4xl">
                 <SEO
-                    title="AI Test Generator from PDF - TestoZa"
-                    description="Generate tests from PDF documents using AI."
-                    keywords={["ai test generator", "pdf to quiz"]}
+                    title="AI Test Generator - TestoZa"
+                    description="Generate tests from PDF documents and images using AI."
+                    keywords={["ai test generator", "pdf to quiz", "image to quiz"]}
                 />
 
                 <div className="space-y-6">
-                    <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" onClick={() => { setFile(null); setError(null); }}>
-                            <ArrowLeft className="w-4 h-4 mr-1" /> Back
-                        </Button>
-                        <div>
-                            <h2 className="text-lg font-semibold">{file.name}</h2>
-                            <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
-                        </div>
-                    </div>
+                    {/* Files Preview */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center justify-between">
+                                <span>
+                                    {uploadType === 'document' ? 'Document' : 'Images'} 
+                                    {' '}({files.length} {files.length === 1 ? 'file' : 'files'})
+                                </span>
+                                <Button variant="ghost" size="sm" onClick={clearAllFiles}>
+                                    <X className="w-4 h-4 mr-1" /> Clear All
+                                </Button>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {files.map((fileObj) => (
+                                    <div key={fileObj.id} className="relative group">
+                                        {fileObj.preview ? (
+                                            <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
+                                                <img 
+                                                    src={fileObj.preview} 
+                                                    alt={fileObj.file.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2">
+                                                <FileText className="w-8 h-8 text-muted-foreground mb-1" />
+                                                <span className="text-xs text-center truncate w-full">{fileObj.file.name}</span>
+                                            </div>
+                                        )}
+                                        <button
+                                            onClick={() => removeFile(fileObj.id)}
+                                            className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                                
+                                {/* Add More Button - only for images */}
+                                {uploadType === 'image' && (
+                                    <button
+                                        onClick={() => imageInputRef.current?.click()}
+                                        className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
+                                    >
+                                        <Plus className="w-6 h-6 text-muted-foreground" />
+                                        <span className="text-xs text-muted-foreground">Add More</span>
+                                    </button>
+                                )}
+                            </div>
+                            
+                            <Input
+                                ref={imageInputRef}
+                                type="file"
+                                accept=".png,.jpg,.jpeg,.webp"
+                                multiple
+                                onChange={handleImageChange}
+                                className="hidden"
+                            />
+                        </CardContent>
+                    </Card>
 
-                    <div className="text-center space-y-2">
-                        <h1 className="text-2xl font-bold">How do you want to process this PDF?</h1>
-                        <p className="text-muted-foreground">Choose a mode based on your goal</p>
-                    </div>
+                    {/* Answer Key Upload - Show for both document and image uploads */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Key className="w-5 h-5" />
+                                Answer Key (Optional)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {answerKeyFile ? (
+                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                        <Key className="w-5 h-5 text-primary" />
+                                        <div>
+                                            <p className="font-medium">{answerKeyFile.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                AI will use this to match correct answers with questions
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => setAnswerKeyFile(null)}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div 
+                                    className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 rounded-lg p-6 text-center cursor-pointer transition-colors"
+                                    onClick={() => answerKeyInputRef.current?.click()}
+                                >
+                                    <Key className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                                    <p className="font-medium">Upload Answer Key</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Helps AI accurately match correct answers (PDF or Image)
+                                    </p>
+                                    <Input
+                                        ref={answerKeyInputRef}
+                                        type="file"
+                                        accept=".pdf,.png,.jpg,.jpeg"
+                                        onChange={handleAnswerKeyChange}
+                                        className="hidden"
+                                    />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {error && (
                         <Alert variant="destructive">
@@ -357,6 +762,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     )}
+
+                    <div className="text-center space-y-2">
+                        <h1 className="text-2xl font-bold">How do you want to process {hasImages && hasPDF ? 'these files' : 'this file'}?</h1>
+                        <p className="text-muted-foreground">Choose a mode based on your goal</p>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                         {/* Extract Mode */}
@@ -392,7 +802,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 <div>
                                     <h3 className="text-lg font-bold">Generate New Questions</h3>
                                     <p className="text-sm text-muted-foreground mt-1">
-                                        AI creates original questions based on the content and topics in the PDF
+                                        AI creates original questions based on the content and topics in the document
                                     </p>
                                 </div>
                                 <Badge variant="secondary" className="text-xs">
@@ -432,46 +842,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
-    // Error Boundary Component
-    class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
-        constructor(props: any) {
-            super(props);
-            this.state = { hasError: false, error: null };
-        }
-
-        static getDerivedStateFromError(error: any) {
-            return { hasError: true, error };
-        }
-
-        componentDidCatch(error: any, errorInfo: any) {
-            console.error("Preview Error:", error, errorInfo);
-        }
-
-        render() {
-            if (this.state.hasError) {
-                return (
-                    <div className="p-4 border border-red-500 bg-red-50 text-red-700 rounded-md">
-                        <h3 className="font-bold">Something went wrong rendering the preview</h3>
-                        <pre className="text-xs mt-2 overflow-auto max-h-40">{String(this.state.error)}</pre>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2 border-red-200 hover:bg-red-100"
-                            onClick={() => this.setState({ hasError: false })}
-                        >
-                            Try Again
-                        </Button>
-                    </div>
-                );
-            }
-
-            return this.props.children;
-        }
-    }
-
     // Step 4: Preview & Import
     if (parsedData) {
-        console.log("Rendering Preview for:", parsedData); // Debug log
+        console.log("Rendering Preview for:", parsedData);
 
         try {
             const questions = parsedData.questions || [];
@@ -693,7 +1066,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             </ScrollArea>
 
                             {/* Generate More Questions Button */}
-                            {file && mode && (
+                            {files.length > 0 && mode && (
                                 <Card className="mt-4 border-dashed border-2 border-primary/30">
                                     <CardContent className="p-4">
                                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
