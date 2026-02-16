@@ -1,15 +1,16 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key } from "lucide-react";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ProcessingProgress } from "@/components/ProcessingProgress";
 
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -22,7 +23,7 @@ interface Question {
     type: 'single' | 'multiple' | 'numerical' | string;
     question: string;
     image?: string | null;
-    options?: { [key: string]: string } | null;
+    options?: { [key: string]: string | { text: string; image?: string | null } } | null;
     optionImages?: { [key: string]: string | null };
     correctAnswer?: string | string[] | { min: number; max: number } | null;
     needsAnswer?: boolean;
@@ -30,6 +31,7 @@ interface Question {
     negativeMarks?: number;
     diagramPage?: number | null;
     passageContent?: string;
+    page?: number;
 }
 
 interface ParseResponse {
@@ -54,7 +56,59 @@ interface SelectedFile {
     preview?: string;
 }
 
+
+// Helper component for markdown preview
+const MarkdownPreview = ({ content }: { content: string }) => (
+    <div className="prose dark:prose-invert max-w-none text-sm">
+        <ReactMarkdown
+            remarkPlugins={[remarkMath]}
+            rehypePlugins={[rehypeKatex]}
+            components={{
+                p: ({ children }) => <span className="block mb-2 last:mb-0">{children}</span>
+            }}
+        >
+            {content}
+        </ReactMarkdown>
+    </div>
+);
+
+// Error Boundary Component
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
+    constructor(props: any) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: any) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: any, errorInfo: any) {
+        console.error("Preview Error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-4 border border-red-500 bg-red-50 text-red-700 rounded-md">
+                    <h3 className="font-bold">Something went wrong rendering the preview</h3>
+                    <pre className="text-xs mt-2 overflow-auto max-h-40">{String(this.state.error)}</pre>
+                    <button
+                        className="mt-2 text-sm underline text-red-600 hover:text-red-800"
+                        onClick={() => this.setState({ hasError: false })}
+                    >
+                        Try Again
+                    </button>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
+
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
+
     const [files, setFiles] = useState<SelectedFile[]>([]);
     const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
     const [mode, setMode] = useState<ProcessMode | null>(null);
@@ -66,7 +120,18 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [showCamera, setShowCamera] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [uploadType, setUploadType] = useState<UploadType>(null);
-    
+
+    // ULTRA-FAST Streaming State
+    const [isStreaming, setIsStreaming] = useState(false);
+    const [streamProgress, setStreamProgress] = useState<{
+        stage: 'uploading' | 'analyzing' | 'processing' | 'extracting' | 'finalizing' | 'complete' | 'error';
+        percent: number;
+        message: string;
+        data?: any;
+    } | null>(null);
+    const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
+    const [abortController, setAbortController] = useState<AbortController | null>(null);
+
     const documentInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
     const answerKeyInputRef = useRef<HTMLInputElement>(null);
@@ -163,22 +228,43 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         setError(null);
         setParsedData(null);
         setMode(null);
+        // Reset streaming state
+        setIsStreaming(false);
+        setStreamProgress(null);
+        setStreamingQuestions([]);
+        if (abortController) {
+            abortController.abort();
+            setAbortController(null);
+        }
     };
+
+    // Fix: Use useEffect to attach stream once videoRef is available in the DOM
+    useEffect(() => {
+        if (showCamera && cameraStream && videoRef.current) {
+            videoRef.current.srcObject = cameraStream;
+        }
+    }, [showCamera, cameraStream]);
 
     const openCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
                     facingMode: 'environment',
                     width: { ideal: 1920 },
                     height: { ideal: 1080 }
-                } 
+                }
             });
             setCameraStream(stream);
             setShowCamera(true);
+            setUploadType('image'); // Ensure we enter the image workflow
+            setError(null);
+            // Removed direct srcObject assignment here as videoRef might be null 
+            // before the dialog renders the video element.
+            /*
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
             }
+            */
         } catch (err) {
             setError("Could not access camera. Please ensure you have granted camera permissions.");
         }
@@ -196,14 +282,14 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         if (videoRef.current && canvasRef.current) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
-            
+
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
+
             const ctx = canvas.getContext('2d');
             if (ctx) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
+
                 canvas.toBlob((blob) => {
                     if (blob) {
                         const file = new File([blob], `camera_capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
@@ -268,31 +354,147 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             setLoading(true);
         }
         setError(null);
+        setProgress('');
+
+        // ULTRA-FAST: Use SSE streaming for new uploads (not for continue mode)
+        if (!isContinue) {
+            await handleStreamProcess(selectedMode);
+        } else {
+            // Fall back to old method for "generate more" mode
+            await handleLegacyProcess(selectedMode, isContinue);
+        }
+    };
+
+    // ULTRA-FAST SSE Streaming Process
+    const handleStreamProcess = async (selectedMode: ProcessMode) => {
+        setIsStreaming(true);
+        setStreamingQuestions([]);
+        setStreamProgress(null);
 
         const formData = new FormData();
-        
+
         // Add all files
-        files.forEach((fileObj, index) => {
-            formData.append(`files`, fileObj.file);
+        files.forEach((fileObj) => {
+            formData.append('files', fileObj.file);
         });
 
         // Add answer key if provided
         if (answerKeyFile) {
-            formData.append("answer_key", answerKeyFile);
+            formData.append('answer_key', answerKeyFile);
         }
 
-        // If continuing, send existing question IDs to avoid duplicates
+        const abortCtrl = new AbortController();
+        setAbortController(abortCtrl);
+
+        try {
+            const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+            const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+
+            // Use ULTRA-FAST streaming endpoint
+            const response = await fetch(`${baseUrl}/ai/parse-stream?mode=${selectedMode}`, {
+                method: 'POST',
+                body: formData,
+                signal: abortCtrl.signal,
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => null);
+                throw new Error(errData?.detail || `Server error (${response.status})`);
+            }
+
+            if (!response.body) {
+                throw new Error('No response body received');
+            }
+
+            // Read the stream
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+
+                    // Parse SSE events
+                    if (line.startsWith('event: ')) {
+                        const eventType = line.slice(7).trim();
+                        const dataLine = lines[i + 1];
+
+                        if (dataLine && dataLine.startsWith('data: ')) {
+                            const data = JSON.parse(dataLine.slice(6));
+
+                            switch (eventType) {
+                                case 'progress':
+                                    setStreamProgress({
+                                        stage: data.stage,
+                                        percent: data.percent,
+                                        message: data.message,
+                                        data: data.data
+                                    });
+                                    break;
+
+                                case 'question':
+                                    setStreamingQuestions(prev => [...prev, data.question]);
+                                    break;
+
+                                case 'complete':
+                                    setParsedData(data);
+                                    setIsStreaming(false);
+                                    setLoading(false);
+                                    setAbortController(null);
+                                    return;
+
+                                case 'error':
+                                    throw new Error(data.message);
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (err: any) {
+            if (err.name === 'AbortError') {
+                console.log('Processing cancelled by user');
+            } else {
+                console.error('Stream Error:', err);
+                setError(err.message || 'An error occurred during processing');
+            }
+            setIsStreaming(false);
+            setLoading(false);
+            setAbortController(null);
+        }
+    };
+
+    // Legacy non-streaming process (for "generate more" mode)
+    const handleLegacyProcess = async (selectedMode: ProcessMode, isContinue: boolean) => {
+        const formData = new FormData();
+
+        files.forEach((fileObj) => {
+            formData.append('files', fileObj.file);
+        });
+
+        if (answerKeyFile) {
+            formData.append('answer_key', answerKeyFile);
+        }
+
         if (isContinue && parsedData) {
             const existingIds = parsedData.questions.map(q => q.id);
-            formData.append("existing_ids", JSON.stringify(existingIds));
-            formData.append("continue_mode", "true");
+            formData.append('existing_ids', JSON.stringify(existingIds));
+            formData.append('continue_mode', 'true');
         }
 
         try {
             setProgress(isContinue
                 ? 'AI is analyzing remaining content...'
                 : (selectedMode === 'extract'
-                    ? 'AI is reading your exam paper (processing in batches)...'
+                    ? 'AI is reading your exam paper...'
                     : 'AI is analyzing content & generating questions...')
             );
 
@@ -300,28 +502,27 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
             const response = await fetch(`${baseUrl}/ai/parse?mode=${selectedMode}`, {
-                method: "POST",
+                method: 'POST',
                 body: formData,
             });
 
             if (!response.ok) {
                 const errData = await response.json().catch(() => null);
-                throw new Error(errData?.detail || `Server error (${response.status}). Ensure backend is running.`);
+                throw new Error(errData?.detail || `Server error (${response.status})`);
             }
 
             const data: ParseResponse = await response.json();
 
             if (!data.questions || data.questions.length === 0) {
                 throw new Error(isContinue
-                    ? "No additional questions found in the remaining content."
-                    : "AI returned 0 questions. Try a different file or mode."
+                    ? 'No additional questions found in the remaining content.'
+                    : 'AI returned 0 questions. Try a different file or mode.'
                 );
             }
 
             setProgress('');
 
             if (isContinue && parsedData) {
-                // Append new questions to existing ones with adjusted IDs
                 const maxId = Math.max(...parsedData.questions.map(q => q.id));
                 const adjustedQuestions = data.questions.map((q, idx) => ({
                     ...q,
@@ -336,12 +537,23 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 setParsedData(data);
             }
         } catch (err: any) {
-            console.error("Process Error:", err);
-            setError(err.message || "An unknown error occurred");
+            console.error('Process Error:', err);
+            setError(err.message || 'An unknown error occurred');
             setProgress('');
         } finally {
             setLoading(false);
             setGeneratingMore(false);
+        }
+    };
+
+    // Cancel ongoing stream
+    const handleCancelStream = () => {
+        if (abortController) {
+            abortController.abort();
+            setIsStreaming(false);
+            setLoading(false);
+            setStreamProgress(null);
+            setAbortController(null);
         }
     };
 
@@ -362,11 +574,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         console.log("[AITestImporter] handleImport called");
         console.log("[AITestImporter] parsedData:", parsedData);
         console.log("[AITestImporter] onImport exists:", !!onImport);
-        
+
         if (!parsedData || !onImport) {
-            console.error("[AITestImporter] Cannot import: parsedData or onImport is missing", { 
-                hasParsedData: !!parsedData, 
-                hasOnImport: !!onImport 
+            console.error("[AITestImporter] Cannot import: parsedData or onImport is missing", {
+                hasParsedData: !!parsedData,
+                hasOnImport: !!onImport
             });
             return;
         }
@@ -374,23 +586,24 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         // Clean and prepare extraction data for the builder
         const questions = parsedData.questions.map((q, index) => {
             console.log(`[AITestImporter] Processing question ${index + 1}:`, q);
-            
+
             // Handle different question types
             let processedOptions: { [key: string]: { text: string; image: string | null } } = {};
 
             // Only process options for single/multiple choice questions
             if (q.type !== 'numerical' && q.options && typeof q.options === 'object') {
-                Object.entries(q.options).forEach(([key, text]) => {
-                    if (text && typeof text === 'object' && 'text' in text) {
+                Object.entries(q.options).forEach(([key, val]) => {
+                    const optionVal = val as any;
+                    if (optionVal && typeof optionVal === 'object' && 'text' in optionVal) {
                         // Already in nested format
                         processedOptions[key] = {
-                            text: (text as any).text || '',
-                            image: (text as any).image || null
+                            text: optionVal.text || '',
+                            image: optionVal.image || null
                         };
                     } else {
                         // Flat format, convert to nested
                         processedOptions[key] = {
-                            text: String(text || ''),
+                            text: String(val || ''),
                             image: q.optionImages?.[key] || null
                         };
                     }
@@ -411,7 +624,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 passageContent: q.passageContent || "",
                 typingMode: 'en' as const
             };
-            
+
             console.log(`[AITestImporter] Processed question ${index + 1}:`, processedQuestion);
             return processedQuestion;
         });
@@ -433,60 +646,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         console.log("[AITestImporter] onImport called successfully");
     };
 
-    // Helper component for markdown preview
-    const MarkdownPreview = ({ content }: { content: string }) => (
-        <div className="prose dark:prose-invert max-w-none text-sm">
-            <ReactMarkdown
-                remarkPlugins={[remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-                components={{
-                    p: ({ children }) => <span className="block mb-2 last:mb-0">{children}</span>
-                }}
-            >
-                {content}
-            </ReactMarkdown>
-        </div>
-    );
 
-    // Error Boundary Component
-    class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
-        constructor(props: any) {
-            super(props);
-            this.state = { hasError: false, error: null };
-        }
-
-        static getDerivedStateFromError(error: any) {
-            return { hasError: true, error };
-        }
-
-        componentDidCatch(error: any, errorInfo: any) {
-            console.error("Preview Error:", error, errorInfo);
-        }
-
-        render() {
-            if (this.state.hasError) {
-                return (
-                    <div className="p-4 border border-red-500 bg-red-50 text-red-700 rounded-md">
-                        <h3 className="font-bold">Something went wrong rendering the preview</h3>
-                        <pre className="text-xs mt-2 overflow-auto max-h-40">{String(this.state.error)}</pre>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2 border-red-200 hover:bg-red-100"
-                            onClick={() => this.setState({ hasError: false })}
-                        >
-                            Try Again
-                        </Button>
-                    </div>
-                );
-            }
-
-            return this.props.children;
-        }
-    }
 
     // Step 1: File Upload - Separate sections for Documents and Images
-    if (files.length === 0) {
+    if (files.length === 0 && !uploadType) {
         return (
             <div className="container mx-auto p-4 max-w-4xl">
                 <SEO
@@ -521,8 +684,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         <p className="text-xs text-muted-foreground">
                                             Best for exam papers, textbooks, notes
                                         </p>
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             onClick={() => documentInputRef.current?.click()}
                                             className="gap-2 w-full"
                                         >
@@ -542,7 +705,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         </Card>
 
                         {/* Images Upload Section */}
-                        <Card className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
+                        <Card
+                            className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group"
+                            onClick={() => {
+                                setUploadType('image');
+                                setError(null);
+                            }}
+                        >
                             <CardContent className="p-8">
                                 <div className="space-y-4">
                                     <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -557,17 +726,23 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                             Best for question photos, screenshots
                                         </p>
                                         <div className="flex gap-2">
-                                            <Button 
-                                                variant="outline" 
-                                                onClick={() => imageInputRef.current?.click()}
+                                            <Button
+                                                variant="outline"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    imageInputRef.current?.click();
+                                                }}
                                                 className="gap-2 flex-1"
                                             >
                                                 <ImageIcon className="w-4 h-4" />
                                                 Browse
                                             </Button>
-                                            <Button 
-                                                variant="outline" 
-                                                onClick={openCamera}
+                                            <Button
+                                                variant="outline"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openCamera();
+                                                }}
                                                 className="gap-2 flex-1"
                                             >
                                                 <Camera className="w-4 h-4" />
@@ -636,7 +811,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     if (!loading && !generatingMore && !parsedData) {
         const hasPDF = files.some(f => f.type === 'pdf');
         const hasImages = files.some(f => f.type === 'image');
-        
+
         return (
             <div className="container mx-auto p-4 max-w-4xl">
                 <SEO
@@ -650,11 +825,25 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-lg flex items-center justify-between">
-                                <span>
-                                    {uploadType === 'document' ? 'Document' : 'Images'} 
-                                    {' '}({files.length} {files.length === 1 ? 'file' : 'files'})
-                                </span>
-                                <Button variant="ghost" size="sm" onClick={clearAllFiles}>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                            if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
+                                                clearAllFiles();
+                                            }
+                                        }}
+                                    >
+                                        <ArrowLeft className="w-4 h-4" />
+                                    </Button>
+                                    <span>
+                                        {uploadType === 'document' ? 'Document' : 'Images'}
+                                        {' '}({files.length} {files.length === 1 ? 'file' : 'files'})
+                                    </span>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={clearAllFiles} className="text-muted-foreground hover:text-destructive">
                                     <X className="w-4 h-4 mr-1" /> Clear All
                                 </Button>
                             </CardTitle>
@@ -665,8 +854,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     <div key={fileObj.id} className="relative group">
                                         {fileObj.preview ? (
                                             <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
-                                                <img 
-                                                    src={fileObj.preview} 
+                                                <img
+                                                    src={fileObj.preview}
                                                     alt={fileObj.file.name}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -685,19 +874,30 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         </button>
                                     </div>
                                 ))}
-                                
+
                                 {/* Add More Button - only for images */}
                                 {uploadType === 'image' && (
-                                    <button
-                                        onClick={() => imageInputRef.current?.click()}
-                                        className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
-                                    >
-                                        <Plus className="w-6 h-6 text-muted-foreground" />
-                                        <span className="text-xs text-muted-foreground">Add More</span>
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => imageInputRef.current?.click()}
+                                            className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
+                                        >
+                                            <Plus className="w-6 h-6 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">Add Image</span>
+                                        </button>
+                                        <button
+                                            onClick={openCamera}
+                                            className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
+                                        >
+                                            <Camera className="w-6 h-6 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">Camera</span>
+                                        </button>
+                                    </>
                                 )}
                             </div>
-                            
+
+
+
                             <Input
                                 ref={imageInputRef}
                                 type="file"
@@ -734,7 +934,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     </Button>
                                 </div>
                             ) : (
-                                <div 
+                                <div
                                     className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 rounded-lg p-6 text-center cursor-pointer transition-colors"
                                     onClick={() => answerKeyInputRef.current?.click()}
                                 >
@@ -784,9 +984,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         Extract exact questions, options, and diagrams from the exam paper as-is
                                     </p>
                                 </div>
-                                <Badge variant="secondary" className="text-xs">
-                                    Best for: Exam papers, question banks
-                                </Badge>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    <Badge variant="secondary" className="text-xs">
+                                        Best for: Exam papers, question banks
+                                    </Badge>
+                                    <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                                        <Zap className="w-3 h-3 mr-1" />
+                                        ULTRA-FAST
+                                    </Badge>
+                                </div>
                             </CardContent>
                         </Card>
 
@@ -805,9 +1011,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         AI creates original questions based on the content and topics in the document
                                     </p>
                                 </div>
-                                <Badge variant="secondary" className="text-xs">
-                                    Best for: Textbooks, notes, study material
-                                </Badge>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    <Badge variant="secondary" className="text-xs">
+                                        Best for: Textbooks, notes, study material
+                                    </Badge>
+                                    <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                                        <Zap className="w-3 h-3 mr-1" />
+                                        ULTRA-FAST
+                                    </Badge>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
@@ -816,8 +1028,100 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
-    // Step 3: Loading state
+    // Step 3: Loading state - ULTRA-FAST Streaming with Progress
     if (loading || generatingMore) {
+        // Show ULTRA-FAST streaming UI for new uploads
+        if (isStreaming && streamProgress) {
+            return (
+                <div className="container mx-auto p-4 max-w-4xl space-y-8">
+                    {/* Progress Component */}
+                    <ProcessingProgress
+                        stage={streamProgress.stage}
+                        percent={streamProgress.percent}
+                        message={streamProgress.message}
+                        data={streamProgress.data}
+                    />
+
+                    {/* Progressive Question Display */}
+                    {streamingQuestions.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-semibold">
+                                        Questions Found
+                                    </h3>
+                                    <Badge variant="default" className="bg-green-600">
+                                        {streamingQuestions.length}
+                                    </Badge>
+                                </div>
+                                {streamProgress.stage !== 'complete' && (
+                                    <span className="text-sm text-muted-foreground animate-pulse flex items-center gap-1">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        More coming...
+                                    </span>
+                                )}
+                            </div>
+
+                            <ScrollArea className="h-[400px] border rounded-lg p-4 bg-muted/20">
+                                <div className="space-y-3">
+                                    {streamingQuestions.map((q, idx) => (
+                                        <Card
+                                            key={idx}
+                                            className="border-l-4 border-l-primary/50 hover:border-l-primary transition-all duration-300 animate-in slide-in-from-left-2"
+                                            style={{ animationDelay: `${idx * 50}ms` }}
+                                        >
+                                            <CardContent className="p-3">
+                                                <div className="flex gap-3">
+                                                    <span className="font-bold text-primary min-w-[28px] text-sm">
+                                                        {q.id}.
+                                                    </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm line-clamp-2 text-foreground">
+                                                            {q.question || 'No question text'}
+                                                        </p>
+                                                        {q.options && Object.keys(q.options).length > 0 && (
+                                                            <div className="flex gap-2 mt-2 flex-wrap">
+                                                                {Object.entries(q.options).slice(0, 4).map(([key, value]) => (
+                                                                    <span
+                                                                        key={key}
+                                                                        className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded"
+                                                                    >
+                                                                        {key}: {typeof value === 'string' ? value.slice(0, 20) : '...'}
+                                                                        {typeof value === 'string' && value.length > 20 ? '...' : ''}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <Badge variant="outline" className="text-xs shrink-0">
+                                                        {q.type || 'single'}
+                                                    </Badge>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+
+                            {/* Cancel Button */}
+                            <div className="flex justify-center">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancelStream}
+                                    className="text-muted-foreground hover:text-destructive"
+                                >
+                                    <X className="w-4 h-4 mr-1" />
+                                    Cancel Processing
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Legacy loading UI for "generate more" mode
         return (
             <div className="container mx-auto p-4 max-w-3xl">
                 <div className="flex flex-col items-center justify-center py-20 space-y-6">
@@ -835,7 +1139,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             {generatingMore ? 'Generating More Questions...' : (mode === 'extract' ? 'Extracting Questions...' : 'Generating Questions...')}
                         </h2>
                         <p className="text-muted-foreground animate-pulse">{progress}</p>
-                        <p className="text-xs text-muted-foreground/60">This may take a minute for larger documents (batch processing active)</p>
+                        <p className="text-xs text-muted-foreground/60">Processing...</p>
                     </div>
                 </div>
             </div>
@@ -947,8 +1251,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                             <div className="flex gap-4">
                                                 <div className="font-bold text-lg min-w-[30px] pt-1 text-primary">{q.id}.</div>
                                                 <div className="flex-1 space-y-3">
-                                                    {/* Question Type Badge */}
-                                                    <div className="flex gap-2 items-center">
+                                                    {/* Question Type Badge & Page */}
+                                                    <div className="flex gap-2 items-center flex-wrap">
                                                         <Badge variant="secondary" className="text-xs">
                                                             {q.type === 'multiple' ? (
                                                                 <><CheckSquare className="w-3 h-3 mr-1" /> Multiple Choice</>
@@ -958,6 +1262,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                 <><Check className="w-3 h-3 mr-1" /> Single Choice</>
                                                             )}
                                                         </Badge>
+                                                        {q.page && (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                Page {q.page}
+                                                            </Badge>
+                                                        )}
                                                     </div>
 
                                                     {/* Question Content Toggle */}
@@ -1021,15 +1330,22 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                 </div>
                                                                 <div className="flex-1 space-y-2">
                                                                     <div className="text-sm pt-1">
-                                                                        {text ? (
-                                                                            <ErrorBoundary>
-                                                                                <MarkdownPreview content={String(text)} />
-                                                                            </ErrorBoundary>
-                                                                        ) : <span className="text-muted-foreground italic">Empty</span>}
+                                                                        {(() => {
+                                                                            const displayValue = typeof text === 'object' && text !== null ? (text as any).text : text;
+                                                                            return displayValue ? (
+                                                                                <ErrorBoundary>
+                                                                                    <MarkdownPreview content={String(displayValue)} />
+                                                                                </ErrorBoundary>
+                                                                            ) : <span className="text-muted-foreground italic">Empty</span>;
+                                                                        })()}
                                                                     </div>
-                                                                    {q.optionImages?.[key] && (
+                                                                    {(q.optionImages?.[key] || (typeof text === 'object' && text !== null && (text as any).image)) && (
                                                                         <div className="border rounded bg-white dark:bg-gray-900 p-1">
-                                                                            <img src={q.optionImages[key]!} alt={`Option ${key}`} className="h-24 object-contain" />
+                                                                            <img
+                                                                                src={(q.optionImages?.[key] || (text as any).image)!}
+                                                                                alt={`Option ${key}`}
+                                                                                className="h-24 object-contain"
+                                                                            />
                                                                         </div>
                                                                     )}
                                                                 </div>
