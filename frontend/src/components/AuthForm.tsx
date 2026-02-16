@@ -38,9 +38,11 @@ const formSchema = z.object({
     designation: z.enum(["Student", "Teacher", "Institution", "Guest"]).optional(),
 }).refine((data) => {
     // Signup passwords match check
+    /* 
     if (data.name && data.password !== data.confirmPassword) {
         return false;
     }
+    */
     return true;
 }, {
     message: "Passwords don't match",
@@ -155,10 +157,48 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
+                /* 
                 toast.success('Sign up successful!', {
                     duration: 5000,
                 });
                 setView('login');
+                */
+
+                // Direct Login logic after signup
+                try {
+                    const response = await apiClient.post('/login', {
+                        email: values.email,
+                        password: values.password
+                    });
+
+                    const { session } = response.data;
+
+                    if (!session || !session.access_token || !session.refresh_token) {
+                        throw new Error("Invalid session received from backend");
+                    }
+
+                    const { error: sessionError } = await supabase.auth.setSession({
+                        access_token: session.access_token,
+                        refresh_token: session.refresh_token,
+                    });
+
+                    if (sessionError) throw sessionError;
+
+                    toast.success('Successfully signed up and logged in!');
+
+                    const intent = localStorage.getItem('auth_redirect_intent');
+                    const stateFrom = location.state?.from;
+                    const from = intent || (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
+                    if (intent) localStorage.removeItem('auth_redirect_intent');
+
+                    setTimeout(() => {
+                        navigate(from, { replace: true });
+                    }, 100);
+                } catch (loginErr: any) {
+                    console.error("Login after signup failed", loginErr);
+                    toast.error("Account created but automatic login failed. Please login manually.");
+                    setView('login');
+                }
 
             } else if (view === 'forgot') {
                 const { error } = await resetPasswordForEmail(values.email);
@@ -283,6 +323,7 @@ export default function AuthForm() {
                                 />
                             )}
 
+                            {/* Commented out confirm password ui
                             {view === 'signup' && (
                                 <FormField
                                     control={form.control}
@@ -298,6 +339,7 @@ export default function AuthForm() {
                                     )}
                                 />
                             )}
+                            */}
 
                             <Button type="submit" className="w-full" disabled={isLoading}>
                                 {isLoading ? 'Loading...' :

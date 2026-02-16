@@ -10,8 +10,9 @@ httpx>=0.24.0
 python-jose[cryptography]
 passlib[bcrypt]
 pytest
-google-generativeai
+google-genai>=1.0.0
 youtube-transcript-api
+yt-dlp
 PyMuPDF
 pdfplumber
 Pillow

@@ -35,9 +35,10 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
             return;
         }
 
-        // Basic YouTube URL validation
-        if (!url.match(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/)) {
-            toast.error("Please enter a valid YouTube URL");
+        // Comprehensive YouTube URL validation including live streams, shorts, and standard URLs
+        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/(watch\?v=|live\/|embed\/|v\/|shorts\/|)?([0-9A-Za-z_-]{11})([?&].*)?$/;
+        if (!youtubeRegex.test(url)) {
+            toast.error("Please enter a valid YouTube URL (supports standard, live, and shorts URLs)");
             return;
         }
 

@@ -68,11 +68,12 @@ export const deleteMaterial = async (id: string, filePath?: string) => {
 
 // Helper: Extract YouTube info + Title via NoEmbed (Kept Client side as it uses public API)
 export const getYouTubeInfo = async (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    // Comprehensive regex to handle all YouTube URL formats including live streams
+    const regExp = /^.*(?:youtu\.be\/|youtube\.com\/(?:live\/|watch\?v=|embed\/|v\/|shorts\/)|v\/|u\/\w\/|&v=)([0-9A-Za-z_-]{11})(?:[?&].*)?$/;
     const match = url.match(regExp);
 
-    if (match && match[2].length === 11) {
-        const videoId = match[2];
+    if (match && match[1].length === 11) {
+        const videoId = match[1];
         const thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
         // Try Fetching Title using NoEmbed (Public oEmbed service, no API key needed)
