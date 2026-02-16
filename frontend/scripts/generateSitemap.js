@@ -38,7 +38,7 @@ async function generateSitemap() {
         // Removed table-qualified 'tests.created_at' which caused PGRST100
         const { data: tests, error: testError } = await supabase
             .from('tests')
-            .select('id, slug, updated_at, created_at')
+            .select('id, slug, created_at')
             .eq('is_public', true);
 
         if (testError) {

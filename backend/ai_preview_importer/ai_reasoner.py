@@ -49,6 +49,7 @@ async def analyze_page_refinement(raw_blocks, images, candidates, page_num):
 
 --------------------------------------------------
 
+
 Reconstruct the exam from the following raw data:
 {json.dumps(input_data, indent=2)}
 """
