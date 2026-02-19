@@ -331,8 +331,8 @@ Preserve exact structure from document.
 MATH & FORMATTING RULES:
 
 - Use LaTeX for ALL math:
-  \\\\frac, \\\\sqrt, \\\\int, x^2, etc.
-- CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands inside the JSON strings.
+  \\frac, \\sqrt, \\int, x^2, etc.
+- CRITICAL: Use DOUBLE BACKSLASHES (\\) for all LaTeX commands inside the JSON strings.
 - Inline math: $...$
 - Block math: $$...$$
 - Do NOT simplify expressions.
@@ -438,7 +438,7 @@ ABSOLUTE OUTPUT RULES
 6. DO NOT include keys if their value is null or truly absent
 7. Question IDs must be sequential integers (1,2,3,...)
 8. Deeply scan mathematical syntax before finalizing
-9. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\\\frac).
+9. CRITICAL: Use DOUBLE BACKSLASHES (\\) for all LaTeX commands (e.g., use \\frac instead of \\frac).
 
 SECTION STRUCTURE
 
@@ -596,7 +596,7 @@ MATHEMATICAL EXPRESSION RULES
 
 5. Example:
 √(x^2 + y^2)
-→ "\\\\sqrt{x^2 + y^2}"
+→ "\\sqrt{x^2 + y^2}"
 
 --------------------------------------------------
 
