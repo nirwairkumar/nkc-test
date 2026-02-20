@@ -1,74 +1,234 @@
-# Welcome to your Lovable project
+# 🚀 TestoZa
 
-## Project info
+> **Auto-Create. Revise. Share. Connect. Practice. Evaluate.**
+>  
+> AI-Powered Assessment & Learning Infrastructure for Students, Teachers & Institutions.
 
-**URL**: https://lovable.dev/projects/6e1f6d2f-83e4-40c7-9e5c-a5eb69b3963d
-**Open with vercle**: https://answer-ace-lab.vercel.app/
+---
 
-## How can I edit this code?
+## 🌍 Overview
 
-There are several ways of editing your application.
+**TestoZa** is a next-generation AI-powered assessment platform designed to simplify and modernize the way tests are created, conducted, analyzed, and shared.
 
-**Use Lovable**
+It is built for:
+- Students
+- Teachers
+- Coaching Institutes
+- Schools
+- EdTech Creators
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6e1f6d2f-83e4-40c7-9e5c-a5eb69b3963d) and start prompting.
+The platform combines:
+- AI-based test generation
+- Secure proctored exam infrastructure
+- Advanced marking & analytics
+- Public test publishing & creator system
+- Institutional branding support
 
-Changes made via Lovable will be committed automatically to this repo.
+⚡ **Current Stage:** MVP Live  
+🌐 Live Platform: https://testoza.com  
+👨‍💻 Built Independently by: Nirwair Kumar Chaudhary  
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# ✨ Core Features
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🧠 AI & Automation
 
-Follow these steps:
+- 📄 Convert PDF / PPT / Image → Structured Test
+- 🎥 Convert YouTube Lecture → Revision Notes / Live Test
+- 🧾 File-to-Test Intelligent Parsing
+- 🔢 Numerical Range Evaluation Support
+- 🧩 Partial Marking for Multiple Correct Questions
+- 📊 Advanced Marking Logic Engine
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 📝 Test Creation System
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Single Choice Questions
+- Multiple Correct Questions
+- Numerical Type Questions (Range-based checking)
+- Image-based Questions
+- Option Image Support
+- Section-wise Tests
+- Custom Marks per Question
+- Custom Negative Marking
+- Fraction-based Marking (e.g., 1/4)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
+## 🧮 Smart Evaluation Engine
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Section-wise Scoring
+- Partial Marking System
+- Negative Marking Support
+- Auto Score Calculation
+- Detailed Result Analysis
+- Percentage Calculation
+- Positive & Negative Score Breakdown
+- Attempt Metadata Tracking
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📊 Result & Analytics
 
-## What technologies are used for this project?
+- Detailed Question-wise Analysis
+- Section-wise Performance Report
+- Correct / Wrong / Partial / Skipped Count
+- Instant Result Mode
+- Hidden Result Mode (Institution Controlled)
+- Test History Tracking
+- Answer Review System
 
-This project is built with:
+---
 
+## 🔒 Secure Exam Infrastructure (Proctoring)
+
+- Full-Screen Enforcement Mode
+- Tab Switch Detection
+- Strict Mode (Auto-submit on violation)
+- Warning Mode (Multi-warning system)
+- Disable Copy / Paste
+- Disable Right Click
+- Local Session Save & Resume System
+- Auto Save Test Progress
+- Auto Submit on Time Up
+
+---
+
+## 🏫 Institution & Creator Support
+
+- Institution Branding (Logo + Name on Test)
+- Public Test Publishing
+- Verified Creator Model
+- Creator Profile Page
+- Like System for Tests
+- Public Test Discovery
+- Tag-Based Search System
+
+---
+
+## 🔎 Smart Discovery System
+
+- Search by Title
+- Search by Tag
+- Search by Category
+- Featured Tests Section
+- Infinite Feed System
+- User Recent Tests Section
+
+---
+
+## 👤 User Features
+
+- Authentication System
+- Password Reset Flow
+- Profile System
+- Creator Profile
+- Test History
+- Attempt Deletion
+- Resume Interrupted Test
+- Scientific Calculator (Optional per Test)
+- Dark Mode Support
+
+---
+
+# 🧱 Tech Stack
+
+### Frontend
+- React + TypeScript
 - Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- TailwindCSS
+- ShadCN UI
+- Lucide Icons
+- React Router
+- Latex Rendering (Math Support)
 
-## How can I deploy this project?
+### Backend
+- Supabase (Auth + Database)
+- PostgreSQL
+- Supabase Storage
 
-Simply open [Lovable](https://lovable.dev/projects/6e1f6d2f-83e4-40c7-9e5c-a5eb69b3963d) and click on Share -> Publish.
+### Architecture Highlights
+- Section-aware marking model
+- Per-question marking override system
+- Metadata-based attempt storage
+- LocalStorage + SessionStorage session recovery
+- Lazy loaded components for performance
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+# 🏗️ Project Structure (High-Level)
+src/
+├── pages/
+│ ├── TestPage
+│ ├── ResultsPage
+│ ├── TestHistory
+│ ├── CreatorProfilePage
+│ ├── UpdatePassword
+│ └── ...
+│
+├── components/
+│ ├── TestFeed
+│ ├── FeaturedTests
+│ ├── ScientificCalculator
+│ ├── YouTubeGenerator
+│ └── ...
+│
+├── contexts/
+│ ├── AuthContext
+│ ├── TestContext
+│
+├── lib/
+│ ├── testsApi
+│ ├── attemptsApi
+│ └── supabaseClient
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+---
+
+# 🛣️ Roadmap (Under Development 🚧)
+
+TestoZa is actively evolving.
+
+### 🔜 Planned Features
+
+- 🧑‍🤝‍🧑 Student–Teacher Social Community
+- 💬 Messaging System (Direct & Group)
+- 🏷️ Community-based Learning Groups
+- 📢 Institution Promotion Dashboard
+- 📈 Advanced Analytics Dashboard
+- 🏆 Leaderboard System
+- 📱 Progressive Web App (PWA)
+- 🧠 Advanced AI Question Quality Improvement
+- 📊 AI-based Weakness Analysis
+
+> ⚠️ Note: Social community and messaging features are planned but not yet implemented in the current MVP.
+
+---
+
+# 🎯 Market Problem Solved
+
+Today:
+- Google Forms → Too Basic  
+- Moodle → Too Complex  
+- LMS → Too Expensive  
+- Telegram → Unstructured  
+- Test Platforms → No Creator Visibility  
+
+TestoZa provides:
+
+✔ Affordable Structured Assessment Engine  
+✔ AI-Powered Automation  
+✔ Secure Exam Infrastructure  
+✔ Public Creator Publishing  
+✔ Institution Promotion Infrastructure  
+✔ Community-Driven Learning Model  
+
+---
+
+# 🚀 Getting Started (Development)
+
+## 1️⃣ Clone the Repository
+
+```bash
