@@ -721,11 +721,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         };
 
         if (isEditMode && testId) {
-            const { error } = await updateTest(testId, testDataPayload);
+            const { error } = await updateTest(testId, testDataPayload, isAdmin);
             if (error) throw error;
             if (selectedCategories.length > 0) {
                 const { assignCategoriesToTest } = await import('@/lib/categoriesApi');
-                await assignCategoriesToTest(testId, selectedCategories);
+                await assignCategoriesToTest(testId, selectedCategories, isAdmin);
             }
         } else {
             if (isAuto) throw new Error("Auto-save not supported for new unsaved tests yet");

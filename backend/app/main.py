@@ -82,6 +82,9 @@ app.include_router(support.router, prefix="/api/support", tags=["Support"])
 from app.routers import social
 app.include_router(social.router, prefix="/api/social", tags=["Social"])
 
+from app.routers import reports
+app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
+
 @app.get("/api/health")
 def health_check():
     return {

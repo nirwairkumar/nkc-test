@@ -5,10 +5,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -25,6 +26,8 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Latex from 'react-latex-next';
 import ScientificCalculator from '@/components/ScientificCalculator';
+import { submitReport } from '@/lib/reportsApi';
+import { supabase } from '@/lib/supabaseClient';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -69,6 +72,48 @@ export default function TestPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  // Reporting State
+  const [reportReason, setReportReason] = useState<string>('');
+  const [reportDetails, setReportDetails] = useState<string>('');
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportedQuestions, setReportedQuestions] = useState<Set<number>>(new Set());
+  const [isReportPopoverOpen, setIsReportPopoverOpen] = useState(false);
+
+  const handleReportSubmit = async (questionId: number, reason: string, details?: string) => {
+    if (!test) return;
+    if (!user) {
+      toast.error("Please login to report a question.");
+      return;
+    }
+
+    setIsReporting(true);
+
+    // Find the original index of the question
+    const qObj = test?.questions.find((q: any) => q.id === questionId);
+    const submitIndex = qObj && qObj.originalIndex !== undefined ? qObj.originalIndex : questionId;
+
+    const payload = {
+      test_id: test.id,
+      question_id: submitIndex,
+      creator_id: test.created_by,
+      reason: reason,
+      details: details || ''
+    };
+
+    const { error } = await submitReport(payload);
+    setIsReporting(false);
+
+    if (error) {
+      toast.error("Failed to submit report.");
+    } else {
+      toast.success("Report submitted successfully.");
+      setReportedQuestions(prev => new Set(prev).add(questionId));
+      setIsReportPopoverOpen(false);
+      setReportReason('');
+      setReportDetails('');
+    }
+  };
 
   // Palette Resize State
   const [paletteWidth, setPaletteWidth] = useState(320);
@@ -360,6 +405,13 @@ export default function TestPage() {
       const { data, error } = await fetchTestById(testId);
       if (error) throw error;
       if (!data) throw new Error('Test not found');
+
+      // Embed original index before shuffling to ensure accurate reporting
+      if (data.questions) {
+        data.questions.forEach((q: any, idx: number) => {
+          q.originalIndex = idx;
+        });
+      }
 
       // Randomize questions if setting is enabled
       const settings = data.settings;
@@ -704,17 +756,22 @@ export default function TestPage() {
         }
       }
 
-      navigate('/results', {
-        state: {
-          test: test,
-          answers: answers,
-          score: score,
-          totalQuestions: test.questions.length,
-          marksPerQuestion: test.marks_per_question || 4,
-          negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1
-        },
-        replace: true
-      });
+      // Handle Result Visibility
+      if (test.settings?.show_results_immediate === false) {
+        navigate('/test-submitted', { replace: true });
+      } else {
+        navigate('/results', {
+          state: {
+            test: test,
+            answers: answers,
+            score: score,
+            totalQuestions: test.questions.length,
+            marksPerQuestion: test.marks_per_question || 4,
+            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1
+          },
+          replace: true
+        });
+      }
       return;
     }
 
@@ -782,6 +839,82 @@ export default function TestPage() {
   if (!currentQuestion) return <div className="p-8 text-center">Error loading question.</div>;
 
   console.log("TestPage Render. ID:", id, "Test:", test?.title, "Q:", currentQuestion?.id);
+
+  const renderReportQuestionButton = (questionId: number) => {
+    const isReported = reportedQuestions.has(questionId);
+
+    return (
+      <Popover
+        open={isReportPopoverOpen && currentQuestion?.id === questionId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsReportPopoverOpen(false);
+            setReportReason('');
+            setReportDetails('');
+          } else {
+            if (isReported) {
+              toast.info("You already reported this question.");
+              return;
+            }
+            setIsReportPopoverOpen(true);
+          }
+        }}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`h-7 w-7 p-0 ml-1 ${isReported ? 'text-green-600 hover:text-green-700 bg-green-50' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'}`}
+            title={isReported ? "Reported" : "Report Issue"}
+          >
+            <MessageSquareWarning className="w-4 h-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-52 p-2.5 z-[100] border-slate-100 shadow-md" align="end">
+          <div className="space-y-2.5">
+            <h4 className="font-medium text-xs text-slate-400 px-1">Report Question</h4>
+            <div className="space-y-0.5">
+              {['Wrong Question', 'Formatting Issue', 'Incorrect Marking', 'Content Missing', 'Other'].map(r => (
+                <div
+                  key={r}
+                  className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs text-slate-500 transition-colors"
+                  onClick={() => {
+                    if (r === 'Other') {
+                      setReportReason(r);
+                    } else {
+                      handleReportSubmit(questionId, r);
+                    }
+                  }}
+                >
+                  <div className={`w-2.5 h-2.5 rounded-full border ${reportReason === r ? 'border-slate-400 bg-slate-400' : 'border-slate-300'}`} />
+                  {r}
+                </div>
+              ))}
+            </div>
+            {reportReason === 'Other' && (
+              <div className="space-y-2 mt-2 px-1">
+                <Textarea
+                  placeholder="Describe the issue..."
+                  value={reportDetails}
+                  onChange={e => setReportDetails(e.target.value)}
+                  className="text-xs min-h-[50px] resize-none border-slate-200 focus-visible:ring-slate-200"
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full h-7 text-xs bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  disabled={isReporting || !reportDetails.trim()}
+                  onClick={() => handleReportSubmit(questionId, 'Other', reportDetails)}
+                >
+                  {isReporting ? 'Submitting...' : 'Submit Report'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
   // Palette Component
   const QuestionPalette = ({ onQuestionClick }: { onQuestionClick?: () => void }) => {
@@ -954,37 +1087,42 @@ export default function TestPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-3 sticky top-0 z-10 shadow-sm flex items-center justify-between">
-        <div className="font-mono text-xl font-bold flex items-center gap-2">
+      <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2.5 md:px-5 md:py-2.5 relative md:sticky top-0 z-10 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
+        {/* Left Side: Test Title (Dim, grayish, aesthetic) */}
+        <div className="text-[13px] md:text-sm font-medium text-slate-400 tracking-wide truncate w-full md:max-w-[40%] md:flex-1 text-left">
+          {test?.title || "Live Test"}
+        </div>
+
+        {/* Right Side: Timer & Controls */}
+        <div className="flex items-center justify-between md:justify-end gap-1.5 md:gap-3 w-full md:w-auto mt-0.5 md:mt-0">
+
+          {/* Timer Block */}
           {(() => {
             const isCriticalTime = timeRemaining < 300;
             const shouldShow = !isTimeHidden || isCriticalTime;
 
             return (
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-md">
-                <Clock className={`w-5 h-5 ${isCriticalTime ? 'text-red-500 animate-pulse' : 'text-slate-600 dark:text-slate-400'}`} />
-                <span className={`min-w-[80px] text-center ${isCriticalTime ? 'text-red-600' : 'text-slate-800 dark:text-slate-200'}`}>
-                  {shouldShow ? formatTime(timeRemaining) : '** : **'}
+              <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-semibold border transition-colors ${isCriticalTime ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50/80 text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'}`}>
+                <Clock className={`w-3.5 h-3.5 ${isCriticalTime ? 'animate-pulse text-red-500' : 'text-slate-400'}`} />
+                <span className="min-w-[40px] md:min-w-[45px] text-center font-mono">
+                  {shouldShow ? formatTime(timeRemaining) : '**:**'}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 ml-1 text-slate-500 hover:text-slate-700"
+                <button
+                  className="flex items-center justify-center p-0.5 rounded-full text-slate-400 hover:text-slate-600 disabled:opacity-50 transition-colors"
                   onClick={() => setIsTimeHidden(!isTimeHidden)}
                   disabled={isCriticalTime}
                   title={isCriticalTime ? "Time cannot be hidden (less than 5m left)" : (isTimeHidden ? "Show Time" : "Hide Time")}
                 >
-                  {shouldShow ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                </Button>
+                  {shouldShow ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
               </div>
             );
           })()}
-        </div>
-        <div className="flex items-center gap-2">
+
           {/* Warning Counter - Security Violations */}
           {(test?.settings?.tab_switch_mode !== 'off' || test?.settings?.force_fullscreen) && (
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-              <TriangleAlert className={`w-4 h-4 ${warnings > 0 ? 'fill-red-100 text-red-600' : 'fill-amber-100 text-amber-600'}`} />
+            <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+              <TriangleAlert className={`w-3.5 h-3.5 ${warnings > 0 ? 'fill-red-100 text-red-600' : 'fill-amber-100 text-amber-600'}`} />
               <span>
                 {test.settings?.tab_switch_mode === 'strict'
                   ? `${warnings}/1`
@@ -999,11 +1137,11 @@ export default function TestPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex h-9 w-9 p-0 rounded-full"
+                className="flex h-7 w-7 md:h-8 md:w-8 p-0 rounded-full text-slate-500 hover:text-slate-700"
                 title="Scientific Calculator"
                 onClick={() => setIsCalculatorOpen(true)}
               >
-                <Calculator className="w-5 h-5" />
+                <Calculator className="w-4 h-4" />
               </Button>
               <ScientificCalculator
                 onClose={() => setIsCalculatorOpen(false)}
@@ -1012,7 +1150,7 @@ export default function TestPage() {
             </>
           )}
 
-          <Button onClick={attemptSubmit} disabled={isSubmitting} variant="destructive" size="sm">
+          <Button onClick={attemptSubmit} disabled={isSubmitting} variant="destructive" size="sm" className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold shadow-sm ml-auto md:ml-0 overflow-hidden shrink-0">
             Submit Test
           </Button>
         </div>
@@ -1201,10 +1339,13 @@ export default function TestPage() {
                           : parseMark(targetQ.negativeMarks, fallbackNeg);
 
                         return (
-                          <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                            <span className="text-emerald-700">+{parseFloat(marksVal.toFixed(2))}</span>
-                            <span className="text-slate-300">|</span>
-                            <span className="text-red-600">-{parseFloat(negVal.toFixed(2))}</span>
+                          <div className="flex items-center gap-1">
+                            <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                              <span className="text-emerald-700">+{parseFloat(marksVal.toFixed(2))}</span>
+                              <span className="text-slate-300">|</span>
+                              <span className="text-red-600">-{parseFloat(negVal.toFixed(2))}</span>
+                            </div>
+                            {renderReportQuestionButton(targetQ.id)}
                           </div>
                         );
                       })()}
@@ -1373,10 +1514,13 @@ export default function TestPage() {
                       }
 
                       return (
-                        <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                          <span className="text-emerald-700">+{marks}</span>
-                          <span className="text-slate-300">|</span>
-                          <span className="text-red-600">-{neg}</span>
+                        <div className="flex items-center gap-1">
+                          <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                            <span className="text-emerald-700">+{marks}</span>
+                            <span className="text-slate-300">|</span>
+                            <span className="text-red-600">-{neg}</span>
+                          </div>
+                          {renderReportQuestionButton(currentQuestion.id)}
                         </div>
                       );
                     })()}

@@ -116,3 +116,21 @@ async def assign_categories(test_id: str, payload: TestCategoryAssignment, db: C
     except Exception as e:
         print(f"Error assigning categories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/admin/assign/{test_id}")
+async def admin_assign_categories(test_id: str, payload: TestCategoryAssignment):
+    try:
+        from app.core.database import supabase as admin_db
+        # 1. Delete existing
+        admin_db.table("test_categories").delete().eq("test_id", test_id).execute()
+        
+        # 2. Insert new
+        if payload.category_ids:
+            rows = [{"test_id": test_id, "category_id": cid} for cid in payload.category_ids]
+            admin_db.table("test_categories").insert(rows).execute()
+            
+        return {"success": True}
+    except Exception as e:
+        print(f"Error assigning categories (admin): {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

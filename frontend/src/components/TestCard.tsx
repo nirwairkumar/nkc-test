@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Edit, MoreVertical, Globe, Link as LinkIcon, Lock, GraduationCap, Check } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import TestLikeButton from '@/components/TestLikeButton';
 import { toast } from 'sonner';
@@ -42,6 +43,7 @@ export default function TestCard({
     isVerifiedCreator = false
 }: TestCardProps) {
     const navigate = useNavigate();
+    const { isAdmin } = useAuth();
 
     const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(test.visibility || (test.is_public ? 'public' : 'private'));
 
@@ -78,7 +80,7 @@ export default function TestCard({
         const prevInfo = classInfo;
         setClassInfo({ id: classId, name: className }); // Optimistic
 
-        const { error } = await updateTest(test.id, { class_id: classId });
+        const { error } = await updateTest(test.id, { class_id: classId }, isAdmin);
         if (error) {
             toast.error("Failed to update class assignment");
             setClassInfo(prevInfo); // Revert
@@ -109,7 +111,7 @@ export default function TestCard({
             const { error } = await updateTest(test.id, {
                 visibility: newVisibility,
                 is_public: isPublic // Sync legacy field
-            });
+            }, isAdmin);
 
             if (error) throw error;
 
@@ -149,7 +151,7 @@ export default function TestCard({
     return (
         <Card className="flex flex-col hover:shadow-lg transition-shadow relative h-full border-slate-200 dark:border-slate-800">
             <div className="absolute top-2 right-2 z-10 flex gap-1">
-                {user?.id === test.created_by && (
+                {(user?.id === test.created_by || isAdmin) && (
                     <DropdownMenu onOpenChange={(open) => { if (open) loadClasses(); }}>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm">
@@ -231,7 +233,7 @@ export default function TestCard({
                                 <span className="uppercase">{classInfo.name}</span>
                             </div>
                         )}
-                        {user?.id === test.created_by && (
+                        {(user?.id === test.created_by || isAdmin) && (
                             <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getVisibilityColor()}`}>
                                 {getVisibilityIcon()}
                                 <span className="uppercase">{visibility === 'unlisted' ? 'Link' : visibility}</span>
@@ -256,7 +258,7 @@ export default function TestCard({
             </CardContent>
             <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
                 <div className="flex-none"><TestLikeButton testId={test.id} userId={user?.id} /></div>
-                {user?.id === test.created_by ? (
+                {(user?.id === test.created_by || isAdmin) ? (
                     <div className="flex-1 flex gap-2">
                         {onManage && (
                             <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground px-2" onClick={() => onManage(test)}>

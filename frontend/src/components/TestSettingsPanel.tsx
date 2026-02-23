@@ -78,7 +78,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
             const { data, error } = await updateTest(test.id, {
                 settings: settings,
                 class_id: classId
-            });
+            }, overridePremium);
 
             if (error) throw error;
             toast.success("Test settings updated successfully");

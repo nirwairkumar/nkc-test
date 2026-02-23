@@ -33,9 +33,10 @@ export async function createCategory(name: string) {
     }
 }
 
-export async function assignCategoriesToTest(testId: string, categoryIds: string[]) {
+export async function assignCategoriesToTest(testId: string, categoryIds: string[], isAdmin: boolean = false) {
     try {
-        await apiClient.post(`/categories/assign/${testId}`, { category_ids: categoryIds });
+        const endpoint = isAdmin ? `/categories/admin/assign/${testId}` : `/categories/assign/${testId}`;
+        await apiClient.post(endpoint, { category_ids: categoryIds });
         return { error: null };
     } catch (error: any) {
         return { error };

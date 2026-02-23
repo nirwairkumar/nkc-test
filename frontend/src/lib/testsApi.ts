@@ -89,6 +89,7 @@ export interface Question {
     marks?: number | string;
     negativeMarks?: number | string;
     typingMode?: 'en' | 'hi';
+    originalIndex?: number; // Added to strictly track index when shuffling
 }
 
 // ---------------- TEST MANAGEMENT (BACKEND) ----------------
@@ -156,18 +157,20 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, s
     }
 }
 
-export async function updateTest(id: string, updates: Partial<Test>) {
+export async function updateTest(id: string, updates: Partial<Test>, isAdmin: boolean = false) {
     try {
-        const response = await apiClient.put(`/tests/${id}`, updates);
+        const endpoint = isAdmin ? `/tests/admin/${id}` : `/tests/${id}`;
+        const response = await apiClient.put(endpoint, updates);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
     }
 }
 
-export async function deleteTest(id: string) {
+export async function deleteTest(id: string, isAdmin: boolean = false) {
     try {
-        const response = await apiClient.delete(`/tests/${id}`);
+        const endpoint = isAdmin ? `/tests/admin/${id}` : `/tests/${id}`;
+        const response = await apiClient.delete(endpoint);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };

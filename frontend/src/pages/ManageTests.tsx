@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { fetchAllTests, createTest, deleteTest, updateTest, fetchTestsByCreator } from '@/lib/testsApi';
+import { fetchAdminUsersReportStats, fetchAdminUserReports, Report } from '@/lib/reportsApi';
 import { fetchUsers, fetchUserDetails, verifyCreator, revokeVerification } from '@/lib/usersApi';
 import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category } from '@/lib/categoriesApi';
 import { fetchUserAttempts } from '@/lib/attemptsApi';
@@ -89,7 +90,10 @@ export default function ManageTests() {
     const [usersLoading, setUsersLoading] = useState(true);
     const [userSearchQuery, setUserSearchQuery] = useState("");
     const [viewingUser, setViewingUser] = useState<any>(null); // For User Details Dialog
-    const [userDetails, setUserDetails] = useState<any>({ createdTests: [], attempts: [] });
+    const [userDetails, setUserDetails] = useState<any>({ createdTests: [], attempts: [], reports: [] });
+
+    // Reports Stats State
+    const [reportStats, setReportStats] = useState<Record<string, { total: number; open: number; solved: number }>>({});
 
     // Manage & Results State
     const [configuringTest, setConfiguringTest] = useState<any>(null);
@@ -248,6 +252,13 @@ export default function ManageTests() {
 
             if (error) throw error;
             setUsers(data || []);
+
+            // Fetch Report Stats for Admin
+            const { data: statsData } = await fetchAdminUsersReportStats();
+            if (statsData) {
+                setReportStats(statsData);
+            }
+
         } catch (error) {
             console.error("Error loading users:", error);
             toast.error("Failed to load users");
@@ -258,7 +269,7 @@ export default function ManageTests() {
 
     const handleViewUserDetails = async (user: any) => {
         setViewingUser(user);
-        setUserDetails({ createdTests: [], attempts: [] }); // Reset
+        setUserDetails({ createdTests: [], attempts: [], reports: [] }); // Reset
 
         try {
             // 1. Fetch Created Tests
@@ -286,9 +297,13 @@ export default function ManageTests() {
                 enrichedAttempts = attempts.map(a => ({ ...a, test_title: testMap.get(a.test_id) || 'Unknown Test' }));
             }
 
+            // 3. Fetch Reports (against tests created by this user)
+            const { data: reports } = await fetchAdminUserReports(user.id);
+
             setUserDetails({
                 createdTests: createdTests || [],
-                attempts: enrichedAttempts
+                attempts: enrichedAttempts,
+                reports: reports || []
             });
 
         } catch (error) {
@@ -327,37 +342,49 @@ export default function ManageTests() {
 
     const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'unlisted' | 'private') => {
         const isPublic = newVisibility === 'public';
+        const oldVisibility = test.visibility;
+
+        // Optimistic update
+        setTests(prev => prev.map(t => t.id === test.id ? { ...t, visibility: newVisibility, is_public: isPublic } : t));
 
         try {
-            const { error } = await supabase
-                .from('tests')
-                .update({ visibility: newVisibility, is_public: isPublic })
-                .eq('id', test.id);
+            const { error } = await updateTest(test.id, { visibility: newVisibility, is_public: isPublic }, isAdmin);
 
             if (error) throw error;
 
             toast.success(`Visibility set to ${newVisibility === 'unlisted' ? 'Link Only' : newVisibility.charAt(0).toUpperCase() + newVisibility.slice(1)}`);
-            loadTests(); // Refresh to show updated data
         } catch (error: any) {
             console.error("Failed to update visibility:", error);
             toast.error("Failed to update visibility");
+            // Revert
+            setTests(prev => prev.map(t => t.id === test.id ? { ...t, visibility: oldVisibility, is_public: test.is_public } : t));
         }
     };
 
     const handleClassChange = async (test: any, classId: string | null, className: string | null) => {
+        const oldClassId = test.class_id;
+        // Optimistic update
+        setTests(prev => prev.map(t => t.id === test.id ? {
+            ...t,
+            class_id: classId,
+            classes: className ? { name: className } : null
+        } : t));
+
         try {
-            const { error } = await supabase
-                .from('tests')
-                .update({ class_id: classId })
-                .eq('id', test.id);
+            const { error } = await updateTest(test.id, { class_id: classId }, isAdmin);
 
             if (error) throw error;
 
             toast.success(classId ? `Assigned to ${className}` : "Removed from class");
-            loadTests(); // Refresh to show updated data
         } catch (error: any) {
             console.error("Failed to update class assignment:", error);
             toast.error("Failed to update class assignment");
+            // Revert
+            setTests(prev => prev.map(t => t.id === test.id ? {
+                ...t,
+                class_id: oldClassId,
+                classes: test.classes
+            } : t));
         }
     };
 
@@ -423,7 +450,7 @@ export default function ManageTests() {
             return;
         }
         try {
-            const { error } = await supabase.from('tests').delete().eq('id', testId);
+            const { error } = await deleteTest(testId, isAdmin);
             if (error) throw error;
             setTests(prev => prev.filter(t => t.id !== testId));
             toast.success(`Test "${testTitle}" deleted`);
@@ -441,20 +468,17 @@ export default function ManageTests() {
     const handleSaveTest = async () => {
         if (!editingTest) return;
         try {
-            const { error } = await supabase
-                .from('tests')
-                .update({
-                    title: editingTest.title,
-                    description: editingTest.description,
-                    custom_id: editingTest.custom_id,
-                    marks_per_question: parseFloat(editingTest.marks_per_question),
-                    negative_marks: parseFloat(editingTest.negative_marks),
-                    duration: parseFloat(editingTest.duration)
-                })
-                .eq('id', editingTest.id);
+            const { error } = await updateTest(editingTest.id, {
+                title: editingTest.title,
+                description: editingTest.description,
+                custom_id: editingTest.custom_id,
+                marks_per_question: parseFloat(editingTest.marks_per_question),
+                negative_marks: parseFloat(editingTest.negative_marks),
+                duration: parseFloat(editingTest.duration)
+            }, isAdmin);
 
             if (error) throw error;
-            await assignCategoriesToTest(editingTest.id, selectedCategoriesForTest);
+            await assignCategoriesToTest(editingTest.id, selectedCategoriesForTest, isAdmin);
 
             toast.success("Test updated successfully");
             setIsTestEditOpen(false);
@@ -1132,17 +1156,6 @@ export default function ManageTests() {
                 </DialogContent>
             </Dialog>
 
-            {configuringTest && (
-                <TestSettingsPanel
-                    test={configuringTest}
-                    onClose={() => setConfiguringTest(null)}
-                    onUpdate={loadTests}
-                    onViewResults={() => {
-                        setConfiguringTest(null);
-                        setViewingResultsTest(configuringTest);
-                    }}
-                />
-            )}
 
             {viewingResultsTest && (
                 <TestResultsPanel
@@ -1222,16 +1235,28 @@ export default function ManageTests() {
                                         <div className="text-2xl font-bold">{userDetails.attempts?.length || 0}</div>
                                         <div className="text-[10px] uppercase text-muted-foreground font-semibold">Tests Taken</div>
                                     </div>
+                                    <div className="text-center p-2 bg-white dark:bg-black rounded border min-w-[80px]">
+                                        <div className={`text-2xl font-bold ${reportStats[viewingUser.id]?.open > 0 ? 'text-red-500' : ''}`}>
+                                            {reportStats[viewingUser.id]?.total || 0}
+                                        </div>
+                                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">Total Reports</div>
+                                    </div>
                                 </div>
                             </div>
 
                             <Tabs defaultValue="created" className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
+                                <TabsList className="grid w-full grid-cols-3">
                                     <TabsTrigger value="created" className="flex items-center gap-2">
                                         <BookOpen className="w-4 h-4" /> Created Tests
                                     </TabsTrigger>
                                     <TabsTrigger value="history" className="flex items-center gap-2">
                                         <GraduationCap className="w-4 h-4" /> Attempt History
+                                    </TabsTrigger>
+                                    <TabsTrigger value="reports" className="flex items-center gap-2 relative">
+                                        <Info className="w-4 h-4" /> Reports
+                                        {reportStats[viewingUser.id]?.open > 0 && (
+                                            <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-red-500" />
+                                        )}
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -1276,10 +1301,46 @@ export default function ManageTests() {
                                                 {userDetails.attempts.map((a: any) => (
                                                     <TableRow key={a.id}>
                                                         <TableCell className="font-medium">{a.test_title}</TableCell>
-                                                        <TableCell className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString()}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="outline">{a.score}</Badge>
+                                                        <TableCell className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</TableCell>
+                                                        <TableCell className="font-mono">{a.score?.toFixed(2)}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    )}
+                                </TabsContent>
+
+                                <TabsContent value="reports" className="mt-4 border rounded-md p-0 overflow-hidden">
+                                    {!userDetails.reports || userDetails.reports.length === 0 ? (
+                                        <div className="p-8 text-center text-muted-foreground">No reports filed against tests created by this user.</div>
+                                    ) : (
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow className="bg-slate-50/50">
+                                                    <TableHead>Test Title</TableHead>
+                                                    <TableHead>Q#</TableHead>
+                                                    <TableHead>Issue</TableHead>
+                                                    <TableHead>Status</TableHead>
+                                                    <TableHead>Date</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {userDetails.reports.map((r: any) => (
+                                                    <TableRow key={r.id}>
+                                                        <TableCell className="font-medium max-w-[200px] truncate" title={`${r.tests?.title} ${r.tests?.custom_id ? `(${r.tests.custom_id})` : ''}`}>
+                                                            {r.tests?.title} {r.tests?.custom_id ? <span className="text-xs text-muted-foreground ml-1">({r.tests.custom_id})</span> : ''}
                                                         </TableCell>
+                                                        <TableCell>{r.question_id + 1}</TableCell>
+                                                        <TableCell>
+                                                            <div className="font-medium text-sm">{r.reason}</div>
+                                                            {r.details && <div className="text-xs text-muted-foreground truncate max-w-[150px]" title={r.details}>{r.details}</div>}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={r.status === 'open' ? 'destructive' : 'secondary'} className={r.status === 'open' ? 'bg-red-500' : ''}>
+                                                                {r.status.toUpperCase()}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</TableCell>
                                                     </TableRow>
                                                 ))}
                                             </TableBody>
