@@ -42,13 +42,14 @@ export const IMEInput: React.FC<IMEInputProps> = ({
         }
     }, [isEditing]);
 
-    // Check if we contain math to decide if preview is needed
-    // Simple check for LaTeX delimiters: $...$ or \(...\) or \[...\]
-    const hasMath = value && (value.includes('$') || value.includes('\\') || value.includes('{'));
+    // Check if we contain math or markup to decide if preview is needed
+    // Simple check for LaTeX/Markdown delimiters to avoid unnecessary preview switch on plain text,
+    // though rendering all text as Markdown/LaTeX is perfectly valid when enablePreview is true.
+    const hasFormatting = value && (value.includes('$') || value.includes('\\') || value.includes('{') || value.includes('*') || value.includes('_') || value.includes('`') || value.includes('#') || value.includes('-') || value.match(/\d+\./));
 
-    // If not enabled or no math, we always stay in "Edit" mode effectively (render input usually)
+    // If not enabled or no Formatting, we always stay in "Edit" mode effectively (render input usually)
     // But for consistency, we can just use the toggle logic if enablePreview is true.
-    const showPreview = enablePreview && !isEditing && hasMath;
+    const showPreview = enablePreview && !isEditing && hasFormatting;
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (typingMode === 'hi' && e.key === ' ') {

@@ -45,6 +45,7 @@ const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
+const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
 
 
 const Layout = lazy(() => import("./Layout"));
@@ -171,6 +172,14 @@ const App = () => (
                       element={
                         <PrivateRoute>
                           <ResultsPage />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/analysis"
+                      element={
+                        <PrivateRoute>
+                          <AdvancedAnalysis />
                         </PrivateRoute>
                       }
                     />

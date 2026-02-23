@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput } from '@/components/ui/IMEInput';
@@ -45,6 +45,7 @@ import slugify from 'slugify';
 
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import PremiumGuard from '@/components/premium/PremiumGuard';
+import { JsonImporter } from '@/components/test-builder/JsonImporter';
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
@@ -70,9 +71,10 @@ interface TestBuilderProps {
     initialData?: any;
     onSuccess?: () => void;
     onCancel?: () => void;
+    onAiImport?: () => void;
 }
 
-export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBuilderProps) {
+export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImport }: TestBuilderProps) {
     const { user, isAdmin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -321,6 +323,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         // For new tests (guest or user creating new), save to localStorage
         if (!isEditMode) {
             const timer = setTimeout(() => {
+                // Prevent saving empty draft immediately on mount which could clobber loaded JSON
+                if (!title && questions.length === 1 && questions[0].question === '') return;
+
                 const draftData = {
                     title,
                     description,
@@ -330,14 +335,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                     duration: time,
                     is_public: isPublic,
                     questions,
-                    selectedCategories
+                    selectedCategories,
+                    enable_section_mode: enableSectionMode,
+                    sections
                 };
                 localStorage.setItem('create_test_draft', JSON.stringify(draftData));
             }, 1000);
             return () => clearTimeout(timer);
         }
 
-    }, [questions, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedCategories, isEditMode, testId, institutionName, institutionLogo]);
+    }, [questions, sections, enableSectionMode, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedCategories, isEditMode, testId, institutionName, institutionLogo]);
 
     const handleAutoSave = async () => {
         if (!title.trim()) return; // Silent fail if no title
@@ -370,8 +377,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
             return;
         }
 
-        if (!data.questions || !Array.isArray(data.questions)) {
-            console.error("[TestBuilder] populateData received data without questions array:", data);
+        const hasQuestions = data.questions && Array.isArray(data.questions);
+        const hasSections = data.sections && Array.isArray(data.sections);
+
+        if (!hasQuestions && !hasSections) {
+            console.error("[TestBuilder] populateData received data without questions or sections array:", data);
             return;
         }
 
@@ -386,70 +396,74 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         setNegativeMarks(data.negative_marks || 1);
         setIsPublic(data.is_public ?? true);
 
-        if (data.enable_section_mode && data.sections) {
-            console.log("[TestBuilder] Processing section mode with", data.sections.length, "sections");
-            setEnableSectionMode(true);
-            setSections(data.sections.map((s: any) => ({
-                ...s,
-                questions: s.questions.map((q: any) => ({
-                    ...q,
-                    options: q.options || { A: '', B: '', C: '', D: '' },
-                    typingMode: 'en'
-                }))
-            })));
-        } else {
-            console.log("[TestBuilder] Processing", data.questions.length, "questions");
-            const mappedQuestions = (data.questions as any[]).map((q: any, index: number) => {
-                console.log(`[TestBuilder] Processing question ${index + 1}:`, q);
+        // CLEAR old data so React registers a sharp state transition
+        setQuestions([]);
+        setSections([]);
 
-                // Handle basic mapping (questionText -> question)
-                let mappedQ = {
-                    ...q,
-                    question: q.question || q.questionText || '',
-                    typingMode: 'en' as const
-                };
+        const mapQuestion = (q: any, index: number) => {
+            let mappedQ = {
+                ...q,
+                id: q.id || index + 1,
+                type: q.type || 'single',
+                question: q.question || q.questionText || '',
+                typingMode: 'en' as const,
+                marks: q.marks !== undefined ? String(q.marks) : '4',
+                negativeMarks: q.negativeMarks !== undefined ? String(q.negativeMarks) : '1',
+            };
 
-                // Handle Options Conversion (Nested AI Object -> Flat Frontend Structure)
-                // AI Schema: options: { A: { text: "...", image: "..." } }
-                // Frontend Schema: options: { A: "..." }, optionImages: { A: "..." }
+            let flatOptions: { [key: string]: string } = {};
+            let flatOptionImages: { [key: string]: string } = q.optionImages || {};
 
-                let flatOptions: { [key: string]: string } = {};
-                let flatOptionImages: { [key: string]: string } = q.optionImages || {};
-
-                if (q.options && typeof q.options === 'object') {
-                    Object.keys(q.options).forEach(key => {
-                        const val = q.options[key];
-                        if (val && typeof val === 'object' && val.text !== undefined) {
-                            // It's the AI nested format
-                            flatOptions[key] = val.text || '';
-                            if (val.image) {
-                                flatOptionImages[key] = val.image;
-                            }
-                        } else {
-                            // It's already flat or something else
-                            flatOptions[key] = String(val || '');
-                        }
-                    });
-
-                    // If flatOptionImages has content, attach it
-                    if (Object.keys(flatOptionImages).length > 0) {
-                        mappedQ.optionImages = flatOptionImages;
+            if (q.options && typeof q.options === 'object') {
+                Object.keys(q.options).forEach(key => {
+                    const val = q.options[key];
+                    if (val && typeof val === 'object' && val.text !== undefined) {
+                        flatOptions[key] = val.text || '';
+                        if (val.image) flatOptionImages[key] = val.image;
+                    } else {
+                        flatOptions[key] = String(val || '');
                     }
-                } else if (!q.options) {
-                    flatOptions = { A: '', B: '', C: '', D: '' };
+                });
+                if (Object.keys(flatOptionImages).length > 0) {
+                    mappedQ.optionImages = flatOptionImages;
                 }
+            } else if (!q.options) {
+                flatOptions = { A: '', B: '', C: '', D: '' };
+            }
 
-                mappedQ.options = flatOptions;
-                console.log(`[TestBuilder] Question ${index + 1} processed:`, mappedQ);
-                return mappedQ;
-            });
-            console.log("[TestBuilder] Setting questions:", mappedQuestions);
-            setQuestions(mappedQuestions);
-            console.log("[TestBuilder] Questions set successfully");
-        }
+            // Fallback: If no correct answer is given but it's single choice, default to 'A'
+            // If numerical, ensure the min/max keys exist
+            if (mappedQ.type === 'single' && !mappedQ.correctAnswer) {
+                mappedQ.correctAnswer = 'A';
+            } else if (mappedQ.type === 'numerical') {
+                if (!mappedQ.correctAnswer || typeof mappedQ.correctAnswer !== 'object') {
+                    mappedQ.correctAnswer = { min: 0, max: 0 };
+                }
+            }
+
+            mappedQ.options = flatOptions;
+            return mappedQ;
+        };
+
+        // Defer actual population by 1 tick so React commits the empty arrays first
+        setTimeout(() => {
+            if (data.enable_section_mode && hasSections) {
+                console.log("[TestBuilder] Processing section mode with", data.sections.length, "sections");
+                setEnableSectionMode(true);
+                setSections(data.sections.map((s: any) => ({
+                    ...s,
+                    questions: (s.questions || []).map(mapQuestion)
+                })));
+            } else if (hasQuestions) {
+                console.log("[TestBuilder] Processing", data.questions.length, "questions");
+                const mappedQuestions = (data.questions as any[]).map(mapQuestion);
+                console.log("[TestBuilder] Setting questions:", mappedQuestions);
+                setQuestions(mappedQuestions);
+                console.log("[TestBuilder] Questions set successfully");
+            }
+        }, 0);
 
         setHasScientificCalculator(data.has_scientific_calculator || false);
-        setEnableSectionMode(data.enable_section_mode || false);
         setSectionMarkingModel(data.section_marking_model || 'section-wise');
 
         if (data.custom_category) {
@@ -458,8 +472,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         }
 
         // Show success message when importing data
-        if (data.questions && data.questions.length > 0) {
-            toast.success(`Successfully imported ${data.questions.length} question${data.questions.length > 1 ? 's' : ''}!`);
+        const count = (data.enable_section_mode && hasSections)
+            ? data.sections.reduce((acc: number, s: any) => acc + (s.questions?.length || 0), 0)
+            : (hasQuestions ? data.questions.length : 0);
+
+        if (count > 0) {
+            toast.success(`Successfully loaded ${count} question${count > 1 ? 's' : ''}!`);
         }
 
         console.log("[TestBuilder] populateData completed successfully");
@@ -656,31 +674,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
         const reader = new FileReader();
         reader.onloadend = () => callback(reader.result as string);
         reader.readAsDataURL(file);
-    };
-
-    const handleJsonImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const text = event.target?.result as string;
-                const json = JSON.parse(text);
-                const hasQuestions = json.questions && Array.isArray(json.questions) && json.questions.length > 0;
-                const hasSections = json.sections && Array.isArray(json.sections) && json.sections.length > 0;
-
-                if (!json.title || (!hasQuestions && !hasSections)) throw new Error("Invalid JSON format: Must have title and either questions or sections");
-
-                // Use existing populate logic
-                populateData(json);
-                toast.success("Test imported successfully");
-            } catch (err: any) {
-                console.error(err);
-                toast.error("Failed to import: " + err.message);
-            }
-        };
-        reader.readAsText(file);
-        e.target.value = '';
     };
 
     const performSave = async (isAuto: boolean) => {
@@ -1142,15 +1135,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                     <h1 className="text-2xl font-bold text-slate-800">{isEditMode ? 'Edit Test' : 'Create New Test'}</h1>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                    {onAiImport && !isEditMode && (
+                        <Button onClick={onAiImport} variant="outline" className="gap-2 shrink-0">
+                            <FileText className="w-4 h-4" />
+                            Import PDF
+                        </Button>
+                    )}
                     <div className="flex flex-col items-end gap-1">
-                        <label className="cursor-pointer">
-                            <input type="file" accept=".json" className="hidden" onChange={handleJsonImport} />
-                            <div className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2 cursor-pointer">
-                                <Upload className="w-4 h-4 mr-2" />
-                                Import JSON
-                            </div>
-                        </label>
+                        <JsonImporter onImportSuccess={populateData} />
                         <TestUploadFormatGuide />
                     </div>
 
@@ -1522,6 +1515,77 @@ export default function TestBuilder({ initialData, onSuccess, onCancel }: TestBu
                                                     />
                                                 </div>
 
+
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="mb-0.5 text-slate-400 hover:text-slate-600">
+                                                            <MoreVertical className="w-5 h-5" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-80 p-4" align="end">
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center justify-between">
+                                                                <h4 className="font-bold text-sm">Attempt Control</h4>
+                                                                <Switch
+                                                                    checked={section.attempt_control?.enabled || false}
+                                                                    onCheckedChange={(val) => updateSection(sIdx, 'attempt_control', { ...(section.attempt_control || {}), enabled: val })}
+                                                                />
+                                                            </div>
+
+                                                            {section.attempt_control?.enabled && (
+                                                                <div className="space-y-4 pt-2 border-t">
+                                                                    <div className="space-y-2">
+                                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
+                                                                        <Input
+                                                                            type="number"
+                                                                            value={section.attempt_control?.max_attempts || 0}
+                                                                            onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
+                                                                            placeholder="e.g. 5"
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="space-y-2">
+                                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
+                                                                        <RadioGroup
+                                                                            value={section.attempt_control?.mode || 'hard'}
+                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
+                                                                            className="flex gap-4"
+                                                                        >
+                                                                            <div className="flex items-center space-x-2">
+                                                                                <RadioGroupItem value="hard" id={`hard-${sIdx}`} />
+                                                                                <Label htmlFor={`hard-${sIdx}`} className="text-sm">Hard</Label>
+                                                                            </div>
+                                                                            <div className="flex items-center space-x-2">
+                                                                                <RadioGroupItem value="soft" id={`soft-${sIdx}`} />
+                                                                                <Label htmlFor={`soft-${sIdx}`} className="text-sm">Soft</Label>
+                                                                            </div>
+                                                                        </RadioGroup>
+                                                                    </div>
+
+                                                                    {section.attempt_control?.mode === 'soft' && (
+                                                                        <div className="space-y-2">
+                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
+                                                                            <RadioGroup
+                                                                                value={section.attempt_control?.soft_type || 'first_n'}
+                                                                                onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
+                                                                                className="flex flex-col gap-2"
+                                                                            >
+                                                                                <div className="flex items-center space-x-2">
+                                                                                    <RadioGroupItem value="first_n" id={`first_n-${sIdx}`} />
+                                                                                    <Label htmlFor={`first_n-${sIdx}`} className="text-sm">First N Questions</Label>
+                                                                                </div>
+                                                                                <div className="flex items-center space-x-2">
+                                                                                    <RadioGroupItem value="best_n" id={`best_n-${sIdx}`} />
+                                                                                    <Label htmlFor={`best_n-${sIdx}`} className="text-sm">Best N Questions</Label>
+                                                                                </div>
+                                                                            </RadioGroup>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
 
                                                 <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="mb-0.5 text-slate-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></Button>
                                             </div>

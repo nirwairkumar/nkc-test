@@ -13,8 +13,10 @@ import {
   Home,
   History,
   Timer,
-  Target
+  Target,
+  Loader2
 } from 'lucide-react';
+import { fetchAdvancedAnalysis } from '@/lib/testsApi';
 import {
   Accordion,
   AccordionContent,
@@ -75,7 +77,6 @@ const ResultsPage = () => {
   } | undefined;
 
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
-
   const selectedTest = stateData?.test || contextSelectedTest;
 
   // Normalize answers
@@ -83,172 +84,32 @@ const ResultsPage = () => {
   if (stateData?.answers) {
     answers = stateData.answers;
   } else if (contextAnswers) {
-    answers = {};
+    answers = contextAnswers as any;
   }
 
-  // Calculate Stats with Section Support and Partial Marking
-  let totalQuestions = selectedTest?.questions?.length || 0;
+  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Detailed Stats
-  let calculatedScore = 0;
-  let correctCount = 0;
-  let partialCount = 0;
-  let wrongCount = 0;
-  let skippedCount = 0;
-  let totalMaxMarks = 0;
-
-  // Section Wise Stats Storage
-  const sectionAnalysis: Record<string, {
-    name: string;
-    totalQ: number;
-    attempted: number;
-    correct: number;
-    partial: number;
-    wrong: number;
-    score: number;
-    maxScore: number;
-    marksPerQuestion: string | number;
-    negativeMarks: string | number;
-  }> = {};
-
-  // Initialize Sections if enabled
-  if (selectedTest?.enable_section_mode && selectedTest?.sections) {
-    selectedTest.sections.forEach((sec: any) => {
-      sectionAnalysis[sec.id] = {
-        name: sec.name,
-        totalQ: 0,
-        attempted: 0,
-        correct: 0,
-        partial: 0,
-        wrong: 0,
-        score: 0,
-        maxScore: 0,
-        marksPerQuestion: getDisplayMark(sec.marks_per_question, 4),
-        negativeMarks: getDisplayMark(sec.negative_marks, 1)
+  useEffect(() => {
+    if (showPersonalResults && selectedTest) {
+      const loadAnalysis = async () => {
+        setLoading(true);
+        try {
+          const { data, error } = await fetchAdvancedAnalysis(selectedTest, answers);
+          if (error) {
+            setError(error);
+          } else {
+            setAnalysisData(data);
+          }
+        } catch (err: any) {
+          setError(err.message || "Failed to analyze results");
+        } finally {
+          setLoading(false);
+        }
       };
-    });
-  } else {
-    // Default 'General' section for flat tests
-    sectionAnalysis['default'] = {
-      name: 'General',
-      totalQ: 0,
-      attempted: 0,
-      correct: 0,
-      partial: 0,
-      wrong: 0,
-      score: 0,
-      maxScore: 0,
-      marksPerQuestion: 4,
-      negativeMarks: 1
-    };
-  }
-
-  if (selectedTest?.questions) {
-    let runningQIndex = 0;
-
-    selectedTest.questions.forEach((q: any, index: number) => {
-      // Identify Section
-      let currentSectionId = 'default';
-      let marks = selectedTest.marks_per_question ? parseMark(selectedTest.marks_per_question, 4) : 4;
-      let neg = selectedTest.negative_marks !== undefined ? parseMark(selectedTest.negative_marks, 1) : 1;
-
-      if (selectedTest.enable_section_mode && selectedTest.sections) {
-        let rCount = 0;
-        for (const section of selectedTest.sections) {
-          if (index >= rCount && index < rCount + section.questions.length) {
-            currentSectionId = section.id;
-            marks = parseMark(section.marks_per_question, 4);
-            neg = parseMark(section.negative_marks, 1);
-            break;
-          }
-          rCount += section.questions.length;
-        }
-      }
-
-      // Per-Question overrides
-      if (q.marks !== undefined) marks = parseMark(q.marks, marks);
-      if (q.negativeMarks !== undefined) neg = parseMark(q.negativeMarks, neg);
-
-      // Update Max Marks
-      totalMaxMarks += marks;
-      if (sectionAnalysis[currentSectionId]) {
-        sectionAnalysis[currentSectionId].totalQ++;
-        sectionAnalysis[currentSectionId].maxScore += marks;
-      }
-
-      const ans = answers[q.id];
-      let qScore = 0;
-      let isCorrect = false;
-      let isPartial = false;
-      let isSkipped = !ans;
-      let isWrong = false;
-
-      if (isSkipped) {
-        skippedCount++;
-      } else {
-        // Attempted
-        if (sectionAnalysis[currentSectionId]) sectionAnalysis[currentSectionId].attempted++;
-
-        if (q.type === 'numerical') {
-          const numAns = parseFloat(ans);
-          const range = q.correctAnswer;
-          if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
-            isCorrect = true;
-            qScore = marks;
-          } else {
-            isWrong = true;
-            qScore = -neg;
-          }
-        } else if (q.type === 'multiple') {
-          const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].map(String).sort() : [];
-          const userArr = Array.isArray(ans) ? [...ans].map(String).sort() : [];
-
-          const hasIncorrect = userArr.some(a => !correctArr.includes(a));
-
-          if (hasIncorrect) {
-            isWrong = true;
-            qScore = -neg;
-          } else {
-            if (userArr.length === correctArr.length) {
-              isCorrect = true;
-              qScore = marks;
-            } else if (userArr.length > 0) {
-              isPartial = true;
-              const fraction = userArr.length / correctArr.length;
-              qScore = fraction * marks;
-            }
-          }
-        } else {
-          // Single
-          if (ans === q.correctAnswer) {
-            isCorrect = true;
-            qScore = marks;
-          } else {
-            isWrong = true;
-            qScore = -neg;
-          }
-        }
-      }
-
-      // Update Counters
-      if (isCorrect) correctCount++;
-      if (isPartial) partialCount++;
-      if (isWrong) wrongCount++;
-      calculatedScore += qScore;
-
-      // Update Section Stats
-      if (sectionAnalysis[currentSectionId]) {
-        if (isCorrect) sectionAnalysis[currentSectionId].correct++;
-        if (isPartial) sectionAnalysis[currentSectionId].partial++;
-        if (isWrong) sectionAnalysis[currentSectionId].wrong++;
-        sectionAnalysis[currentSectionId].score += qScore;
-      }
-    });
-  }
-
-  // Override total marks with actual calc if available
-  const finalScore = stateData?.score ?? calculatedScore;
-  const percentage = totalMaxMarks > 0 ? Math.round((finalScore / totalMaxMarks) * 100) : 0;
+      loadAnalysis();
+    }
+  }, [showPersonalResults, selectedTest, answers]);
 
   const handleRetakeTest = () => {
     resetTest();
@@ -264,6 +125,50 @@ const ResultsPage = () => {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
+        <span className="text-slate-600 font-medium">Calculating Results...</span>
+      </div>
+    );
+  }
+
+  if (error || !analysisData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h1 className="text-xl font-bold text-red-600 mb-4">Failed to process results</h1>
+        <p className="text-slate-500 mb-6">{error}</p>
+        <Button onClick={() => navigate('/')}>Return Home</Button>
+      </div>
+    );
+  }
+
+  const {
+    finalScore,
+    totalMaxMarks,
+    correctCount,
+    partialCount,
+    wrongCount,
+    skippedCount,
+    percentage,
+    sectionData,
+    questionStatus
+  } = analysisData;
+
+  const sectionAnalysis = sectionData as Record<string, {
+    name: string;
+    totalQ: number;
+    attempted: number;
+    correct: number;
+    partial: number;
+    wrong: number;
+    score: number;
+    maxScore: number;
+    marksPerQuestion: string | number;
+    negativeMarks: string | number;
+  }>;
+
   // Determine testId for feedback
   const testId = selectedTest?.id;
 
@@ -274,6 +179,14 @@ const ResultsPage = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Result Analysis</h1>
           <div className="flex gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+              onClick={() => navigate('/analysis', { state: stateData })}
+            >
+              <Target className="w-4 h-4 mr-2" /> Advance Analysis
+            </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/')}>
               <Home className="w-4 h-4 mr-2" /> Home
             </Button>
@@ -416,28 +329,11 @@ const ResultsPage = () => {
                   negDisplay = getDisplayMark(q.negativeMarks, neg);
                 }
 
-                let isCorrect = false;
-                if (q.type === 'numerical') {
-                  const numAns = parseFloat(ans);
-                  const range = q.correctAnswer;
-                  if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) {
-                    isCorrect = true;
-                  }
-                } else if (q.type === 'multiple') {
-                  const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].sort() : [];
-                  const userArr = Array.isArray(ans) ? [...ans].sort() : [];
-                  if (correctArr.length > 0 && correctArr.length === userArr.length &&
-                    correctArr.every((val, index) => val === userArr[index])) {
-                    isCorrect = true;
-                  }
-                } else {
-                  if (ans === q.correctAnswer) {
-                    isCorrect = true;
-                  }
-                }
-
-                const isSkipped = !ans;
-                const isWrong = !isSkipped && !isCorrect;
+                const qStats = questionStatus[q.id] || { status: 'skipped', score: 0 };
+                const isCorrect = qStats.status === 'correct';
+                const isWrong = qStats.status === 'wrong';
+                const isPartial = qStats.status === 'partial';
+                const isSkipped = qStats.status === 'skipped';
 
                 return (
                   <AccordionItem key={q.id} value={`item-${q.id}`} className="border rounded-lg px-2 data-[state=open]:bg-slate-50">
@@ -448,6 +344,7 @@ const ResultsPage = () => {
                                             ${isCorrect ? 'bg-green-100 text-green-700 border-green-200' : ''}
                                             ${isWrong ? 'bg-red-100 text-red-700 border-red-200' : ''}
                                             ${isSkipped ? 'bg-slate-100 text-slate-500 border-slate-200' : ''}
+                                            ${isPartial ? 'bg-blue-100 text-blue-700 border-blue-200' : ''}
                                         `}>
                           {index + 1}
                         </div>
@@ -458,23 +355,7 @@ const ResultsPage = () => {
                         <div className="mr-2 flex items-center gap-3">
                           {/* Marks Display: Obtained / Total */}
                           {(() => {
-                            let obtainedMark = 0;
-                            if (isSkipped) {
-                              obtainedMark = 0;
-                            } else if (isCorrect) {
-                              obtainedMark = typeof marks === 'number' ? marks : parseFloat(marks as any);
-                            } else if (isWrong) {
-                              obtainedMark = -(typeof neg === 'number' ? neg : parseFloat(neg as any));
-                            } else {
-                              // Partial Case (Multiple Choice)
-                              if (q.type === 'multiple') {
-                                const correctArr = Array.isArray(q.correctAnswer) ? [...q.correctAnswer].map(String).sort() : [];
-                                const userArr = Array.isArray(ans) ? [...ans].map(String).sort() : [];
-                                const fraction = correctArr.length > 0 ? userArr.length / correctArr.length : 0;
-                                obtainedMark = fraction * (typeof marks === 'number' ? marks : parseFloat(marks as any));
-                              }
-                            }
-
+                            const obtainedMark = qStats.score;
                             // Format for display
                             const displayObtained = parseFloat(obtainedMark.toFixed(2));
                             const displayTotal = marksDisplay;
@@ -487,6 +368,7 @@ const ResultsPage = () => {
                           })()}
                           {isCorrect && <Badge className="bg-green-600">Correct</Badge>}
                           {isWrong && <Badge variant="destructive">Wrong</Badge>}
+                          {isPartial && <Badge className="bg-blue-600">Partial</Badge>}
                           {isSkipped && <Badge variant="secondary">Skipped</Badge>}
                         </div>
                       </div>

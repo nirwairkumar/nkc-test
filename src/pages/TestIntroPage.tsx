@@ -227,9 +227,12 @@ export default function TestIntroPage() {
 
     const questionCount = test.questions?.length || 0;
 
-    // Calculate Total Marks
+    // Calculate Total Marks (Prefer backend computed value over manual calculation to respect attempt control)
     let totalMaxMarks = 0;
-    if (test.enable_section_mode && test.sections) {
+
+    if (test.computed_max_marks?.total_max_marks !== undefined) {
+        totalMaxMarks = test.computed_max_marks.total_max_marks;
+    } else if (test.enable_section_mode && test.sections) {
         test.sections.forEach((sec: any) => {
             if (sec.questions) {
                 sec.questions.forEach((q: any) => {
@@ -326,9 +329,11 @@ export default function TestIntroPage() {
                                 </thead>
                                 <tbody className="divide-y dark:divide-slate-800">
                                     {test.sections.map((sec: any) => {
-                                        // Calculate total marks for this section
+                                        // Use backend computed marks if available
                                         let sectionTotal = 0;
-                                        if (sec.questions) {
+                                        if (test.computed_max_marks?.section_max_marks?.[sec.id] !== undefined) {
+                                            sectionTotal = test.computed_max_marks.section_max_marks[sec.id];
+                                        } else if (sec.questions) {
                                             sec.questions.forEach((q: any) => {
                                                 const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
                                                 sectionTotal += isNaN(m) ? 0 : m;
