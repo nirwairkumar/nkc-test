@@ -161,27 +161,15 @@ const App = () => (
                     />
                     <Route
                       path="/test-submitted"
-                      element={
-                        <PrivateRoute>
-                          <TestSubmissionSuccess />
-                        </PrivateRoute>
-                      }
+                      element={<TestSubmissionSuccess />}
                     />
                     <Route
                       path="/results"
-                      element={
-                        <PrivateRoute>
-                          <ResultsPage />
-                        </PrivateRoute>
-                      }
+                      element={<ResultsPage />}
                     />
                     <Route
                       path="/analysis"
-                      element={
-                        <PrivateRoute>
-                          <AdvancedAnalysis />
-                        </PrivateRoute>
-                      }
+                      element={<AdvancedAnalysis />}
                     />
                     <Route
                       path="/profile"
