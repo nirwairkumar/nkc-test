@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+import json
 from app.routers.tests.schemas import *
 import uuid
 
@@ -115,3 +117,105 @@ async def delete_test(test_id: str, db: Client = Depends(get_db)):
     except Exception as e:
         print(f"Error deleting test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/import/json")
+async def import_json(file: UploadFile = File(...)):
+    if not file.filename.endswith(".json"):
+        raise HTTPException(status_code=400, detail="Only JSON files are allowed")
+    try:
+        content = await file.read()
+        data = json.loads(content)
+        
+        has_questions = "questions" in data and isinstance(data["questions"], list) and len(data["questions"]) > 0
+        has_sections = "sections" in data and isinstance(data["sections"], list) and len(data["sections"]) > 0
+        
+        if not data.get("title") or (not has_questions and not has_sections):
+            raise HTTPException(status_code=400, detail="Invalid JSON format: Must have title and either questions or sections")
+            
+        def map_question(q: dict, index: int) -> dict:
+            mapped_q = {**q}
+            mapped_q["id"] = q.get("id", index + 1)
+            mapped_q["type"] = q.get("type", "single")
+            mapped_q["question"] = q.get("question") or q.get("questionText", "")
+            mapped_q["typingMode"] = "en"
+            mapped_q["marks"] = str(q.get("marks", 4))
+            mapped_q["negativeMarks"] = str(q.get("negativeMarks", 1))
+            mapped_q["passageContent"] = q.get("passageContent", "")
+            mapped_q["groupId"] = q.get("groupId", "")
+            mapped_q["image"] = q.get("image", None)
+            
+            flat_options = {}
+            flat_option_images = q.get("optionImages", {})
+            raw_options = q.get("options")
+            
+            if isinstance(raw_options, dict):
+                for k, v in raw_options.items():
+                    if isinstance(v, dict) and "text" in v:
+                        flat_options[k] = v.get("text", "")
+                        if "image" in v and v["image"]:
+                            flat_option_images[k] = v["image"]
+                    else:
+                        flat_options[k] = str(v) if v is not None else ""
+                
+                if flat_option_images:
+                    mapped_q["optionImages"] = flat_option_images
+            elif not raw_options:
+                flat_options = {"A": "", "B": "", "C": "", "D": ""}
+                
+            mapped_q["options"] = flat_options
+            
+            # Type-specific correctAnswer mapping
+            if mapped_q["type"] == "single" and not mapped_q.get("correctAnswer"):
+                mapped_q["correctAnswer"] = "A"
+            elif mapped_q["type"] == "multiple":
+                correct = mapped_q.get("correctAnswer")
+                if not isinstance(correct, list):
+                    mapped_q["correctAnswer"] = []
+            elif mapped_q["type"] == "numerical":
+                correct = mapped_q.get("correctAnswer")
+                if not isinstance(correct, dict):
+                    mapped_q["correctAnswer"] = {"min": 0, "max": 0}
+                    
+            return mapped_q
+            
+        total_max_marks = 0
+
+        if data.get("sections") and has_sections:
+            data["enable_section_mode"] = True
+            for s in data["sections"]:
+                section_questions = [map_question(q, i) for i, q in enumerate(s.get("questions", []))]
+                s["questions"] = section_questions
+                
+                # Check for attempt control to calculate specific section marks
+                attempt_control = s.get("attempt_control", {})
+                is_attempt_control_enabled = attempt_control.get("enabled", False)
+                max_attempts = attempt_control.get("max_attempts", len(section_questions))
+                
+                if is_attempt_control_enabled and max_attempts:
+                    # Sort questions by marks descending and pick top `max_attempts`
+                    # In real JEE this assumes uniform marks (typically 4) so we do simplistic maxing
+                    sorted_marks = sorted([float(q["marks"]) for q in section_questions], reverse=True)
+                    total_max_marks += sum(sorted_marks[:max_attempts])
+                else:
+                    total_max_marks += sum(float(q["marks"]) for q in section_questions)
+        elif has_questions:
+            data["enable_section_mode"] = False
+            data["questions"] = [map_question(q, i) for i, q in enumerate(data.get("questions", []))]
+            total_max_marks = sum(float(q["marks"]) for q in data["questions"])
+            
+        data["enable_section_mode"] = data.get("enable_section_mode", False)
+        data["has_scientific_calculator"] = data.get("has_scientific_calculator", False)
+        data["section_marking_model"] = data.get("section_marking_model", "section-wise")
+        
+        # Override data maxMarks with true calculated maximum
+        data["duration"] = data.get("duration", 180)
+        data["maxMarks"] = int(total_max_marks)
+        data["description"] = data.get("description", "")
+        
+        return data
+        
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
+    except Exception as e:
+        print(f"Error importing JSON: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process JSON: {str(e)}")

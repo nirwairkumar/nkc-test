@@ -14,8 +14,6 @@ Now also supports:
   - Cross-page question stitching
   - ULTRA-FAST processing with hybrid OCR+Vision approach
   - Smart content analysis and parallel batch processing
-  - Enhanced table extraction
-  - Better image/diagram association with questions and options
 """
 import os
 import io
@@ -30,12 +28,15 @@ from utils.logger import get_logger
 from app.core.config import settings
 from PIL import Image
 
-# Import enhanced extraction modules
-from ai_preview_importer.table_extractor import extract_tables_from_pdf, match_tables_to_questions
-from ai_preview_importer.enhanced_image_extractor import extract_and_match_images, enhance_questions_with_spatial_data
-from ai_preview_importer.enhanced_prompts import ENHANCED_EXTRACT_PROMPT
-
 logger = get_logger(__name__)
+
+# Optional: Tesseract OCR for hybrid processing
+try:
+    import pytesseract
+    TESSERACT_AVAILABLE = True
+except ImportError:
+    TESSERACT_AVAILABLE = False
+    logger.warning("Tesseract not available. Using vision-only mode.")
 
 # Configure Gemini using the app settings (loaded from .env)
 api_key = settings.GEMINI_API_KEY
@@ -218,7 +219,7 @@ MATH & FORMATTING RULES:
 - Use LaTeX for ALL math: \\frac, \\sqrt, \\int, x^2, etc.
 - Escape ALL backslashes for JSON: use \\\\ instead of \\.
 - Inline math: $...$
-- Block math: $$...$$
+- No block math: $$...$$
 - Do NOT simplify expressions.
 
 TEXT & LINE-BREAK RULES:
@@ -1055,26 +1056,18 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         if not options and q_type != "numerical":
             options = {"A": "", "B": "", "C": "", "D": ""}
 
-        # Build option images - use AI-provided ones if available
-        option_images = q.get("optionImages", {})
-        if not option_images and options:
-            option_images = {k: None for k in options.keys()}
-        
-        validated_q = {
+        validated.append({
             "id": q.get("id", i + 1),
             "type": q_type,
             "question": question_text,
             "image": q_image,
             "options": options,
-            "optionImages": option_images,
+            "optionImages": {k: None for k in options.keys()} if options else {},
             "correctAnswer": q.get("correctAnswer"),
             "marks": q.get("marks", 4),
             "negativeMarks": q.get("negativeMarks", 1),
             "crossPage": q.get("crossPage", False),
-            "page": q.get("page", q.get("diagramPage", 1)),  # Track page number
-        }
-        
-        validated.append(validated_q)
+        })
 
     result = {
         "title": data.get("title", ""),
@@ -1364,42 +1357,10 @@ async def process_files_stream(
                 completed_batches += 1
                 return {'success': False, 'error': str(e), 'batch': batch_num}
     
-    # Process ALL batches in parallel with progress updates
+    # Process ALL batches in parallel
     logger.info(f"🚀 Launching {total_batches} parallel batch processors...")
-    
-    # Create tasks for all batches
-    pending_tasks = {
-        asyncio.create_task(process_batch_with_progress(batch)): batch 
-        for batch in batches
-    }
-    
-    # Process with progress updates as each completes
-    batch_results = []
-    while pending_tasks:
-        # Wait for at least one task to complete
-        done, _ = await asyncio.wait(
-            pending_tasks.keys(), 
-            return_when=asyncio.FIRST_COMPLETED
-        )
-        
-        for task in done:
-            result = await task
-            batch_results.append(result)
-            del pending_tasks[task]
-            
-            # Update progress after each batch completes
-            if progress_callback:
-                await progress_callback({
-                    'stage': 'processing',
-                    'percent': 40 + (len(batch_results) / total_batches) * 40,
-                    'message': f'Processing batch {result["batch"]} of {total_batches} ({total_questions_found} questions found)...',
-                    'data': {
-                        'batch': len(batch_results),
-                        'total_batches': total_batches,
-                        'questions_found': total_questions_found,
-                        'pending': len(pending_tasks)
-                    }
-                })
+    batch_tasks = [process_batch_with_progress(batch) for batch in batches]
+    batch_results = await asyncio.gather(*batch_tasks)
     
     # Collect successful results
     failed_batches = []
@@ -1424,61 +1385,6 @@ async def process_files_stream(
     
     # Merge cross-page questions
     unique_questions = merge_cross_page_questions(all_questions)
-    
-    # ============================================================
-    # ENHANCED EXTRACTION: Tables and Image Matching
-    # ============================================================
-    
-    # Step 7a: Extract tables from PDFs
-    all_tables = []
-    if progress_callback:
-        await progress_callback({
-            'stage': 'finalizing',
-            'percent': 92,
-            'message': 'Extracting tables and structured data...'
-        })
-    
-    for file_info in all_files_info:
-        if file_info['type'] == 'pdf':
-            try:
-                tables = extract_tables_from_pdf(file_info['content'])
-                all_tables.extend(tables)
-                logger.info(f"📊 Extracted {len(tables)} tables from {file_info['filename']}")
-            except Exception as e:
-                logger.warning(f"Table extraction failed for {file_info['filename']}: {e}")
-    
-    # Step 7b: Enhance questions with spatial data and match images
-    if progress_callback:
-        await progress_callback({
-            'stage': 'finalizing',
-            'percent': 94,
-            'message': 'Matching images and diagrams to questions...'
-        })
-    
-    # Get all PDF bytes for image extraction
-    all_pdf_bytes = None
-    for file_info in all_files_info:
-        if file_info['type'] == 'pdf':
-            all_pdf_bytes = file_info['content']
-            break
-    
-    if all_pdf_bytes and unique_questions:
-        try:
-            # Enhance questions with bounding boxes and spatial data
-            unique_questions = enhance_questions_with_spatial_data(unique_questions, all_pdf_bytes)
-            
-            # Match images to questions and options
-            unique_questions = extract_and_match_images(all_pdf_bytes, unique_questions)
-            
-            # Match tables to questions
-            if all_tables:
-                unique_questions = match_tables_to_questions(all_tables, unique_questions, all_embedded_images)
-                
-            logger.info(f"✅ Enhanced {len(unique_questions)} questions with spatial data and images")
-        except Exception as e:
-            logger.warning(f"Enhanced extraction failed: {e}")
-    
-    # ============================================================
     
     # Match answer key if provided
     if answer_key:
@@ -1562,8 +1468,7 @@ async def _process_single_batch_stream(
     embedded_images = batch_data['embedded_images']
     total_pages = batch_data['total_pages']
     
-    # Use enhanced prompt for better extraction
-    prompt = ENHANCED_EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
+    prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
     
     # Build content parts
     content_parts = [prompt]
