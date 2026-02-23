@@ -10,7 +10,7 @@ export function useYouTubeStyleRender<T>(
   isLoading: boolean,
   options: UseYouTubeStyleRenderOptions = {}
 ) {
-  const { 
+  const {
     rootMargin = '50px',
     threshold = 0.1
   } = options;
@@ -51,7 +51,7 @@ export function useYouTubeStyleRender<T>(
               newSet.add(itemId);
               return newSet;
             });
-            
+
             // Add to rendered items with a small delay for animation
             const item = items.find((i: any) => (i.id || i) === itemId);
             if (item) {
@@ -63,16 +63,16 @@ export function useYouTubeStyleRender<T>(
                 });
               }, 50);
             }
-            
+
             // Stop observing once visible
             observer.disconnect();
             observersRef.current.delete(itemId);
           }
         });
       },
-      { 
+      {
         rootMargin,
-        threshold 
+        threshold
       }
     );
 
@@ -83,10 +83,10 @@ export function useYouTubeStyleRender<T>(
   // Register a skeleton element to be observed
   const registerSkeleton = useCallback((itemId: string, element: HTMLElement | null) => {
     if (!element || isLoading) return;
-    
+
     // If already rendered, don't observe
     if (renderedItems.has(itemId)) return;
-    
+
     createObserver(itemId, element);
   }, [createObserver, isLoading, renderedItems]);
 

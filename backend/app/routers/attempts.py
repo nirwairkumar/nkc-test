@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from app.core.database import get_db
+from app.core.database import get_db, supabase
+from app.utils.attempt_control import apply_section_attempt_control
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -23,6 +24,17 @@ async def save_attempt(
     db: Client = Depends(get_db)
 ):
     try:
+        # Fetch test details for attempt control validation
+        test_res = supabase.table("tests").select("id, enable_section_mode, sections").eq("id", payload.test_id).single().execute()
+        test_data = test_res.data
+        
+        if test_data and test_data.get("enable_section_mode") and test_data.get("sections"):
+            try:
+                # This validates HARD mode and can be used for filtering in the future
+                apply_section_attempt_control(test_data["sections"], payload.answers)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+
         response = db.table("user_tests").insert({
             "user_id": payload.user_id,
             "test_id": payload.test_id,

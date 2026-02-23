@@ -48,6 +48,10 @@ export interface Test {
         id: string;
         name: string;
     }[];
+    computed_max_marks?: {
+        total_max_marks: number;
+        section_max_marks?: Record<string, number>;
+    };
 }
 
 export interface TestSettings {
@@ -122,6 +126,33 @@ export async function createTest(testData: Partial<Test>) {
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
+    }
+}
+
+export async function importTestJson(file: File) {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await apiClient.post('/tests/import/json', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
+    }
+}
+
+export async function fetchAdvancedAnalysis(test: any, answers: Record<number, string>) {
+    try {
+        const response = await apiClient.post('/results/analyze', {
+            test,
+            answers
+        });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
     }
 }
 

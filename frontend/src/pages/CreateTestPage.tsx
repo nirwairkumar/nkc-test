@@ -55,17 +55,10 @@ export default function CreateTestPage() {
                 description="Create custom online tests and quizzes for free. Use AI to generate questions from text or PDF. Best for teachers and students."
                 keywords={["create test online", "free quiz maker", "exam builder", "test generator"]}
             />
-            {!importedData && !showImporter && (
-                <div className="absolute top-4 right-4 z-10">
-                    <Button onClick={() => setShowImporter(true)} variant="outline" className="gap-2">
-                        <FileText className="w-4 h-4" />
-                        Import from PDF
-                    </Button>
-                </div>
-            )}
-            <TestBuilder 
-                key={importedData ? `imported-${importedData.questions?.length || 0}` : 'new'} 
-                initialData={importedData} 
+            <TestBuilder
+                key={importedData ? `imported-${importedData.questions?.length || 0}` : 'new'}
+                initialData={importedData}
+                onAiImport={() => setShowImporter(true)}
             />
         </div>
     );

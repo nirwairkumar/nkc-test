@@ -383,8 +383,44 @@ export default function TestPage() {
     }
   }
 
+  const checkAttemptLimit = (questionId: number): boolean => {
+    if (!test || !test.enable_section_mode || !test.sections) return true;
+
+    let targetSection: any = null;
+    for (const section of test.sections) {
+      if (section.questions.some((q: any) => q.id === questionId)) {
+        targetSection = section;
+        break;
+      }
+    }
+
+    if (targetSection && targetSection.attempt_control?.enabled && targetSection.attempt_control?.mode === 'hard') {
+      let attemptCount = 0;
+      targetSection.questions.forEach((q: any) => {
+        const ans = answers[q.id];
+        const isAttempted = ans !== undefined && ans !== '' && (!Array.isArray(ans) || ans.length > 0);
+        if (isAttempted) attemptCount++;
+      });
+
+      const maxAttempts = targetSection.attempt_control.max_attempts || 0;
+      if (attemptCount >= maxAttempts) {
+        toast.error(`Limit reached! You can only attempt ${maxAttempts} questions in the ${targetSection.name} section.`);
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleAnswerSelect = (questionId: number, optionKey: string) => {
     if (isTimeUp) return;
+
+    const currentAns = answers[questionId];
+    const isCurrentlyAnswered = currentAns !== undefined && currentAns !== '' && (!Array.isArray(currentAns) || currentAns.length > 0);
+
+    if (!isCurrentlyAnswered) {
+      if (!checkAttemptLimit(questionId)) return;
+    }
+
     setAnswers(prev => ({ ...prev, [questionId]: optionKey }));
   };
 
@@ -461,18 +497,89 @@ export default function TestPage() {
     setShowSubmitDialog(false);
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // Calculate score & stats
+    const unattemptedCountOriginal = test.questions.filter(q => !answers[q.id]).length;
+
     let score = 0;
     let positiveScore = 0;
     let negativeScore = 0;
     let correctCount = 0;
-    let wrongCount = 0;
     let partialCount = 0;
+    let wrongCount = 0;
     let unattemptedCount = 0;
+
+    // SECTION ATTEMPT CONTROL FILTERING
+    let finalAnswers = { ...answers };
+    if (test.enable_section_mode && test.sections) {
+      const filteredAnswers: Record<number, string | string[]> = {};
+
+      test.sections.forEach(section => {
+        const sectionQIds = section.questions.map((q: any) => q.id);
+        const sectionAnswers = Object.entries(answers)
+          .filter(([qId]) => sectionQIds.includes(Number(qId)))
+          .map(([qId, ans]) => ({ id: Number(qId), ans }));
+
+        const control = (section as any).attempt_control;
+        if (control?.enabled && control.mode === 'soft') {
+          const max = control.max_attempts || 0;
+          if (sectionAnswers.length > max) {
+            if (control.soft_type === 'first_n') {
+              // Group answers by question order in section
+              sectionAnswers.sort((a, b) => sectionQIds.indexOf(a.id) - sectionQIds.indexOf(b.id));
+              sectionAnswers.slice(0, max).forEach(item => {
+                filteredAnswers[item.id] = item.ans;
+              });
+            } else if (control.soft_type === 'best_n') {
+              // This is TRICKY. We need to calculate score per question FIRST to pick best.
+              // Let's create a scored list for this section
+              const scoredSectionAnswers = sectionAnswers.map(item => {
+                const q = section.questions.find((sq: any) => sq.id === item.id);
+                // Simple score calculation (reusing logic from below but simplified)
+                let itemScore = 0;
+                const sectionMarks = parseMark((section as any).marks_per_question, 4);
+                const sectionNegative = parseMark((section as any).negative_marks, 1);
+
+                if (q.type === 'numerical') {
+                  const numAns = parseFloat(item.ans as string);
+                  const range = q.correctAnswer as { min: number, max: number };
+                  if (!isNaN(numAns) && range && typeof range === 'object' && numAns >= range.min && numAns <= range.max) itemScore = sectionMarks;
+                  else itemScore = -sectionNegative;
+                } else if (q.type === 'multiple') {
+                  const correctArr = (Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]).map(String).sort();
+                  const userArr = (Array.isArray(item.ans) ? item.ans : [item.ans]).map(String).sort();
+                  if (userArr.some(ans => !correctArr.includes(ans))) itemScore = -sectionNegative;
+                  else if (userArr.length === correctArr.length) itemScore = sectionMarks;
+                  else if (userArr.length > 0) itemScore = (userArr.length / correctArr.length) * sectionMarks;
+                } else {
+                  if (item.ans === q.correctAnswer) itemScore = sectionMarks;
+                  else itemScore = -sectionNegative;
+                }
+                return { ...item, score: itemScore };
+              });
+
+              // Sort by score descending
+              scoredSectionAnswers.sort((a, b) => b.score - a.score);
+              scoredSectionAnswers.slice(0, max).forEach(item => {
+                filteredAnswers[item.id] = item.ans;
+              });
+            }
+          } else {
+            sectionAnswers.forEach(item => {
+              filteredAnswers[item.id] = item.ans;
+            });
+          }
+        } else {
+          // No control or Hard mode (already validated or truncated)
+          sectionAnswers.forEach(item => {
+            filteredAnswers[item.id] = item.ans;
+          });
+        }
+      });
+      finalAnswers = filteredAnswers;
+    }
 
     test.questions.forEach((q, index) => {
       let isCorrect = false;
-      const userAns = answers[q.id];
+      const userAns = finalAnswers[q.id];
 
       if (!userAns) {
         unattemptedCount++;
@@ -1192,7 +1299,7 @@ export default function TestPage() {
                               </div>
 
                               <div className="flex-1 flex flex-col gap-2">
-                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex>{text}</Latex></div>}
+                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex strict={false} trust={true}>{text}</Latex></div>}
                                 {optionImage && (
                                   <img
                                     src={optionImage.trim()}
@@ -1316,6 +1423,12 @@ export default function TestPage() {
                           value={answers[currentQuestion.id] || ''}
                           onChange={(e) => {
                             const val = e.target.value;
+                            const currentAns = answers[currentQuestion.id];
+                            const isCurrentlyAnswered = currentAns !== undefined && currentAns !== '';
+
+                            if (val !== '' && !isCurrentlyAnswered) {
+                              if (!checkAttemptLimit(currentQuestion.id)) return;
+                            }
                             setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
                           }}
                           className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12"
@@ -1336,12 +1449,19 @@ export default function TestPage() {
                               if (currentQuestion.type === 'multiple') {
                                 const current = (answers[currentQuestion.id] as any) || [];
                                 const newAnswers = Array.isArray(current) ? [...current] : [];
+                                const isCurrentlyAnswered = newAnswers.length > 0;
 
                                 if (newAnswers.includes(key)) {
                                   newAnswers.splice(newAnswers.indexOf(key), 1);
                                 } else {
                                   newAnswers.push(key);
                                 }
+
+                                const willBeAnswered = newAnswers.length > 0;
+                                if (!isCurrentlyAnswered && willBeAnswered) {
+                                  if (!checkAttemptLimit(currentQuestion.id)) return;
+                                }
+
                                 newAnswers.sort();
                                 setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
                               } else {
@@ -1366,7 +1486,7 @@ export default function TestPage() {
 
                             {/* Option Text/Image */}
                             <div className="flex-1 flex flex-col gap-2">
-                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex>{text}</Latex></div>}
+                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex strict={false} trust={true}>{text}</Latex></div>}
                               {optionImage && (
                                 <img
                                   src={optionImage.trim()}

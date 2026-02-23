@@ -3,6 +3,7 @@ from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
 from app.routers.tests.schemas import *
+from app.utils.attempt_control import calculate_test_max_marks
 import uuid
 
 router = APIRouter()
@@ -294,6 +295,9 @@ async def get_test_by_id(
         else:
             test["categories"] = []
 
+        # Add computed max marks info
+        test["computed_max_marks"] = calculate_test_max_marks(test)
+
         return test
 
     except Exception as e:
@@ -333,6 +337,9 @@ async def get_test_by_slug(
             test["categories"] = cats_res.data or []
         else:
             test["categories"] = []
+
+        # Add computed max marks info
+        test["computed_max_marks"] = calculate_test_max_marks(test)
 
         return test
 

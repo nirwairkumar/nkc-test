@@ -8,6 +8,12 @@ class TestSection(BaseModel):
     marks_per_question: Optional[float] = 4
     negative_marks: Optional[float] = 1
     question_type: Optional[str] = "single"
+    attempt_control: Optional[Dict[str, Any]] = {
+        "enabled": False,
+        "max_attempts": 0,
+        "mode": "hard",
+        "soft_type": "first_n"
+    }
     questions: List[Dict[str, Any]] = []
 
 class CreateTestRequest(BaseModel):

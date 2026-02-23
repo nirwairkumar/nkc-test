@@ -15,6 +15,7 @@ import { ClassItem } from '@/lib/classesApi';
 import { fetchCategories } from '@/lib/categoriesApi';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import { toast } from 'sonner';
 
 interface CreatorProfile {
     id: string;
@@ -68,7 +69,9 @@ export default function CreatorProfilePage() {
         setLoading(true);
         try {
             // REFACTORED: Single API call to Python Backend
+            console.log("loadCreatorData: Fetching creators data...", creatorId);
             const response = await apiClient.get(`/creators/${creatorId}`);
+            console.log("loadCreatorData: API response received!", response.data);
             const { profile, tests, classes, materials } = response.data;
 
             if (profile) setCreator(profile);
@@ -82,21 +85,18 @@ export default function CreatorProfilePage() {
             setCategories(catRes.data || []);
 
         } catch (error) {
-            console.error("Failed to load creator data", error);
+            console.error("Failed to load creator data", error); toast.error("Failed to load creator profile!");
         } finally {
             setLoading(false);
         }
     };
-
-    if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
-    if (!creator) return <div className="container py-10 text-center">Creator not found</div>;
 
     // Filter content based on selected class
     const filteredTests = selectedClassId === 'all'
         ? tests
         : tests.filter(t => t.class_id === selectedClassId);
 
-    // YouTube-style lazy loading hook for filtered tests
+    // YouTube-style lazy loading hook for filtered tests (MUST run before early returns)
     const {
         registerSkeleton,
         isItemRendered,
@@ -107,6 +107,11 @@ export default function CreatorProfilePage() {
         rootMargin: '100px',
         threshold: 0.1
     });
+
+    console.log("CreatorProfilePage render state - loading:", loading, "hasCreator:", !!creator, "tests count:", tests.length);
+
+    if (loading) return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
+    if (!creator) return <div className="container py-10 text-center">Creator not found</div>;
 
     const filteredMaterials = selectedClassId === 'all'
         ? materials
@@ -128,7 +133,7 @@ export default function CreatorProfilePage() {
             <div className="flex flex-col md:flex-row gap-6 items-center md:items-start mb-10">
                 <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white shadow-lg">
                     <AvatarImage src={creator.avatar_url} />
-                    <AvatarFallback className="text-4xl">{creator.full_name?.[0]}</AvatarFallback>
+                    <AvatarFallback className="text-4xl">{creator.full_name ? creator.full_name[0].toUpperCase() : "C"}</AvatarFallback>
                 </Avatar>
                 <div className="text-center md:text-left flex-1">
                     <h1 className="text-3xl font-bold">{creator.full_name}</h1>
@@ -191,7 +196,7 @@ export default function CreatorProfilePage() {
                             {filteredTests.map(test => {
                                 const testId = test.id;
                                 const isRendered = isItemRendered(testId);
-                                
+
                                 if (!isRendered) {
                                     return (
                                         <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
@@ -211,7 +216,7 @@ export default function CreatorProfilePage() {
                                     </div>
                                 );
                             })}
-                            
+
                             {/* Progress indicator */}
                             {!isComplete && filteredTests.length > 0 && (
                                 <div className="col-span-full py-4 text-center">
