@@ -191,7 +191,7 @@ export const IMEInput: React.FC<IMEInputProps> = ({
                     )}
                 >
                     {/* @ts-ignore */}
-                    <Latex strict={false} trust={true}>
+                    <Latex strict={false} {...({ trust: true } as any)}>
                         {value}
                     </Latex>
                 </div>
