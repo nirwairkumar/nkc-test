@@ -411,8 +411,10 @@ NO TEXT BEFORE OR AFTER.
   const jsonTemplateSection = `ROLE:
 You are a high-precision AI exam parser specialized in complex multi-section competitive exams (JEE/NEET/GATE/SSC/UPSC style).
 
+-> Give full output in one **code snippet** only.
+
 GOAL:
-Convert the PROVIDED PDF/IMAGE into a STRICTLY VALID JSON test file that exactly matches the required structure.
+Convert the PROVIDED PDF/IMAGE/TEXT into a STRICTLY VALID JSON test file that exactly matches the required structure.
 
 The platform supports:
 • Mixed question types inside same section
@@ -438,7 +440,17 @@ ABSOLUTE OUTPUT RULES
 6. DO NOT include keys if their value is null or truly absent
 7. Question IDs must be sequential integers (1,2,3,...)
 8. Deeply scan mathematical syntax before finalizing
-9. CRITICAL: Use DOUBLE BACKSLASHES (\\) for all LaTeX commands (e.g., use \\frac instead of \\frac).
+9. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+
+FILE STRUCTURE
+{
+  "title": "write relevant title",     
+  "description": "write relevant description",     
+  "maxMarks": "", 
+  "duration": "analyse and find total duration of exam in minutes",
+  "sections": [...]
+}
+
 
 SECTION STRUCTURE
 
@@ -448,9 +460,6 @@ Each section must follow:
   "id": "section-1",
   "name": "Section Name",
   "questions": [...],
-  "question_type": "default if mentioned",
-  "negative_marks": 0,
-  "marks_per_question": 1
 }
 
 NOTE:
@@ -544,10 +553,10 @@ OPTIONS RULE
 
 For single & multiple:
     "options": {
-      "A": "...",
-      "B": "...",
-      "C": "...",
-      "D": "..."
+      "A": "Exact extracted text (KaTeX preserved)",
+      "B": "Exact extracted text (KaTeX preserved)",
+      "C": "Exact extracted text (KaTeX preserved)",
+      "D": "Exact extracted text (KaTeX preserved)"
     }
 
 For numerical:
@@ -596,7 +605,7 @@ MATHEMATICAL EXPRESSION RULES
 
 5. Example:
 √(x^2 + y^2)
-→ "\\sqrt{x^2 + y^2}"
+→ "$\\sqrt{x^2 + y^2}$"
 
 --------------------------------------------------
 
@@ -616,8 +625,7 @@ Original table:
 | 3 | 4 |
 
 Convert to:
-
-\\[
+$$
 \\begin{array}{|c|c|}
 \\hline
 A & B \\\\
@@ -626,7 +634,7 @@ A & B \\\\
 3 & 4 \\\\
 \\hline
 \\end{array}
-\\]
+$$
 
 Embed this directly inside the "question" string.
 
@@ -650,14 +658,13 @@ A. Apple      1. Fruit
 B. Car        2. Vehicle
 
 Convert to:
-
-\\[
+$$
 \\begin{array}{ll}
 \\text{Column I} & \\text{Column II} \\\\
 A.\\ \\text{Apple} & 1.\\ \\text{Fruit} \\\\
 B.\\ \\text{Car} & 2.\\ \\text{Vehicle}
 \\end{array}
-\\]
+$$
 
 Embed this inside the question text.
 
@@ -693,8 +700,52 @@ Pay special attention to:
 • Comprehension blocks
 • Mixed question types
 
-Return ONLY RAW JSON.
-`;
+Return ONLY RAW JSON.`;
+
+  const jsonTemplateSectionAddon = `--------------------------------------------------
+
+🔥 ADD-ON: SECTION ATTEMPT CONTROL RULE (CRITICAL)
+
+The document might contain instructions restricting how many questions a student is allowed to attempt within a section (e.g., "Attempt any 5 out of 10 questions").
+
+You MUST detect such language in the section instructions and configure the "attempt_control" object within the SECTION.
+
+The structure of the "attempt_control" object must be exactly as follows:
+
+"attempt_control": {
+  "enabled": true,
+  "mode": "hard | soft",
+  "max_attempts": <integer>,
+  "soft_type": "first_n | best_n"
+}
+
+Attempt Control Sub-Fields:
+- "enabled": (boolean) true if attempt limits exist for the section. False otherwise.
+- "mode": "hard" (blocks UI submission/preventing users from selecting more than max_attempts limit) OR "soft" (allows answering more, but penalizes or filters out answers). Default to "hard" if the exam instruction explicitly forbids answering more. Default to "soft" if the exam states "only first N will be evaluated".
+- "max_attempts": (integer) The number of questions the student is allowed to attempt in this section.
+- "soft_type": "first_n" (used when mode is "soft" and only the first N chronologically answered questions are considered except it is mentioned in instructions that best N answers will be considered).
+
+Behaviors:
+1. "Attempt any 5 out of 10" -> "enabled": true, "mode": "hard", "max_attempts": 5.
+2. "Only the first 10 questions attempted will be evaluated" -> "enabled": true, "mode": "soft", "max_attempts": 10, "soft_type": "first_n".
+3. If no such constraints are mentioned for a section, omit the "attempt_control" object entirely or set "enabled": false.
+
+EXAMPLE IN SECTION JSON:
+{
+  "id": "section-2",
+  "name": "Chemistry - Section B",
+  "instructions": "Attempt any 10 questions out of the given 15.",
+  "attempt_control": {
+    "enabled": true,
+    "mode": "hard",
+    "max_attempts": 10
+  },
+  "questions": [ ... ]
+}
+
+Check every section's header or overall syllabus instructions to determine if attempt_control should be attached.
+
+-> Give full output in one **code snippet** only.`;
 
   const handleDownload = () => {
     const blob = new Blob([jsonTemplate], { type: 'application/json' });
@@ -765,21 +816,55 @@ Return ONLY RAW JSON.
                   </TabsContent>
 
                   <TabsContent value="section" className="mt-0">
-                    <div className="relative">
-                      <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
-                        {jsonTemplateSection.trim()}
-                      </pre>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
-                        onClick={() => {
-                          navigator.clipboard.writeText(jsonTemplateSection.trim());
-                          toast.success("Section Prompt copied!");
-                        }}
-                      >
-                        <Copy className="h-3 w-3 mr-2" /> Copy Prompt
-                      </Button>
+                    <div className="flex flex-col gap-4">
+                      {/* Base Section Prompt */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-sm font-semibold text-slate-700">1. Main Base Prompt</h4>
+                        </div>
+                        <div className="relative">
+                          <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
+                            {jsonTemplateSection.trim()}
+                          </pre>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
+                            onClick={() => {
+                              navigator.clipboard.writeText(jsonTemplateSection.trim());
+                              toast.success("Section Prompt copied!");
+                            }}
+                          >
+                            <Copy className="h-3 w-3 mr-2" /> Copy Prompt
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Add-on Prompt */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2 mt-2">
+                          <div>
+                            <h4 className="text-sm font-semibold text-purple-700">2. Add-on Prompt (Optional)</h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">Append this if exams enforce section attempt controls (e.g. "Attempt any 5 out of 10").</p>
+                          </div>
+                        </div>
+                        <div className="relative">
+                          <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
+                            {jsonTemplateSectionAddon.trim()}
+                          </pre>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
+                            onClick={() => {
+                              navigator.clipboard.writeText(jsonTemplateSectionAddon.trim());
+                              toast.success("Add-on Prompt copied!");
+                            }}
+                          >
+                            <Copy className="h-3 w-3 mr-2" /> Copy Add-on
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>
