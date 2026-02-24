@@ -31,7 +31,14 @@ async function generateSitemap() {
         const pages = [
             { url: '/', changefreq: 'daily', priority: 1.0 },
             { url: '/login', changefreq: 'monthly', priority: 0.5 },
-            // Add other static pages
+            { url: '/create-test', changefreq: 'weekly', priority: 0.8 },
+            { url: '/generate-with-ai', changefreq: 'weekly', priority: 0.8 },
+            { url: '/pricing', changefreq: 'monthly', priority: 0.8 },
+            { url: '/premium', changefreq: 'monthly', priority: 0.8 },
+            { url: '/about', changefreq: 'monthly', priority: 0.6 },
+            { url: '/support', changefreq: 'monthly', priority: 0.6 },
+            { url: '/privacy-policy', changefreq: 'monthly', priority: 0.4 },
+            { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.4 },
         ];
 
         // 2. Fetch Tests - Correct Syntax
