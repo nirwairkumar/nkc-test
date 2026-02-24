@@ -786,7 +786,7 @@ Check every section's header or overall syllabus instructions to determine if at
             <div className="space-y-3 flex-1">
               <h3 className="font-semibold text-lg text-purple-700">Generate with AI</h3>
               <p className="text-sm text-muted-foreground">
-                Paste this prompt into <strong>ChatGPT / Gemini / Perplexity</strong> to create your file automatically.
+                Paste this prompt into <strong className="text-blue-600 dark:text-blue-400">Google Gemini</strong> (Recommended) or ChatGPT / Perplexity to create your file automatically.
               </p>
 
               <div className="relative group">
@@ -876,9 +876,12 @@ Check every section's header or overall syllabus instructions to determine if at
           <div className="flex gap-4">
             <div className="flex-none w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">2</div>
             <div className="space-y-2 flex-1">
-              <h3 className="font-semibold text-lg text-purple-700">Upload Source to AI</h3>
+              <h3 className="font-semibold text-lg text-purple-700 flex items-center gap-2">
+                Upload Source to AI
+                <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Gemini Recommended</span>
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Go to <strong>ChatGPT / Gemini / Perplexity</strong>. Paste the prompt, then <strong>upload your PDF, Image, or Video</strong> that you want to create a test from.
+                Go to <strong className="text-blue-600 dark:text-blue-400">Google Gemini</strong>, ChatGPT, or Perplexity. Paste the prompt, then <strong>upload your PDF, Image, or Video</strong> that you want to create a test from.
               </p>
               <div className="flex gap-2 mt-2">
                 <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">PDF</span>
