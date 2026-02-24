@@ -2,379 +2,393 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/</loc>
-        <lastmod>2026-02-23T06:44:16.621Z</lastmod>
+        <loc>https://testoza.com/</loc>
+        <lastmod>2026-02-24T11:15:47.432Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>1</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/login</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/login</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/36e63d0f-be2c-4104-a953-2ee87a1dc277</loc>
+        <loc>https://testoza.com/test-intro/36e63d0f-be2c-4104-a953-2ee87a1dc277</loc>
         <lastmod>2026-02-14T17:17:37.906Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/5276149a-b891-472f-b3ae-66548a6e8ef9</loc>
-        <lastmod>2026-02-21T16:39:12.688Z</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/20036acb-b619-4962-99f2-8b939e117b32</loc>
+        <loc>https://testoza.com/test-intro/20036acb-b619-4962-99f2-8b939e117b32</loc>
         <lastmod>2025-12-31T04:46:47.459Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jee-main-2025-session-2-april-2-shift-1-yz6i</loc>
+        <loc>https://testoza.com/test/jee-main-2025-session-2-april-2-shift-1-yz6i</loc>
         <lastmod>2026-01-10T17:59:29.753Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/ssc-foundation-2025-indian-polity-mock-test-mnxr</loc>
+        <loc>https://testoza.com/test/ssc-foundation-2025-indian-polity-mock-test-mnxr</loc>
         <lastmod>2026-01-28T09:25:49.538Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/ssc-foundation-2025-polity-bp15</loc>
+        <loc>https://testoza.com/test/ssc-foundation-2025-polity-bp15</loc>
         <lastmod>2026-01-21T17:33:58.585Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/carbon-capture-utilization-and-storage-ccus-innovations-kbdf</loc>
+        <loc>https://testoza.com/test/carbon-capture-utilization-and-storage-ccus-innovations-kbdf</loc>
         <lastmod>2026-01-05T11:00:02.183Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/410a1ac2-711c-4b5b-9a02-c85a87d9f12f</loc>
+        <loc>https://testoza.com/test-intro/410a1ac2-711c-4b5b-9a02-c85a87d9f12f</loc>
         <lastmod>2026-02-14T17:26:31.059Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/-w577</loc>
+        <loc>https://testoza.com/test/-w577</loc>
         <lastmod>2026-01-17T07:13:45.666Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jam-2022-biotechnology-bt-pyq-91b1</loc>
+        <loc>https://testoza.com/test/jam-2022-biotechnology-bt-pyq-91b1</loc>
         <lastmod>2026-01-20T18:02:26.253Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/hcf-lcm-competitive-exam-practice-odho</loc>
+        <loc>https://testoza.com/test/hcf-lcm-competitive-exam-practice-odho</loc>
         <lastmod>2026-01-21T19:57:01.386Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jam-2025-biotechnology-bt-1cul</loc>
+        <loc>https://testoza.com/test/jam-2025-biotechnology-bt-1cul</loc>
         <lastmod>2026-01-01T18:21:03.040Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/testing-of-section-with-attempt-limit-im41</loc>
-        <lastmod>2026-02-22T14:24:39.805Z</lastmod>
+        <loc>https://testoza.com/test/fetching-details-testing-by-admin-dbva</loc>
+        <lastmod>2026-02-23T14:51:24.094Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/delhi-police-2025-circulatory-system-j8xp</loc>
+        <loc>https://testoza.com/test/creator-detail-fetching-test-ygmi</loc>
+        <lastmod>2026-02-23T14:50:22.337Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/test/delhi-police-2025-circulatory-system-j8xp</loc>
         <lastmod>2026-01-22T06:48:37.655Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jam-2020-biotechnology-bt-dbz9</loc>
+        <loc>https://testoza.com/test/jam-2020-biotechnology-bt-dbz9</loc>
         <lastmod>2026-02-13T20:23:29.495Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/extracte-elctro-wt2t</loc>
+        <loc>https://testoza.com/test/extracte-elctro-wt2t</loc>
         <lastmod>2026-02-14T19:54:41.610Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/1b4db4dc-ae92-43e1-b070-86011e169368</loc>
+        <loc>https://testoza.com/test/testing-of-section-with-attempt-limit-mz7d</loc>
+        <lastmod>2026-02-22T14:24:39.805Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/test-intro/1b4db4dc-ae92-43e1-b070-86011e169368</loc>
         <lastmod>2025-12-15T07:12:51.319Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/f704decc-2f76-46c0-8aa0-c3add2cfe4fb</loc>
+        <loc>https://testoza.com/test-intro/f704decc-2f76-46c0-8aa0-c3add2cfe4fb</loc>
         <lastmod>2026-02-04T20:51:10.648Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/a48b6471-b6c0-48d3-851d-041e776b0619</loc>
+        <loc>https://testoza.com/test-intro/a48b6471-b6c0-48d3-851d-041e776b0619</loc>
         <lastmod>2026-01-24T20:58:23.526Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/98659227-2dca-4509-899d-d46bfc8b45e3</loc>
+        <loc>https://testoza.com/test-intro/98659227-2dca-4509-899d-d46bfc8b45e3</loc>
         <lastmod>2026-01-16T20:57:02.071Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jee-mains-3rd-april-shift-2-mvcb</loc>
+        <loc>https://testoza.com/test/kardashev-scale-and-the-future-of-humanity-qnjf</loc>
+        <lastmod>2026-02-21T16:39:12.688Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/test/jee-mains-3rd-april-shift-2-mvcb</loc>
         <lastmod>2026-01-28T12:46:39.335Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/iit-jam-2023-biotechnology-7e7y</loc>
+        <loc>https://testoza.com/test/iit-jam-2023-biotechnology-7e7y</loc>
         <lastmod>2026-01-04T11:57:25.344Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/6fbd2658-7965-416e-90c9-0af3e07495ab</loc>
+        <loc>https://testoza.com/test-intro/6fbd2658-7965-416e-90c9-0af3e07495ab</loc>
         <lastmod>2026-01-10T20:52:33.641Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/cf196e02-2f30-42cb-9cd2-accd55937059</loc>
+        <loc>https://testoza.com/test-intro/cf196e02-2f30-42cb-9cd2-accd55937059</loc>
         <lastmod>2025-12-19T06:56:05.396Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jee-mains-2025-4th-april-shift-1-xqwd</loc>
+        <loc>https://testoza.com/test/jee-mains-2025-4th-april-shift-1-xqwd</loc>
         <lastmod>2026-01-27T10:17:42.431Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/6b02a6cf-2265-4a13-a67a-72b0bec4b9e3</loc>
+        <loc>https://testoza.com/test-intro/6b02a6cf-2265-4a13-a67a-72b0bec4b9e3</loc>
         <lastmod>2026-01-04T20:53:50.760Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jee-main-2025-session-2-april-8-question-papers-rohi</loc>
+        <loc>https://testoza.com/test/jee-main-2025-session-2-april-8-question-papers-rohi</loc>
         <lastmod>2026-02-15T12:15:09.305Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/102ef635-c288-49d7-879a-b457a9d172a3</loc>
+        <loc>https://testoza.com/test-intro/102ef635-c288-49d7-879a-b457a9d172a3</loc>
         <lastmod>2025-12-30T16:00:26.123Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/2b75bc99-c5e0-4531-9aed-ebf88ba527fe</loc>
+        <loc>https://testoza.com/test-intro/2b75bc99-c5e0-4531-9aed-ebf88ba527fe</loc>
         <lastmod>2026-01-17T21:11:08.035Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/ssc-cgl-tier-i-12th-september-2025-shift-1-solved-paper-33ir</loc>
+        <loc>https://testoza.com/test/ssc-cgl-tier-i-12th-september-2025-shift-1-solved-paper-33ir</loc>
         <lastmod>2025-12-25T09:46:31.605Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/4229d7a9-15b5-4976-b2f5-dfe1bef1ff10</loc>
+        <loc>https://testoza.com/test-intro/4229d7a9-15b5-4976-b2f5-dfe1bef1ff10</loc>
         <lastmod>2026-02-21T10:44:08.515Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/891ddfbf-50ab-4cac-b320-f685fc03b2b7</loc>
+        <loc>https://testoza.com/test-intro/891ddfbf-50ab-4cac-b320-f685fc03b2b7</loc>
         <lastmod>2025-12-24T21:06:59.186Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/e6406649-ab5f-44d5-bfff-0d4e44553d80</loc>
+        <loc>https://testoza.com/test-intro/e6406649-ab5f-44d5-bfff-0d4e44553d80</loc>
         <lastmod>2026-02-21T10:51:50.810Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/jee-main-2025-22-january-shift-1-mathongo-solved-paper-7m9f</loc>
+        <loc>https://testoza.com/test/jee-main-2025-22-january-shift-1-mathongo-solved-paper-7m9f</loc>
         <lastmod>2025-12-24T15:18:08.830Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/39dcafbe-6ca8-4a35-aa37-cf047a65e5bf</loc>
+        <loc>https://testoza.com/test-intro/39dcafbe-6ca8-4a35-aa37-cf047a65e5bf</loc>
         <lastmod>2026-01-23T20:56:32.551Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/evolution-and-architecture-of-gpt-models-09ri</loc>
+        <loc>https://testoza.com/test/evolution-and-architecture-of-gpt-models-09ri</loc>
         <lastmod>2026-01-26T19:03:38.432Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/59e46565-c2ce-47f4-a7e7-7c811ba18e04</loc>
+        <loc>https://testoza.com/test-intro/59e46565-c2ce-47f4-a7e7-7c811ba18e04</loc>
         <lastmod>2025-12-04T21:02:49.890Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test-intro/cbc082d9-0603-46d8-bee4-da768f7f736c</loc>
+        <loc>https://testoza.com/test-intro/cbc082d9-0603-46d8-bee4-da768f7f736c</loc>
         <lastmod>2026-01-13T20:55:29.869Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/test/indian-economy-zhsg</loc>
+        <loc>https://testoza.com/test/indian-economy-zhsg</loc>
         <lastmod>2026-02-21T16:31:28.895Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/general-knowledge-2</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/general-knowledge-2</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/science</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/science</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/maths</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/maths</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/history</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/history</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/jee</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/jee</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/cat</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/cat</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/gate</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/gate</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/jee-mains</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/jee-mains</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/jee-advance</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/jee-advance</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/neet-ug</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/neet-ug</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/iit-jam</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/iit-jam</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/ntse</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/ntse</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
-        <loc>https://nkc-test-platform.vercel.app/tests/ssc</loc>
-        <lastmod>2026-02-23T06:44:16.622Z</lastmod>
+        <loc>https://testoza.com/tests/ssc</loc>
+        <lastmod>2026-02-24T11:15:47.433Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.7</priority>
     </url>

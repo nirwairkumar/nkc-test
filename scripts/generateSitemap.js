@@ -17,7 +17,7 @@ async function generateSitemap() {
         const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
         // Support both ANON_KEY and PUBLISHABLE_KEY (legacy)
         const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const BASE_URL = process.env.VITE_SITE_URL || 'https://nkc-test-platform.vercel.app';
+        const BASE_URL = process.env.VITE_SITE_URL || 'https://testoza.com';
 
         // 1. Graceful Skip if Env Missing
         if (!SUPABASE_URL || !SUPABASE_KEY) {
