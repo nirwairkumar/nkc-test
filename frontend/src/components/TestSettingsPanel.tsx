@@ -26,6 +26,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const [settings, setSettings] = useState<TestSettings>({
         attempt_limit: undefined,
         strict_timer: false,
+        allow_flexible_timer: true,
         tab_switch_mode: 'off',
         disable_copy_paste: false,
         disable_actions: false,
@@ -381,6 +382,25 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         checked={settings.strict_timer}
                         onCheckedChange={(c) => updateSetting('strict_timer', c)}
                     />
+                </div>
+
+                <div className="flex items-start justify-between border p-4 rounded-lg bg-purple-50/20">
+                    <div className="space-y-1 pr-4">
+                        <Label className="flex items-center gap-2 text-base"><Clock className="w-4 h-4 text-purple-600" /> Allow Flexible Timer</Label>
+                        <p className="text-sm text-muted-foreground">Allows test takers to disable the test timer before starting.</p>
+                        {settings.allow_flexible_timer !== false && (
+                            <div className="flex items-start gap-2 mt-2 text-xs text-amber-700 bg-amber-50 p-2.5 rounded border border-amber-200">
+                                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
+                                <p><strong>Warning:</strong> Don't forget to turn this off for strict exams. Candidates can take unlimited time if enabled.</p>
+                            </div>
+                        )}
+                    </div>
+                    <div className="pt-1">
+                        <Switch
+                            checked={settings.allow_flexible_timer !== false}
+                            onCheckedChange={(c) => updateSetting('allow_flexible_timer', c)}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex items-center justify-between border p-4 rounded-lg">

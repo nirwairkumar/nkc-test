@@ -12,6 +12,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import {
     Dialog,
@@ -44,6 +45,7 @@ export default function TestIntroPage() {
     const [showFullScreenDialog, setShowFullScreenDialog] = useState(false);
     const [hasAttempted, setHasAttempted] = useState(false);
     const [checklistDiff, setChecklistDiff] = useState(false);
+    const [isTimerDisabled, setIsTimerDisabled] = useState(false);
     const [startFormValues, setStartFormValues] = useState<Record<string, string>>({});
     const [schedulingError, setSchedulingError] = useState<string | null>(null);
     const [showAuthWarning, setShowAuthWarning] = useState(false);
@@ -193,6 +195,9 @@ export default function TestIntroPage() {
             }
             sessionStorage.setItem(`start_form_${test.id}`, JSON.stringify(startFormValues));
         }
+
+        // Save flexible timer preference
+        sessionStorage.setItem(`flexible_timer_${test.id}`, String(isTimerDisabled));
 
         setShowFullScreenDialog(false);
 
@@ -477,13 +482,25 @@ export default function TestIntroPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Pre-Exam Checklist</AlertDialogTitle>
                         <AlertDialogDescription className="space-y-4 pt-2">
-                            <div className="space-y-2">
-                                <label className="flex items-start gap-2 p-2 border rounded hover:bg-slate-50 cursor-pointer">
-                                    <input type="checkbox" className="mt-1" checked={checklistDiff} onChange={(e) => setChecklistDiff(e.target.checked)} />
-                                    <span className="text-sm text-slate-800">
+                            <div className="space-y-3">
+                                <label className="flex items-start gap-3 p-3 border rounded hover:bg-slate-50 cursor-pointer">
+                                    <input type="checkbox" className="mt-1 flex-shrink-0" checked={checklistDiff} onChange={(e) => setChecklistDiff(e.target.checked)} />
+                                    <span className="text-sm text-slate-800 leading-tight">
                                         I have closed all other tabs and applications. I enable "Do Not Disturb" mode on my device.
                                     </span>
                                 </label>
+                                {test.settings?.allow_flexible_timer !== false && (
+                                    <div className="flex items-center gap-3 p-3 border rounded hover:bg-slate-50 bg-purple-50/50 border-purple-100">
+                                        <Switch
+                                            id="flexible-timer"
+                                            checked={isTimerDisabled}
+                                            onCheckedChange={setIsTimerDisabled}
+                                        />
+                                        <label htmlFor="flexible-timer" className="text-sm text-slate-800 cursor-pointer leading-tight">
+                                            <strong>Flexible Timer:</strong> Take this test without a time limit.
+                                        </label>
+                                    </div>
+                                )}
                                 {test.settings?.force_fullscreen && (
                                     <div className="text-xs text-amber-600 font-medium p-2 bg-amber-50 rounded">
                                         Note: This test requires Full Screen mode.

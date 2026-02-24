@@ -186,6 +186,7 @@ export default function TestPage() {
 
 
   const [isTimeHidden, setIsTimeHidden] = useState(false);
+  const [isTimerDisabled] = useState(() => sessionStorage.getItem(`flexible_timer_${id}`) === 'true');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -198,7 +199,7 @@ export default function TestPage() {
   }, [id]);
 
   useEffect(() => {
-    if (timeRemaining > 0 && !isTimeUp) {
+    if (timeRemaining > 0 && !isTimeUp && !isTimerDisabled) {
       timerRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
@@ -1100,6 +1101,17 @@ export default function TestPage() {
           {(() => {
             const isCriticalTime = timeRemaining < 300;
             const shouldShow = !isTimeHidden || isCriticalTime;
+
+            if (isTimerDisabled) {
+              return (
+                <div className="flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-semibold border transition-colors bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span className="min-w-[40px] md:min-w-[45px] text-center font-medium">
+                    No Time Limit
+                  </span>
+                </div>
+              );
+            }
 
             return (
               <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-semibold border transition-colors ${isCriticalTime ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50/80 text-slate-600 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'}`}>
