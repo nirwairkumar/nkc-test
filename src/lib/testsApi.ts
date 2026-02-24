@@ -57,6 +57,7 @@ export interface Test {
 export interface TestSettings {
     attempt_limit?: number; // 1 for single attempt
     strict_timer?: boolean; // Server-side time validation
+    allow_flexible_timer?: boolean; // Let user disable timer
     tab_switch_mode?: 'warming' | 'strict' | 'off'; // 2 warning then submit, or instant submit
     disable_copy_paste?: boolean;
     disable_actions?: boolean; // Right click, etc
