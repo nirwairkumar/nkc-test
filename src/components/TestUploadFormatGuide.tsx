@@ -774,7 +774,7 @@ Check every section's header or overall syllabus instructions to determine if at
             Upload Guide
           </DialogTitle>
           <DialogDescription className="text-base">
-            Follow these 5 simple steps to upload tests in bulk.
+            Follow these 4 simple steps to upload tests in bulk.
           </DialogDescription>
         </DialogHeader>
 
@@ -888,35 +888,44 @@ Check every section's header or overall syllabus instructions to determine if at
             </div>
           </div>
 
-          {/* Step 3: Download Template */}
+          {/* Step 3: Save the JSON */}
           <div className="flex gap-4">
             <div className="flex-none w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">3</div>
-            <div className="space-y-2 flex-1">
-              <h3 className="font-semibold text-lg">Download the Template</h3>
-              <p className="text-sm text-muted-foreground">Get a ready-to-use file showing exactly how to structure your test if you want to edit manually.</p>
-              <Button onClick={handleDownload} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-                <Download className="h-4 w-4" /> Download Template File
-              </Button>
-            </div>
-          </div>
-
-          {/* Step 4: Paste & Save */}
-          <div className="flex gap-4">
-            <div className="flex-none w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">4</div>
             <div className="space-y-4 flex-1">
-              <h3 className="font-semibold text-lg">Paste & Save</h3>
-              <p className="text-sm text-muted-foreground">
-                Paste the generated text from the AI chat platform into the <code>sample_test_template.json</code> file (or any .json file) and <strong>Save</strong>.
-              </p>
+              <h3 className="font-semibold text-lg">Save the AI Output as a JSON File</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border rounded-lg p-4 space-y-3 bg-white">
+                  <h4 className="font-medium text-blue-700 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" /> Option A: Quick Online Editor
+                  </h4>
+                  <p className="text-sm text-muted-foreground">No coding tools needed. Easiest for most users.</p>
+                  <ol className="text-sm text-slate-600 space-y-2 list-decimal list-inside">
+                    <li>Visit <a href="https://jsoneditoronline.org/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">jsoneditoronline.org</a></li>
+                    <li><strong>Paste</strong> the structured output from AI.</li>
+                    <li>Click <strong>Save</strong> (disk icon) to download it to your PC.</li>
+                  </ol>
+                </div>
+
+                <div className="border rounded-lg p-4 space-y-3 bg-white">
+                  <h4 className="font-medium text-slate-700 flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Option B: Offline editing
+                  </h4>
+                  <p className="text-sm text-muted-foreground">Download our blank template file and paste the AI output directly into it using a text editor (e.g. Notepad).</p>
+                  <Button onClick={handleDownload} variant="outline" size="sm" className="w-full gap-2 mt-2 border-dashed">
+                    <Download className="h-4 w-4" /> Download Template
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Step 5: Upload It */}
+          {/* Step 4: Upload It */}
           <div className="flex gap-4">
-            <div className="flex-none w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">5</div>
+            <div className="flex-none w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">4</div>
             <div className="space-y-2 flex-1">
-              <h3 className="font-semibold text-lg">Upload It</h3>
-              <p className="text-sm">Click <strong>Import JSON</strong> and select your saved file.</p>
+              <h3 className="font-semibold text-lg">Upload to Editor</h3>
+              <p className="text-sm text-muted-foreground">Click the <strong>Upload JSON File</strong> button or drag and drop your newly saved `.json` file to instantly build your test.</p>
             </div>
           </div>
 
