@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard } from 'lucide-react';
 import NotificationBox from './NotificationBox';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
@@ -85,6 +85,17 @@ export default function Navbar() {
                         {!user && (
                             <Button
                                 variant="ghost"
+                                onClick={() => navigate('/dashboard')}
+                                className="flex items-center text-primary"
+                            >
+                                <LayoutDashboard className="mr-2 h-4 w-4" />
+                                <span>Dashboard</span>
+                            </Button>
+                        )}
+
+                        {!user && (
+                            <Button
+                                variant="ghost"
                                 onClick={() => navigate('/admin-login')}
                             >
                                 <Shield className="mr-2 h-4 w-4" />
@@ -106,6 +117,10 @@ export default function Navbar() {
                                     <DropdownMenuItem onClick={() => navigate('/')}>
                                         <Home className="mr-2 h-4 w-4" />
                                         <span>Home</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                                        <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
+                                        <span className="text-primary font-medium">Dashboard</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => navigate('/support')}>
                                         <HelpCircle className="mr-2 h-4 w-4" />
