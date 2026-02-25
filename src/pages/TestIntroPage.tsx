@@ -31,6 +31,66 @@ import { SEOContent } from '@/components/SEOContent';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+const formatDateCustom = (date: Date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const year = String(date.getFullYear()).slice(-2);
+    return `${day}-${month}-${year}`;
+};
+
+const formatTimeCustom = (date: Date) => {
+    return date.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+};
+
+const TimeBox = ({ value, label }: { value: number; label: string }) => (
+    <div className="flex flex-col items-center justify-center bg-white min-w-[60px] md:min-w-[70px] py-1.5 px-1 rounded-xl shadow-[0_2px_8px_-4px_rgba(0,0,0,0.08)] border border-indigo-50/50">
+        <span className="text-2xl md:text-3xl font-bold bg-gradient-to-b from-indigo-500 to-indigo-700 bg-clip-text text-transparent w-full text-center">
+            {String(value).padStart(2, '0')}
+        </span>
+        <span className="text-[10px] md:text-[11px] tracking-widest uppercase font-semibold text-indigo-400 mt-0.5">
+            {label}
+        </span>
+    </div>
+);
+
+const CountdownDisplay = ({ targetDate, onComplete }: { targetDate: Date; onComplete: () => void }) => {
+    const [timeLeft, setTimeLeft] = useState(targetDate.getTime() - Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const newTimeLeft = targetDate.getTime() - Date.now();
+            setTimeLeft(newTimeLeft);
+            if (newTimeLeft <= 0) {
+                clearInterval(timer);
+                onComplete();
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [targetDate, onComplete]);
+
+    if (timeLeft <= 0) return null;
+
+    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+    const seconds = Math.floor((timeLeft / 1000) % 60);
+
+    return (
+        <div className="flex flex-col items-center justify-center p-5 bg-gradient-to-br from-indigo-50/80 to-blue-50/50 rounded-2xl border border-indigo-100/60 shadow-sm w-full my-2">
+            <p className="text-xs font-semibold text-indigo-800/70 mb-3 tracking-widest uppercase">Test Starts In</p>
+            <div className="flex items-center gap-3">
+                {days > 0 && <TimeBox value={days} label="Days" />}
+                {(hours > 0 || days > 0) && <TimeBox value={hours} label="Hours" />}
+                <TimeBox value={minutes} label="Mins" />
+                <TimeBox value={seconds} label="Secs" />
+            </div>
+            <p className="text-xs text-indigo-600/80 mt-4 font-medium px-4 text-center">
+                Scheduled for {formatDateCustom(targetDate)} at {formatTimeCustom(targetDate)}
+            </p>
+        </div>
+    );
+};
+
 export default function TestIntroPage() {
     const { id, slug } = useParams<{ id: string; slug: string }>();
     const navigate = useNavigate();
@@ -47,7 +107,8 @@ export default function TestIntroPage() {
     const [checklistDiff, setChecklistDiff] = useState(false);
     const [isTimerDisabled, setIsTimerDisabled] = useState(false);
     const [startFormValues, setStartFormValues] = useState<Record<string, string>>({});
-    const [schedulingError, setSchedulingError] = useState<string | null>(null);
+    const [schedulingStatus, setSchedulingStatus] = useState<'upcoming' | 'ended' | 'live' | null>(null);
+    const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
     const [showAuthWarning, setShowAuthWarning] = useState(false);
 
     // 1. Authentication Check
@@ -68,7 +129,7 @@ export default function TestIntroPage() {
 
     // 3. Check Permissions (Schedule & Attempts)
     useEffect(() => {
-        if (test && user) {
+        if (test) {
             checkPermissions();
         }
     }, [test, user]);
@@ -134,7 +195,7 @@ export default function TestIntroPage() {
     };
 
     const checkPermissions = async () => {
-        if (!test || !user) return;
+        if (!test) return;
 
         // Schedule Check
         if (test.settings?.schedule?.enabled) {
@@ -143,14 +204,19 @@ export default function TestIntroPage() {
             const end = test.settings.schedule.end_time ? new Date(test.settings.schedule.end_time) : null;
 
             if (start && now < start) {
-                setSchedulingError(`Test starts on ${start.toLocaleString()}`);
-                return;
+                setSchedulingStatus('upcoming');
+                setScheduledDate(start);
+            } else if (end && now > end) {
+                setSchedulingStatus('ended');
+                setScheduledDate(end);
+            } else {
+                setSchedulingStatus('live');
             }
-            if (end && now > end) {
-                setSchedulingError(`Test ended on ${end.toLocaleString()}`);
-                return;
-            }
+        } else {
+            setSchedulingStatus('live');
         }
+
+        if (!user) return;
 
         // Attempt Limit Check
         if (test.settings?.attempt_limit === 1) {
@@ -166,7 +232,7 @@ export default function TestIntroPage() {
 
     const handleStartTest = () => {
         if (hasAttempted) return;
-        if (schedulingError) return;
+        if (schedulingStatus === 'upcoming' || schedulingStatus === 'ended') return;
 
         // Auth Check for Anonymous Start
         if (!user) {
@@ -402,7 +468,7 @@ export default function TestIntroPage() {
 
                                         {test.settings.schedule?.enabled && (
                                             <li>
-                                                <strong>Scheduled:</strong> Test is live from {new Date(test.settings.schedule.start_time!).toLocaleString()} to {new Date(test.settings.schedule.end_time!).toLocaleString()}.
+                                                <strong>Scheduled:</strong> Test is live from {test.settings.schedule.start_time ? formatDateCustom(new Date(test.settings.schedule.start_time)) : '...'} to {test.settings.schedule.end_time ? formatDateCustom(new Date(test.settings.schedule.end_time)) : '...'}.
                                             </li>
                                         )}
 
@@ -461,12 +527,14 @@ export default function TestIntroPage() {
                     )}
                 </CardContent>
                 <CardFooter className="pt-0 pb-4 px-4 flex flex-col gap-3">
-                    {schedulingError ? (
-                        <div className="w-full p-4 bg-red-100 text-red-800 rounded-lg text-center font-bold">
-                            {schedulingError}
+                    {schedulingStatus === 'upcoming' && scheduledDate ? (
+                        <CountdownDisplay targetDate={scheduledDate} onComplete={() => setSchedulingStatus('live')} />
+                    ) : schedulingStatus === 'ended' && scheduledDate ? (
+                        <div className="w-full p-4 bg-red-50 text-red-800 rounded-xl text-center font-medium border border-red-100 shadow-sm">
+                            This test ended on {formatDateCustom(scheduledDate)}
                         </div>
                     ) : hasAttempted ? (
-                        <div className="w-full p-4 bg-amber-100 text-amber-800 rounded-lg text-center font-bold">
+                        <div className="w-full p-4 bg-amber-50 text-amber-800 rounded-xl text-center font-medium border border-amber-100 shadow-sm">
                             You have already attempted this test.
                         </div>
                     ) : (
