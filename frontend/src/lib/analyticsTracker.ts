@@ -28,11 +28,6 @@ class AnalyticsTracker {
     }
 
     async trackPageView(path: string, title: string) {
-        // Respect Do Not Track
-        if (navigator.doNotTrack === '1') {
-            return;
-        }
-
         await this.ensureInitialized();
         this.sessionToken = this.getOrCreateSession(); // Refresh session
 
@@ -58,7 +53,10 @@ class AnalyticsTracker {
     }
 
     private send(data: object) {
-        const url = `${API_BASE}/api/analytics/track`;
+        // API_BASE likely already includes /api, e.g., http://localhost:8000/api
+        // We just need to route to /analytics/track
+        const baseUrl = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
+        const url = `${baseUrl}/analytics/track`;
 
         // Use sendBeacon if available, otherwise fallback to fetch
         if (navigator.sendBeacon) {
