@@ -4,7 +4,6 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { analyticsTracker } from '@/lib/analyticsTracker';
-import CookieConsent from '@/components/CookieConsent';
 
 export default function Layout() {
     const location = useLocation();
@@ -50,7 +49,6 @@ export default function Layout() {
                 <Outlet />
             </main>
             {!isLiveTestPage && <Footer />}
-            <CookieConsent />
         </div>
     );
 }
