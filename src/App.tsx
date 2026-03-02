@@ -45,6 +45,7 @@ const AboutPage = lazy(() => import("./pages/AboutPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
 const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 
 
 const Layout = lazy(() => import("./Layout"));
@@ -84,6 +85,14 @@ const App = () => (
                     <Route path="/admin-login" element={<AdminLogin />} />
                     <Route path="/admin-pricing" element={<AdminPricing />} />
                     <Route path="/admin-promo-codes" element={<AdminPromoCodes />} />
+                    <Route
+                      path="/admin/analytics"
+                      element={
+                        <PrivateRoute>
+                          <AdminAnalytics />
+                        </PrivateRoute>
+                      }
+                    />
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/premium" element={<PremiumPage />} />
                     <Route path="/manage-tests" element={<ManageTests />} />
