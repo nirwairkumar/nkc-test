@@ -43,6 +43,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 class UserLogin(BaseModel):
     email: str
     password: str
+from app.routers import analytics
 from app.routers import creators
 
 app.include_router(creators.router, prefix="/api/creators", tags=["Creators"])
@@ -84,6 +85,9 @@ app.include_router(social.router, prefix="/api/social", tags=["Social"])
 
 from app.routers import reports
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
+
+from app.routers import analytics
+app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
 
 @app.get("/api/health")
 def health_check():

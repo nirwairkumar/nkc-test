@@ -19,3 +19,4 @@ pdfplumber
 Pillow
 numpy
 opencv-python-headless
+user-agents

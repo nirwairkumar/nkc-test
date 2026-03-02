@@ -1,0 +1,15 @@
+name = "nkc-analytics-edge"
+main = "workers/analytics-edge.js"
+compatibility_date = "2024-03-01"
+
+# Automatically route these paths through the worker
+# Replace 'example.com' with your actual domain when deploying
+# routes = [
+#   { pattern = "yourdomain.com/*", zone_name = "yourdomain.com" }
+# ]
+
+# Bind to Cloudflare Analytics Engine
+# The dataset name 'VISITOR_EVENTS' can be queried in Cloudflare dashboard
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "VISITOR_EVENTS"

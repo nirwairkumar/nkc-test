@@ -3,11 +3,18 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
+import { analyticsTracker } from '@/lib/analyticsTracker';
+import CookieConsent from '@/components/CookieConsent';
 
 export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
+
+    // Track page views on route change
+    React.useEffect(() => {
+        analyticsTracker.trackPageView(location.pathname, document.title);
+    }, [location.pathname]);
 
     // Check for redirect intent after login
     React.useEffect(() => {
@@ -43,6 +50,7 @@ export default function Layout() {
                 <Outlet />
             </main>
             {!isLiveTestPage && <Footer />}
+            <CookieConsent />
         </div>
     );
 }
