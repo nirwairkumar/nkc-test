@@ -183,6 +183,8 @@ export function TestUploadFormatGuide() {
   const jsonTemplate = `ROLE:
 You are an AI document parser, OCR analyst, and exam-content extractor.
 
+-> Give full output in one **code snippet** only.
+
 GOAL:
 Convert the PROVIDED PDF or IMAGE into a STRICT, VALID JSON test file.
 DO NOT generate new questions.
@@ -190,8 +192,21 @@ ONLY extract and restructure content that exists in the file.
 
 --------------------------------------------------
 
+ABSOLUTE OUTPUT RULES
+
+1. RETURN ONLY RAW JSON
+2. NO explanation
+3. NO markdown formatting
+4. NO text before or after JSON
+5. JSON must be syntactically valid
+6. Question IDs must be sequential integers (1,2,3,...)
+7. Deeply scan mathematical syntax before finalizing
+8. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+
+--------------------------------------------------
+
 CRITICAL BEHAVIOR RULES:
-- Read the uploaded PDF/Image visually (OCR + layout reasoning).
+- Read the uploaded PDF/Image/Video visually (OCR + layout reasoning).
 - Identify QUESTIONS, OPTIONS, ANSWERS, IMAGES, TABLES, and COLUMN STRUCTURES based on layout.
 - If a diagram/image appears immediately before or after a question, attach it to that question.
 - NEVER hallucinate or invent content.
@@ -332,7 +347,7 @@ MATH & FORMATTING RULES:
 
 - Use LaTeX for ALL math:
   \\frac, \\sqrt, \\int, x^2, etc.
-- CRITICAL: Use DOUBLE BACKSLASHES (\\) for all LaTeX commands inside the JSON strings.
+- CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands inside the JSON strings.
 - Inline math: $...$
 - Block math: $$...$$
 - Do NOT simplify expressions.
@@ -404,10 +419,30 @@ FAIL-SAFE RULES:
 
 --------------------------------------------------
 
-FINAL OUTPUT RULE:
-RETURN ONLY RAW JSON.
-NO TEXT BEFORE OR AFTER.
-`;
+STRICT VALIDATION BEFORE OUTPUT
+
+Internally verify:
+
+✔ IDs sequential integers
+✔ No duplicate IDs
+✔ Single → string correctAnswer
+✔ Multiple → array correctAnswer
+✔ Numerical → object correctAnswer
+✔ Valid JSON
+
+--------------------------------------------------
+
+FINAL COMMAND
+
+Deep scan entire document.
+Pay special attention to:
+• Mathematical syntax
+• Tables
+• Match-the-following
+• Comprehension blocks
+• Mixed question types
+
+Return ONLY RAW JSON.`;
   const jsonTemplateSection = `ROLE:
 You are a high-precision AI exam parser specialized in complex multi-section competitive exams (JEE/NEET/GATE/SSC/UPSC style).
 
