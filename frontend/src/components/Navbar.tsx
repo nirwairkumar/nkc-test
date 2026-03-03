@@ -19,7 +19,8 @@ import { Badge } from '@/components/ui/badge';
 
 
 export default function Navbar() {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, profile } = useAuth();
+    const canSeeNews = isAdmin || profile?.is_verified_creator;
     const { unreadCount } = useNotifications();
     const navigate = useNavigate();
     const location = useLocation();
@@ -195,12 +196,24 @@ export default function Navbar() {
                                             <span>Support</span>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
+                                        {canSeeNews && (
+                                            <DropdownMenuItem onClick={() => navigate('/news')}>
+                                                <FileText className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                                <span className="text-blue-600 dark:text-blue-400 font-medium">News & Updates</span>
+                                            </DropdownMenuItem>
+                                        )}
                                     </div>
 
                                     <DropdownMenuItem onClick={() => navigate('/dashboard')}>
                                         <Home className="mr-2 h-4 w-4" />
                                         <span>Dashboard</span>
                                     </DropdownMenuItem>
+                                    {canSeeNews && (
+                                        <DropdownMenuItem onClick={() => navigate('/news')} className="hidden md:flex">
+                                            <FileText className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                            <span className="text-blue-600 dark:text-blue-400 font-medium">News & Updates</span>
+                                        </DropdownMenuItem>
+                                    )}
                                     <DropdownMenuItem onClick={() => navigate('/profile')}>
                                         <User className="mr-2 h-4 w-4" />
                                         <span>Profile</span>

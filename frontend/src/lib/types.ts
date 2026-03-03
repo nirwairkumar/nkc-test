@@ -34,3 +34,59 @@ export interface Notification {
     is_read: boolean;
     created_at: string;
 }
+
+export interface PostCreate {
+    title: string;
+    content: Record<string, any>;
+    summary?: string;
+    cover_image?: string;
+    category?: string;
+    tags?: string[];
+    status?: 'draft' | 'published' | 'archived';
+}
+
+export interface PostUpdate {
+    title?: string;
+    content?: Record<string, any>;
+    summary?: string;
+    cover_image?: string;
+    category?: string;
+    tags?: string[];
+    status?: 'draft' | 'published' | 'archived';
+    is_pinned?: boolean;
+}
+
+export interface PostFeedResponse {
+    id: string;
+    title: string;
+    slug: string;
+    summary?: string;
+    cover_image?: string;
+    category: string;
+    tags: string[];
+    published_at: string;
+    view_count: number;
+    like_count: number;
+    is_pinned: boolean;
+    author_id: string;
+    profiles: {
+        id: string;
+        full_name: string;
+        avatar_url: string;
+        is_verified_creator: boolean;
+    };
+}
+
+export interface PostDetailed extends Omit<PostFeedResponse, 'profiles'> {
+    content: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+    status: 'draft' | 'published' | 'archived';
+    profiles: {
+        id: string;
+        full_name: string;
+        avatar_url: string;
+        is_verified_creator: boolean;
+        bio?: string;
+    };
+}
