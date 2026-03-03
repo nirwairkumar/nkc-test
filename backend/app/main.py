@@ -128,9 +128,3 @@ def login(payload: UserLogin):
 @app.get("/api/me")
 def read_users_me(user = Depends(get_current_user)):
     return user
-
-if __name__ == "__main__":
-    import os
-    import uvicorn
-    port = int(os.environ.get("PORT", 8080))
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
