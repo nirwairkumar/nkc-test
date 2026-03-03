@@ -47,12 +47,15 @@ const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess")
 const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 
+// News & Posts
+const NewsFeed = lazy(() => import("./pages/NewsFeed"));
+const NewsPostView = lazy(() => import("./pages/NewsPostView"));
+const NewsPostEditor = lazy(() => import("./pages/NewsPostEditor"));
+const MyPosts = lazy(() => import("./pages/MyPosts"));
 
 const Layout = lazy(() => import("./Layout"));
 
 const queryClient = new QueryClient();
-
-
 
 const AIImportRoute = () => {
   const navigate = useNavigate();
@@ -77,6 +80,26 @@ const App = () => (
                   <Route element={<Layout />}>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/dashboard" element={<TestList />} />
+
+                    {/* News & Posts Routes */}
+                    <Route path="/news" element={<NewsFeed />} />
+                    <Route path="/news/:slug" element={<NewsPostView />} />
+                    <Route path="/news/create" element={
+                      <PrivateRoute>
+                        <NewsPostEditor />
+                      </PrivateRoute>
+                    } />
+                    <Route path="/news/edit/:id" element={
+                      <PrivateRoute>
+                        <NewsPostEditor />
+                      </PrivateRoute>
+                    } />
+                    <Route path="/my-posts" element={
+                      <PrivateRoute>
+                        <MyPosts />
+                      </PrivateRoute>
+                    } />
+
                     <Route path="/login" element={<AuthForm />} />
                     <Route path="/onboarding" element={<OnboardingPage />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
