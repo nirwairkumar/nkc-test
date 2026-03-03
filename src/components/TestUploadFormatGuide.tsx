@@ -982,21 +982,18 @@ Check every section's header or overall syllabus instructions to determine if at
               </div>
 
               <CollapsibleContent className="space-y-4">
-                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg opacity-90 text-sm space-y-6">
+                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg text-sm space-y-6">
 
                   <div>
-                    <h5 className="font-bold mb-2">File Structure</h5>
-                    <p className="text-muted-foreground mb-2">The JSON file should contain a single object representing the Test, which includes a questions array.</p>
+                    <h5 className="font-bold mb-2">1. Standard File Structure (Flat)</h5>
+                    <p className="text-muted-foreground mb-2">The standard JSON file contains a single object with a questions array at the root.</p>
                     <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
                       {`{
   "title": "Required: Test Title",
   "description": "Optional: Short description",
-  "revision_notes": "Optional: Rich text summary/instructions (Markdown supported)",
-  "institution_name": "Optional: Name of institution",
-  "duration": 30,            // Duration in minutes (default: 30)
-  "marks_per_question": 4,   // Marks for correct answer (default: 4)
-  "negative_marks": 1,       // Deduction for wrong answer (default: 1)
-  "is_public": true,         // true for Public, false for Private
+  "duration": 30,            // Duration in minutes
+  "marks_per_question": 4,   // Default marks for correct answer
+  "negative_marks": 1,       // Default deduction for wrong answer
   "questions": [
     // Array of Question objects (see below)
   ]
@@ -1005,129 +1002,107 @@ Check every section's header or overall syllabus instructions to determine if at
                   </div>
 
                   <div>
-                    <h5 className="font-bold mb-2">1. Single Choice Question (Default)</h5>
+                    <h5 className="font-bold mb-2">2. Section-Wise File Structure</h5>
+                    <p className="text-muted-foreground mb-2">For multi-section exams, use a sections array instead of keeping questions at the root.</p>
                     <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
                       {`{
+  "title": "Required: Test Title",
+  "duration": 180,
+  "sections": [
+    {
+      "id": "section-1",
+      "name": "Physics",
+      "instructions": "Section instructions (Optional)",
+      "questions": [
+        // Array of Question objects for Physics
+      ]
+    }
+  ]
+}`}
+                    </pre>
+                  </div>
+
+                  <div>
+                    <h5 className="font-bold mb-2">3. Question Object Types</h5>
+                    <p className="text-muted-foreground mb-2">Each question can be <code>single</code>, <code>multiple</code>, or <code>numerical</code>.</p>
+                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                      {`// Single Choice
+{
   "id": 1, 
   "type": "single",
   "question": "What is the capital of India?",
-  "options": {
-    "A": "Mumbai",
-    "B": "New Delhi",
-    "C": "Kolkata",
-    "D": "Chennai"
-  },
-  "correctAnswer": "B",
-  "typingMode": "en"  // "en" for English, "hi" for Hindi
-}`}
-                    </pre>
-                  </div>
+  "options": { "A": "Mumbai", "B": "New Delhi", "C": "Kolkata", "D": "Chennai" },
+  "correctAnswer": "B"
+}
 
-                  <div>
-                    <h5 className="font-bold mb-2">2. Multiple Choice Question (Checkbox)</h5>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`{
+// Multiple Choice (Checkbox)
+{
   "id": 2,
   "type": "multiple",
-  "question": "Which of the following are prime numbers?",
-  "options": {
-    "A": "2",
-    "B": "4",
-    "C": "5",
-    "D": "9"
-  },
+  "question": "Which are prime numbers?",
+  "options": { "A": "2", "B": "4", "C": "5", "D": "9" },
   "correctAnswer": ["A", "C"], // Array of correct options
-  "typingMode": "en"
-}`}
-                    </pre>
-                  </div>
+}
 
-                  <div>
-                    <h5 className="font-bold mb-2">3. Numerical Question (Range)</h5>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`{
+// Numerical (Range)
+{
   "id": 3,
   "type": "numerical",
   "question": "Value of Pi up to 2 decimals?",
-  "correctAnswer": {
-    "min": 3.14,
-    "max": 3.14
-  },
-  "typingMode": "en"
+  "correctAnswer": { "min": 3.14, "max": 3.14 } // Use empty "options": {}
 }`}
                     </pre>
                   </div>
 
                   <div>
-                    <h5 className="font-bold mb-2">4. Image-Based Question</h5>
-                    <p className="text-muted-foreground mb-2">Images must be provided as Base64 strings or public URLs.</p>
+                    <h5 className="font-bold mb-2">4. Image & Comprehension Questions</h5>
+                    <p className="text-muted-foreground mb-2">Attach images as specific keys, and link passage groups using <code>groupId</code> or <code>passageContent</code>.</p>
                     <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
                       {`{
   "id": 4,
   "type": "single",
   "question": "Identify this logo:",
-  "image": "https://example.com/logo.png",
-  "options": {
-    "A": "Apple",
-    "B": "Google",
-    "C": "Microsoft",
-    "D": "Meta"
-  },
-  "optionImages": {
-     "A": "base64_string_here..." // Optional: Images for options
-  },
+  "image": "https://example.com/logo.png", // or base64
+  "options": { "A": "Apple", "B": "Google" },
+  "optionImages": { "A": "base64_string_here..." }, // Optional option images
+  "passageContent": "Full Passage shared between questions...",
+  "groupId": "passage_grp_1",
   "correctAnswer": "A"
 }`}
                     </pre>
                   </div>
 
                   <div>
-                    <h5 className="font-bold mb-2">5. Passage / Comprehension Question</h5>
-                    <p className="text-muted-foreground mb-2">For questions based on a passage, add the <code>passageContent</code> field to <strong>every</strong> question in the group.</p>
+                    <h5 className="font-bold mb-2">5. Advanced Formatting (KaTeX & Tables)</h5>
+                    <p className="text-muted-foreground mb-2">The platform fully supports KaTeX for math. Tables and "Match-the-following" grids should also be built using KaTeX arrays.</p>
                     <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
                       {`{
   "id": 5,
   "type": "single",
-  "question": "What is the main theme of the passage?",
-  "passageContent": "Start of the passage... [Full Text] ... End of passage.",
-  "options": { "A": "Nature", "B": "Technology", "C": "History", "D": "Space" },
-  "correctAnswer": "A"
-},
-{
-  "id": 6,
-  "type": "single",
-  "question": "According to the author, what is true?",
-  "passageContent": "Start of the passage... [Full Text] ... End of passage.",
-  "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
-  "correctAnswer": "B"
+  "question": "Solve the integral: $$\\int_{0}^{1} x^{2} dx$$ <br><br> Match the columns:<br> $$ \\\\begin{array}{|c|c|} \\\\hline A & 1 \\\\\\\\ \\\\hline B & 2 \\\\\\\\ \\\\hline \\\\end{array} $$",
+  "options": { "A": "1/3", "B": "1/2" },
+  "correctAnswer": "A",
+  "marks": "4",          // Override section defaults per question
+  "negativeMarks": "1"
 }`}
                     </pre>
                   </div>
 
                   <div>
-                    <h5 className="font-bold mb-2">Complete Example File (sample_test.json)</h5>
+                    <h5 className="font-bold mb-2">6. Advanced Attempt Controls</h5>
+                    <p className="text-muted-foreground mb-2">In section-wise tests, you can restrict how many questions a student can attempt per section using <code>attempt_control</code>.</p>
                     <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
                       {`{
-  "title": "General Knowledge & Math Mock",
-  "description": "A sample test uploaded via file.",
-  "duration": 15,
-  "marks_per_question": 2,
-  "negative_marks": 0.5,
-  "questions": [
-    {
-      "id": 1,
-      "type": "single",
-      "question": "Blue planet is?",
-      "options": { "A": "Mars", "B": "Earth", "C": "Venus", "D": "Jupiter" },
-      "correctAnswer": "B"
-    },
-    {
-      "id": 2,
-      "type": "numerical",
-      "question": "Solve: 5 + 5",
-      "correctAnswer": { "min": 10, "max": 10 }
-    }
-  ]
+  "id": "section-2",
+  "name": "Chemistry",
+  "instructions": "Attempt any 5 questions out of 10.",
+  "attempt_control": {
+    "enabled": true,
+    "mode": "hard",           // "hard" blocks answering more, "soft" only evaluates first N
+    "max_attempts": 5,        // Max allowed questions
+    "soft_type": "first_n"    // if mode is "soft"
+  },
+  "questions": [ ... ]
 }`}
                     </pre>
                   </div>
