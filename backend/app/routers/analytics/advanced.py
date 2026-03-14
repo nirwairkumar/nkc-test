@@ -15,11 +15,12 @@ async def get_test_funnel(
     """
     Returns aggregate funnel stats:
     Total Tests Started -> Submitted -> Abandoned, Average Completion %
+    (Registered users only — see /anon/summary for anonymous stats)
     """
     try:
         start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
 
-        # Get all registrations in the time period
+        # ── Registered Users ──
         regs = supabase.table("test_registrations")\
             .select("id, status, completion_percentage")\
             .gte("started_at", start_date)\
@@ -37,16 +38,33 @@ async def get_test_funnel(
                 sum(float(r.get("completion_percentage") or 0) for r in data) / len(data), 1
             )
 
-        # Completion rate
         completion_rate = round((total_submitted / total_started * 100), 1) if total_started > 0 else 0
 
+        # ── Anonymous Users (separate table) ──
+        anon_regs = supabase.table("anon_test_attempts")\
+            .select("id, status, completion_pct")\
+            .gte("started_at", start_date)\
+            .execute()
+
+        anon_data = anon_regs.data or []
+        anon_started = len(anon_data)
+        anon_submitted = sum(1 for r in anon_data if r.get("status") == "submitted")
+        anon_abandoned = sum(1 for r in anon_data if r.get("status") == "abandoned")
+        anon_in_progress = sum(1 for r in anon_data if r.get("status") == "in_progress")
+
         return {
+            # Registered user stats
             "total_started": total_started,
             "total_submitted": total_submitted,
             "total_abandoned": total_abandoned,
             "total_in_progress": total_in_progress,
             "avg_completion_percentage": avg_completion,
             "completion_rate": completion_rate,
+            # Anonymous user stats (separate)
+            "anon_started": anon_started,
+            "anon_submitted": anon_submitted,
+            "anon_abandoned": anon_abandoned,
+            "anon_in_progress": anon_in_progress,
         }
     except Exception as e:
         print(f"Error in test funnel: {e}")
@@ -364,4 +382,95 @@ async def get_visitor_locations(
         }
     except Exception as e:
         print(f"Error in visitor locations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Anonymous Summary ─────────────────────────────────────────
+@router.get("/anon/summary")
+async def get_anon_summary(
+    days: int = 30,
+    db: Client = Depends(get_db)
+):
+    """
+    Returns comprehensive anonymous user statistics from anon_test_attempts.
+    Completely separate from registered user data.
+    """
+    try:
+        start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+        anon_rows = supabase.table("anon_test_attempts")\
+            .select("id, test_id, status, completion_pct, score, started_at, submitted_at")\
+            .gte("started_at", start_date)\
+            .execute()
+
+        data = anon_rows.data or []
+
+        total = len(data)
+        submitted = sum(1 for r in data if r.get("status") == "submitted")
+        in_progress = sum(1 for r in data if r.get("status") == "in_progress")
+        abandoned = sum(1 for r in data if r.get("status") == "abandoned")
+
+        avg_completion = round(
+            sum(float(r.get("completion_pct") or 0) for r in data) / total, 1
+        ) if total > 0 else 0
+
+        completion_rate = round((submitted / total * 100), 1) if total > 0 else 0
+
+        # Per-test breakdown
+        test_map: dict = {}
+        for r in data:
+            tid = r.get("test_id")
+            if not tid:
+                continue
+            if tid not in test_map:
+                test_map[tid] = {"starts": 0, "submitted": 0, "in_progress": 0, "abandoned": 0}
+            test_map[tid]["starts"] += 1
+            s = r.get("status", "")
+            if s == "submitted":
+                test_map[tid]["submitted"] += 1
+            elif s == "in_progress":
+                test_map[tid]["in_progress"] += 1
+            elif s == "abandoned":
+                test_map[tid]["abandoned"] += 1
+
+        # Enrich with test titles
+        test_ids = list(test_map.keys())
+        test_titles = {}
+        if test_ids:
+            titles_res = supabase.table("tests")\
+                .select("id, title")\
+                .in_("id", test_ids[:50])\
+                .execute()
+            for t in (titles_res.data or []):
+                test_titles[t["id"]] = t.get("title", "Unknown Test")
+
+        top_tests = sorted([
+            {
+                "test_id": tid,
+                "title": test_titles.get(tid, "Unknown Test"),
+                **stats
+            }
+            for tid, stats in test_map.items()
+        ], key=lambda x: x["starts"], reverse=True)[:20]
+
+        # Daily trend
+        daily: dict = {}
+        for r in data:
+            day = (r.get("started_at") or "")[:10]
+            if day:
+                daily[day] = daily.get(day, 0) + 1
+        daily_trend = [{"date": k, "count": v} for k, v in sorted(daily.items())]
+
+        return {
+            "total": total,
+            "submitted": submitted,
+            "in_progress": in_progress,
+            "abandoned": abandoned,
+            "avg_completion_pct": avg_completion,
+            "completion_rate": completion_rate,
+            "top_tests": top_tests,
+            "daily_trend": daily_trend,
+        }
+    except Exception as e:
+        print(f"Error in anon/summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))

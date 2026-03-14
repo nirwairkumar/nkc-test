@@ -397,3 +397,145 @@ async def mark_abandoned(
     except Exception as e:
         print(f"Error marking abandoned: {e}")
         return {"success": False}
+
+
+# ─── Anonymous Attempt Tracking ────────────────────────────────
+# All anon attempts go into a separate table (anon_test_attempts)
+# to avoid mixing with registered user data.
+
+class AnonStartRequest(BaseModel):
+    session_token: str
+    test_id: str
+
+class AnonProgressRequest(BaseModel):
+    session_token: str
+    test_id: str
+    completion_pct: float = 0.0
+
+class AnonSubmitRequest(BaseModel):
+    session_token: str
+    test_id: str
+    answers: Optional[Dict[str, Any]] = None
+    score: Optional[float] = 0.0
+    completion_pct: Optional[float] = 100.0
+
+class AnonAbandonRequest(BaseModel):
+    session_token: str
+    test_id: str
+    reason: Optional[str] = "tab_closed"
+    completion_pct: Optional[float] = None
+
+
+@router.post("/anon/start")
+async def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
+    """Register an anonymous user starting a test."""
+    try:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+
+        # Check if session already started this test (e.g. page refresh)
+        existing = supabase.table("anon_test_attempts")\
+            .select("id, status")\
+            .eq("session_token", payload.session_token)\
+            .eq("test_id", payload.test_id)\
+            .limit(1).execute()
+
+        if existing.data:
+            row = existing.data[0]
+            # If already submitted, don't reset
+            if row.get("status") == "submitted":
+                return {"success": True, "resumed": False}
+            # If in_progress, it's a refresh - just update last_active
+            supabase.table("anon_test_attempts")\
+                .update({"last_active_at": now})\
+                .eq("id", row["id"]).execute()
+            return {"success": True, "resumed": True}
+
+        # New session
+        supabase.table("anon_test_attempts").insert({
+            "session_token": payload.session_token,
+            "test_id": payload.test_id,
+            "status": "in_progress",
+            "completion_pct": 0,
+            "started_at": now,
+            "last_active_at": now
+        }).execute()
+        return {"success": True, "resumed": False}
+    except Exception as e:
+        print(f"Error in anon/start: {e}")
+        return {"success": False}
+
+
+@router.post("/anon/progress")
+async def anon_progress(payload: AnonProgressRequest, db: Client = Depends(get_db)):
+    """Update completion progress for an anonymous test session."""
+    try:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+
+        supabase.table("anon_test_attempts")\
+            .update({
+                "completion_pct": min(payload.completion_pct, 99),
+                "last_active_at": now
+            })\
+            .eq("session_token", payload.session_token)\
+            .eq("test_id", payload.test_id)\
+            .neq("status", "submitted")\
+            .execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error in anon/progress: {e}")
+        return {"success": False}
+
+
+@router.post("/anon/submit")
+async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
+    """Mark an anonymous test as submitted, storing answers and score."""
+    try:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+
+        supabase.table("anon_test_attempts")\
+            .update({
+                "status": "submitted",
+                "answers": payload.answers or {},
+                "score": payload.score or 0,
+                "completion_pct": 100,
+                "submitted_at": now,
+                "last_active_at": now
+            })\
+            .eq("session_token", payload.session_token)\
+            .eq("test_id", payload.test_id)\
+            .neq("status", "submitted")\
+            .execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error in anon/submit: {e}")
+        return {"success": False}
+
+
+@router.post("/anon/abandon")
+async def anon_abandon(payload: AnonAbandonRequest, db: Client = Depends(get_db)):
+    """Mark an anonymous test as abandoned (e.g. tab closed)."""
+    try:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+
+        update_data: Dict[str, Any] = {
+            "status": "abandoned",
+            "abandoned_reason": payload.reason or "tab_closed",
+            "last_active_at": now
+        }
+        if payload.completion_pct is not None:
+            update_data["completion_pct"] = payload.completion_pct
+
+        supabase.table("anon_test_attempts")\
+            .update(update_data)\
+            .eq("session_token", payload.session_token)\
+            .eq("test_id", payload.test_id)\
+            .neq("status", "submitted")\
+            .execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error in anon/abandon: {e}")
+        return {"success": False}

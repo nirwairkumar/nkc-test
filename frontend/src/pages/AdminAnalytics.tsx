@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { analyticsApi } from '@/lib/analyticsApi';
-import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3 } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -40,15 +40,22 @@ export default function AdminAnalytics() {
     const [creationStats, setCreationStats] = useState<any>(null);
     const [visitorStats, setVisitorStats] = useState<any>(null);
     const [trends, setTrends] = useState<any[]>([]);
+    const [anonStats, setAnonStats] = useState<any>(null);
+    const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     useEffect(() => {
         fetchAllData();
+        // Auto-refresh every 30 seconds for real-time visibility
+        const interval = setInterval(fetchAllData, 30000);
+        return () => clearInterval(interval);
     }, [days]);
 
-    const fetchAllData = async () => {
+    const fetchAllData = useCallback(async () => {
         try {
+            setIsRefreshing(true);
             setLoading(true);
-            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData] =
+            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData, anonData] =
                 await Promise.all([
                     analyticsApi.getTestFunnel(days),
                     analyticsApi.getVisitorLocations(days),
@@ -57,6 +64,7 @@ export default function AdminAnalytics() {
                     analyticsApi.getTestCreationStats(days),
                     analyticsApi.getOverviewStats(days).catch(() => null),
                     analyticsApi.getDailyTrends(days).catch(() => []),
+                    analyticsApi.getAnonSummary(days).catch(() => null),
                 ]);
 
             setFunnel(funnelData);
@@ -66,13 +74,16 @@ export default function AdminAnalytics() {
             setCreationStats(createData);
             setVisitorStats(overviewData);
             setTrends(trendsData || []);
+            setAnonStats(anonData);
+            setLastRefreshed(new Date());
         } catch (error) {
             console.error("Failed to fetch analytics:", error);
             toast.error("Failed to load analytics.");
         } finally {
             setLoading(false);
+            setIsRefreshing(false);
         }
-    };
+    }, [days]);
 
     if (loading) {
         return (
@@ -111,6 +122,17 @@ export default function AdminAnalytics() {
                     <p className="text-muted-foreground">Complete platform insights and test performance metrics.</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                        {isRefreshing ? 'Refreshing...' : `Updated ${lastRefreshed.toLocaleTimeString()}`}
+                    </span>
+                    <button
+                        onClick={fetchAllData}
+                        disabled={isRefreshing}
+                        title="Refresh analytics"
+                        className="p-2 rounded-lg border bg-card hover:bg-muted transition-colors disabled:opacity-50"
+                    >
+                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
                     <select
                         value={days}
                         onChange={(e) => setDays(Number(e.target.value))}
@@ -146,7 +168,7 @@ export default function AdminAnalytics() {
             {/* ════════ OVERVIEW TAB ════════ */}
             {activeTab === 'overview' && (
                 <div className="space-y-6">
-                    {/* Top-level funnel cards */}
+                    {/* Top-level funnel cards - Registered Users */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                         <StatCard title="Tests Started" value={funnel?.total_started || 0} icon={TrendingUp} color="text-blue-500" bgColor="bg-blue-500/10" />
                         <StatCard title="Submitted" value={funnel?.total_submitted || 0} icon={CheckCircle2} color="text-green-500" bgColor="bg-green-500/10" />
@@ -154,6 +176,25 @@ export default function AdminAnalytics() {
                         <StatCard title="In Progress" value={funnel?.total_in_progress || 0} icon={Clock} color="text-yellow-500" bgColor="bg-yellow-500/10" />
                         <StatCard title="Completion Rate" value={`${funnel?.completion_rate || 0}%`} icon={TrendingUp} color="text-indigo-500" bgColor="bg-indigo-500/10" />
                         <StatCard title="Avg Completion" value={`${funnel?.avg_completion_percentage || 0}%`} icon={BarChart3} color="text-purple-500" bgColor="bg-purple-500/10" />
+                    </div>
+
+                    {/* Anonymous Traffic Section — completely separate */}
+                    <div className="rounded-xl border-2 border-dashed border-orange-400/40 bg-orange-500/5 p-5">
+                        <div className="flex items-center gap-2 mb-4">
+                            <UserX className="h-5 w-5 text-orange-500" />
+                            <h3 className="text-base font-semibold">Anonymous Traffic (Guest Users)</h3>
+                            <span className="ml-auto text-xs text-muted-foreground">Tracked separately · No account required</span>
+                        </div>
+                        {anonStats ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <StatCard title="Anon Started" value={anonStats.total ?? 0} icon={Users} color="text-orange-500" bgColor="bg-orange-500/10" />
+                                <StatCard title="Anon Submitted" value={anonStats.submitted ?? 0} icon={CheckCircle2} color="text-green-500" bgColor="bg-green-500/10" />
+                                <StatCard title="Anon In Progress" value={anonStats.in_progress ?? 0} icon={Clock} color="text-yellow-500" bgColor="bg-yellow-500/10" />
+                                <StatCard title="Anon Abandoned" value={anonStats.abandoned ?? 0} icon={AlertTriangle} color="text-red-500" bgColor="bg-red-500/10" />
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No anonymous attempts yet in this period.</p>
+                        )}
                     </div>
 
                     {/* Visitor stats row */}

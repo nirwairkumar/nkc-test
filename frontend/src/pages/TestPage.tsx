@@ -241,6 +241,15 @@ export default function TestPage() {
   // ─── Analytics: Progress Tracking & Abandon Detection ───────
   const submittedRef = useRef(false);
 
+  // On test load: register anonymous start
+  useEffect(() => {
+    if (!test || !id) return;
+    if (!user) {
+      // Anonymous user starts — track in dedicated anon table
+      analyticsApi.startAnonAttempt(id);
+    }
+  }, [test?.id]);
+
   // Periodic progress ping (every 60 seconds)
   useEffect(() => {
     if (!test || !id || isSubmitting) return;
@@ -249,7 +258,13 @@ export default function TestPage() {
       const totalQ = test.questions?.length || 1;
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      analyticsApi.updateProgress(user?.id || null, id, Math.min(pct, 99));
+      if (user) {
+        // Registered user
+        analyticsApi.updateProgress(user.id, id, Math.min(pct, 99));
+      } else {
+        // Anonymous user — use dedicated anon endpoint
+        analyticsApi.updateAnonProgress(id, Math.min(pct, 99));
+      }
     }, 60000); // every 60 seconds
     return () => clearInterval(interval);
   }, [test, user, id, answers, isSubmitting]);
@@ -262,7 +277,11 @@ export default function TestPage() {
       const totalQ = test.questions?.length || 1;
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      analyticsApi.markAbandoned(user?.id || null, id, 'tab_closed', pct);
+      if (user) {
+        analyticsApi.markAbandoned(user.id, id, 'tab_closed', pct);
+      } else {
+        analyticsApi.abandonAnonAttempt(id, 'tab_closed', pct);
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -777,8 +796,8 @@ export default function TestPage() {
 
     // ANONYMOUS SUBMISSION
     if (!user) {
-      // Mark registration as submitted even for anonymous users so it leaves "In Progress"
-      analyticsApi.updateProgress(null, id || test.id, 100);
+      // Submit to dedicated anon table — correctly marks this session as submitted
+      await analyticsApi.submitAnonAttempt(id || test.id, finalAnswers as Record<string, any>, finalScore);
       toast.info('Test Submitted (Anonymous Mode). Result not saved to history.');
 
       // Exit Full Screen if active
