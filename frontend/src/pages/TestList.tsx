@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import HomeHero from '@/components/home/HomeHero';
 import ExploreFilters from '@/components/home/ExploreFilters';
 import TestCard from '@/components/TestCard';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 
 // Lazy Load Components
 const FeaturedTests = React.lazy(() => import('@/components/home/FeaturedTests'));
@@ -21,7 +22,13 @@ const TestLinkPaster = React.lazy(() => import('@/components/TestLinkPaster'));
 
 // Skeletons
 function SectionSkeleton() {
-    return <div className="h-64 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded-lg mb-8"></div>;
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {[1, 2, 3].map(i => (
+                <TestCardSkeleton key={i} />
+            ))}
+        </div>
+    );
 }
 
 export default function TestList() {

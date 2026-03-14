@@ -451,11 +451,7 @@ export default function TestPage() {
   }, [currentQuestionIndex]);
 
   async function loadTest(testId: string) {
-    try {
-      const { data, error } = await fetchTestById(testId);
-      if (error) throw error;
-      if (!data) throw new Error('Test not found');
-
+    const processTestData = (data: any) => {
       // Embed original index before shuffling to ensure accurate reporting
       if (data.questions) {
         data.questions.forEach((q: any, idx: number) => {
@@ -477,6 +473,16 @@ export default function TestPage() {
       // Initialize timer: Use test duration if available, else calc from question count
       const durationMins = data.duration || (data.questions?.length || 0);
       setTimeRemaining(durationMins * 60);
+    };
+
+    setLoading(true);
+    try {
+      const { data, error } = await fetchTestById(testId, (cachedData) => {
+        processTestData(cachedData);
+        setLoading(false);
+      });
+      if (error && !test) throw error;
+      if (data) processTestData(data);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load test');
       navigate('/');

@@ -1,32 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Edit, ChevronRight } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Edit, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestLikeButton from '@/components/TestLikeButton';
 import { fetchTestsByUserId, Test } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
+import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 
 export default function UserRecentTests({ user, onManageTest }: { user: any, onManageTest: (test: any) => void }) {
     const [userTests, setUserTests] = useState<Test[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const navigate = useNavigate();
+
+    const loadUserTests = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
+        setError(false);
+        try {
+            const { data, error: fetchError } = await fetchTestsByUserId(user.id);
+            if (data) {
+                setUserTests(data as Test[]);
+            } else if (fetchError) {
+                console.error('Failed to load user tests:', fetchError);
+                setError(true);
+                toast.error('Failed to load your recent tests. Please try again.');
+            }
+        } catch (e) {
+            // Only catch unexpected errors (cancellation is rethrown by fetchTestsByUserId)
+            console.error('Unexpected error loading user tests:', e);
+            setError(true);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
 
     useEffect(() => {
         if (user) {
             loadUserTests();
         }
-    }, [user]);
-
-    async function loadUserTests() {
-        const { data } = await fetchTestsByUserId(user.id);
-        if (data) {
-            // Backend sort or Client sort? Backend has order('created_at', desc=True)
-            // But let's verify if TS needs help
-            setUserTests(data as Test[]);
-        }
-    }
+    }, [user, loadUserTests]);
 
     const handleShare = (e: React.MouseEvent, testId: string) => {
         e.stopPropagation();
@@ -35,7 +51,47 @@ export default function UserRecentTests({ user, onManageTest }: { user: any, onM
         toast.success("Test link copied!");
     };
 
-    if (!user || userTests.length === 0) return null;
+    if (!user) return null;
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-4 px-1">
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                        Your Recent Tests
+                    </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map(i => <TestCardSkeleton key={i} />)}
+                </div>
+            </div>
+        );
+    }
+
+    // Error state with retry
+    if (error) {
+        return (
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-4 px-1">
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                        Your Recent Tests
+                    </h2>
+                </div>
+                <div className="flex flex-col items-center justify-center py-8 px-4 rounded-lg bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900">
+                    <AlertCircle className="h-8 w-8 text-red-400 mb-2" />
+                    <p className="text-sm text-muted-foreground mb-3">Couldn't load your tests. Network may be slow.</p>
+                    <Button variant="outline" size="sm" onClick={loadUserTests} className="gap-2">
+                        <RefreshCw className="h-4 w-4" />
+                        Retry
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // No tests
+    if (userTests.length === 0) return null;
 
     return (
         <div className="mb-8 animate-in slide-in-from-left-4 duration-700">

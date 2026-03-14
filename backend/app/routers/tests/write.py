@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, BackgroundTasks
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
@@ -37,6 +37,7 @@ async def debug_schema(db: Client = Depends(get_db)):
 @router.post("/")
 async def create_test(
     payload: CreateTestRequest,
+    background_tasks: BackgroundTasks,
     db: Client = Depends(get_db)
 ):
     try:
@@ -47,7 +48,7 @@ async def create_test(
             # PostgREST returns list of inserted rows
             result = response.data[0] if response.data else None
             if result:
-                notify_test_created(result)
+                background_tasks.add_task(notify_test_created, result)
             return result
         except Exception as e:
             # If schema mismatch (missing columns for new features), retry with safe legacy fields
@@ -71,7 +72,7 @@ async def create_test(
             print("Legacy insert successful.")
             result = response.data[0] if response.data else None
             if result:
-                notify_test_created(result)
+                background_tasks.add_task(notify_test_created, result)
             return result
             
     except Exception as e:
@@ -83,6 +84,7 @@ async def create_test(
 async def update_test(
     test_id: str,
     payload: Dict[str, Any], # Allow partial updates without strict validation or use UpdateTestRequest
+    background_tasks: BackgroundTasks,
     # Using Dict because frontend might send fields not in UpdateTestRequest if we lag behind
     db: Client = Depends(get_db)
 ):
@@ -94,7 +96,7 @@ async def update_test(
         try:
              response = db.table("tests").update(payload).eq("id", test_id).execute()
              if response.data:
-                notify_test_updated(response.data[0])
+                background_tasks.add_task(notify_test_updated, response.data[0])
                 return response.data[0]
              return None
         except Exception as e:
@@ -108,7 +110,7 @@ async def update_test(
             safe_payload = {k: v for k, v in payload.items() if k in legacy_keys}
             response = db.table("tests").update(safe_payload).eq("id", test_id).execute()
             if response.data:
-                notify_test_updated(response.data[0])
+                background_tasks.add_task(notify_test_updated, response.data[0])
                 return response.data[0]
             return None
 

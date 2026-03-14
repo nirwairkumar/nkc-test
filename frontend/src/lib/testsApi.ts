@@ -124,7 +124,9 @@ export async function fetchAllTests(options?: {
 
 export async function createTest(testData: Partial<Test>) {
     try {
-        const response = await apiClient.post('/tests/', testData);
+        const response = await apiClient.post('/tests/', testData, {
+            timeout: 60000, // 60s — test payloads can be very large
+        });
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
@@ -214,43 +216,30 @@ export async function fetchTestsByCreator(
     options?: { searchQuery?: string; signal?: AbortSignal }
 ) {
     const { searchQuery = '', signal } = options || {};
-    try {
-        // Assuming we rely on the generic fetch with filter or add a specific one later.
-        // For now, if backend has /tests/user/{uid} or we use filter:
-        // Let's us /tests/user/{uid} if available, else filter.
-        // Looking at backend `tests.py`, we haven't added `get_user_tests`.
-        // But `ManageTests` expects it.
-        // Let's implement it as a filter on `all` or `feed` or add endpoint.
-        // We actually typically have `fetchUserTests`.
-        // Let's check if we removed it.
-        // I'll assume we need to add GET /tests/user/{uid} to backend or use client-side filter.
-        // For now, let's use the /feed endpoint with a creator filter if supported, OR just /all and filter (bad performance).
-        // Wait, `ManageTests` calls this.
-        // I will add `get_user_tests` to `tests.py` later if needed.
-        // For now, I'll return an empty list or error if not implemented, BUT
-        // the user's `tests.py` likely DOES NOT have it yet based on my reads.
-        // actually `tests.py` has `get_tests_feed`.
+    const maxRetries = 1;
 
-        // I will implement a quick workaround: fetch all and filter in frontend OR
-        // Request the user to let me add the endpoint.
-        // BUT I CAN add the endpoint to `tests.py` now.
-        // Use `fetchUserTests` logic.
-
-        // But to be safe and "Industrial Norm", I should have the endpoint.
-        // I will add the function here and make it call `/tests/user/${userId}`.
-        // And I will Ensure `routers/tests.py` has it.
-
-        const response = await apiClient.get(`/tests/user/${userId}`, {
-            params: { search_query: searchQuery },
-            signal
-        });
-        return { data: response.data, error: null };
-    } catch (error: any) {
-        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
-            throw error;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await apiClient.get(`/tests/user/${userId}`, {
+                params: { search_query: searchQuery },
+                signal
+            });
+            return { data: response.data, error: null };
+        } catch (error: any) {
+            if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {
+                throw error;
+            }
+            // Retry on timeout or network errors (not on 4xx/5xx)
+            const isRetryable = !error.response && (error.code === 'ECONNABORTED' || error.message?.includes('timeout') || error.message?.includes('Network Error'));
+            if (isRetryable && attempt < maxRetries) {
+                console.warn(`[testsApi] fetchTestsByCreator attempt ${attempt + 1} failed, retrying...`);
+                await new Promise(r => setTimeout(r, 1000)); // wait 1s before retry
+                continue;
+            }
+            return { data: null, error };
         }
-        return { data: null, error };
     }
+    return { data: null, error: new Error('Max retries exceeded') };
 }
 
 // Alias for compatibility
