@@ -135,12 +135,15 @@ export default function TestIntroPage() {
     }, [test, user]);
 
     const loadTestBySlug = async (testSlug: string) => {
+        // Serve from cache first if available for instant load
         setLoading(true);
         try {
-            const { data, error } = await fetchTestBySlug(testSlug);
-            if (error) throw error;
-            if (!data) throw new Error("Test not found");
-            setTest(data);
+            const { data, error } = await fetchTestBySlug(testSlug, (cachedData) => {
+                setTest(cachedData);
+                setLoading(false);
+            });
+            if (error && !test) throw error; // If no cache and no data
+            if (data) setTest(data);
         } catch (err: any) {
             console.error("Error loading test by slug:", err);
             setError(err.message || "Failed to load test details.");
@@ -158,13 +161,19 @@ export default function TestIntroPage() {
             let data, error;
 
             if (isUUID) {
-                const res = await fetchTestById(testId);
+                const res = await fetchTestById(testId, (cachedData) => {
+                    setTest(cachedData);
+                    setLoading(false);
+                });
                 data = res.data;
                 error = res.error;
             } else {
                 // Try Custom ID
                 const { fetchTestByCustomId } = await import('@/lib/testsApi');
-                const res = await fetchTestByCustomId(testId);
+                const res = await fetchTestByCustomId(testId, (cachedData) => {
+                    setTest(cachedData);
+                    setLoading(false);
+                });
                 data = res.data;
                 error = res.error;
             }
