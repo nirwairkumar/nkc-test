@@ -34,7 +34,7 @@ export default function AdminAnalytics() {
 
     // Data states
     const [funnel, setFunnel] = useState<any>(null);
-    const [abandonment, setAbandonment] = useState<any>(null);
+    const [locations, setLocations] = useState<any>(null);
     const [testMatrix, setTestMatrix] = useState<any[]>([]);
     const [userMatrix, setUserMatrix] = useState<any[]>([]);
     const [creationStats, setCreationStats] = useState<any>(null);
@@ -48,10 +48,10 @@ export default function AdminAnalytics() {
     const fetchAllData = async () => {
         try {
             setLoading(true);
-            const [funnelData, abandonData, testData, userData, createData, overviewData, trendsData] =
+            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData] =
                 await Promise.all([
                     analyticsApi.getTestFunnel(days),
-                    analyticsApi.getAbandonmentAnalysis(days),
+                    analyticsApi.getVisitorLocations(days),
                     analyticsApi.getTestMatrix(days),
                     analyticsApi.getUserMatrix(days),
                     analyticsApi.getTestCreationStats(days),
@@ -60,7 +60,7 @@ export default function AdminAnalytics() {
                 ]);
 
             setFunnel(funnelData);
-            setAbandonment(abandonData);
+            setLocations(locationsData);
             setTestMatrix(testData || []);
             setUserMatrix(userData || []);
             setCreationStats(createData);
@@ -89,14 +89,10 @@ export default function AdminAnalytics() {
         { id: 'creation', label: 'Test Creation', icon: TrendingUp },
     ];
 
-    // Abandonment pie data
-    const abandonPieData = abandonment?.reasons
-        ? Object.entries(abandonment.reasons).map(([name, value]) => ({ name, value }))
-        : [];
-
-    const dropOffBarData = abandonment?.drop_off_buckets
-        ? Object.entries(abandonment.drop_off_buckets).map(([name, value]) => ({ name, count: value }))
-        : [];
+    // Location chart data
+    const locationBarData = (locations?.countries || [])
+        .filter((c: any) => c.name !== 'Unknown')
+        .slice(0, 10);
 
     // Funnel bar data
     const funnelBarData = funnel ? [
@@ -193,40 +189,41 @@ export default function AdminAnalytics() {
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Abandonment Reasons Pie */}
+                        {/* User Locations */}
                         <div className="rounded-xl border bg-card p-5 shadow-sm">
-                            <h3 className="text-lg font-semibold mb-4">Abandonment Reasons</h3>
-                            {abandonPieData.length > 0 ? (
+                            <h3 className="text-lg font-semibold mb-4">Visitor Locations (by Country)</h3>
+                            {locationBarData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height={300}>
-                                    <PieChart>
-                                        <Pie data={abandonPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                                            {abandonPieData.map((_: any, index: number) => (
-                                                <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                        <Legend />
-                                    </PieChart>
+                                    <BarChart data={locationBarData} layout="vertical">
+                                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                        <XAxis type="number" tick={{ fontSize: 12 }} />
+                                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={100} />
+                                        <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                                        <Bar dataKey="visitors" fill="#6366f1" radius={[0, 6, 6, 0]} name="Visitors" />
+                                    </BarChart>
                                 </ResponsiveContainer>
                             ) : (
-                                <div className="flex h-[300px] items-center justify-center text-muted-foreground">No abandonment data yet</div>
+                                <div className="flex h-[300px] items-center justify-center text-muted-foreground">No location data yet. It will populate as visitors browse.</div>
                             )}
                         </div>
                     </div>
 
-                    {/* Drop-off distribution */}
-                    <div className="rounded-xl border bg-card p-5 shadow-sm">
-                        <h3 className="text-lg font-semibold mb-4">Drop-off Distribution (At what % do users abandon?)</h3>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={dropOffBarData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
-                                <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {/* Top Cities Table */}
+                    {locations?.top_cities?.length > 0 && (
+                        <div className="rounded-xl border bg-card shadow-sm">
+                            <div className="p-4 border-b">
+                                <h3 className="text-lg font-semibold">Top Cities</h3>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4">
+                                {locations.top_cities.map((city: any, i: number) => (
+                                    <div key={i} className="flex items-center justify-between rounded-lg border px-3 py-2">
+                                        <span className="text-sm truncate mr-2">{city.name}</span>
+                                        <span className="text-sm font-mono font-medium text-primary">{city.visitors}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Visitor Trends */}
                     {trends.length > 0 && (
@@ -401,8 +398,8 @@ export default function AdminAnalytics() {
                                         <td className="px-4 py-3 text-muted-foreground">{t.creator_name || 'Unknown'}</td>
                                         <td className="px-4 py-3 text-center">
                                             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${t.visibility === 'public' ? 'bg-green-500/10 text-green-600' :
-                                                    t.visibility === 'private' ? 'bg-red-500/10 text-red-600' :
-                                                        'bg-yellow-500/10 text-yellow-600'
+                                                t.visibility === 'private' ? 'bg-red-500/10 text-red-600' :
+                                                    'bg-yellow-500/10 text-yellow-600'
                                                 }`}>{t.visibility || (t.is_public ? 'public' : 'private')}</span>
                                         </td>
                                         <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">

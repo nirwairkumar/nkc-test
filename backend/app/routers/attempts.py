@@ -15,16 +15,16 @@ class SaveAttemptRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 class RegisterRequest(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     test_id: str
 
 class ProgressUpdateRequest(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     test_id: str
     completion_percentage: float  # 0-100
 
 class AbandonRequest(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
     test_id: str
     reason: Optional[str] = 'tab_closed'
     completion_percentage: Optional[float] = None
@@ -60,6 +60,7 @@ async def save_attempt(
                 .update({"status": "submitted", "completion_percentage": 100})\
                 .eq("user_id", payload.user_id)\
                 .eq("test_id", payload.test_id)\
+                .neq("status", "submitted")\
                 .execute()
         except Exception as reg_err:
             print(f"Warning: Could not update registration status: {reg_err}")
@@ -242,28 +243,48 @@ async def register_start(
     db: Client = Depends(get_db)
 ):
     try:
-        # Check existing
-        existing = db.table("test_registrations")\
-            .select("id")\
-            .eq("user_id", payload.user_id)\
-            .eq("test_id", payload.test_id)\
-            .execute()
-            
-        if existing.data:
-            return {"success": True}
-            
-        response = db.table("test_registrations").insert({
-            "user_id": payload.user_id,
-            "test_id": payload.test_id,
-            "status": "in_progress",
-            "completion_percentage": 0
-        }).execute()
-        
+        # Build the insert data
+        insert_data: Dict[str, Any] = {"test_id": payload.test_id}
+        if payload.user_id:
+            insert_data["user_id"] = payload.user_id
+
+        # Check if already registered (for non-anonymous only)
+        if payload.user_id:
+            existing = supabase.table("test_registrations")\
+                .select("id, status")\
+                .eq("user_id", payload.user_id)\
+                .eq("test_id", payload.test_id)\
+                .execute()
+            if existing.data:
+                # Reset to in_progress if re-starting (not submitted)
+                row = existing.data[0]
+                if row.get("status") != "submitted":
+                    try:
+                        supabase.table("test_registrations")\
+                            .update({"status": "in_progress", "completion_percentage": 0})\
+                            .eq("id", row["id"]).execute()
+                    except Exception:
+                        pass  # columns may not exist yet
+                return {"success": True}
+
+        # Try insert with analytics columns first
+        try:
+            insert_data["status"] = "in_progress"
+            insert_data["completion_percentage"] = 0
+            supabase.table("test_registrations").insert(insert_data).execute()
+        except Exception:
+            # Fallback: insert without analytics columns (migration not run yet)
+            fallback_data = {"test_id": payload.test_id}
+            if payload.user_id:
+                fallback_data["user_id"] = payload.user_id
+            supabase.table("test_registrations").insert(fallback_data).execute()
+
         return {"success": True}
-        
+
     except Exception as e:
         print(f"Error registering start: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Non-critical: don't block the test start
+        return {"success": False}
 
 @router.get("/test/{test_id}")
 async def get_test_attempts(
@@ -317,19 +338,29 @@ async def update_progress(
     """Called periodically by the frontend to record how far a user is in a test."""
     try:
         from datetime import datetime, timezone
-        supabase.table("test_registrations")\
-            .update({
-                "completion_percentage": min(payload.completion_percentage, 99),
+        
+        # Try full update first
+        try:
+            status = "submitted" if payload.completion_percentage >= 100 else "in_progress"
+            update_data = {
+                "completion_percentage": min(payload.completion_percentage, 100),
+                "status": status,
                 "last_active_at": datetime.now(timezone.utc).isoformat()
-            })\
-            .eq("user_id", payload.user_id)\
-            .eq("test_id", payload.test_id)\
-            .eq("status", "in_progress")\
-            .execute()
+            }
+            query = supabase.table("test_registrations").update(update_data).eq("test_id", payload.test_id)
+            if payload.user_id:
+                query = query.eq("user_id", payload.user_id)
+            else:
+                query = query.is_("user_id", "null")
+            query.execute()
+        except Exception:
+            # Fallback: Migration not run, no-op or minimal update if possible
+            # We don't have other columns to update in the old schema for registrations
+            pass
+            
         return {"success": True}
     except Exception as e:
         print(f"Error updating progress: {e}")
-        # Non-critical - don't fail the user's test experience
         return {"success": False}
 
 
@@ -342,20 +373,26 @@ async def mark_abandoned(
     """Called when user closes tab or explicitly leaves a test without submitting."""
     try:
         from datetime import datetime, timezone
-        update_data = {
-            "status": "abandoned",
-            "abandoned_reason": payload.reason or "tab_closed",
-            "last_active_at": datetime.now(timezone.utc).isoformat()
-        }
-        if payload.completion_percentage is not None:
-            update_data["completion_percentage"] = payload.completion_percentage
         
-        supabase.table("test_registrations")\
-            .update(update_data)\
-            .eq("user_id", payload.user_id)\
-            .eq("test_id", payload.test_id)\
-            .eq("status", "in_progress")\
-            .execute()
+        try:
+            update_data = {
+                "status": "abandoned",
+                "abandoned_reason": payload.reason or "tab_closed",
+                "last_active_at": datetime.now(timezone.utc).isoformat()
+            }
+            if payload.completion_percentage is not None:
+                update_data["completion_percentage"] = payload.completion_percentage
+
+            query = supabase.table("test_registrations").update(update_data).eq("test_id", payload.test_id)
+            if payload.user_id:
+                query = query.eq("user_id", payload.user_id)
+            else:
+                query = query.is_("user_id", "null")
+            query.execute()
+        except Exception:
+            # Fallback: Migration not run
+            pass
+            
         return {"success": True}
     except Exception as e:
         print(f"Error marking abandoned: {e}")

@@ -60,8 +60,8 @@ export const analyticsApi = {
         return response.data;
     },
 
-    getAbandonmentAnalysis: async (days: number = 30) => {
-        const response = await apiClient.get('/analytics/stats/tests/abandonment', { params: { days } });
+    getVisitorLocations: async (days: number = 30) => {
+        const response = await apiClient.get('/analytics/stats/visitors/locations', { params: { days } });
         return response.data;
     },
 
@@ -81,15 +81,15 @@ export const analyticsApi = {
     },
 
     // ─── Progress & Abandonment Tracking ──────────────────────
-    updateProgress: async (user_id: string, test_id: string, completion_percentage: number) => {
+    updateProgress: async (user_id: string | null, test_id: string, completion_percentage: number) => {
         try {
             await apiClient.post('/attempts/progress', { user_id, test_id, completion_percentage });
         } catch (e) { /* non-critical */ }
     },
 
-    markAbandoned: async (user_id: string, test_id: string, reason: string, completion_percentage?: number) => {
+    markAbandoned: async (user_id: string | null, test_id: string, reason: string, completion_percentage?: number) => {
         try {
-            const payload: any = { user_id, test_id, reason };
+            const payload: any = { user_id: user_id || null, test_id, reason };
             if (completion_percentage !== undefined) payload.completion_percentage = completion_percentage;
             // Use sendBeacon for reliability on tab close
             const url = (apiClient.defaults.baseURL || '') + '/attempts/abandon';

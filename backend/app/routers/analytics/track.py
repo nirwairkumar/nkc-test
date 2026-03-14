@@ -24,10 +24,20 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
         browser = f"{user_agent.browser.family} {user_agent.browser.version_string}"
         os = f"{user_agent.os.family} {user_agent.os.version_string}"
         
-        # 2. Extract Geo (Simplified: Assuming Cloudflare headers or fallback)
-        # In a real deployed app, extract from CF-IPCountry
-        country = "Unknown"  # Would be request.headers.get("cf-ipcountry", "Unknown")
+        # 2. Extract Geo via free IP geolocation API (ip-api.com, no key needed)
+        country = "Unknown"
         city = "Unknown"
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=3.0) as geo_client:
+                geo_resp = await geo_client.get(f"http://ip-api.com/json/{client_ip}?fields=country,city,status")
+                if geo_resp.status_code == 200:
+                    geo_data = geo_resp.json()
+                    if geo_data.get("status") == "success":
+                        country = geo_data.get("country", "Unknown")
+                        city = geo_data.get("city", "Unknown")
+        except Exception as geo_err:
+            logger.warning(f"Geo lookup failed for {client_ip}: {geo_err}")
         
         # 3. UPSERT Visitor
         visitor_resp = db.table("visitors").select("id").eq("fingerprint", event.fingerprint).execute()

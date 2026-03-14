@@ -243,26 +243,26 @@ export default function TestPage() {
 
   // Periodic progress ping (every 60 seconds)
   useEffect(() => {
-    if (!test || !user || !id || isSubmitting) return;
+    if (!test || !id || isSubmitting) return;
     const interval = setInterval(() => {
       if (submittedRef.current) return;
       const totalQ = test.questions?.length || 1;
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      analyticsApi.updateProgress(user.id, id, Math.min(pct, 99));
+      analyticsApi.updateProgress(user?.id || null, id, Math.min(pct, 99));
     }, 60000); // every 60 seconds
     return () => clearInterval(interval);
   }, [test, user, id, answers, isSubmitting]);
 
   // Abandon detection on tab close / navigation away
   useEffect(() => {
-    if (!test || !user || !id) return;
+    if (!test || !id) return;
     const handleBeforeUnload = () => {
       if (submittedRef.current) return; // already submitted, don't mark abandoned
       const totalQ = test.questions?.length || 1;
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      analyticsApi.markAbandoned(user.id, id, 'tab_closed', pct);
+      analyticsApi.markAbandoned(user?.id || null, id, 'tab_closed', pct);
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -777,6 +777,8 @@ export default function TestPage() {
 
     // ANONYMOUS SUBMISSION
     if (!user) {
+      // Mark registration as submitted even for anonymous users so it leaves "In Progress"
+      analyticsApi.updateProgress(null, id || test.id, 100);
       toast.info('Test Submitted (Anonymous Mode). Result not saved to history.');
 
       // Exit Full Screen if active
