@@ -24,7 +24,6 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { updateProfile } from '@/lib/usersApi';
-import supabase from '@/lib/supabaseClient';
 
 
 const formSchema = z.object({
@@ -65,12 +64,11 @@ export default function OnboardingPage() {
 
             const isCreatorDefault = values.designation === 'Teacher' || values.designation === 'Institution';
 
-            // 1. Update Auth User Metadata (Critical for preventing onboarding loop)
-            const { error: authError } = await supabase.auth.updateUser({
-                data: {
-                    full_name: values.name,
-                    designation: values.designation
-                }
+            // 1. Update Auth User Metadata via Backend Proxy
+            const { authApi } = await import('@/lib/authApi');
+            const { error: authError } = await authApi.updateMetadata({
+                full_name: values.name,
+                designation: values.designation
             });
 
             if (authError) {

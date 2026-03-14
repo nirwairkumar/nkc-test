@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { supabase } from './supabaseClient';
 
 // Use environment variable for API URL or default to localhost
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
@@ -13,10 +12,10 @@ const apiClient = axios.create({
 
 // Request Interceptor: Add Auth Token
 apiClient.interceptors.request.use(async (config) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const token = localStorage.getItem('testoza_token');
 
-    if (session?.access_token) {
-        config.headers.Authorization = `Bearer ${session.access_token}`;
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;

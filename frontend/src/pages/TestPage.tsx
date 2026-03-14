@@ -27,7 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import Latex from 'react-latex-next';
 import ScientificCalculator from '@/components/ScientificCalculator';
 import { submitReport } from '@/lib/reportsApi';
-import { supabase } from '@/lib/supabaseClient';
+import { analyticsApi } from '@/lib/analyticsApi';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -237,6 +237,36 @@ export default function TestPage() {
 
     localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
   }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id]);
+
+  // ─── Analytics: Progress Tracking & Abandon Detection ───────
+  const submittedRef = useRef(false);
+
+  // Periodic progress ping (every 60 seconds)
+  useEffect(() => {
+    if (!test || !user || !id || isSubmitting) return;
+    const interval = setInterval(() => {
+      if (submittedRef.current) return;
+      const totalQ = test.questions?.length || 1;
+      const answeredQ = Object.keys(answers).length;
+      const pct = Math.round((answeredQ / totalQ) * 100);
+      analyticsApi.updateProgress(user.id, id, Math.min(pct, 99));
+    }, 60000); // every 60 seconds
+    return () => clearInterval(interval);
+  }, [test, user, id, answers, isSubmitting]);
+
+  // Abandon detection on tab close / navigation away
+  useEffect(() => {
+    if (!test || !user || !id) return;
+    const handleBeforeUnload = () => {
+      if (submittedRef.current) return; // already submitted, don't mark abandoned
+      const totalQ = test.questions?.length || 1;
+      const answeredQ = Object.keys(answers).length;
+      const pct = Math.round((answeredQ / totalQ) * 100);
+      analyticsApi.markAbandoned(user.id, id, 'tab_closed', pct);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [test, user, id, answers]);
 
   // Check for saved session on mount
   useEffect(() => {
@@ -546,6 +576,7 @@ export default function TestPage() {
 
   const confirmSubmit = async () => {
     if (!test) return;
+    submittedRef.current = true; // Prevent abandon detection from firing
     setIsSubmitting(true);
     setShowSubmitDialog(false);
     if (timerRef.current) clearInterval(timerRef.current);

@@ -13,15 +13,12 @@ export default function UpdatePassword() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Ensure user is authenticated (via the reset link token)
-        import('@/lib/supabaseClient').then(({ supabase }) => {
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                if (!session) {
-                    toast.error('Invalid or expired reset session. Please request a new password reset.');
-                    navigate('/login');
-                }
-            });
-        });
+        // Ensure user is authenticated (via the reset link token or captured session)
+        const token = localStorage.getItem('testoza_token');
+        if (!token) {
+            toast.error('Invalid or expired reset session. Please request a new password reset.');
+            navigate('/login');
+        }
     }, [navigate]);
 
     const handleUpdate = async (e: React.FormEvent) => {

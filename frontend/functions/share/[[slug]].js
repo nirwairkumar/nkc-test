@@ -9,13 +9,8 @@ export async function onRequest(context) {
         return new Response("Not Found", { status: 404 });
     }
 
-    // Supabase Config
-    const supabaseUrl = env.VITE_SUPABASE_URL;
-    const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-        return new Response("Configuration Error", { status: 500 });
-    }
+    // Backend API Config
+    const apiUrl = env.VITE_API_URL || 'https://api.testoza.com/api';
 
     // Defaults
     let test = null;
@@ -25,35 +20,13 @@ export async function onRequest(context) {
     let destPath = "/";
 
     try {
-        // 1. Try fetching by slug
-        let queryUrl = `${supabaseUrl}/rest/v1/tests?slug=eq.${slugOrId}&select=*`;
-        let res = await fetch(queryUrl, {
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`
-            }
-        });
-        let data = await res.json();
-        if (data && data.length > 0) {
-            test = data[0];
-        }
+        // Fetch test data from backend API
+        // The backend /tests/{id} endpoint handles both UUIDs and slugs
+        const apiPath = `${apiUrl}/tests/${slugOrId}`;
+        const res = await fetch(apiPath);
 
-        // 2. If not found, try by ID (if valid UUID)
-        if (!test) {
-            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
-            if (isUUID) {
-                queryUrl = `${supabaseUrl}/rest/v1/tests?id=eq.${slugOrId}&select=*`;
-                res = await fetch(queryUrl, {
-                    headers: {
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${supabaseKey}`
-                    }
-                });
-                data = await res.json();
-                if (data && data.length > 0) {
-                    test = data[0];
-                }
-            }
+        if (res.ok) {
+            test = await res.json();
         }
 
         if (test) {

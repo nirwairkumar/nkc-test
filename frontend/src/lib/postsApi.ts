@@ -1,6 +1,17 @@
 import apiClient from './apiClient';
 import { PostCreate, PostUpdate, PostFeedResponse, PostDetailed } from './types';
-import { supabase } from './supabaseClient';
+
+// Helper to get user ID from token (minimal Decode)
+const getUserIdFromToken = () => {
+    const token = localStorage.getItem('testoza_token');
+    if (!token) return null;
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.sub; // Supabase uses 'sub' for user ID
+    } catch {
+        return null;
+    }
+};
 
 export const postsApi = {
     // Feed & Exploration
@@ -21,43 +32,42 @@ export const postsApi = {
 
     // Creator Dashboard
     getMyPosts: async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-        const response = await apiClient.get<PostDetailed[]>(`/posts/my?user_id=${user.id}`);
+        const userId = getUserIdFromToken();
+        if (!userId) throw new Error("Not authenticated");
+        const response = await apiClient.get<PostDetailed[]>(`/posts/my?user_id=${userId}`);
         return response.data;
     },
 
     // CRUD
     createPost: async (data: PostCreate) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-        const response = await apiClient.post<PostDetailed>(`/posts?user_id=${user.id}`, data);
+        const userId = getUserIdFromToken();
+        if (!userId) throw new Error("Not authenticated");
+        const response = await apiClient.post<PostDetailed>(`/posts?user_id=${userId}`, data);
         return response.data;
     },
 
     updatePost: async (id: string, data: PostUpdate) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-        const response = await apiClient.put<PostDetailed>(`/posts/${id}?user_id=${user.id}`, data);
+        const userId = getUserIdFromToken();
+        if (!userId) throw new Error("Not authenticated");
+        const response = await apiClient.put<PostDetailed>(`/posts/${id}?user_id=${userId}`, data);
         return response.data;
     },
 
     deletePost: async (id: string) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-        const response = await apiClient.delete(`/posts/${id}?user_id=${user.id}`);
+        const userId = getUserIdFromToken();
+        if (!userId) throw new Error("Not authenticated");
+        const response = await apiClient.delete(`/posts/${id}?user_id=${userId}`);
         return response.data;
     },
 
     // Images
     uploadImage: async (file: File) => {
+        const userId = getUserIdFromToken();
+        if (!userId) throw new Error("Not authenticated");
+
         const formData = new FormData();
         formData.append('file', file);
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-
-        formData.append('user_id', user.id);
+        formData.append('user_id', userId);
 
         const response = await apiClient.post<{ url: string }>('/posts/upload-image', formData, {
             headers: {
@@ -69,16 +79,16 @@ export const postsApi = {
 
     // Engagement
     toggleLike: async (id: string) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
-        const response = await apiClient.post<{ liked: boolean, likeCount: number }>(`/posts/${id}/like?user_id=${user.id}`);
+        const userId = getUserIdFromToken();
+        if (!userId) throw new Error("Not authenticated");
+        const response = await apiClient.post<{ liked: boolean, likeCount: number }>(`/posts/${id}/like?user_id=${userId}`);
         return response.data;
     },
 
     checkLiked: async (id: string) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return { liked: false };
-        const response = await apiClient.get<{ liked: boolean }>(`/posts/${id}/liked?user_id=${user.id}`);
+        const userId = getUserIdFromToken();
+        if (!userId) return { liked: false };
+        const response = await apiClient.get<{ liked: boolean }>(`/posts/${id}/liked?user_id=${userId}`);
         return response.data;
     }
 };

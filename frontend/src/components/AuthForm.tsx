@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { SEO } from '@/components/SEO';
 import { useForm } from 'react-hook-form';
-import supabase from '@/lib/supabaseClient';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import apiClient from '@/lib/apiClient';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,8 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { signUpWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { signUpWithEmail, signInWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
 
 
 const formSchema = z.object({
@@ -54,6 +54,8 @@ export default function AuthForm() {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+
+    const { refreshSession } = useAuth();
 
     useEffect(() => {
         if (location.state?.isSignup) {
@@ -90,27 +92,23 @@ export default function AuthForm() {
                 }
 
                 try {
-                    const response = await apiClient.post('/login', {
-                        email: values.email,
-                        password: values.password
-                    });
+                    const response = await signInWithEmail(values.email, values.password!);
 
-                    const { session } = response.data; // Backend returns the full Supabase response which has 'session'
+                    if (response.error) {
+                        toast.error(response.error.message || 'Login failed');
+                        setIsLoading(false);
+                        return;
+                    }
 
-                    if (!session || !session.access_token || !session.refresh_token) {
+                    const { session } = response.data;
+
+                    if (!session || !session.access_token) {
                         throw new Error("Invalid session received from backend");
                     }
 
-                    // CRITICAL FIX: Manually set the session on the frontend client
-                    // This updates the AuthContext and local storage
-                    const { error: sessionError } = await supabase.auth.setSession({
-                        access_token: session.access_token,
-                        refresh_token: session.refresh_token,
-                    });
+                    await refreshSession();
 
-                    if (sessionError) throw sessionError;
-
-                    toast.success('Successfully logged in via Backend!');
+                    toast.success('Successfully logged in!');
 
                     // Let the AuthContext update (it listens to onAuthStateChange)
                     // We might need a small delay or just rely on the navigate
@@ -166,23 +164,17 @@ export default function AuthForm() {
 
                 // Direct Login logic after signup
                 try {
-                    const response = await apiClient.post('/login', {
-                        email: values.email,
-                        password: values.password
-                    });
+                    const response = await signInWithEmail(values.email, values.password!);
+
+                    if (response.error) throw response.error;
 
                     const { session } = response.data;
 
-                    if (!session || !session.access_token || !session.refresh_token) {
+                    if (!session || !session.access_token) {
                         throw new Error("Invalid session received from backend");
                     }
 
-                    const { error: sessionError } = await supabase.auth.setSession({
-                        access_token: session.access_token,
-                        refresh_token: session.refresh_token,
-                    });
-
-                    if (sessionError) throw sessionError;
+                    await refreshSession();
 
                     toast.success('Successfully signed up and logged in!');
 
@@ -218,7 +210,7 @@ export default function AuthForm() {
         try {
             const { error } = await signInWithGoogle();
             if (error) throw error;
-            // Redirect is handled by Supabase
+            // Redirect is handled by backend or OAuth provider
         } catch (error: any) {
             toast.error(error.message || 'Google login failed');
             setIsLoading(false);

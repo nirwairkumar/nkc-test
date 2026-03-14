@@ -1,11 +1,10 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import supabase from '@/lib/supabaseClient';
-import type { Session, User } from '@supabase/supabase-js';
+import { authApi } from '@/lib/authApi';
 
 type AuthContextType = {
-    session: Session | null;
-    user: User | null;
+    session: any | null;
+    user: any | null;
     profile: any | null;
     loading: boolean;
     isAdmin: boolean;
@@ -13,6 +12,7 @@ type AuthContextType = {
     premiumLoading: boolean;
     isGlobalUnlock: boolean;
     hasActivePlans: boolean;
+    refreshSession: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,11 +25,12 @@ const AuthContext = createContext<AuthContextType>({
     premiumLoading: true,
     isGlobalUnlock: false,
     hasActivePlans: true,
+    refreshSession: async () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [session, setSession] = useState<Session | null>(null);
-    const [user, setUser] = useState<User | null>(null);
+    const [session, setSession] = useState<any | null>(null);
+    const [user, setUser] = useState<any | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -38,38 +39,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isGlobalUnlock, setIsGlobalUnlock] = useState(false);
     const [hasActivePlans, setHasActivePlans] = useState(true);
 
-    const fetchProfile = async (userId: string | undefined) => {
+    const fetchProfileData = async (userId: string | undefined) => {
         if (!userId) {
             setProfile(null);
             return;
         }
         try {
-            const { data } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-            setProfile(data);
+            const { fetchUserDetails } = await import('@/lib/usersApi');
+            const { data, error } = await fetchUserDetails(userId);
+            if (data) setProfile(data);
         } catch (error) {
             console.error('Error fetching profile:', error);
             setProfile(null);
         }
     };
 
-    const checkAdminStatus = async (email: string | undefined) => {
-        if (!email) {
+    const checkAdminStatus = async (user_id: string | undefined) => {
+        if (!user_id) {
             setIsAdmin(false);
             return;
         }
         try {
-            const { data } = await supabase
-                .from('admins')
-                .select('email')
-                .eq('email', email)
-                .single();
-            setIsAdmin(!!data);
+            const response = await import('@/lib/apiClient').then(m => m.default.get('/users/check-admin', { params: { user_id } }));
+            setIsAdmin(!!response.data);
         } catch (error) {
-            console.error('Error checking admin status:', error);
             setIsAdmin(false);
         }
     };
@@ -77,16 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkPremiumStatus = async (userId: string | undefined) => {
         setPremiumLoading(true);
         try {
-            // Step 1: Check global unlock and active plans status
             const { checkPremiumAccess } = await import('@/lib/pricingApi');
-            const { data: accessData, error: accessError } = await checkPremiumAccess();
-
-            if (accessError) {
-                console.error('Error checking premium access:', accessError);
-                setIsPremium(false);
-                setPremiumLoading(false);
-                return;
-            }
+            const { data: accessData } = await checkPremiumAccess();
 
             const unlockAll = accessData?.unlock_all_premium || false;
             const hasPlans = accessData?.has_active_plans || false;
@@ -94,46 +79,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsGlobalUnlock(unlockAll);
             setHasActivePlans(hasPlans);
 
-            // If global unlock is enabled, grant premium access
-            if (unlockAll) {
+            if (unlockAll || !hasPlans) {
                 setIsPremium(true);
-                setPremiumLoading(false);
                 return;
             }
 
-            // If no active plans exist, grant premium access
-            if (!hasPlans) {
-                setIsPremium(true);
-                setPremiumLoading(false);
-                return;
-            }
-
-            // Step 2: Check user's subscription status (only if user is logged in)
             if (!userId) {
                 setIsPremium(false);
-                setPremiumLoading(false);
                 return;
             }
 
             const { fetchUserDetails } = await import('@/lib/usersApi');
-            const { data: userProfile, error } = await fetchUserDetails(userId);
-
-            if (error) {
-                console.error('Error fetching premium status:', error);
-                setIsPremium(false);
-                setPremiumLoading(false);
-                return;
-            }
+            const { data: userProfile } = await fetchUserDetails(userId);
 
             if (userProfile?.is_premium && userProfile?.premium_expiry) {
                 const expiry = new Date(userProfile.premium_expiry);
                 const now = new Date();
-
-                if (expiry > now) {
-                    setIsPremium(true);
-                } else {
-                    setIsPremium(false);
-                }
+                setIsPremium(expiry > now);
             } else {
                 setIsPremium(false);
             }
@@ -145,25 +107,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data }) => {
-            setSession(data.session ?? null);
-            setUser(data.session?.user ?? null);
-            fetchProfile(data.session?.user?.id);
-            checkAdminStatus(data.session?.user?.email);
-            checkPremiumStatus(data.session?.user?.id);
+    const initializeAuth = async () => {
+        setLoading(true);
+        try {
+            // 1. Capture access token from URL hash (e.g. from password reset link)
+            const hash = window.location.hash;
+            if (hash) {
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+
+                if (accessToken) {
+                    localStorage.setItem('testoza_token', accessToken);
+                    if (refreshToken) {
+                        localStorage.setItem('testoza_refresh_token', refreshToken);
+                    }
+                    // Clear hash for clean URL
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
+            }
+
+            // 2. Load from localStorage
+            const token = localStorage.getItem('testoza_token');
+            if (token) {
+                try {
+                    const response = await authApi.getMe();
+                    if (response.data?.user) {
+                        const userData = response.data.user;
+                        setUser(userData);
+                        // Build a minimal session object for compatibility
+                        setSession({ user: userData, access_token: token });
+
+                        await Promise.all([
+                            fetchProfileData(userData.id),
+                            checkAdminStatus(userData.id),
+                            checkPremiumStatus(userData.id)
+                        ]);
+                    } else {
+                        throw new Error("No user in response");
+                    }
+                } catch (e) {
+                    // Token invalid or expired
+                    localStorage.removeItem('testoza_token');
+                    localStorage.removeItem('testoza_refresh_token');
+                    setUser(null);
+                    setSession(null);
+                }
+            } else {
+                setUser(null);
+                setSession(null);
+            }
+        } catch (error) {
+            console.error('Auth initialization error:', error);
+        } finally {
             setLoading(false);
-        });
+        }
+    };
 
-        const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-            setSession(newSession ?? null);
-            setUser(newSession?.user ?? null);
-            fetchProfile(newSession?.user?.id);
-            checkAdminStatus(newSession?.user?.email);
-            checkPremiumStatus(newSession?.user?.id);
-        });
-
-        return () => sub.subscription.unsubscribe();
+    useEffect(() => {
+        initializeAuth();
     }, []);
 
     return (
@@ -177,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             premiumLoading,
             isGlobalUnlock,
             hasActivePlans,
+            refreshSession: initializeAuth
         }}>
             {children}
         </AuthContext.Provider>

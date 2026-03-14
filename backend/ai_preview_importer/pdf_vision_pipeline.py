@@ -22,7 +22,8 @@ import json
 import base64
 import fitz  # PyMuPDF
 import asyncio
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from typing import Dict, List, Optional, Tuple, Callable
 from utils.logger import get_logger
 from app.core.config import settings
@@ -41,7 +42,7 @@ except ImportError:
 # Configure Gemini using the app settings (loaded from .env)
 api_key = settings.GEMINI_API_KEY
 if api_key:
-    genai.configure(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 else:
     logger.warning("GEMINI_API_KEY not found in settings/.env")
 
@@ -527,16 +528,17 @@ async def process_answer_key(answer_key_data: Dict) -> List[Dict]:
         })
     
     try:
-        model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
-            generation_config={
-                "temperature": 0.1,
-                "top_p": 0.95,
-                "max_output_tokens": 4096,
-            }
-        )
+        model = "gemini-2.0-flash"
         
-        response = model.generate_content(content_parts)
+        response = client.models.generate_content(
+            model=model,
+            contents=content_parts,
+            config=types.GenerateContentConfig(
+                temperature=0.1,
+                top_p=0.95,
+                max_output_tokens=4096,
+            )
+        )
         raw_text = response.text
         
         # Parse the answer key JSON
@@ -767,15 +769,16 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         logger.info(f"Sending batch {batch_num} to Gemini...")
         
         try:
-            model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
-                generation_config={
-                    "temperature": 0.1,
-                    "top_p": 0.95,
-                    "max_output_tokens": 65536,
-                }
+            model = "gemini-2.0-flash"
+            response = client.models.generate_content(
+                model=model,
+                contents=content_parts,
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    top_p=0.95,
+                    max_output_tokens=65536,
+                )
             )
-            response = model.generate_content(content_parts)
             raw_text = response.text
             
             logger.info(f"Batch {batch_num} response received. Length: {len(raw_text)}")
@@ -1482,16 +1485,17 @@ async def _process_single_batch_stream(
         })
     
     # Call Gemini
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        generation_config={
-            "temperature": 0.1,
-            "top_p": 0.95,
-            "max_output_tokens": 65536,
-        }
-    )
+    model = "gemini-2.0-flash"
     
-    response = model.generate_content(content_parts)
+    response = client.models.generate_content(
+        model=model,
+        contents=content_parts,
+        config=types.GenerateContentConfig(
+            temperature=0.1,
+            top_p=0.95,
+            max_output_tokens=65536,
+        )
+    )
     raw_text = response.text
     
     # Parse response

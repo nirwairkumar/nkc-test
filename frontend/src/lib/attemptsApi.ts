@@ -1,5 +1,4 @@
 import apiClient from '@/lib/apiClient';
-import { supabase } from '@/lib/supabaseClient';
 
 export async function saveAttempt(user_id: string, test_id: string, answers: any, score?: number, metadata?: any) {
     try {

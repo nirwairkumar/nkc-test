@@ -103,6 +103,25 @@ async def revoke_verification(
         print(f"Error revoking verification: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/check-admin")
+async def check_admin(user_id: str):
+    try:
+        # 1. Fetch user's email from profiles
+        user_profile = supabase.table("profiles").select("email").eq("id", user_id).execute()
+        if not user_profile.data:
+            return False
+            
+        user_email = user_profile.data[0].get("email")
+        if not user_email:
+            return False
+
+        # 2. Check if email exists in admins table
+        response = supabase.table("admins").select("email").eq("email", user_email).execute()
+        return bool(response.data)
+    except Exception as e:
+        print(f"Error checking admin: {e}")
+        return False
+
 @router.get("/")
 async def get_all_users(
     ids: Optional[str] = None,

@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,19 +13,10 @@ async function generateSitemap() {
     try {
         console.log("Starting sitemap generation...");
 
-        const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-        // Support both ANON_KEY and PUBLISHABLE_KEY (legacy)
-        const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const BASE_URL = process.env.VITE_SITE_URL || 'https://testoza.com';
+        const API_URL = process.env.VITE_API_URL || 'http://localhost:8000/api';
 
-        // 1. Graceful Skip if Env Missing
-        if (!SUPABASE_URL || !SUPABASE_KEY) {
-            console.warn("⚠️  [Sitemap] Skipped: Missing VITE_SUPABASE_URL or keys.");
-            // EXIT 0 to allow build to continue
-            process.exit(0);
-        }
-
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log(`Using API URL: ${API_URL}`);
 
         const pages = [
             { url: '/', changefreq: 'daily', priority: 1.0 },
@@ -41,46 +31,50 @@ async function generateSitemap() {
             { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.4 },
         ];
 
-        // 2. Fetch Tests - Correct Syntax
-        // Removed table-qualified 'tests.created_at' which caused PGRST100
-        const { data: tests, error: testError } = await supabase
-            .from('tests')
-            .select('id, slug, created_at')
-            .eq('is_public', true);
-
-        if (testError) {
-            // Log warning but DO NOT crash
-            console.warn("⚠️  [Sitemap] Failed to fetch tests:", testError.message);
-        } else if (tests) {
-            tests.forEach(test => {
-                const lastMod = test.updated_at || test.created_at;
-                const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
-                pages.push({
-                    url,
-                    changefreq: 'weekly',
-                    priority: 0.8,
-                    lastmod: lastMod
+        // 1. Fetch Tests from Backend
+        try {
+            // We'll use the feed endpoint which is public
+            const testRes = await fetch(`${API_URL}/tests/feed?limit=1000`);
+            if (testRes.ok) {
+                const testData = await testRes.json();
+                const tests = testData.tests || [];
+                tests.forEach(test => {
+                    const lastMod = test.updated_at || test.created_at;
+                    const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+                    pages.push({
+                        url,
+                        changefreq: 'weekly',
+                        priority: 0.8,
+                        lastmod: lastMod
+                    });
                 });
-            });
+            } else {
+                console.warn(`⚠️  [Sitemap] Failed to fetch tests from API: ${testRes.status}`);
+            }
+        } catch (e) {
+            console.warn("⚠️  [Sitemap] Error fetching tests:", e.message);
         }
 
-        // 3. Fetch Categories
-        const { data: categories, error: catError } = await supabase
-            .from('categories')
-            .select('name');
-
-        if (catError) {
-            console.warn("⚠️  [Sitemap] Failed to fetch categories:", catError.message);
-        } else if (categories) {
-            categories.forEach(cat => {
-                // Simple slugify for category name
-                const slug = cat.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-                pages.push({
-                    url: `/tests/${slug}`,
-                    changefreq: 'weekly',
-                    priority: 0.7
-                });
-            });
+        // 2. Fetch Categories from Backend
+        try {
+            const catRes = await fetch(`${API_URL}/categories/`);
+            if (catRes.ok) {
+                const categories = await catRes.json();
+                if (Array.isArray(categories)) {
+                    categories.forEach(cat => {
+                        const slug = (cat.slug || cat.name).toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+                        pages.push({
+                            url: `/tests/${slug}`,
+                            changefreq: 'weekly',
+                            priority: 0.7
+                        });
+                    });
+                }
+            } else {
+                console.warn(`⚠️  [Sitemap] Failed to fetch categories from API: ${catRes.status}`);
+            }
+        } catch (e) {
+            console.warn("⚠️  [Sitemap] Error fetching categories:", e.message);
         }
 
         // 4. Generate XML

@@ -253,3 +253,26 @@ async def check_premium_access(db: Client = Depends(get_db)):
     except Exception as e:
         print(f"Error checking premium access: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+@router.post("/create-order")
+async def create_order(payload: Dict[str, Any]):
+    try:
+        # Use global supabase to invoke Edge Function
+        response = supabase.functions.invoke("create-order", {
+            "body": payload
+        })
+        return response.data
+    except Exception as e:
+        print(f"Error invoking create-order: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/verify-payment")
+async def verify_payment(payload: Dict[str, Any]):
+    try:
+        # Use global supabase to invoke Edge Function
+        response = supabase.functions.invoke("verify-payment", {
+            "body": payload
+        })
+        return response.data
+    except Exception as e:
+        print(f"Error invoking verify-payment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

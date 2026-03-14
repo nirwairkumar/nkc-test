@@ -144,3 +144,43 @@ async def clear_all_notifications(user_id: str, db: Client = Depends(get_db)):
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+# --- Test Likes ---
+
+@router.post("/tests/{test_id}/like")
+async def toggle_test_like(test_id: str, user_id: str, db: Client = Depends(get_db)):
+    try:
+        # Check if already liked
+        existing = db.table("test_likes").select("id")\
+            .eq("test_id", test_id)\
+            .eq("user_id", user_id)\
+            .maybe_single().execute()
+        
+        if existing.data:
+            # Unlike
+            db.table("test_likes").delete().eq("id", existing.data["id"]).execute()
+            return {"liked": False}
+        else:
+            # Like
+            db.table("test_likes").insert({"test_id": test_id, "user_id": user_id}).execute()
+            return {"liked": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/tests/{test_id}/like-count")
+async def get_test_like_count(test_id: str, db: Client = Depends(get_db)):
+    try:
+        response = db.table("test_likes").select("*", count="exact").eq("test_id", test_id).execute()
+        return {"count": response.count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/tests/{test_id}/like-status")
+async def get_test_like_status(test_id: str, user_id: str, db: Client = Depends(get_db)):
+    try:
+        response = db.table("test_likes").select("id")\
+            .eq("test_id", test_id)\
+            .eq("user_id", user_id)\
+            .maybe_single().execute()
+        return {"liked": bool(response.data)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

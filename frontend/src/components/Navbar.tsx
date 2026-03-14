@@ -233,6 +233,10 @@ export default function Navbar() {
                                                 <Shield className="mr-2 h-4 w-4" />
                                                 <span>Admin Data Migration</span>
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => navigate('/admin/analytics')}>
+                                                <LayoutDashboard className="mr-2 h-4 w-4" />
+                                                <span>Visitor Analytics</span>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => navigate('/admin-pricing')}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>Manage Pricing</span>

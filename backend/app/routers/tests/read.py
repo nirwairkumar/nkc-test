@@ -8,6 +8,28 @@ import uuid
 
 router = APIRouter()
 
+@router.get("/batch")
+async def get_tests_batch(
+    ids: str = Query(..., description="Comma-separated list of test IDs"),
+    db: Client = Depends(get_db)
+):
+    try:
+        id_list = [id.strip() for id in ids.split(",")]
+        # Fetch tests including class name
+        response = db.table("tests").select("*, classes(name)").in_("id", id_list).execute()
+        
+        # Enrich with creator info and categories (similar to feed logic)
+        tests = response.data
+        if not tests:
+            return []
+            
+        # Re-use the enrichment logic if possible, or just return basic for now
+        # For simplicity in proxying, we return what Supabase would return
+        return tests
+    except Exception as e:
+        print(f"Error fetching batch tests: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/feed")
 async def get_tests_feed(
     page: int = Query(1, ge=1),

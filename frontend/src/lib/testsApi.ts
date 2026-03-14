@@ -1,5 +1,4 @@
 import apiClient from '@/lib/apiClient';
-import { supabase } from '@/lib/supabaseClient';
 
 export interface TestSection {
     id: string;
@@ -284,32 +283,26 @@ export const fetchTestBySlug = fetchTestById;
 export const fetchTestByCustomId = fetchTestById;
 export const fetchTestByCustomIdOrSlug = fetchTestById;
 
-// ---------------- LIKE FUNCTIONALITY (Direct Supabase) ----------------
-
-export async function toggleTestLike(testId: string, userId: string) {
+// Helper to get user ID from token
+const getUserIdFromToken = () => {
+    const token = localStorage.getItem('testoza_token');
+    if (!token) return null;
     try {
-        // Check if already liked
-        const { data: existing } = await supabase
-            .from("test_likes")
-            .select("id")
-            .eq("test_id", testId)
-            .eq("user_id", userId)
-            .maybeSingle();
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.sub;
+    } catch {
+        return null;
+    }
+};
 
-        if (existing) {
-            // Unlike
-            const { error } = await supabase
-                .from("test_likes")
-                .delete()
-                .eq("id", existing.id);
-            return { error };
-        } else {
-            // Like
-            const { error } = await supabase
-                .from("test_likes")
-                .insert({ test_id: testId, user_id: userId });
-            return { error };
-        }
+// ---------------- LIKE FUNCTIONALITY (Backend Proxy) ----------------
+
+export async function toggleTestLike(testId: string, userIdArg?: string) {
+    try {
+        const userId = userIdArg || getUserIdFromToken();
+        if (!userId) throw new Error("Not authenticated");
+        const response = await apiClient.post(`/social/tests/${testId}/like?user_id=${userId}`);
+        return { error: null, liked: response.data.liked };
     } catch (error) {
         return { error };
     }
@@ -317,27 +310,19 @@ export async function toggleTestLike(testId: string, userId: string) {
 
 export async function getTestLikeCount(testId: string) {
     try {
-        const { count, error } = await supabase
-            .from("test_likes")
-            .select("*", { count: 'exact', head: true })
-            .eq("test_id", testId);
-
-        return { count, error };
+        const response = await apiClient.get(`/social/tests/${testId}/like-count`);
+        return { count: response.data.count, error: null };
     } catch (error) {
         return { count: 0, error };
     }
 }
 
-export async function getTestLikeStatus(testId: string, userId: string) {
+export async function getTestLikeStatus(testId: string, userIdArg?: string) {
     try {
-        const { data, error } = await supabase
-            .from("test_likes")
-            .select("id")
-            .eq("test_id", testId)
-            .eq("user_id", userId)
-            .maybeSingle();
-
-        return { liked: !!data, error };
+        const userId = userIdArg || getUserIdFromToken();
+        if (!userId) return { liked: false, error: null };
+        const response = await apiClient.get(`/social/tests/${testId}/like-status?user_id=${userId}`);
+        return { liked: response.data.liked, error: null };
     } catch (error) {
         return { liked: false, error };
     }

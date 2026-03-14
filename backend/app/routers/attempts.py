@@ -18,6 +18,17 @@ class RegisterRequest(BaseModel):
     user_id: str
     test_id: str
 
+class ProgressUpdateRequest(BaseModel):
+    user_id: str
+    test_id: str
+    completion_percentage: float  # 0-100
+
+class AbandonRequest(BaseModel):
+    user_id: str
+    test_id: str
+    reason: Optional[str] = 'tab_closed'
+    completion_percentage: Optional[float] = None
+
 @router.post("/save")
 async def save_attempt(
     payload: SaveAttemptRequest,
@@ -42,6 +53,16 @@ async def save_attempt(
             "score": payload.score,
             "metadata": payload.metadata
         }).execute()
+        
+        # Mark the corresponding test_registration as submitted
+        try:
+            supabase.table("test_registrations")\
+                .update({"status": "submitted", "completion_percentage": 100})\
+                .eq("user_id", payload.user_id)\
+                .eq("test_id", payload.test_id)\
+                .execute()
+        except Exception as reg_err:
+            print(f"Warning: Could not update registration status: {reg_err}")
         
         # In v2, insert returns APIResponse. .data contains array of inserted rows.
         if response.data:
@@ -233,7 +254,9 @@ async def register_start(
             
         response = db.table("test_registrations").insert({
             "user_id": payload.user_id,
-            "test_id": payload.test_id
+            "test_id": payload.test_id,
+            "status": "in_progress",
+            "completion_percentage": 0
         }).execute()
         
         return {"success": True}
@@ -283,3 +306,57 @@ async def delete_registration(
     except Exception as e:
         print(f"Error deleting registration: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Progress Tracking ─────────────────────────────────────────
+@router.post("/progress")
+async def update_progress(
+    payload: ProgressUpdateRequest,
+    db: Client = Depends(get_db)
+):
+    """Called periodically by the frontend to record how far a user is in a test."""
+    try:
+        from datetime import datetime, timezone
+        supabase.table("test_registrations")\
+            .update({
+                "completion_percentage": min(payload.completion_percentage, 99),
+                "last_active_at": datetime.now(timezone.utc).isoformat()
+            })\
+            .eq("user_id", payload.user_id)\
+            .eq("test_id", payload.test_id)\
+            .eq("status", "in_progress")\
+            .execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error updating progress: {e}")
+        # Non-critical - don't fail the user's test experience
+        return {"success": False}
+
+
+# ─── Abandonment Tracking ──────────────────────────────────────
+@router.post("/abandon")
+async def mark_abandoned(
+    payload: AbandonRequest,
+    db: Client = Depends(get_db)
+):
+    """Called when user closes tab or explicitly leaves a test without submitting."""
+    try:
+        from datetime import datetime, timezone
+        update_data = {
+            "status": "abandoned",
+            "abandoned_reason": payload.reason or "tab_closed",
+            "last_active_at": datetime.now(timezone.utc).isoformat()
+        }
+        if payload.completion_percentage is not None:
+            update_data["completion_percentage"] = payload.completion_percentage
+        
+        supabase.table("test_registrations")\
+            .update(update_data)\
+            .eq("user_id", payload.user_id)\
+            .eq("test_id", payload.test_id)\
+            .eq("status", "in_progress")\
+            .execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error marking abandoned: {e}")
+        return {"success": False}

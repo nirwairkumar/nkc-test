@@ -56,22 +56,30 @@ export async function revokeVerification(userId: string) {
     }
 }
 
+export async function checkAdmin(userId: string) {
+    try {
+        const response = await apiClient.get('/users/check-admin', {
+            params: { user_id: userId }
+        });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
+
 export async function uploadAvatar(userId: string, file: File) {
     try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${userId}-${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bucket', 'avatars');
 
-        const { supabase } = await import('@/lib/supabaseClient');
+        const response = await apiClient.post('/storage/upload?bucket=avatars', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
 
-        const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-        return { publicUrl: data.publicUrl, error: null };
+        return { publicUrl: response.data.url, error: null };
     } catch (error: any) {
         return { publicUrl: null, error };
     }
@@ -79,9 +87,9 @@ export async function uploadAvatar(userId: string, file: File) {
 
 export async function updatePassword(password: string) {
     try {
-        const { supabase } = await import('@/lib/supabaseClient');
-        const { error } = await supabase.auth.updateUser({ password });
-        return { error };
+        const { authApi } = await import('@/lib/authApi');
+        const response = await authApi.updatePassword(password);
+        return { error: response.error };
     } catch (error: any) {
         return { error };
     }

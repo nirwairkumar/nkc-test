@@ -60,7 +60,7 @@ async def get_all_tests(
 
 @router.get("/next-id")
 async def get_next_test_id(
-    prefix: str = Query("M", regex="^(M|YT)$"),
+    prefix: str = Query("M", pattern="^(M|YT)$"),
     db: Client = Depends(get_db)
 ):
     try:

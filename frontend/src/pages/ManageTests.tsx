@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabaseClient';
 import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import {
@@ -217,11 +216,7 @@ export default function ManageTests() {
         }
 
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', creatorId)
-                .single();
+            const { data, error } = await fetchUserDetails(creatorId);
 
             if (error) throw error;
 
@@ -245,10 +240,7 @@ export default function ManageTests() {
     const loadUsers = async () => {
         setUsersLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .order('created_at', { ascending: false });
+            const { data, error } = await fetchUsers();
 
             if (error) throw error;
             setUsers(data || []);
@@ -273,36 +265,17 @@ export default function ManageTests() {
 
         try {
             // 1. Fetch Created Tests
-            const { data: createdTests } = await supabase
-                .from('tests')
-                .select('id, title, created_at, questions')
-                .eq('created_by', user.id)
-                .order('created_at', { ascending: false });
+            const { data: createdTests } = await fetchTestsByCreator(user.id);
 
             // 2. Fetch Attempts (History)
-            // Note: We need test titles. For optimization, we fetch attempts then join or fetch test info.
-            const { data: attempts } = await supabase
-                .from('user_tests')
-                .select('id, test_id, score, created_at')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
-
-            // Fetch test titles for attempts if needed (or just show IDs/Dates)
-            // Let's do a quick enrichment if attempts exist
-            let enrichedAttempts = attempts || [];
-            if (attempts && attempts.length > 0) {
-                const testIds = Array.from(new Set(attempts.map(a => a.test_id)));
-                const { data: testInfos } = await supabase.from('tests').select('id, title').in('id', testIds);
-                const testMap = new Map(testInfos?.map(t => [t.id, t.title]));
-                enrichedAttempts = attempts.map(a => ({ ...a, test_title: testMap.get(a.test_id) || 'Unknown Test' }));
-            }
+            const { data: attempts } = await fetchUserAttempts(user.id);
 
             // 3. Fetch Reports (against tests created by this user)
             const { data: reports } = await fetchAdminUserReports(user.id);
 
             setUserDetails({
                 createdTests: createdTests || [],
-                attempts: enrichedAttempts,
+                attempts: attempts || [],
                 reports: reports || []
             });
 
@@ -325,7 +298,7 @@ export default function ManageTests() {
     // --- Three-dot Menu Handlers ---
     const loadAllClasses = async () => {
         try {
-            const { data, error } = await supabase.from('classes').select('*');
+            const { data, error } = await fetchAllClasses();
             if (error) throw error;
             setAllClasses(data || []);
         } catch (error) {
@@ -402,15 +375,7 @@ export default function ManageTests() {
         if (!confirm(`Are you sure you want to verify "${userToVerify.full_name}" as an Authorized Partner?`)) return;
 
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    is_verified_creator: true,
-                    verified_role: 'authorized_partner',
-                    verified_at: new Date().toISOString(),
-                    verified_by_admin_id: user?.id
-                })
-                .eq('id', userToVerify.id);
+            const { error } = await verifyCreator(userToVerify.id);
 
             if (error) throw error;
             toast.success(`${userToVerify.full_name} is now a Verified Creator!`);
@@ -425,15 +390,7 @@ export default function ManageTests() {
         if (!confirm(`Are you sure you want to REVOKE verification for "${userToRevoke.full_name}"?`)) return;
 
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    is_verified_creator: false,
-                    verified_role: null,
-                    verified_at: null,
-                    verified_by_admin_id: null
-                })
-                .eq('id', userToRevoke.id);
+            const { error } = await revokeVerification(userToRevoke.id);
 
             if (error) throw error;
             toast.success(`Verification revoked for ${userToRevoke.full_name}`);
