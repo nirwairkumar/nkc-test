@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
 from supabase import Client
@@ -13,6 +14,9 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
 )
+
+# GZip compression for all responses > 1KB (cuts test JSON payload by ~70%)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # CORS Middleware
 origins = [

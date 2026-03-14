@@ -5,8 +5,31 @@ from typing import Optional, List, Dict, Any
 from app.routers.tests.schemas import *
 from app.utils.attempt_control import calculate_test_max_marks
 import uuid
+from cachetools import TTLCache
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 router = APIRouter()
+
+# ─── In-Memory TTL Caches ────────────────────────────────
+_cache_lock = threading.Lock()
+# Cache individual test data for 5 minutes (300s)
+_test_cache: TTLCache = TTLCache(maxsize=500, ttl=300)
+# Cache feed page 1 for 2 minutes
+_feed_cache: TTLCache = TTLCache(maxsize=50, ttl=120)
+
+def _cache_set(cache: TTLCache, key: str, value: Any):
+    with _cache_lock:
+        cache[key] = value
+
+def _cache_get(cache: TTLCache, key: str):
+    with _cache_lock:
+        return cache.get(key)
+
+def _cache_bust(cache: TTLCache, key: str):
+    with _cache_lock:
+        cache.pop(key, None)
+
 
 @router.get("/batch")
 async def get_tests_batch(
@@ -39,6 +62,13 @@ async def get_tests_feed(
     db: Client = Depends(get_db)
 ):
     try:
+        # ─ Cache key for pages 1-2, no search (most common loads)
+        feed_cache_key = f"feed:p{page}:l{limit}:c{category_id or ''}" if page <= 2 and not search_query else None
+        if feed_cache_key:
+            cached = _cache_get(_feed_cache, feed_cache_key)
+            if cached is not None:
+                return cached
+
         # Pre-filter by category if needed
         category_test_ids = None
         if category_id:
@@ -110,19 +140,31 @@ async def get_tests_feed(
         test_ids = [t["id"] for t in tests]
         creator_ids = list(set([t["created_by"] for t in tests if t.get("created_by")]))
 
-        # 5. Fetch Categories (map test_id -> category names/ids)
-        # Fetch test_categories mapping
-        test_cats_res = db.table("test_categories").select("*").in_("test_id", test_ids).execute()
-        test_cats = test_cats_res.data
-        
+        # 5. Fetch Categories + Creators IN PARALLEL
+        def _fetch_categories():
+            tc_res = db.table("test_categories").select("*").in_("test_id", test_ids).execute()
+            return tc_res.data or []
+
+        def _fetch_creators():
+            if not creator_ids:
+                return []
+            res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").in_("id", creator_ids).execute()
+            return res.data or []
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_cats = executor.submit(_fetch_categories)
+            future_creators = executor.submit(_fetch_creators)
+            test_cats = future_cats.result()
+            creators_data = future_creators.result()
+
+        # Build categories map
         category_ids = list(set([tc["category_id"] for tc in test_cats]))
-        
-        # Fetch actual Category objects
-        cats_res = db.table("categories").select("*").in_("id", category_ids).execute()
-        all_cats = {c["id"]: c for c in cats_res.data} # Access by ID
-        
-        # Build Map: test_id -> [Category Objects]
-        tests_categories_map = {}
+        all_cats: Dict[str, Any] = {}
+        if category_ids:
+            cats_res = db.table("categories").select("*").in_("id", category_ids).execute()
+            all_cats = {c["id"]: c for c in (cats_res.data or [])}
+
+        tests_categories_map: Dict[str, list] = {}
         for tc in test_cats:
             tid = tc["test_id"]
             cid = tc["category_id"]
@@ -131,39 +173,36 @@ async def get_tests_feed(
             if cid in all_cats:
                 tests_categories_map[tid].append(all_cats[cid])
 
-        # 6. Fetch Verified Creators
-        verified_creators = {}
-        if creator_ids:
-            creators_res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").in_("id", creator_ids).execute()
-            for c in creators_res.data:
-                verified_creators[c["id"]] = {
-                    "is_verified": c.get("is_verified_creator", False),
-                    "name": c.get("full_name"),
-                    "avatar": c.get("avatar_url")
-                }
+        # Build creators map
+        verified_creators: Dict[str, dict] = {}
+        for c in creators_data:
+            verified_creators[c["id"]] = {
+                "is_verified": c.get("is_verified_creator", False),
+                "name": c.get("full_name"),
+                "avatar": c.get("avatar_url")
+            }
 
         # 7. Enrich Test Objects
         typesafe_tests = []
         for t in tests:
-            # Inject creator info if we have it (to save frontend lookup)
             cid = t.get("created_by")
             if cid and cid in verified_creators:
                 t["creator_name"] = verified_creators[cid]["name"]
                 t["creator_avatar"] = verified_creators[cid]["avatar"]
                 t["creator_verified"] = verified_creators[cid]["is_verified"]
-            
-            # Inject Categories
             t["categories"] = tests_categories_map.get(t["id"], [])
-            
             typesafe_tests.append(t)
 
-        return {
+        result = {
             "tests": typesafe_tests,
             "meta": {
                 "page": page,
                 "has_more": len(tests) == limit
             }
         }
+        if feed_cache_key:
+            _cache_set(_feed_cache, feed_cache_key, result)
+        return result
 
     except Exception as e:
         print(f"Error fetching test feed: {e}")
@@ -274,6 +313,12 @@ async def get_test_by_id(
     db: Client = Depends(get_db)
 ):
     try:
+        # ─ Cache check (5 min TTL for individual tests)
+        cache_key = f"test:{test_id}"
+        cached = _cache_get(_test_cache, cache_key)
+        if cached is not None:
+            return cached
+
         # Check if UUID
         is_uuid = False
         try:
@@ -297,21 +342,32 @@ async def get_test_by_id(
         if not test_res.data or len(test_res.data) == 0:
             raise HTTPException(status_code=404, detail="Test not found")
         
-        test = test_res.data[0]  # Get first result
+        test = test_res.data[0]
 
-        # Enrich with Creator Info
-        if test.get("created_by"):
-            creator_res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").eq("id", test["created_by"]).execute()
-            if creator_res.data:
-                c = creator_res.data[0]
-                test["creator_name"] = c.get("full_name")
-                test["creator_avatar"] = c.get("avatar_url")
-                test["creator_verified"] = c.get("is_verified_creator")
+        # ─ Fetch creator info + categories IN PARALLEL
+        def _fetch_creator():
+            if not test.get("created_by"):
+                return None
+            res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").eq("id", test["created_by"]).execute()
+            return res.data[0] if res.data else None
 
-        # Enrich with Categories
-        test_cats_res = db.table("test_categories").select("category_id").eq("test_id", test["id"]).execute()
-        if test_cats_res.data:
-            cat_ids = [tc["category_id"] for tc in test_cats_res.data]
+        def _fetch_test_cats():
+            res = db.table("test_categories").select("category_id").eq("test_id", test["id"]).execute()
+            return res.data or []
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_creator = executor.submit(_fetch_creator)
+            future_cats = executor.submit(_fetch_test_cats)
+            creator = future_creator.result()
+            test_cats = future_cats.result()
+
+        if creator:
+            test["creator_name"] = creator.get("full_name")
+            test["creator_avatar"] = creator.get("avatar_url")
+            test["creator_verified"] = creator.get("is_verified_creator")
+
+        if test_cats:
+            cat_ids = [tc["category_id"] for tc in test_cats]
             cats_res = db.table("categories").select("*").in_("id", cat_ids).execute()
             test["categories"] = cats_res.data or []
         else:
@@ -320,11 +376,13 @@ async def get_test_by_id(
         # Add computed max marks info
         test["computed_max_marks"] = calculate_test_max_marks(test)
 
+        _cache_set(_test_cache, cache_key, test)
         return test
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching test details: {e}")
-        # Supabase specific error handling could be better but broad catch for now
         raise HTTPException(status_code=404, detail="Test not found")
 
 
@@ -334,6 +392,12 @@ async def get_test_by_slug(
     db: Client = Depends(get_db)
 ):
     try:
+        # ─ Cache check
+        slug_cache_key = f"test:slug:{slug}"
+        cached = _cache_get(_test_cache, slug_cache_key)
+        if cached is not None:
+            return cached
+
         # Fetch Test by Slug
         query = db.table("tests").select("*, classes(name)").eq("slug", slug).single()
         test_res = query.execute()
@@ -342,29 +406,42 @@ async def get_test_by_slug(
         if not test:
             raise HTTPException(status_code=404, detail="Test not found")
 
-        # Enrich with Creator Info
-        if test.get("created_by"):
-            creator_res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").eq("id", test["created_by"]).single().execute()
-            if creator_res.data:
-                c = creator_res.data
-                test["creator_name"] = c.get("full_name")
-                test["creator_avatar"] = c.get("avatar_url")
-                test["creator_verified"] = c.get("is_verified_creator")
+        # ─ Fetch creator + categories IN PARALLEL
+        def _fetch_creator():
+            if not test.get("created_by"):
+                return None
+            res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").eq("id", test["created_by"]).single().execute()
+            return res.data
 
-        # Enrich with Categories
-        test_cats_res = db.table("test_categories").select("category_id").eq("test_id", test["id"]).execute()
-        if test_cats_res.data:
-            cat_ids = [tc["category_id"] for tc in test_cats_res.data]
+        def _fetch_test_cats():
+            res = db.table("test_categories").select("category_id").eq("test_id", test["id"]).execute()
+            return res.data or []
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_creator = executor.submit(_fetch_creator)
+            future_cats = executor.submit(_fetch_test_cats)
+            creator = future_creator.result()
+            test_cats = future_cats.result()
+
+        if creator:
+            test["creator_name"] = creator.get("full_name")
+            test["creator_avatar"] = creator.get("avatar_url")
+            test["creator_verified"] = creator.get("is_verified_creator")
+
+        if test_cats:
+            cat_ids = [tc["category_id"] for tc in test_cats]
             cats_res = db.table("categories").select("*").in_("id", cat_ids).execute()
             test["categories"] = cats_res.data or []
         else:
             test["categories"] = []
 
-        # Add computed max marks info
         test["computed_max_marks"] = calculate_test_max_marks(test)
 
+        _cache_set(_test_cache, slug_cache_key, test)
         return test
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching test by slug: {e}")
         raise HTTPException(status_code=404, detail="Test not found")
