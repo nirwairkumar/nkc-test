@@ -77,13 +77,16 @@ async def get_category_stats(db: Client = Depends(get_db)):
             cid = m["category_id"]
             counts[cid] = counts.get(cid, 0) + 1
             
-        # Enrich
+        # Enrich and Sort by count descending
         enriched = []
         for c in cats:
             enriched.append({
                 **c,
                 "count": counts.get(c["id"], 0)
             })
+            
+        # Sort by count descending
+        enriched.sort(key=lambda x: x["count"], reverse=True)
             
         return enriched
         

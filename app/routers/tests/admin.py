@@ -34,14 +34,14 @@ async def get_all_tests(
                 # Fallback
                 cleaned_query = search_query.replace(",", "")
                 query = db.table("tests")\
-                    .select("*, classes(name)")\
+                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)")\
                     .order("created_at", desc=True)
                 query = query.or_(f"title.ilike.%{cleaned_query}%,custom_id.ilike.%{cleaned_query}%")
                 response = query.range(start, end).execute()
                 tests = response.data
         else:
             query = db.table("tests")\
-                .select("*, classes(name)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)")\
                 .order("created_at", desc=True)
             response = query.range(start, end).execute()
             tests = response.data
