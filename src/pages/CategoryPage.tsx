@@ -119,18 +119,6 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
 
             <div className="mt-6 mb-8">
                 <h1 className="text-2xl font-bold capitalize mb-2">{categoryName} Practice Tests</h1>
-                <p className="text-muted-foreground text-sm mb-4">
-                    Browse our extensive collection of {categoryName} mock tests and practice exams.
-                    Designed to help you crack your exams with better scores.
-                </p>
-                <div className="prose dark:prose-invert max-w-none">
-                    <h2 className="text-lg font-semibold mt-4">Why Take {categoryName} Mock Tests on TestoZa?</h2>
-                    <p className="text-sm text-muted-foreground">
-                        Our AI-powered platform generates high-quality {categoryName} questions from study materials,
-                        providing you with a realistic exam environment. Practice with instant feedback,
-                        detailed analytics, and performance tracking to improve your speed and accuracy.
-                    </p>
-                </div>
             </div>
 
             {tests.length === 0 ? (
@@ -141,10 +129,10 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tests.map((test: any) => {
                         if (!test) return null;
-                        
+
                         const testId = test.id || Math.random();
                         const isRendered = isItemRendered(testId);
-                        
+
                         if (!isRendered) {
                             return (
                                 <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
@@ -209,7 +197,7 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                             </Card>
                         );
                     })}
-                    
+
                     {/* Progress indicator */}
                     {!isComplete && tests.length > 0 && (
                         <div className="col-span-full py-4 text-center">

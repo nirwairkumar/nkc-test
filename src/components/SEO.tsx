@@ -50,6 +50,15 @@ export const SEO: React.FC<SEOProps> = ({
         ? keywords.join(', ')
         : "online test maker, AI quiz generator, create test from PDF, free mock tests, exam preparation, TestoZa";
 
+    // Dynamic keyword boost for JEE or Previous Year content
+    const lowerTitle = (title || "").toLowerCase();
+    const isJEE = lowerTitle.includes('jee');
+    const isPYQ = lowerTitle.includes('previous year') || lowerTitle.includes('pyq') || lowerTitle.includes('202') || lowerTitle.includes('shift');
+
+    let finalKeywords = matchKeywords;
+    if (isJEE) finalKeywords = `JEE Main 2026, JEE Mock Test, JEE Practice Paper, ${finalKeywords}`;
+    if (isPYQ) finalKeywords = `Previous Year Questions, PYQ 2026, Solved Papers, ${finalKeywords}`;
+
     return (
         <Helmet>
             {/* Standard Meta Tags */}
