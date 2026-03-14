@@ -308,7 +308,7 @@ logger = get_logger("ai_router")
 async def parse_document(
     files: List[UploadFile] = File(..., description="Upload PDF or image files"),
     answer_key: Optional[UploadFile] = File(None, description="Optional answer key file (PDF or image)"),
-    mode: str = Query("extract", regex="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones")
+    mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones")
 ):
     """
     Parses uploaded PDF/image files and returns structured questions.
@@ -380,7 +380,7 @@ import asyncio
 async def parse_document_stream(
     files: List[UploadFile] = File(..., description="Upload PDF or image files"),
     answer_key: Optional[UploadFile] = File(None, description="Optional answer key file (PDF or image)"),
-    mode: str = Query("extract", regex="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones")
+    mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones")
 ):
     """
     ULTRA-FAST streaming document parsing with real-time progress updates.

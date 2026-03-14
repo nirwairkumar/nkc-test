@@ -15,10 +15,17 @@ app = FastAPI(
 )
 
 # CORS Middleware
-# In production, specific origins should be allowed.
+origins = [
+    "https://testoza.com",
+    "https://www.testoza.com",
+    "http://localhost:5173",# Local dev
+    "http://localhost:8081", # Local dev
+    "*" # Re-enable wildcard temporarily for transition if needed, but per plan specify origins
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For dev only
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,9 +47,9 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-class UserLogin(BaseModel):
-    email: str
-    password: str
+from app.routers import auth, storage, analytics
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(storage.router, prefix="/api/storage", tags=["Storage"])
 from app.routers import analytics
 from app.routers import creators
 
@@ -99,31 +106,6 @@ def health_check():
         "project": settings.PROJECT_NAME,
         "version": settings.PROJECT_VERSION
     }
-
-@app.post("/api/login")
-def login(payload: UserLogin):
-    """
-    This endpoint is a placeholder. 
-    The Frontend typically logs in directly with Supabase Client (JS), then sends the TOKEN to backend api.
-    HOWEVER, if you want Backend-only logic:
-    Frontend -> Backend -> Supabase Auth.
-    
-    Here strictly following the architecture request:
-    'All backend logics should be separated and connected by api'
-    So frontend will Call THIS endpoint with credentials, 
-    This backend will call supabase.auth.sign_in_with_password
-    """
-    # This requires Supabase Service Key or Anon Key initialized client
-    # We use a fresh client or the global one if configured for anon
-    try:
-        from app.core.database import supabase
-        response = supabase.auth.sign_in_with_password({
-            "email": payload.email,
-            "password": payload.password
-        })
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/me")
 def read_users_me(user = Depends(get_current_user)):
