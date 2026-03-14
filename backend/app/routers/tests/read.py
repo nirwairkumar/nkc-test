@@ -234,7 +234,7 @@ async def get_user_tests(
                 print(f"RPC Error (User Search): {rpc_error}")
                 # Fallback to ILIKE if RPC fails
                 tests_res = db.table("tests")\
-                    .select("*, classes(name), test_likes(count)")\
+                    .select("*, classes(name), test_votes(count)")\
                     .eq("created_by", user_id)\
                     .ilike("title", f"%{search_query}%")\
                     .order("created_at", desc=True)\
@@ -243,7 +243,7 @@ async def get_user_tests(
         else:
             # Default fetch
             tests_res = db.table("tests")\
-                .select("*, classes(name), test_likes(count)")\
+                .select("*, classes(name), test_votes(count)")\
                 .eq("created_by", user_id)\
                 .order("created_at", desc=True)\
                 .execute()
@@ -290,11 +290,11 @@ async def get_user_tests(
                 t["creator_verified"] = creator_info.get("is_verified_creator")
             
             # Ensure likes count is present if not in RPC result
-            if 'test_likes' not in t and 'id' in t:
+            if 'test_votes' not in t and 'id' in t:
                  # If RPC was used, we might lack relation data depending on RPC return
                  # But our RPC returns basic fields. We might need to fetch likes separately or include in RPC.
                  # For now, let's just do a quick fix if missing, but RPC doesn't return joined data easily.
-                 # Actually, RPC returns columns. We might miss `test_likes` count.
+                 # Actually, RPC returns columns. We might miss `test_votes` count.
                  # Optimization: Fetch likes for all these tests
                  pass
 

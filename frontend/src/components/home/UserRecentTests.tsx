@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Edit, ChevronRight, RefreshCw, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import TestLikeButton from '@/components/TestLikeButton';
+import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTestsByUserId, Test } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
@@ -179,7 +179,7 @@ export default function UserRecentTests({ user, onManageTest }: { user: any, onM
                                     </div>
                                 </CardContent>
                                 <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                                    <div className="flex-none"><TestLikeButton testId={test.id} userId={user?.id} /></div>
+                                    <div className="flex-none"><TestVoteButtons testId={test.id} userId={user?.id} /></div>
                                     <div className="flex-1 flex gap-2">
                                         <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground px-2" onClick={() => onManageTest(test)}>
                                             <Settings className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Manage</span>

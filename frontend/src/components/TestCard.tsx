@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Edit, MoreVertical, Globe, Link as LinkIcon, Lock, GraduationCap, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import TestLikeButton from '@/components/TestLikeButton';
+import TestVoteButtons from '@/components/TestVoteButtons';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
@@ -257,7 +257,7 @@ export default function TestCard({
                 </div>
             </CardContent>
             <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                <div className="flex-none"><TestLikeButton testId={test.id} userId={user?.id} /></div>
+                <div className="flex-none"><TestVoteButtons testId={test.id} userId={user?.id} isCreatorOrAdmin={user?.id === test.created_by || isAdmin} /></div>
                 {(user?.id === test.created_by || isAdmin) ? (
                     <div className="flex-1 flex gap-2">
                         {onManage && (

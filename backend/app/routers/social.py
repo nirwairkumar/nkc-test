@@ -21,6 +21,10 @@ class NotificationCreate(BaseModel):
     sender_name: Optional[str] = None
     sender_email: Optional[str] = None
 
+class VoteRequest(BaseModel):
+    user_id: str
+    vote_type: int  # 1 for upvote, -1 for downvote
+
 # --- Follows ---
 
 @router.post("/follows/follow")
@@ -144,43 +148,61 @@ async def clear_all_notifications(user_id: str, db: Client = Depends(get_db)):
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-# --- Test Likes ---
+# --- Test Votes ---
 
-@router.post("/tests/{test_id}/like")
-async def toggle_test_like(test_id: str, user_id: str, db: Client = Depends(get_db)):
+@router.post("/tests/{test_id}/vote")
+async def toggle_test_vote(test_id: str, payload: VoteRequest, db: Client = Depends(get_db)):
     try:
-        # Check if already liked
-        existing = db.table("test_likes").select("id")\
+        user_id = payload.user_id
+        vote_type = payload.vote_type
+        
+        # Check if already voted
+        existing = db.table("test_votes").select("id, vote_type")\
             .eq("test_id", test_id)\
             .eq("user_id", user_id)\
             .maybe_single().execute()
         
         if existing.data:
-            # Unlike
-            db.table("test_likes").delete().eq("id", existing.data["id"]).execute()
-            return {"liked": False}
+            if existing.data["vote_type"] == vote_type:
+                # Remove vote if clicking the same button again
+                db.table("test_votes").delete().eq("id", existing.data["id"]).execute()
+                return {"vote": 0}
+            else:
+                # Change vote (up to down, or down to up)
+                db.table("test_votes").update({"vote_type": vote_type}).eq("id", existing.data["id"]).execute()
+                return {"vote": vote_type}
         else:
-            # Like
-            db.table("test_likes").insert({"test_id": test_id, "user_id": user_id}).execute()
-            return {"liked": True}
+            # New vote
+            db.table("test_votes").insert({"test_id": test_id, "user_id": user_id, "vote_type": vote_type}).execute()
+            return {"vote": vote_type}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/tests/{test_id}/like-count")
-async def get_test_like_count(test_id: str, db: Client = Depends(get_db)):
+@router.get("/tests/{test_id}/vote-count")
+async def get_test_vote_count(test_id: str, db: Client = Depends(get_db)):
     try:
-        response = db.table("test_likes").select("*", count="exact").eq("test_id", test_id).execute()
-        return {"count": response.count}
+        # Get upvotes
+        upvotes = db.table("test_votes").select("*", count="exact").eq("test_id", test_id).eq("vote_type", 1).execute()
+        # Get downvotes
+        downvotes = db.table("test_votes").select("*", count="exact").eq("test_id", test_id).eq("vote_type", -1).execute()
+        
+        return {
+            "upvotes": upvotes.count or 0,
+            "downvotes": downvotes.count or 0
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/tests/{test_id}/like-status")
-async def get_test_like_status(test_id: str, user_id: str, db: Client = Depends(get_db)):
+@router.get("/tests/{test_id}/vote-status")
+async def get_test_vote_status(test_id: str, user_id: str, db: Client = Depends(get_db)):
     try:
-        response = db.table("test_likes").select("id")\
+        response = db.table("test_votes").select("vote_type")\
             .eq("test_id", test_id)\
             .eq("user_id", user_id)\
             .maybe_single().execute()
-        return {"liked": bool(response.data)}
+            
+        if response.data:
+            return {"vote": response.data["vote_type"]}
+        return {"vote": 0}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

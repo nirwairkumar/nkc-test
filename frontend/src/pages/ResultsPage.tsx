@@ -26,6 +26,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { FeedbackForm } from '@/components/FeedbackForm';
 import Latex from 'react-latex-next';
+import { toast } from 'sonner';
+import { Share2 } from 'lucide-react'; // ensure Share2 is imported, although it might be already
 
 interface TestResult {
   id: string;
@@ -488,6 +490,14 @@ const ResultsPage = () => {
         <div className="flex justify-center gap-4 pb-10">
           <Button size="lg" onClick={handleRetakeTest}>
             <RotateCcw className="w-4 h-4 mr-2" /> Retake Test
+          </Button>
+          <Button size="lg" variant="default" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
+            const path = selectedTest?.slug ? `/test/${selectedTest.slug}` : `/test-intro/${testId}`;
+            const url = `${window.location.origin}${path}`;
+            navigator.clipboard.writeText(url);
+            toast.success("Test link copied! Share it with your friends.");
+          }}>
+            <Share2 className="w-4 h-4 mr-2" /> Share to Friends
           </Button>
           <Button size="lg" variant="outline" onClick={() => navigate('/')}>
             View Other Tests

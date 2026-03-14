@@ -1,0 +1,119 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowBigUp, ArrowBigDown } from 'lucide-react';
+import { toast } from 'sonner';
+import { voteTest, getTestVoteCount, getTestVoteStatus } from '@/lib/testsApi';
+
+interface TestVoteButtonsProps {
+    testId: string;
+    userId: string | undefined;
+    isCreatorOrAdmin?: boolean;
+}
+
+export default function TestVoteButtons({ testId, userId, isCreatorOrAdmin = false }: TestVoteButtonsProps) {
+    const [userVote, setUserVote] = useState<number>(0); // 1 = upvote, -1 = downvote, 0 = none
+    const [upvotes, setUpvotes] = useState(0);
+    const [downvotes, setDownvotes] = useState(0);
+
+    useEffect(() => {
+        getTestVoteCount(testId).then(({ upvotes, downvotes }) => {
+            setUpvotes(upvotes || 0);
+            setDownvotes(downvotes || 0);
+        });
+
+        if (userId) {
+            getTestVoteStatus(testId, userId).then(({ vote }) => {
+                setUserVote(vote || 0);
+            });
+        }
+    }, [testId, userId]);
+
+    const handleVote = async (e: React.MouseEvent, type: 1 | -1) => {
+        e.stopPropagation();
+        if (!userId) {
+            toast.error("Please login to vote");
+            return;
+        }
+
+        const prevVote = userVote;
+        let newVote: number = type;
+
+        if (prevVote === type) {
+            // Un-voting
+            newVote = 0;
+            if (type === 1) setUpvotes(prev => prev - 1);
+            else setDownvotes(prev => prev - 1);
+        } else {
+            // New vote or change vote
+            if (type === 1) {
+                setUpvotes(prev => prev + 1);
+                if (prevVote === -1) setDownvotes(prev => prev - 1);
+            } else {
+                setDownvotes(prev => prev + 1);
+                if (prevVote === 1) setUpvotes(prev => prev - 1);
+            }
+        }
+
+        setUserVote(newVote);
+
+        const { error, vote } = await voteTest(testId, type, userId);
+        if (error) {
+            // Revert on error
+            setUserVote(prevVote);
+
+            // Revert counts
+            if (prevVote === type) { // was un-voting
+                if (type === 1) setUpvotes(prev => prev + 1);
+                else setDownvotes(prev => prev + 1);
+            } else {
+                if (type === 1) { // was upvoting
+                    setUpvotes(prev => prev - 1);
+                    if (prevVote === -1) setDownvotes(prev => prev + 1);
+                } else { // was downvoting
+                    setDownvotes(prev => prev - 1);
+                    if (prevVote === 1) setUpvotes(prev => prev + 1);
+                }
+            }
+            toast.error("Failed to register vote");
+        } else if (vote !== undefined) {
+            // Sync with backend confirmed vote
+            setUserVote(vote);
+        }
+    };
+
+    return (
+        <div className="flex items-center space-x-0.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-full px-1">
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => handleVote(e, 1)}
+                className={`h-8 w-8 rounded-full ${userVote === 1 ? 'text-orange-500 bg-orange-100 dark:bg-orange-900/30' : 'text-slate-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'}`}
+            >
+                <ArrowBigUp className={`h-5 w-5 ${userVote === 1 ? 'fill-current' : ''}`} />
+            </Button>
+
+            {/* Display counts conditionally based on role */}
+            <div className="flex items-center text-xs font-medium px-1 text-slate-600 dark:text-slate-400">
+                {isCreatorOrAdmin ? (
+                    <div className="flex space-x-2">
+                        <span className="text-orange-600 dark:text-orange-400 font-bold" title="Upvotes">{upvotes}</span>
+                        <span className="text-blue-500 dark:text-blue-400 font-bold" title="Downvotes">{downvotes}</span>
+                    </div>
+                ) : (
+                    <span className={userVote === 1 ? 'text-orange-600 font-bold dark:text-orange-400' : ''}>
+                        {upvotes > 0 ? upvotes : ''}
+                    </span>
+                )}
+            </div>
+
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => handleVote(e, -1)}
+                className={`h-8 w-8 rounded-full ${userVote === -1 ? 'text-blue-500 bg-blue-100 dark:bg-blue-900/30' : 'text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}
+            >
+                <ArrowBigDown className={`h-5 w-5 ${userVote === -1 ? 'fill-current' : ''}`} />
+            </Button>
+        </div>
+    );
+}

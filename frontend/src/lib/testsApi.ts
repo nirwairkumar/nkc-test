@@ -315,35 +315,38 @@ const getUserIdFromToken = () => {
     }
 };
 
-// ---------------- LIKE FUNCTIONALITY (Backend Proxy) ----------------
+// ---------------- VOTE FUNCTIONALITY (Backend Proxy) ----------------
 
-export async function toggleTestLike(testId: string, userIdArg?: string) {
+export async function voteTest(testId: string, voteType: 1 | -1, userIdArg?: string) {
     try {
         const userId = userIdArg || getUserIdFromToken();
         if (!userId) throw new Error("Not authenticated");
-        const response = await apiClient.post(`/social/tests/${testId}/like?user_id=${userId}`);
-        return { error: null, liked: response.data.liked };
+        const response = await apiClient.post(`/social/tests/${testId}/vote`, {
+            user_id: userId,
+            vote_type: voteType
+        });
+        return { error: null, vote: response.data.vote };
     } catch (error) {
         return { error };
     }
 }
 
-export async function getTestLikeCount(testId: string) {
+export async function getTestVoteCount(testId: string) {
     try {
-        const response = await apiClient.get(`/social/tests/${testId}/like-count`);
-        return { count: response.data.count, error: null };
+        const response = await apiClient.get(`/social/tests/${testId}/vote-count`);
+        return { upvotes: response.data.upvotes, downvotes: response.data.downvotes, error: null };
     } catch (error) {
-        return { count: 0, error };
+        return { upvotes: 0, downvotes: 0, error };
     }
 }
 
-export async function getTestLikeStatus(testId: string, userIdArg?: string) {
+export async function getTestVoteStatus(testId: string, userIdArg?: string) {
     try {
         const userId = userIdArg || getUserIdFromToken();
-        if (!userId) return { liked: false, error: null };
-        const response = await apiClient.get(`/social/tests/${testId}/like-status?user_id=${userId}`);
-        return { liked: response.data.liked, error: null };
+        if (!userId) return { vote: 0, error: null };
+        const response = await apiClient.get(`/social/tests/${testId}/vote-status?user_id=${userId}`);
+        return { vote: response.data.vote, error: null };
     } catch (error) {
-        return { liked: false, error };
+        return { vote: 0, error };
     }
 }
