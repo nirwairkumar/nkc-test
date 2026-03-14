@@ -80,26 +80,7 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                {/* Feature Sections with scroll animations */}
-                <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
-                        <ManualCreateSection />
-                    </Suspense>
-                </div>
-
-                <div id="features" className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
-                        <UploadMaterialsSection />
-                    </Suspense>
-                </div>
-
-                <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
-                        <FileToTestSection />
-                    </Suspense>
-                </div>
-
-                {/* Real Data injected into Landing Page */}
+                {/* Discover Free Tests - Real Data */}
                 <div className="landing-section bg-slate-50 dark:bg-slate-900/20 py-16">
                     <div className="container mx-auto px-6 max-w-7xl">
                         <div className="text-center mb-12">
@@ -133,6 +114,25 @@ export default function LandingPage() {
                             </a>
                         </div>
                     </div>
+                </div>
+
+                {/* Feature Sections with scroll animations */}
+                <div className="landing-section">
+                    <Suspense fallback={<SectionLoader />}>
+                        <ManualCreateSection />
+                    </Suspense>
+                </div>
+
+                <div id="features" className="landing-section">
+                    <Suspense fallback={<SectionLoader />}>
+                        <UploadMaterialsSection />
+                    </Suspense>
+                </div>
+
+                <div className="landing-section">
+                    <Suspense fallback={<SectionLoader />}>
+                        <FileToTestSection />
+                    </Suspense>
                 </div>
 
                 <div className="landing-section">
