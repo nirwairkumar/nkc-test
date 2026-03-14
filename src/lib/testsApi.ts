@@ -103,7 +103,7 @@ export async function fetchAllTests(options?: {
 }) {
     const { page = 1, limit = 12, searchQuery = '', signal } = options || {};
     try {
-        const response = await apiClient.get('/tests/all', {
+        const response = await apiClient.get('tests/all', {
             params: {
                 page,
                 limit,
@@ -124,7 +124,7 @@ export async function fetchAllTests(options?: {
 
 export async function createTest(testData: Partial<Test>) {
     try {
-        const response = await apiClient.post('/tests/', testData, {
+        const response = await apiClient.post('tests/', testData, {
             timeout: 60000, // 60s — test payloads can be very large
         });
         return { data: response.data, error: null };
@@ -137,7 +137,7 @@ export async function importTestJson(file: File) {
     try {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await apiClient.post('/tests/import/json', formData, {
+        const response = await apiClient.post('tests/import/json', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -150,7 +150,7 @@ export async function importTestJson(file: File) {
 
 export async function fetchAdvancedAnalysis(test: any, answers: Record<number, string>) {
     try {
-        const response = await apiClient.post('/results/analyze', {
+        const response = await apiClient.post('results/analyze', {
             test,
             answers
         });
@@ -162,7 +162,7 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, s
 
 export async function updateTest(id: string, updates: Partial<Test>, isAdmin: boolean = false) {
     try {
-        const endpoint = isAdmin ? `/tests/admin/${id}` : `/tests/${id}`;
+        const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.put(endpoint, updates);
         return { data: response.data, error: null };
     } catch (error: any) {
@@ -172,7 +172,7 @@ export async function updateTest(id: string, updates: Partial<Test>, isAdmin: bo
 
 export async function deleteTest(id: string, isAdmin: boolean = false) {
     try {
-        const endpoint = isAdmin ? `/tests/admin/${id}` : `/tests/${id}`;
+        const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.delete(endpoint);
         return { data: response.data, error: null };
     } catch (error: any) {
@@ -187,16 +187,18 @@ export async function fetchTests(options?: {
     excludeIds?: string[];
     categoryId?: string;
     signal?: AbortSignal;
+    idsOnly?: boolean;
 }) {
-    const { page = 1, limit = 12, searchQuery = '', categoryId, signal } = options || {};
+    const { page = 1, limit = 12, searchQuery = '', categoryId, signal, idsOnly = false } = options || {};
 
     try {
-        const response = await apiClient.get('/tests/feed', {
+        const response = await apiClient.get('tests/feed', {
             params: {
                 page,
                 limit,
                 search_query: searchQuery,
-                category_id: categoryId
+                category_id: categoryId,
+                ids_only: idsOnly
             },
             signal
         });
@@ -213,15 +215,15 @@ export async function fetchTests(options?: {
 
 export async function fetchTestsByCreator(
     userId: string,
-    options?: { searchQuery?: string; signal?: AbortSignal }
+    options?: { searchQuery?: string; signal?: AbortSignal; idsOnly?: boolean }
 ) {
-    const { searchQuery = '', signal } = options || {};
+    const { searchQuery = '', signal, idsOnly = false } = options || {};
     const maxRetries = 1;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const response = await apiClient.get(`/tests/user/${userId}`, {
-                params: { search_query: searchQuery },
+            const response = await apiClient.get(`tests/user/${userId}`, {
+                params: { search_query: searchQuery, ids_only: idsOnly },
                 signal
             });
             return { data: response.data, error: null };
@@ -244,6 +246,64 @@ export async function fetchTestsByCreator(
 
 // Alias for compatibility
 export const fetchTestsByUserId = fetchTestsByCreator;
+
+let snippetQueue: string[] = [];
+let snippetResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();
+let snippetTimeout: any = null;
+
+export function fetchTestCardSnippet(testId: string): Promise<{ data: any, error: any }> {
+    return new Promise((resolve, reject) => {
+        if (!snippetResolvers.has(testId)) {
+            snippetResolvers.set(testId, []);
+            snippetQueue.push(testId);
+        }
+        snippetResolvers.get(testId)!.push({ resolve, reject });
+
+        if (!snippetTimeout) {
+            snippetTimeout = setTimeout(processSnippetQueue, 50);
+        }
+    });
+}
+
+async function processSnippetQueue() {
+    const idsToFetch = [...snippetQueue];
+    const resolversMap = new Map(snippetResolvers);
+
+    snippetQueue = [];
+    snippetResolvers.clear();
+    snippetTimeout = null;
+
+    try {
+        // Chunk requests to avoid URL too long, though UUIDs are ~36 chars so 50 is fine.
+        const chunkSize = 20;
+        for (let i = 0; i < idsToFetch.length; i += chunkSize) {
+            const chunk = idsToFetch.slice(i, i + chunkSize);
+            const response = await apiClient.get('tests/batch', {
+                params: { ids: chunk.join(',') }
+            });
+            const fetchedData = response.data || [];
+            const dataMap = new Map();
+            fetchedData.forEach((d: any) => dataMap.set(d.id, d));
+
+            for (const id of chunk) {
+                const resolvers = resolversMap.get(id);
+                if (resolvers) {
+                    const data = dataMap.get(id);
+                    resolvers.forEach(({ resolve }) => {
+                        if (data) resolve({ data, error: null });
+                        else resolve({ data: null, error: new Error('Test not found') });
+                    });
+                    resolversMap.delete(id);
+                }
+            }
+        }
+    } catch (error: any) {
+        // Reject any remaining
+        for (const [id, resolvers] of resolversMap.entries()) {
+            resolvers.forEach(({ resolve }) => resolve({ data: null, error }));
+        }
+    }
+}
 
 export async function getNextTestId(prefix: 'M' | 'YT'): Promise<string> {
     try {
@@ -287,7 +347,7 @@ export async function fetchTestById(id: string, onCacheHit?: (data: any) => void
         onCacheHit(cached);
     }
     try {
-        const response = await apiClient.get(`/tests/${id}`);
+        const response = await apiClient.get(`tests/${id}`);
         const data = response.data;
         _setCachedTest(id, data);
         return { data, error: null };
@@ -315,13 +375,11 @@ const getUserIdFromToken = () => {
     }
 };
 
-// ---------------- VOTE FUNCTIONALITY (Backend Proxy) ----------------
-
 export async function voteTest(testId: string, voteType: 1 | -1, userIdArg?: string) {
     try {
         const userId = userIdArg || getUserIdFromToken();
         if (!userId) throw new Error("Not authenticated");
-        const response = await apiClient.post(`/social/tests/${testId}/vote`, {
+        const response = await apiClient.post(`social/tests/${testId}/vote`, {
             user_id: userId,
             vote_type: voteType
         });
@@ -331,22 +389,58 @@ export async function voteTest(testId: string, voteType: 1 | -1, userIdArg?: str
     }
 }
 
-export async function getTestVoteCount(testId: string) {
-    try {
-        const response = await apiClient.get(`/social/tests/${testId}/vote-count`);
-        return { upvotes: response.data.upvotes, downvotes: response.data.downvotes, error: null };
-    } catch (error) {
-        return { upvotes: 0, downvotes: 0, error };
-    }
+let voteQueue: string[] = [];
+let voteResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();
+let voteTimeout: any = null;
+
+export function getTestVoteStats(testId: string, userIdArg?: string): Promise<{ upvotes: number, downvotes: number, user_vote: number, error: any }> {
+    return new Promise((resolve, reject) => {
+        const userId = userIdArg || getUserIdFromToken();
+
+        if (!voteResolvers.has(testId)) {
+            voteResolvers.set(testId, []);
+            voteQueue.push(testId);
+        }
+        voteResolvers.get(testId)!.push({ resolve, reject });
+
+        if (!voteTimeout) {
+            voteTimeout = setTimeout(() => processVoteQueue(userId), 50);
+        }
+    });
 }
 
-export async function getTestVoteStatus(testId: string, userIdArg?: string) {
+async function processVoteQueue(userId: string | null) {
+    const idsToFetch = [...voteQueue];
+    const resolversMap = new Map(voteResolvers);
+
+    voteQueue = [];
+    voteResolvers.clear();
+    voteTimeout = null;
+
     try {
-        const userId = userIdArg || getUserIdFromToken();
-        if (!userId) return { vote: 0, error: null };
-        const response = await apiClient.get(`/social/tests/${testId}/vote-status?user_id=${userId}`);
-        return { vote: response.data.vote, error: null };
-    } catch (error) {
-        return { vote: 0, error };
+        const chunkSize = 20;
+        for (let i = 0; i < idsToFetch.length; i += chunkSize) {
+            const chunk = idsToFetch.slice(i, i + chunkSize);
+            const params: any = { ids: chunk.join(',') };
+            if (userId) params.user_id = userId;
+
+            const response = await apiClient.get('social/tests/batch/votes', { params });
+            const fetchedData = response.data || [];
+            const dataMap = new Map();
+            fetchedData.forEach((d: any) => dataMap.set(d.test_id, d));
+
+            for (const id of chunk) {
+                const resolvers = resolversMap.get(id);
+                if (resolvers) {
+                    const data = dataMap.get(id) || { upvotes: 0, downvotes: 0, user_vote: 0 };
+                    resolvers.forEach(({ resolve }) => resolve({ ...data, error: null }));
+                    resolversMap.delete(id);
+                }
+            }
+        }
+    } catch (error: any) {
+        for (const [id, resolvers] of resolversMap.entries()) {
+            resolvers.forEach(({ resolve }) => resolve({ upvotes: 0, downvotes: 0, user_vote: 0, error }));
+        }
     }
 }

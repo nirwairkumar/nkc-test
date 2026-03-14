@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowBigUp, ArrowBigDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { voteTest, getTestVoteCount, getTestVoteStatus } from '@/lib/testsApi';
+import { voteTest, getTestVoteStats } from '@/lib/testsApi';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface TestVoteButtonsProps {
@@ -22,16 +22,11 @@ export default function TestVoteButtons({ testId, userId: propUserId, isCreatorO
     const [downvotes, setDownvotes] = useState(0);
 
     useEffect(() => {
-        getTestVoteCount(testId).then(({ upvotes, downvotes }) => {
+        getTestVoteStats(testId, userId || undefined).then(({ upvotes, downvotes, user_vote }) => {
             setUpvotes(upvotes || 0);
             setDownvotes(downvotes || 0);
+            setUserVote(user_vote || 0);
         });
-
-        if (userId) {
-            getTestVoteStatus(testId, userId).then(({ vote }) => {
-                setUserVote(vote || 0);
-            });
-        }
     }, [testId, userId]);
 
     const handleVote = async (e: React.MouseEvent, type: 1 | -1) => {
