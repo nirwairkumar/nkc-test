@@ -313,3 +313,55 @@ async def get_test_creation_stats(
     except Exception as e:
         print(f"Error in test creation stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Visitor Location Stats ───────────────────────────────────
+@router.get("/visitors/locations")
+async def get_visitor_locations(
+    days: int = 30,
+    db: Client = Depends(get_db)
+):
+    """
+    Returns aggregated location data from the visitors table.
+    Shows which countries and cities users are accessing from.
+    """
+    try:
+        start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+        visitors = supabase.table("visitors")\
+            .select("country, city")\
+            .gte("last_seen_at", start_date)\
+            .execute()
+
+        data = visitors.data or []
+
+        # Aggregate by country
+        country_counts = {}
+        city_counts = {}
+        for v in data:
+            country = v.get("country") or "Unknown"
+            city = v.get("city") or "Unknown"
+            country_counts[country] = country_counts.get(country, 0) + 1
+            if city != "Unknown":
+                city_key = f"{city}, {country}"
+                city_counts[city_key] = city_counts.get(city_key, 0) + 1
+
+        # Sort by count descending
+        countries = sorted(
+            [{"name": k, "visitors": v} for k, v in country_counts.items()],
+            key=lambda x: x["visitors"], reverse=True
+        )
+        cities = sorted(
+            [{"name": k, "visitors": v} for k, v in city_counts.items()],
+            key=lambda x: x["visitors"], reverse=True
+        )[:20]  # Top 20 cities
+
+        return {
+            "total_located": len(data),
+            "unknown_count": country_counts.get("Unknown", 0),
+            "countries": countries,
+            "top_cities": cities,
+        }
+    except Exception as e:
+        print(f"Error in visitor locations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
