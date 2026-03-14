@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 import json
 from app.routers.tests.schemas import *
 import uuid
+from app.utils.google_indexing import notify_test_created, notify_test_updated
 
 router = APIRouter()
 
@@ -45,7 +45,10 @@ async def create_test(
             # Try inserting with all fields (including new ones like sections)
             response = db.table("tests").insert(data).execute()
             # PostgREST returns list of inserted rows
-            return response.data[0] if response.data else None
+            result = response.data[0] if response.data else None
+            if result:
+                notify_test_created(result)
+            return result
         except Exception as e:
             # If schema mismatch (missing columns for new features), retry with safe legacy fields
             print(f"Full insert failed (likely schema mismatch or syntax): {e}. Retrying with legacy fields only.")
@@ -66,7 +69,10 @@ async def create_test(
             # Try insert again
             response = db.table("tests").insert(safe_data).execute()
             print("Legacy insert successful.")
-            return response.data[0] if response.data else None
+            result = response.data[0] if response.data else None
+            if result:
+                notify_test_created(result)
+            return result
             
     except Exception as e:
         print(f"Error creating test: {e}")
@@ -88,6 +94,7 @@ async def update_test(
         try:
              response = db.table("tests").update(payload).eq("id", test_id).execute()
              if response.data:
+                notify_test_updated(response.data[0])
                 return response.data[0]
              return None
         except Exception as e:
@@ -101,6 +108,7 @@ async def update_test(
             safe_payload = {k: v for k, v in payload.items() if k in legacy_keys}
             response = db.table("tests").update(safe_payload).eq("id", test_id).execute()
             if response.data:
+                notify_test_updated(response.data[0])
                 return response.data[0]
             return None
 

@@ -20,3 +20,4 @@ Pillow
 numpy
 opencv-python-headless
 user-agents
+google-auth
