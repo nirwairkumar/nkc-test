@@ -321,18 +321,29 @@ export default function TestIntroPage() {
         <div className="container mx-auto max-w-3xl py-2 px-4 space-y-4 relative">
             <SEO
                 title={test.title}
-                description={test.description}
+                description={test.description || `${test.title} - Free Online Mock Test with ${test.questions?.length} questions. Start practicing now on TestoZa.`}
                 image={test.og_image} // Fallback handled in component
                 url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
                 categories={[...(test.tags || []), ...(test.custom_category ? [test.custom_category] : [])]}
+                keywords={[
+                    ...(test.tags || []),
+                    "JEE Main 2026",
+                    "Session 1",
+                    "Shift 1",
+                    "Shift 2",
+                    "Previous Year Papers",
+                    "Mock Test"
+                ]}
                 schemas={[
                     {
                         "@context": "https://schema.org",
                         "@type": "Quiz",
                         "name": test.title,
-                        "description": test.description || "Online Test",
+                        "description": test.description || `Online Mock Test for ${test.title}`,
                         "url": `${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`,
                         "educationLevel": "Intermediate",
+                        "datePublished": test.created_at,
+                        "dateModified": test.updated_at || test.created_at,
                         "hasPart": test.questions?.map((q) => ({
                             "@type": "Question",
                             "name": q.question.substring(0, 150),

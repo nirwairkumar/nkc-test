@@ -33,29 +33,60 @@ async function generateSitemap() {
 
         // 1. Fetch Tests from Backend
         try {
-            // We'll use the feed endpoint which is public
-            const testRes = await fetch(`${API_URL}/tests/feed?limit=1000`);
-            if (testRes.ok) {
-                const testData = await testRes.json();
-                const tests = testData.tests || [];
-                tests.forEach(test => {
-                    const lastMod = test.updated_at || test.created_at;
-                    const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
-                    pages.push({
-                        url,
-                        changefreq: 'weekly',
-                        priority: 0.8,
-                        lastmod: lastMod
-                    });
-                });
-            } else {
-                console.warn(`⚠️  [Sitemap] Failed to fetch tests from API: ${testRes.status}`);
+            // Fetch tests in batches to avoid missing entries
+            const LIMIT = 1000;
+            let page = 1;
+            let hasMore = true;
+            let allTests = [];
+
+            while (hasMore && page <= 5) { // Limit to 5000 for safety
+                console.log(`[Sitemap] Fetching tests page ${page}...`);
+                const testRes = await fetch(`${API_URL}/tests/feed?limit=${LIMIT}&page=${page}`);
+                if (testRes.ok) {
+                    const testData = await testRes.json();
+                    const tests = testData.tests || [];
+                    allTests = [...allTests, ...tests];
+                    hasMore = tests.length === LIMIT && testData.meta?.has_more !== false;
+                    page++;
+                } else {
+                    hasMore = false;
+                }
             }
+
+            console.log(`[Sitemap] Total tests fetched: ${allTests.length}`);
+
+            allTests.forEach(test => {
+                const lastMod = test.updated_at || test.created_at;
+                const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+
+                // Prioritize JEE content
+                const isJEE = test.title?.toUpperCase().includes('JEE');
+
+                pages.push({
+                    url,
+                    changefreq: isJEE ? 'daily' : 'weekly',
+                    priority: isJEE ? 0.9 : 0.8,
+                    lastmod: lastMod
+                });
+            });
         } catch (e) {
             console.warn("⚠️  [Sitemap] Error fetching tests:", e.message);
         }
 
-        // 2. Fetch Categories from Backend
+        // 2b. Add Explicit Hub Categories (requested by user)
+        const hubCategories = [
+            'jee-mains', 'gate', 'cat', 'jee', 'iit-jam'
+        ];
+        hubCategories.forEach(slug => {
+            // Ensure they aren't duplicates if already fetched from DB
+            if (!pages.find(p => p.url === `/tests/${slug}`)) {
+                pages.push({
+                    url: `/tests/${slug}`,
+                    changefreq: 'daily',
+                    priority: 0.95
+                });
+            }
+        });
         try {
             const catRes = await fetch(`${API_URL}/categories/`);
             if (catRes.ok) {
@@ -63,10 +94,12 @@ async function generateSitemap() {
                 if (Array.isArray(categories)) {
                     categories.forEach(cat => {
                         const slug = (cat.slug || cat.name).toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+                        const isJEE = cat.name?.toUpperCase().includes('JEE');
+
                         pages.push({
                             url: `/tests/${slug}`,
-                            changefreq: 'weekly',
-                            priority: 0.7
+                            changefreq: isJEE ? 'daily' : 'weekly',
+                            priority: isJEE ? 0.85 : 0.7
                         });
                     });
                 }

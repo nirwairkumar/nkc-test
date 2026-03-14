@@ -16,6 +16,7 @@ export interface Test {
     description: string;
     questions: Question[]; // JSONB (Used for Flat Mode)
     created_at: string;
+    updated_at?: string;
     custom_id?: string;
     marks_per_question?: number | string;
     negative_marks?: number | string;
