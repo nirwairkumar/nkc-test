@@ -178,7 +178,7 @@ async def get_user_tests(
     try:
         # Fetch tests created by user
         tests_res = db.table("tests")\
-            .select("*, classes(name), test_likes(count)")\
+            .select("*, classes(name), test_votes(count)")\
             .eq("created_by", user_id)\
             .order("created_at", desc=True)\
             .execute()
