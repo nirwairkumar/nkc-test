@@ -156,20 +156,26 @@ async def toggle_test_vote(test_id: str, payload: VoteRequest, db: Client = Depe
         user_id = payload.user_id
         vote_type = payload.vote_type
         
-        # Check if already voted
         existing = db.table("test_votes").select("id, vote_type")\
             .eq("test_id", test_id)\
             .eq("user_id", user_id)\
             .maybe_single().execute()
         
-        if existing.data:
-            if existing.data["vote_type"] == vote_type:
+        # Safely extract data
+        existing_data = None
+        if existing and hasattr(existing, 'data'):
+            existing_data = existing.data
+        elif isinstance(existing, dict):
+            existing_data = existing.get("data", existing)
+            
+        if existing_data:
+            if existing_data.get("vote_type") == vote_type:
                 # Remove vote if clicking the same button again
-                db.table("test_votes").delete().eq("id", existing.data["id"]).execute()
+                db.table("test_votes").delete().eq("id", existing_data["id"]).execute()
                 return {"vote": 0}
             else:
                 # Change vote (up to down, or down to up)
-                db.table("test_votes").update({"vote_type": vote_type}).eq("id", existing.data["id"]).execute()
+                db.table("test_votes").update({"vote_type": vote_type}).eq("id", existing_data["id"]).execute()
                 return {"vote": vote_type}
         else:
             # New vote
@@ -201,8 +207,14 @@ async def get_test_vote_status(test_id: str, user_id: str, db: Client = Depends(
             .eq("user_id", user_id)\
             .maybe_single().execute()
             
-        if response.data:
-            return {"vote": response.data["vote_type"]}
+        response_data = None
+        if response and hasattr(response, 'data'):
+            response_data = response.data
+        elif isinstance(response, dict):
+            response_data = response.get("data", response)
+            
+        if response_data:
+            return {"vote": response_data.get("vote_type")}
         return {"vote": 0}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
