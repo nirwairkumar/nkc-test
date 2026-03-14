@@ -214,10 +214,7 @@ export default function Navbar() {
                                                 </Badge>
                                             )}
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => navigate('/')}>
-                                            <Home className="mr-2 h-4 w-4" />
-                                            <span>Home</span>
-                                        </DropdownMenuItem>
+
                                         <DropdownMenuItem onClick={() => navigate('/support')}>
                                             <HelpCircle className="mr-2 h-4 w-4" />
                                             <span>Support</span>
