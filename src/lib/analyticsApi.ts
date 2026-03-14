@@ -97,4 +97,54 @@ export const analyticsApi = {
             navigator.sendBeacon(url, blob);
         } catch (e) { /* non-critical */ }
     },
+
+    // ─── Anonymous Attempt Tracking ─────────────────────────────
+    // Uses a separate backend table (anon_test_attempts) — no mixing with real users.
+
+    _getSessionToken(): string {
+        let token = sessionStorage.getItem('nkc_session');
+        if (!token) {
+            token = crypto.randomUUID();
+            sessionStorage.setItem('nkc_session', token);
+        }
+        return token;
+    },
+
+    startAnonAttempt: async (test_id: string) => {
+        try {
+            const session_token = analyticsApi._getSessionToken();
+            await apiClient.post('/attempts/anon/start', { session_token, test_id });
+        } catch (e) { /* non-critical */ }
+    },
+
+    updateAnonProgress: async (test_id: string, completion_pct: number) => {
+        try {
+            const session_token = analyticsApi._getSessionToken();
+            await apiClient.post('/attempts/anon/progress', { session_token, test_id, completion_pct });
+        } catch (e) { /* non-critical */ }
+    },
+
+    submitAnonAttempt: async (test_id: string, answers: Record<string, any>, score: number) => {
+        try {
+            const session_token = analyticsApi._getSessionToken();
+            await apiClient.post('/attempts/anon/submit', { session_token, test_id, answers, score, completion_pct: 100 });
+        } catch (e) { /* non-critical */ }
+    },
+
+    abandonAnonAttempt: (test_id: string, reason: string, completion_pct?: number) => {
+        try {
+            const session_token = analyticsApi._getSessionToken();
+            const payload: any = { session_token, test_id, reason };
+            if (completion_pct !== undefined) payload.completion_pct = completion_pct;
+            // Use sendBeacon for tab-close reliability
+            const url = (apiClient.defaults.baseURL || '') + '/attempts/anon/abandon';
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            navigator.sendBeacon(url, blob);
+        } catch (e) { /* non-critical */ }
+    },
+
+    getAnonSummary: async (days: number = 30) => {
+        const response = await apiClient.get('/analytics/stats/anon/summary', { params: { days } });
+        return response.data;
+    },
 };
