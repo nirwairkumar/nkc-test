@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Loader2, Edit } from 'lucide-react';
-import TestLikeButton from '@/components/TestLikeButton';
+import TestVoteButtons from '@/components/TestVoteButtons';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import { toSlug } from '@/lib/slugUtils';
 import { toast } from 'sonner';
@@ -185,7 +185,7 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                                    <div className="flex-none"><TestLikeButton testId={test.id} userId={undefined} /></div>
+                                    <div className="flex-none"><TestVoteButtons testId={test.id} userId={undefined} /></div>
                                     <div className="flex-1">
                                         <Button asChild size="sm" className="w-full h-8 text-sm">
                                             <Link to={`/test-intro/${test.id}`}>

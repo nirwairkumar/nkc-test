@@ -23,6 +23,7 @@ import {
     GraduationCap,
     Check
 } from 'lucide-react';
+import TestVoteButtons from '@/components/TestVoteButtons';
 
 interface UserTestCardProps {
     test: any;
@@ -163,13 +164,10 @@ export function UserTestCard({
                     </div>
                 )}
 
-                {/* Likes info if popular */}
-                {(test.test_likes?.[0]?.count || 0) > 0 && (
-                    <div className="ml-auto flex items-center gap-1 text-xs text-rose-500 font-medium bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
-                        <Heart className="h-3 w-3 fill-rose-500" />
-                        {test.test_likes?.[0]?.count}
-                    </div>
-                )}
+                {/* Likes info if popular - now handled internally by TestVoteButtons */}
+                <div className="ml-auto">
+                    <TestVoteButtons testId={test.id} userId={undefined} isCreatorOrAdmin={true} />
+                </div>
             </div>
 
             {/* --- Zone D: Actions --- */}

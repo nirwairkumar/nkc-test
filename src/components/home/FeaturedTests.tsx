@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Edit, FileText, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import TestLikeButton from '@/components/TestLikeButton';
+import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTests, Test } from '@/lib/testsApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -66,7 +66,7 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
                     const testId = test.id;
                     const isRendered = isItemRendered(testId);
                     const categories = test.categories || [];
-                    
+
                     if (!isRendered) {
                         return (
                             <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
@@ -141,7 +141,7 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
                             </CardContent>
 
                             <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                                <div className="flex-none"><TestLikeButton testId={test.id} userId={user?.id} /></div>
+                                <div className="flex-none"><TestVoteButtons testId={test.id} userId={user?.id} /></div>
 
                                 {user?.id === test.created_by ? (
                                     <div className="flex-1 flex gap-2">
@@ -163,7 +163,7 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
                         </Card>
                     );
                 })}
-                
+
                 {/* Progress indicator */}
                 {!isComplete && tests.length > 0 && (
                     <div className="col-span-full py-4 text-center">
