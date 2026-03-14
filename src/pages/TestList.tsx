@@ -92,25 +92,25 @@ export default function TestList() {
                     onRefresh={handleRefresh}
                 />
 
-                {/* 2. Test Link Paster (Replaces YouTube Generator) */}
-                <Suspense fallback={<div className="h-32 w-full bg-slate-50 animate-pulse rounded-lg"></div>}>
-                    <TestLinkPaster />
-                </Suspense>
-
-                {/* 3. Your Recent Tests (Lazy) - Only when NOT searching */}
-                {user && !searchQuery && (
-                    <Suspense fallback={<SectionSkeleton />}>
-                        <UserRecentTests user={user} onManageTest={onManageTest} />
-                    </Suspense>
-                )}
-
-                {/* 4. Explore Tests / Search */}
+                {/* 2. Explore Tests / Search (Discover Free Tests) */}
                 <ExploreFilters
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                     placeholders={placeholders}
                     placeholderIndex={placeholderIndex}
                 />
+
+                {/* 3. Test Link Paster */}
+                <Suspense fallback={<div className="h-32 w-full bg-slate-50 animate-pulse rounded-lg"></div>}>
+                    <TestLinkPaster />
+                </Suspense>
+
+                {/* 4. Your Recent Tests (Lazy) - Only when NOT searching */}
+                {user && !searchQuery && (
+                    <Suspense fallback={<SectionSkeleton />}>
+                        <UserRecentTests user={user} onManageTest={onManageTest} />
+                    </Suspense>
+                )}
             </div>
 
             {/* SEARCH RESULTS MODE */}

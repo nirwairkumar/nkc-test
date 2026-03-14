@@ -52,27 +52,54 @@ export default function Navbar() {
 
 
                 <div className="flex items-center gap-2 sm:gap-4">
-                    <Button
-                        variant="ghost"
-                        onClick={() => navigate('/create-test')}
-                        className="flex items-center"
-                    >
-                        <Plus className="mr-0 h-4 w-4" />
-                        <span>Create Test</span>
-                    </Button>
+                    {/* Visible Navbar Buttons: Order depends on login state */}
+                    {user ? (
+                        <>
+                            {/* Logged In: Dashboard first, Create Test second */}
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/dashboard')}
+                                className="flex items-center"
+                            >
+                                <LayoutDashboard className="mr-0 sm:mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Dashboard</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/create-test')}
+                                className="flex items-center"
+                            >
+                                <Plus className="mr-0 sm:mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Create Test</span>
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            {/* Logged Out: Create Test visible */}
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/create-test')}
+                                className="flex items-center"
+                            >
+                                <Plus className="mr-0 h-4 w-4" />
+                                <span>Create Test</span>
+                            </Button>
+                        </>
+                    )}
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate('/')}
-                            className="flex items-center"
-                        >
-                            <Home className="mr-2 h-4 w-4" />
-                            <span>Home</span>
-                        </Button>
-
-
+                        {/* Home is visible only when NOT logged in */}
+                        {!user && (
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/')}
+                                className="flex items-center"
+                            >
+                                <Home className="mr-2 h-4 w-4" />
+                                <span>Home</span>
+                            </Button>
+                        )}
 
                         <Button
                             variant="ghost"
@@ -204,9 +231,9 @@ export default function Navbar() {
                                         )}
                                     </div>
 
-                                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                                    <DropdownMenuItem onClick={() => navigate('/')}>
                                         <Home className="mr-2 h-4 w-4" />
-                                        <span>Dashboard</span>
+                                        <span>Home</span>
                                     </DropdownMenuItem>
                                     {canSeeNews && (
                                         <DropdownMenuItem onClick={() => navigate('/news')} className="hidden md:flex">
