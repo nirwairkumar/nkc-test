@@ -3,14 +3,20 @@ import { Button } from '@/components/ui/button';
 import { ArrowBigUp, ArrowBigDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { voteTest, getTestVoteCount, getTestVoteStatus } from '@/lib/testsApi';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TestVoteButtonsProps {
     testId: string;
-    userId: string | undefined;
+    userId?: string;
     isCreatorOrAdmin?: boolean;
 }
 
-export default function TestVoteButtons({ testId, userId, isCreatorOrAdmin = false }: TestVoteButtonsProps) {
+export default function TestVoteButtons({ testId, userId: propUserId, isCreatorOrAdmin = false }: TestVoteButtonsProps) {
+    const { user, isAdmin } = useAuth();
+    const userId = propUserId || user?.id;
+    // Derive if creator/admin if not explicitly passed
+    const isSpecialView = isCreatorOrAdmin || isAdmin;
+
     const [userVote, setUserVote] = useState<number>(0); // 1 = upvote, -1 = downvote, 0 = none
     const [upvotes, setUpvotes] = useState(0);
     const [downvotes, setDownvotes] = useState(0);
@@ -58,6 +64,7 @@ export default function TestVoteButtons({ testId, userId, isCreatorOrAdmin = fal
 
         const { error, vote } = await voteTest(testId, type, userId);
         if (error) {
+            console.error("Vote registration failed:", error);
             // Revert on error
             setUserVote(prevVote);
 
@@ -74,7 +81,8 @@ export default function TestVoteButtons({ testId, userId, isCreatorOrAdmin = fal
                     if (prevVote === 1) setUpvotes(prev => prev + 1);
                 }
             }
-            toast.error("Failed to register vote");
+            const errMsg = error.response?.data?.detail || error.message || "Unknown error";
+            toast.error(`Failed to register vote: ${errMsg}`);
         } else if (vote !== undefined) {
             // Sync with backend confirmed vote
             setUserVote(vote);
