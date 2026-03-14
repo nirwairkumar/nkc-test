@@ -11,44 +11,23 @@ export async function onRequest(context) {
     const assetRequest = new Request(url, { headers: request.headers });
     const response = await env.ASSETS.fetch(assetRequest);
 
-    // Supabase Config
-    const supabaseUrl = env.VITE_SUPABASE_URL;
-    const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-        const res = new Response(response.body, response);
-        res.headers.set('X-SEO-Debug', 'Missing-Keys');
-        return res;
-    }
+    // Backend API Config
+    const apiUrl = env.VITE_API_URL || 'https://api.testoza.com/api';
 
     try {
-        // Fetch test data
-        let apiPath = `${supabaseUrl}/rest/v1/tests?select=*&limit=1`;
+        // Fetch test data from backend API
+        // The backend /tests/{id} endpoint handles both UUIDs and slugs
+        const apiPath = `${apiUrl}/tests/${slugOrId}`;
 
-        // Determine if slug or UUID
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
-
-        if (isUUID) {
-            apiPath += `&id=eq.${slugOrId}`;
-        } else {
-            apiPath += `&slug=eq.${slugOrId}`;
-        }
-
-        const dbRes = await fetch(apiPath, {
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`
-            }
-        });
+        const dbRes = await fetch(apiPath);
 
         if (!dbRes.ok) {
             const res = new Response(response.body, response);
-            res.headers.set('X-SEO-Error', `DB-Error-${dbRes.status}`);
+            res.headers.set('X-SEO-Error', `API-Error-${dbRes.status}`);
             return res;
         }
 
-        const data = await dbRes.json();
-        const test = data && data.length > 0 ? data[0] : null;
+        const test = await dbRes.json();
 
         if (test) {
             // Success! Prepare tags

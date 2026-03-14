@@ -1,9 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
-import { visualizer } from "rollup-plugin-visualizer";
-import compression from "vite-plugin-compression2";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -29,24 +26,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
-    mode === 'analyze' && visualizer({
-      open: true,
-      gzipSize: true,
-      brotliSize: true,
-      filename: 'dist/stats.html',
-    }),
-    // Enable Brotli and Gzip compression for production
-    mode === 'production' && compression({
-      algorithm: 'brotliCompress',
-      exclude: [/\.(br)$/, /\.(gz)$/],
-      threshold: 1024,
-    }),
-    mode === 'production' && compression({
-      algorithm: 'gzip',
-      exclude: [/\.(br)$/, /\.(gz)$/],
-      threshold: 1024,
-    }),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -54,41 +33,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: 'esnext',
-    minify: 'terser',
+    target: 'es2020',
+    minify: 'esbuild',
     cssMinify: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-label',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-switch',
-          ],
-          'vendor-charts': ['recharts'],
-          'vendor-editor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-image', '@tiptap/extension-link', '@tiptap/extension-text-align', '@tiptap/extension-underline'],
-          'vendor-motion': ['framer-motion'],
-          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-ai': ['@google/generative-ai'],
-          'vendor-math': ['katex', 'react-latex-next', 'rehype-katex', 'remark-math'],
-          'vendor-markdown': ['react-markdown', 'remark-gfm'],
-        },
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
@@ -106,7 +55,6 @@ export default defineConfig(({ mode }) => ({
     },
     sourcemap: mode === 'development',
     chunkSizeWarningLimit: 1000,
-    // Improve build performance
     reportCompressedSize: false,
   },
   optimizeDeps: {
@@ -115,8 +63,6 @@ export default defineConfig(({ mode }) => ({
       'react-dom',
       'react-router-dom',
       '@tanstack/react-query',
-      '@supabase/supabase-js',
     ],
-    exclude: ['lovable-tagger'],
   },
 }));

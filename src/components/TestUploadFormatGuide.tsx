@@ -734,8 +734,8 @@ Pay special attention to:
 • Match-the-following
 • Comprehension blocks
 • Mixed question types
-
-Return ONLY RAW JSON.`;
+-> Give full output in ONLY RAW JSON in one **code snippet** only.
+`;
 
   const jsonTemplateSectionAddon = `--------------------------------------------------
 

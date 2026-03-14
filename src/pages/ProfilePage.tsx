@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import supabase from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -106,18 +105,6 @@ const ProfilePage = () => {
             .slice(0, 2);
     };
 
-    const getBadgeVariant = (role: string) => {
-        switch (role) {
-            case 'Admin': return 'destructive'; // Red/Destructive for Admin
-            case 'Teacher': return 'default'; // Bluish
-            case 'Institution': return 'warning'; // Golden (assuming warning is yellowish)
-            case 'Student': return 'secondary'; // Gray
-            case 'Guest': return 'outline'; // Gray outline
-            default: return 'secondary';
-        }
-    };
-
-    // Custom badge styling if default variants don't match user request perfectly
     const getBadgeStyle = (role: string) => {
         switch (role) {
             case 'Admin': return { backgroundColor: '#dc2626', color: 'white' }; // Red
@@ -164,26 +151,25 @@ const ProfilePage = () => {
         const finalDesignation = isAdmin ? 'Admin' : designation;
 
         try {
-            // Update Auth Session (Optional but recommended for instant UI feedback)
-            const { error } = await supabase.auth.updateUser({
-                data: {
-                    full_name: fullName,
-                    bio: bio,
-                    avatar_url: avatarUrl,
-                    designation: finalDesignation
-                }
+            // Update Auth Session via Backend Proxy
+            const { authApi } = await import('@/lib/authApi');
+            const { error } = await authApi.updateMetadata({
+                full_name: fullName,
+                bio: bio,
+                avatar_url: avatarUrl,
+                designation: finalDesignation
             });
 
             if (error) throw error;
 
             // Update Database Profile via API
             const { updateProfile } = await import('@/lib/usersApi');
-            const { error: apiError } = await updateProfile(user.id, {
+            const { error: apiError } = await updateProfile(user!.id, {
                 full_name: fullName,
                 bio: bio,
                 avatar_url: avatarUrl,
                 designation: finalDesignation,
-                email: user.email,
+                email: user!.email,
                 is_creator: isCreator,
                 following_visibility: followingVisibility,
                 updated_at: new Date().toISOString()

@@ -52,5 +52,49 @@ export const analyticsApi = {
     getLiveVisitors: async () => {
         const response = await apiClient.get('/analytics/stats/live');
         return response.data;
-    }
+    },
+
+    // ─── Advanced Analytics ───────────────────────────────────
+    getTestFunnel: async (days: number = 30) => {
+        const response = await apiClient.get('/analytics/stats/tests/funnel', { params: { days } });
+        return response.data;
+    },
+
+    getAbandonmentAnalysis: async (days: number = 30) => {
+        const response = await apiClient.get('/analytics/stats/tests/abandonment', { params: { days } });
+        return response.data;
+    },
+
+    getTestMatrix: async (days: number = 30, limit: number = 50) => {
+        const response = await apiClient.get('/analytics/stats/tests/matrix', { params: { days, limit } });
+        return response.data;
+    },
+
+    getUserMatrix: async (days: number = 30, limit: number = 50) => {
+        const response = await apiClient.get('/analytics/stats/users/matrix', { params: { days, limit } });
+        return response.data;
+    },
+
+    getTestCreationStats: async (days: number = 30) => {
+        const response = await apiClient.get('/analytics/stats/tests/creation', { params: { days } });
+        return response.data;
+    },
+
+    // ─── Progress & Abandonment Tracking ──────────────────────
+    updateProgress: async (user_id: string, test_id: string, completion_percentage: number) => {
+        try {
+            await apiClient.post('/attempts/progress', { user_id, test_id, completion_percentage });
+        } catch (e) { /* non-critical */ }
+    },
+
+    markAbandoned: async (user_id: string, test_id: string, reason: string, completion_percentage?: number) => {
+        try {
+            const payload: any = { user_id, test_id, reason };
+            if (completion_percentage !== undefined) payload.completion_percentage = completion_percentage;
+            // Use sendBeacon for reliability on tab close
+            const url = (apiClient.defaults.baseURL || '') + '/attempts/abandon';
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            navigator.sendBeacon(url, blob);
+        } catch (e) { /* non-critical */ }
+    },
 };
