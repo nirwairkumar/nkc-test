@@ -92,7 +92,19 @@ export default function TestList() {
                     onRefresh={handleRefresh}
                 />
 
-                {/* 2. Explore Tests / Search (Discover Free Tests) */}
+                {/* 2. Test Link Paster (Replaces YouTube Generator) */}
+                <Suspense fallback={<div className="h-32 w-full bg-slate-50 animate-pulse rounded-lg"></div>}>
+                    <TestLinkPaster />
+                </Suspense>
+
+                {/* 3. Your Recent Tests (Lazy) - Only when NOT searching */}
+                {user && !searchQuery && (
+                    <Suspense fallback={<SectionSkeleton />}>
+                        <UserRecentTests user={user} onManageTest={onManageTest} />
+                    </Suspense>
+                )}
+
+                {/* 4. Explore Tests / Search */}
                 <ExploreFilters
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
@@ -101,7 +113,7 @@ export default function TestList() {
                 />
             </div>
 
-            {/* Explore Tests Content (test cards) - Right after search */}
+            {/* SEARCH RESULTS MODE */}
             {searchQuery ? (
                 <Suspense fallback={<SectionSkeleton />}>
                     <SearchResults
@@ -112,64 +124,56 @@ export default function TestList() {
                 </Suspense>
             ) : (
                 <>
-                    {/* Category Folders */}
+                    {/* 5. Category Folders */}
                     <Suspense fallback={<SectionSkeleton />}>
                         <CategoryFolderCards />
                     </Suspense>
 
-                    {/* Featured Tests */}
+                    {/* 6. Featured Tests */}
                     <Suspense fallback={<SectionSkeleton />}>
                         <FeaturedTests user={user} onManageTest={onManageTest} />
                     </Suspense>
 
-                    {/* Infinite Feed */}
+                    {/* 7. Infinite Feed (Now first) */}
                     <SuspenseFallbackWrapper>
                         <TestFeed user={user} onManageTest={onManageTest} />
                     </SuspenseFallbackWrapper>
+
+                    {/* 8. YouTube Generator (Moved to very bottom) */}
+                    <div className="my-8 mt-16">
+                        {/* <div className="text-center mb-6">
+                            <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent inline-block">
+                                Generate Tests from YouTube
+                            </h3>
+                            <p className="text-muted-foreground mt-1">
+                                Don't see what you're looking for? Create a test instantly from any video.
+                            </p>
+                        </div> */}
+                        <Suspense fallback={<SectionSkeleton />}>
+                            <YouTubeGenerator onTestGenerated={handleTestGenerated} />
+                        </Suspense>
+
+                        {/* Temporary Generated Test Display */}
+                        {generatedTest && (
+                            <div className="mt-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-lg font-semibold text-green-600 flex items-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        New Test Generated! (Disappears in 30s)
+                                    </h3>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <TestCard
+                                        test={generatedTest}
+                                        onManage={onManageTest}
+                                        user={user}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
-
-            {/* 3. Test Link Paster */}
-            <div className="mt-8">
-                <Suspense fallback={<div className="h-32 w-full bg-slate-50 animate-pulse rounded-lg"></div>}>
-                    <TestLinkPaster />
-                </Suspense>
-            </div>
-
-            {/* 4. Your Recent Tests - Only when NOT searching */}
-            {user && !searchQuery && (
-                <div className="mt-8">
-                    <Suspense fallback={<SectionSkeleton />}>
-                        <UserRecentTests user={user} onManageTest={onManageTest} />
-                    </Suspense>
-                </div>
-            )}
-
-            {/* 5. YouTube Generator */}
-            <div className="my-8 mt-16">
-                <Suspense fallback={<SectionSkeleton />}>
-                    <YouTubeGenerator onTestGenerated={handleTestGenerated} />
-                </Suspense>
-
-                {/* Temporary Generated Test Display */}
-                {generatedTest && (
-                    <div className="mt-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-green-600 flex items-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                New Test Generated! (Disappears in 30s)
-                            </h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <TestCard
-                                test={generatedTest}
-                                onManage={onManageTest}
-                                user={user}
-                            />
-                        </div>
-                    </div>
-                )}
-            </div>
 
             {/* Manage Test Panel */}
             {configuringTest && (
