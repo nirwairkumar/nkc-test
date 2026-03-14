@@ -13,6 +13,7 @@ import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import { toSlug } from '@/lib/slugUtils';
 import { toast } from 'sonner';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import IndependentTestCard from '@/components/IndependentTestCard';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
 interface CategoryPageProps { }
@@ -60,7 +61,8 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                 // Fetch tests
                 const { data: testData } = await fetchTests({
                     categoryId: matchedCat.id,
-                    limit: 100
+                    limit: 100,
+                    idsOnly: true
                 });
                 setTests(testData || []);
             } else {
@@ -71,7 +73,8 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                     setCurrentCategoryId(directMatch.id);
                     const { data: testData } = await fetchTests({
                         categoryId: directMatch.id,
-                        limit: 100
+                        limit: 100,
+                        idsOnly: true
                     });
                     setTests(testData || []);
                 } else {
@@ -142,59 +145,12 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                         }
 
                         return (
-                            <Card key={testId} className="flex flex-col hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden group border-slate-200 dark:border-slate-800 h-full animate-in fade-in duration-500">
-                                <div className="absolute top-2 right-2 z-10">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => {
-                                        e.stopPropagation();
-                                        const url = `${window.location.origin}/test-intro/${test.id}`;
-                                        navigator.clipboard.writeText(url);
-                                        toast.success("Test link copied!");
-                                    }}>
-                                        <Share2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <CardHeader className="p-3 pb-2">
-                                    <CardTitle className="text-lg font-bold text-red-900 md:text-xl pr-8 leading-tight line-clamp-2">{test.title || 'Untitled Test'}</CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex-1 p-3 pt-0">
-                                    <div className="flex flex-col justify-end mt-auto gap-1">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center text-sm text-muted-foreground">
-                                                <Clock className="mr-1 h-4 w-4" />{test.questions?.length || 0} Qs • {test.duration || 30}m
-                                            </div>
-                                            {test.custom_id && (
-                                                <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">#{test.custom_id}</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-1.5 gap-2 h-8">
-                                        <div className="flex items-center gap-2 shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full pr-2 transition-colors py-0.5">
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={test.creator_avatar} />
-                                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                                    {test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">{test.creator_name || 'Creator'}</span>
-                                        </div>
-                                        <TestCardCategoryList
-                                            categoryIds={currentCategoryId ? [currentCategoryId] : []}
-                                            allCategories={allCategories}
-                                            customCategory={test.custom_category}
-                                        />
-                                    </div>
-                                </CardContent>
-                                <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                                    <div className="flex-none"><TestVoteButtons testId={test.id} userId={undefined} /></div>
-                                    <div className="flex-1">
-                                        <Button asChild size="sm" className="w-full h-8 text-sm">
-                                            <Link to={`/test-intro/${test.id}`}>
-                                                Open <ArrowRight className="ml-2 h-3 w-3" />
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </CardFooter>
-                            </Card>
+                            <IndependentTestCard
+                                key={testId}
+                                testId={test.id || testId}
+                                initialTitle={test.title}
+                                user={user}
+                            />
                         );
                     })}
 

@@ -5,7 +5,7 @@ import { Profile, Follow } from '@/lib/types';
 
 export async function followUser(followerId: string, followingId: string) {
     try {
-        await apiClient.post('/social/follows/follow', { follower_id: followerId, following_id: followingId });
+        await apiClient.post('social/follows/follow', { follower_id: followerId, following_id: followingId });
         return { error: null };
     } catch (error: any) {
         return { error };
@@ -14,7 +14,7 @@ export async function followUser(followerId: string, followingId: string) {
 
 export async function unfollowUser(followerId: string, followingId: string) {
     try {
-        await apiClient.post('/social/follows/unfollow', { follower_id: followerId, following_id: followingId });
+        await apiClient.post('social/follows/unfollow', { follower_id: followerId, following_id: followingId });
         return { error: null };
     } catch (error: any) {
         return { error };
@@ -23,7 +23,7 @@ export async function unfollowUser(followerId: string, followingId: string) {
 
 export async function isFollowing(followerId: string, followingId: string) {
     try {
-        const response = await apiClient.get('/social/follows/check', {
+        const response = await apiClient.get('social/follows/check', {
             params: { follower_id: followerId, following_id: followingId }
         });
         return { isFollowing: response.data?.isFollowing, error: null };
@@ -36,7 +36,7 @@ export async function isFollowing(followerId: string, followingId: string) {
 
 export async function getFollowerCount(userId: string) {
     try {
-        const response = await apiClient.get(`/social/follows/stats/${userId}`);
+        const response = await apiClient.get(`social/follows/stats/${userId}`);
         return { count: response.data.followers_count, error: null };
     } catch (error: any) {
         return { count: 0, error };
@@ -45,7 +45,7 @@ export async function getFollowerCount(userId: string) {
 
 export async function getFollowingCount(userId: string) {
     try {
-        const response = await apiClient.get(`/social/follows/stats/${userId}`);
+        const response = await apiClient.get(`social/follows/stats/${userId}`);
         return { count: response.data.following_count, error: null };
     } catch (error: any) {
         return { count: 0, error };
@@ -56,7 +56,7 @@ export async function getFollowingCount(userId: string) {
 
 export async function getFollowers(userId: string) {
     try {
-        const response = await apiClient.get(`/social/follows/followers/${userId}`);
+        const response = await apiClient.get(`social/follows/followers/${userId}`);
         const data = response.data;
 
         // Transform data to match Follow interface with nested Profile
@@ -75,7 +75,7 @@ export async function getFollowers(userId: string) {
 
 export async function getFollowing(userId: string) {
     try {
-        const response = await apiClient.get(`/social/follows/following/${userId}`);
+        const response = await apiClient.get(`social/follows/following/${userId}`);
         const data = response.data;
 
         const formattedData = data?.map((item: any) => ({
@@ -128,7 +128,7 @@ export async function createNotification(
     }
 ) {
     try {
-        await apiClient.post('/social/notifications/create', {
+        await apiClient.post('social/notifications/create', {
             user_id: userId,
             title,
             message,

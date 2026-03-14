@@ -30,6 +30,64 @@ def _cache_bust(cache: TTLCache, key: str):
     with _cache_lock:
         cache.pop(key, None)
 
+def _enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
+    if not tests:
+        return []
+
+    test_ids = [t["id"] for t in tests]
+    creator_ids = list(set([t["created_by"] for t in tests if t.get("created_by")]))
+
+    def _fetch_categories():
+        tc_res = db.table("test_categories").select("*").in_("test_id", test_ids).execute()
+        return tc_res.data or []
+
+    def _fetch_creators():
+        if not creator_ids:
+            return []
+        res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").in_("id", creator_ids).execute()
+        return res.data or []
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future_cats = executor.submit(_fetch_categories)
+        future_creators = executor.submit(_fetch_creators)
+        test_cats = future_cats.result()
+        creators_data = future_creators.result()
+
+    category_ids = list(set([tc["category_id"] for tc in test_cats]))
+    all_cats = {}
+    if category_ids:
+        cats_res = db.table("categories").select("*").in_("id", category_ids).execute()
+        all_cats = {c["id"]: c for c in (cats_res.data or [])}
+
+    tests_categories_map = {}
+    for tc in test_cats:
+        tid = tc["test_id"]
+        cid = tc["category_id"]
+        if tid not in tests_categories_map:
+            tests_categories_map[tid] = []
+        if cid in all_cats:
+            tests_categories_map[tid].append(all_cats[cid])
+
+    verified_creators = {}
+    for c in creators_data:
+        verified_creators[c["id"]] = {
+            "is_verified": c.get("is_verified_creator", False),
+            "name": c.get("full_name"),
+            "avatar": c.get("avatar_url")
+        }
+
+    enriched_tests = []
+    for t in tests:
+        cid = t.get("created_by")
+        if cid and cid in verified_creators:
+            t["creator_name"] = verified_creators[cid]["name"]
+            t["creator_avatar"] = verified_creators[cid]["avatar"]
+            t["creator_verified"] = verified_creators[cid]["is_verified"]
+        t["categories"] = tests_categories_map.get(t["id"], [])
+        enriched_tests.append(t)
+        
+    return enriched_tests
+
 
 @router.get("/batch")
 async def get_tests_batch(
@@ -38,17 +96,16 @@ async def get_tests_batch(
 ):
     try:
         id_list = [id.strip() for id in ids.split(",")]
-        # Fetch tests including class name
-        response = db.table("tests").select("*, classes(name)").in_("id", id_list).execute()
+        # Fetch tests metadata but EXCLUDING large questions JSONB
+        response = db.table("tests").select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)").in_("id", id_list).execute()
         
-        # Enrich with creator info and categories (similar to feed logic)
+        # Enrich with creator info and categories
         tests = response.data
         if not tests:
             return []
             
-        # Re-use the enrichment logic if possible, or just return basic for now
-        # For simplicity in proxying, we return what Supabase would return
-        return tests
+        enriched = _enrich_tests(tests, db)
+        return enriched
     except Exception as e:
         print(f"Error fetching batch tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -59,11 +116,12 @@ async def get_tests_feed(
     limit: int = Query(12, ge=1, le=100),
     search_query: Optional[str] = None,
     category_id: Optional[str] = None,
+    ids_only: bool = Query(False, description="Faster fetch returning just IDs for progressive loading"),
     db: Client = Depends(get_db)
 ):
     try:
         # ─ Cache key for pages 1-2, no search (most common loads)
-        feed_cache_key = f"feed:p{page}:l{limit}:c{category_id or ''}" if page <= 2 and not search_query else None
+        feed_cache_key = f"feed:p{page}:l{limit}:c{category_id or ''}:ids{ids_only}" if page <= 2 and not search_query else None
         if feed_cache_key:
             cached = _cache_get(_feed_cache, feed_cache_key)
             if cached is not None:
@@ -103,7 +161,7 @@ async def get_tests_feed(
                 # Fallback to old ILIKE query
                 cleaned_query = search_query.replace(",", "")
                 query = db.table("tests")\
-                    .select("*, classes(name)")\
+                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)")\
                     .eq("is_public", True)\
                     .order("created_at", desc=True)
                 
@@ -117,7 +175,7 @@ async def get_tests_feed(
         else:
              # Standard Feed Query
             query = db.table("tests")\
-                .select("*, classes(name)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)")\
                 .eq("is_public", True)\
                 .order("created_at", desc=True)
 
@@ -135,63 +193,22 @@ async def get_tests_feed(
                     "has_more": False
                 }
             }
-
-        # 4. Extract IDs for Batch Fetching
-        test_ids = [t["id"] for t in tests]
-        creator_ids = list(set([t["created_by"] for t in tests if t.get("created_by")]))
-
-        # 5. Fetch Categories + Creators IN PARALLEL
-        def _fetch_categories():
-            tc_res = db.table("test_categories").select("*").in_("test_id", test_ids).execute()
-            return tc_res.data or []
-
-        def _fetch_creators():
-            if not creator_ids:
-                return []
-            res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").in_("id", creator_ids).execute()
-            return res.data or []
-
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            future_cats = executor.submit(_fetch_categories)
-            future_creators = executor.submit(_fetch_creators)
-            test_cats = future_cats.result()
-            creators_data = future_creators.result()
-
-        # Build categories map
-        category_ids = list(set([tc["category_id"] for tc in test_cats]))
-        all_cats: Dict[str, Any] = {}
-        if category_ids:
-            cats_res = db.table("categories").select("*").in_("id", category_ids).execute()
-            all_cats = {c["id"]: c for c in (cats_res.data or [])}
-
-        tests_categories_map: Dict[str, list] = {}
-        for tc in test_cats:
-            tid = tc["test_id"]
-            cid = tc["category_id"]
-            if tid not in tests_categories_map:
-                tests_categories_map[tid] = []
-            if cid in all_cats:
-                tests_categories_map[tid].append(all_cats[cid])
-
-        # Build creators map
-        verified_creators: Dict[str, dict] = {}
-        for c in creators_data:
-            verified_creators[c["id"]] = {
-                "is_verified": c.get("is_verified_creator", False),
-                "name": c.get("full_name"),
-                "avatar": c.get("avatar_url")
+            
+        # Fast exit for Amazon-style independent skeleton loading
+        if ids_only:
+            result = {
+                "tests": [{"id": t["id"], "title": t.get("title"), "created_at": t.get("created_at")} for t in tests], # Return tiny payload
+                "meta": {
+                    "page": page,
+                    "has_more": len(tests) == limit
+                }
             }
+            if feed_cache_key:
+                _cache_set(_feed_cache, feed_cache_key, result)
+            return result
 
-        # 7. Enrich Test Objects
-        typesafe_tests = []
-        for t in tests:
-            cid = t.get("created_by")
-            if cid and cid in verified_creators:
-                t["creator_name"] = verified_creators[cid]["name"]
-                t["creator_avatar"] = verified_creators[cid]["avatar"]
-                t["creator_verified"] = verified_creators[cid]["is_verified"]
-            t["categories"] = tests_categories_map.get(t["id"], [])
-            typesafe_tests.append(t)
+        # 4. Enrich Test Objects
+        typesafe_tests = _enrich_tests(tests, db)
 
         result = {
             "tests": typesafe_tests,
@@ -213,6 +230,7 @@ async def get_tests_feed(
 async def get_user_tests(
     user_id: str,
     search_query: str = None,
+    ids_only: bool = Query(False, description="Faster fetch returning just IDs for progressive loading"),
     db: Client = Depends(get_db)
 ):
     try:
@@ -234,7 +252,7 @@ async def get_user_tests(
                 print(f"RPC Error (User Search): {rpc_error}")
                 # Fallback to ILIKE if RPC fails
                 tests_res = db.table("tests")\
-                    .select("*, classes(name), test_votes(count)")\
+                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name), test_votes(count)")\
                     .eq("created_by", user_id)\
                     .ilike("title", f"%{search_query}%")\
                     .order("created_at", desc=True)\
@@ -243,7 +261,7 @@ async def get_user_tests(
         else:
             # Default fetch
             tests_res = db.table("tests")\
-                .select("*, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name), test_votes(count)")\
                 .eq("created_by", user_id)\
                 .order("created_at", desc=True)\
                 .execute()
@@ -251,6 +269,9 @@ async def get_user_tests(
         
         if not tests:
             return []
+
+        if ids_only:
+            return [{"id": t["id"], "title": t.get("title"), "created_at": t.get("created_at")} for t in tests]
 
         # Enrich with categories (Similar logic to feed)
         test_ids = [t["id"] for t in tests]

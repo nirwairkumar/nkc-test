@@ -41,7 +41,7 @@ BEGIN
             t.custom_id,
             t.slug,
             t.cover_image,
-            t.total_questions,
+            COALESCE(jsonb_array_length(t.questions), 0) as total_questions,
             t.duration,
             t.test_type,
             t.difficulty,

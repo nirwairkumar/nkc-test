@@ -218,3 +218,36 @@ async def get_test_vote_status(test_id: str, user_id: str, db: Client = Depends(
         return {"vote": 0}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/tests/batch/votes")
+async def get_batch_test_votes(ids: str, user_id: str = None, db: Client = Depends(get_db)):
+    try:
+        id_list = [i.strip() for i in ids.split(",") if i.strip()]
+        if not id_list:
+            return []
+            
+        # Get all votes for these tests in one query
+        res = db.table("test_votes").select("test_id, user_id, vote_type").in_("test_id", id_list).execute()
+        votes_data = res.data or []
+        
+        # Aggregate manually
+        stats = {tid: {"upvotes": 0, "downvotes": 0, "user_vote": 0} for tid in id_list}
+        
+        for v in votes_data:
+            tid = v["test_id"]
+            if tid not in stats:
+                continue
+                
+            v_type = v.get("vote_type")
+            if v_type == 1:
+                stats[tid]["upvotes"] += 1
+            elif v_type == -1:
+                stats[tid]["downvotes"] += 1
+                
+            if user_id and v.get("user_id") == user_id:
+                stats[tid]["user_vote"] = v_type
+                
+        # Format as list
+        return [{"test_id": k, **v} for k, v in stats.items()]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
