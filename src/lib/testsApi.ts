@@ -269,11 +269,41 @@ export async function getNextTestId(prefix: 'M' | 'YT'): Promise<string> {
     }
 }
 
-export async function fetchTestById(id: string) {
+// ─── Test Data Cache (stale-while-revalidate) ─────────────────
+const TEST_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+
+function _getCachedTest(id: string): any | null {
+    try {
+        const raw = localStorage.getItem(`test_cache_${id}`);
+        if (!raw) return null;
+        const { data, ts } = JSON.parse(raw);
+        if (Date.now() - ts > TEST_CACHE_TTL) {
+            localStorage.removeItem(`test_cache_${id}`);
+            return null;
+        }
+        return data;
+    } catch { return null; }
+}
+
+function _setCachedTest(id: string, data: any) {
+    try {
+        localStorage.setItem(`test_cache_${id}`, JSON.stringify({ data, ts: Date.now() }));
+    } catch { /* storage full — ignore */ }
+}
+
+export async function fetchTestById(id: string, onCacheHit?: (data: any) => void) {
+    // Serve stale cache immediately, revalidate in background
+    const cached = _getCachedTest(id);
+    if (cached && onCacheHit) {
+        onCacheHit(cached);
+    }
     try {
         const response = await apiClient.get(`/tests/${id}`);
-        return { data: response.data, error: null };
+        const data = response.data;
+        _setCachedTest(id, data);
+        return { data, error: null };
     } catch (error: any) {
+        if (cached) return { data: cached, error: null }; // fallback to cache on error
         console.error("Error fetching test details:", error);
         return { data: null, error: error };
     }
