@@ -267,14 +267,12 @@ export default function TestIntroPage() {
 
         setShowFullScreenDialog(false);
 
-        // Register Attempt
-        if (user) {
-            try {
-                const { registerTestStart } = await import('@/lib/attemptsApi');
-                await registerTestStart(user.id, test.id);
-            } catch (err) {
-                console.error("Error registering start:", err);
-            }
+        // Register Attempt (for both logged-in and anonymous users)
+        try {
+            const { registerTestStart } = await import('@/lib/attemptsApi');
+            await registerTestStart(user?.id || null, test.id);
+        } catch (err) {
+            console.error("Error registering start:", err);
         }
 
         // Request Fullscreen

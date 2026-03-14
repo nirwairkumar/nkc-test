@@ -35,7 +35,7 @@ export async function checkUserTestAttempt(user_id: string, test_id: string) {
     }
 }
 
-export async function registerTestStart(user_id: string, test_id: string) {
+export async function registerTestStart(user_id: string | null, test_id: string) {
     try {
         const response = await apiClient.post('/attempts/register', {
             user_id,
