@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -11,7 +15,7 @@ export default defineConfig(({ mode }) => ({
       '/api/yt': {
         target: 'https://www.youtube.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/yt/, ''),
+        rewrite: (p) => p.replace(/^\/api\/yt/, ''),
         headers: {
           'Origin': 'https://www.youtube.com',
           'Referer': 'https://www.youtube.com/'
@@ -20,7 +24,7 @@ export default defineConfig(({ mode }) => ({
       '/api': {
         target: 'http://localhost:8002',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (p) => p.replace(/^\/api/, ''),
       }
     }
   },
@@ -41,12 +45,13 @@ export default defineConfig(({ mode }) => ({
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.');
+          const name = assetInfo.name || '';
+          const info = name.split('.');
           const ext = info[info.length - 1];
-          if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(assetInfo.name)) {
+          if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(name)) {
             return 'assets/images/[name]-[hash][extname]';
           }
-          if (/\.css$/i.test(assetInfo.name)) {
+          if (/\.css$/i.test(name)) {
             return 'assets/css/[name]-[hash][extname]';
           }
           return 'assets/[name]-[hash][extname]';
