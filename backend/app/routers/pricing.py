@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.core.database import get_db
+from app.core.database import get_db, supabase
 from supabase import Client
 from typing import Optional, List, Any, Dict
 from pydantic import BaseModel
@@ -117,8 +117,8 @@ class ApplyPromoRequest(BaseModel):
 async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
     try:
         code = payload.code.upper()
-        # Fetch Promo
-        promo_res = db.table("promo_codes").select("*").eq("code", code).eq("is_active", True).execute()
+        # Fetch Promo using admin client (to bypass RLS for users)
+        promo_res = supabase.table("promo_codes").select("*").eq("code", code).eq("is_active", True).execute()
         if not promo_res.data:
             raise HTTPException(status_code=400, detail="Invalid or inactive promo code")
         
@@ -254,25 +254,34 @@ async def check_premium_access(db: Client = Depends(get_db)):
         print(f"Error checking premium access: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 @router.post("/create-order")
-async def create_order(payload: Dict[str, Any]):
+async def create_order(payload: Dict[str, Any], db: Client = Depends(get_db)):
     try:
-        # Use global supabase to invoke Edge Function
-        response = supabase.functions.invoke("create-order", {
+        # Invoke Edge Function (db client carries user auth)
+        response = db.functions.invoke("create-order", {
             "body": payload
         })
-        return response.data
+        
+        # Handle bytes response
+        import json
+        if isinstance(response, bytes):
+            return json.loads(response.decode())
+        return response
     except Exception as e:
         print(f"Error invoking create-order: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/verify-payment")
-async def verify_payment(payload: Dict[str, Any]):
+async def verify_payment(payload: Dict[str, Any], db: Client = Depends(get_db)):
     try:
-        # Use global supabase to invoke Edge Function
-        response = supabase.functions.invoke("verify-payment", {
+        # Invoke Edge Function (db client carries user auth)
+        response = db.functions.invoke("verify-payment", {
             "body": payload
         })
-        return response.data
+
+        import json
+        if isinstance(response, bytes):
+            return json.loads(response.decode())
+        return response
     except Exception as e:
         print(f"Error invoking verify-payment: {e}")
         raise HTTPException(status_code=500, detail=str(e))
