@@ -1,0 +1,3 @@
+L2342: EXCESSIVE CLOSE -> </div>
+L2343: EXCESSIVE CLOSE -> </div >
+Finished with empty stack (All matched correctly or excessive tags were handled)

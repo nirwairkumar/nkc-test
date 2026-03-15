@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V273PTS9DR"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-V273PTS9DR');
+    </script>
+    <meta charset="utf-8">
+    <title>ChemDoodle Web Components | Installation > Download</title>
+    <meta name="description" content="The ChemDoodle Web Components library is a pure JavaScript chemical graphics and cheminformatics library derived from the ChemDoodle application and produced by iChemLabs. ChemDoodle Web Components allow the wielder to present publication quality 2D and 3D graphics and animations for chemical structures, reactions and spectra. Beyond graphics, this tool provides a framework for user interaction to create dynamic applications through web browsers, desktop platforms and mobile devices such as the iPhone, iPad and Android devices. This library also has complete access to the entire ChemDoodle 2D API through AJAX, allowing for quick access to one of the most robust chemical graphics and informatics packages in existence directly through JavaScript.">
+    <meta name="keywords" content="chemical,chemistry,science,molecule,atom,bond,nmr,spectroscopy,reaction,IUPAC,cheminformatics,chemoinformatics,drawing,building,modeling,modelling,JavaScript,Java,HTML5,WebGL,software,desktop,web,mobile,chemical drawing,molecular modeling,IUPAC naming,NMR simulation,force field,elemental analysis,stereochemistry,CIP,SMILES">
+    <meta name="author" content="iChemLabs">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/css/stack-interface.css" rel="stylesheet" type="text/css" media="all">
+    <link href="/css/socicon.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="/css/iconsmind.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="/css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="/css/lightbox.min.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="/css/flickity.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="/css/stack-interface.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="/css/theme-no-forms.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="/css/custom.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:200,300,400,400i,500,600,700" rel="stylesheet">
+    <!-- ChemDoodle Web Components -->
+    <link rel="stylesheet" href="/libs/cwc/obsolete/jquery-ui-1.11.4.css" type="text/css">
+    <link rel="stylesheet" href="/libs/cwc/ChemDoodleWeb.css" type="text/css">
+    <script type="text/javascript" src="/libs/cwc/ChemDoodleWeb.js?v=11.0.0"></script>
+    <script type="text/javascript" src="/libs/cwc/obsolete/jquery-2.2.4.js"></script>
+    <script type="text/javascript" src="/libs/cwc/obsolete/jquery-ui-1.11.4.js"></script>
+    <script type="text/javascript" src="/libs/cwc/obsolete/jquery.ui.touch-punch.js"></script>
+    <script type="text/javascript" src="/libs/cwc/ChemDoodleWeb-uis.js?v=11.0.0"></script>
+    <script>
+        ChemDoodle.iChemLabs.SERVER_URL = '/cdcloud.php';
+    </script>
+    <!-- HighlightJS -->
+    <link rel="stylesheet" href="/libs/highlight/a11y-dark.css">
+    <script src="/libs/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+<style>
+#main-section ol {
+    padding-top: 25px;
+    margin-left: 50px;
+}
+#main-section ol>li {
+    margin-top: -25px;
+}
+#main-section ul{
+    margin-left: 50px;
+    list-style-type: circle;
+}
+</style>
+
+<body data-smooth-scroll-offset="77">
+    <div class="nav-container">
+    <div class="via-1566740174261" via="via-1566740174261" vio="iChemLabs">
+        <div class="bar bar--sm visible-xs">
+            <div class="container">
+                <div class="row">
+                    <div class="col-4 col-md-3">
+                        <a href="/"> <img class="logo logo-dark" alt="logo" src="/img/chemdoodleweb_logo.png"> <img
+                                class="logo logo-light" alt="logo" src="/img/chemdoodleweb_logo.png"> </a>
+                    </div>
+                    <div class="col-8 col-md-9 text-right">
+                        <a href="#" class="hamburger-toggle" data-toggle-class="#menu1;hidden-xs hidden-sm"> <i
+                                class="icon icon--sm stack-interface stack-menu"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav id="menu1" class="bar bar-1 hidden-xs">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-2 col-md-2 hidden-xs">
+                        <div class="bar__module">
+                            <a href="/"> <img class="logo logo-dark" alt="iChemLabs logo" src="/img/chemdoodleweb_logo.png">
+                                <img class="logo logo-light" alt="logo" src="/img/chemdoodleweb_logo.png"> </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-10 text-right text-left-xs text-left-sm col-md-11">
+                        <div class="bar__module">
+                            <ul class="menu-horizontal text-left">
+                                <li class="dropdown"> <span class="dropdown__trigger">
+                                        About
+                                    </span>
+                                    <div class="dropdown__container">
+                                        <div class="container">
+                                            <div class="row">
+                                                <div class="dropdown__content col-lg-3">
+                                                    <ul class="menu-vertical">
+                                                        <li> <a href="/#explanation">What is ChemDoodle Web?</a> </li>
+                                                        <li> <a href="/#advantages">Advantages</a> </li>
+                                                        <li> <a href="/#desktop">Desktop Solutions</a> </li>
+                                                        <li> <a href="/#questions">Questions?</a> </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="dropdown"> <span class="dropdown__trigger">
+                                        Demos
+                                    </span>
+                                    <div class="dropdown__container">
+                                        <div class="container">
+                                            <div class="row">
+                                                <div class="dropdown__content row w-100">
+                                                    <div class="col-lg-4">
+                                                        <h5>Interfaces</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/demos/2d-sketcher">2D Sketcher</a> </li>
+                                                            <li> <a href="/demos/3d-editor">3D Editor</a> </li>
+                                                            <li> <a href="/demos/ada-wcag-accessibility-compliance">ADA & WCAG Accessibility</a> </li>
+                                                            <li> <a href="/demos/iza-zeolite-explorer">IZA Zeolite Explorer</a> </li>
+                                                            <li> <a href="/demos/pdb-ribbons">PDB Ribbons</a> </li>
+                                                            <li> <a href="/demos/molgrabber-3d">MolGrabber 3D</a> </li>
+                                                        </ul>
+                                                        <h5>Education</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/demos/automatic-structure-grading">Automatic Structure Grading</a> </li>
+                                                            <li> <a href="/demos/lewis-dot-structures">Lewis Dot Structures</a> </li>
+                                                            <li> <a href="/demos/mechanism-matching">Mechanism Matching</a> </li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <h5>Cheminformatics</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/demos/2d-coordinate-generation">2D Coordinate Generation</a> </li>
+                                                            <li> <a href="/demos/balance-reaction">Balance Reaction Equation</a> </li>
+                                                            <li> <a href="/demos/calculate-molecule-properties">Calculate Molecule Properties</a> </li>
+                                                            <li> <a href="/demos/elemental-analysis">Elemental Analysis</a> </li>
+                                                            <li> <a href="/demos/iupac-naming">IUPAC Naming</a> </li>
+                                                            <li> <a href="/demos/simulate-nmr-and-ms">Simulate NMR and MS</a> </li>
+                                                            <li> <a href="/demos/stereochemistry">Stereochemistry</a> </li>
+                                                            <li> <a href="/demos/stoichiometry">Stoichiometry</a> </li>
+                                                        </ul>
+                                                        <h5>Molecular Modeling</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/demos/3d-coordinate-generation">3D Coordinate Generation</a> </li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <h5>Games</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/demos/benzene-pong">Benzene Pong</a> </li>
+                                                            <li> <a href="/demos/memory-game">Memory Game</a> </li>
+                                                        </ul>
+                                                        <h5>File I/O</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/demos/chemdraw-cdx-viewer">ChemDraw CDX Viewer</a> </li>
+                                                            <li> <a href="/demos/chemical-image-recovery">Chemical Image Recovery</a> </li>
+                                                            <li> <a href="/demos/smiles">SMILES</a> </li>
+                                                            <li> <a href="/demos/wiswesser-line-notation">Wiswesser Line Notation (WLN)</a> </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="dropdown"> <span class="dropdown__trigger">
+                                        Tutorial
+                                    </span>
+                                    <div class="dropdown__container">
+                                        <div class="container">
+                                            <div class="row">
+                                                <div class="dropdown__content row w-100">
+                                                    <div class="col-lg-4">
+                                                        <h5>Basics</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/tutorial/introduction">Introduction</a> </li>
+                                                            <li> <a href="/tutorial/loading-data">Loading Data</a> </li>
+                                                            <li> <a href="/tutorial/initializing-canvases">Initializing Canvases</a> </li>
+                                                            <li> <a href="/tutorial/retrieving-data">Retrieving Data</a> </li>
+                                                            <li> <a href="/tutorial/input-events">Input Events</a> </li>
+                                                            <li> <a href="/tutorial/drawing-on-canvases">Drawing on Canvases</a> </li>
+                                                            <li> <a href="/tutorial/extending-canvases">Extending Canvases</a> </li>
+                                                            <li> <a href="/tutorial/animations">Animations</a> </li>
+                                                            <li> <a href="/tutorial/tips-and-tricks">Tips and Tricks</a> </li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <h5>2D Structure Canvases</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/tutorial/2d-structure-canvases/viewer-canvas">ViewerCanvas</a> </li>
+                                                            <li> <a href="/tutorial/2d-structure-canvases/hyperlink-canvas">HyperlinkCanvas</a> </li>
+                                                            <li> <a href="/tutorial/2d-structure-canvases/rotator-canvas">RotatorCanvas</a> </li>
+                                                            <li> <a href="/tutorial/2d-structure-canvases/transform-canvas">TransformCanvas</a> </li>
+                                                            <li> <a href="/tutorial/2d-structure-canvases/slideshow-canvas">SlideshowCanvas</a> </li>
+                                                            <li> <a href="/tutorial/2d-structure-canvases/molgrabber-canvas">MolGrabberCanvas</a> </li>
+                                                            <li> <a href="/tutorial/2d-structure-canvases/sketcher-canvas">SketcherCanvas</a> </li>
+                                                        </ul>
+                                                        <h5>3D Structure Canvases</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/tutorial/3d-structure-canvases/viewer3d-canvas">ViewerCanvas3D</a> </li>
+                                                            <li> <a href="/tutorial/3d-structure-canvases/rotator3d-canvas">RotatorCanvas3D</a> </li>
+                                                            <li> <a href="/tutorial/3d-structure-canvases/transform3d-canvas">TransformCanvas3D</a> </li>
+                                                            <li> <a href="/tutorial/3d-structure-canvases/molgrabber3d-canvas">MolGrabberCanvas3D</a> </li>
+                                                            <li> <a href="/tutorial/3d-structure-canvases/movie3d-canvas">MovieCanvas3D</a> </li>
+                                                            <li> <a href="/tutorial/3d-structure-canvases/editor3d-canvas">EditorCanvas3D</a> </li>
+                                                        </ul>
+                                                        <h5>Spectrum Canvases</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/tutorial/spectrum-canvases/observer-canvas">ObserverCanvas</a> </li>
+                                                            <li> <a href="/tutorial/spectrum-canvases/overlay-canvas">OverlayCanvas</a> </li>
+                                                            <li> <a href="/tutorial/spectrum-canvases/perspective-canvas">PerspectiveCanvas</a> </li>
+                                                            <li> <a href="/tutorial/spectrum-canvases/seeker-canvas">SeekerCanvas</a> </li>
+                                                        </ul>
+                                                        <h5>Other Canvases</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/tutorial/other-canvases/periodic-table-canvas">PeriodicTableCanvas</a> </li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <h5>Advanced</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/tutorial/advanced/developing-plugins">Developing Plugins</a> </li>
+                                                            <li> <a href="/tutorial/advanced/image-export">Image Export</a> </li>
+                                                            <li> <a href="/tutorial/advanced/initializing-components-after-closing-the-dom">Initializing Components after Closing the DOM</a> </li>
+                                                            <li> <a href="/tutorial/advanced/lewis-dot-structures">Lewis Dot Structures</a> </li>
+                                                            <li> <a href="/tutorial/advanced/reactjs-development">ReactJS Development</a> </li>
+                                                            <li> <a href="/tutorial/advanced/sketcher-application-window">Sketcher: Application Window</a> </li>
+                                                            <li> <a href="/tutorial/advanced/sketcher-listening-to-user-changes">Sketcher: Listening to User Changes</a> </li>
+                                                            <li> <a href="/tutorial/advanced/sketcher-query-sketcher">Sketcher: Query Sketcher</a> </li>
+                                                            <li> <a href="/tutorial/advanced/structurespectrum-correlations">Structure/Spectrum Correlations</a> </li>
+                                                            <li> <a href="/tutorial/advanced/styles">Styles</a> </li>
+                                                            <li> <a href="/tutorial/advanced/transparent-backgrounds">Transparent Backgrounds</a> </li>
+                                                            <li> <a href="/tutorial/advanced/working-with-cif-files">Working with CIF Files</a> </li>
+                                                            <li> <a href="/tutorial/advanced/working-with-pdb-files">Working with PDB Files</a> </li>
+                                                        </ul>
+                                                        <h5>Non-Canvas Components</h5>
+                                                        <ul class="menu-vertical">
+                                                            <li> <a href="/tutorial/non-canvas/stoichiometry-table">Stoichiometry Table</a> </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="dropdown"> <span class="dropdown__trigger">
+                                        Docs
+                                    </span>
+                                    <div class="dropdown__container">
+                                        <div class="container">
+                                            <div class="row">
+                                                <div class="dropdown__content col-lg-5">
+                                                    <ul class="menu-vertical">
+                                                        <li> <a href="/docs/api">Application Programming Interface (API)</a> </li>
+                                                        <li> <a href="/docs/chemdoodle-json-format">ChemDoodle JSON Format</a> </li>
+                                                        <li> <a href="/docs/ichemlabs-cloud-services">iChemLabs Cloud Services</a> </li>
+                                                        <li> <a href="/docs/2d-shapes">2D Shapes</a> </li>
+                                                        <li> <a href="/docs/3d-shapes">3D Shapes</a> </li>
+                                                        <li> <a href="https://doi.org/10.1186/s13321-015-0085-3" target="_blank">JCheminformatics: ChemDoodle Web Components</a> </li>
+                                                        <li> <a href="https://doi.org/10.1186/s13321-019-0331-1" target="_blank">JCheminformatics: JavaScript in Chemistry</a> </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="dropdown"> <span class="dropdown__trigger">
+                                        Install
+                                    </span>
+                                    <div class="dropdown__container">
+                                        <div class="container">
+                                            <div class="row">
+                                                <div class="dropdown__content col-lg-3">
+                                                    <ul class="menu-vertical">
+                                                        <li> <a href="/installation/license">License</a> </li>
+                                                        <li> <a href="/installation/download">Download</a> </li>
+                                                        <li> <a href="/installation/browser-compatibility">Browser Compatibility</a> </li>
+                                                        <li> <a href="/installation/web-components-builder">Web Components Builder</a> </li>
+                                                        <li> <a href="/installation/changelog">Change Log</a> </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="dropdown"> <span class="dropdown__trigger">
+                                        Store
+                                    </span>
+                                    <div class="dropdown__container">
+                                        <div class="container">
+                                            <div class="row">
+                                                <div class="dropdown__content col-lg-3">
+                                                    <ul class="menu-vertical">
+                                                        <li> <a href="https://www.ichemlabs.com/buycwcsupport" target="_blank">Support</a> </li>
+                                                        <li> <a href="https://www.ichemlabs.com/fcs" target="_blank">Cloud Services Request</a> </li>
+                                                        <li> <a href="/store/proprietary-licensing">Proprietary Licensing</a> </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="bar__module">
+                            <a class="btn btn--sm btn--primary type--uppercase" href="/installation/download"> <span
+                                    class="btn__text">
+                                    Download
+                                </span> </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>    <div class="main-container">
+        <section id="main-section" class="text-left pt-5">
+            <div class="container">
+                <div class="row d-flex justify-content-center">
+                    <div class="col-md-10 col-lg-8">
+                        <h2>Installation > Download</h2>
+                    </div>
+                </div>
+                <div class="row d-flex justify-content-center">
+                    <div class="col-md-10 col-lg-8">
+
+<p><a name="download"></a>To ensure the continued success of
+    <strong>ChemDoodle Web Components</strong>, <a href="https://www.ichemlabs.com">iChemLabs</a> is dedicated to
+    funding and developing this project. Please also help us by mentioning it to your colleagues and friends and placing
+    a link to us on your webpage. If you really like <strong>ChemDoodle Web Components</strong>, you may also enjoy <a
+        href="https://www.chemdoodle.com">ChemDoodle</a>, our advanced and affordable chemical structure environment
+    that works on all operating systems.
+</p>
+<p><a class="btn btn--primary type--uppercase" href="/downloads/ChemDoodleWeb-11.0.0.zip"> <span class="btn__text"> Download ChemDoodle Web Components
+    v11.0.0 </span> </a>
+    <br>
+    <strong>SHA256 checksum:</strong> 23bd18e8d32f2b287d63dccb0976070e06f24df6a0f2c81ad8b995341fa9e505    <br>
+    <em>ChemDoodleWeb.js is only 420 KB!</em>
+</p>
+<h3>Setup</h3>
+<p>
+    Setting up <strong>ChemDoodle Web Components</strong> for use on your website is very simple and consists of 3 easy
+    steps:
+</p>
+<ol>
+    <li>
+        <a href="#download">Download</a> the <strong>ChemDoodle Web Components</strong> library above.
+    </li>
+    <li>
+        Install the following files on your website. This can be done by simply copying the files to your server so
+        they are accessible by your webpages.
+        <ol style="list-style-type: lower-alpha;">
+            <li>
+                ChemDoodleWeb.css
+            </li>
+            <li>
+                ChemDoodleWeb.js
+            </li>
+        </ol>
+    </li>
+    <li>
+        Link to the essential files as <strong>URI</strong> resources in the <strong>&lt;head&gt;</strong> section
+        of all the pages in which you would like to use the components. <em>[path]</em> is a placeholder and should be the path to the installation files on
+        your web server.
+    </li>
+</ol>
+
+<pre><code>&lt;link rel="stylesheet" href="[path]/ChemDoodleWeb.css" type="text/css">
+&lt;script type="text/javascript" src="[path]/ChemDoodleWeb.js">&lt;/script></code></pre>
+<p>Congratulations! <strong>ChemDoodle Web Components</strong> is now installed and ready for you to use!</p>
+
+<h3>Getting Started</h3>
+<p>Please refer to the <a href="/tutorial/introduction">Tutorial</a> menu on the top of this website to begin using the
+    <strong>ChemDoodle Web Components</strong>.
+</p>
+<p>The <em>ChemDoodleWeb/samples</em> directory in the download contains various sample <strong>HTML</strong> files for
+    different components. Just open these files in a web browser to see them work, and view their source to learn how
+    they work.
+</p>
+<p>We also recommend reading the following two reviews in the Journal of Cheminformatics:
+</p>
+<ul>
+    <li> <a href="https://doi.org/10.1186/s13321-015-0085-3" target="_blank">ChemDoodle Web Components: HTML5 toolkit for chemical graphics, interfaces, and informatics</a> </li>
+    <li> <a href="https://doi.org/10.1186/s13321-019-0331-1" target="_blank">Programming languages in chemistry: a review of HTML5/JavaScript</a> </li>
+</ul>
+
+<h3>3rd Party Libraries</h3><a name="libraries"></a>
+<p>ChemDoodle uses the following 3rd party libraries, which are encapsulated in the <em>ChemDoodle</em> scope
+    (<em>ChemDoodle.lib</em>):</p>
+<ul>
+    <li><a href="https://github.com/gliffy/canvas2svg" target="_blank">canvas2svg</a> - Convert content on the canvas into SVG.
+        MIT license.</li>
+    <li><a href="https://github.com/toji/gl-matrix" target="_blank">glMatrix</a> - A high performance matrix maths library by
+        Brandon Jones. MIT license.</li>
+    <li><a href="https://github.com/jsplumb/jsBezier" target="_blank">jsBezier</a> - Mathematical functions for working with
+        bezier curves. MIT license.</li>
+    <li><a href="https://github.com/mikolalysenko/isosurface" target="_blank">isosurface</a> - Marching cubes support. MIT
+        license.</li>
+</ul>
+
+<p>The following libraries are only included when you import the <em>uis</em> extension, which are also encapsulated in the <em>ChemDoodle</em> scope (<em>ChemDoodle.lib</em>):</p>
+<ul>
+    <li><a href="https://floating-ui.com/" target="_blank">Floating UI</a> - a small library that helps you create "floating" elements such as tooltips, popovers, dropdowns, and more. MIT license. <strong>(uis extension only)</strong></li>
+</ul>
+
+<p>Because these libraries are encapsulated in the <em>ChemDoodle</em> scope, they will not interfere with any other versions
+    of these libraries linked on your page. For instance, you can link another version of
+    <strong>glMatrix</strong> on your page and it will not interfere with <strong>ChemDoodle Web
+        Components</strong> or vice versa.</p>
+
+<p>You may find that you need to update to a newer version or use an older version of one of the libraries used
+    by <strong>ChemDoodle Web Components</strong> (if you are customizing the <strong>ChemDoodle Web
+        Components</strong> for instance). In this case, you will need to replace the appropriate library in the
+    source and properly update the third party library to reference the <em>ChemDoodle.lib</em> scope. There is
+    no guarantee that <strong>ChemDoodle Web Components</strong> will continue to work if there are major
+    differences between the provided version of these libraries and the ones you are replacing it with. More
+    information about these libraries can be found in the <strong>ChemDoodle Web Components</strong> download.
+</p>
+
+
+
+                                            </div>
+                </div>
+            </div>
+        </section>
+                <footer class="space--sm footer-1 text-center-xs">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <ul class="list-inline list--hover">
+                            <li> <a href="https://www.ichemlabs.com"><span>Our Company</span></a> </li>
+                            <li> <a href="/installation/download"><span>Download</span></a> </li>
+                            <li> <a href="/tutorial/introduction"><span>Tutorial</span></a> </li>
+                            <li> <a href="/installation/license"><span>GPL License</span></a> </li>
+                            <li> <a href="/store/proprietary-licensing"><span>Proprietary License</span></a> </li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-6 text-right text-center-xs">
+                        <ul class="social-list list-inline list--hover">
+                            <li><a href="https://www.youtube.com/user/ichemlabs" target="_blank"><i class="socicon socicon-youtube icon icon--xs" _target="blank"></i></a></li><li><a href="https://www.linkedin.com/company/ichemlabs" target="_blank"><i class="socicon socicon-linkedin icon icon--xs" _target="blank"></i></a></li><li><a href="https://twitter.com/ichemlabs" target="_blank"><i class="socicon socicon-twitter icon icon--xs" _target="blank"></i></a></li><li><a href="https://facebook.com/chemdoodle" target="_blank"><i class="socicon socicon-facebook icon icon--xs" _target="blank"></i></a></li><li><a href="https://www.instagram.com/ichemlabs" target="_blank"><i class="socicon socicon-instagram icon icon--xs" _target="blank"></i></a></li><li><a href="https://www.ichemlabs.com/news/feed.xml" target="_blank"><i class="socicon socicon-rss icon icon--xs" _target="blank"></i></a></li>                        </ul>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-sm-12">
+                        <a href="https://www.ichemlabs.com" class="inner-link mr-3"><img alt="Image" class="logo" src="/img/ichemlabs_logo.png"></a>
+                        <span class="type--fine-print">© 2007-2026 iChemLabs, LLC.</span>
+                        <a class="type--fine-print" href="https://ichemlabs.com/legal?tab=privacy">Privacy Policy</a>
+                        <a class="type--fine-print" href="https://ichemlabs.com/legal?tab=terms">Terms of Use</a>
+                        <a class="type--fine-print" href="https://ichemlabs.com/legal">Legal</a> </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <div id="chemdoodle_ad">
+        <p style="font-weight: bold;">Get your work done with our popular desktop software.</p>
+        <div class="container">
+            <div class="row d-flex justify-content-center">
+                    <div class="col-4 text-center feature boxed boxed--border border--round bg--secondary p-0 mx-2 mb-3"><a href="https://www.chemdoodle.com" class="block"><img src="/img/icons/chemdoodle.png" width="72" height="72" class="mb-1 mt-2"/><h5>ChemDoodle 2D</h5></a></div><div class="col-4 text-center feature boxed boxed--border border--round bg--secondary p-0 mx-2 mb-3"><a href="https://www.chemdoodle.com/3d" class="block"><img src="/img/icons/chemdoodle3d.png" width="72" height="72" class="mb-1 mt-2"/><h5>ChemDoodle 3D</h5></a></div>            </div>
+        </div>
+    </div>
+    <script src="/js/jquery-3.1.1.min.js"></script>
+    <script src="/js/flickity.min.js"></script>
+    <script src="/js/parallax.js"></script>
+    <script src="/js/isotope.min.js"></script>
+    <script src="/js/lightbox.min.js"></script>
+    <script src="/js/smooth-scroll.min.js"></script>
+    <script src="/js/scripts.js?version=1"></script>
+    <script>
+        var is_root =/^\/(index|index.php)?$/i.test(location.pathname);
+        if(!is_root){
+            $( document ).ready(function() {
+                $('#chemdoodle_ad').attr('class', 'show');
+                $(document).mouseup(function (event) {            
+                    $('#chemdoodle_ad').attr('class', '');
+                });
+            });
+        }
+        // safari loads at the sketcher
+        var isSafari = !!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/);
+        if(isSafari){
+            var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if(!ChemDoodle.featureDetection.supports_touch()){
+                $( document ).ready(function() {
+                    window.scroll(0,0);
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>
+
+</body>
+
+</html>

@@ -8,6 +8,12 @@ export interface TestSection {
     negative_marks?: number | string;
     question_type?: string;
     questions: Question[];
+    attempt_control?: {
+        enabled: boolean;
+        max_attempts?: number;
+        mode?: 'hard' | 'soft' | string;
+        soft_type?: 'first_n' | 'best_n' | string;
+    };
 }
 
 export interface Test {
