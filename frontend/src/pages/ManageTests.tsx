@@ -616,7 +616,7 @@ export default function ManageTests() {
                                                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1.5">
                                                         <span className="flex items-center gap-1.5">
                                                             <FileText className="w-3.5 h-3.5 opacity-70" />
-                                                            {test.questions?.length || 0} Qs
+                                                            {test.total_questions || test.questions?.length || 0} Qs
                                                         </span>
                                                         <span className="text-slate-300">•</span>
                                                         <span className="flex items-center gap-1.5">

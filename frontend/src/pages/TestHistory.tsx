@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import Latex from 'react-latex-next';
+import LatexRenderer from '@/components/ui/LatexRenderer';
 
 interface Attempt {
     id: string;
@@ -252,7 +252,7 @@ export default function TestHistory() {
                                                                             <div key={key} className="flex items-start gap-2 mt-1">
                                                                                 <span className="font-semibold whitespace-nowrap min-w-[1.5rem]">{key})</span>
                                                                                 <div className="flex flex-col gap-1">
-                                                                                    {optText && <span><Latex>{optText}</Latex></span>}
+                                                                                    {optText && <span><LatexRenderer>{optText}</LatexRenderer></span>}
                                                                                     {optImg && (
                                                                                         <img
                                                                                             src={optImg.trim()}
@@ -287,7 +287,7 @@ export default function TestHistory() {
                                                                     <div key={q.id} className={`p-4 rounded-lg border ${isCorrect ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}`}>
                                                                         <div className="mb-3">
                                                                             <span className="font-bold mr-2 text-slate-500">{idx + 1}.</span>
-                                                                            <span className="font-medium"><Latex>{q.question}</Latex></span>
+                                                                            <span className="font-medium"><LatexRenderer>{q.question}</LatexRenderer></span>
                                                                             {q.image && (
                                                                                 <div className="mt-2">
                                                                                     <img src={q.image} alt="Question" className="max-h-[150px] rounded border" />

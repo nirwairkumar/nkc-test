@@ -259,6 +259,13 @@ let snippetTimeout: any = null;
 
 export function fetchTestCardSnippet(testId: string): Promise<{ data: any, error: any }> {
     return new Promise((resolve, reject) => {
+        // Prevent invalid IDs (e.g. skeletons) from crashing the PostgreSQL batch query
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!testId || !uuidRegex.test(testId)) {
+            resolve({ data: null, error: new Error('Invalid Test ID') });
+            return;
+        }
+
         if (!snippetResolvers.has(testId)) {
             snippetResolvers.set(testId, []);
             snippetQueue.push(testId);
@@ -313,7 +320,7 @@ async function processSnippetQueue() {
 
 export async function getNextTestId(prefix: 'M' | 'YT'): Promise<string> {
     try {
-        const response = await apiClient.get('/tests/next-id', {
+        const response = await apiClient.get('tests/next-id', {
             params: { prefix }
         });
         return response.data?.next_id || `${prefix}001`;

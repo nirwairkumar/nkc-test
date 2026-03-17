@@ -9,9 +9,10 @@ interface TestVoteButtonsProps {
     testId: string;
     userId?: string;
     isCreatorOrAdmin?: boolean;
+    className?: string; // Allow custom styling from parent
 }
 
-export default function TestVoteButtons({ testId, userId: propUserId, isCreatorOrAdmin = false }: TestVoteButtonsProps) {
+export default function TestVoteButtons({ testId, userId: propUserId, isCreatorOrAdmin = false, className }: TestVoteButtonsProps) {
     const { user, isAdmin } = useAuth();
     const userId = propUserId || user?.id;
     // Derive if creator/admin if not explicitly passed
@@ -85,7 +86,7 @@ export default function TestVoteButtons({ testId, userId: propUserId, isCreatorO
     };
 
     return (
-        <div className="flex items-center space-x-0.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-full px-1">
+        <div className={`flex items-center space-x-0 bg-slate-100/50 dark:bg-slate-800/50 px-1 ${className || 'rounded-full'}`}>
             <Button
                 variant="ghost"
                 size="icon"
@@ -96,9 +97,9 @@ export default function TestVoteButtons({ testId, userId: propUserId, isCreatorO
             </Button>
 
             {/* Display counts conditionally based on role */}
-            <div className="flex items-center text-xs font-medium px-1 text-slate-600 dark:text-slate-400">
+            <div className="flex items-center text-xs font-medium -ml-1 mr-1 text-slate-600 dark:text-slate-400 min-w-[12px] justify-center">
                 {isCreatorOrAdmin ? (
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-1.5">
                         <span className="text-orange-600 dark:text-orange-400 font-bold" title="Upvotes">{upvotes}</span>
                         <span className="text-blue-500 dark:text-blue-400 font-bold" title="Downvotes">{downvotes}</span>
                     </div>
