@@ -25,9 +25,12 @@ import {
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
 import { FeedbackForm } from '@/components/FeedbackForm';
-import Latex from 'react-latex-next';
+import { useAuth } from '@/contexts/AuthContext';
+import 'katex/dist/katex.min.css';
+import LatexRenderer from '@/components/ui/LatexRenderer';
 import { toast } from 'sonner';
-import { Share2 } from 'lucide-react'; // ensure Share2 is imported, although it might be already
+import { Share2 } from 'lucide-react';
+import TestVoteButtons from '@/components/TestVoteButtons';
 
 interface TestResult {
   id: string;
@@ -179,8 +182,8 @@ const ResultsPage = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header Actions */}
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Result Analysis</h1>
-          <div className="flex gap-2">
+          <h1 className="text-xl md:text-3xl font-bold hidden md:block">Result Analysis</h1>
+          <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
             <Button
               variant="default"
               size="sm"
@@ -197,23 +200,32 @@ const ResultsPage = () => {
 
         {/* Score Card */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-xl">
+          <Card className="md:col-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-xl relative overflow-hidden">
             <CardContent className="p-6 flex flex-col justify-between h-full">
-              <div>
-                <h2 className="text-2xl font-semibold opacity-90">{selectedTest?.title}</h2>
-                <p className="text-indigo-100">Test Completed Successfully</p>
+              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                <div className="pr-12 md:pr-0">
+                  <h2 className="text-lg md:text-2xl font-semibold opacity-90 leading-tight">{selectedTest?.title}</h2>
+                  <p className="text-indigo-100 text-sm md:text-base mt-1">Test Completed Successfully</p>
+                </div>
               </div>
 
-              <div className="flex items-end gap-4 mt-6">
-                <div>
-                  <span className="text-6xl font-bold">{parseFloat(finalScore.toFixed(2))}</span>
-                  <span className="text-2xl opacity-75">/{totalMaxMarks}</span>
+              <div className="flex items-end justify-between gap-4 mt-6">
+                <div className="flex items-end gap-3 md:gap-4">
+                  <div>
+                    <span className="text-5xl md:text-6xl font-bold">{parseFloat(finalScore.toFixed(2))}</span>
+                    <span className="text-xl md:text-2xl opacity-75">/{totalMaxMarks}</span>
+                  </div>
+                  <div className="mb-1 md:mb-2">
+                    <Badge variant="secondary" className="text-sm md:text-lg px-2 md:px-3 py-1">
+                      {percentage}% Score
+                    </Badge>
+                  </div>
                 </div>
-                <div className="mb-2">
-                  <Badge variant="secondary" className="text-lg px-3 py-1">
-                    {percentage}% Score
-                  </Badge>
-                </div>
+                {testId && (
+                  <div className="absolute bottom-0 right-0 md:static bg-white/20 backdrop-blur-md rounded-tl-lg md:rounded-full p-0.5 shadow-sm border-t border-l md:border border-white/30 self-end scale-90 md:scale-100 origin-bottom-right z-10 transition-all">
+                    <TestVoteButtons testId={testId} className="!bg-transparent rounded-none md:rounded-full" />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -254,10 +266,6 @@ const ResultsPage = () => {
                       {sec.name}
                       <span className="text-sm font-normal text-slate-500">{sec.totalQ} Qs</span>
                     </CardTitle>
-                    <CardDescription className="flex justify-between text-xs mt-1">
-                      <span>Mark/Q: <span className="text-green-600 font-medium">+{sec.marksPerQuestion}</span></span>
-                      <span>Neg Mark: <span className="text-red-500 font-medium">-{sec.negativeMarks}</span></span>
-                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -351,8 +359,7 @@ const ResultsPage = () => {
                           {index + 1}
                         </div>
                         <div className="flex-1 font-medium text-sm line-clamp-1">
-                          {/* @ts-ignore */}
-                          <Latex strict={false} {...({ trust: true } as any)}>{q.question}</Latex>
+                          <LatexRenderer>{q.question}</LatexRenderer>
                         </div>
                         <div className="mr-2 flex items-center gap-3">
                           {/* Marks Display: Obtained / Total */}
@@ -378,8 +385,7 @@ const ResultsPage = () => {
                     <AccordionContent className="px-4 pb-4">
                       <div className="space-y-4 pt-2">
                         <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3">
-                          {/* @ts-ignore */}
-                          <Latex strict={false} {...({ trust: true } as any)}>{q.question}</Latex>
+                          <LatexRenderer>{q.question}</LatexRenderer>
                         </div>
 
                         {/* Question Image */}
@@ -421,8 +427,7 @@ const ResultsPage = () => {
                                         ? (ans as string[]).join(', ') // Multi
                                         : `${ans}) ` // Single
                                     }
-                                    {/* @ts-ignore */}
-                                    {q.type !== 'numerical' && !Array.isArray(ans) && <Latex strict={false} {...({ trust: true } as any)}>{q.options[ans]}</Latex>}
+                                    {q.type !== 'numerical' && !Array.isArray(ans) && <LatexRenderer>{q.options[ans]}</LatexRenderer>}
                                   </span>
                                   {q.type !== 'numerical' && !Array.isArray(ans) && q.optionImages?.[ans] && (
                                     <img
@@ -449,8 +454,7 @@ const ResultsPage = () => {
                                 ) : (
                                   `${q.correctAnswer}) `
                                 )}
-                                {/* @ts-ignore */}
-                                {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <Latex strict={false} {...({ trust: true } as any)}>{q.options[q.correctAnswer as string]}</Latex>}
+                                {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer>{q.options[q.correctAnswer as string]}</LatexRenderer>}
                               </span>
                               {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                 <img

@@ -75,7 +75,7 @@ export function UserTestCard({
                     {/* --- Zone B: Metadata (Clean Row) --- */}
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1">
                         <span className="flex items-center gap-1.5">
-                            <span className="opacity-70 font-semibold">{test.questions?.length || 0}</span> Qs
+                            <span className="opacity-70 font-semibold">{test.total_questions || test.questions?.length || 0}</span> Qs
                         </span>
                         <span className="text-slate-300">•</span>
                         <span className="flex items-center gap-1.5">

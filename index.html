@@ -46,6 +46,16 @@
   <!-- Preload Critical Assets -->
   <link rel="preload" href="/logo-testoza.svg" as="image" type="image/svg+xml" />
   <link rel="preload" href="/src/main.tsx" as="script" />
+
+  <!-- Add KaTeX and mhchem extension globally -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
+    integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71bZlhw5v6" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"
+    integrity="sha384-cpW21h6RZv/phavutF+Gpb8ABRqz0+svSSzgwZk5ktdmgqweqE2z/fGOy/BikBfD"
+    crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/mhchem.min.js"
+    integrity="sha384-sO9m1K112+O4aQ3XjM8rD5BqNbsYPUq92yO70sE25qHw8+Wq5z8Xz+s9UuE2qZ1m"
+    crossorigin="anonymous"></script>
   <!-- Prefetch Important Routes -->
   <link rel="prefetch" href="/" />
   <link rel="prefetch" href="/auth" />

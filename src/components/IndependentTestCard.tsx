@@ -20,29 +20,36 @@ interface IndependentTestCardProps {
 export default function IndependentTestCard({ testId, initialTitle, user, onManageTest }: IndependentTestCardProps) {
     const [test, setTest] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isRetrying, setIsRetrying] = useState(false);
     const navigate = useNavigate();
+
+    const fetchSnippet = async (isRetry = false) => {
+        if (isRetry) setIsRetrying(true);
+        if (testId.startsWith('pending-')) {
+            if (isRetry) setIsRetrying(false);
+            return;
+        }
+
+        try {
+            const { data, error } = await fetchTestCardSnippet(testId);
+            if (data) {
+                setTest(data);
+            } else if (error) {
+                setTest({ error: true });
+            }
+        } catch (err) {
+            setTest({ error: true });
+        } finally {
+            setLoading(false);
+            if (isRetry) setIsRetrying(false);
+        }
+    };
 
     useEffect(() => {
         let mounted = true;
-        const loadSnippet = async () => {
-            try {
-                const { data, error } = await fetchTestCardSnippet(testId);
-                if (mounted) {
-                    if (data) {
-                        setTest(data);
-                    } else if (error) {
-                        setTest({ error: true });
-                    }
-                    setLoading(false);
-                }
-            } catch (err) {
-                if (mounted) {
-                    setTest({ error: true });
-                    setLoading(false);
-                }
-            }
-        };
-        loadSnippet();
+        fetchSnippet().then(() => {
+            if (!mounted) return;
+        });
         return () => { mounted = false; };
     }, [testId]);
 
@@ -61,8 +68,19 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
         return (
             <Card className="flex flex-col h-full items-center justify-center p-6 text-center border-slate-200 dark:border-slate-800 bg-slate-50/50">
                 <div className="text-muted-foreground text-sm mb-2 font-medium">Test Not Found</div>
+                {initialTitle && (
+                    <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 leading-tight line-clamp-2">{initialTitle}</div>
+                )}
                 <div className="text-[10px] text-muted-foreground mb-3 opacity-50 px-2 line-clamp-1">{testId}</div>
-                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => window.location.reload()}>Retry</Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => fetchSnippet(true)}
+                    disabled={isRetrying}
+                >
+                    {isRetrying ? 'Retrying...' : 'Retry'}
+                </Button>
             </Card>
         );
     }

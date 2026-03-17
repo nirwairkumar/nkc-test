@@ -24,7 +24,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import Latex from 'react-latex-next';
+import LatexRenderer from '@/components/ui/LatexRenderer';
 import ScientificCalculator from '@/components/ScientificCalculator';
 import { submitReport } from '@/lib/reportsApi';
 import { analyticsApi } from '@/lib/analyticsApi';
@@ -1340,8 +1340,7 @@ export default function TestPage() {
                   </h3>
                 </div>
                 <div className="p-6 text-base leading-relaxed text-slate-800 dark:text-slate-200 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
-                  {/* @ts-ignore */}
-                  <Latex strict={false} {...({ trust: true } as any)}>{currentQuestion.passageContent}</Latex>
+                  <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer>
                 </div>
               </div>
 
@@ -1351,8 +1350,7 @@ export default function TestPage() {
                 <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
                   <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Passage Reference</div>
                   <div className="text-sm leading-relaxed max-h-48 overflow-y-auto bg-slate-50 p-3 rounded border [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
-                    {/* @ts-ignore */}
-                    <Latex strict={false} {...({ trust: true } as any)}>{currentQuestion.passageContent}</Latex>
+                    <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer>
                   </div>
                 </div>
 
@@ -1428,8 +1426,7 @@ export default function TestPage() {
                     {/* Question Text */}
                     <div className="text-lg md:text-xl text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]">
                       <div className="overflow-x-auto max-w-full">
-                        {/* @ts-ignore */}
-                        <Latex strict={false} {...({ trust: true } as any)}>{currentQuestion.question}</Latex>
+                        <LatexRenderer>{currentQuestion.question}</LatexRenderer>
                       </div>
                     </div>
 
@@ -1510,7 +1507,7 @@ export default function TestPage() {
                               </div>
 
                               <div className="flex-1 flex flex-col gap-2">
-                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex strict={false} {...({ trust: true } as any)}>{text}</Latex></div>}
+                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><LatexRenderer>{text}</LatexRenderer></div>}
                                 {optionImage && (
                                   <img
                                     src={optionImage.trim()}
@@ -1603,8 +1600,7 @@ export default function TestPage() {
                   {/* Question Text */}
                   <div className="text-lg md:text-xl text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]">
                     <div className="overflow-x-auto max-w-full">
-                      {/* @ts-ignore */}
-                      <Latex strict={false} {...({ trust: true } as any)}>{currentQuestion.question}</Latex>
+                      <LatexRenderer>{currentQuestion.question}</LatexRenderer>
                     </div>
                   </div>
 
@@ -1700,7 +1696,7 @@ export default function TestPage() {
 
                             {/* Option Text/Image */}
                             <div className="flex-1 flex flex-col gap-2">
-                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><Latex strict={false} {...({ trust: true } as any)}>{text}</Latex></div>}
+                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><LatexRenderer>{text}</LatexRenderer></div>}
                               {optionImage && (
                                 <img
                                   src={optionImage.trim()}

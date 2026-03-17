@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import 'katex/dist/katex.min.css';
-import Latex from 'react-latex-next';
+import LatexRenderer from '@/components/ui/LatexRenderer';
 
 interface IMEInputProps {
     value: string;
@@ -190,10 +189,7 @@ export const IMEInput: React.FC<IMEInputProps> = ({
                         className
                     )}
                 >
-                    {/* @ts-ignore */}
-                    <Latex strict={false} {...({ trust: true } as any)}>
-                        {value}
-                    </Latex>
+                    <LatexRenderer>{value}</LatexRenderer>
                 </div>
             ) : (
                 <>
