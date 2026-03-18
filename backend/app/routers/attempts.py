@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
 from app.core.database import get_db, supabase
 from app.utils.attempt_control import apply_section_attempt_control
 from supabase import Client
@@ -7,27 +7,22 @@ from typing import Optional, Dict, Any, List
 
 router = APIRouter()
 
-class SaveAttemptRequest(BaseModel):
-    user_id: str
-    test_id: str
-    answers: Dict[str, Any]
-    score: Optional[float] = 0
-    metadata: Optional[Dict[str, Any]] = None
-
-class RegisterRequest(BaseModel):
-    user_id: Optional[str] = None
-    test_id: str
-
-class ProgressUpdateRequest(BaseModel):
-    user_id: Optional[str] = None
-    test_id: str
-    completion_percentage: float  # 0-100
-
-class AbandonRequest(BaseModel):
-    user_id: Optional[str] = None
-    test_id: str
-    reason: Optional[str] = 'tab_closed'
-    completion_percentage: Optional[float] = None
+from app.schemas.attempts import (
+    SaveAttemptRequest, 
+    RegisterRequest, 
+    ProgressUpdateRequest, 
+    AbandonRequest,
+    AnonStartRequest,
+    AnonProgressRequest,
+    AnonSubmitRequest,
+    AnonAbandonRequest
+)
+from app.services.attempt_service import (
+    process_progress,
+    process_abandon,
+    process_anon_progress,
+    process_anon_abandon
+)
 
 @router.post("/save")
 async def save_attempt(
@@ -333,97 +328,23 @@ async def delete_registration(
 @router.post("/progress")
 async def update_progress(
     payload: ProgressUpdateRequest,
-    db: Client = Depends(get_db)
+    background_tasks: BackgroundTasks
 ):
     """Called periodically by the frontend to record how far a user is in a test."""
-    try:
-        from datetime import datetime, timezone
-        
-        # Try full update first
-        try:
-            status = "submitted" if payload.completion_percentage >= 100 else "in_progress"
-            update_data = {
-                "completion_percentage": min(payload.completion_percentage, 100),
-                "status": status,
-                "last_active_at": datetime.now(timezone.utc).isoformat()
-            }
-            query = supabase.table("test_registrations").update(update_data).eq("test_id", payload.test_id)
-            if payload.user_id:
-                query = query.eq("user_id", payload.user_id)
-            else:
-                query = query.is_("user_id", "null")
-            query.execute()
-        except Exception:
-            # Fallback: Migration not run, no-op or minimal update if possible
-            # We don't have other columns to update in the old schema for registrations
-            pass
-            
-        return {"success": True}
-    except Exception as e:
-        print(f"Error updating progress: {e}")
-        return {"success": False}
+    background_tasks.add_task(process_progress, payload)
+    return {"success": True}
 
 
 # ─── Abandonment Tracking ──────────────────────────────────────
 @router.post("/abandon")
 async def mark_abandoned(
     payload: AbandonRequest,
-    db: Client = Depends(get_db)
+    background_tasks: BackgroundTasks
 ):
     """Called when user closes tab or explicitly leaves a test without submitting."""
-    try:
-        from datetime import datetime, timezone
-        
-        try:
-            update_data = {
-                "status": "abandoned",
-                "abandoned_reason": payload.reason or "tab_closed",
-                "last_active_at": datetime.now(timezone.utc).isoformat()
-            }
-            if payload.completion_percentage is not None:
-                update_data["completion_percentage"] = payload.completion_percentage
+    background_tasks.add_task(process_abandon, payload)
+    return {"success": True}
 
-            query = supabase.table("test_registrations").update(update_data).eq("test_id", payload.test_id)
-            if payload.user_id:
-                query = query.eq("user_id", payload.user_id)
-            else:
-                query = query.is_("user_id", "null")
-            query.execute()
-        except Exception:
-            # Fallback: Migration not run
-            pass
-            
-        return {"success": True}
-    except Exception as e:
-        print(f"Error marking abandoned: {e}")
-        return {"success": False}
-
-
-# ─── Anonymous Attempt Tracking ────────────────────────────────
-# All anon attempts go into a separate table (anon_test_attempts)
-# to avoid mixing with registered user data.
-
-class AnonStartRequest(BaseModel):
-    session_token: str
-    test_id: str
-
-class AnonProgressRequest(BaseModel):
-    session_token: str
-    test_id: str
-    completion_pct: float = 0.0
-
-class AnonSubmitRequest(BaseModel):
-    session_token: str
-    test_id: str
-    answers: Optional[Dict[str, Any]] = None
-    score: Optional[float] = 0.0
-    completion_pct: Optional[float] = 100.0
-
-class AnonAbandonRequest(BaseModel):
-    session_token: str
-    test_id: str
-    reason: Optional[str] = "tab_closed"
-    completion_pct: Optional[float] = None
 
 
 @router.post("/anon/start")
@@ -467,25 +388,13 @@ async def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
 
 
 @router.post("/anon/progress")
-async def anon_progress(payload: AnonProgressRequest, db: Client = Depends(get_db)):
+async def anon_progress(
+    payload: AnonProgressRequest,
+    background_tasks: BackgroundTasks
+):
     """Update completion progress for an anonymous test session."""
-    try:
-        from datetime import datetime, timezone
-        now = datetime.now(timezone.utc).isoformat()
-
-        supabase.table("anon_test_attempts")\
-            .update({
-                "completion_pct": min(payload.completion_pct, 99),
-                "last_active_at": now
-            })\
-            .eq("session_token", payload.session_token)\
-            .eq("test_id", payload.test_id)\
-            .neq("status", "submitted")\
-            .execute()
-        return {"success": True}
-    except Exception as e:
-        print(f"Error in anon/progress: {e}")
-        return {"success": False}
+    background_tasks.add_task(process_anon_progress, payload)
+    return {"success": True}
 
 
 @router.post("/anon/submit")
@@ -515,27 +424,10 @@ async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
 
 
 @router.post("/anon/abandon")
-async def anon_abandon(payload: AnonAbandonRequest, db: Client = Depends(get_db)):
+async def anon_abandon(
+    payload: AnonAbandonRequest,
+    background_tasks: BackgroundTasks
+):
     """Mark an anonymous test as abandoned (e.g. tab closed)."""
-    try:
-        from datetime import datetime, timezone
-        now = datetime.now(timezone.utc).isoformat()
-
-        update_data: Dict[str, Any] = {
-            "status": "abandoned",
-            "abandoned_reason": payload.reason or "tab_closed",
-            "last_active_at": now
-        }
-        if payload.completion_pct is not None:
-            update_data["completion_pct"] = payload.completion_pct
-
-        supabase.table("anon_test_attempts")\
-            .update(update_data)\
-            .eq("session_token", payload.session_token)\
-            .eq("test_id", payload.test_id)\
-            .neq("status", "submitted")\
-            .execute()
-        return {"success": True}
-    except Exception as e:
-        print(f"Error in anon/abandon: {e}")
-        return {"success": False}
+    background_tasks.add_task(process_anon_abandon, payload)
+    return {"success": True}
