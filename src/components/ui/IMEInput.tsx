@@ -44,7 +44,7 @@ export const IMEInput: React.FC<IMEInputProps> = ({
     // Check if we contain math or markup to decide if preview is needed
     // Simple check for LaTeX/Markdown delimiters to avoid unnecessary preview switch on plain text,
     // though rendering all text as Markdown/LaTeX is perfectly valid when enablePreview is true.
-    const hasFormatting = value && (value.includes('$') || value.includes('\\') || value.includes('{') || value.includes('*') || value.includes('_') || value.includes('`') || value.includes('#') || value.includes('-') || value.match(/\d+\./));
+    const hasFormatting = value && (value.includes('$') || value.includes('\\') || value.includes('{') || value.includes('*') || value.includes('_') || value.includes('`') || value.includes('#') || value.includes('-') || value.match(/\d+\./) || value.includes('!['));
 
     // If not enabled or no Formatting, we always stay in "Edit" mode effectively (render input usually)
     // But for consistency, we can just use the toggle logic if enablePreview is true.
