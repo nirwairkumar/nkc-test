@@ -44,13 +44,6 @@ export default function AdminAnalytics() {
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    useEffect(() => {
-        fetchAllData();
-        // Auto-refresh every 30 seconds for real-time visibility
-        const interval = setInterval(fetchAllData, 30000);
-        return () => clearInterval(interval);
-    }, [days]);
-
     const fetchAllData = useCallback(async () => {
         try {
             setIsRefreshing(true);
@@ -84,6 +77,10 @@ export default function AdminAnalytics() {
             setIsRefreshing(false);
         }
     }, [days]);
+
+    useEffect(() => {
+        fetchAllData();
+    }, [fetchAllData]);
 
     if (loading) {
         return (
