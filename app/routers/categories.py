@@ -6,14 +6,7 @@ from typing import Optional, List, Dict, Any
 
 router = APIRouter()
 
-class CategoryCreate(BaseModel):
-    name: str
-
-class CategoryUpdate(BaseModel):
-    name: str
-
-class TestCategoryAssignment(BaseModel):
-    category_ids: List[str]
+from app.schemas.categories import CategoryCreate, CategoryUpdate, TestCategoryAssignment
 
 @router.get("/")
 async def get_categories(db: Client = Depends(get_db)):
