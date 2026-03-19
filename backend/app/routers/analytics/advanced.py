@@ -144,6 +144,21 @@ async def get_test_matrix(
             .execute()
         reg_data = regs.data or []
 
+        # Fetch anonymous attempts to ensure unknown traffic counts
+        anon_regs = supabase.table("anon_test_attempts")\
+            .select("test_id, status, completion_pct, started_at")\
+            .gte("started_at", start_date)\
+            .execute()
+        
+        for a in (anon_regs.data or []):
+            reg_data.append({
+                "test_id": a.get("test_id"),
+                "user_id": None, # Indicates anonymous
+                "status": a.get("status"),
+                "completion_percentage": a.get("completion_pct"),
+                "started_at": a.get("started_at")
+            })
+
         # Aggregate per test_id
         test_map = {}
         for r in reg_data:
@@ -473,4 +488,129 @@ async def get_anon_summary(
         }
     except Exception as e:
         print(f"Error in anon/summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Detailed Attempt Logs ─────────────────────────────────────
+@router.get("/attempts/logs")
+async def get_attempt_logs(
+    days: int = 30,
+    limit: int = 200,
+    db: Client = Depends(get_db)
+):
+    """
+    Returns a unified, granular view of all test attempts (registered and anonymous)
+    for the "Detailed Sessions" / "Live Attempt Logs" dashboard.
+    """
+    try:
+        start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+        # 1. Fetch Registered Users
+        regs = supabase.table("test_registrations")\
+            .select("id, test_id, user_id, status, completion_percentage, started_at, last_active_at, abandoned_reason")\
+            .gte("started_at", start_date)\
+            .order("started_at", desc=True)\
+            .limit(limit)\
+            .execute()
+        
+        # 2. Fetch Anonymous Users
+        anons = supabase.table("anon_test_attempts")\
+            .select("id, test_id, session_token, status, completion_pct, started_at, last_active_at, submitted_at, abandoned_reason")\
+            .gte("started_at", start_date)\
+            .order("started_at", desc=True)\
+            .limit(limit)\
+            .execute()
+
+        logs = []
+        user_ids = set()
+        test_ids = set()
+        session_tokens = set()
+
+        # Process registered
+        for r in (regs.data or []):
+            uid = r.get("user_id")
+            if uid: user_ids.add(uid)
+            tid = r.get("test_id")
+            if tid: test_ids.add(tid)
+            logs.append({
+                "id": r.get("id"),
+                "type": "registered",
+                "test_id": tid,
+                "user_id": uid,
+                "status": r.get("status", "in_progress"),
+                "completion_pct": r.get("completion_percentage", 0),
+                "started_at": r.get("started_at"),
+                "last_active": r.get("last_active_at") or r.get("started_at"),
+                "reason": r.get("abandoned_reason")
+            })
+
+        # Process anonymous
+        for a in (anons.data or []):
+            tid = a.get("test_id")
+            stoken = a.get("session_token")
+            if tid: test_ids.add(tid)
+            if stoken: session_tokens.add(stoken)
+            logs.append({
+                "id": a.get("id"),
+                "type": "anonymous",
+                "test_id": tid,
+                "session_token": stoken,
+                "status": a.get("status", "in_progress"),
+                "completion_pct": a.get("completion_pct", 0),
+                "started_at": a.get("started_at"),
+                "last_active": a.get("submitted_at") or a.get("last_active_at") or a.get("started_at"),
+                "reason": a.get("abandoned_reason")
+            })
+
+        # 3. Enrich Data (Tests, Profiles, Visitors)
+        test_map = {}
+        if test_ids:
+            t_res = supabase.table("tests").select("id, title").in_("id", list(test_ids)).execute()
+            for t in (t_res.data or []): test_map[t["id"]] = t["title"]
+
+        profile_map = {}
+        if user_ids:
+            p_res = supabase.table("profiles").select("id, full_name, email").in_("id", list(user_ids)).execute()
+            for p in (p_res.data or []): profile_map[p["id"]] = p
+
+        location_map = {}
+        if session_tokens:
+            # Join sessions to visitors
+            s_res = supabase.table("sessions").select("session_token, visitor_id").in_("session_token", list(session_tokens)).execute()
+            v_ids = [s["visitor_id"] for s in (s_res.data or []) if s.get("visitor_id")]
+            if v_ids:
+                v_res = supabase.table("visitors").select("id, country, city, device_type, os").in_("id", v_ids).execute()
+                v_map = {v["id"]: v for v in (v_res.data or [])}
+                for s in (s_res.data or []):
+                    location_map[s["session_token"]] = v_map.get(s["visitor_id"], {})
+
+        # Build final decorated logs
+        for log in logs:
+            log["test_title"] = test_map.get(log["test_id"], "Unknown Test")
+            if log["type"] == "registered":
+                p = profile_map.get(log["user_id"], {})
+                log["user_name"] = p.get("full_name", "Unknown User")
+                log["user_email"] = p.get("email", "")
+                log["location"] = "Registered User" 
+            else:
+                log["user_name"] = "Anonymous Guest"
+                log["user_email"] = ""
+                loc = location_map.get(log.get("session_token"), {})
+                country = loc.get("country", "")
+                city = loc.get("city", "")
+                device = loc.get("device_type", "")
+                loc_str = ""
+                if city and country: loc_str = f"{city}, {country}"
+                elif country: loc_str = country
+                
+                info = []
+                if loc_str: info.append(loc_str)
+                if device: info.append(device.title())
+                log["location"] = " • ".join(info) if info else "Unknown"
+
+        logs.sort(key=lambda x: x["started_at"], reverse=True)
+        return logs[:limit]
+
+    except Exception as e:
+        print(f"Error in attempt logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))

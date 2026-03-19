@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { analyticsApi } from '@/lib/analyticsApi';
-import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -29,7 +29,7 @@ const PIE_COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e', '#8b5cf6'];
 
 export default function AdminAnalytics() {
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'tests' | 'users' | 'creation'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'tests' | 'users' | 'creation' | 'logs'>('overview');
     const [days, setDays] = useState(30);
 
     // Data states
@@ -41,6 +41,7 @@ export default function AdminAnalytics() {
     const [visitorStats, setVisitorStats] = useState<any>(null);
     const [trends, setTrends] = useState<any[]>([]);
     const [anonStats, setAnonStats] = useState<any>(null);
+    const [attemptLogs, setAttemptLogs] = useState<any[]>([]);
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -58,6 +59,7 @@ export default function AdminAnalytics() {
                     analyticsApi.getOverviewStats(days).catch(() => null),
                     analyticsApi.getDailyTrends(days).catch(() => []),
                     analyticsApi.getAnonSummary(days).catch(() => null),
+                    analyticsApi.getAttemptLogs(days, 200).catch(() => []),
                 ]);
 
             setFunnel(funnelData);
@@ -94,6 +96,7 @@ export default function AdminAnalytics() {
         { id: 'overview', label: 'Overview', icon: BarChart3 },
         { id: 'tests', label: 'Test Matrix', icon: FileText },
         { id: 'users', label: 'User Matrix', icon: Users },
+        { id: 'logs', label: 'Detailed Sessions', icon: List },
         { id: 'creation', label: 'Test Creation', icon: TrendingUp },
     ];
 
@@ -445,6 +448,86 @@ export default function AdminAnalytics() {
                                         </td>
                                     </tr>
                                 ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* ════════ DETAILED ATTEMPT LOGS TAB ════════ */}
+            {activeTab === 'logs' && (
+                <div className="space-y-4">
+                    <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
+                        <div className="p-4 border-b flex items-center justify-between">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                <List className="h-5 w-5 text-indigo-500" />
+                                Live Attempt Logs
+                            </h3>
+                            <span className="text-sm text-muted-foreground">{attemptLogs.length} recent sessions</span>
+                        </div>
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b bg-muted/30">
+                                    <th className="px-4 py-3 text-left font-semibold">User</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Test / Location</th>
+                                    <th className="px-4 py-3 text-center font-semibold">Status</th>
+                                    <th className="px-4 py-3 text-center font-semibold">%</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Timeline</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {attemptLogs.length === 0 ? (
+                                    <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">No recent attempts logged.</td></tr>
+                                ) : (
+                                    attemptLogs.map((log: any, i: number) => {
+                                        const startTime = new Date(log.started_at);
+                                        const leaveTime = new Date(log.last_active);
+                                        const duration = Math.max(0, Math.round((leaveTime.getTime() - startTime.getTime()) / 60000));
+
+                                        return (
+                                            <tr key={i} className="hover:bg-muted/20 transition-colors group">
+                                                <td className="px-4 py-3 font-medium">
+                                                    <div className="flex flex-col">
+                                                        <span className="flex items-center gap-2">
+                                                            {log.type === 'anonymous' ? <UserX className="h-4 w-4 text-orange-500" /> : <Users className="h-4 w-4 text-blue-500" />}
+                                                            {log.user_name}
+                                                        </span>
+                                                        {log.user_email && <span className="text-xs text-muted-foreground ml-6">{log.user_email}</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col max-w-[250px]">
+                                                        <span className="font-medium truncate" title={log.test_title}>{log.test_title}</span>
+                                                        <span className="text-xs text-muted-foreground truncate" title={log.location}>{log.location}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    {log.status === 'submitted' ? (
+                                                        <span className="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-semibold text-green-600 border border-green-200">Submitted</span>
+                                                    ) : log.status === 'abandoned' ? (
+                                                        <span className="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-600 border border-red-200">Abandoned</span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center rounded-full bg-yellow-500/10 px-2.5 py-1 text-xs font-semibold text-yellow-600 border border-yellow-200">In Progress</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <div className="flex flex-col items-center gap-1 cursor-help" title={log.reason ? `Reason: ${log.reason}` : undefined}>
+                                                        <span className="text-xs font-mono font-medium">{log.completion_pct}%</span>
+                                                        <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden">
+                                                            <div className={`h-full rounded-full transition-all ${log.status === 'submitted' ? 'bg-green-500' : log.status === 'abandoned' ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${log.completion_pct}%` }} />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col text-xs space-y-1">
+                                                        <span className="text-foreground"><span className="text-muted-foreground">Start:</span> {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        <span className="text-foreground"><span className="text-muted-foreground">Left:</span> {leaveTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({duration}m)</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                     </div>
