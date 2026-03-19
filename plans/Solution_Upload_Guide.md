@@ -2,9 +2,39 @@
 
 This guide explains how to prepare a JSON file to bulk-upload detailed solutions for your tests. Detailed solutions help students understand their mistakes once they have submitted a test.
 
+## 🧠 Generate Solutions with AI
+If you have a PDF, Image, or Word doc with solutions, you can use this prompt with **Google Gemini** or ChatGPT to create your JSON file automatically:
+
+> **Copy and paste this prompt:**
+> ```text
+> ROLE:
+> You are an AI document parser and educational content extractor.
+> 
+> GOAL:
+> Convert the PROVIDED PDF, IMAGE, or TEXT containing EXAM SOLUTIONS into a STRICT, VALID JSON file for bulk uploading.
+> 
+> RULES:
+> 1. RETURN ONLY RAW JSON (No markdown, no talk).
+> 2. Use DOUBLE BACKSLASHES (\\) for all LaTeX (e.g., \\frac, \\ce{H2O}).
+> 3. Use <br> for line breaks within a solution.
+> 4. Maintain the sequential order of questions.
+> 
+> STRICT JSON FORMAT:
+> {
+>   "solutions": [
+>     "Step-by-step solution for Q1 with KaTeX math...",
+>     "Detailed solution for Q2 using \\ce{H2O}...",
+>     "..."
+>   ]
+> }
+> 
+> FINAL COMMAND:
+> Extract solutions from the attached document and output ONLY the JSON snippet.
+> ```
+
 ---
 
-## 🚀 Quick Start
+## 🚀 Two Ways to Structure JSON
 You specify solutions in a single `.json` file. There are two ways to structure this file:
 
 ### 1. Sequential Array Format (Recommended)
