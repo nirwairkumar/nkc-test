@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchUserAttempts, deleteAttempt } from '@/lib/attemptsApi';
 import { fetchTestById } from '@/lib/testsApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronDown, ChevronUp, Calendar, Trash2, RefreshCw } from 'lucide-react';
+import { Loader2, Calendar, Trash2, RefreshCw, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import {
     Table,
@@ -29,6 +30,7 @@ interface Attempt {
 
 export default function TestHistory() {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [attempts, setAttempts] = useState<Attempt[]>([]);
     const [loading, setLoading] = useState(true);
     const [expandedAttempt, setExpandedAttempt] = useState<string | null>(null);
@@ -183,9 +185,23 @@ export default function TestHistory() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button variant="ghost" size="sm" onClick={() => setExpandedAttempt(expandedAttempt === attempt.id ? null : attempt.id)}>
-                                                        {expandedAttempt === attempt.id ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
-                                                        View Answers
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate('/results', {
+                                                                state: {
+                                                                    test: testDetails[attempt.test_id],
+                                                                    answers: attempt.answers,
+                                                                    timeSpent: 0,
+                                                                    score: attempt.score
+                                                                }
+                                                            });
+                                                        }}
+                                                    >
+                                                        <Target className="h-4 w-4 mr-1" />
+                                                        View Result
                                                     </Button>
 
                                                     <Button

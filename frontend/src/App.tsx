@@ -20,7 +20,10 @@ const TestList = lazy(() => import("./pages/TestList"));
 const TestPage = lazy(() => import("./pages/TestPage"));
 const TestIntroPage = lazy(() => import("./pages/TestIntroPage"));
 const TestHistory = lazy(() => import("./pages/TestHistory"));
+const ResultsLayout = lazy(() => import("./components/layout/ResultsLayout"));
 const ResultsPage = lazy(() => import("./pages/ResultsPage"));
+const SolutionEditorPage = lazy(() => import("./pages/SolutionEditorPage"));
+const SolutionsViewPage = lazy(() => import("./pages/SolutionsViewPage"));
 const AuthForm = lazy(() => import("@/components/AuthForm"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const AdminMigration = lazy(() => import("./pages/AdminMigration"));
@@ -193,13 +196,25 @@ const App = () => (
                       path="/test-submitted"
                       element={<TestSubmissionSuccess />}
                     />
+
+                    {/* Unified Results Layout */}
+                    <Route path="/results" element={<ResultsLayout />}>
+                      <Route index element={<ResultsPage />} />
+                      <Route path="solutions/:testId" element={<SolutionsViewPage />} />
+                      <Route path="analytics" element={<AdvancedAnalysis />} />
+                    </Route>
+
+                    {/* Redirects from old paths to new paths */}
+                    <Route path="/analysis" element={<Navigate to="/results/analytics" replace />} />
+                    <Route path="/solutions/:testId" element={<Navigate to="/results" replace />} />
+
                     <Route
-                      path="/results"
-                      element={<ResultsPage />}
-                    />
-                    <Route
-                      path="/analysis"
-                      element={<AdvancedAnalysis />}
+                      path="/solutions-editor/:testId"
+                      element={
+                        <PrivateRoute>
+                          <SolutionEditorPage />
+                        </PrivateRoute>
+                      }
                     />
                     <Route
                       path="/profile"

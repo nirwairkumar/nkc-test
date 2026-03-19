@@ -171,25 +171,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
     }, [children]);
 
     return (
-        <div className={cn("latex-renderer-container overflow-x-auto my-2", className)}>
-            <style>{`
-                .latex-renderer-container table td {
-                    vertical-align: middle;
-                }
-                .latex-renderer-container img {
-                    width: auto !important;
-                    height: auto !important;
-                    max-width: none !important;
-                    border-radius: 4px;
-                }
-                .latex-renderer-container .katex-display {
-                    margin: 0.5em 0;
-                    text-align: left;
-                }
-                .latex-renderer-container .katex {
-                    text-align: left;
-                }
-            `}</style>
+        <div className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}>
             <span dangerouslySetInnerHTML={{ __html: rendered }} />
         </div>
     );

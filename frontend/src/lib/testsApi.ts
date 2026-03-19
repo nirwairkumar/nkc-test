@@ -186,6 +186,26 @@ export async function deleteTest(id: string, isAdmin: boolean = false) {
     }
 }
 
+// ---------------- SOLUTIONS MANAGEMENT ----------------
+
+export async function saveSolutions(testId: string, solutions: Record<string, string>) {
+    try {
+        const response = await apiClient.put(`tests/${testId}/solutions`, { solutions });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
+    }
+}
+
+export async function fetchSolutions(testId: string) {
+    try {
+        const response = await apiClient.get(`tests/${testId}/solutions`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
+    }
+}
+
 export async function fetchTests(options?: {
     page?: number;
     limit?: number;

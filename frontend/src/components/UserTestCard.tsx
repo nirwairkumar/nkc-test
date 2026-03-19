@@ -21,7 +21,8 @@ import {
     Link as LinkIcon,
     Lock,
     GraduationCap,
-    Check
+    Check,
+    FileText
 } from 'lucide-react';
 import TestVoteButtons from '@/components/TestVoteButtons';
 
@@ -33,6 +34,7 @@ interface UserTestCardProps {
     onDelete: (testId: string, title: string) => void;
     onVisibilityChange: (test: any, visibility: string) => void;
     onShare: (test: any) => void;
+    onUploadSolutions: (test: any) => void;
     onClassChange: (test: any, classId: string | null) => void;
     getVisibilityColor: (visibility: string) => string;
     getVisibilityIcon: (visibility: string) => React.ReactNode;
@@ -46,6 +48,7 @@ export function UserTestCard({
     onDelete,
     onVisibilityChange,
     onShare,
+    onUploadSolutions,
     onClassChange,
     getVisibilityColor,
     getVisibilityIcon,
@@ -119,6 +122,10 @@ export function UserTestCard({
                             </DropdownMenuSub>
 
                             <DropdownMenuSeparator />
+
+                            <DropdownMenuItem onClick={() => onUploadSolutions(test)}>
+                                <FileText className="mr-2 h-4 w-4 text-indigo-500" /> Upload Solutions
+                            </DropdownMenuItem>
 
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger>

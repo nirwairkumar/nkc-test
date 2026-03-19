@@ -28,8 +28,6 @@ import { FeedbackForm } from '@/components/FeedbackForm';
 import { useAuth } from '@/contexts/AuthContext';
 import 'katex/dist/katex.min.css';
 import LatexRenderer from '@/components/ui/LatexRenderer';
-import { toast } from 'sonner';
-import { Share2 } from 'lucide-react';
 import TestVoteButtons from '@/components/TestVoteButtons';
 
 interface TestResult {
@@ -70,9 +68,11 @@ const ResultsPage = () => {
   const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
   const navigate = useNavigate();
   const location = useLocation();
+  const rawState = location.state;
+
   const [loading, setLoading] = useState(true);
 
-  const stateData = location.state as {
+  const stateData = rawState as {
     test: any;
     answers: Record<number, string>;
     score: number;
@@ -150,16 +150,16 @@ const ResultsPage = () => {
   }
 
   const {
-    finalScore,
-    totalMaxMarks,
-    correctCount,
-    partialCount,
-    wrongCount,
-    skippedCount,
-    percentage,
-    sectionData,
-    questionStatus
-  } = analysisData;
+    finalScore = 0,
+    totalMaxMarks = 0,
+    correctCount = 0,
+    partialCount = 0,
+    wrongCount = 0,
+    skippedCount = 0,
+    percentage = 0,
+    sectionData = {},
+    questionStatus = {}
+  } = analysisData || {};
 
   const sectionAnalysis = sectionData as Record<string, {
     name: string;
@@ -178,25 +178,9 @@ const ResultsPage = () => {
   const testId = selectedTest?.id;
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header Actions */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl md:text-3xl font-bold hidden md:block">Result Analysis</h1>
-          <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-            <Button
-              variant="default"
-              size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-              onClick={() => navigate('/analysis', { state: stateData })}
-            >
-              <Target className="w-4 h-4 mr-2" /> Advance Analysis
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/')}>
-              <Home className="w-4 h-4 mr-2" /> Home
-            </Button>
-          </div>
-        </div>
+        {/* Main Content Start */}
 
         {/* Score Card */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -212,8 +196,8 @@ const ResultsPage = () => {
               <div className="flex items-end justify-between gap-4 mt-6">
                 <div className="flex items-end gap-3 md:gap-4">
                   <div>
-                    <span className="text-5xl md:text-6xl font-bold">{parseFloat(finalScore.toFixed(2))}</span>
-                    <span className="text-xl md:text-2xl opacity-75">/{totalMaxMarks}</span>
+                    <span className="text-5xl md:text-6xl font-bold">{parseFloat((finalScore || 0).toFixed(2))}</span>
+                    <span className="text-xl md:text-2xl opacity-75">/{totalMaxMarks || 0}</span>
                   </div>
                   <div className="mb-1 md:mb-2">
                     <Badge variant="secondary" className="text-sm md:text-lg px-2 md:px-3 py-1">
@@ -259,7 +243,7 @@ const ResultsPage = () => {
               <Target className="w-5 h-5" /> Section Analysis
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.values(sectionAnalysis).map((sec) => (
+              {Object.values(sectionAnalysis || {}).map((sec: any) => (
                 <Card key={sec.name} className="bg-white border-none shadow-md">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg flex justify-between">
@@ -271,7 +255,7 @@ const ResultsPage = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
                         <span className="text-sm font-medium">Score</span>
-                        <span className="font-bold text-emerald-600">{parseFloat(sec.score.toFixed(2))} / {sec.maxScore}</span>
+                        <span className="font-bold text-emerald-600">{parseFloat((sec.score || 0).toFixed(2))} / {sec.maxScore || 0}</span>
                       </div>
                       <div className="grid grid-cols-3 gap-1 text-center text-xs">
                         <div className="bg-green-100 text-green-700 p-1 rounded">
@@ -339,7 +323,7 @@ const ResultsPage = () => {
                   negDisplay = getDisplayMark(q.negativeMarks, neg);
                 }
 
-                const qStats = questionStatus[q.id] || { status: 'skipped', score: 0 };
+                const qStats = (questionStatus && questionStatus[q.id]) || { status: 'skipped', score: 0 };
                 const isCorrect = qStats.status === 'correct';
                 const isWrong = qStats.status === 'wrong';
                 const isPartial = qStats.status === 'partial';
@@ -358,16 +342,20 @@ const ResultsPage = () => {
                                         `}>
                           {index + 1}
                         </div>
-                        <div className="flex-1 font-medium text-sm line-clamp-1">
-                          <LatexRenderer>{q.question}</LatexRenderer>
+                        <div className="flex-1 min-w-0 h-6 relative overflow-hidden flex items-center">
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap [&_*]:!inline [&_.math]:!inline-block [&_p]:!m-0 [&_span]:!whitespace-nowrap text-slate-700 dark:text-slate-300 pointer-events-none text-sm font-medium">
+                            <LatexRenderer>{q.question || ""}</LatexRenderer>
+                          </div>
+                          {/* Horizontal Fade to prevent sharp cutoff */}
+                          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent pointer-events-none z-10" />
                         </div>
                         <div className="mr-2 flex items-center gap-3">
                           {/* Marks Display: Obtained / Total */}
                           {(() => {
-                            const obtainedMark = qStats.score;
+                            const obtainedMark = qStats.score || 0;
                             // Format for display
                             const displayObtained = parseFloat(obtainedMark.toFixed(2));
-                            const displayTotal = marksDisplay;
+                            const displayTotal = marksDisplay || 0;
 
                             return (
                               <span className={`text-sm font-bold ${obtainedMark > 0 ? 'text-green-600' : obtainedMark < 0 ? 'text-red-500' : 'text-slate-400'}`}>
@@ -385,14 +373,14 @@ const ResultsPage = () => {
                     <AccordionContent className="px-4 pb-4">
                       <div className="space-y-4 pt-2">
                         <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3">
-                          <LatexRenderer>{q.question}</LatexRenderer>
+                          <LatexRenderer>{q.question || ""}</LatexRenderer>
                         </div>
 
                         {/* Question Image */}
                         {q.image && (
                           <div className="my-2">
                             <img
-                              src={q.image.trim()}
+                              src={(q.image || "").trim()}
                               alt={`Question ${index + 1}`}
                               referrerPolicy="no-referrer"
                               className="max-w-full max-h-[300px] rounded-lg border object-contain"
@@ -402,7 +390,7 @@ const ResultsPage = () => {
                                 const parent = target.parentElement;
                                 if (parent) {
                                   const errorLink = document.createElement('a');
-                                  errorLink.href = q.image.trim();
+                                  errorLink.href = (q.image || "").trim();
                                   errorLink.target = "_blank";
                                   errorLink.rel = "noopener noreferrer";
                                   errorLink.className = "text-xs text-blue-600 underline block mt-1";
@@ -491,20 +479,12 @@ const ResultsPage = () => {
         )}
 
         {/* Footer Actions */}
-        <div className="flex justify-center gap-4 pb-10">
-          <Button size="lg" onClick={handleRetakeTest}>
-            <RotateCcw className="w-4 h-4 mr-2" /> Retake Test
-          </Button>
-          <Button size="lg" variant="default" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => {
-            const path = selectedTest?.slug ? `/test/${selectedTest.slug}` : `/test-intro/${testId}`;
-            const url = `${window.location.origin}${path}`;
-            navigator.clipboard.writeText(url);
-            toast.success("Test link copied! Share it with your friends.");
-          }}>
-            <Share2 className="w-4 h-4 mr-2" /> Share to Friends
-          </Button>
+        <div className="flex flex-wrap justify-center gap-4 pb-10">
           <Button size="lg" variant="outline" onClick={() => navigate('/')}>
-            View Other Tests
+            <Home className="w-4 h-4 mr-2" /> Back to Home
+          </Button>
+          <Button size="lg" onClick={handleRetakeTest} className="bg-indigo-600 hover:bg-indigo-700">
+            <RotateCcw className="w-4 h-4 mr-2" /> Retake Test
           </Button>
         </div>
       </div>
