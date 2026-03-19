@@ -80,6 +80,11 @@ export const analyticsApi = {
         return response.data;
     },
 
+    getAttemptLogs: async (days: number = 30, limit: number = 200) => {
+        const response = await apiClient.get('analytics/stats/attempts/logs', { params: { days, limit } });
+        return response.data;
+    },
+
     // ─── Progress & Abandonment Tracking ──────────────────────
     updateProgress: async (user_id: string | null, test_id: string, completion_percentage: number) => {
         try {
@@ -91,10 +96,15 @@ export const analyticsApi = {
         try {
             const payload: any = { user_id: user_id || null, test_id, reason };
             if (completion_percentage !== undefined) payload.completion_percentage = completion_percentage;
-            // Use sendBeacon for reliability on tab close
+
+            // Use fetch with keepalive instead of sendBeacon to properly send 'application/json' to FastAPI
             const url = (apiClient.defaults.baseURL || '') + '/attempts/abandon';
-            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-            navigator.sendBeacon(url, blob);
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            }).catch(e => console.error(e));
         } catch (e) { /* non-critical */ }
     },
 
@@ -136,10 +146,15 @@ export const analyticsApi = {
             const session_token = analyticsApi._getSessionToken();
             const payload: any = { session_token, test_id, reason };
             if (completion_pct !== undefined) payload.completion_pct = completion_pct;
-            // Use sendBeacon for tab-close reliability
+
+            // Use fetch with keepalive to send application/json correctly on tab close
             const url = (apiClient.defaults.baseURL || '') + '/attempts/anon/abandon';
-            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-            navigator.sendBeacon(url, blob);
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            }).catch(e => console.error(e));
         } catch (e) { /* non-critical */ }
     },
 
