@@ -40,6 +40,9 @@ You specify solutions in a single `.json` file. There are two ways to structure 
 ### 1. Sequential Array Format (Recommended)
 This is the easiest method. You just provide a list of solutions in the **same order as the questions** appear in your test.
 
+> [!NOTE]
+> **For Section-Wise Tests**: The order follows questions across all sections (Section 1 Questions → Section 2 Questions → etc.).
+
 **File: `solutions.json`**
 ```json
 {
