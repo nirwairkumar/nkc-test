@@ -25,6 +25,9 @@ class PasswordResetRequest(BaseModel):
 class PasswordUpdateRequest(BaseModel):
     password: str
 
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
 @router.post("/login")
 async def login(payload: LoginRequest):
     try:
@@ -78,6 +81,23 @@ async def register(payload: RegisterRequest):
 @router.post("/logout")
 async def logout():
     return {"status": "success", "message": "Logged out"}
+
+@router.post("/refresh")
+async def refresh_token(payload: RefreshRequest):
+    try:
+        response = supabase.auth.refresh_session(payload.refresh_token)
+        if hasattr(response, "session") and response.session:
+            session_data = jsonable_encoder(response.session)
+            return {
+                "data": {
+                    "session": session_data
+                },
+                "error": None
+            }
+        return {"data": jsonable_encoder(response), "error": None}
+    except Exception as e:
+        detail = str(e)
+        raise HTTPException(status_code=401, detail=f"Refresh failed: {detail}")
 
 @router.get("/me")
 async def get_me(
