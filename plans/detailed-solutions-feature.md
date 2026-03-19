@@ -142,10 +142,28 @@ export async function fetchSolutions(testId: string) { ... }
    - Correct answer displayed below (read-only)
    - `<Textarea>` (or `IMEInput`) for writing the solution
    - Live preview toggle showing rendered LaTeX/mhchem output via `LatexRenderer`
-4. **JSON Import**: File input that accepts `.json` file with format:
+4. **JSON Import**: File input that accepts `.json` file. Supported formats:
+
+   **Option A: Sequential Array (Easiest)**
+   The solutions are mapped to questions in the same order they appear in the test.
    ```json
    {
-     "solutions": ["Solution for Q1...", "Solution for Q2...", ...]
+     "solutions": [
+       "Solution for Question 1 (LaTeX supported)...",
+       "Solution for Question 2...",
+       "Solution for Question 3..."
+     ]
+   }
+   ```
+
+   **Option B: Explicit ID Mapping (Strict)**
+   Useful if you know the internal Question IDs and want to ensure 100% accuracy regardless of order.
+   ```json
+   {
+     "solutions": {
+       "101": "Detailed solution for Q with ID 101",
+       "102": "Detailed solution for Q with ID 102"
+     }
    }
    ```
    Maps array index → question ID and fills in text areas
