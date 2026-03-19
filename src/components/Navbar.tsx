@@ -12,10 +12,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, BookOpen } from 'lucide-react';
 import NotificationBox from './NotificationBox';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
+import { TestUploadFormatGuide } from './TestUploadFormatGuide';
+import { SolutionUploadGuide } from './SolutionUploadGuide';
 
 
 export default function Navbar() {
@@ -25,6 +27,9 @@ export default function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
     const isLiveTest = location.pathname.startsWith('/live');
+
+    const [isSolutionGuideOpen, setIsSolutionGuideOpen] = React.useState(false);
+    const [isUploadGuideOpen, setIsUploadGuideOpen] = React.useState(false);
 
     if (isLiveTest) return null;
 
@@ -160,6 +165,16 @@ export default function Navbar() {
                                         <span>Admin</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider pb-1">User Guides</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={() => setIsSolutionGuideOpen(true)}>
+                                        <BookOpen className="mr-2 h-4 w-4 text-indigo-600" />
+                                        <span>Solution Upload Guide</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setIsUploadGuideOpen(true)}>
+                                        <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                                        <span>Test Upload Guide</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => navigate('/login')}>
                                         <User className="mr-2 h-4 w-4" />
                                         <span>Login</span>
@@ -286,6 +301,18 @@ export default function Navbar() {
                                             </DropdownMenuItem>
                                         </>
                                     )}
+
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider pb-1">User Guides</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={() => setIsSolutionGuideOpen(true)}>
+                                        <BookOpen className="mr-2 h-4 w-4 text-indigo-600" />
+                                        <span>Solution Upload Guide</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setIsUploadGuideOpen(true)}>
+                                        <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                                        <span>Test Upload Guide</span>
+                                    </DropdownMenuItem>
+
                                     <DropdownMenuItem onClick={() => navigate('/create-test')}>
                                         <Plus className="mr-2 h-4 w-4" />
                                         <span>Create Test</span>
@@ -311,6 +338,16 @@ export default function Navbar() {
                     )}
                 </div>
             </div>
+
+            {/* User Guides (Controlled) */}
+            <SolutionUploadGuide
+                open={isSolutionGuideOpen}
+                onOpenChange={setIsSolutionGuideOpen}
+            />
+            <TestUploadFormatGuide
+                open={isUploadGuideOpen}
+                onOpenChange={setIsUploadGuideOpen}
+            />
         </header>
     );
 }

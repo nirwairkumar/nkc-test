@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Save, ArrowLeft, Upload } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Upload, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { fetchTestById, fetchSolutions, saveSolutions } from '@/lib/testsApi';
 import { IMEInput } from '@/components/ui/IMEInput';
 import LatexRenderer from '@/components/ui/LatexRenderer';
@@ -16,6 +16,7 @@ export default function SolutionEditorPage() {
     const [solutions, setSolutions] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
 
     // Default to 'en' (Latex input) since solutions are mostly math
     const [typingMode, setTypingMode] = useState<'en' | 'hi'>('en');
@@ -52,6 +53,13 @@ export default function SolutionEditorPage() {
             ...prev,
             [String(questionId)]: value
         }));
+    };
+
+    const handleClearAll = () => {
+        if (window.confirm("Are you sure you want to clear ALL solutions? This cannot be undone.")) {
+            setSolutions({});
+            toast.success("All solutions cleared");
+        }
     };
 
     const handleSaveAll = async () => {
@@ -175,6 +183,15 @@ export default function SolutionEditorPage() {
                             </Button>
                         </div>
                         <Button
+                            variant="outline"
+                            onClick={handleClearAll}
+                            className="text-destructive hover:bg-destructive/10 border-destructive/20"
+                            title="Clear all solutions"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Clear All
+                        </Button>
+                        <Button
                             onClick={handleSaveAll}
                             disabled={saving}
                             className="bg-primary hover:bg-primary/90 text-white min-w-[120px]"
@@ -226,12 +243,12 @@ export default function SolutionEditorPage() {
                                             </div>
 
                                             {/* Minimal Correct Answer Display */}
-                                            <div className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-md text-sm font-medium border border-green-100 dark:border-green-900/50">
-                                                <span>Correct Answer:</span>
-                                                <span>{correctDisplay}</span>
+                                            <div className="inline-flex items-center gap-2 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-xs font-semibold border border-emerald-100/50 dark:border-emerald-900/30">
+                                                <span className="opacity-70">Correct Answer:</span>
+                                                <span className="bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded text-emerald-800 dark:text-emerald-300">{correctDisplay}</span>
                                                 {q.type !== 'numerical' && !Array.isArray(correctAns) && q.options && q.options[correctAns as string] && (
-                                                    <span className="ml-1 opacity-90 truncate max-w-[200px]">
-                                                        (<LatexRenderer>{q.options[correctAns as string]}</LatexRenderer>)
+                                                    <span className="ml-0.5 font-medium truncate max-w-[300px]">
+                                                        <LatexRenderer>{q.options[correctAns as string]}</LatexRenderer>
                                                     </span>
                                                 )}
                                             </div>
@@ -239,22 +256,77 @@ export default function SolutionEditorPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="pt-4 pl-6 pb-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detailed Solution</label>
-                                        <IMEInput
-                                            as="textarea"
-                                            typingMode={typingMode}
-                                            value={solutions[q.id] || ''}
-                                            onChange={(val) => handleSolutionChange(q.id, val)}
-                                            placeholder="Write detailed step-by-step solution here. Use $$ for math blocks or \ce{} for chemistry..."
-                                            className="min-h-[150px] font-mono text-sm"
-                                            enablePreview={true}
-                                        />
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detailed Solution</label>
+                                            {activeQuestionId === String(q.id) && (
+                                                <span className="text-[10px] text-indigo-500 font-medium animate-pulse">Editing Mode</span>
+                                            )}
+                                        </div>
+
+                                        {activeQuestionId === String(q.id) ? (
+                                            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <IMEInput
+                                                    as="textarea"
+                                                    autoFocus
+                                                    typingMode={typingMode}
+                                                    value={solutions[q.id] || ''}
+                                                    onChange={(val) => handleSolutionChange(q.id, val)}
+                                                    onBlur={() => setActiveQuestionId(null)}
+                                                    placeholder="Write detailed step-by-step solution here. Use $$ for math blocks or \ce{} for chemistry..."
+                                                    className="min-h-[200px] font-mono text-sm border-indigo-200 ring-2 ring-indigo-50 shadow-sm"
+                                                    enablePreview={true}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div
+                                                onClick={() => setActiveQuestionId(String(q.id))}
+                                                className={`min-h-[100px] p-5 rounded-xl border transition-all cursor-text group relative flex flex-col ${solutions[q.id]
+                                                    ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 shadow-sm'
+                                                    : 'bg-slate-50 dark:bg-slate-900/50 border-dashed border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800'
+                                                    }`}
+                                            >
+                                                {!solutions[q.id] ? (
+                                                    <div className="flex flex-col items-center justify-center my-auto py-4 text-slate-400">
+                                                        <Pencil className="h-5 w-5 mb-2 opacity-30" />
+                                                        <p className="text-sm font-medium">Click to add detailed solution...</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 solution-renderer">
+                                                        <LatexRenderer>{solutions[q.id]}</LatexRenderer>
+                                                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="flex items-center gap-1.5 p-1 px-2.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold border border-indigo-100 shadow-sm">
+                                                                <Pencil className="w-3 h-3" />
+                                                                EDIT
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
                         );
                     })}
+
+                    {/* Bottom Save Button */}
+                    {allQuestions.length > 3 && (
+                        <div className="flex justify-center pt-6 pb-10">
+                            <Button
+                                onClick={handleSaveAll}
+                                disabled={saving}
+                                size="lg"
+                                className="bg-primary hover:bg-primary/90 text-white min-w-[200px] shadow-lg hover:shadow-xl transition-all"
+                            >
+                                {saving ? (
+                                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving All Solutions...</>
+                                ) : (
+                                    <><Save className="h-5 w-5 mr-2" /> Save All Solutions</>
+                                )}
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {allQuestions.length === 0 && (
@@ -262,6 +334,28 @@ export default function SolutionEditorPage() {
                         No questions in this test.
                     </div>
                 )}
+            </div>
+
+            {/* Floating Navigation Arrows */}
+            <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-50">
+                <Button
+                    variant="secondary"
+                    size="icon"
+                    className="rounded-full shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    title="Scroll to Top"
+                >
+                    <ChevronUp className="h-5 w-5" />
+                </Button>
+                <Button
+                    variant="secondary"
+                    size="icon"
+                    className="rounded-full shadow-lg bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
+                    onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                    title="Scroll to Bottom"
+                >
+                    <ChevronDown className="h-5 w-5" />
+                </Button>
             </div>
         </div>
     );

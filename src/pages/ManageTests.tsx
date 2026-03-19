@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -714,6 +714,11 @@ export default function ManageTests() {
                                                             {/* Manage Action */}
                                                             <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
                                                                 <Settings className="mr-2 h-4 w-4" /> Manage Settings
+                                                            </DropdownMenuItem>
+
+                                                            {/* Upload Solutions Action */}
+                                                            <DropdownMenuItem onClick={() => navigate(`/solutions-editor/${test.id}`)}>
+                                                                <Upload className="mr-2 h-4 w-4" /> Upload Solutions
                                                             </DropdownMenuItem>
 
                                                             <DropdownMenuSeparator />
