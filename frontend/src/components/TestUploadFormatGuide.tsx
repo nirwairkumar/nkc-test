@@ -13,8 +13,17 @@ import { FileText, Download, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-export function TestUploadFormatGuide() {
-  const [isOpen, setIsOpen] = React.useState(false);
+interface TestUploadFormatGuideProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+}
+
+export function TestUploadFormatGuide({ open: controlledOpen, onOpenChange, trigger }: TestUploadFormatGuideProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false);
+
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setIsOpen = onOpenChange || setInternalOpen;
 
   //     const jsonTemplate_old = `ROLE:
   // You are an AI document parser, OCR analyst, and exam-content extractor.
@@ -796,12 +805,18 @@ Check every section's header or overall syllabus instructions to determine if at
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="link" className="text-xs text-muted-foreground h-auto p-0 underline decoration-dashed underline-offset-4 hover:text-primary">
-          format the file. (Guide)
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {trigger ? (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      ) : controlledOpen === undefined ? (
+        <DialogTrigger asChild>
+          <Button variant="link" className="text-xs text-muted-foreground h-auto p-0 underline decoration-dashed underline-offset-4 hover:text-primary">
+            format the file. (Guide)
+          </Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">

@@ -28,6 +28,7 @@ import LatexRenderer from '@/components/ui/LatexRenderer';
 import ScientificCalculator from '@/components/ScientificCalculator';
 import { submitReport } from '@/lib/reportsApi';
 import { analyticsApi } from '@/lib/analyticsApi';
+import { Progress } from '@/components/ui/progress';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -59,6 +60,7 @@ export default function TestPage() {
 
   const [test, setTest] = useState<Test | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // State
@@ -189,6 +191,28 @@ export default function TestPage() {
   const [isTimerDisabled] = useState(() => sessionStorage.getItem(`flexible_timer_${id}`) === 'true');
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Simulated loading progress
+  useEffect(() => {
+    if (!loading) {
+      setLoadingProgress(100);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        // Incremental jump to make it feel organic
+        const inc = Math.random() * 8 + 2;
+        return Math.min(90, prev + inc);
+      });
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [loading]);
 
   useEffect(() => {
     if (!id) return;
@@ -479,14 +503,19 @@ export default function TestPage() {
     try {
       const { data, error } = await fetchTestById(testId, (cachedData) => {
         processTestData(cachedData);
-        setLoading(false);
+        // Small delay to show 100% progress
+        setLoadingProgress(100);
+        setTimeout(() => setLoading(false), 400);
       });
       if (error && !test) throw error;
-      if (data) processTestData(data);
+      if (data) {
+        processTestData(data);
+        setLoadingProgress(100);
+        setTimeout(() => setLoading(false), 400);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to load test');
       navigate('/');
-    } finally {
       setLoading(false);
     }
   }
@@ -883,8 +912,47 @@ export default function TestPage() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (loading) return <div className="p-8 text-center">Loading Test...</div>;
-  if (loading) return <div className="p-8 text-center">Loading Test...</div>;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 p-6">
+        <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in duration-500">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl mb-2">
+              <Clock className="h-6 w-6 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Preparing Your Test
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
+              We're setting up your exam environment...
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <Progress value={loadingProgress} className="h-2.5 bg-indigo-100 dark:bg-indigo-950" />
+            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-indigo-500">
+              <span className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
+                Loading Questions
+              </span>
+              <span>{Math.round(loadingProgress)}%</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 pt-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500/20 animate-shimmer"
+                  style={{ animationDelay: `${i * 0.2}s`, width: '100%' }}
+                ></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!test) return <div className="p-8 text-center">Test not found.</div>;
   if (!test.questions || test.questions.length === 0) return <div className="p-8 text-center">This test has no questions.</div>;
 
