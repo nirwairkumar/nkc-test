@@ -85,6 +85,11 @@ export const analyticsApi = {
         return response.data;
     },
 
+    getUploadLogs: async (days: number = 30, limit: number = 100) => {
+        const response = await apiClient.get('analytics/stats/uploads/logs', { params: { days, limit } });
+        return response.data;
+    },
+
     // ─── Progress & Abandonment Tracking ──────────────────────
     updateProgress: async (user_id: string | null, test_id: string, completion_percentage: number) => {
         try {
