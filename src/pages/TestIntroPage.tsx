@@ -21,9 +21,10 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle, FileText, CheckCircle, ArrowLeft, Info } from 'lucide-react';
+import { Loader2, Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle, FileText, CheckCircle, ArrowLeft, Info, RefreshCcw, WifiOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { fetchTestById, fetchTestBySlug, Test } from '@/lib/testsApi';
 // import { Helmet } from 'react-helmet-async'; // Replaced by SEO component
 import { SEO } from '@/components/SEO';
@@ -99,6 +100,7 @@ export default function TestIntroPage() {
 
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadingProgress, setLoadingProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
 
     // Logic State
@@ -111,98 +113,7 @@ export default function TestIntroPage() {
     const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
     const [showAuthWarning, setShowAuthWarning] = useState(false);
 
-    // 1. Authentication Check
-    useEffect(() => {
-        if (!authLoading && !user) {
-            // Optional: Redirect to login logic if required
-        }
-    }, [user, authLoading]);
-
-    // 2. Load Test Data
-    useEffect(() => {
-        if (slug) {
-            loadTestBySlug(slug);
-        } else if (id) {
-            loadTestById(id);
-        }
-    }, [id, slug]);
-
-    // 3. Check Permissions (Schedule & Attempts)
-    useEffect(() => {
-        if (test) {
-            checkPermissions();
-        }
-    }, [test, user]);
-
-    const loadTestBySlug = async (testSlug: string) => {
-        // Serve from cache first if available for instant load
-        setLoading(true);
-        try {
-            const { data, error } = await fetchTestBySlug(testSlug, (cachedData) => {
-                setTest(cachedData);
-                setLoading(false);
-            });
-            if (error && !test) throw error; // If no cache and no data
-            if (data) setTest(data);
-        } catch (err: any) {
-            console.error("Error loading test by slug:", err);
-            setError(err.message || "Failed to load test details.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const loadTestById = async (testId: string) => {
-        setLoading(true);
-        try {
-            // Check if testId is a UUID
-            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(testId);
-
-            let data, error;
-
-            if (isUUID) {
-                const res = await fetchTestById(testId, (cachedData) => {
-                    setTest(cachedData);
-                    setLoading(false);
-                });
-                data = res.data;
-                error = res.error;
-            } else {
-                // Try Custom ID
-                const { fetchTestByCustomId } = await import('@/lib/testsApi');
-                const res = await fetchTestByCustomId(testId, (cachedData) => {
-                    setTest(cachedData);
-                    setLoading(false);
-                });
-                data = res.data;
-                error = res.error;
-            }
-
-            if (error) {
-                // If invalid UUID but wasn't found as custom ID, it might still return error.
-                throw error;
-            }
-            if (!data) throw new Error("Test not found");
-
-            // SEO Redirect: If test has a slug, redirect to it
-            // Only redirect if we loaded by ID (UUID), to keep URLs clean. 
-            // If we loaded by Custom ID, we might also want to redirect to slug OR keep custom ID url.
-            // Let's redirect to slug if it exists for canonical reasons.
-            if (data.slug) {
-                navigate(`/test/${data.slug}`, { replace: true });
-                return;
-            }
-
-            setTest(data);
-        } catch (err: any) {
-            console.error("Error loading test:", err);
-            setError(err.message || "Failed to load test details.");
-        } finally {
-            console.log("Load Test Finished. Loading: false");
-            setLoading(false);
-        }
-    };
-
+    // Logic Functions
     const checkPermissions = async () => {
         if (!test) return;
 
@@ -238,6 +149,125 @@ export default function TestIntroPage() {
             }
         }
     };
+
+    const loadTestBySlug = async (testSlug: string) => {
+        setLoading(true);
+        try {
+            const { data, error } = await fetchTestBySlug(testSlug, (cachedData) => {
+                setTest(cachedData);
+                setLoadingProgress(100);
+                setTimeout(() => setLoading(false), 300);
+            });
+            if (error && !test) throw error;
+            if (data) {
+                setTest(data);
+                setLoadingProgress(100);
+                setTimeout(() => setLoading(false), 300);
+            }
+        } catch (err: any) {
+            console.error("Error loading test by slug:", err);
+            setError(err.message || "Failed to load test details.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadTestById = async (testId: string) => {
+        setLoading(true);
+        try {
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(testId);
+            let data, error;
+
+            if (isUUID) {
+                const res = await fetchTestById(testId, (cachedData) => {
+                    setTest(cachedData);
+                    setLoadingProgress(100);
+                    setTimeout(() => setLoading(false), 300);
+                });
+                data = res.data;
+                error = res.error;
+            } else {
+                const { fetchTestByCustomId } = await import('@/lib/testsApi');
+                const res = await fetchTestByCustomId(testId, (cachedData) => {
+                    setTest(cachedData);
+                    setLoadingProgress(100);
+                    setTimeout(() => setLoading(false), 300);
+                });
+                data = res.data;
+                error = res.error;
+            }
+
+            if (error) throw error;
+            if (!data) throw new Error("Test not found");
+
+            if (data.slug) {
+                navigate(`/test/${data.slug}`, { replace: true });
+                return;
+            }
+
+            setTest(data);
+        } catch (err: any) {
+            console.error("Error loading test:", err);
+            setError(err.message || "Failed to load test details.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleReload = () => {
+        if (slug) {
+            loadTestBySlug(slug);
+        } else if (id) {
+            loadTestById(id);
+        } else {
+            window.location.reload();
+        }
+    };
+
+    // 1. Authentication Check
+    useEffect(() => {
+        if (!authLoading && !user) {
+            // Optional: Redirect to login logic if required
+        }
+    }, [user, authLoading]);
+
+    // 2. Load Test Data
+    useEffect(() => {
+        if (slug) {
+            loadTestBySlug(slug);
+        } else if (id) {
+            loadTestById(id);
+        }
+    }, [id, slug]);
+
+    // 3. Check Permissions (Schedule & Attempts)
+    useEffect(() => {
+        if (test) {
+            checkPermissions();
+        }
+    }, [test, user]);
+
+    // Simulated loading progress
+    useEffect(() => {
+        if (!loading) {
+            setLoadingProgress(100);
+            return;
+        }
+
+        const interval = setInterval(() => {
+            setLoadingProgress(prev => {
+                if (prev >= 95) {
+                    clearInterval(interval);
+                    return 95;
+                }
+                const inc = Math.random() * 5 + 2;
+                return Math.min(95, prev + inc);
+            });
+        }, 400);
+
+        return () => clearInterval(interval);
+    }, [loading]);
+
 
     const handleStartTest = () => {
         if (hasAttempted) return;
@@ -298,8 +328,83 @@ export default function TestIntroPage() {
         navigate(`/live/${test.id}`);
     };
 
-    if (loading) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin" /></div>;
-    if (error) return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[80vh] bg-slate-50 dark:bg-slate-950 p-6">
+                <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="text-center space-y-3">
+                        <div className="inline-flex items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl mb-2">
+                            <BookOpen className="h-8 w-8 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            Fetching Test Details
+                        </h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            Almost there! We're gathering everything you need.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <Progress value={loadingProgress} className="h-2 bg-indigo-100 dark:bg-indigo-950" />
+                        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-indigo-500">
+                            <span className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
+                                Loading Data
+                            </span>
+                            <span>{Math.round(loadingProgress)}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[80vh] bg-slate-50 dark:bg-slate-950 p-6">
+                <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none animate-in zoom-in duration-300">
+                    <div className="flex flex-col items-center text-center space-y-6">
+                        <div className="h-20 w-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                            <WifiOff className="h-10 w-10 text-red-500 dark:text-red-400" />
+                        </div>
+
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Connection Error</h2>
+                            <p className="text-slate-500 dark:text-slate-400">
+                                {error === "Test not found"
+                                    ? "We couldn't find the test you're looking for. It might have been removed or the link is incorrect."
+                                    : "We're having trouble reaching our servers. Please check your connection and try again."}
+                            </p>
+                        </div>
+
+                        <div className="w-full flex flex-col gap-3">
+                            <Button
+                                onClick={handleReload}
+                                className="w-full py-6 text-lg font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                <RefreshCcw className="mr-2 h-5 w-5" />
+                                Try Again
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate('/')}
+                                className="w-full py-6 text-lg font-semibold rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all"
+                            >
+                                <ArrowLeft className="mr-2 h-5 w-5" />
+                                Back to Home
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Subtle Support Text */}
+                <p className="mt-8 text-slate-400 dark:text-slate-500 text-sm">
+                    If the problem persists, please contact support.
+                </p>
+            </div>
+        );
+    }
     console.log("TestIntroPage Render. Test:", test);
     if (!test) return <div className="flex justify-center items-center h-screen">Test not found.</div>;
 
