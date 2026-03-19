@@ -1,120 +1,194 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.core.database import get_db
-from app.main import get_current_user  # Assuming get_current_user logic exists in main
+from app.core.database import get_db, supabase
 from supabase import Client
 from datetime import datetime, timedelta
-from typing import List
+from collections import defaultdict
 
 router = APIRouter()
-
-# Dependency to check if user is an admin
-def require_admin(user = Depends(get_current_user), db: Client = Depends(get_db)):
-    # Check admin role from profiles/admins table or JWT
-    # Simplified mock approach for this example:
-    try:
-        admin_check = db.table("admins").select("id").eq("user_id", user.id).execute()
-        if not admin_check.data:
-            raise HTTPException(status_code=403, detail="Admin privileges required")
-    except Exception:
-        # Fallback if admins table doesn't exist, check app metadata role
-        if getattr(user, 'app_metadata', {}).get('role') != 'admin':
-             raise HTTPException(status_code=403, detail="Admin privileges required")
-    return user
 
 @router.get("/overview")
 async def get_analytics_overview(
     days: int = 30,
-    user = Depends(require_admin),
     db: Client = Depends(get_db)
 ):
     """
-    Get high-level overview metrics for the dashboard.
+    Compute visitor stats LIVE from raw tables (visitors, sessions, page_views).
+    No dependency on a pre-aggregated daily_stats table.
     """
-    start_date = (datetime.utcnow() - timedelta(days=days)).date()
-    
+    start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
     try:
-        stats = db.table("daily_stats").select("*").gte("stat_date", str(start_date)).order("stat_date", desc=True).execute()
-        
-        if not stats.data:
-            return {
-                "total_visitors": 0,
-                "total_page_views": 0,
-                "total_sessions": 0,
-                "bounce_rate": 0
-            }
-            
-        # Aggregate the daily stats
-        total_visitors = sum([day["new_visitors"] for day in stats.data])
-        total_page_views = sum([day["total_page_views"] for day in stats.data])
-        total_sessions = sum([day["total_sessions"] for day in stats.data])
-        
-        # Weighted average bounce rate
-        if total_sessions > 0:
-            bounce_rate = sum([day["bounce_rate"] * day["total_sessions"] for day in stats.data]) / total_sessions
-        else:
-            bounce_rate = 0
-            
+        # Count unique visitors
+        visitors_res = supabase.table("visitors")\
+            .select("id", count="exact")\
+            .gte("created_at", start_date)\
+            .execute()
+        total_visitors = visitors_res.count if hasattr(visitors_res, 'count') and visitors_res.count else len(visitors_res.data or [])
+
+        # Count sessions
+        sessions_res = supabase.table("sessions")\
+            .select("id, is_bounce", count="exact")\
+            .gte("created_at", start_date)\
+            .execute()
+        total_sessions = sessions_res.count if hasattr(sessions_res, 'count') and sessions_res.count else len(sessions_res.data or [])
+
+        # Count page views
+        page_views_res = supabase.table("page_views")\
+            .select("id", count="exact")\
+            .gte("created_at", start_date)\
+            .execute()
+        total_page_views = page_views_res.count if hasattr(page_views_res, 'count') and page_views_res.count else len(page_views_res.data or [])
+
+        # Bounce rate
+        bounce_count = 0
+        if sessions_res.data:
+            bounce_count = sum(1 for s in sessions_res.data if s.get("is_bounce") is True)
+
+        bounce_rate = round((bounce_count / total_sessions * 100), 2) if total_sessions > 0 else 0
+
         return {
             "total_visitors": total_visitors,
             "total_page_views": total_page_views,
             "total_sessions": total_sessions,
-            "bounce_rate": round(bounce_rate, 2)
+            "bounce_rate": bounce_rate
         }
     except Exception as e:
-         raise HTTPException(status_code=500, detail=str(e))
+        print(f"Error in analytics overview: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/daily")
 async def get_daily_trends(
     days: int = 30,
-    user = Depends(require_admin),
     db: Client = Depends(get_db)
 ):
     """
-    Get daily breakdown for charts.
+    Compute daily trend from raw page_views and visitors tables.
     """
-    start_date = (datetime.utcnow() - timedelta(days=days)).date()
-    stats = db.table("daily_stats").select("*").gte("stat_date", str(start_date)).order("stat_date", desc=False).execute()
-    return stats.data
+    start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+    try:
+        # Get page views with date
+        pv_res = supabase.table("page_views")\
+            .select("created_at")\
+            .gte("created_at", start_date)\
+            .order("created_at", desc=False)\
+            .execute()
+
+        # Get visitors with date
+        v_res = supabase.table("visitors")\
+            .select("created_at")\
+            .gte("created_at", start_date)\
+            .order("created_at", desc=False)\
+            .execute()
+
+        # Get sessions with date
+        s_res = supabase.table("sessions")\
+            .select("created_at")\
+            .gte("created_at", start_date)\
+            .order("created_at", desc=False)\
+            .execute()
+
+        # Aggregate by day
+        daily: dict = defaultdict(lambda: {"total_page_views": 0, "total_visitors": 0, "total_sessions": 0})
+
+        for pv in (pv_res.data or []):
+            day = (pv.get("created_at") or "")[:10]
+            if day:
+                daily[day]["total_page_views"] += 1
+
+        for v in (v_res.data or []):
+            day = (v.get("created_at") or "")[:10]
+            if day:
+                daily[day]["total_visitors"] += 1
+
+        for s in (s_res.data or []):
+            day = (s.get("created_at") or "")[:10]
+            if day:
+                daily[day]["total_sessions"] += 1
+
+        result = [
+            {"stat_date": date, **counts}
+            for date, counts in sorted(daily.items())
+        ]
+        return result
+
+    except Exception as e:
+        print(f"Error in daily trends: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/pages")
 async def get_top_pages(
     days: int = 30,
     limit: int = 10,
-    user = Depends(require_admin),
     db: Client = Depends(get_db)
 ):
     """
-    Get top pages by view count. This normally aggregates from daily_stats.top_pages
-    or raw page_views depending on scale.
+    Get top pages by view count from raw page_views.
     """
-    # Simplified approach: query raw page views for accuracy (if scale is med/small)
-    start_date = datetime.utcnow() - timedelta(days=days)
-    
-    # Supabase grouping isn't natively supported via Rest API like this easily
-    # So we call an RPC function or do it via raw SQL on the server.
-    # For now, returning mock structure to fit the plan
-    return [
-         {"path": "/", "views": 1520},
-         {"path": "/tests", "views": 850},
-         {"path": "/generate-with-ai", "views": 420},
-    ]
+    start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+    try:
+        pv_res = supabase.table("page_views")\
+            .select("page_path")\
+            .gte("created_at", start_date)\
+            .execute()
+
+        page_counts: dict = defaultdict(int)
+        for pv in (pv_res.data or []):
+            path = pv.get("page_path", "/")
+            page_counts[path] += 1
+
+        result = sorted(
+            [{"path": path, "views": count} for path, count in page_counts.items()],
+            key=lambda x: x["views"],
+            reverse=True
+        )
+        return result[:limit]
+
+    except Exception as e:
+        print(f"Error in top pages: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/referrers")
 async def get_top_referrers(
     days: int = 30,
-    user = Depends(require_admin),
     db: Client = Depends(get_db)
 ):
-    # Mocking implementation per plan
-    return [
-         {"source": "Direct", "count": 1200},
-         {"source": "Google", "count": 850},
-         {"source": "Twitter", "count": 320},
-    ]
+    """
+    Get top referrers from raw sessions table.
+    """
+    start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+    try:
+        s_res = supabase.table("sessions")\
+            .select("referrer")\
+            .gte("created_at", start_date)\
+            .execute()
+
+        ref_counts: dict = defaultdict(int)
+        for s in (s_res.data or []):
+            ref = s.get("referrer") or "Direct"
+            if not ref or ref.strip() == "":
+                ref = "Direct"
+            ref_counts[ref] += 1
+
+        result = sorted(
+            [{"source": src, "count": count} for src, count in ref_counts.items()],
+            key=lambda x: x["count"],
+            reverse=True
+        )
+        return result[:10]
+
+    except Exception as e:
+        print(f"Error in referrers: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/live")
 async def get_live_visitors(
-    user = Depends(require_admin),
     db: Client = Depends(get_db)
 ):
     """
@@ -122,7 +196,10 @@ async def get_live_visitors(
     """
     five_mins_ago = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
     try:
-        active = db.table("sessions").select("id", count="exact").gte("ended_at", five_mins_ago).execute()
-        return {"live_visitors": active.count if hasattr(active, 'count') else 0}
+        active = supabase.table("sessions")\
+            .select("id", count="exact")\
+            .gte("ended_at", five_mins_ago)\
+            .execute()
+        return {"live_visitors": active.count if hasattr(active, 'count') and active.count else 0}
     except Exception as e:
         return {"live_visitors": 0}

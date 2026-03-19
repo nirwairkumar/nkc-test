@@ -238,29 +238,34 @@ async def register_start(
     db: Client = Depends(get_db)
 ):
     try:
+        if not payload.user_id:
+            # Anonymous users are tracked exclusively via anon_test_attempts
+            return {"success": True}
+
         # Build the insert data
-        insert_data: Dict[str, Any] = {"test_id": payload.test_id}
-        if payload.user_id:
-            insert_data["user_id"] = payload.user_id
+        insert_data: Dict[str, Any] = {
+            "test_id": payload.test_id,
+            "user_id": payload.user_id
+        }
 
         # Check if already registered (for non-anonymous only)
-        if payload.user_id:
-            existing = supabase.table("test_registrations")\
-                .select("id, status")\
-                .eq("user_id", payload.user_id)\
-                .eq("test_id", payload.test_id)\
-                .execute()
-            if existing.data:
-                # Reset to in_progress if re-starting (not submitted)
-                row = existing.data[0]
-                if row.get("status") != "submitted":
-                    try:
-                        supabase.table("test_registrations")\
-                            .update({"status": "in_progress", "completion_percentage": 0})\
-                            .eq("id", row["id"]).execute()
-                    except Exception:
-                        pass  # columns may not exist yet
-                return {"success": True}
+        existing = supabase.table("test_registrations")\
+            .select("id, status")\
+            .eq("user_id", payload.user_id)\
+            .eq("test_id", payload.test_id)\
+            .execute()
+
+        if existing.data:
+            # Reset to in_progress if re-starting (not submitted)
+            row = existing.data[0]
+            if row.get("status") != "submitted":
+                try:
+                    supabase.table("test_registrations")\
+                        .update({"status": "in_progress", "completion_percentage": 0})\
+                        .eq("id", row["id"]).execute()
+                except Exception:
+                    pass  # columns may not exist yet
+            return {"success": True}
 
         # Try insert with analytics columns first
         try:
@@ -269,9 +274,10 @@ async def register_start(
             supabase.table("test_registrations").insert(insert_data).execute()
         except Exception:
             # Fallback: insert without analytics columns (migration not run yet)
-            fallback_data = {"test_id": payload.test_id}
-            if payload.user_id:
-                fallback_data["user_id"] = payload.user_id
+            fallback_data = {
+                "test_id": payload.test_id,
+                "user_id": payload.user_id
+            }
             supabase.table("test_registrations").insert(fallback_data).execute()
 
         return {"success": True}
