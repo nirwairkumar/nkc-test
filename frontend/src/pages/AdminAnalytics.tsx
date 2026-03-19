@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { analyticsApi } from '@/lib/analyticsApi';
-import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, ArrowUp, ArrowDown, Search, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -42,14 +42,20 @@ export default function AdminAnalytics() {
     const [trends, setTrends] = useState<any[]>([]);
     const [anonStats, setAnonStats] = useState<any>(null);
     const [attemptLogs, setAttemptLogs] = useState<any[]>([]);
+    const [uploadLogs, setUploadLogs] = useState<any[]>([]);
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // Test Matrix sort & filter
+    const [sortField, setSortField] = useState<string>('starts');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+    const [filterText, setFilterText] = useState('');
 
     const fetchAllData = useCallback(async () => {
         try {
             setIsRefreshing(true);
             setLoading(true);
-            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData, anonData] =
+            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData, anonData, logsData, uploadData] =
                 await Promise.all([
                     analyticsApi.getTestFunnel(days),
                     analyticsApi.getVisitorLocations(days),
@@ -60,6 +66,7 @@ export default function AdminAnalytics() {
                     analyticsApi.getDailyTrends(days).catch(() => []),
                     analyticsApi.getAnonSummary(days).catch(() => null),
                     analyticsApi.getAttemptLogs(days, 200).catch(() => []),
+                    analyticsApi.getUploadLogs(days).catch(() => ({ uploads: [] })),
                 ]);
 
             setFunnel(funnelData);
@@ -70,6 +77,8 @@ export default function AdminAnalytics() {
             setVisitorStats(overviewData);
             setTrends(trendsData || []);
             setAnonStats(anonData);
+            setAttemptLogs(logsData || []);
+            setUploadLogs(uploadData?.uploads || []);
             setLastRefreshed(new Date());
         } catch (error) {
             console.error("Failed to fetch analytics:", error);
@@ -97,7 +106,7 @@ export default function AdminAnalytics() {
         { id: 'tests', label: 'Test Matrix', icon: FileText },
         { id: 'users', label: 'User Matrix', icon: Users },
         { id: 'logs', label: 'Detailed Sessions', icon: List },
-        { id: 'creation', label: 'Test Creation', icon: TrendingUp },
+        { id: 'creation', label: 'Creation / Upload', icon: Upload },
     ];
 
     // Location chart data
@@ -287,61 +296,107 @@ export default function AdminAnalytics() {
             )}
 
             {/* ════════ TEST MATRIX TAB ════════ */}
-            {activeTab === 'tests' && (
-                <div className="space-y-4">
-                    <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b bg-muted/30">
-                                    <th className="px-4 py-3 text-left font-semibold">Test Title</th>
-                                    <th className="px-4 py-3 text-left font-semibold">Creator</th>
-                                    <th className="px-4 py-3 text-center font-semibold">Starts</th>
-                                    <th className="px-4 py-3 text-center font-semibold">Submitted</th>
-                                    <th className="px-4 py-3 text-center font-semibold">Abandoned</th>
-                                    <th className="px-4 py-3 text-center font-semibold">In Progress</th>
-                                    <th className="px-4 py-3 text-center font-semibold">Completion %</th>
-                                    <th className="px-4 py-3 text-center font-semibold">Anon</th>
-                                    <th className="px-4 py-3 text-left font-semibold">Created</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {testMatrix.length === 0 ? (
-                                    <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">No test attempt data found for this period.</td></tr>
-                                ) : (
-                                    testMatrix.map((t: any, i: number) => (
-                                        <tr key={i} className="hover:bg-muted/20 transition-colors">
-                                            <td className="px-4 py-3 font-medium max-w-[200px] truncate">{t.title}</td>
-                                            <td className="px-4 py-3 text-muted-foreground">{t.creator_name}</td>
-                                            <td className="px-4 py-3 text-center font-mono">{t.starts}</td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">{t.submitted}</span>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600">{t.abandoned}</span>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className="inline-flex items-center rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-600">{t.in_progress}</span>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
-                                                        <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${t.completion_rate}%` }} />
+            {activeTab === 'tests' && (() => {
+                const SortIcon = ({ field }: { field: string }) => {
+                    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
+                    return sortDir === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+                };
+                const toggleSort = (field: string) => {
+                    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                    else { setSortField(field); setSortDir('desc'); }
+                };
+                const filtered = testMatrix.filter((t: any) =>
+                    !filterText || (t.title || '').toLowerCase().includes(filterText.toLowerCase()) || (t.creator_name || '').toLowerCase().includes(filterText.toLowerCase())
+                );
+                const sorted = [...filtered].sort((a: any, b: any) => {
+                    let av = a[sortField], bv = b[sortField];
+                    if (typeof av === 'string') av = av.toLowerCase();
+                    if (typeof bv === 'string') bv = bv.toLowerCase();
+                    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+                    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                const cols = [
+                    { key: 'title', label: 'Test Title', align: 'left' },
+                    { key: 'creator_name', label: 'Creator', align: 'left' },
+                    { key: 'starts', label: 'Starts', align: 'center' },
+                    { key: 'submitted', label: 'Submitted', align: 'center' },
+                    { key: 'abandoned', label: 'Abandoned', align: 'center' },
+                    { key: 'in_progress', label: 'In Progress', align: 'center' },
+                    { key: 'completion_rate', label: 'Completion %', align: 'center' },
+                    { key: 'anonymous_count', label: 'Anon', align: 'center' },
+                    { key: 'test_created_at', label: 'Created', align: 'left' },
+                ];
+                return (
+                    <div className="space-y-4">
+                        {/* Filter input */}
+                        <div className="relative max-w-sm">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Filter by title or creator..."
+                                value={filterText}
+                                onChange={e => setFilterText(e.target.value)}
+                                className="w-full rounded-lg border bg-card pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                        </div>
+                        <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b bg-muted/30">
+                                        {cols.map(col => (
+                                            <th
+                                                key={col.key}
+                                                onClick={() => toggleSort(col.key)}
+                                                className={`px-4 py-3 font-semibold cursor-pointer select-none hover:bg-muted/50 transition-colors text-${col.align}`}
+                                            >
+                                                <span className="inline-flex items-center gap-1">
+                                                    {col.label}
+                                                    <SortIcon field={col.key} />
+                                                </span>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {sorted.length === 0 ? (
+                                        <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">No test attempt data found for this period.</td></tr>
+                                    ) : (
+                                        sorted.map((t: any, i: number) => (
+                                            <tr key={i} className="hover:bg-muted/20 transition-colors">
+                                                <td className="px-4 py-3 font-medium max-w-[200px] truncate">{t.title}</td>
+                                                <td className="px-4 py-3 text-muted-foreground">{t.creator_name}</td>
+                                                <td className="px-4 py-3 text-center font-mono">{t.starts}</td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">{t.submitted}</span>
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600">{t.abandoned}</span>
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <span className="inline-flex items-center rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-600">{t.in_progress}</span>
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
+                                                            <div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${t.completion_rate}%` }} />
+                                                        </div>
+                                                        <span className="text-xs font-mono">{t.completion_rate}%</span>
                                                     </div>
-                                                    <span className="text-xs font-mono">{t.completion_rate}%</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-center text-muted-foreground">{t.anonymous_count}</td>
-                                            <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                                                {t.test_created_at ? new Date(t.test_created_at).toLocaleDateString() : '—'}
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                                </td>
+                                                <td className="px-4 py-3 text-center text-muted-foreground">{t.anonymous_count}</td>
+                                                <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                                                    {t.test_created_at ? new Date(t.test_created_at).toLocaleDateString() : '—'}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {/* ════════ USER MATRIX TAB ════════ */}
             {activeTab === 'users' && (
@@ -448,6 +503,69 @@ export default function AdminAnalytics() {
                                         </td>
                                     </tr>
                                 ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Recent Uploads (Materials/Links) */}
+                    <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
+                        <div className="p-4 border-b flex items-center justify-between">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                <Upload className="h-5 w-5 text-green-500" />
+                                Recent Document & Link Uploads
+                            </h3>
+                            <span className="text-xs text-muted-foreground">Files, PDFs, Video Links</span>
+                        </div>
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b bg-muted/30">
+                                    <th className="px-4 py-3 text-left font-semibold">Title / Name</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Uploader</th>
+                                    <th className="px-4 py-3 text-center font-semibold">Type</th>
+                                    <th className="px-4 py-3 text-center font-semibold">Status</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y">
+                                {uploadLogs.length === 0 ? (
+                                    <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">No recent uploads found.</td></tr>
+                                ) : (
+                                    uploadLogs.map((log: any, i: number) => (
+                                        <tr key={i} className="hover:bg-muted/20 transition-colors">
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col">
+                                                    <a
+                                                        href={log.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="font-medium text-primary hover:underline truncate max-w-[300px]"
+                                                    >
+                                                        {log.title}
+                                                    </a>
+                                                    {log.uploader_email && <span className="text-xs text-muted-foreground">{log.uploader_email}</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 font-medium">{log.uploader_name}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border ${log.type === 'link'
+                                                        ? 'bg-blue-500/10 text-blue-600 border-blue-200'
+                                                        : 'bg-indigo-500/10 text-indigo-600 border-indigo-200'
+                                                    }`}>
+                                                    {log.type === 'link' ? 'LINK' : (log.file_ext || 'FILE')}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-200">
+                                                    <CheckCircle2 className="h-3 w-3" />
+                                                    Uploaded
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                                                {new Date(log.uploaded_at).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>

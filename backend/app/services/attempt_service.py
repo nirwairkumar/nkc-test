@@ -22,6 +22,7 @@ def process_progress(payload: ProgressUpdateRequest):
                 query = query.eq("user_id", payload.user_id)
             else:
                 query = query.is_("user_id", "null")
+            query = query.neq("status", "submitted")
             query.execute()
         except Exception:
             pass
@@ -44,6 +45,7 @@ def process_abandon(payload: AbandonRequest):
                 query = query.eq("user_id", payload.user_id)
             else:
                 query = query.is_("user_id", "null")
+            query = query.neq("status", "submitted")
             query.execute()
         except Exception:
             pass

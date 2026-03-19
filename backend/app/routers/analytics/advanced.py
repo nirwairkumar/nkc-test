@@ -22,11 +22,11 @@ async def get_test_funnel(
 
         # ── Registered Users ──
         regs = supabase.table("test_registrations")\
-            .select("id, status, completion_percentage")\
+            .select("id, user_id, status, completion_percentage")\
             .gte("started_at", start_date)\
             .execute()
 
-        data = regs.data or []
+        data = [r for r in (regs.data or []) if r.get("user_id")]
         total_started = len(data)
         total_submitted = sum(1 for r in data if r.get("status") == "submitted")
         total_abandoned = sum(1 for r in data if r.get("status") == "abandoned")
@@ -84,12 +84,12 @@ async def get_abandonment_analysis(
         start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
 
         abandoned = supabase.table("test_registrations")\
-            .select("completion_percentage, abandoned_reason")\
+            .select("user_id, completion_percentage, abandoned_reason")\
             .eq("status", "abandoned")\
             .gte("started_at", start_date)\
             .execute()
 
-        data = abandoned.data or []
+        data = [r for r in (abandoned.data or []) if r.get("user_id")]
 
         # Reason breakdown
         reasons = {}
@@ -137,12 +137,11 @@ async def get_test_matrix(
     try:
         start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
 
-        # Fetch all registrations
         regs = supabase.table("test_registrations")\
             .select("test_id, user_id, status, completion_percentage, started_at")\
             .gte("started_at", start_date)\
             .execute()
-        reg_data = regs.data or []
+        reg_data = [r for r in (regs.data or []) if r.get("user_id")]
 
         # Fetch anonymous attempts to ensure unknown traffic counts
         anon_regs = supabase.table("anon_test_attempts")\
@@ -345,6 +344,72 @@ async def get_test_creation_stats(
         }
     except Exception as e:
         print(f"Error in test creation stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Upload Logs (Materials) ──────────────────────────────────
+@router.get("/uploads/logs")
+async def get_upload_logs(
+    days: int = 30,
+    limit: int = 100,
+    db: Client = Depends(get_db)
+):
+    """
+    Returns recent file/link uploads from the materials table,
+    enriched with uploader profile info.
+    """
+    try:
+        start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+        mats = supabase.table("materials")\
+            .select("id, user_id, title, type, url, file_path, created_at")\
+            .gte("created_at", start_date)\
+            .order("created_at", desc=True)\
+            .limit(limit)\
+            .execute()
+
+        data = mats.data or []
+
+        # Enrich with uploader profiles
+        user_ids = list(set(m.get("user_id") for m in data if m.get("user_id")))
+        profiles_map = {}
+        if user_ids:
+            p_res = supabase.table("profiles")\
+                .select("id, full_name, email")\
+                .in_("id", user_ids)\
+                .execute()
+            for p in (p_res.data or []):
+                profiles_map[p["id"]] = p
+
+        result = []
+        for m in data:
+            profile = profiles_map.get(m.get("user_id"), {})
+            # Estimate file size from URL path info (not available directly)
+            file_ext = ""
+            if m.get("file_path"):
+                parts = m["file_path"].rsplit(".", 1)
+                file_ext = parts[-1].upper() if len(parts) > 1 else ""
+            elif m.get("url"):
+                file_ext = "LINK"
+
+            result.append({
+                "id": m["id"],
+                "title": m.get("title", "Untitled"),
+                "type": m.get("type", "file"),
+                "url": m.get("url", ""),
+                "file_ext": file_ext,
+                "uploader_name": profile.get("full_name", "Unknown"),
+                "uploader_email": profile.get("email", ""),
+                "uploaded_at": m.get("created_at"),
+            })
+
+        return {
+            "total": len(result),
+            "uploads": result
+        }
+
+    except Exception as e:
+        print(f"Error in upload logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
