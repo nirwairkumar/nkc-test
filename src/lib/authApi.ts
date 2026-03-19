@@ -26,6 +26,11 @@ export const authApi = {
         localStorage.removeItem('testoza_token');
         localStorage.removeItem('testoza_refresh_token');
     },
+    refreshToken: async (refresh_token: string) => {
+        // Use standard axios to avoid cyclic interceptor triggers
+        const response = await apiClient.post('/auth/refresh', { refresh_token });
+        return response.data;
+    },
     getMe: async () => {
         const response = await apiClient.get('/auth/me');
         return response.data;

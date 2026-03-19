@@ -233,6 +233,10 @@ export default function UserTestManager() {
         toast.success("Test link copied!");
     };
 
+    const handleUploadSolutions = (test: any) => {
+        navigate(`/solutions-editor/${test.id}`);
+    };
+
     const handleClassChange = async (test: any, classId: string | null) => {
         const oldClassId = test.class_id;
         // Optimistic update
@@ -456,6 +460,7 @@ export default function UserTestManager() {
                                                 onDelete={handleDeleteTest}
                                                 onVisibilityChange={handleVisibilityChange}
                                                 onShare={handleShare}
+                                                onUploadSolutions={handleUploadSolutions}
                                                 onClassChange={handleClassChange}
                                                 getVisibilityColor={getVisibilityColor}
                                                 getVisibilityIcon={getVisibilityIcon}
