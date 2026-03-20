@@ -39,10 +39,10 @@ export default function Footer() {
                         <h3 className="text-base font-semibold">Support</h3>
                         <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                             <a
-                                href="mailto:ziptrip.info.mail@gmail.com"
+                                href="mailto:support@testoza.com"
                                 className="hover:text-primary transition-colors"
                             >
-                                ziptrip.info.mail@gmail.com
+                                support@testoza.com
                             </a>
                             <a
                                 href="https://testoza.com"
