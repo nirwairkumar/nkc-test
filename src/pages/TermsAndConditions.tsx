@@ -58,7 +58,7 @@ export default function TermsAndConditions() {
                     </p>
 
                     <p className="mb-4 font-semibold">
-                        For any questions, concerns, or legal notices, users may contact us at ziptrip.info.mail@gmail.com.
+                        For any questions, concerns, or legal notices, users may contact us at support@testoza.com.
                     </p>
                 </CardContent>
             </Card>

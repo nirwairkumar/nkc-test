@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
                     </p>
 
                     <p className="mb-4 font-semibold">
-                        For any questions or concerns regarding this Privacy Policy, users may contact us at ziptrip.info.mail@gmail.com.
+                        For any questions or concerns regarding this Privacy Policy, users may contact us at support@testoza.com.
                     </p>
                 </CardContent>
             </Card>
