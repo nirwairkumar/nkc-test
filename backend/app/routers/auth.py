@@ -5,6 +5,7 @@ from app.core.database import supabase, get_db
 from supabase import Client
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any
+from app.core.config import settings
 
 security = HTTPBearer()
 
@@ -177,11 +178,11 @@ async def update_user(payload: Dict[str, Any], db: Client = Depends(get_db)):
 @router.get("/google")
 async def get_google_login_url(request: Request):
     try:
-        host = request.headers.get("origin") or "https://testoza.com"
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
         response = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
-                "redirect_to": f"{host}/auth/callback"
+                "redirect_to": f"{frontend_url}/auth/callback"
             }
         })
         return {"data": response, "error": None}

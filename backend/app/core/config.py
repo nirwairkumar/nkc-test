@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     
     # API Configuration
     API_V1_STR: str = "/api/v1"
+    FRONTEND_URL: str = "http://localhost:8081"
     
     # Supabase Configuration
     SUPABASE_URL: str
