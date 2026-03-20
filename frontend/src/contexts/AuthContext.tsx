@@ -116,6 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const params = new URLSearchParams(hash.substring(1));
                 const accessToken = params.get('access_token');
                 const refreshToken = params.get('refresh_token');
+                const type = params.get('type');
 
                 if (accessToken) {
                     localStorage.setItem('testoza_token', accessToken);
@@ -124,6 +125,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                     // Clear hash for clean URL
                     window.history.replaceState(null, '', window.location.pathname);
+
+                    if (type === 'recovery') {
+                        window.location.href = '/update-password';
+                        return;
+                    }
                 }
             }
 

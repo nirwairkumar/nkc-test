@@ -2,18 +2,18 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { Resend } from "npm:resend@2.0.0"
 
 const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 interface AuthEmailPayload {
-    email: string
-    type: "signup" | "recovery"
-    action_link: string
+  email: string
+  type: "signup" | "recovery"
+  action_link: string
 }
 
 function getConfirmationEmailTemplate(actionLink: string): string {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
       <head>
@@ -59,7 +59,7 @@ function getConfirmationEmailTemplate(actionLink: string): string {
 }
 
 function getRecoveryEmailTemplate(actionLink: string): string {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
       <head>
@@ -105,68 +105,68 @@ function getRecoveryEmailTemplate(actionLink: string): string {
 }
 
 serve(async (req) => {
-    if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+
+    const { email, type, action_link } = await req.json() as AuthEmailPayload
+
+    if (!email || !type || !action_link) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    try {
-        const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
+    console.log("Processing email:", { email, type })
 
-        const { email, type, action_link } = await req.json() as AuthEmailPayload
+    let subject: string
+    let html: string
 
-        if (!email || !type || !action_link) {
-            return new Response(
-                JSON.stringify({ error: "Missing required fields" }),
-                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            )
-        }
-
-        console.log("Processing email:", { email, type })
-
-        let subject: string
-        let html: string
-
-        if (type === "signup") {
-            subject = "Confirm your email address"
-            html = getConfirmationEmailTemplate(action_link)
-        } else if (type === "recovery") {
-            subject = "Reset your password"
-            html = getRecoveryEmailTemplate(action_link)
-        } else {
-            console.error("Unsupported email type:", type)
-            return new Response(
-                JSON.stringify({ error: "Unsupported email type" }),
-                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            )
-        }
-
-        console.log("Sending email via Resend...")
-        const { data, error } = await resend.emails.send({
-            from: "Testoza <testoza@nymintra.com>",
-            to: email,
-            subject,
-            html,
-        })
-
-        if (error) {
-            console.error("Resend error:", error)
-            return new Response(
-                JSON.stringify({ error: "Failed to send email", details: error }),
-                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            )
-        }
-
-        console.log("Email sent successfully:", data?.id)
-        return new Response(
-            JSON.stringify({ success: true, messageId: data?.id }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        )
-
-    } catch (error) {
-        console.error("Error processing request:", error)
-        return new Response(
-            JSON.stringify({ error: error.message }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        )
+    if (type === "signup") {
+      subject = "Confirm your email address"
+      html = getConfirmationEmailTemplate(action_link)
+    } else if (type === "recovery") {
+      subject = "Reset your password"
+      html = getRecoveryEmailTemplate(action_link)
+    } else {
+      console.error("Unsupported email type:", type)
+      return new Response(
+        JSON.stringify({ error: "Unsupported email type" }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+
+    console.log("Sending email via Resend...")
+    const { data, error } = await resend.emails.send({
+      from: "Testoza <testoza@nymintra.com>",
+      to: email,
+      subject,
+      html,
+    })
+
+    if (error) {
+      console.error("Resend error:", error)
+      return new Response(
+        JSON.stringify({ error: "Failed to send email", details: error }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log("Email sent successfully:", data?.id)
+    return new Response(
+      JSON.stringify({ success: true, messageId: data?.id }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    )
+
+  } catch (error) {
+    console.error("Error processing request:", error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+    )
+  }
 })

@@ -131,19 +131,34 @@ async def password_reset(payload: PasswordResetRequest, request: Request):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/password-update")
-async def password_update(payload: PasswordUpdateRequest, db: Client = Depends(get_db)):
+async def password_update(payload: PasswordUpdateRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
-        response = db.auth.update_user({"password": payload.password})
-        if hasattr(response, "user"):
+        # 1. Get user from token to verify authenticity
+        token = credentials.credentials
+        user_response = supabase.auth.get_user(token)
+        
+        if not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid session or token")
+            
+        user_id = user_response.user.id
+        
+        # 2. Use global admin client (Service Key) to update the password
+        response = supabase.auth.admin.update_user_by_id(
+            user_id,
+            attributes={"password": payload.password}
+        )
+        
+        if hasattr(response, "user") and response.user:
             return {
                 "data": {
-                    "user": response.user
+                    "user": jsonable_encoder(response.user)
                 },
                 "error": None
             }
-        return {"data": response, "error": None}
+        return {"data": jsonable_encoder(response), "error": None}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        error_detail = str(e)
+        raise HTTPException(status_code=400, detail=error_detail)
 @router.post("/update-user")
 async def update_user(payload: Dict[str, Any], db: Client = Depends(get_db)):
     try:
