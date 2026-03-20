@@ -59,8 +59,12 @@ export async function resetPasswordForEmail(email: string) {
 export async function signInWithGoogle() {
     try {
         const responseData = await authApi.signInWithGoogle();
-        if (responseData && responseData.url) {
-            window.location.href = responseData.url;
+
+        // The backend returns { data: { provider: 'google', url: '...' }, error: null }
+        const url = responseData?.data?.url || responseData?.url;
+
+        if (url) {
+            window.location.href = url;
             return { error: null };
         } else {
             throw new Error("Could not get Google login URL");
