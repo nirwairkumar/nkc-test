@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { fetchAllTests, createTest, deleteTest, updateTest, fetchTestsByCreator } from '@/lib/testsApi';
 import { fetchAdminUsersReportStats, fetchAdminUserReports, Report } from '@/lib/reportsApi';
 import { fetchUsers, fetchUserDetails, verifyCreator, revokeVerification } from '@/lib/usersApi';
-import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category } from '@/lib/categoriesApi';
+import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category, SubCategory, fetchSubCategories, fetchAllSubCategories, createSubCategory, updateSubCategory, deleteSubCategory, assignSubCategoryToTest } from '@/lib/categoriesApi';
 import { fetchUserAttempts } from '@/lib/attemptsApi';
 import { fetchAllClasses } from '@/lib/classesApi';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
@@ -83,6 +83,13 @@ export default function ManageTests() {
     const [categoriesLoading, setCategoriesLoading] = useState(true);
     const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<{ id?: string, name: string }>({ name: '' });
+
+    // Sub-Categories State
+    const [subCategories, setSubCategories] = useState<Record<string, SubCategory[]>>({});
+    const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+    const [isSubCategoryDialogOpen, setIsSubCategoryDialogOpen] = useState(false);
+    const [editingSubCategory, setEditingSubCategory] = useState<{ id?: string, name: string, category_id: string }>({ name: '', category_id: '' });
+    const [allSubCategories, setAllSubCategories] = useState<SubCategory[]>([]);
 
     // Users State
     const [users, setUsers] = useState<any[]>([]);
@@ -192,6 +199,7 @@ export default function ManageTests() {
         loadCategories();
         loadUsers();
         loadAllClasses();
+        loadAllSubCategoriesData();
     }, []);
 
     useEffect(() => {
@@ -519,6 +527,82 @@ export default function ManageTests() {
         }
     };
 
+    // --- Sub-Category Actions ---
+    const loadSubCategories = async (categoryId: string) => {
+        const { data } = await fetchSubCategories(categoryId);
+        if (data) {
+            setSubCategories(prev => ({ ...prev, [categoryId]: data }));
+        }
+    };
+
+    const loadAllSubCategoriesData = async () => {
+        const { data } = await fetchAllSubCategories();
+        if (data) setAllSubCategories(data);
+    };
+
+    const toggleExpandCategory = (categoryId: string) => {
+        if (expandedCategory === categoryId) {
+            setExpandedCategory(null);
+        } else {
+            setExpandedCategory(categoryId);
+            loadSubCategories(categoryId);
+        }
+    };
+
+    const openSubCategoryDialog = (categoryId: string, subCategory?: SubCategory) => {
+        if (subCategory) {
+            setEditingSubCategory({ id: subCategory.id, name: subCategory.name, category_id: categoryId });
+        } else {
+            setEditingSubCategory({ name: '', category_id: categoryId });
+        }
+        setIsSubCategoryDialogOpen(true);
+    };
+
+    const handleSaveSubCategory = async () => {
+        if (!editingSubCategory.name.trim()) return;
+        try {
+            if (editingSubCategory.id) {
+                const { error } = await updateSubCategory(editingSubCategory.id, editingSubCategory.name.trim());
+                if (error) throw error;
+                toast.success("Sub-category updated");
+            } else {
+                const { error } = await createSubCategory(editingSubCategory.category_id, editingSubCategory.name.trim());
+                if (error) throw error;
+                toast.success("Sub-category created");
+            }
+            setIsSubCategoryDialogOpen(false);
+            loadSubCategories(editingSubCategory.category_id);
+            loadAllSubCategoriesData();
+        } catch (error: any) {
+            console.error("Error saving sub-category:", error);
+            toast.error("Failed to save sub-category");
+        }
+    };
+
+    const handleDeleteSubCategory = async (subCategory: SubCategory) => {
+        if (!confirm(`Delete sub-category "${subCategory.name}"?`)) return;
+        try {
+            const { error } = await deleteSubCategory(subCategory.id);
+            if (error) throw error;
+            toast.success("Sub-category deleted");
+            loadSubCategories(subCategory.category_id);
+            loadAllSubCategoriesData();
+        } catch (error: any) {
+            toast.error("Failed to delete sub-category");
+        }
+    };
+
+    const handleAssignSubCategory = async (testId: string, subCategoryId: string | null) => {
+        try {
+            const { error } = await assignSubCategoryToTest(testId, subCategoryId);
+            if (error) throw error;
+            toast.success(subCategoryId ? "Sub-category assigned" : "Sub-category removed");
+        } catch (error: any) {
+            console.error("Error assigning sub-category:", error);
+            toast.error("Failed to assign sub-category");
+        }
+    };
+
 
     // YouTube-style lazy loading hook for tests
     const {
@@ -704,6 +788,30 @@ export default function ManageTests() {
                                                                 </DropdownMenuSubContent>
                                                             </DropdownMenuSub>
 
+                                                            {/* Sub-Category Assignment Submenu */}
+                                                            <DropdownMenuSub>
+                                                                <DropdownMenuSubTrigger>
+                                                                    <BookOpen className="mr-2 h-4 w-4" /> Assign Sub-Category
+                                                                </DropdownMenuSubTrigger>
+                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                                    <DropdownMenuItem onClick={() => handleAssignSubCategory(test.id, null)}>
+                                                                        <span className="opacity-50">None</span>
+                                                                    </DropdownMenuItem>
+                                                                    {allSubCategories.length === 0 ? (
+                                                                        <DropdownMenuItem disabled>No sub-categories yet</DropdownMenuItem>
+                                                                    ) : (
+                                                                        allSubCategories.map(sc => {
+                                                                            const parentCat = categories.find(c => c.id === sc.category_id);
+                                                                            return (
+                                                                                <DropdownMenuItem key={sc.id} onClick={() => handleAssignSubCategory(test.id, sc.id)}>
+                                                                                    {parentCat ? `${parentCat.name} → ` : ''}{sc.name}
+                                                                                </DropdownMenuItem>
+                                                                            );
+                                                                        })
+                                                                    )}
+                                                                </DropdownMenuSubContent>
+                                                            </DropdownMenuSub>
+
                                                             <DropdownMenuSeparator />
 
                                                             {/* Edit Action */}
@@ -831,17 +939,49 @@ export default function ManageTests() {
                                         </TableRow>
                                     ) : (
                                         categories.map(category => (
-                                            <TableRow key={category.id}>
-                                                <TableCell className="font-medium">{category.name}</TableCell>
-                                                <TableCell className="text-right flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => openCategoryDialog(category)}>
-                                                        <Pencil className="w-4 h-4 text-blue-600" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category)}>
-                                                        <Trash2 className="w-4 h-4 text-red-600" />
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
+                                            <React.Fragment key={category.id}>
+                                                <TableRow className="cursor-pointer hover:bg-slate-50" onClick={() => toggleExpandCategory(category.id)}>
+                                                    <TableCell className="font-medium">
+                                                        <span className="mr-2 text-xs text-muted-foreground">{expandedCategory === category.id ? '▼' : '▶'}</span>
+                                                        {category.name}
+                                                        {subCategories[category.id] && (
+                                                            <span className="ml-2 text-xs text-muted-foreground">({subCategories[category.id].length} sub)</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-right flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                                        <Button variant="ghost" size="icon" onClick={() => openSubCategoryDialog(category.id)} title="Add Sub-Category">
+                                                            <Plus className="w-4 h-4 text-emerald-600" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => openCategoryDialog(category)}>
+                                                            <Pencil className="w-4 h-4 text-blue-600" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category)}>
+                                                            <Trash2 className="w-4 h-4 text-red-600" />
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                                {expandedCategory === category.id && (
+                                                    (subCategories[category.id] || []).length === 0 ? (
+                                                        <TableRow>
+                                                            <TableCell colSpan={2} className="pl-10 text-sm text-muted-foreground italic bg-slate-50/50">No sub-categories. Click + to add one.</TableCell>
+                                                        </TableRow>
+                                                    ) : (
+                                                        (subCategories[category.id] || []).map(sc => (
+                                                            <TableRow key={sc.id} className="bg-slate-50/50">
+                                                                <TableCell className="pl-10 text-sm">↳ {sc.name}</TableCell>
+                                                                <TableCell className="text-right flex justify-end gap-2">
+                                                                    <Button variant="ghost" size="icon" onClick={() => openSubCategoryDialog(category.id, sc)}>
+                                                                        <Pencil className="w-3.5 h-3.5 text-blue-500" />
+                                                                    </Button>
+                                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSubCategory(sc)}>
+                                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                                    </Button>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        ))
+                                                    )
+                                                )}
+                                            </React.Fragment>
                                         ))
                                     )}
                                 </TableBody>
@@ -1114,6 +1254,30 @@ export default function ManageTests() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>Cancel</Button>
                         <Button onClick={handleSaveCategory}>Save</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* SUB-CATEGORY EDIT/ADD DIALOG */}
+            <Dialog open={isSubCategoryDialogOpen} onOpenChange={setIsSubCategoryDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{editingSubCategory.id ? 'Edit Sub-Category' : 'Add Sub-Category'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="subcat-name">Sub-Category Name</Label>
+                            <Input
+                                id="subcat-name"
+                                value={editingSubCategory.name}
+                                onChange={(e) => setEditingSubCategory({ ...editingSubCategory, name: e.target.value })}
+                                placeholder="e.g. Session 1, Chapter 2"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsSubCategoryDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveSubCategory}>Save</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

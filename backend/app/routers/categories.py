@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 
 router = APIRouter()
 
-from app.schemas.categories import CategoryCreate, CategoryUpdate, TestCategoryAssignment
+from app.schemas.categories import CategoryCreate, CategoryUpdate, TestCategoryAssignment, SubCategoryCreate, SubCategoryUpdate, TestSubCategoryAssignment
 
 @router.get("/")
 async def get_categories(db: Client = Depends(get_db)):
@@ -130,3 +130,107 @@ async def admin_assign_categories(test_id: str, payload: TestCategoryAssignment)
         print(f"Error assigning categories (admin): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ─── Sub-Category Endpoints ───
+
+@router.get("/{category_id}/subcategories")
+async def get_subcategories(category_id: str, db: Client = Depends(get_db)):
+    try:
+        response = db.table("sub_categories").select("*").eq("category_id", category_id).order("name").execute()
+        return response.data
+    except Exception as e:
+        print(f"Error fetching subcategories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/subcategories/all")
+async def get_all_subcategories(db: Client = Depends(get_db)):
+    try:
+        response = db.table("sub_categories").select("*").order("name").execute()
+        return response.data
+    except Exception as e:
+        print(f"Error fetching all subcategories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{category_id}/subcategories")
+async def create_subcategory(category_id: str, payload: SubCategoryCreate, db: Client = Depends(get_db)):
+    try:
+        response = db.table("sub_categories").insert({
+            "name": payload.name,
+            "category_id": category_id
+        }).execute()
+        if response.data:
+            return response.data[0]
+        return None
+    except Exception as e:
+        error_str = str(e)
+        if "duplicate key" in error_str or "23505" in error_str:
+            raise HTTPException(status_code=409, detail="Sub-category already exists in this category")
+        print(f"Error creating subcategory: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/subcategories/{sub_category_id}")
+async def update_subcategory(sub_category_id: str, payload: SubCategoryUpdate, db: Client = Depends(get_db)):
+    try:
+        response = db.table("sub_categories").update({"name": payload.name}).eq("id", sub_category_id).execute()
+        if response.data:
+            return response.data[0]
+        return None
+    except Exception as e:
+        print(f"Error updating subcategory: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/subcategories/{sub_category_id}")
+async def delete_subcategory(sub_category_id: str, db: Client = Depends(get_db)):
+    try:
+        response = db.table("sub_categories").delete().eq("id", sub_category_id).execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error deleting subcategory: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/admin/assign-subcategory/{test_id}")
+async def admin_assign_subcategory(test_id: str, payload: TestSubCategoryAssignment):
+    try:
+        from app.core.database import supabase as admin_db
+        # Update all test_categories rows for this test to set the sub_category_id
+        if payload.sub_category_id:
+            admin_db.table("test_categories").update({
+                "sub_category_id": payload.sub_category_id
+            }).eq("test_id", test_id).execute()
+        else:
+            # Clear sub-category assignment
+            admin_db.table("test_categories").update({
+                "sub_category_id": None
+            }).eq("test_id", test_id).execute()
+        return {"success": True}
+    except Exception as e:
+        print(f"Error assigning subcategory (admin): {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/test/{test_id}/subcategory")
+async def get_test_subcategory(test_id: str, db: Client = Depends(get_db)):
+    try:
+        response = db.table("test_categories").select("sub_category_id").eq("test_id", test_id).execute()
+        if response.data:
+            # Return first non-null sub_category_id
+            for row in response.data:
+                if row.get("sub_category_id"):
+                    return {"sub_category_id": row["sub_category_id"]}
+        return {"sub_category_id": None}
+    except Exception as e:
+        print(f"Error fetching test subcategory: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{category_id}/test-subcategory-map")
+async def get_category_test_subcategory_map(category_id: str, db: Client = Depends(get_db)):
+    """Returns a mapping of test_id -> sub_category_id for all tests in a category."""
+    try:
+        response = db.table("test_categories").select("test_id, sub_category_id").eq("category_id", category_id).execute()
+        result = {}
+        for row in (response.data or []):
+            if row.get("sub_category_id"):
+                result[row["test_id"]] = row["sub_category_id"]
+        return result
+    except Exception as e:
+        print(f"Error fetching test-subcategory map: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
