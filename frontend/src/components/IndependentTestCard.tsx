@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestVoteButtons from '@/components/TestVoteButtons';
-import { fetchTestCardSnippet } from '@/lib/testsApi';
+import { fetchTestCardSnippet, getTestAttemptStatus } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
@@ -21,6 +21,7 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
     const [test, setTest] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isRetrying, setIsRetrying] = useState(false);
+    const [progress, setProgress] = useState<{ status: 'in_progress' | 'submitted' | null, score: number | null, total_marks: number | null } | null>(null);
     const navigate = useNavigate();
 
     const fetchSnippet = async (isRetry = false) => {
@@ -34,6 +35,13 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
             const { data, error } = await fetchTestCardSnippet(testId);
             if (data) {
                 setTest(data);
+                if (user?.id) {
+                    getTestAttemptStatus(testId, user.id).then(prog => {
+                        if (!prog.error && prog.status) {
+                            setProgress(prog);
+                        }
+                    });
+                }
             } else if (error) {
                 setTest({ error: true });
             }
@@ -94,7 +102,24 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>
-            <CardHeader className="p-3 pb-2">
+
+            {/* CSS Stamp Overlay for Completed Tests */}
+            {progress && progress.status === 'submitted' && (
+                <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none -rotate-12 opacity-90 transition-transform duration-300 scale-90 sm:scale-100 mix-blend-multiply">
+                    <div className="border-[4px] border-emerald-600/80 rounded-lg p-1.5 flex flex-col items-center justify-center bg-transparent">
+                        <div className="border-[3px] border-emerald-600/80 rounded border-dotted p-3 text-center min-w-[140px]">
+                            <div className="text-4xl font-black text-emerald-600/90 tracking-widest uppercase mb-1 origin-center drop-shadow-sm font-serif">
+                                DONE
+                            </div>
+                            <div className="text-emerald-700/90 font-bold text-sm px-2 w-fit mx-auto uppercase tracking-wider border-t-2 border-emerald-600/50 pt-1">
+                                SCORE: {progress.score ?? 0}/{progress.total_marks ?? '?'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <CardHeader className="p-3 pb-2 relative">
                 <CardTitle className="text-lg font-bold text-red-900 md:text-xl pr-8 leading-tight line-clamp-2">{test.title || initialTitle}</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-3 pt-0">
@@ -149,14 +174,14 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                         <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => navigate(`/edit-test/${test.id}`)}>
                             <Edit className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Edit</span>
                         </Button>
-                        <Button size="sm" className="flex-1 h-8 px-3" onClick={() => navigate(`/test-intro/${test.id}`)}>
-                            Open <ArrowRight className="ml-2 h-3 w-3" />
+                        <Button size="sm" className={`flex-1 h-8 px-3 ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                            {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-3 w-3" />
                         </Button>
                     </div>
                 ) : (
                     <div className="flex-1">
-                        <Button size="sm" className="w-full h-8 text-sm" onClick={() => navigate(`/test-intro/${test.id}`)}>
-                            Open <ArrowRight className="ml-2 h-3 w-3" />
+                        <Button size="sm" className={`w-full h-8 text-sm ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                            {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-3 w-3" />
                         </Button>
                     </div>
                 )}
