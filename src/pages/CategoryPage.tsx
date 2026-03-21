@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCategories } from '@/lib/categoriesApi';
+import { fetchCategories, fetchSubCategories, fetchCategoryTestSubCategoryMap, SubCategory } from '@/lib/categoriesApi';
 import { fetchTests } from '@/lib/testsApi';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,8 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
 
     const [currentCategoryId, setCurrentCategoryId] = useState<string | null>(null);
     const [allCategories, setAllCategories] = useState<any[]>([]);
+    const [categorySubCategories, setCategorySubCategories] = useState<SubCategory[]>([]);
+    const [testSubCategoryMap, setTestSubCategoryMap] = useState<Record<string, string>>({});
 
     // YouTube-style lazy loading hook
     const {
@@ -65,6 +67,12 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                     idsOnly: true
                 });
                 setTests(testData || []);
+
+                // Fetch sub-categories for this category
+                const { data: subCats } = await fetchSubCategories(matchedCat.id);
+                setCategorySubCategories(subCats || []);
+                const { data: scMap } = await fetchCategoryTestSubCategoryMap(matchedCat.id);
+                setTestSubCategoryMap(scMap || {});
             } else {
                 // Fallback: Name direct match
                 const directMatch = allCats?.find((c: any) => c.name.toLowerCase() === slugOrName.replace(/-/g, ' ').toLowerCase());
@@ -77,6 +85,12 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                         idsOnly: true
                     });
                     setTests(testData || []);
+
+                    // Fetch sub-categories for this category
+                    const { data: subCats } = await fetchSubCategories(directMatch.id);
+                    setCategorySubCategories(subCats || []);
+                    const { data: scMap } = await fetchCategoryTestSubCategoryMap(directMatch.id);
+                    setTestSubCategoryMap(scMap || {});
                 } else {
                     setCategoryName(slugOrName.replace(/-/g, ' '));
                     setTests([]);
@@ -127,6 +141,83 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
             {tests.length === 0 ? (
                 <div className="text-center py-20 border-2 border-dashed rounded-xl">
                     <p className="text-muted-foreground">No tests found for this category.</p>
+                </div>
+            ) : categorySubCategories.length > 0 ? (
+                // Grouped view by sub-category
+                <div className="space-y-8">
+                    {categorySubCategories.map(sc => {
+                        const scTests = tests.filter(t => testSubCategoryMap[t.id] === sc.id);
+                        if (scTests.length === 0) return null;
+                        return (
+                            <div key={sc.id}>
+                                <h2 className="text-lg font-semibold mb-4 border-b pb-2 text-slate-700 dark:text-slate-300">{sc.name}</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {scTests.map((test: any) => {
+                                        if (!test) return null;
+                                        const testId = test.id || Math.random();
+                                        const isRendered = isItemRendered(testId);
+                                        if (!isRendered) {
+                                            return (
+                                                <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                                    <TestCardSkeleton />
+                                                </div>
+                                            );
+                                        }
+                                        return (
+                                            <IndependentTestCard
+                                                key={testId}
+                                                testId={test.id || testId}
+                                                initialTitle={test.title}
+                                                user={user}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Tests without a sub-category */}
+                    {(() => {
+                        const ungroupedTests = tests.filter(t => !testSubCategoryMap[t.id]);
+                        if (ungroupedTests.length === 0) return null;
+                        return (
+                            <div>
+                                <h2 className="text-lg font-semibold mb-4 border-b pb-2 text-slate-700 dark:text-slate-300">Other</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {ungroupedTests.map((test: any) => {
+                                        if (!test) return null;
+                                        const testId = test.id || Math.random();
+                                        const isRendered = isItemRendered(testId);
+                                        if (!isRendered) {
+                                            return (
+                                                <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                                    <TestCardSkeleton />
+                                                </div>
+                                            );
+                                        }
+                                        return (
+                                            <IndependentTestCard
+                                                key={testId}
+                                                testId={test.id || testId}
+                                                initialTitle={test.title}
+                                                user={user}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    {/* Progress indicator */}
+                    {!isComplete && tests.length > 0 && (
+                        <div className="py-4 text-center">
+                            <span className="text-sm text-muted-foreground">
+                                {renderedCount} of {totalCount} tests loaded
+                            </span>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
