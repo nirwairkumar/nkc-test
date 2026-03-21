@@ -477,3 +477,62 @@ async function processVoteQueue(userId: string | null) {
         }
     }
 }
+
+let progressQueue: string[] = [];
+let progressResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();
+let progressTimeout: any = null;
+
+export function getTestAttemptStatus(testId: string, userIdArg?: string): Promise<{ status: 'in_progress' | 'submitted' | null, score: number | null, total_marks: number | null, error: any }> {
+    return new Promise((resolve, reject) => {
+        const userId = userIdArg || getUserIdFromToken();
+        if (!userId) {
+            resolve({ status: null, score: null, total_marks: null, error: null });
+            return;
+        }
+
+        if (!progressResolvers.has(testId)) {
+            progressResolvers.set(testId, []);
+            progressQueue.push(testId);
+        }
+        progressResolvers.get(testId)!.push({ resolve, reject });
+
+        if (!progressTimeout) {
+            progressTimeout = setTimeout(() => processProgressQueue(userId), 50);
+        }
+    });
+}
+
+async function processProgressQueue(userId: string) {
+    const idsToFetch = [...progressQueue];
+    const resolversMap = new Map(progressResolvers);
+
+    progressQueue = [];
+    progressResolvers.clear();
+    progressTimeout = null;
+
+    try {
+        const chunkSize = 20;
+        for (let i = 0; i < idsToFetch.length; i += chunkSize) {
+            const chunk = idsToFetch.slice(i, i + chunkSize);
+            const response = await apiClient.post('attempts/batch-status', {
+                user_id: userId,
+                test_ids: chunk
+            });
+            const dataMap = response.data || {};
+
+            for (const id of chunk) {
+                const resolvers = resolversMap.get(id);
+                if (resolvers) {
+                    // Try exact match then lowercase match for ID consistency
+                    const statusData = dataMap[id] || dataMap[id.toLowerCase()] || { status: null, score: null, total_marks: null };
+                    resolvers.forEach(({ resolve }) => resolve({ ...statusData, error: null }));
+                    resolversMap.delete(id);
+                }
+            }
+        }
+    } catch (error: any) {
+        for (const [id, resolvers] of resolversMap.entries()) {
+            resolvers.forEach(({ resolve }) => resolve({ status: null, score: null, total_marks: null, error }));
+        }
+    }
+}
