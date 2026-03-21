@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
 from app.core.database import get_db, supabase
 from app.utils.attempt_control import apply_section_attempt_control
@@ -17,12 +18,17 @@ from app.schemas.attempts import (
     AnonSubmitRequest,
     AnonAbandonRequest
 )
+
+class BatchStatusRequest(BaseModel):
+    user_id: str
+    test_ids: List[str]
 from app.services.attempt_service import (
     process_progress,
     process_abandon,
     process_anon_progress,
     process_anon_abandon
 )
+from app.utils.attempt_control import apply_section_attempt_control, calculate_test_max_marks
 
 @router.post("/save")
 async def save_attempt(
@@ -196,6 +202,94 @@ async def get_user_attempts(
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/batch-status")
+async def get_batch_status(
+    payload: BatchStatusRequest,
+    db: Client = Depends(get_db)
+):
+    try:
+        user_id = payload.user_id
+        test_ids = payload.test_ids
+        if not user_id or not test_ids:
+            return {}
+
+        # 1. Check registrations for in_progress status
+        reg_res = db.table("test_registrations")\
+            .select("test_id, status")\
+            .eq("user_id", user_id)\
+            .in_("test_id", test_ids)\
+            .execute()
+
+        # 2. Check user_tests for completed status and scores
+        att_res = db.table("user_tests")\
+            .select("test_id, score")\
+            .eq("user_id", user_id)\
+            .in_("test_id", test_ids)\
+            .order("score", desc=True)\
+            .execute()
+
+        test_ids_norm = [str(tid).lower() for tid in test_ids]
+        results = {}
+        for t in test_ids_norm:
+            results[t] = None
+
+        for r in reg_res.data or []:
+            tid = str(r.get("test_id", "")).lower()
+            if tid in results:
+                results[tid] = {"status": r["status"]}
+
+        for a in att_res.data or []:
+            tid = str(a.get("test_id", "")).lower()
+            if tid in results:
+                if not results[tid]:
+                    results[tid] = {"status": "submitted"}
+                
+                # Keep the highest score if multiple attempts
+                current_score = results[tid].get("score", -999999)
+                if a["score"] > current_score:
+                    results[tid]["score"] = a["score"]
+                    results[tid]["status"] = "submitted"
+                
+        # Calculate total marks for submitted tests
+        submitted_ids = [k for k, v in results.items() if v and v.get("status") == "submitted"]
+        if submitted_ids:
+            try:
+                tests_res = db.table("tests").select("id, questions, sections, enable_section_mode, marks_per_question").in_("id", submitted_ids).execute()
+                for t in tests_res.data or []:
+                    tid_str = str(t["id"]).lower()
+                    if tid_str in results:
+                        try:
+                            if isinstance(t.get("questions"), str):
+                                try: t["questions"] = json.loads(t["questions"])
+                                except: t["questions"] = []
+                            if not t.get("questions"): t["questions"] = []
+
+                            if isinstance(t.get("sections"), str):
+                                try: t["sections"] = json.loads(t["sections"])
+                                except: t["sections"] = []
+                            if not t.get("sections"): t["sections"] = []
+                                
+                            try:
+                                mpq = t.get("marks_per_question")
+                                if mpq is None or str(mpq).strip() == "": 
+                                    t["marks_per_question"] = 4.0
+                                else:
+                                    t["marks_per_question"] = float(mpq)
+                            except:
+                                t["marks_per_question"] = 4.0
+
+                            max_marks_info = calculate_test_max_marks(t)
+                            results[tid_str]["total_marks"] = max_marks_info.get("total_max_marks", 0)
+                        except Exception as e:
+                            print(f"Error computing total_marks for {tid_str}: {e}")
+            except Exception as e:
+                print(f"Batch-status Exception: {e}")
+
+        return results
+    except Exception as e:
+        print(f"Error fetching batch status: {e}")
+        return {}
 
 @router.get("/check/{user_id}/{test_id}")
 async def check_attempt_status(
