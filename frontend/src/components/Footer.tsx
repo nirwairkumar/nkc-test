@@ -37,21 +37,27 @@ export default function Footer() {
                     {/* Support Section */}
                     <div className="flex flex-col gap-2">
                         <h3 className="text-base font-semibold">Support</h3>
-                        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                            <a
-                                href="mailto:support@testoza.com"
-                                className="hover:text-primary transition-colors"
-                            >
-                                support@testoza.com
-                            </a>
-                            <a
-                                href="https://testoza.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:text-primary transition-colors"
-                            >
-                                https://testoza.com
-                            </a>
+                        <div className="flex flex-col gap-1 text-sm text-muted-foreground text-left">
+                            <div className="flex items-center gap-1">
+                                <span>Email:</span>
+                                <a
+                                    href="mailto:support@testoza.com"
+                                    className="hover:text-primary transition-colors"
+                                >
+                                    support@testoza.com
+                                </a>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span>Web:</span>
+                                <a
+                                    href="https://testoza.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-primary transition-colors"
+                                >
+                                    https://testoza.com
+                                </a>
+                            </div>
                         </div>
                     </div>
 
