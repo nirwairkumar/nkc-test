@@ -309,6 +309,25 @@ async def analyze_test_results(payload: AnalyzeRequest):
                 "Wrong": t["wrong"],
                 "Partial": t.get("partial", 0)
             })
+
+    # Merged Section Marks aggregation
+    merged_section_data = []
+    merged_sections_config = test.get("merged_sections", []) or []
+    if merged_sections_config and enable_section and sections:
+        for merge_group in merged_sections_config:
+            label = merge_group.get("label", "")
+            sec_ids = merge_group.get("section_ids", [])
+            merged_score = 0.0
+            merged_max = 0.0
+            for sid in sec_ids:
+                s = section_data.get(str(sid), {})
+                merged_score += s.get("score", 0.0)
+                merged_max += s.get("maxScore", 0.0)
+            merged_section_data.append({
+                "label": label,
+                "score": round(merged_score, 2),
+                "maxScore": round(merged_max, 2)
+            })
             
     return {
         "finalScore": round(calculated_score, 2),
@@ -326,5 +345,6 @@ async def analyze_test_results(payload: AnalyzeRequest):
         "pieData": pie_data,
         "radarData": radar_data,
         "barData": bar_data,
-        "typeChartData": type_chart_data
+        "typeChartData": type_chart_data,
+        "mergedSectionData": merged_section_data
     }
