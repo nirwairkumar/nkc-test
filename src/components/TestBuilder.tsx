@@ -138,6 +138,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
     ]);
 
+    // Merged Section Marks State
+    const [mergedSections, setMergedSections] = useState<{ label: string; section_ids: string[] }[]>([]);
+
+    // Helper to extract common prefix from section names
+    const getCommonPrefix = (names: string[]): string => {
+        if (names.length === 0) return '';
+        const sorted = [...names].sort();
+        const first = sorted[0];
+        const last = sorted[sorted.length - 1];
+        let i = 0;
+        while (i < first.length && first[i] === last[i]) i++;
+        let prefix = first.substring(0, i).replace(/[-_\s]+$/, '').trim();
+        return prefix || names[0];
+    };
+
     // Auto Save State
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -344,7 +359,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             return () => clearTimeout(timer);
         }
 
-    }, [questions, sections, enableSectionMode, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedCategories, isEditMode, testId, institutionName, institutionLogo]);
+    }, [questions, sections, enableSectionMode, title, description, revisionNotes, time, marks, negativeMarks, isPublic, selectedCategories, isEditMode, testId, institutionName, institutionLogo, mergedSections]);
 
     const handleAutoSave = async () => {
         if (!title.trim()) return; // Silent fail if no title
@@ -465,6 +480,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
         setHasScientificCalculator(data.has_scientific_calculator || false);
         setSectionMarkingModel(data.section_marking_model || 'section-wise');
+        setMergedSections(data.merged_sections || []);
 
         if (data.custom_category) {
             setShowOtherCategory(true);
@@ -717,7 +733,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             enable_section_mode: enableSectionMode,
             section_marking_model: sectionMarkingModel,
             has_scientific_calculator: hasScientificCalculator,
-            sections: sanitizedSections
+            sections: sanitizedSections,
+            // Only include merged_sections when there's actual data (column may not exist in DB)
+            ...(enableSectionMode && mergedSections.length > 0 ? { merged_sections: mergedSections } : {})
         };
 
         if (isEditMode && testId) {
@@ -1464,6 +1482,91 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 </div>
                             </div>
                         </div>
+
+                        {/* Merge Section Marks Config */}
+                        {enableSectionMode && sections.length >= 2 && (
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <Label className="text-slate-700 font-semibold text-sm">Merge Section Marks</Label>
+                                        <p className="text-xs text-slate-500">Group sections to show combined subject marks on results page</p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setMergedSections([...mergedSections, { label: '', section_ids: [] }])}
+                                    >
+                                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Group
+                                    </Button>
+                                </div>
+                                {mergedSections.length > 0 && (
+                                    <div className="space-y-3">
+                                        {mergedSections.map((group, gIdx) => (
+                                            <div key={gIdx} className="flex flex-col gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                <div className="flex items-center gap-2">
+                                                    <Input
+                                                        placeholder="Subject label (e.g. Chemistry)"
+                                                        value={group.label}
+                                                        onChange={(e) => {
+                                                            const updated = [...mergedSections];
+                                                            updated[gIdx] = { ...updated[gIdx], label: e.target.value };
+                                                            setMergedSections(updated);
+                                                        }}
+                                                        className="flex-1 h-8 text-sm"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                                                        onClick={() => setMergedSections(mergedSections.filter((_, i) => i !== gIdx))}
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {sections.map((sec) => {
+                                                        const isSelected = group.section_ids.includes(sec.id);
+                                                        return (
+                                                            <button
+                                                                key={sec.id}
+                                                                type="button"
+                                                                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${isSelected
+                                                                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                                                                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                                                                    }`}
+                                                                onClick={() => {
+                                                                    const updated = [...mergedSections];
+                                                                    const ids = isSelected
+                                                                        ? group.section_ids.filter(id => id !== sec.id)
+                                                                        : [...group.section_ids, sec.id];
+                                                                    updated[gIdx] = { ...updated[gIdx], section_ids: ids };
+                                                                    // Auto-fill label from common prefix if label is empty or was auto-filled
+                                                                    if (ids.length >= 2) {
+                                                                        const selectedNames = sections.filter(s => ids.includes(s.id)).map(s => s.name);
+                                                                        const prefix = getCommonPrefix(selectedNames);
+                                                                        if (!updated[gIdx].label || updated[gIdx].label === getCommonPrefix(
+                                                                            sections.filter(s => group.section_ids.includes(s.id)).map(s => s.name)
+                                                                        )) {
+                                                                            updated[gIdx] = { ...updated[gIdx], label: prefix };
+                                                                        }
+                                                                    }
+                                                                    setMergedSections(updated);
+                                                                }}
+                                                            >
+                                                                {isSelected && <Check className="w-3 h-3 inline mr-1" />}
+                                                                {sec.name}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

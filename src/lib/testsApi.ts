@@ -47,6 +47,7 @@ export interface Test {
     enable_section_mode?: boolean;
     sections?: TestSection[];
     section_marking_model?: 'section-wise' | 'question-wise'; // 'section-wise' is default
+    merged_sections?: { label: string; section_ids: string[] }[];
 
     // Enriched fields from Backend API
     creator_verified?: boolean;
