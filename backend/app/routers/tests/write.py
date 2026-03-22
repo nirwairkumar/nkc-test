@@ -59,7 +59,9 @@ async def create_test(
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "marks_per_question", "negative_marks", 
                 "is_public", "visibility", "revision_notes", "institution_name",
-                "institution_logo", "slug", "tags", "class_id", "sections", "test_id"
+                "institution_logo", "slug", "tags", "class_id", "sections", "test_id",
+                "enable_section_mode", "section_marking_model", "has_scientific_calculator",
+                "merged_sections"
             }
             # Also creator_name/avatar might be missing if that migration wasn't run
             # But let's try to keep them if possible, or fall back further? 
@@ -105,7 +107,9 @@ async def update_test(
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "marks_per_question", "negative_marks", 
                 "is_public", "visibility", "revision_notes", "institution_name",
-                "institution_logo", "slug", "tags", "class_id"
+                "institution_logo", "slug", "tags", "class_id", "sections",
+                "enable_section_mode", "section_marking_model", "has_scientific_calculator",
+                "merged_sections"
             }
             safe_payload = {k: v for k, v in payload.items() if k in legacy_keys}
             response = db.table("tests").update(safe_payload).eq("id", test_id).execute()

@@ -158,7 +158,8 @@ const ResultsPage = () => {
     skippedCount = 0,
     percentage = 0,
     sectionData = {},
-    questionStatus = {}
+    questionStatus = {},
+    mergedSectionData = []
   } = analysisData || {};
 
   const sectionAnalysis = sectionData as Record<string, {
@@ -211,6 +212,22 @@ const ResultsPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Merged Subject Marks */}
+              {(mergedSectionData as any[]).length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-white/20">
+                  {(mergedSectionData as any[]).map((m: any) => (
+                    <div key={m.label}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                 bg-white/10 backdrop-blur-sm border border-white/20">
+                      <span className="text-sm font-medium text-white/90">{m.label}</span>
+                      <span className="text-sm font-bold text-white">
+                        {parseFloat((m.score || 0).toFixed(2))}/{m.maxScore}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 

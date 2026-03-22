@@ -43,6 +43,7 @@ class CreateTestRequest(BaseModel):
     enable_section_mode: Optional[bool] = False
     sections: Optional[List[Dict[str, Any]]] = []
     section_marking_model: Optional[str] = "section-wise"
+    merged_sections: Optional[List[Dict[str, Any]]] = None
 
 class UpdateTestRequest(BaseModel):
     title: Optional[str] = None
@@ -63,5 +64,6 @@ class UpdateTestRequest(BaseModel):
     enable_section_mode: Optional[bool] = None
     sections: Optional[List[Dict[str, Any]]] = None
     section_marking_model: Optional[str] = None
+    merged_sections: Optional[List[Dict[str, Any]]] = None
     slug: Optional[str] = None
     og_image: Optional[str] = None
