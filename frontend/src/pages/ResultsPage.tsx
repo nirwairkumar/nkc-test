@@ -247,118 +247,120 @@ const ResultsPage = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Main Content Start */}
 
-        {/* Score Card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-xl relative overflow-hidden">
-            <CardContent className="p-6 flex flex-col justify-between h-full">
-              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                <div className="pr-12 md:pr-0">
-                  <h2 className="text-lg md:text-2xl font-semibold opacity-90 leading-tight">{selectedTest?.title}</h2>
-                  <p className="text-indigo-100 text-sm md:text-base mt-1">Test Completed Successfully</p>
+        <div id="results-overview-section" className="space-y-8 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl">
+          {/* Score Card */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-xl relative overflow-hidden">
+              <CardContent className="p-6 flex flex-col justify-between h-full">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                  <div className="pr-12 md:pr-0">
+                    <h2 className="text-lg md:text-2xl font-semibold opacity-90 leading-tight">{selectedTest?.title}</h2>
+                    <p className="text-indigo-100 text-sm md:text-base mt-1">Test Completed Successfully</p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-end justify-between gap-4 mt-6">
-                <div className="flex items-end gap-3 md:gap-4">
-                  <div>
-                    <span className="text-5xl md:text-6xl font-bold">{parseFloat((finalScore || 0).toFixed(2))}</span>
-                    <span className="text-xl md:text-2xl opacity-75">/{totalMaxMarks || 0}</span>
+                <div className="flex items-end justify-between gap-4 mt-6">
+                  <div className="flex items-end gap-3 md:gap-4">
+                    <div>
+                      <span className="text-5xl md:text-6xl font-bold">{parseFloat((finalScore || 0).toFixed(2))}</span>
+                      <span className="text-xl md:text-2xl opacity-75">/{totalMaxMarks || 0}</span>
+                    </div>
+                    <div className="mb-1 md:mb-2">
+                      <Badge variant="secondary" className="text-sm md:text-lg px-2 md:px-3 py-1">
+                        {percentage}% Score
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="mb-1 md:mb-2">
-                    <Badge variant="secondary" className="text-sm md:text-lg px-2 md:px-3 py-1">
-                      {percentage}% Score
-                    </Badge>
-                  </div>
+                  {testId && (
+                    <div className="absolute bottom-0 right-0 md:static bg-white/20 backdrop-blur-md rounded-tl-lg md:rounded-full p-0.5 shadow-sm border-t border-l md:border border-white/30 self-end scale-90 md:scale-100 origin-bottom-right z-10 transition-all">
+                      <TestVoteButtons testId={testId} className="!bg-transparent rounded-none md:rounded-full" />
+                    </div>
+                  )}
                 </div>
-                {testId && (
-                  <div className="absolute bottom-0 right-0 md:static bg-white/20 backdrop-blur-md rounded-tl-lg md:rounded-full p-0.5 shadow-sm border-t border-l md:border border-white/30 self-end scale-90 md:scale-100 origin-bottom-right z-10 transition-all">
-                    <TestVoteButtons testId={testId} className="!bg-transparent rounded-none md:rounded-full" />
+
+                {/* Merged Subject Marks */}
+                {(mergedSectionData as any[]).length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-white/20">
+                    {(mergedSectionData as any[]).map((m: any) => (
+                      <div key={m.label}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                 bg-white/10 backdrop-blur-sm border border-white/20">
+                        <span className="text-sm font-medium text-white/90">{m.label}</span>
+                        <span className="text-sm font-bold text-white">
+                          {parseFloat((m.score || 0).toFixed(2))}/{m.maxScore}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Merged Subject Marks */}
-              {(mergedSectionData as any[]).length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-white/20">
-                  {(mergedSectionData as any[]).map((m: any) => (
-                    <div key={m.label}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                                 bg-white/10 backdrop-blur-sm border border-white/20">
-                      <span className="text-sm font-medium text-white/90">{m.label}</span>
-                      <span className="text-sm font-bold text-white">
-                        {parseFloat((m.score || 0).toFixed(2))}/{m.maxScore}
-                      </span>
-                    </div>
-                  ))}
+            <Card className="flex flex-col justify-center gap-4 p-6 shadow-md">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg">
+                  <span className="text-2xl font-bold text-green-700">{correctCount}</span>
+                  <span className="text-xs font-medium text-green-600 uppercase">Correct</span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="flex flex-col justify-center gap-4 p-6 shadow-md">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg">
-                <span className="text-2xl font-bold text-green-700">{correctCount}</span>
-                <span className="text-xs font-medium text-green-600 uppercase">Correct</span>
+                <div className="flex flex-col items-center p-3 bg-red-50 rounded-lg">
+                  <span className="text-2xl font-bold text-red-700">{wrongCount}</span>
+                  <span className="text-xs font-medium text-red-600 uppercase">Wrong</span>
+                </div>
+                <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg">
+                  <span className="text-2xl font-bold text-blue-700">{partialCount}</span>
+                  <span className="text-xs font-medium text-blue-600 uppercase">Partial</span>
+                </div>
+                <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-2xl font-bold text-slate-700">{skippedCount}</span>
+                  <span className="text-xs font-medium text-slate-600 uppercase">Skipped</span>
+                </div>
               </div>
-              <div className="flex flex-col items-center p-3 bg-red-50 rounded-lg">
-                <span className="text-2xl font-bold text-red-700">{wrongCount}</span>
-                <span className="text-xs font-medium text-red-600 uppercase">Wrong</span>
-              </div>
-              <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg">
-                <span className="text-2xl font-bold text-blue-700">{partialCount}</span>
-                <span className="text-xs font-medium text-blue-600 uppercase">Partial</span>
-              </div>
-              <div className="flex flex-col items-center p-3 bg-slate-50 rounded-lg">
-                <span className="text-2xl font-bold text-slate-700">{skippedCount}</span>
-                <span className="text-xs font-medium text-slate-600 uppercase">Skipped</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Section Wise Analysis */}
-        {selectedTest?.enable_section_mode && (
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <Target className="w-5 h-5" /> Section Analysis
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.values(sectionAnalysis || {}).map((sec: any) => (
-                <Card key={sec.name} className="bg-white border-none shadow-md">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex justify-between">
-                      {sec.name}
-                      <span className="text-sm font-normal text-slate-500">{sec.totalQ} Qs</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
-                        <span className="text-sm font-medium">Score</span>
-                        <span className="font-bold text-emerald-600">{parseFloat((sec.score || 0).toFixed(2))} / {sec.maxScore || 0}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-1 text-center text-xs">
-                        <div className="bg-green-100 text-green-700 p-1 rounded">
-                          <div className="font-bold">{sec.correct}</div> Correct
-                        </div>
-                        <div className="bg-red-100 text-red-700 p-1 rounded">
-                          <div className="font-bold">{sec.wrong}</div> Wrong
-                        </div>
-                        <div className="bg-blue-100 text-blue-700 p-1 rounded">
-                          <div className="font-bold">{sec.partial}</div> Partial
-                        </div>
-                      </div>
-                      <div className="text-center text-xs text-slate-400 mt-2">
-                        Attempted: {sec.attempted} / {sec.totalQ}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            </Card>
           </div>
-        )}
+
+          {/* Section Wise Analysis */}
+          {selectedTest?.enable_section_mode && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Target className="w-5 h-5" /> Section Analysis
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.values(sectionAnalysis || {}).map((sec: any) => (
+                  <Card key={sec.name} className="bg-white border-none shadow-md">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg flex justify-between">
+                        {sec.name}
+                        <span className="text-sm font-normal text-slate-500">{sec.totalQ} Qs</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center bg-slate-50 p-2 rounded">
+                          <span className="text-sm font-medium">Score</span>
+                          <span className="font-bold text-emerald-600">{parseFloat((sec.score || 0).toFixed(2))} / {sec.maxScore || 0}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-center text-xs">
+                          <div className="bg-green-100 text-green-700 p-1 rounded">
+                            <div className="font-bold">{sec.correct}</div> Correct
+                          </div>
+                          <div className="bg-red-100 text-red-700 p-1 rounded">
+                            <div className="font-bold">{sec.wrong}</div> Wrong
+                          </div>
+                          <div className="bg-blue-100 text-blue-700 p-1 rounded">
+                            <div className="font-bold">{sec.partial}</div> Partial
+                          </div>
+                        </div>
+                        <div className="text-center text-xs text-slate-400 mt-2">
+                          Attempted: {sec.attempted} / {sec.totalQ}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Detailed Analysis Accordion */}
         <Card className="shadow-lg border-t-4 border-t-primary">

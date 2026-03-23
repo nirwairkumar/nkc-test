@@ -23,6 +23,7 @@ import {
 import { updateTest, getTestAttemptStatus } from '@/lib/testsApi';
 import { fetchClasses } from '@/lib/classesApi';
 import { useState, useEffect } from 'react';
+import { shareTest } from '@/utils/shareUtils';
 
 interface TestCardProps {
     test: any;
@@ -102,13 +103,7 @@ export default function TestCard({
 
     const handleShare = (e: React.MouseEvent, test: any) => {
         e.stopPropagation();
-        // Use slug if available for cleaner URL, otherwise ID
-        // Direct link interceptors on /test/ and /test-intro/ now handle SEO, so we can use canonical URLs.
-        const path = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
-        const url = `${window.location.origin}${path}`;
-
-        navigator.clipboard.writeText(url);
-        toast.success("Test link copied!");
+        shareTest(test);
     };
 
     const handleVisibilityChange = async (newVisibility: 'public' | 'unlisted' | 'private') => {

@@ -1,10 +1,11 @@
 import React from 'react';
 import { NavLink, Outlet, useParams, useLocation } from 'react-router-dom';
-import { Target, BookOpen, Menu, Share2, Home } from 'lucide-react';
+import { Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { shareWithFriends, shareResultWhatsApp, shareResultImage, shareToFacebook, shareToReddit } from '@/utils/shareUtils';
 
 const CustomFeedbackIcon = ({ className }: { className?: string }) => (
     <svg
@@ -49,7 +50,7 @@ export default function ResultsLayout() {
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
 
     // Try to extract State Data so we can pass it down through Outlet context or links
-    const stateData = location.state;
+    const stateData = location.state as any;
     // We get testId either from URL or state
     const currentTestId = testId || stateData?.test?.id;
 
@@ -108,16 +109,74 @@ export default function ResultsLayout() {
 
             <Button
                 variant="ghost"
-                className="justify-start px-4 py-6 font-medium text-slate-600 dark:text-slate-400"
+                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
                 onClick={() => {
-                    const url = `${window.location.origin}/test-intro/${currentTestId}`;
-                    navigator.clipboard.writeText(url);
-                    toast.success("Link copied to clipboard!");
+                    const test = stateData?.test || { id: currentTestId, title: "Test" };
+                    const score = stateData?.score || 0;
+                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                    shareWithFriends(test, score, totalMarks);
                 }}
             >
                 <Share2 className="mr-3 h-5 w-5" />
                 Share with friends
             </Button>
+
+            <Button
+                variant="ghost"
+                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                onClick={() => {
+                    const test = stateData?.test || { id: currentTestId, title: "Test" };
+                    const score = stateData?.score || 0;
+                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                    shareResultWhatsApp(test, score, totalMarks);
+                }}
+            >
+                <MessageCircle className="mr-3 h-5 w-5 text-green-500" />
+                Share on WhatsApp
+            </Button>
+
+            <Button
+                variant="ghost"
+                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                onClick={() => {
+                    const test = stateData?.test || { id: currentTestId, title: "Test" };
+                    const score = stateData?.score || 0;
+                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                    shareResultImage(test, score, totalMarks);
+                }}
+            >
+                <Download className="mr-3 h-5 w-5 text-blue-500" />
+                Share Result Image
+            </Button>
+
+            <Button
+                variant="ghost"
+                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                onClick={() => {
+                    const test = stateData?.test || { id: currentTestId, title: "Test" };
+                    const score = stateData?.score || 0;
+                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                    shareToFacebook(test, score, totalMarks);
+                }}
+            >
+                <Facebook className="mr-3 h-5 w-5 text-blue-600" />
+                Share on Facebook
+            </Button>
+
+            <Button
+                variant="ghost"
+                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                onClick={() => {
+                    const test = stateData?.test || { id: currentTestId, title: "Test" };
+                    const score = stateData?.score || 0;
+                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                    shareToReddit(test, score, totalMarks);
+                }}
+            >
+                <Reddit className="mr-3 h-5 w-5 text-orange-600" />
+                Share on Reddit
+            </Button>
+
             <NavLink
                 to="/"
                 className={({ isActive }) => getLinkStyle(isActive)}
