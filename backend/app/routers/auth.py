@@ -178,13 +178,26 @@ async def update_user(payload: Dict[str, Any], db: Client = Depends(get_db)):
 @router.get("/google")
 async def get_google_login_url(request: Request):
     try:
+        # Ensure we have a valid protocol and no trailing slash
         frontend_url = settings.FRONTEND_URL.rstrip('/')
+        if not frontend_url.startswith('http'):
+            frontend_url = f"https://{frontend_url}"
+            
+        print(f"DEBUG: Authenticating with redirect to: {frontend_url}/")
+        
         response = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
-                "redirect_to": f"{frontend_url}/auth/callback"
+                "redirect_to": f"{frontend_url}/"
             }
         })
+        
+        # If Supabase didn't provide a URL, something is wrong with the keys or dashboard config
+        if not getattr(response, 'url', None):
+            raise Exception("Supabase did not return a login URL. Check Redirect URLs in Dashboard.")
+            
         return {"data": response, "error": None}
     except Exception as e:
+        print(f"ERROR in Google Auth: {str(e)}")
+        # We return the error detail so the frontend toast shows the REAL problem
         raise HTTPException(status_code=400, detail=str(e))

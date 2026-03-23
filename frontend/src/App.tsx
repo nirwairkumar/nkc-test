@@ -24,6 +24,7 @@ const ResultsLayout = lazy(() => import("./components/layout/ResultsLayout"));
 const ResultsPage = lazy(() => import("./pages/ResultsPage"));
 const SolutionEditorPage = lazy(() => import("./pages/SolutionEditorPage"));
 const SolutionsViewPage = lazy(() => import("./pages/SolutionsViewPage"));
+const FeedbackViewPage = lazy(() => import("./pages/FeedbackViewPage"));
 const AuthForm = lazy(() => import("@/components/AuthForm"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const AdminMigration = lazy(() => import("./pages/AdminMigration"));
@@ -202,6 +203,7 @@ const App = () => (
                       <Route index element={<ResultsPage />} />
                       <Route path="solutions/:testId" element={<SolutionsViewPage />} />
                       <Route path="analytics" element={<AdvancedAnalysis />} />
+                      <Route path="feedback/:testId" element={<FeedbackViewPage />} />
                     </Route>
 
                     {/* Redirects from old paths to new paths */}

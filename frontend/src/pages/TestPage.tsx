@@ -855,7 +855,8 @@ export default function TestPage() {
             score: score,
             totalQuestions: test.questions.length,
             marksPerQuestion: test.marks_per_question || 4,
-            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1
+            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1,
+            justSubmitted: true
           },
           replace: true
         });
@@ -896,7 +897,8 @@ export default function TestPage() {
             score: score,
             totalQuestions: test.questions.length,
             marksPerQuestion: test.marks_per_question || 4,
-            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1
+            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1,
+            justSubmitted: true
           },
           replace: true
         });
