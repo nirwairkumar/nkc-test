@@ -6,6 +6,41 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
+const CustomFeedbackIcon = ({ className }: { className?: string }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        {/* Top Bubble */}
+        <path d="M3 10V4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H6l-3 3v-3z" />
+
+        {/* 3 Stars (Outlined) */}
+        <g strokeWidth="1">
+            <polygon points="7.5,5.5 8,7 9.5,7 8.3,8 8.7,9.5 7.5,8.5 6.3,9.5 6.7,8 5.5,7 7,7" />
+            <polygon points="12,5.5 12.5,7 14,7 12.8,8 13.2,9.5 12,8.5 10.8,9.5 11.2,8 10,7 11.5,7" />
+            <polygon points="16.5,5.5 17,7 18.5,7 17.3,8 17.7,9.5 16.5,8.5 15.3,9.5 15.7,8 14.5,7 16,7" />
+        </g>
+
+        {/* Bottom Bubble */}
+        <path d="M21 21l-3-3h-11a2 2 0 0 1-2-2v-5" />
+        <path d="M21 16v-2a2 2 0 0 0-2-2h-3" />
+
+        {/* Text lines */}
+        <path d="M8 15h5" />
+        <path d="M8 18h3" />
+
+        {/* Pen */}
+        <path d="M14.5 16.5l3.5-3.5 1.5 1.5-3.5 3.5z" />
+        <path d="M14.5 16.5l1.5 1.5" />
+    </svg>
+);
+
 export default function ResultsLayout() {
     const { testId } = useParams();
     const location = useLocation();
@@ -58,6 +93,18 @@ export default function ResultsLayout() {
             </NavLink>
 
             <div className="my-4 border-t border-slate-200 dark:border-slate-800"></div>
+
+            {currentTestId && (
+                <NavLink
+                    to={`${basePath}/feedback/${currentTestId}`}
+                    state={stateData}
+                    className={({ isActive }) => getLinkStyle(isActive)}
+                    id="left-menu-feedback-btn"
+                >
+                    <CustomFeedbackIcon className="h-5 w-5" />
+                    Give Feedback
+                </NavLink>
+            )}
 
             <Button
                 variant="ghost"

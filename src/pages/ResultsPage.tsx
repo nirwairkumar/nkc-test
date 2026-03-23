@@ -14,9 +14,13 @@ import {
   History,
   Timer,
   Target,
-  Loader2
+  Loader2,
+  X,
+  Sparkles
 } from 'lucide-react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
+import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Accordion,
   AccordionContent,
@@ -94,6 +98,66 @@ const ResultsPage = () => {
 
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupDismissed, setPopupDismissed] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
+
+  useEffect(() => {
+    if (showPersonalResults && selectedTest && stateData?.justSubmitted) {
+      // Trigger confetti animation on mount
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+      function randomInRange(min: number, max: number) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval: any = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+          colors: ['#FFB6C1', '#FFC0CB', '#FF69B4', '#FFD700', '#FFA500']
+        });
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+          colors: ['#FFB6C1', '#FFC0CB', '#FF69B4', '#FFD700', '#FFA500']
+        });
+      }, 250);
+
+      return () => clearInterval(interval);
+    }
+  }, [showPersonalResults, selectedTest, stateData?.justSubmitted]);
+
+  useEffect(() => {
+    if (stateData?.justSubmitted && !popupDismissed) {
+      const timer = setTimeout(() => {
+        setShowPopup(true);
+      }, 5000); // 5 seconds delay
+      return () => clearTimeout(timer);
+    }
+  }, [stateData?.justSubmitted, popupDismissed]);
+
+  const handleDismissPopup = () => {
+    setIsDismissing(true);
+    // After animation finishes, actually remove it from DOM
+    setTimeout(() => {
+      setShowPopup(false);
+      setPopupDismissed(true);
+    }, 600);
+  };
 
   useEffect(() => {
     if (showPersonalResults && selectedTest) {
@@ -484,7 +548,7 @@ const ResultsPage = () => {
 
         {/* Feedback Section */}
         {testId && (
-          <div className="max-w-2xl mx-auto">
+          <div id="feedback-section" className="max-w-2xl mx-auto scroll-mt-24">
             <FeedbackForm
               testId={testId}
               studentName={contextStudentName}
@@ -505,6 +569,52 @@ const ResultsPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Ad-like Sliding Popup */}
+      <AnimatePresence>
+        {showPopup && testId && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={isDismissing
+              ? { x: "-50vw", y: "-20vh", scale: 0, opacity: 0 }
+              : { y: 0, opacity: 1, x: 0, scale: 1 }
+            }
+            exit={{ opacity: 0, scale: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 100 }}
+            className="fixed bottom-6 right-6 lg:right-12 z-50 w-[350px] shadow-2xl rounded-2xl overflow-hidden border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900"
+          >
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 relative">
+              <button
+                onClick={handleDismissPopup}
+                className="absolute top-2 right-2 p-1 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-full">
+                  <Sparkles className="w-5 h-5 text-yellow-300" />
+                </div>
+                <h3 className="text-white font-bold text-lg leading-tight">We value your opinion!</h3>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Help us improve your experience by sharing a quick feedback. It takes less than a minute!
+              </p>
+              <Button
+                onClick={() => {
+                  setShowPopup(false);
+                  navigate(`/results/feedback/${testId}`, { state: stateData });
+                }}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 shadow-md h-11"
+              >
+                Give Feedback
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
