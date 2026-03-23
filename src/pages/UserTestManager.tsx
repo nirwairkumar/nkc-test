@@ -14,9 +14,9 @@ import { Globe, Link as LinkIcon, Lock, GraduationCap, Search, Inbox, CheckCircl
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchCreatorReports, updateReportStatus, Report } from "@/lib/reportsApi";
 import { Badge } from "@/components/ui/badge";
-
 import TestBuilder from '@/components/TestBuilder';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
+import { shareTest } from '@/utils/shareUtils';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
 import {
@@ -227,10 +227,7 @@ export default function UserTestManager() {
     };
 
     const handleShare = (test: any) => {
-        const path = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
-        const url = `${window.location.origin}${path}`;
-        navigator.clipboard.writeText(url);
-        toast.success("Test link copied!");
+        shareTest(test);
     };
 
     const handleUploadSolutions = (test: any) => {

@@ -12,6 +12,7 @@ import FolderCard from '@/components/home/FolderCard';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import { shareTest } from '@/utils/shareUtils';
 
 export default function SearchResults({ searchQuery, user, onManageTest }: { searchQuery: string, user: any, onManageTest: (test: any) => void }) {
     const [tests, setTests] = useState<Test[]>([]);
@@ -117,11 +118,9 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
         }
     };
 
-    const handleShare = (e: React.MouseEvent, testId: string) => {
+    const handleShare = (e: React.MouseEvent, test: any) => {
         e.stopPropagation();
-        const url = `${window.location.origin}/test-intro/${testId}`;
-        navigator.clipboard.writeText(url);
-        toast.success("Test link copied!");
+        shareTest(test);
     };
 
     if (loading) {
@@ -201,7 +200,7 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
                     return (
                         <Card key={test.id} className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full animate-in fade-in duration-500">
                             <div className="absolute top-2 right-2 z-10">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test.id)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test)}>
                                     <Share2 className="h-4 w-4" />
                                 </Button>
                             </div>

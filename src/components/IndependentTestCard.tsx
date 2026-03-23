@@ -9,6 +9,7 @@ import { fetchTestCardSnippet, getTestAttemptStatus } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { shareTest } from '@/utils/shareUtils';
 
 interface IndependentTestCardProps {
     testId: string;
@@ -61,11 +62,9 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
         return () => { mounted = false; };
     }, [testId]);
 
-    const handleShare = (e: React.MouseEvent, id: string) => {
+    const handleShare = (e: React.MouseEvent, test: any) => {
         e.stopPropagation();
-        const url = `${window.location.origin}/test-intro/${id}`;
-        navigator.clipboard.writeText(url);
-        toast.success("Test link copied!");
+        shareTest(test);
     };
 
     if (loading) {
@@ -98,7 +97,7 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
     return (
         <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800 animate-in fade-in duration-500">
             <div className="absolute top-2 right-2 z-10">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test.id)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test)}>
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>

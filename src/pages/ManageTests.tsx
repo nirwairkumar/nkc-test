@@ -43,7 +43,7 @@ import {
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
-
+import { shareTest } from '@/utils/shareUtils';
 export default function ManageTests() {
     const { user, loading: authLoading, isAdmin } = useAuth();
     const navigate = useNavigate();
@@ -315,10 +315,7 @@ export default function ManageTests() {
     };
 
     const handleShare = (test: any) => {
-        const path = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
-        const url = `${window.location.origin}${path}`;
-        navigator.clipboard.writeText(url);
-        toast.success("Test link copied!");
+        shareTest(test);
     };
 
     const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'unlisted' | 'private') => {
