@@ -15,6 +15,10 @@ class FeedbackCreate(BaseModel):
     sender_email: Optional[str] = None
     receiver_name: Optional[str] = None
     receiver_email: Optional[str] = None
+    improvements: Optional[str] = None
+    requirements: Optional[str] = None
+    test_experience: Optional[str] = None
+    dislikes: Optional[str] = None
 
 @router.post("/feedback")
 async def submit_feedback(payload: FeedbackCreate, db: Client = Depends(get_db)):
