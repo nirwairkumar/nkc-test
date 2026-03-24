@@ -83,6 +83,7 @@ const ResultsPage = () => {
     totalQuestions: number;
     marksPerQuestion: number;
     negativeMark: number;
+    justSubmitted?: boolean;
   } | undefined;
 
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
@@ -103,8 +104,10 @@ const ResultsPage = () => {
   const [popupDismissed, setPopupDismissed] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
 
+  const justSubmitted = stateData?.justSubmitted;
+
   useEffect(() => {
-    if (showPersonalResults && selectedTest && stateData?.justSubmitted) {
+    if (showPersonalResults && selectedTest && justSubmitted) {
       // Trigger confetti animation on mount
       const duration = 3000;
       const animationEnd = Date.now() + duration;
@@ -139,16 +142,18 @@ const ResultsPage = () => {
 
       return () => clearInterval(interval);
     }
-  }, [showPersonalResults, selectedTest, stateData?.justSubmitted]);
+  }, [showPersonalResults, selectedTest, justSubmitted]);
 
   useEffect(() => {
-    if (stateData?.justSubmitted && !popupDismissed) {
+    if (justSubmitted && !popupDismissed) {
       const timer = setTimeout(() => {
         setShowPopup(true);
       }, 5000); // 5 seconds delay
       return () => clearTimeout(timer);
     }
-  }, [stateData?.justSubmitted, popupDismissed]);
+  }, [justSubmitted, popupDismissed]);
+
+
 
   const handleDismissPopup = () => {
     setIsDismissing(true);

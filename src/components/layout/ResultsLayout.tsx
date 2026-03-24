@@ -154,9 +154,8 @@ export default function ResultsLayout() {
                 className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
                 onClick={() => {
                     const test = stateData?.test || { id: currentTestId, title: "Test" };
-                    const score = stateData?.score || 0;
-                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                    shareToFacebook(test, score, totalMarks);
+                    const url = `${window.location.origin}/test/${test.id}`;
+                    shareToFacebook(url);
                 }}
             >
                 <Facebook className="mr-3 h-5 w-5 text-blue-600" />
@@ -170,7 +169,9 @@ export default function ResultsLayout() {
                     const test = stateData?.test || { id: currentTestId, title: "Test" };
                     const score = stateData?.score || 0;
                     const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                    shareToReddit(test, score, totalMarks);
+                    const url = `${window.location.origin}/test/${test.id}`;
+                    const title = `I scored ${score}/${totalMarks} in "${test.title}"!`;
+                    shareToReddit(url, title);
                 }}
             >
                 <Reddit className="mr-3 h-5 w-5 text-orange-600" />
