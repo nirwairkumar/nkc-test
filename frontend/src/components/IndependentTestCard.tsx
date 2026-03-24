@@ -40,6 +40,21 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                     getTestAttemptStatus(testId, user.id).then(prog => {
                         if (!prog.error && prog.status) {
                             setProgress(prog);
+
+                            // If submitted, fetch full test details to get computed_max_marks
+                            // This follows the results.py logic of requiring full test metadata for accuracy
+                            if (prog.status === 'submitted' && !prog.total_marks) {
+                                import('@/lib/testsApi').then(({ fetchTestById }) => {
+                                    fetchTestById(testId).then(({ data }) => {
+                                        if (data?.computed_max_marks) {
+                                            setProgress(prev => prev ? ({
+                                                ...prev,
+                                                total_marks: data.computed_max_marks.total_max_marks
+                                            }) : null);
+                                        }
+                                    });
+                                });
+                            }
                         }
                     });
                 }
@@ -104,31 +119,35 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
 
             {/* CSS Stamp Overlay for Completed Tests */}
             {progress && progress.status === 'submitted' && (
-                <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none -rotate-[15deg] opacity-90 transition-transform duration-300 scale-75 sm:scale-[0.85] mix-blend-multiply text-emerald-600/90">
-                    <div className="relative w-[140px] h-[140px] flex items-center justify-center rounded-full border-[4px] border-emerald-600/80 p-1">
-                        <div className="w-full h-full rounded-full border-[2px] border-emerald-600/80 flex flex-col items-center justify-center relative bg-transparent">
+                <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none -rotate-[12deg] opacity-90 transition-transform duration-300 scale-[0.8] sm:scale-[0.9] mix-blend-multiply text-emerald-600/90 drop-shadow-sm">
+                    <div className="relative w-[130px] h-[130px] flex items-center justify-center rounded-full border-[3.5px] border-emerald-600/70 p-1.5">
+                        <div className="w-full h-full rounded-full border-[1.5px] border-emerald-600/50 flex flex-col items-center justify-start pt-2 bg-transparent">
                             {/* Top Stars */}
-                            <div className="flex gap-2 opacity-90 items-center justify-center -mt-3">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="mt-1"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="mt-1"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
+                            <div className="flex gap-1.5 opacity-80 items-center justify-center mb-1">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
                             </div>
 
-                            {/* Center Text */}
-                            <div className="text-[32px] font-black tracking-[0.15em] uppercase leading-none font-serif text-emerald-600/95 drop-shadow-sm my-1.5 pl-[0.15em]">
-                                DONE
+                            {/* "DONE" Text with horizontal lines - positioned higher to leave room for score */}
+                            <div className="absolute top-[24%] left-1/2 -translate-x-1/2 z-30 w-[120%] flex flex-col items-center">
+                                <div className="w-full border-t-[2.5px] border-emerald-600/80 mb-[2px]"></div>
+                                <div className="text-[34px] font-black tracking-[0.1em] uppercase leading-none font-serif text-emerald-600 bg-white/5 px-2">
+                                    DONE
+                                </div>
+                                <div className="w-full border-b-[2.5px] border-emerald-600/80 mt-[2px]"></div>
                             </div>
 
-                            {/* Bottom Stars */}
-                            <div className="flex gap-2 opacity-90 items-center justify-center mb-1">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="mb-1"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="mb-1"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
-                            </div>
-
-                            {/* Score Text */}
-                            <div className="absolute bottom-3 font-bold text-[10px] uppercase tracking-wider text-emerald-700/90 whitespace-nowrap border-t-[1.5px] border-emerald-600/40 pt-[2px] px-1 bg-transparent">
-                                SCORE: {progress.score ?? 0}/{progress.total_marks ?? '?'}
+                            {/* Bottom Stars & Numerical Score only */}
+                            <div className="mt-12 mb-0.5 flex flex-col items-center">
+                                <div className="flex gap-1.5 opacity-80 items-center justify-center mb-1">
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
+                                </div>
+                                <div className="flex items-baseline mt-0.5">
+                                    <span className="text-[22px] font-black text-emerald-600 leading-none">{progress.score ?? 0}</span>
+                                    <span className="text-[16px] font-bold text-emerald-600/60 leading-none ml-1">/{progress.total_marks ?? '?'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
