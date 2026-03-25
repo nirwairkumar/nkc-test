@@ -594,6 +594,10 @@ export default function ManageTests() {
             const { error } = await assignSubCategoryToTest(testId, subCategoryId);
             if (error) throw error;
             toast.success(subCategoryId ? "Sub-category assigned" : "Sub-category removed");
+            // Immediate UI update for the tick indicator
+            setTests(prev => prev.map(t =>
+                t.id === testId ? { ...t, sub_category_id: subCategoryId } : t
+            ));
         } catch (error: any) {
             console.error("Error assigning sub-category:", error);
             toast.error("Failed to assign sub-category");
@@ -791,8 +795,9 @@ export default function ManageTests() {
                                                                     <BookOpen className="mr-2 h-4 w-4" /> Assign Sub-Category
                                                                 </DropdownMenuSubTrigger>
                                                                 <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                                                    <DropdownMenuItem onClick={() => handleAssignSubCategory(test.id, null)}>
+                                                                    <DropdownMenuItem onClick={() => handleAssignSubCategory(test.id, null)} className="flex items-center justify-between">
                                                                         <span className="opacity-50">None</span>
+                                                                        {!test.sub_category_id && <Check className="h-4 w-4 ml-2 text-primary" />}
                                                                     </DropdownMenuItem>
                                                                     {(() => {
                                                                         const filteredSubs = allSubCategories.filter(sc =>
@@ -805,9 +810,11 @@ export default function ManageTests() {
 
                                                                         return filteredSubs.map(sc => {
                                                                             const parentCat = categories.find(c => c.id === sc.category_id);
+                                                                            const isAssigned = test.sub_category_id === sc.id;
                                                                             return (
-                                                                                <DropdownMenuItem key={sc.id} onClick={() => handleAssignSubCategory(test.id, sc.id)}>
-                                                                                    {parentCat ? `${parentCat.name} → ` : ''}{sc.name}
+                                                                                <DropdownMenuItem key={sc.id} onClick={() => handleAssignSubCategory(test.id, sc.id)} className="flex items-center justify-between">
+                                                                                    <span>{parentCat ? `${parentCat.name} → ` : ''}{sc.name}</span>
+                                                                                    {isAssigned && <Check className="h-4 w-4 ml-2 text-primary" />}
                                                                                 </DropdownMenuItem>
                                                                             );
                                                                         });

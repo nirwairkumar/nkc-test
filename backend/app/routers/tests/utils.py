@@ -36,13 +36,19 @@ def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
         all_cats = {c["id"]: c for c in (cats_res.data or [])}
 
     tests_categories_map = {}
+    tests_subcategory_map = {}
     for tc in test_cats:
         tid = tc["test_id"]
         cid = tc["category_id"]
+        scid = tc.get("sub_category_id")
+        
         if tid not in tests_categories_map:
             tests_categories_map[tid] = []
         if cid in all_cats:
             tests_categories_map[tid].append(all_cats[cid])
+            
+        if scid:
+            tests_subcategory_map[tid] = scid
 
     verified_creators = {}
     for c in creators_data:
@@ -60,6 +66,7 @@ def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
             t["creator_avatar"] = verified_creators[cid]["avatar"]
             t["creator_verified"] = verified_creators[cid]["is_verified"]
         t["categories"] = tests_categories_map.get(t["id"], [])
+        t["sub_category_id"] = tests_subcategory_map.get(t["id"])
         enriched_tests.append(t)
         
     return enriched_tests
