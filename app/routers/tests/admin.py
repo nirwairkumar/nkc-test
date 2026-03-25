@@ -3,6 +3,7 @@ from app.core.database import get_db
 from supabase import Client
 
 from typing import Optional, List, Dict, Any
+from app.routers.tests.utils import enrich_tests
 
 router = APIRouter()
 
@@ -46,8 +47,10 @@ async def get_all_tests(
             response = query.range(start, end).execute()
             tests = response.data
 
+        enriched = enrich_tests(tests, db)
+
         return {
-            "tests": tests,
+            "tests": enriched,
             "meta": {
                 "page": page,
                 "has_more": len(tests) == limit
