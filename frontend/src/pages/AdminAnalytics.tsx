@@ -548,8 +548,8 @@ export default function AdminAnalytics() {
                                             <td className="px-4 py-3 font-medium">{log.uploader_name}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border ${log.type === 'link'
-                                                        ? 'bg-blue-500/10 text-blue-600 border-blue-200'
-                                                        : 'bg-indigo-500/10 text-indigo-600 border-indigo-200'
+                                                    ? 'bg-blue-500/10 text-blue-600 border-blue-200'
+                                                    : 'bg-indigo-500/10 text-indigo-600 border-indigo-200'
                                                     }`}>
                                                     {log.type === 'link' ? 'LINK' : (log.file_ext || 'FILE')}
                                                 </span>
@@ -638,6 +638,7 @@ export default function AdminAnalytics() {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-col text-xs space-y-1">
+                                                        <span className="text-foreground"><span className="text-muted-foreground">Date:</span> {startTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                         <span className="text-foreground"><span className="text-muted-foreground">Start:</span> {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                         <span className="text-foreground"><span className="text-muted-foreground">Left:</span> {leaveTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({duration}m)</span>
                                                     </div>

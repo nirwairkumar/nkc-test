@@ -25,7 +25,7 @@ import { Loader2, Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { fetchTestById, fetchTestBySlug, Test } from '@/lib/testsApi';
+import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/testsApi';
 // import { Helmet } from 'react-helmet-async'; // Replaced by SEO component
 import { SEO } from '@/components/SEO';
 import { SEOContent } from '@/components/SEOContent';
@@ -112,6 +112,7 @@ export default function TestIntroPage() {
     const [schedulingStatus, setSchedulingStatus] = useState<'upcoming' | 'ended' | 'live' | null>(null);
     const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
     const [showAuthWarning, setShowAuthWarning] = useState(false);
+    const [hasSolutions, setHasSolutions] = useState(false);
 
     // Logic Functions
     const checkPermissions = async () => {
@@ -244,6 +245,18 @@ export default function TestIntroPage() {
     useEffect(() => {
         if (test) {
             checkPermissions();
+            // Check for solutions
+            const checkSolutions = async () => {
+                try {
+                    const { data } = await fetchSolutions(test.id);
+                    if (data && data.has_solutions) {
+                        setHasSolutions(true);
+                    }
+                } catch (err) {
+                    console.error("Error checking solutions:", err);
+                }
+            };
+            checkSolutions();
         }
     }, [test, user]);
 
@@ -501,6 +514,14 @@ export default function TestIntroPage() {
                             <span className="text-sm text-muted-foreground">Total Marks</span>
                             <span className="font-bold text-lg">{totalMaxMarks}</span>
                         </div>
+
+                        {hasSolutions && (
+                            <div className="flex flex-col items-center justify-center text-center">
+                                <CheckCircle className="h-6 w-6 text-indigo-600 mb-2 animate-pulse" />
+                                <span className="text-sm text-muted-foreground">Solutions</span>
+                                <span className="font-bold text-sm text-indigo-700">Available</span>
+                            </div>
+                        )}
 
                         {test.enable_section_mode && (
                             <div className="flex flex-col items-center justify-center text-center col-span-2 md:col-span-2 bg-white dark:bg-slate-800 rounded border border-dashed">
