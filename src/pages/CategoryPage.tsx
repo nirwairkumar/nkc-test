@@ -15,6 +15,12 @@ import { toast } from 'sonner';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import IndependentTestCard from '@/components/IndependentTestCard';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface CategoryPageProps { }
 
@@ -145,70 +151,80 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
             ) : categorySubCategories.length > 0 ? (
                 // Grouped view by sub-category
                 <div className="space-y-8">
-                    {categorySubCategories.map(sc => {
-                        const scTests = tests.filter(t => testSubCategoryMap[t.id] === sc.id);
-                        if (scTests.length === 0) return null;
-                        return (
-                            <div key={sc.id}>
-                                <h2 className="text-lg font-semibold mb-4 border-b pb-2 text-slate-700 dark:text-slate-300">{sc.name}</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {scTests.map((test: any) => {
-                                        if (!test) return null;
-                                        const testId = test.id || Math.random();
-                                        const isRendered = isItemRendered(testId);
-                                        if (!isRendered) {
-                                            return (
-                                                <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
-                                                    <TestCardSkeleton />
-                                                </div>
-                                            );
-                                        }
-                                        return (
-                                            <IndependentTestCard
-                                                key={testId}
-                                                testId={test.id || testId}
-                                                initialTitle={test.title}
-                                                user={user}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        );
-                    })}
+                    <Accordion type="multiple" defaultValue={[...categorySubCategories.map(sc => sc.id), "other"]}>
+                        {categorySubCategories.map(sc => {
+                            const scTests = tests.filter(t => testSubCategoryMap[t.id] === sc.id);
+                            if (scTests.length === 0) return null;
+                            return (
+                                <AccordionItem key={sc.id} value={sc.id} className="border-none mt-0">
+                                    <AccordionTrigger className="hover:no-underline py-2 border-b">
+                                        <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">{sc.name}</h2>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {scTests.map((test: any) => {
+                                                if (!test) return null;
+                                                const testId = test.id || Math.random();
+                                                const isRendered = isItemRendered(testId);
+                                                if (!isRendered) {
+                                                    return (
+                                                        <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                                            <TestCardSkeleton />
+                                                        </div>
+                                                    );
+                                                }
+                                                return (
+                                                    <IndependentTestCard
+                                                        key={testId}
+                                                        testId={test.id || testId}
+                                                        initialTitle={test.title}
+                                                        user={user}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            );
+                        })}
 
-                    {/* Tests without a sub-category */}
-                    {(() => {
-                        const ungroupedTests = tests.filter(t => !testSubCategoryMap[t.id]);
-                        if (ungroupedTests.length === 0) return null;
-                        return (
-                            <div>
-                                <h2 className="text-lg font-semibold mb-4 border-b pb-2 text-slate-700 dark:text-slate-300">Other</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {ungroupedTests.map((test: any) => {
-                                        if (!test) return null;
-                                        const testId = test.id || Math.random();
-                                        const isRendered = isItemRendered(testId);
-                                        if (!isRendered) {
-                                            return (
-                                                <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
-                                                    <TestCardSkeleton />
-                                                </div>
-                                            );
-                                        }
-                                        return (
-                                            <IndependentTestCard
-                                                key={testId}
-                                                testId={test.id || testId}
-                                                initialTitle={test.title}
-                                                user={user}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        );
-                    })()}
+                        {/* Tests without a sub-category */}
+                        {(() => {
+                            const ungroupedTests = tests.filter(t => !testSubCategoryMap[t.id]);
+                            if (ungroupedTests.length === 0) return null;
+                            return (
+                                <AccordionItem value="other" className="border-none mt-4">
+                                    <AccordionTrigger className="hover:no-underline py-2 border-b">
+                                        <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Other</h2>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {ungroupedTests.map((test: any) => {
+                                                if (!test) return null;
+                                                const testId = test.id || Math.random();
+                                                const isRendered = isItemRendered(testId);
+                                                if (!isRendered) {
+                                                    return (
+                                                        <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                                            <TestCardSkeleton />
+                                                        </div>
+                                                    );
+                                                }
+                                                return (
+                                                    <IndependentTestCard
+                                                        key={testId}
+                                                        testId={test.id || testId}
+                                                        initialTitle={test.title}
+                                                        user={user}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            );
+                        })()}
+                    </Accordion>
 
                     {/* Progress indicator */}
                     {!isComplete && tests.length > 0 && (

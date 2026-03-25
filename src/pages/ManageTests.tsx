@@ -794,18 +794,24 @@ export default function ManageTests() {
                                                                     <DropdownMenuItem onClick={() => handleAssignSubCategory(test.id, null)}>
                                                                         <span className="opacity-50">None</span>
                                                                     </DropdownMenuItem>
-                                                                    {allSubCategories.length === 0 ? (
-                                                                        <DropdownMenuItem disabled>No sub-categories yet</DropdownMenuItem>
-                                                                    ) : (
-                                                                        allSubCategories.map(sc => {
+                                                                    {(() => {
+                                                                        const filteredSubs = allSubCategories.filter(sc =>
+                                                                            test.categories?.some((c: any) => c.id === sc.category_id)
+                                                                        );
+
+                                                                        if (filteredSubs.length === 0) {
+                                                                            return <DropdownMenuItem disabled>No categories assigned / No matching sub-categories</DropdownMenuItem>;
+                                                                        }
+
+                                                                        return filteredSubs.map(sc => {
                                                                             const parentCat = categories.find(c => c.id === sc.category_id);
                                                                             return (
                                                                                 <DropdownMenuItem key={sc.id} onClick={() => handleAssignSubCategory(test.id, sc.id)}>
                                                                                     {parentCat ? `${parentCat.name} → ` : ''}{sc.name}
                                                                                 </DropdownMenuItem>
                                                                             );
-                                                                        })
-                                                                    )}
+                                                                        });
+                                                                    })()}
                                                                 </DropdownMenuSubContent>
                                                             </DropdownMenuSub>
 
