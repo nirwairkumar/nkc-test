@@ -64,19 +64,20 @@ export default function OnboardingPage() {
 
             const isCreatorDefault = values.designation === 'Teacher' || values.designation === 'Institution';
 
-            // 1. Update Auth User Metadata via Backend Proxy
-            const { authApi } = await import('@/lib/authApi');
-            const { error: authError } = await authApi.updateMetadata({
-                full_name: values.name,
-                designation: values.designation
-            });
-
-            if (authError) {
-                console.error('Error updating auth metadata:', authError);
-                throw authError;
+            // 1. Try to update Auth User Metadata (non-critical — may fail for Google OAuth users
+            //    if the backend doesn't have a service role key)
+            try {
+                const { authApi } = await import('@/lib/authApi');
+                await authApi.updateMetadata({
+                    full_name: values.name,
+                    designation: values.designation
+                });
+            } catch (metaErr) {
+                console.warn('Auth metadata update failed (non-critical):', metaErr);
+                // Continue — profiles table is the primary source of truth
             }
 
-            // 2. Sync to profiles table via Backend API
+            // 2. Sync to profiles table via Backend API (this is the critical update)
             const { error: profileError } = await updateProfile(user.id, {
                 full_name: values.name,
                 designation: values.designation,
