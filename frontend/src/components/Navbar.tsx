@@ -175,11 +175,11 @@ export default function Navbar() {
                                         <span>Test Upload Guide</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => navigate('/login')}>
+                                    <DropdownMenuItem onClick={() => navigate('/login', { state: { from: location.pathname } })}>
                                         <User className="mr-2 h-4 w-4" />
                                         <span>Login</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate('/login', { state: { isSignup: true } })}>
+                                    <DropdownMenuItem onClick={() => navigate('/login', { state: { isSignup: true, from: location.pathname } })}>
                                         <User className="mr-2 h-4 w-4" />
                                         <span>Sign Up</span>
                                     </DropdownMenuItem>
@@ -328,10 +328,10 @@ export default function Navbar() {
                         </>
                     ) : (
                         <div className="hidden md:flex gap-2">
-                            <Button variant="ghost" onClick={() => navigate('/login')}>
+                            <Button variant="ghost" onClick={() => navigate('/login', { state: { from: location.pathname } })}>
                                 Login
                             </Button>
-                            <Button onClick={() => navigate('/login', { state: { isSignup: true } })}>
+                            <Button onClick={() => navigate('/login', { state: { isSignup: true, from: location.pathname } })}>
                                 Sign Up
                             </Button>
                         </div>

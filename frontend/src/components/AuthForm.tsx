@@ -63,6 +63,14 @@ export default function AuthForm() {
         } else {
             setView('login');
         }
+
+        // Store the redirect intent globally as soon as the AuthForm mounts,
+        // so it survives email/password logins and Google OAuth redirects.
+        const stateFrom = location.state?.from;
+        const redirectPath = (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname);
+        if (redirectPath && redirectPath !== '/login' && redirectPath !== '/onboarding') {
+            localStorage.setItem('auth_redirect_intent', redirectPath);
+        }
     }, [location.state]);
 
     const form = useForm<z.infer<typeof formSchema>>({
