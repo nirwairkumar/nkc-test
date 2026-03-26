@@ -8,7 +8,7 @@ import { analyticsTracker } from '@/lib/analyticsTracker';
 export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
 
     // Track page views on route change
     React.useEffect(() => {
@@ -24,16 +24,20 @@ export default function Layout() {
                 navigate(redirectPath);
             }
 
-            // Force onboarding if designation is missing
-            // Check if user has metadata and if designation is missing
-            if (user.user_metadata && !user.user_metadata.designation) {
+            // Force onboarding if designation is missing in both user_metadata and profile
+            const hasDesignation = user.user_metadata?.designation || profile?.designation;
+
+            if (!hasDesignation) {
                 // Allow staying on /onboarding
                 if (location.pathname !== '/onboarding') {
                     navigate('/onboarding', { replace: true });
                 }
+            } else if (location.pathname === '/onboarding') {
+                // If they have a designation but somehow landed on the onboarding page, redirect them home
+                navigate('/', { replace: true });
             }
         }
-    }, [user, navigate, location.pathname]);
+    }, [user, profile, navigate, location.pathname]);
     // Hide navbar only on live test page (/test/:id)
     // Also hiding on /test-intro/:id as requested
     const isLiveTestPage = location.pathname.startsWith('/test/') || location.pathname.startsWith('/test-intro/') || location.pathname.startsWith('/live/') || location.pathname.startsWith('/test-submitted');
