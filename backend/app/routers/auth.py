@@ -183,7 +183,7 @@ async def get_google_login_url(request: Request):
         if not frontend_url.startswith('http'):
             frontend_url = f"https://{frontend_url}"
             
-        print(f"DEBUG: Authenticating with redirect to: {frontend_url}/")
+        print(f"DEBUG: Authenticating with redirect to: {frontend_url}/auth/callback")
         
         response = supabase.auth.sign_in_with_oauth({
             "provider": "google",
@@ -201,3 +201,31 @@ async def get_google_login_url(request: Request):
         print(f"ERROR in Google Auth: {str(e)}")
         # We return the error detail so the frontend toast shows the REAL problem
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/callback")
+async def exchange_code_for_session(payload: Dict[str, Any]):
+    """Exchange a PKCE authorization code for a session (used by AuthCallback page)."""
+    try:
+        code = payload.get("code")
+        if not code:
+            raise HTTPException(status_code=400, detail="Missing authorization code")
+        
+        print(f"DEBUG: Exchanging PKCE code for session")
+        
+        response = supabase.auth.exchange_code_for_session({"auth_code": code})
+        
+        if hasattr(response, "session") and response.session:
+            session_data = jsonable_encoder(response.session)
+            user_data = jsonable_encoder(response.user) if hasattr(response, "user") else None
+            return {
+                "data": {
+                    "session": session_data,
+                    "user": user_data
+                },
+                "error": None
+            }
+        return {"data": jsonable_encoder(response), "error": None}
+    except Exception as e:
+        print(f"ERROR in code exchange: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
