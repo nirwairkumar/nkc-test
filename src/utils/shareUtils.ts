@@ -7,7 +7,7 @@ Practice now:
 ${url}
 
 Powered by Testoza
-https://testoza.com`;
+https://www.testoza.com`;
 
     try {
         if (navigator.share) {
@@ -36,7 +36,7 @@ Try it here:
 ${window.location.origin}/test/${test.id}
 
 Powered by Testoza
-https://testoza.com`;
+https://www.testoza.com`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
@@ -77,7 +77,7 @@ Try here:
 ${window.location.origin}/test/${test.id}
 
 Powered by Testoza
-https://testoza.com`;
+https://www.testoza.com`;
 
     try {
         if (navigator.share) {
@@ -113,7 +113,7 @@ Try here:
 ${url}
 
 Powered by Testoza
-https://testoza.com`;
+https://www.testoza.com`;
 
     try {
         if (navigator.share) {

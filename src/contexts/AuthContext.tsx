@@ -110,7 +110,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
         setLoading(true);
         try {
-            // 1. Capture access token from URL hash (e.g. from password reset link)
+            // 1. Check for password recovery tokens in URL hash (from password reset links)
+            // OAuth tokens are now handled by the /auth/callback page
             const hash = window.location.hash;
             if (hash) {
                 const params = new URLSearchParams(hash.substring(1));
@@ -118,18 +119,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const refreshToken = params.get('refresh_token');
                 const type = params.get('type');
 
-                if (accessToken) {
+                if (type === 'recovery' && accessToken) {
                     localStorage.setItem('testoza_token', accessToken);
                     if (refreshToken) {
                         localStorage.setItem('testoza_refresh_token', refreshToken);
                     }
-                    // Clear hash for clean URL
                     window.history.replaceState(null, '', window.location.pathname);
-
-                    if (type === 'recovery') {
-                        window.location.href = '/update-password';
-                        return;
-                    }
+                    window.location.href = '/update-password';
+                    return;
                 }
             }
 

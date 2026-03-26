@@ -127,7 +127,7 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                                 "@type": "ListItem",
                                 "position": 1,
                                 "name": "Simulated Exams",
-                                "item": "https://testoza.com/tests"
+                                "item": "https://www.testoza.com/tests"
                             },
                             {
                                 "@type": "ListItem",
