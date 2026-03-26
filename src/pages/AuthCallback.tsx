@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+import apiClient from '@/lib/apiClient';
 
 /**
  * AuthCallback — handles the redirect from Supabase after Google OAuth.
- * Supabase appends tokens in the URL hash: #access_token=...&refresh_token=...
- * On error, Supabase appends: #error=...&error_description=...
  *
- * This page:
- * 1. Reads tokens/errors from the hash
- * 2. Stores tokens in localStorage
- * 3. Calls refreshSession() to update AuthContext
- * 4. Redirects to the saved auth_redirect_intent (or /dashboard)
- * 5. On error → redirects to /auth-error
+ * Supabase can redirect here in two ways:
+ * 1. Implicit flow: tokens in URL hash → #access_token=...&refresh_token=...
+ * 2. PKCE flow: authorization code in query params → ?code=...
+ *
+ * This page handles both flows.
  */
 export default function AuthCallback() {
     const navigate = useNavigate();
     const { refreshSession } = useAuth();
+    const [searchParams] = useSearchParams();
     const [status, setStatus] = useState('Processing your login...');
 
     useEffect(() => {
@@ -27,65 +26,109 @@ export default function AuthCallback() {
     const handleCallback = async () => {
         try {
             const hash = window.location.hash;
+            const code = searchParams.get('code');
 
-            if (!hash) {
-                // No hash at all — could be a stale visit
-                setStatus('No authentication data found. Redirecting...');
-                setTimeout(() => navigate('/login', { replace: true }), 1500);
-                return;
+            console.log('[AuthCallback] URL:', window.location.href);
+            console.log('[AuthCallback] Hash present:', !!hash);
+            console.log('[AuthCallback] Code present:', !!code);
+
+            // --- Flow 1: Implicit flow (tokens in hash) ---
+            if (hash && hash.length > 1) {
+                const params = new URLSearchParams(hash.substring(1));
+
+                // Check for error from Supabase OAuth
+                const error = params.get('error');
+                const errorDescription = params.get('error_description');
+
+                if (error) {
+                    const errorParams = new URLSearchParams();
+                    errorParams.set('error', error);
+                    if (errorDescription) errorParams.set('detail', errorDescription);
+                    navigate(`/auth-error?${errorParams.toString()}`, { replace: true });
+                    return;
+                }
+
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+
+                if (accessToken) {
+                    localStorage.setItem('testoza_token', accessToken);
+                    if (refreshToken) {
+                        localStorage.setItem('testoza_refresh_token', refreshToken);
+                    }
+
+                    window.history.replaceState(null, '', window.location.pathname);
+                    setStatus('Login successful! Redirecting...');
+
+                    await refreshSession();
+                    redirectToIntent();
+                    return;
+                }
             }
 
-            const params = new URLSearchParams(hash.substring(1));
+            // --- Flow 2: PKCE flow (code in query params) ---
+            if (code) {
+                setStatus('Exchanging authorization code...');
 
-            // Check for error from Supabase OAuth
-            const error = params.get('error');
-            const errorDescription = params.get('error_description');
+                try {
+                    // Send the code to the backend to exchange for tokens
+                    const response = await apiClient.post('/auth/callback', { code });
+                    const data = response.data;
 
-            if (error) {
+                    const session = data?.data?.session || data?.session;
+
+                    if (session?.access_token) {
+                        localStorage.setItem('testoza_token', session.access_token);
+                        if (session.refresh_token) {
+                            localStorage.setItem('testoza_refresh_token', session.refresh_token);
+                        }
+
+                        setStatus('Login successful! Redirecting...');
+                        await refreshSession();
+                        redirectToIntent();
+                        return;
+                    } else {
+                        console.error('[AuthCallback] No session in PKCE response:', data);
+                        navigate('/auth-error?error=pkce_error&detail=Could+not+exchange+code+for+session', { replace: true });
+                        return;
+                    }
+                } catch (err: any) {
+                    console.error('[AuthCallback] PKCE exchange error:', err);
+                    navigate('/auth-error?error=pkce_error&detail=Code+exchange+failed', { replace: true });
+                    return;
+                }
+            }
+
+            // --- Check for error in query params too ---
+            const errorParam = searchParams.get('error');
+            const errorDesc = searchParams.get('error_description');
+            if (errorParam) {
                 const errorParams = new URLSearchParams();
-                errorParams.set('error', error);
-                if (errorDescription) errorParams.set('detail', errorDescription);
+                errorParams.set('error', errorParam);
+                if (errorDesc) errorParams.set('detail', errorDesc);
                 navigate(`/auth-error?${errorParams.toString()}`, { replace: true });
                 return;
             }
 
-            // Extract tokens
-            const accessToken = params.get('access_token');
-            const refreshToken = params.get('refresh_token');
+            // --- No data at all ---
+            console.warn('[AuthCallback] No hash, no code, no error. Full URL:', window.location.href);
+            setStatus('No authentication data found. Redirecting...');
+            setTimeout(() => navigate('/login', { replace: true }), 2000);
 
-            if (!accessToken) {
-                navigate('/auth-error?error=missing_token&detail=No+access+token+received+from+provider', { replace: true });
-                return;
-            }
-
-            // Store tokens
-            localStorage.setItem('testoza_token', accessToken);
-            if (refreshToken) {
-                localStorage.setItem('testoza_refresh_token', refreshToken);
-            }
-
-            // Clean the URL hash
-            window.history.replaceState(null, '', window.location.pathname);
-
-            setStatus('Login successful! Redirecting...');
-
-            // Refresh the auth context to pick up the new session
-            await refreshSession();
-
-            // Redirect to the intended page (saved before OAuth redirect)
-            const redirectIntent = localStorage.getItem('auth_redirect_intent');
-            localStorage.removeItem('auth_redirect_intent');
-
-            const destination = redirectIntent || '/dashboard';
-
-            // Small delay to ensure AuthContext state propagates
-            setTimeout(() => {
-                navigate(destination, { replace: true });
-            }, 150);
         } catch (err) {
             console.error('Auth callback error:', err);
             navigate('/auth-error?error=callback_error&detail=An+unexpected+error+occurred+during+login', { replace: true });
         }
+    };
+
+    const redirectToIntent = () => {
+        const redirectIntent = localStorage.getItem('auth_redirect_intent');
+        localStorage.removeItem('auth_redirect_intent');
+        const destination = redirectIntent || '/dashboard';
+
+        setTimeout(() => {
+            navigate(destination, { replace: true });
+        }, 150);
     };
 
     return (
