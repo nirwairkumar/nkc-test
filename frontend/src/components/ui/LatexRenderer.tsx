@@ -28,8 +28,8 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 const escapedSrc = src.replace(/"/g, '&quot;');
                 const escapedAlt = alt.replace(/"/g, '&quot;');
                 // Using auto width/height and no max-width to ensure original size.
-                // Added a larger margin for clearer separation.
-                return `<img src="${escapedSrc}" alt="${escapedAlt}" style="width: auto !important; height: auto !important; max-width: none !important; border-radius: 4px; display: block; margin: 12px 0; border: 1px solid #e2e8f0; padding: 4px;" />`;
+                // Changed display to inline-block and removed border/padding based on user request.
+                return `<img src="${escapedSrc}" alt="${escapedAlt}" style="width: auto !important; height: none !important; max-width: 50% !important; border-radius: 4px; display: inline-block; vertical-align: middle; margin: 0 4px;" />`;
             };
 
             const extractImagesFromTex = (tex: string): string => {

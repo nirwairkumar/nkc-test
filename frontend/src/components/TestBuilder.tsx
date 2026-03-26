@@ -9,10 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { IMEInput } from '@/components/ui/IMEInput';
+import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { AdvancedQuestionEditor } from '@/components/AdvancedQuestionEditor';
 import { Calculator } from 'lucide-react';
@@ -46,6 +46,7 @@ import slugify from 'slugify';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import PremiumGuard from '@/components/premium/PremiumGuard';
 import { JsonImporter } from '@/components/test-builder/JsonImporter';
+import { ScreenshotCaptureModal } from '@/components/test-builder/ScreenshotCaptureModal';
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
@@ -160,6 +161,86 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     // UX State for Image Inputs
     const [expandedImageInputs, setExpandedImageInputs] = useState<Record<string, boolean>>({});
     const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({});
+
+    // Screenshot Capture State
+    const [isCaptureModalOpen, setIsCaptureModalOpen] = useState(false);
+    const [captureTarget, setCaptureTarget] = useState<{ type: 'question' | 'option', qIdx: number, optKey?: string } | null>(null);
+
+    // --- Cloudinary Integration ---
+    // --- Cloudinary Integration ---
+    const imeRefs = React.useRef<Record<string, IMEInputHandle | null>>({});
+    const [isCloudUploadOpen, setIsCloudUploadOpen] = useState(false);
+    const [cloudUploadTarget, setCloudUploadTarget] = useState<string | null>(null);
+    const cloudUploadBoxRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isCloudUploadOpen && cloudUploadBoxRef.current) {
+            // Small timeout to ensure the DOM has painted before focusing
+            setTimeout(() => cloudUploadBoxRef.current?.focus(), 50);
+        }
+    }, [isCloudUploadOpen]);
+
+    const openCloudUploadModal = (e: React.MouseEvent, refId: string) => {
+        e.preventDefault();
+        setCloudUploadTarget(refId);
+        setIsCloudUploadOpen(true);
+    };
+
+    const handleCloudinaryUpload = async (e: any, refId: string) => {
+        const file = e.target?.files?.[0] || e.clipboardData?.files?.[0];
+        if (!file || !file.type.startsWith('image/')) {
+            if (e.target && e.target.value !== undefined) e.target.value = '';
+            toast.error("Please provide a valid image file.");
+            return;
+        }
+
+        const uploadPreset = "TestoZa_cloudinary";
+        const cloudName = "dma0h19mk"; 
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
+
+        toast.info("Uploading image...");
+        setIsCloudUploadOpen(false); // Optimistic close
+        try {
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+            if (data.secure_url) {
+                const markdownLink = `![image](${data.secure_url})`;
+                imeRefs.current[refId]?.insertAtCursor(markdownLink);
+            } else {
+                toast.error("Cloudinary upload failed");
+            }
+        } catch (error) {
+            console.error("Cloudinary error:", error);
+            toast.error("Upload error");
+        } finally {
+            if (e.target && e.target.value !== undefined) e.target.value = ''; // Reset file input
+        }
+    };
+
+    const openCaptureModal = (type: 'question' | 'option', qIdx: number, optKey?: string) => {
+        setCaptureTarget({ type, qIdx, optKey });
+        setIsCaptureModalOpen(true);
+    };
+
+    const handleScreenshotCapture = (base64: string) => {
+        if (!captureTarget) return;
+
+        if (captureTarget.type === 'question') {
+            updateQuestion(captureTarget.qIdx, 'image', base64);
+        } else if (captureTarget.type === 'option' && captureTarget.optKey) {
+            const nq = [...questions];
+            if (!nq[captureTarget.qIdx].optionImages) nq[captureTarget.qIdx].optionImages = {};
+            nq[captureTarget.qIdx].optionImages![captureTarget.optKey] = base64;
+            setQuestions(nq);
+        }
+        setIsCaptureModalOpen(false);
+    };
 
     const toggleImageInput = (id: string | number) => {
         setExpandedImageInputs(prev => ({
@@ -1302,6 +1383,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         </div>
                                     </div>
                                     <IMEInput
+                                        ref={(el) => imeRefs.current['test-desc'] = el}
                                         typingMode={descriptionLanguage}
                                         value={description}
                                         onChange={setDescription}
@@ -1807,7 +1889,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     <div className="p-6 space-y-6">
                                                                         <div className="space-y-3">
                                                                             <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
-                                                                                <IMEInput as="textarea" typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
+                                                                                <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
                                                                                 <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
                                                                                     <div className="group/info relative cursor-help">
                                                                                         <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
@@ -1841,6 +1923,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
                                                                                                     <Upload className="w-3.5 h-3.5 mr-1" />Upload
                                                                                                 </label>
+                                                                                                <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                    <Cloud className="w-4 h-4" />
+                                                                                                </button>
                                                                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
                                                                                                     <X className="w-4 h-4" />
                                                                                                 </Button>
@@ -1919,6 +2004,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                 <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
                                                                                                     <div className="relative">
                                                                                                         <IMEInput
+                                                                                                            ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] = el}
                                                                                                             as="textarea"
                                                                                                             typingMode={q.typingMode}
                                                                                                             placeholder={`Option ${optKey}`}
@@ -1929,6 +2015,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                                                                         {/* Right Side Actions - Overlay on Text Area */}
                                                                                                         <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10">
+                                                                                                            <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}>
+                                                                                                                <Cloud className="w-3.5 h-3.5" />
+                                                                                                            </button>
                                                                                                             <Button
                                                                                                                 variant="ghost"
                                                                                                                 size="icon"
@@ -2171,6 +2260,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                 <div className="space-y-3">
                                                     <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                         <IMEInput
+                                                            ref={(el) => imeRefs.current[`std-q-${index}`] = el}
                                                             as="textarea"
                                                             typingMode={q.typingMode}
                                                             placeholder="Type your question here..."
@@ -2224,6 +2314,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             <Upload className="w-3.5 h-3.5" />
                                                                             Upload
                                                                         </label>
+                                                                        <Button variant="outline" size="icon" type="button" className="h-9 w-9 mr-1" onClick={() => openCaptureModal('question', index)} title="Capture Snip">
+                                                                            <Monitor className="w-4 h-4 text-blue-600" />
+                                                                        </Button>
+                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 shadow-sm outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}`)}>
+                                                                            <Cloud className="w-4 h-4" />
+                                                                        </button>
                                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`q-${index}`)}>
                                                                             <X className="w-4 h-4" />
                                                                         </Button>
@@ -2308,6 +2404,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             {/* Option Text Input */}
                                                                             <div className="relative">
                                                                                 <IMEInput
+                                                                                    ref={(el) => imeRefs.current[`std-q-${index}-opt-${optKey}`] = el}
                                                                                     as="textarea"
                                                                                     typingMode={q.typingMode}
                                                                                     placeholder={`Type option ${optKey}...`}
@@ -2321,6 +2418,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                                                 {/* Right Side Actions - Overlay on Text Area */}
                                                                                 <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10 pointer-events-auto">
+                                                                                    <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}-opt-${optKey}`)}>
+                                                                                        <Cloud className="w-3.5 h-3.5" />
+                                                                                    </button>
                                                                                     <Button
                                                                                         variant="ghost"
                                                                                         size="icon"
@@ -2380,6 +2480,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                     });
                                                                                                 }} />
                                                                                             </label>
+                                                                                            <button type="button" className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" onClick={() => openCaptureModal('option', index, optKey)} title="Capture Snip">
+                                                                                                <Monitor className="w-3 h-3" />
+                                                                                            </button>
                                                                                         </div>
                                                                                     )}
                                                                                 </div>
@@ -2443,6 +2546,55 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     <Button onClick={handleSave} disabled={loading} size="lg" className="min-w-[150px]">{loading ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2" />} Save Test</Button>
                 </div>
             </div>
+            <ScreenshotCaptureModal
+                isOpen={isCaptureModalOpen}
+                onClose={() => setIsCaptureModalOpen(false)}
+                onCapture={handleScreenshotCapture}
+            />
+
+            {/* Cloudinary Upload Modal */}
+            {isCloudUploadOpen && cloudUploadTarget && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-left">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-slate-800">Upload Image</h3>
+                                <Button variant="ghost" size="icon" onClick={() => setIsCloudUploadOpen(false)} className="h-8 w-8 rounded-full">
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </div>
+                            
+                            <div 
+                                ref={cloudUploadBoxRef}
+                                className="border-2 border-dashed border-slate-200 rounded-xl p-8 pb-6 text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors cursor-pointer group outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-indigo-50/30"
+                                tabIndex={0}
+                                autoFocus
+                                onPaste={(e) => handleCloudinaryUpload(e, cloudUploadTarget)}
+                                onClick={() => document.getElementById('cloud-modal-upload')?.click()}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        document.getElementById('cloud-modal-upload')?.click();
+                                    }
+                                }}
+                            >
+                                <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                    <Cloud className="w-7 h-7" />
+                                </div>
+                                <p className="text-slate-600 font-medium mb-1">Upload from Device</p>
+                                <p className="text-sm text-slate-400 mb-4 px-2">or press <kbd className="hidden sm:inline-block px-1.5 py-0.5 max-w-max mx-1 rounded border border-slate-200 bg-slate-50 text-[10px] font-mono text-slate-500 font-bold shadow-sm whitespace-nowrap">Ctrl+V</kbd> inside this box</p>
+                                <input 
+                                    id="cloud-modal-upload" 
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*" 
+                                    onChange={(e) => handleCloudinaryUpload(e, cloudUploadTarget)} 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

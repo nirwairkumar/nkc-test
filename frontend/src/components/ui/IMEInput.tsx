@@ -3,9 +3,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import LatexRenderer from '@/components/ui/LatexRenderer';
-import { ImageIcon, Loader2 } from 'lucide-react';
-import apiClient from '@/lib/apiClient';
-import { toast } from 'sonner';
 
 interface IMEInputProps {
     value: string;
@@ -18,7 +15,11 @@ interface IMEInputProps {
     [key: string]: any;
 }
 
-export const IMEInput: React.FC<IMEInputProps> = ({
+export interface IMEInputHandle {
+    insertAtCursor: (text: string) => void;
+}
+
+export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     value,
     onChange,
     typingMode,
@@ -26,13 +27,27 @@ export const IMEInput: React.FC<IMEInputProps> = ({
     className,
     enablePreview = true,
     ...props
-}) => {
+}, ref) => {
     const Component = as === 'textarea' || props.multiline ? Textarea : Input;
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [lastWordPos, setLastWordPos] = useState<{ start: number, end: number } | null>(null);
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [isUploading, setIsUploading] = useState(false);
+
+    React.useImperativeHandle(ref, () => ({
+        insertAtCursor: (text: string) => {
+            if (!inputRef.current) return;
+            const el = inputRef.current;
+            const start = el.selectionStart || 0;
+            const end = el.selectionEnd || 0;
+            const newValue = value.substring(0, start) + text + value.substring(end);
+            onChange(newValue);
+            setTimeout(() => {
+                const newPos = start + text.length;
+                el.setSelectionRange(newPos, newPos);
+                el.focus();
+            }, 0);
+        }
+    }));
 
     // Editing state for Auto-Preview
     // Default to false (Preview) if there is a value, ensuring "View first" experience.
@@ -184,79 +199,8 @@ export const IMEInput: React.FC<IMEInputProps> = ({
         setIsEditing(true);
     };
 
-    const handleUploadClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('bucket', 'tests');
-
-            const response = await apiClient.post('/storage/upload?bucket=tests', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            const url = response.data.url;
-            const markdown = `![Image](${url})`;
-
-            // Insert at current cursor position
-            const start = inputRef.current?.selectionStart || 0;
-            const end = inputRef.current?.selectionEnd || 0;
-            const newValue = value.substring(0, start) + markdown + value.substring(end);
-
-            onChange(newValue);
-            toast.success("Image uploaded successfully");
-
-            // Focus back and move cursor after the inserted link
-            setTimeout(() => {
-                if (inputRef.current) {
-                    inputRef.current.focus();
-                    const newPos = start + markdown.length;
-                    inputRef.current.setSelectionRange(newPos, newPos);
-                }
-            }, 0);
-        } catch (error: any) {
-            console.error("Upload failed:", error);
-            toast.error("Failed to upload image");
-        } finally {
-            setIsUploading(false);
-            if (e.target) e.target.value = '';
-        }
-    };
-
     return (
-        <div className="w-full group/ime-container relative">
-            {/* Image Upload Trigger */}
-            {as === 'textarea' && !showPreview && (
-                <div className="absolute top-2 right-2 z-30 opacity-0 group-hover/ime-container:opacity-100 transition-opacity">
-                    <button
-                        type="button"
-                        onClick={handleUploadClick}
-                        disabled={isUploading}
-                        className="p-1.5 rounded-md bg-white/80 backdrop-blur-sm border shadow-sm hover:bg-white hover:text-blue-600 transition-all disabled:opacity-50"
-                        title="Upload Image"
-                    >
-                        {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
-                    </button>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                    />
-                </div>
-            )}
+        <div className="w-full group/ime-container">
             {showPreview ? (
                 <div
                     onClick={handlePreviewClick}
@@ -297,4 +241,6 @@ export const IMEInput: React.FC<IMEInputProps> = ({
             )}
         </div>
     );
-};
+});
+
+IMEInput.displayName = 'IMEInput';
