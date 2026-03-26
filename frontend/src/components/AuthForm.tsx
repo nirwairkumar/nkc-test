@@ -208,6 +208,11 @@ export default function AuthForm() {
     const handleGoogleLogin = async () => {
         setIsLoading(true);
         try {
+            // Save the intended redirect path so AuthCallback can redirect back after login
+            const stateFrom = location.state?.from;
+            const redirectPath = (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
+            localStorage.setItem('auth_redirect_intent', redirectPath);
+
             const { error } = await signInWithGoogle();
             if (error) throw error;
             // Redirect is handled by backend or OAuth provider

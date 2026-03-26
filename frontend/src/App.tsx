@@ -26,6 +26,8 @@ const SolutionEditorPage = lazy(() => import("./pages/SolutionEditorPage"));
 const SolutionsViewPage = lazy(() => import("./pages/SolutionsViewPage"));
 const FeedbackViewPage = lazy(() => import("./pages/FeedbackViewPage"));
 const AuthForm = lazy(() => import("@/components/AuthForm"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const AuthError = lazy(() => import("./pages/AuthError"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 const AdminMigration = lazy(() => import("./pages/AdminMigration"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -105,6 +107,8 @@ const App = () => (
                     } />
 
                     <Route path="/login" element={<AuthForm />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route path="/auth-error" element={<AuthError />} />
                     <Route path="/onboarding" element={<OnboardingPage />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/update-password" element={<UpdatePassword />} />

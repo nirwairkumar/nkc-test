@@ -122,7 +122,7 @@ async def get_me(
 @router.post("/password-reset")
 async def password_reset(payload: PasswordResetRequest, request: Request):
     try:
-        host = request.headers.get("origin") or "https://testoza.com"
+        host = request.headers.get("origin") or "https://www.testoza.com"
         response = supabase.auth.reset_password_for_email(
             payload.email,
             {"redirect_to": f"{host}/update-password"}
@@ -188,7 +188,7 @@ async def get_google_login_url(request: Request):
         response = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
-                "redirect_to": f"{frontend_url}/"
+                "redirect_to": f"{frontend_url}/auth/callback"
             }
         })
         
