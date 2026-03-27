@@ -4,10 +4,17 @@ from app.utils.rate_limiter import check_analytics_rate_limit
 from supabase import Client
 from .models import PageViewEvent
 from user_agents import parse
+import httpx
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Single shared httpx client — reused across all requests, prevents TCP connection leaks
+_geo_client = httpx.AsyncClient(
+    timeout=3.0,
+    limits=httpx.Limits(max_connections=5, max_keepalive_connections=2),
+)
 
 async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Client):
     try:
@@ -28,14 +35,12 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
         country = "Unknown"
         city = "Unknown"
         try:
-            import httpx
-            async with httpx.AsyncClient(timeout=3.0) as geo_client:
-                geo_resp = await geo_client.get(f"http://ip-api.com/json/{client_ip}?fields=country,city,status")
-                if geo_resp.status_code == 200:
-                    geo_data = geo_resp.json()
-                    if geo_data.get("status") == "success":
-                        country = geo_data.get("country", "Unknown")
-                        city = geo_data.get("city", "Unknown")
+            geo_resp = await _geo_client.get(f"http://ip-api.com/json/{client_ip}?fields=country,city,status")
+            if geo_resp.status_code == 200:
+                geo_data = geo_resp.json()
+                if geo_data.get("status") == "success":
+                    country = geo_data.get("country", "Unknown")
+                    city = geo_data.get("city", "Unknown")
         except Exception as geo_err:
             logger.warning(f"Geo lookup failed for {client_ip}: {geo_err}")
         
@@ -56,8 +61,16 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
             visitor_id = new_visitor.data[0]["id"]
         else:
             visitor_id = visitor_resp.data[0]["id"]
-            # Update last seen and increment total visits
-            db.rpc("increment_visitor_count", {"v_id": visitor_id}).execute()
+            # Increment total_visits directly (replaces broken RPC)
+            try:
+                v_data = db.table("visitors").select("total_visits").eq("id", visitor_id).execute()
+                current_visits = v_data.data[0].get("total_visits", 0) if v_data.data else 0
+                db.table("visitors").update({
+                    "total_visits": current_visits + 1,
+                    "last_seen_at": "now()"
+                }).eq("id", visitor_id).execute()
+            except Exception as inc_err:
+                logger.warning(f"Visitor count update failed: {inc_err}")
             
         # 4. UPSERT Session
         session_resp = db.table("sessions").select("id").eq("session_token", event.session_token).execute()
@@ -77,11 +90,16 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
         else:
             session_id = session_resp.data[0]["id"]
             # Update session end time on every hit
-            db.table("sessions").update({
-                "ended_at": "now()",
-                "is_bounce": False # Second hit means not a bounce
-            }).eq("id", session_id).execute()
-            db.rpc("increment_session_pages", {"s_id": session_id}).execute()
+            try:
+                s_data = db.table("sessions").select("page_count").eq("id", session_id).execute()
+                current_pages = s_data.data[0].get("page_count", 1) if s_data.data else 1
+                db.table("sessions").update({
+                    "ended_at": "now()",
+                    "is_bounce": False,
+                    "page_count": current_pages + 1
+                }).eq("id", session_id).execute()
+            except Exception as inc_err:
+                logger.warning(f"Session page count update failed: {inc_err}")
 
         # 5. INSERT Page View
         db.table("page_views").insert({
@@ -114,3 +132,4 @@ async def track_event(
     # Offload the DB writes to a background task
     background_tasks.add_task(process_analytics_event, event, client_ip, db)
     return
+

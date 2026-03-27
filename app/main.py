@@ -51,10 +51,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
-from app.routers import auth, storage, analytics
+from app.routers import auth, storage
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(storage.router, prefix="/api/storage", tags=["Storage"])
-from app.routers import analytics
+
 from app.routers import creators
 
 app.include_router(creators.router, prefix="/api/creators", tags=["Creators"])
@@ -78,8 +78,6 @@ from app.routers import ai
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 
 from app.routers import classes
-
-from app.routers import classes
 app.include_router(classes.router, prefix="/api/classes", tags=["Classes"])
 
 from app.routers import materials
@@ -99,6 +97,7 @@ app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 
 from app.routers import analytics
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+
 
 from app.routers import posts
 app.include_router(posts.router, prefix="/api/posts", tags=["Posts"])

@@ -7,15 +7,11 @@ python-dotenv
 python-multipart
 email-validator
 httpx>=0.24.0
-python-jose[cryptography]
-passlib[bcrypt]
 google-generativeai
-pytest
 google-genai>=1.0.0
 youtube-transcript-api
 yt-dlp
 PyMuPDF
-pdfplumber
 Pillow
 numpy
 opencv-python-headless
