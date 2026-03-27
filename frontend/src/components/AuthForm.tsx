@@ -217,9 +217,13 @@ export default function AuthForm() {
         setIsLoading(true);
         try {
             // Save the intended redirect path so AuthCallback can redirect back after login
-            const stateFrom = location.state?.from;
-            const redirectPath = (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
-            localStorage.setItem('auth_redirect_intent', redirectPath);
+            // Only set if not already set (e.g. by the useEffect on mount)
+            const existingIntent = localStorage.getItem('auth_redirect_intent');
+            if (!existingIntent) {
+                const stateFrom = location.state?.from;
+                const redirectPath = (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
+                localStorage.setItem('auth_redirect_intent', redirectPath);
+            }
 
             const { error } = await signInWithGoogle();
             if (error) throw error;
