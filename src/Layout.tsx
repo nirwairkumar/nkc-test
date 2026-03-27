@@ -15,15 +15,11 @@ export default function Layout() {
         analyticsTracker.trackPageView(location.pathname, document.title);
     }, [location.pathname]);
 
-    // Check for redirect intent after login
+    // Check for redirect intent after login is handled specifically 
+    // in AuthForm.tsx (for email) and AuthCallback.tsx (for Google OAuth)
+    // to avoid race conditions and double redirects.
     React.useEffect(() => {
         if (user) {
-            const redirectPath = localStorage.getItem('auth_redirect_intent');
-            if (redirectPath) {
-                localStorage.removeItem('auth_redirect_intent');
-                navigate(redirectPath);
-            }
-
             // Force onboarding if designation is missing in both user_metadata and profile
             const hasDesignation = user.user_metadata?.designation || profile?.designation;
 
