@@ -32,10 +32,18 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [lastWordPos, setLastWordPos] = useState<{ start: number, end: number } | null>(null);
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+    const lastCursorPosRef = useRef<{ start: number, end: number } | null>(null);
 
     React.useImperativeHandle(ref, () => ({
         insertAtCursor: (text: string) => {
-            if (!inputRef.current) return;
+            if (!inputRef.current) {
+                const start = lastCursorPosRef.current?.start ?? value.length;
+                const end = lastCursorPosRef.current?.end ?? value.length;
+                const newValue = value.substring(0, start) + text + value.substring(end);
+                onChange(newValue);
+                setIsEditing(true);
+                return;
+            }
             const el = inputRef.current;
             const start = el.selectionStart || 0;
             const end = el.selectionEnd || 0;
@@ -179,6 +187,12 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     };
 
     const handleBlur = (e: React.FocusEvent) => {
+        if (inputRef.current) {
+            lastCursorPosRef.current = {
+                start: inputRef.current.selectionStart || 0,
+                end: inputRef.current.selectionEnd || 0
+            };
+        }
         // Delay blur processing slightly to allow clicks on suggestion buttons to fire first
         // But for switching to preview, we just do it.
         // If clicking a suggestion, that's inside the component? 
