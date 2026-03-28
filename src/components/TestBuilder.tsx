@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -138,6 +138,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             question_type: 'single'
         }
     ]);
+    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
     // Merged Section Marks State
     const [mergedSections, setMergedSections] = useState<{ label: string; section_ids: string[] }[]>([]);
@@ -1021,6 +1022,26 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
     };
 
+    const handleDragStartSection = (e: React.DragEvent, sectionId: string) => {
+        e.dataTransfer.setData('sectionId', sectionId);
+    };
+
+    const handleDropSection = (e: React.DragEvent, targetSectionId: string) => {
+        e.preventDefault();
+        const draggedSectionId = e.dataTransfer.getData('sectionId');
+        if (!draggedSectionId || draggedSectionId === targetSectionId) return;
+
+        const draggedIdx = sections.findIndex(s => s.id === draggedSectionId);
+        const targetIdx = sections.findIndex(s => s.id === targetSectionId);
+
+        if (draggedIdx === -1 || targetIdx === -1) return;
+
+        const newSections = [...sections];
+        const [draggedSection] = newSections.splice(draggedIdx, 1);
+        newSections.splice(targetIdx, 0, draggedSection);
+        setSections(newSections);
+    };
+
     // Section Helpers
     const toggleSectionMode = (checked: boolean) => {
         setEnableSectionMode(checked);
@@ -1688,442 +1709,485 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     const style = SECTION_STYLES[sIdx % SECTION_STYLES.length];
 
                                     return (
-                                        <Card key={section.id} className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2`}>
+                                        <Card 
+                                            key={section.id} 
+                                            draggable 
+                                            onDragStart={(e) => handleDragStartSection(e, section.id)}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            onDrop={(e) => handleDropSection(e, section.id)}
+                                            className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2 transition-all duration-300`}
+                                        >
                                             <div className={`${style.header} px-4 py-3 border-b flex flex-wrap gap-4 items-end transition-colors`}>
-                                                <div className="flex-1 space-y-1">
-                                                    <Label className="text-xs font-bold text-slate-500 uppercase">Section Name</Label>
-                                                    <Input
-                                                        value={section.name}
-                                                        onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
-                                                        className="font-bold text-lg bg-white"
-                                                        placeholder="e.g. Physics"
-                                                    />
+                                                <div className="flex-1 space-y-1 flex items-center gap-3">
+                                                    <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-black/5 rounded transition-colors mr-1">
+                                                        <Grip className="w-4 h-4 text-slate-400" />
+                                                    </div>
+                                                    <div className="flex-1 space-y-1">
+                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Section Name</Label>
+                                                        <Input
+                                                            value={section.name}
+                                                            onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
+                                                            className="font-bold text-lg bg-white"
+                                                            placeholder="e.g. Physics"
+                                                        />
+                                                    </div>
                                                 </div>
 
+                                                <div className="flex items-center gap-2 self-end mb-0.5">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-slate-400 hover:text-blue-600 transition-colors"
+                                                        onClick={() => {
+                                                            const newCollapsed = new Set(collapsedSections);
+                                                            if (newCollapsed.has(section.id)) {
+                                                                newCollapsed.delete(section.id);
+                                                            } else {
+                                                                newCollapsed.add(section.id);
+                                                            }
+                                                            setCollapsedSections(newCollapsed);
+                                                        }}
+                                                        title={collapsedSections.has(section.id) ? "Expand Section" : "Collapse Section"}
+                                                    >
+                                                        {collapsedSections.has(section.id) ? (
+                                                            <ChevronDown className="w-5 h-5" />
+                                                        ) : (
+                                                            <ChevronUp className="w-5 h-5" />
+                                                        )}
+                                                    </Button>
 
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="mb-0.5 text-slate-400 hover:text-slate-600">
-                                                            <MoreVertical className="w-5 h-5" />
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-80 p-4" align="end">
-                                                        <div className="space-y-4">
-                                                            <div className="flex items-center justify-between">
-                                                                <h4 className="font-bold text-sm">Attempt Control</h4>
-                                                                <Switch
-                                                                    checked={section.attempt_control?.enabled || false}
-                                                                    onCheckedChange={(val) => updateSection(sIdx, 'attempt_control', { ...(section.attempt_control || {}), enabled: val })}
-                                                                />
-                                                            </div>
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="mb-0.5 text-slate-400 hover:text-slate-600">
+                                                                <MoreVertical className="w-5 h-5" />
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-80 p-4" align="end">
+                                                            <div className="space-y-4">
+                                                                <div className="flex items-center justify-between">
+                                                                    <h4 className="font-bold text-sm">Attempt Control</h4>
+                                                                    <Switch 
+                                                                        checked={!!section.attempt_control}
+                                                                        onCheckedChange={(checked) => {
+                                                                            if (checked) {
+                                                                                updateSection(sIdx, 'attempt_control', { max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
+                                                                            } else {
+                                                                                updateSection(sIdx, 'attempt_control', undefined);
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                </div>
 
-                                                            {section.attempt_control?.enabled && (
-                                                                <div className="space-y-4 pt-2 border-t">
-                                                                    <div className="space-y-2">
-                                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
-                                                                        <Input
-                                                                            type="number"
-                                                                            value={section.attempt_control?.max_attempts || 0}
-                                                                            onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
-                                                                            placeholder="e.g. 5"
-                                                                        />
-                                                                    </div>
-
-                                                                    <div className="space-y-2">
-                                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
-                                                                        <RadioGroup
-                                                                            value={section.attempt_control?.mode || 'hard'}
-                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
-                                                                            className="flex gap-4"
-                                                                        >
-                                                                            <div className="flex items-center space-x-2">
-                                                                                <RadioGroupItem value="hard" id={`hard-${sIdx}`} />
-                                                                                <Label htmlFor={`hard-${sIdx}`} className="text-sm">Hard</Label>
-                                                                            </div>
-                                                                            <div className="flex items-center space-x-2">
-                                                                                <RadioGroupItem value="soft" id={`soft-${sIdx}`} />
-                                                                                <Label htmlFor={`soft-${sIdx}`} className="text-sm">Soft</Label>
-                                                                            </div>
-                                                                        </RadioGroup>
-                                                                    </div>
-
-                                                                    {section.attempt_control?.mode === 'soft' && (
+                                                                {section.attempt_control && (
+                                                                    <>
                                                                         <div className="space-y-2">
-                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
+                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
+                                                                            <Input
+                                                                                type="number"
+                                                                                value={section.attempt_control?.max_attempts || 0}
+                                                                                onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
+                                                                                placeholder="e.g. 5"
+                                                                            />
+                                                                        </div>
+
+                                                                        <div className="space-y-2">
+                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
                                                                             <RadioGroup
-                                                                                value={section.attempt_control?.soft_type || 'first_n'}
-                                                                                onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
-                                                                                className="flex flex-col gap-2"
+                                                                                value={section.attempt_control?.mode || 'hard'}
+                                                                                onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
+                                                                                className="flex gap-4"
                                                                             >
                                                                                 <div className="flex items-center space-x-2">
-                                                                                    <RadioGroupItem value="first_n" id={`first_n-${sIdx}`} />
-                                                                                    <Label htmlFor={`first_n-${sIdx}`} className="text-sm">First N Questions</Label>
+                                                                                    <RadioGroupItem value="hard" id={`hard-${sIdx}`} />
+                                                                                    <Label htmlFor={`hard-${sIdx}`} className="text-sm">Hard</Label>
                                                                                 </div>
                                                                                 <div className="flex items-center space-x-2">
-                                                                                    <RadioGroupItem value="best_n" id={`best_n-${sIdx}`} />
-                                                                                    <Label htmlFor={`best_n-${sIdx}`} className="text-sm">Best N Questions</Label>
+                                                                                    <RadioGroupItem value="soft" id={`soft-${sIdx}`} />
+                                                                                    <Label htmlFor={`soft-${sIdx}`} className="text-sm">Soft</Label>
                                                                                 </div>
                                                                             </RadioGroup>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </PopoverContent>
-                                                </Popover>
 
-                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="mb-0.5 text-slate-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></Button>
+                                                                        {section.attempt_control?.mode === 'soft' && (
+                                                                            <div className="space-y-2">
+                                                                                <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
+                                                                                <RadioGroup
+                                                                                    value={section.attempt_control?.soft_type || 'first_n'}
+                                                                                    onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
+                                                                                    className="flex flex-col gap-2"
+                                                                                >
+                                                                                    <div className="flex items-center space-x-2">
+                                                                                        <RadioGroupItem value="first_n" id={`first_n-${sIdx}`} />
+                                                                                        <Label htmlFor={`first_n-${sIdx}`} className="text-sm">First N Questions</Label>
+                                                                                    </div>
+                                                                                    <div className="flex items-center space-x-2">
+                                                                                        <RadioGroupItem value="best_n" id={`best_n-${sIdx}`} />
+                                                                                        <Label htmlFor={`best_n-${sIdx}`} className="text-sm">Best N Questions</Label>
+                                                                                    </div>
+                                                                                </RadioGroup>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
+
+                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="mb-0.5 text-slate-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></Button>
+                                                </div>
                                             </div>
 
-                                            <CardContent className={`p-4 ${style.bg} transition-colors`}>
-                                                <div className="space-y-4">
-                                                    {section.questions.map((q, qIdx) => {
-                                                        // VISUAL GROUPING LOGIC
-                                                        const currentGroupId = q.groupId;
-                                                        const prevGroupId = qIdx > 0 ? section.questions[qIdx - 1].groupId : undefined;
-                                                        const nextGroupId = qIdx < section.questions.length - 1 ? section.questions[qIdx + 1].groupId : undefined;
+                                            {!collapsedSections.has(section.id) && (
+                                                <CardContent className={`p-4 ${style.bg} transition-colors`}>
+                                                    <div className="space-y-4">
+                                                        {section.questions.map((q, qIdx) => {
+                                                            // VISUAL GROUPING LOGIC
+                                                            const currentGroupId = q.groupId;
+                                                            const prevGroupId = qIdx > 0 ? section.questions[qIdx - 1].groupId : undefined;
+                                                            const nextGroupId = qIdx < section.questions.length - 1 ? section.questions[qIdx + 1].groupId : undefined;
 
-                                                        const isStartOfGroup = !!currentGroupId && currentGroupId !== prevGroupId;
-                                                        const isEndOfGroup = !!currentGroupId && currentGroupId !== nextGroupId;
-                                                        const isInGroup = !!currentGroupId;
+                                                            const isStartOfGroup = !!currentGroupId && currentGroupId !== prevGroupId;
+                                                            const isEndOfGroup = !!currentGroupId && currentGroupId !== nextGroupId;
+                                                            const isInGroup = !!currentGroupId;
 
-                                                        return (
-                                                            <div key={q.id} className={isInGroup ? "mb-0" : "mb-6"}>
-                                                                {/* Passage Header - Renders only at the start of a group inside section */}
-                                                                {isStartOfGroup && (
-                                                                    <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
-                                                                        <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
-                                                                            <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
-                                                                                <FileText className="w-4 h-4" /> Comprehension Passage
-                                                                            </h3>
-                                                                        </div>
-                                                                        <div className="p-6">
-                                                                            <RichTextEditor
-                                                                                value={q.passageContent || ''}
-                                                                                onChange={(val) => updatePassageContentInSection(sIdx, q.groupId!, val)}
-                                                                                placeholder="Write or paste the passage text here..."
-                                                                                className="min-h-[150px] bg-white border-indigo-100 shadow-sm rounded-lg"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                <Card className={`
-                                                                    group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
-                                                                    ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
-                                                                    ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
-                                                                `}>
-
-                                                                    {/* Header Bar */}
-                                                                    <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-wrap gap-4 items-center justify-between">
-                                                                        <div className="flex items-center gap-3">
-                                                                            <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
-                                                                                <GripVertical className="h-4 w-4" />
+                                                            return (
+                                                                <div key={q.id} className={isInGroup ? "mb-0" : "mb-6"}>
+                                                                    {/* Passage Header - Renders only at the start of a group inside section */}
+                                                                    {isStartOfGroup && (
+                                                                        <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
+                                                                            <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
+                                                                                <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
+                                                                                    <FileText className="w-4 h-4" /> Comprehension Passage
+                                                                                </h3>
                                                                             </div>
-                                                                            <span className="font-bold text-slate-400 text-sm">Q{qIdx + 1}</span>
-
-                                                                            <div onClick={(e) => e.stopPropagation()}>
-                                                                                <Select value={q.type || 'single'} onValueChange={(val: any) => updateQuestionTypeInSection(sIdx, qIdx, val)}>
-                                                                                    <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
-                                                                                        <SelectValue placeholder="Type" />
-                                                                                    </SelectTrigger>
-                                                                                    <SelectContent>
-                                                                                        <SelectItem value="single">Single Choice</SelectItem>
-                                                                                        <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                                                                        <SelectItem value="numerical">Numerical</SelectItem>
-                                                                                        {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
-                                                                                    </SelectContent>
-                                                                                </Select>
+                                                                            <div className="p-6">
+                                                                                <RichTextEditor
+                                                                                    value={q.passageContent || ''}
+                                                                                    onChange={(val) => updatePassageContentInSection(sIdx, q.groupId!, val)}
+                                                                                    placeholder="Write or paste the passage text here..."
+                                                                                    className="min-h-[150px] bg-white border-indigo-100 shadow-sm rounded-lg"
+                                                                                />
                                                                             </div>
-
-                                                                            {isInGroup && (
-                                                                                <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase">
-                                                                                    Passage Q
-                                                                                </Badge>
-                                                                            )}
                                                                         </div>
+                                                                    )}
 
-                                                                        <div className="flex items-center gap-3">
-                                                                            <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
-                                                                                <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
-                                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
-                                                                                    <Input
-                                                                                        type="text"
-                                                                                        value={q.marks || ''}
-                                                                                        onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'marks', e.target.value)}
-                                                                                        className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
-                                                                                        placeholder="1"
-                                                                                    />
+                                                                    <Card className={`
+                                                                        group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
+                                                                        ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
+                                                                        ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
+                                                                    `}>
+
+                                                                        {/* Header Bar */}
+                                                                        <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-wrap gap-4 items-center justify-between">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                                                                    <GripVertical className="h-4 w-4" />
                                                                                 </div>
-                                                                                <div className="flex items-center gap-1.5 pl-1">
-                                                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
-                                                                                    <Input
-                                                                                        type="text"
-                                                                                        value={q.negativeMarks || ''}
-                                                                                        onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'negativeMarks', e.target.value)}
-                                                                                        className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
-                                                                                        placeholder="0"
-                                                                                    />
+                                                                                <span className="font-bold text-slate-400 text-sm">Q{qIdx + 1}</span>
+
+                                                                                <div onClick={(e) => e.stopPropagation()}>
+                                                                                    <Select value={q.type || 'single'} onValueChange={(val: any) => updateQuestionTypeInSection(sIdx, qIdx, val)}>
+                                                                                        <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
+                                                                                            <SelectValue placeholder="Type" />
+                                                                                        </SelectTrigger>
+                                                                                        <SelectContent>
+                                                                                            <SelectItem value="single">Single Choice</SelectItem>
+                                                                                            <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                                            <SelectItem value="numerical">Numerical</SelectItem>
+                                                                                            {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
+                                                                                        </SelectContent>
+                                                                                    </Select>
                                                                                 </div>
+
+                                                                                {isInGroup && (
+                                                                                    <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase">
+                                                                                        Passage Q
+                                                                                    </Badge>
+                                                                                )}
                                                                             </div>
 
-                                                                            <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
-                                                                                <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
-                                                                                <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => updateQuestionInSection(sIdx, qIdx, 'typingMode', val)}>
-                                                                                    <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-semibold text-slate-600 w-auto gap-1">
-                                                                                        <SelectValue placeholder="Lang" />
-                                                                                    </SelectTrigger>
-                                                                                    <SelectContent>
-                                                                                        <SelectItem value="en">English</SelectItem>
-                                                                                        <SelectItem value="hi">Hindi</SelectItem>
-                                                                                    </SelectContent>
-                                                                                </Select>
-                                                                            </div>
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
+                                                                                    <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
+                                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            value={q.marks || ''}
+                                                                                            onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'marks', e.target.value)}
+                                                                                            className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-slate-700 text-center"
+                                                                                            placeholder="1"
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-1.5 pl-1">
+                                                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
+                                                                                        <Input
+                                                                                            type="text"
+                                                                                            value={q.negativeMarks || ''}
+                                                                                            onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'negativeMarks', e.target.value)}
+                                                                                            className="h-4 w-8 p-0 border-none bg-transparent shadow-none focus-visible:ring-0 text-xs font-bold text-red-600 text-center"
+                                                                                            placeholder="0"
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
 
-                                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}>
-                                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                                            </Button>
+                                                                                <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
+                                                                                    <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
+                                                                                    <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => updateQuestionInSection(sIdx, qIdx, 'typingMode', val)}>
+                                                                                        <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-semibold text-slate-600 w-auto gap-1">
+                                                                                            <SelectValue placeholder="Lang" />
+                                                                                        </SelectTrigger>
+                                                                                        <SelectContent>
+                                                                                            <SelectItem value="en">English</SelectItem>
+                                                                                            <SelectItem value="hi">Hindi</SelectItem>
+                                                                                        </SelectContent>
+                                                                                    </Select>
+                                                                                </div>
+
+                                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}>
+                                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                                </Button>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
 
-                                                                    <div className="p-6 space-y-6">
-                                                                        <div className="space-y-3">
-                                                                            <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
-                                                                                <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
-                                                                                <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
-                                                                                    <div className="group/info relative cursor-help">
-                                                                                        <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
-                                                                                        <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                                                                                            Markdown and MathJax/KaTeX support
-                                                                                            <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                                        <div className="p-6 space-y-6">
+                                                                            <div className="space-y-3">
+                                                                                <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
+                                                                                    <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
+                                                                                    <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
+                                                                                        <div className="group/info relative cursor-help">
+                                                                                            <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                                                                                            <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                                                                Markdown and MathJax/KaTeX support
+                                                                                                <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                                                            </div>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
+
+                                                                                {/* Image Section */}
+                                                                                <div className="space-y-2">
+                                                                                    {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
+                                                                                        <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                                            {q.image ? (
+                                                                                                <div className="relative group/img w-fit mt-2">
+                                                                                                    <img src={q.image} alt="Question" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                                                    <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-4 w-4" /></Button>
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <div className="flex items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                                                    <div className="flex-1 flex gap-2 items-center px-2">
+                                                                                                        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                                            <ImageIcon className="w-4 h-4 text-slate-500" />
+                                                                                                        </div>
+                                                                                                        <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm" />
+                                                                                                    </div>
+                                                                                                    <div className="h-6 w-px bg-slate-300 mx-2"></div>
+                                                                                                    <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
+                                                                                                        <Upload className="w-3.5 h-3.5 mr-1" />Upload
+                                                                                                    </label>
+                                                                                                    <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                        <Cloud className="w-4 h-4" />
+                                                                                                    </button>
+                                                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                        <X className="w-4 h-4" />
+                                                                                                    </Button>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <button
+                                                                                            onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}
+                                                                                            className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
+                                                                                        >
+                                                                                            <ImageIcon className="w-3.5 h-3.5" />
+                                                                                            Add diagram / image (optional)
+                                                                                        </button>
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
 
-                                                                            {/* Image Section */}
-                                                                            <div className="space-y-2">
-                                                                                {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
-                                                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                                                                                        {q.image ? (
-                                                                                            <div className="relative group/img w-fit mt-2">
-                                                                                                <img src={q.image} alt="Question" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
-                                                                                                <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-4 w-4" /></Button>
+                                                                            <div className="h-px bg-slate-100 w-full my-2"></div>
+
+                                                                            {/* Answers */}
+                                                                            <div>
+                                                                                <div className="flex items-center justify-between mb-3">
+                                                                                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Options</Label>
+                                                                                    {q.type === 'multiple' && <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Select all correct options</span>}
+                                                                                </div>
+
+                                                                                {q.type === 'numerical' ? (
+                                                                                    <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
+
+                                                                                        <div className="flex gap-4 items-center mt-2">
+                                                                                            <div className="text-left">
+                                                                                                <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
+                                                                                                <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
                                                                                             </div>
-                                                                                        ) : (
-                                                                                            <div className="flex items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
-                                                                                                <div className="flex-1 flex gap-2 items-center px-2">
-                                                                                                    <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                                                                                        <ImageIcon className="w-4 h-4 text-slate-500" />
-                                                                                                    </div>
-                                                                                                    <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm" />
-                                                                                                </div>
-                                                                                                <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                                                                                                <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
-                                                                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
-                                                                                                    <Upload className="w-3.5 h-3.5 mr-1" />Upload
-                                                                                                </label>
-                                                                                                <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}`)}>
-                                                                                                    <Cloud className="w-4 h-4" />
-                                                                                                </button>
-                                                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
-                                                                                                    <X className="w-4 h-4" />
-                                                                                                </Button>
+                                                                                            <div className="h-px w-8 bg-slate-300 mt-5"></div>
+                                                                                            <div className="text-left">
+                                                                                                <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
+                                                                                                <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
                                                                                             </div>
-                                                                                        )}
+                                                                                        </div>
                                                                                     </div>
                                                                                 ) : (
-                                                                                    <button
-                                                                                        onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}
-                                                                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
-                                                                                    >
-                                                                                        <ImageIcon className="w-3.5 h-3.5" />
-                                                                                        Add diagram / image (optional)
-                                                                                    </button>
+                                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                                        {Object.keys(q.options).sort().map(optKey => {
+                                                                                            const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                                                            const handleSelect = () => {
+                                                                                                if (q.type === 'multiple') {
+                                                                                                    const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                                                    const idx = current.indexOf(optKey);
+                                                                                                    if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                                                    updateQuestionInSection(sIdx, qIdx, 'correctAnswer', current.sort());
+                                                                                                } else {
+                                                                                                    updateQuestionInSection(sIdx, qIdx, 'correctAnswer', optKey);
+                                                                                                }
+                                                                                            };
+                                                                                            return (
+                                                                                                <div key={optKey} className={`
+                                                                                                    group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
+                                                                                                    ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
+                                                                                                    focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
+                                                                                                `}>
+                                                                                                    <button onClick={handleSelect} className={`
+                                                                                                        mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
+                                                                                                        ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-white border border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600'}
+                                                                                                    `}>
+                                                                                                        {isSelected ? (
+                                                                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                                                                                            </svg>
+                                                                                                        ) : (
+                                                                                                            optKey
+                                                                                                        )}
+                                                                                                    </button>
+
+                                                                                                    <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
+                                                                                                        <div className="relative">
+                                                                                                            <IMEInput
+                                                                                                                ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] = el}
+                                                                                                                as="textarea"
+                                                                                                                typingMode={q.typingMode}
+                                                                                                                placeholder={`Option ${optKey}`}
+                                                                                                                value={q.options[optKey]}
+                                                                                                                onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }}
+                                                                                                                className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-16 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                                            />
+
+                                                                                                            {/* Right Side Actions - Overlay on Text Area */}
+                                                                                                            <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10">
+                                                                                                                <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}>
+                                                                                                                    <Cloud className="w-3.5 h-3.5" />
+                                                                                                                </button>
+                                                                                                                <Button
+                                                                                                                    variant="ghost"
+                                                                                                                    size="icon"
+                                                                                                                    className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
+                                                                                                                    onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}
+                                                                                                                    title="Add Image"
+                                                                                                                >
+                                                                                                                    <ImageIcon className="w-3.5 h-3.5" />
+                                                                                                                </Button>
+                                                                                                                <Button
+                                                                                                                    variant="ghost"
+                                                                                                                    size="icon"
+                                                                                                                    className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
+                                                                                                                    onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
+                                                                                                                    title="Remove Option"
+                                                                                                                >
+                                                                                                                    <X className="w-3.5 h-3.5" />
+                                                                                                                </Button>
+                                                                                                            </div>
+                                                                                                        </div>
+
+                                                                                                        {/* Option Image Section (Appears Below) */}
+                                                                                                        {(q.optionImages?.[optKey] || expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`]) && (
+                                                                                                            <div className="relative group/optimg w-fit">
+                                                                                                                {q.optionImages?.[optKey] ? (
+                                                                                                                    <div className="relative group/optimg w-fit">
+                                                                                                                        <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
+                                                                                                                        <button
+                                                                                                                            onClick={() => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (q.optionImages) delete q.optionImages[optKey]; setSections(newSections); }}
+                                                                                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
+                                                                                                                        >
+                                                                                                                            <X className="w-3 h-3" />
+                                                                                                                        </button>
+                                                                                                                    </div>
+                                                                                                                ) : (
+                                                                                                                    <div className="flex items-center gap-1">
+                                                                                                                        <Input
+                                                                                                                            placeholder="Image URL"
+                                                                                                                            className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
+                                                                                                                            onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }}
+                                                                                                                        />
+                                                                                                                        <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
+                                                                                                                            {uploadingImages[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? (
+                                                                                                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                                                                                            ) : (
+                                                                                                                                <Upload className="w-3 h-3" />
+                                                                                                                            )}
+                                                                                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                                                                                                const uploadKey = `sec-${sIdx}-q-${qIdx}-opt-${optKey}`;
+                                                                                                                                setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
+                                                                                                                                handleFileUpload(e, (base64) => {
+                                                                                                                                    const newSections = [...sections];
+                                                                                                                                    const q = newSections[sIdx].questions[qIdx];
+                                                                                                                                    if (!q.optionImages) q.optionImages = {};
+                                                                                                                                    q.optionImages[optKey] = base64;
+                                                                                                                                    setSections(newSections);
+                                                                                                                                    setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
+                                                                                                                                });
+                                                                                                                            }} />
+                                                                                                                        </label>
+                                                                                                                    </div>
+                                                                                                                )}
+                                                                                                            </div>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            );
+                                                                                        })}
+                                                                                        {/* Add Option Button */}
+                                                                                        <div className="flex justify-center pt-2">
+                                                                                            <button
+                                                                                                onClick={() => handleAddOptionToSection(sIdx, qIdx)}
+                                                                                                className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all text-xs font-semibold uppercase tracking-wide"
+                                                                                            >
+                                                                                                <Plus className="w-4 h-4" /> Add Option
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
                                                                                 )}
                                                                             </div>
                                                                         </div>
-
-                                                                        <div className="h-px bg-slate-100 w-full my-2"></div>
-
-                                                                        {/* Answers */}
-                                                                        <div>
-                                                                            <div className="flex items-center justify-between mb-3">
-                                                                                <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Options</Label>
-                                                                                {q.type === 'multiple' && <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Select all correct options</span>}
-                                                                            </div>
-
-                                                                            {q.type === 'numerical' ? (
-                                                                                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
-
-                                                                                    <div className="flex gap-4 items-center mt-2">
-                                                                                        <div className="text-left">
-                                                                                            <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
-                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
-                                                                                        </div>
-                                                                                        <div className="h-px w-8 bg-slate-300 mt-5"></div>
-                                                                                        <div className="text-left">
-                                                                                            <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
-                                                                                            <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="grid grid-cols-1 gap-3">
-                                                                                    {Object.keys(q.options).sort().map(optKey => {
-                                                                                        const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
-                                                                                        const handleSelect = () => {
-                                                                                            if (q.type === 'multiple') {
-                                                                                                const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
-                                                                                                const idx = current.indexOf(optKey);
-                                                                                                if (idx > -1) current.splice(idx, 1); else current.push(optKey);
-                                                                                                updateQuestionInSection(sIdx, qIdx, 'correctAnswer', current.sort());
-                                                                                            } else {
-                                                                                                updateQuestionInSection(sIdx, qIdx, 'correctAnswer', optKey);
-                                                                                            }
-                                                                                        };
-                                                                                        return (
-                                                                                            <div key={optKey} className={`
-                                                                                                group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
-                                                                                                ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
-                                                                                                focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                            `}>
-                                                                                                <button onClick={handleSelect} className={`
-                                                                                                    mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
-                                                                                                    ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-white border border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600'}
-                                                                                                `}>
-                                                                                                    {isSelected ? (
-                                                                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                                                                            <polyline points="20 6 9 17 4 12"></polyline>
-                                                                                                        </svg>
-                                                                                                    ) : (
-                                                                                                        optKey
-                                                                                                    )}
-                                                                                                </button>
-
-                                                                                                <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
-                                                                                                    <div className="relative">
-                                                                                                        <IMEInput
-                                                                                                            ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] = el}
-                                                                                                            as="textarea"
-                                                                                                            typingMode={q.typingMode}
-                                                                                                            placeholder={`Option ${optKey}`}
-                                                                                                            value={q.options[optKey]}
-                                                                                                            onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }}
-                                                                                                            className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-16 focus:ring-0 w-full resize-none placeholder:text-slate-300"
-                                                                                                        />
-
-                                                                                                        {/* Right Side Actions - Overlay on Text Area */}
-                                                                                                        <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10">
-                                                                                                            <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}>
-                                                                                                                <Cloud className="w-3.5 h-3.5" />
-                                                                                                            </button>
-                                                                                                            <Button
-                                                                                                                variant="ghost"
-                                                                                                                size="icon"
-                                                                                                                className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
-                                                                                                                onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}
-                                                                                                                title="Add Image"
-                                                                                                            >
-                                                                                                                <ImageIcon className="w-3.5 h-3.5" />
-                                                                                                            </Button>
-                                                                                                            <Button
-                                                                                                                variant="ghost"
-                                                                                                                size="icon"
-                                                                                                                className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
-                                                                                                                onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
-                                                                                                                title="Remove Option"
-                                                                                                            >
-                                                                                                                <X className="w-3.5 h-3.5" />
-                                                                                                            </Button>
-                                                                                                        </div>
-                                                                                                    </div>
-
-                                                                                                    {/* Option Image Section (Appears Below) */}
-                                                                                                    {(q.optionImages?.[optKey] || expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`]) && (
-                                                                                                        <div className="relative group/optimg w-fit">
-                                                                                                            {q.optionImages?.[optKey] ? (
-                                                                                                                <div className="relative group/optimg w-fit">
-                                                                                                                    <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
-                                                                                                                    <button
-                                                                                                                        onClick={() => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (q.optionImages) delete q.optionImages[optKey]; setSections(newSections); }}
-                                                                                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
-                                                                                                                    >
-                                                                                                                        <X className="w-3 h-3" />
-                                                                                                                    </button>
-                                                                                                                </div>
-                                                                                                            ) : (
-                                                                                                                <div className="flex items-center gap-1">
-                                                                                                                    <Input
-                                                                                                                        placeholder="Image URL"
-                                                                                                                        className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
-                                                                                                                        onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }}
-                                                                                                                    />
-                                                                                                                    <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
-                                                                                                                        {uploadingImages[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? (
-                                                                                                                            <Loader2 className="w-3 h-3 animate-spin" />
-                                                                                                                        ) : (
-                                                                                                                            <Upload className="w-3 h-3" />
-                                                                                                                        )}
-                                                                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                                                                                                                            const uploadKey = `sec-${sIdx}-q-${qIdx}-opt-${optKey}`;
-                                                                                                                            setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
-                                                                                                                            handleFileUpload(e, (base64) => {
-                                                                                                                                const newSections = [...sections];
-                                                                                                                                const q = newSections[sIdx].questions[qIdx];
-                                                                                                                                if (!q.optionImages) q.optionImages = {};
-                                                                                                                                q.optionImages[optKey] = base64;
-                                                                                                                                setSections(newSections);
-                                                                                                                                setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
-                                                                                                                            });
-                                                                                                                        }} />
-                                                                                                                    </label>
-                                                                                                                </div>
-                                                                                                            )}
-                                                                                                        </div>
-                                                                                                    )}
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        );
-                                                                                    })}
-                                                                                    {/* Add Option Button */}
-                                                                                    <div className="flex justify-center pt-2">
-                                                                                        <button
-                                                                                            onClick={() => handleAddOptionToSection(sIdx, qIdx)}
-                                                                                            className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all text-xs font-semibold uppercase tracking-wide"
-                                                                                        >
-                                                                                            <Plus className="w-4 h-4" /> Add Option
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </div>
-                                                                            )}
+                                                                    </Card>
+                                                                    {isEndOfGroup && (
+                                                                        <div className="flex justify-center -mt-6 relative z-0">
+                                                                            <div className="h-6 w-px bg-indigo-200 absolute -top-6"></div>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="secondary"
+                                                                                onClick={() => handleAddSubQuestionToSection(sIdx, qIdx)}
+                                                                                className="gap-2 bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 shadow-sm rounded-full px-4 mt-2"
+                                                                            >
+                                                                                <Plus className="w-4 h-4" /> Add Question to Passage
+                                                                            </Button>
                                                                         </div>
-                                                                    </div>
-                                                                </Card>
-                                                                {isEndOfGroup && (
-                                                                    <div className="flex justify-center -mt-6 relative z-0">
-                                                                        <div className="h-6 w-px bg-indigo-200 absolute -top-6"></div>
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="secondary"
-                                                                            onClick={() => handleAddSubQuestionToSection(sIdx, qIdx)}
-                                                                            className="gap-2 bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 shadow-sm rounded-full px-4 mt-2"
-                                                                        >
-                                                                            <Plus className="w-4 h-4" /> Add Question to Passage
-                                                                        </Button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                    <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
-                                                </div>
-                                            </CardContent>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
+                                                    </div>
+                                                </CardContent>
+                                            )}
                                         </Card>
                                     );
                                 })}
+                                <Button onClick={handleAddSection} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
                             </div>
-                            <Button onClick={handleAddSection} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
                         </>
                     ) : (
                         <>

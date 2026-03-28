@@ -27,9 +27,8 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             const makeImgTag = (src: string, alt: string) => {
                 const escapedSrc = src.replace(/"/g, '&quot;');
                 const escapedAlt = alt.replace(/"/g, '&quot;');
-                // Using auto width/height and no max-width to ensure original size.
-                // Changed display to inline-block and removed border/padding based on user request.
-                return `<img src="${escapedSrc}" alt="${escapedAlt}" style="width: auto !important; height: none !important; max-width: 50% !important; border-radius: 4px; display: inline-block; vertical-align: middle; margin: 0 4px;" />`;
+                // Using max-height/width in pixels since percentage max-widths collapse inside KaTeX table cells.
+                return `<img src="${escapedSrc}" alt="${escapedAlt}" style="max-height: 300px; max-width: 400px; object-fit: contain; border-radius: 4px; display: inline-block; vertical-align: middle; margin: 0 4px;" />`;
             };
 
             const extractImagesFromTex = (tex: string): string => {
@@ -48,10 +47,10 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 return out;
             };
 
-            const renderLatexArray = (tex: string): string | null => {
+            const renderSingleLatexArray = (matchStr: string): string => {
                 const arrayRegex = /\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/;
-                const match = tex.match(arrayRegex);
-                if (!match) return null;
+                const match = matchStr.match(arrayRegex);
+                if (!match) return matchStr;
 
                 const [, format, content] = match;
 
@@ -93,6 +92,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
                         let renderedCell = '';
                         try {
+                            // Sub-cells might just be text or contain images
                             renderedCell = katex.renderToString(cell.trim() || '\\text{ }', {
                                 displayMode: false,
                                 throwOnError: false,
@@ -117,48 +117,59 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 return tableHtml;
             };
 
-            // 1. Replace display math $$...$$
-            result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex) => {
+            const processMathBlock = (tex: string, displayMode: boolean): string => {
                 try {
                     const safeTex = extractImagesFromTex(tex);
-                    if (safeTex.includes('\\begin{array}')) {
-                        const table = renderLatexArray(safeTex);
-                        if (table) return table;
-                    }
+                    
+                    let arrayIndex = 0;
+                    const arrayMap: Record<string, string> = {};
+                    
+                    const texWithoutArrays = safeTex.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
+                        const key = `ARRAYPH${arrayIndex++}`;
+                        arrayMap[key] = renderSingleLatexArray(matchStr);
+                        return `\\text{${key}}`;
+                    });
 
-                    const html = katex.renderToString(safeTex.trim(), {
-                        displayMode: true,
+                    const html = katex.renderToString(texWithoutArrays.trim(), {
+                        displayMode,
                         throwOnError: false,
                         trust: true,
                         strict: false,
                     });
-                    return swapPlaceholders(html);
+                    
+                    let finalHtml = swapPlaceholders(html);
+                    for (const [key, tableHtml] of Object.entries(arrayMap)) {
+                        finalHtml = finalHtml.split(key).join(tableHtml);
+                    }
+                    return finalHtml;
                 } catch (e) {
                     return `<span style="color:red;">${tex}</span>`;
                 }
-            });
+            };
+
+            // 1. Replace display math $$...$$
+            result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex) => processMathBlock(tex, true));
 
             // 2. Replace inline math $...$
-            result = result.replace(/\$([^\$]*?)\$/g, (_match, tex) => {
-                try {
-                    const safeTex = extractImagesFromTex(tex);
-                    const html = katex.renderToString(safeTex.trim(), {
-                        displayMode: false,
-                        throwOnError: false,
-                        trust: true,
-                        strict: false,
-                    });
-                    return swapPlaceholders(html);
-                } catch (e) {
-                    return `<span style="color:red;">${tex}</span>`;
-                }
-            });
+            result = result.replace(/\$([^\$]*?)\$/g, (_match, tex) => processMathBlock(tex, false));
 
             // 3. Fallback: Search for \begin{array} OUTSIDE of delimiters
             if (result.includes('\\begin{array}')) {
-                const safeTex = extractImagesFromTex(result);
-                const table = renderLatexArray(safeTex);
-                if (table) result = table;
+                let arrayIndex = 0;
+                const arrayMap: Record<string, string> = {};
+                
+                result = result.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
+                    const safeMatch = extractImagesFromTex(matchStr);
+                    const tableHtml = renderSingleLatexArray(safeMatch);
+                    const key = `ARRAYPHFB${arrayIndex++}`;
+                    arrayMap[key] = tableHtml;
+                    return key; // Here we are outside math mode, just use direct string replacement
+                });
+                
+                result = swapPlaceholders(result);
+                for (const [key, tableHtml] of Object.entries(arrayMap)) {
+                    result = result.split(key).join(tableHtml);
+                }
             }
 
             // 4. Finally replace remaining images
