@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Edit, FileText, ChevronRight } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Edit, FileText, ChevronRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTests, Test } from '@/lib/testsApi';
@@ -56,8 +56,22 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
 
 
     return (
-        <div className="mb-12 animate-in fade-in duration-700">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mb-14 animate-slide-up-fade stagger-3 relative z-10">
+            <div className="flex items-center gap-3 mb-6 pl-1">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
+                    <Sparkles className="h-5 w-5 md:h-6 md:w-6" />
+                </div>
+                <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                        Featured Tests
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Hand-picked assessments to boost your skills
+                    </p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {tests.map((test: any) => {
                     const testId = test.id;
                     const isRendered = isItemRendered(testId);

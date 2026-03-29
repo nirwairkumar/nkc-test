@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Link2, ArrowRight } from 'lucide-react';
@@ -62,57 +62,60 @@ export default function TestLinkPaster() {
     };
 
     return (
-        <Card className="border-indigo-100 bg-indigo-50/50 dark:bg-indigo-950/10 dark:border-indigo-900/50 mb-8">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                    <Link2 className="h-5 w-5" />
-                    Enter Test Link
-                </CardTitle>
-                <CardDescription>
-                    Have a test link or ID? Paste it here to jump directly to the test.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col md:flex-row gap-4 items-center">
-                    <div className="flex-1 w-full">
+        <div className="relative group mb-8 animate-slide-up-fade stagger-1">
+            {/* Glossy gradient outline effect */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500" />
+            
+            <div className="relative flex flex-col md:flex-row gap-4 items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3 md:p-4 rounded-2xl border border-white/20 dark:border-slate-800/50 shadow-sm">
+                <div className="flex items-center gap-3 w-full md:w-auto pl-2">
+                    <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-inner hidden sm:block">
+                        <Link2 className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                        <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 leading-tight">Quick Jump</h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 hidden lg:block">Paste a test link or ID to start immediately</p>
+                    </div>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-3 items-center w-full md:w-auto flex-1 md:pl-8">
+                    <div className="relative w-full flex-1">
                         <Input
-                            placeholder="Paste full test link (e.g. https://...)"
+                            placeholder="Paste test link (https://...)"
                             value={link}
                             onChange={(e) => {
                                 setLink(e.target.value);
-                                if (e.target.value) setTestId(''); // Clear ID if link is typed
+                                if (e.target.value) setTestId('');
                             }}
                             onKeyDown={(e) => e.key === 'Enter' && handleNavigate()}
-                            className="bg-background"
+                            className="h-11 bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 rounded-xl focus-visible:ring-indigo-500/30 transition-all font-medium"
                             disabled={!!testId}
                         />
                     </div>
-
-                    <div className="font-semibold text-muted-foreground text-sm uppercase">Or</div>
-
-                    <div className="w-full md:w-[150px]">
+                    
+                    <div className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase px-1 hidden sm:block">OR</div>
+                    
+                    <div className="relative w-full sm:w-[140px]">
                         <Input
-                            placeholder="Test ID (M-151)"
+                            placeholder="Test ID (#...)"
                             value={testId}
                             onChange={(e) => {
                                 setTestId(e.target.value);
-                                if (e.target.value) setLink(''); // Clear link if ID is typed
+                                if (e.target.value) setLink('');
                             }}
                             onKeyDown={(e) => e.key === 'Enter' && handleNavigate()}
-                            className="bg-background text-center font-mono"
+                            className="h-11 bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 rounded-xl focus-visible:ring-indigo-500/30 transition-all text-center font-mono font-bold"
                             disabled={!!link}
                         />
                     </div>
 
                     <Button
                         onClick={handleNavigate}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
+                        className="w-full sm:w-auto h-11 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md hover:shadow-lg transition-all hover:scale-105"
                     >
-                        Go to Test
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                        Go <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

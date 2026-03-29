@@ -4,14 +4,19 @@ export default function Footer() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="w-full border-t bg-white dark:bg-gray-950 py-12 shadow-sm mt-auto">
-            <div className="container mx-auto px-4 sm:px-6">
+        <footer className="w-full border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 py-12 mt-auto relative overflow-hidden">
+            {/* Soft gradient decorative line at the top */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
+            
+            <div className="container mx-auto px-4 sm:px-6 relative z-10">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:gap-12">
                     {/* Brand Section */}
                     <div className="flex flex-col gap-2">
-                        <h3 className="text-lg font-bold tracking-tighter text-primary">TestoZa</h3>
-                        <p className="text-sm text-muted-foreground w-full max-w-[300px]">
-                            TestoZa is an online test and assessment platform for practice, evaluation, and learning.
+                        <h3 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-serif">
+                            TestoZa
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 w-full max-w-[300px] leading-relaxed">
+                            Professional online test and assessment platform for practice, evaluation, and learning.
                         </p>
                     </div>
 

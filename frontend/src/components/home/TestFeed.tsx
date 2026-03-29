@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, ChevronDown } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, ChevronDown, Library } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTests, Test } from '@/lib/testsApi';
@@ -78,9 +78,22 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
     };
 
     return (
-        <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4 text-slate-700 dark:text-slate-300">More Tests</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mb-14 animate-slide-up-fade stagger-4 relative z-10">
+            <div className="flex items-center gap-3 mb-6 pl-1">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400">
+                    <Library className="h-5 w-5 md:h-6 md:w-6" />
+                </div>
+                <div>
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                        More Tests
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Explore the full catalog of assessments
+                    </p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {tests.map((test: any) => {
                     const testId = test.id;
                     const isRendered = isItemRendered(testId);
@@ -117,22 +130,31 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
             </div>
 
             {hasMore && (
-                <div className="mt-8 flex justify-center">
+                <div className="mt-10 flex justify-center">
                     <Button
                         variant="outline"
                         onClick={() => loadMoreTests()}
                         disabled={loading}
-                        className="min-w-[150px]"
+                        className="rounded-full px-8 py-6 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all font-semibold shadow-sm group"
                     >
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
-                        {loading ? 'Loading...' : 'View More Tests'}
+                        {loading ? (
+                            <Loader2 className="h-5 w-5 animate-spin mr-2 text-indigo-500" />
+                        ) : (
+                            <ChevronDown className="h-5 w-5 mr-2 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        )}
+                        {loading ? 'Loading...' : 'Load More Tests'}
                     </Button>
                 </div>
             )}
 
             {!hasMore && tests.length > 0 && (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                    You've reached the end of the list.
+                <div className="py-12 mt-4 text-center border-t border-slate-200 dark:border-slate-800 border-dashed relative">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-50 dark:bg-[#020617] px-4">
+                        <div className="h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                        You've reached the end of the catalog
+                    </span>
                 </div>
             )}
         </div>

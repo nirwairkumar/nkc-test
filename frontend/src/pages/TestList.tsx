@@ -79,68 +79,76 @@ export default function TestList() {
     }
 
     return (
-        <div className="container mx-auto py-6">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl animate-in fade-in duration-500">
             <SEO
                 title="Explore Free Mock Tests Online - TestoZa"
                 description="Find free online mock tests for JEE, NEET, GATE, UPSC, SSC, and more. Practice with real exam-like interface on TestoZa."
                 keywords={["online mock tests", "practice tests free", "jee mains mock test", "neet practice questions", "gate test series"]}
             />
-            <div className="flex flex-col mb-8 gap-4">
-                {/* 1. Header */}
+            
+            {/* 1. Header */}
+            <div className="mb-10">
                 <HomeHero
                     isLoading={loading}
                     onRefresh={handleRefresh}
                 />
-
-                {/* 2. Test Link Paster (Replaces YouTube Generator) */}
-                <Suspense fallback={<div className="h-32 w-full bg-slate-50 animate-pulse rounded-lg"></div>}>
-                    <TestLinkPaster />
-                </Suspense>
-
-                {/* 3. Your Recent Tests (Lazy) - Only when NOT searching */}
-                {user && !searchQuery && (
-                    <Suspense fallback={<SectionSkeleton />}>
-                        <UserRecentTests user={user} onManageTest={onManageTest} />
-                    </Suspense>
-                )}
-
-                {/* 4. Explore Tests / Search */}
-                <ExploreFilters
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    placeholders={placeholders}
-                    placeholderIndex={placeholderIndex}
-                />
             </div>
+
+            {/* 2. Test Link Paster (Replaces YouTube Generator) */}
+            <Suspense fallback={<div className="h-20 w-full bg-slate-100 rounded-2xl animate-pulse mb-8" />}>
+                <TestLinkPaster />
+            </Suspense>
+
+            {/* 3. Your Recent Tests (Lazy) - Only when NOT searching */}
+            {user && !searchQuery && (
+                <Suspense fallback={<SectionSkeleton />}>
+                    <UserRecentTests user={user} onManageTest={onManageTest} />
+                    <div className="section-divider" />
+                </Suspense>
+            )}
+
+            {/* 4. Explore Tests / Search */}
+            <ExploreFilters
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                placeholders={placeholders}
+                placeholderIndex={placeholderIndex}
+            />
 
             {/* SEARCH RESULTS MODE */}
             {searchQuery ? (
-                <Suspense fallback={<SectionSkeleton />}>
-                    <SearchResults
-                        searchQuery={searchQuery}
-                        user={user}
-                        onManageTest={onManageTest}
-                    />
-                </Suspense>
+                <div className="mt-8 animate-slide-up-fade">
+                    <Suspense fallback={<SectionSkeleton />}>
+                        <SearchResults
+                            searchQuery={searchQuery}
+                            user={user}
+                            onManageTest={onManageTest}
+                        />
+                    </Suspense>
+                </div>
             ) : (
-                <>
+                <div className="space-y-12 md:space-y-16 mt-10">
                     {/* 5. Category Folders */}
                     <Suspense fallback={<SectionSkeleton />}>
                         <CategoryFolderCards />
                     </Suspense>
+                    
+                    <div className="section-divider" />
 
                     {/* 6. Featured Tests */}
                     <Suspense fallback={<SectionSkeleton />}>
                         <FeaturedTests user={user} onManageTest={onManageTest} />
                     </Suspense>
+                    
+                    <div className="section-divider" />
 
-                    {/* 7. Infinite Feed (Now first) */}
+                    {/* 7. Infinite Feed */}
                     <SuspenseFallbackWrapper>
                         <TestFeed user={user} onManageTest={onManageTest} />
                     </SuspenseFallbackWrapper>
 
-                    {/* 8. YouTube Generator (Moved to very bottom) */}
-                    <div className="my-8 mt-16">
+                    {/* 8. YouTube Generator */}
+                    <div className="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800">
                         {/* <div className="text-center mb-6">
                             <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent inline-block">
                                 Generate Tests from YouTube
@@ -172,7 +180,7 @@ export default function TestList() {
                             </div>
                         )}
                     </div>
-                </>
+                </div>
             )}
 
             {/* Manage Test Panel */}
@@ -181,7 +189,7 @@ export default function TestList() {
                     <TestSettingsPanel
                         test={configuringTest}
                         onClose={() => setConfiguringTest(null)}
-                        onUpdate={() => { }}
+                        onUpdate={() => {}}
                         onViewResults={() => {
                             setConfiguringTest(null);
                             navigate('/my-tests');

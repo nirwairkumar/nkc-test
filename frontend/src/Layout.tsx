@@ -39,7 +39,7 @@ export default function Layout() {
     const isLiveTestPage = location.pathname.startsWith('/test/') || location.pathname.startsWith('/test-intro/') || location.pathname.startsWith('/live/') || location.pathname.startsWith('/test-submitted');
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="min-h-screen bg-slate-50 dashboard-mesh-bg flex flex-col">
             {!isLiveTestPage && (
                 <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <Navbar />
