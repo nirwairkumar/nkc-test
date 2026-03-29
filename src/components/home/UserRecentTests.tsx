@@ -84,18 +84,30 @@ export default function UserRecentTests({ user, onManageTest }: { user: any, onM
     if (userTests.length === 0) return null;
 
     return (
-        <div className="mb-8 animate-in slide-in-from-left-4 duration-700">
-            <div className="flex items-center justify-between mb-4 px-1">
-                <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                    Your Recent Tests
-                </h2>
-                <Button variant="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 -mr-2" onClick={() => navigate('/my-tests')}>
-                    View All
+        <div className="mb-10 animate-slide-up-fade relative z-10">
+            <div className="flex items-center justify-between mb-6 pl-1">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 border border-indigo-200/50 dark:border-indigo-800/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <Clock className="h-5 w-5 md:h-6 md:w-6" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent leading-tight">
+                            Jump Back In
+                        </h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">
+                            Your recently accessed tests
+                        </p>
+                    </div>
+                </div>
+                
+                <Button variant="ghost" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-full sm:px-4" onClick={() => navigate('/history')}>
+                    <span className="hidden sm:inline">View History</span>
+                    <span className="sm:hidden">History</span>
                     <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {userTests.slice(0, 3).map((test, index) => {
                     const categories = test.categories || [];
                     return (

@@ -233,3 +233,97 @@ html {
 .latex-renderer-container .katex {
   text-align: left;
 }
+/* Dashboard UI Redesign Utilities */
+
+/* Glass Panel Effect */
+.glass-panel {
+  @apply bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border border-white/20 dark:border-slate-800/50 shadow-sm;
+}
+
+/* Subtle Gradient Text */
+.gradient-text-subtle {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300;
+}
+
+/* Primary Gradient Text */
+.gradient-text-primary {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400;
+}
+
+/* Accent Gradient Text */
+.gradient-text-accent {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-orange-500 dark:from-rose-400 dark:to-orange-400;
+}
+
+/* Section Divider */
+.section-divider {
+  @apply w-full h-[1px] bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent my-10 opacity-60;
+}
+
+/* Card Hover Elevation */
+.hover-elevate {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-indigo-500/5 dark:hover:shadow-indigo-500/10 border-slate-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800;
+}
+
+/* Minimal Scrollbar for lists */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Animations */
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Stagger Children Utility */
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+.stagger-4 { animation-delay: 400ms; }
+
+/* Dashboard Background Mesh */
+.dashboard-mesh-bg {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 40% 20%, hsla(228,100%,74%,0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189,100%,56%,0.08) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(355,100%,93%,0.08) 0px, transparent 50%);
+}
+
+.dark .dashboard-mesh-bg {
+  background-color: #020617;
+  background-image: 
+    radial-gradient(at 40% 20%, hsla(228,100%,74%,0.03) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189,100%,56%,0.03) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(355,100%,93%,0.03) 0px, transparent 50%);
+}

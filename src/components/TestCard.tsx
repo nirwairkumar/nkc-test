@@ -169,12 +169,15 @@ export default function TestCard({
     };
 
     return (
-        <Card className="flex flex-col hover:shadow-lg transition-shadow relative h-full border-slate-200 dark:border-slate-800">
-            <div className="absolute top-2 right-2 z-10 flex gap-1">
+        <Card className="flex flex-col hover-elevate relative h-full bg-white dark:bg-slate-900 overflow-hidden group">
+            {/* Top Gradient Accent Strip */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-80 group-hover:opacity-100 transition-opacity" />
+
+            <div className="absolute top-2.5 right-2.5 z-10 flex gap-1">
                 {(user?.id === test.created_by || isAdmin) && (
                     <DropdownMenu onOpenChange={(open) => { if (open) loadClasses(); }}>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-slate-50/80 hover:bg-slate-100 text-slate-500 hover:text-slate-900 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-white backdrop-blur-sm shadow-sm transition-all">
                                 <MoreVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -185,13 +188,13 @@ export default function TestCard({
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuSubContent>
                                     <DropdownMenuItem onClick={() => handleVisibilityChange('public')}>
-                                        <Globe className="mr-2 h-4 w-4" /> Public
+                                        <Globe className="mr-2 h-4 w-4 text-green-600" /> Public
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleVisibilityChange('unlisted')}>
-                                        <LinkIcon className="mr-2 h-4 w-4" /> Link Only
+                                        <LinkIcon className="mr-2 h-4 w-4 text-blue-600" /> Link Only
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => handleVisibilityChange('private')}>
-                                        <Lock className="mr-2 h-4 w-4" /> Private
+                                        <Lock className="mr-2 h-4 w-4 text-slate-600" /> Private
                                     </DropdownMenuItem>
                                 </DropdownMenuSubContent>
                             </DropdownMenuSub>
@@ -230,7 +233,7 @@ export default function TestCard({
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-slate-50/80 hover:bg-slate-100 text-slate-500 hover:text-indigo-600 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-indigo-400 backdrop-blur-sm shadow-sm transition-all" onClick={(e) => handleShare(e, test)}>
                     <Share2 className="h-4 w-4" />
                 </Button>
             </div>
@@ -272,68 +275,82 @@ export default function TestCard({
                 </div>
             )}
 
-            <CardHeader className="p-3 pb-2 relative">
-                <CardTitle className="text-lg font-bold text-red-900 md:text-xl pr-8 leading-tight line-clamp-2">{test.title}</CardTitle>
+            <CardHeader className="p-4 pb-2 relative mt-1">
+                <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 md:text-xl pr-14 leading-snug line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {test.title}
+                </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-3 pt-0">
+            <CardContent className="flex-1 p-4 pt-0">
                 <div className="flex flex-col justify-end mt-auto gap-1">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                            <Clock className="mr-1 h-4 w-4" />{test.questions?.length || 0} Qs • {test.duration || 30}m
+                        <div className="flex items-center text-[13px] text-slate-500 dark:text-slate-400 font-medium bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">
+                            <Clock className="mr-1.5 h-3.5 w-3.5 text-indigo-500" />{test.questions?.length || 0} Qs • {test.duration || 30}m
                         </div>
                         {test.custom_id && (
-                            <span className="text-xs text-muted-foreground font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">#{test.custom_id}</span>
+                            <span className="text-xs text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md shadow-sm">{test.custom_id}</span>
                         )}
                         {/* @ts-ignore */}
                         {classInfo.name && (
-                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200">
-                                <GraduationCap className="h-3 w-3" />
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-500/10 dark:to-pink-500/10 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800/50">
+                                <GraduationCap className="h-3.5 w-3.5" />
                                 <span className="uppercase">{classInfo.name}</span>
                             </div>
                         )}
                         {(user?.id === test.created_by || isAdmin) && (
-                            <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${getVisibilityColor()}`}>
+                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide border ${getVisibilityColor()}`}>
                                 {getVisibilityIcon()}
                                 <span className="uppercase">{visibility === 'unlisted' ? 'Link' : visibility}</span>
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="flex items-center justify-between mt-1.5 gap-2 h-8">
-                    <div className="flex items-center gap-2 shrink-0 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full pr-2 transition-colors py-0.5" onClick={(e) => { e.stopPropagation(); navigate(`/creator/${test.created_by}`); }}>
-                        <Avatar className="h-6 w-6">
+                
+                <div className="w-full h-[1px] bg-slate-100 dark:bg-slate-800 my-3" />
+                
+                <div className="flex items-center justify-between gap-2 h-8">
+                    <div className="flex items-center gap-2 shrink-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-full pr-3 pl-1 py-1 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700" onClick={(e) => { e.stopPropagation(); navigate(`/creator/${test.created_by}`); }}>
+                        <Avatar className="h-7 w-7 border-2 border-white dark:border-slate-900 shadow-sm">
                             <AvatarImage src={test.creator_avatar} />
-                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}</AvatarFallback>
+                            <AvatarFallback className="text-[10px] bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 text-indigo-700 dark:text-indigo-300 font-bold">
+                                {test.creator_name ? test.creator_name.substring(0, 2).toUpperCase() : 'TC'}
+                            </AvatarFallback>
                         </Avatar>
                         <div className="flex items-center gap-1 min-w-0">
                             {isVerifiedCreator && <VerifiedBadge size={14} />}
-                            <span className="text-xs text-muted-foreground font-medium truncate max-w-[100px]">{test.creator_name || 'Creator'}</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-300 font-semibold truncate max-w-[100px] hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                {test.creator_name || 'Creator'}
+                            </span>
                         </div>
                     </div>
                     {/* Only show categories if available */}
-                    <TestCardCategoryList categoryIds={categoryIds} allCategories={allCategories} customCategory={test.custom_category} />
+                    <div className="scale-95 origin-right">
+                        <TestCardCategoryList categoryIds={categoryIds} allCategories={allCategories} customCategory={test.custom_category} />
+                    </div>
                 </div>
             </CardContent>
-            <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                <div className="flex-none"><TestVoteButtons testId={test.id} userId={user?.id} isCreatorOrAdmin={user?.id === test.created_by || isAdmin} /></div>
+            
+            <CardFooter className="p-4 pt-3 mt-auto bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-3">
+                <div className="flex-none bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
+                    <TestVoteButtons testId={test.id} userId={user?.id} isCreatorOrAdmin={user?.id === test.created_by || isAdmin} />
+                </div>
                 {(user?.id === test.created_by || isAdmin) ? (
-                    <div className="flex-1 flex gap-2">
+                    <div className="flex-1 flex gap-2 justify-end">
                         {onManage && (
-                            <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-foreground px-2" onClick={() => onManage(test)}>
-                                <Settings className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Manage</span>
+                            <Button variant="ghost" size="sm" className="h-9 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white px-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={() => onManage(test)}>
+                                <Settings className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline font-medium">Manage</span>
                             </Button>
                         )}
-                        <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => navigate(`/edit-test/${test.id}`)}>
-                            <Edit className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Edit</span>
+                        <Button variant="outline" size="sm" className="h-9 px-3 bg-white dark:bg-slate-800 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all font-medium" onClick={() => navigate(`/edit-test/${test.id}`)}>
+                            <Edit className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span>
                         </Button>
-                        <Button size="sm" className={`flex-1 h-8 px-3 ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
-                            {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-3 w-3" />
+                        <Button size="sm" className={`h-9 px-4 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                            {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex-1">
-                        <Button size="sm" className={`w-full h-8 text-sm ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
-                            {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-3 w-3" />
+                    <div className="flex-1 max-w-[140px] ml-auto">
+                        <Button size="sm" className={`w-full h-9 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                            {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </div>
                 )}
