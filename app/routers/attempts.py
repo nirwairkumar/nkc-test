@@ -188,10 +188,6 @@ async def get_user_attempts(
                     "test_settings": test.get("settings") or {} 
                 }
             enriched.append(flat)
-        
-        print(f"\nFinal enriched attempts count: {len(enriched)}")
-        print(f"Returning: {enriched}")
-        print(f"{'='*60}\n")
             
         return enriched
         
