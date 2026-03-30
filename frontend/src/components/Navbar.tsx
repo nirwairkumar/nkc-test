@@ -167,14 +167,9 @@ export default function Navbar() {
                                         <span>Admin</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider pb-1">User Guides</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => setIsSolutionGuideOpen(true)}>
+                                    <DropdownMenuItem onClick={() => navigate('/user-guide')}>
                                         <BookOpen className="mr-2 h-4 w-4 text-indigo-600" />
-                                        <span>Solution Upload Guide</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setIsUploadGuideOpen(true)}>
-                                        <FileText className="mr-2 h-4 w-4 text-blue-600" />
-                                        <span>Test Upload Guide</span>
+                                        <span>User Guide</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => navigate('/login', { state: { from: location.pathname } })}>
@@ -305,14 +300,9 @@ export default function Navbar() {
                                     )}
 
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider pb-1">User Guides</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => setIsSolutionGuideOpen(true)}>
+                                    <DropdownMenuItem onClick={() => navigate('/user-guide')}>
                                         <BookOpen className="mr-2 h-4 w-4 text-indigo-600" />
-                                        <span>Solution Upload Guide</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setIsUploadGuideOpen(true)}>
-                                        <FileText className="mr-2 h-4 w-4 text-blue-600" />
-                                        <span>Test Upload Guide</span>
+                                        <span>User Guide</span>
                                     </DropdownMenuItem>
 
                                     <DropdownMenuItem onClick={() => navigate('/create-test')}>
