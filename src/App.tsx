@@ -41,6 +41,7 @@ const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const UserTestManager = lazy(() => import("./pages/UserTestManager"));
 const MaterialsManager = lazy(() => import("./pages/MaterialsManager"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
+const UserGuidePage = lazy(() => import("./pages/UserGuidePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const CreateTestPage = lazy(() => import("./pages/CreateTestPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
@@ -128,6 +129,8 @@ const App = () => (
                     <Route path="/premium" element={<PremiumPage />} />
                     <Route path="/manage-tests" element={<ManageTests />} />
                     <Route path="/support" element={<SupportPage />} />
+                    <Route path="/user-guide" element={<UserGuidePage />} />
+                    <Route path="/user-guide/:slug" element={<UserGuidePage />} />
                     <Route path="/create-test" element={<CreateTestPage />} />
                     <Route path="/edit-test/:id" element={<CreateTestPage />} />
                     <Route path="/creator/:id" element={<CreatorProfilePage />} />
