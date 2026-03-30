@@ -17,9 +17,10 @@ interface TestUploadFormatGuideProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactNode;
+  isInline?: boolean;
 }
 
-export function TestUploadFormatGuide({ open: controlledOpen, onOpenChange, trigger }: TestUploadFormatGuideProps) {
+export function TestUploadFormatGuide({ open: controlledOpen, onOpenChange, trigger, isInline = false }: TestUploadFormatGuideProps) {
   const [internalOpen, setInternalOpen] = React.useState(false);
 
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -1167,206 +1168,183 @@ Check every section's header or overall syllabus instructions to determine if at
     toast.success("Template downloaded!");
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      {trigger ? (
-        <DialogTrigger asChild>
-          {trigger}
-        </DialogTrigger>
-      ) : controlledOpen === undefined ? (
-        <DialogTrigger asChild>
-          <Button variant="link" className="text-xs text-muted-foreground h-auto p-0 underline decoration-dashed underline-offset-4 hover:text-primary">
-            format the file. (Guide)
-          </Button>
-        </DialogTrigger>
-      ) : null}
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <FileText className="h-6 w-6 text-blue-600" />
-            Upload Guide
-          </DialogTitle>
-          <DialogDescription className="text-base">
-            Follow these 4 simple steps to upload tests in bulk.
-          </DialogDescription>
-        </DialogHeader>
+  const content = (
+    <div className="space-y-8 py-4">
 
-        <div className="space-y-8 py-4">
+      {/* Step 1: Generate with AI */}
+      <div className="flex gap-4">
+        <div className="flex-none w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">1</div>
+        <div className="space-y-3 flex-1">
+          <h3 className="font-semibold text-lg text-purple-700">Generate with AI</h3>
+          <p className="text-sm text-muted-foreground">
+            Paste this prompt into <strong className="text-blue-600 dark:text-blue-400">Google Gemini</strong> (Recommended) or ChatGPT / Perplexity to create your file automatically.
+          </p>
 
-          {/* Step 1: Generate with AI */}
-          <div className="flex gap-4">
-            <div className="flex-none w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">1</div>
-            <div className="space-y-3 flex-1">
-              <h3 className="font-semibold text-lg text-purple-700">Generate with AI</h3>
-              <p className="text-sm text-muted-foreground">
-                Paste this prompt into <strong className="text-blue-600 dark:text-blue-400">Google Gemini</strong> (Recommended) or ChatGPT / Perplexity to create your file automatically.
-              </p>
+          <div className="relative group">
+            <Tabs defaultValue="flat" className="w-full">
+              <TabsList className="mb-2 grid w-full grid-cols-2">
+                <TabsTrigger value="flat">Standard (Flat)</TabsTrigger>
+                <TabsTrigger value="section">Section-Wise</TabsTrigger>
+              </TabsList>
 
-              <div className="relative group">
-                <Tabs defaultValue="flat" className="w-full">
-                  <TabsList className="mb-2 grid w-full grid-cols-2">
-                    <TabsTrigger value="flat">Standard (Flat)</TabsTrigger>
-                    <TabsTrigger value="section">Section-Wise</TabsTrigger>
-                  </TabsList>
+              <TabsContent value="flat" className="mt-0">
+                <div className="relative">
+                  <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
+                    {jsonTemplate.trim()}
+                  </pre>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
+                    onClick={() => {
+                      navigator.clipboard.writeText(jsonTemplate.trim());
+                      toast.success("Standard Prompt copied!");
+                    }}
+                  >
+                    <Copy className="h-3 w-3 mr-2" /> Copy Prompt
+                  </Button>
+                </div>
+              </TabsContent>
 
-                  <TabsContent value="flat" className="mt-0">
+              <TabsContent value="section" className="mt-0">
+                <div className="flex flex-col gap-4">
+                  {/* Base Section Prompt */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-slate-700">1. Main Base Prompt</h4>
+                    </div>
                     <div className="relative">
                       <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
-                        {jsonTemplate.trim()}
+                        {jsonTemplateSection.trim()}
                       </pre>
                       <Button
                         size="sm"
                         variant="secondary"
                         className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
                         onClick={() => {
-                          navigator.clipboard.writeText(jsonTemplate.trim());
-                          toast.success("Standard Prompt copied!");
+                          navigator.clipboard.writeText(jsonTemplateSection.trim());
+                          toast.success("Section Prompt copied!");
                         }}
                       >
                         <Copy className="h-3 w-3 mr-2" /> Copy Prompt
                       </Button>
                     </div>
-                  </TabsContent>
+                  </div>
 
-                  <TabsContent value="section" className="mt-0">
-                    <div className="flex flex-col gap-4">
-                      {/* Base Section Prompt */}
+                  {/* Add-on Prompt */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2 mt-2">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-slate-700">1. Main Base Prompt</h4>
-                        </div>
-                        <div className="relative">
-                          <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[300px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
-                            {jsonTemplateSection.trim()}
-                          </pre>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
-                            onClick={() => {
-                              navigator.clipboard.writeText(jsonTemplateSection.trim());
-                              toast.success("Section Prompt copied!");
-                            }}
-                          >
-                            <Copy className="h-3 w-3 mr-2" /> Copy Prompt
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Add-on Prompt */}
-                      <div>
-                        <div className="flex items-center justify-between mb-2 mt-2">
-                          <div>
-                            <h4 className="text-sm font-semibold text-purple-700">2. Add-on Prompt (Optional)</h4>
-                            <p className="text-xs text-muted-foreground mt-0.5">Append this if exams enforce section attempt controls (e.g. "Attempt any 5 out of 10").</p>
-                          </div>
-                        </div>
-                        <div className="relative">
-                          <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
-                            {jsonTemplateSectionAddon.trim()}
-                          </pre>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
-                            onClick={() => {
-                              navigator.clipboard.writeText(jsonTemplateSectionAddon.trim());
-                              toast.success("Add-on Prompt copied!");
-                            }}
-                          >
-                            <Copy className="h-3 w-3 mr-2" /> Copy Add-on
-                          </Button>
-                        </div>
+                        <h4 className="text-sm font-semibold text-purple-700">2. Add-on Prompt (Optional)</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">Append this if exams enforce section attempt controls (e.g. "Attempt any 5 out of 10").</p>
                       </div>
                     </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: Upload Source to AI */}
-          <div className="flex gap-4">
-            <div className="flex-none w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">2</div>
-            <div className="space-y-2 flex-1">
-              <h3 className="font-semibold text-lg text-purple-700 flex items-center gap-2">
-                Upload Source to AI
-                <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Gemini Recommended</span>
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Go to <strong className="text-blue-600 dark:text-blue-400">Google Gemini</strong>, ChatGPT, or Perplexity. Paste the prompt, then <strong>upload your PDF, Image, or Video</strong> that you want to create a test from.
-              </p>
-              <div className="flex gap-2 mt-2">
-                <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">PDF</span>
-                <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">Images</span>
-                <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">Notes</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3: Save the JSON */}
-          <div className="flex gap-4">
-            <div className="flex-none w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">3</div>
-            <div className="space-y-4 flex-1">
-              <h3 className="font-semibold text-lg">Save the AI Output as a JSON File</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4 space-y-3 bg-white">
-                  <h4 className="font-medium text-blue-700 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" /> Option A: Quick Online Editor
-                  </h4>
-                  <p className="text-sm text-muted-foreground">No coding tools needed. Easiest for most users.</p>
-                  <ol className="text-sm text-slate-600 space-y-2 list-decimal list-inside">
-                    <li>Visit <a href="https://jsoneditoronline.org/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">jsoneditoronline.org</a></li>
-                    <li><strong>Paste</strong> the structured output from AI.</li>
-                    <li>Click <strong>Save</strong> (disk icon) to download it to your PC.</li>
-                  </ol>
+                    <div className="relative">
+                      <pre className="bg-slate-900 text-slate-300 p-4 rounded-lg text-xs font-mono max-h-[200px] overflow-y-auto whitespace-pre-wrap border border-slate-800">
+                        {jsonTemplateSectionAddon.trim()}
+                      </pre>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute top-2 right-2 opacity-90 hover:opacity-100 h-8"
+                        onClick={() => {
+                          navigator.clipboard.writeText(jsonTemplateSectionAddon.trim());
+                          toast.success("Add-on Prompt copied!");
+                        }}
+                      >
+                        <Copy className="h-3 w-3 mr-2" /> Copy Add-on
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
 
-                <div className="border rounded-lg p-4 space-y-3 bg-white">
-                  <h4 className="font-medium text-slate-700 flex items-center gap-2">
-                    <FileText className="w-4 h-4" /> Option B: Offline editing
-                  </h4>
-                  <p className="text-sm text-muted-foreground">Download our blank template file and paste the AI output directly into it using a text editor (e.g. Notepad).</p>
-                  <Button onClick={handleDownload} variant="outline" size="sm" className="w-full gap-2 mt-2 border-dashed">
-                    <Download className="h-4 w-4" /> Download Template
-                  </Button>
-                </div>
-              </div>
+      {/* Step 2: Upload Source to AI */}
+      <div className="flex gap-4">
+        <div className="flex-none w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">2</div>
+        <div className="space-y-2 flex-1">
+          <h3 className="font-semibold text-lg text-purple-700 flex items-center gap-2">
+            Upload Source to AI
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Gemini Recommended</span>
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Go to <strong className="text-blue-600 dark:text-blue-400">Google Gemini</strong>, ChatGPT, or Perplexity. Paste the prompt, then <strong>upload your PDF, Image, or Video</strong> that you want to create a test from.
+          </p>
+          <div className="flex gap-2 mt-2">
+            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">PDF</span>
+            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">Images</span>
+            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">Notes</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Step 3: Save the JSON */}
+      <div className="flex gap-4">
+        <div className="flex-none w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">3</div>
+        <div className="space-y-4 flex-1">
+          <h3 className="font-semibold text-lg">Save the AI Output as a JSON File</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border rounded-lg p-4 space-y-3 bg-white">
+              <h4 className="font-medium text-blue-700 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" /> Option A: Quick Online Editor
+              </h4>
+              <p className="text-sm text-muted-foreground">No coding tools needed. Easiest for most users.</p>
+              <ol className="text-sm text-slate-600 space-y-2 list-decimal list-inside">
+                <li>Visit <a href="https://jsoneditoronline.org/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">jsoneditoronline.org</a></li>
+                <li><strong>Paste</strong> the structured output from AI.</li>
+                <li>Click <strong>Save</strong> (disk icon) to download it to your PC.</li>
+              </ol>
+            </div>
+
+            <div className="border rounded-lg p-4 space-y-3 bg-white">
+              <h4 className="font-medium text-slate-700 flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Option B: Offline editing
+              </h4>
+              <p className="text-sm text-muted-foreground">Download our blank template file and paste the AI output directly into it using a text editor (e.g. Notepad).</p>
+              <Button onClick={handleDownload} variant="outline" size="sm" className="w-full gap-2 mt-2 border-dashed">
+                <Download className="h-4 w-4" /> Download Template
+              </Button>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Step 4: Upload It */}
-          <div className="flex gap-4">
-            <div className="flex-none w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">4</div>
-            <div className="space-y-2 flex-1">
-              <h3 className="font-semibold text-lg">Upload to Editor</h3>
-              <p className="text-sm text-muted-foreground">Click the <strong>Upload JSON File</strong> button or drag and drop your newly saved `.json` file to instantly build your test.</p>
-            </div>
+      {/* Step 4: Upload It */}
+      <div className="flex gap-4">
+        <div className="flex-none w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">4</div>
+        <div className="space-y-2 flex-1">
+          <h3 className="font-semibold text-lg">Upload to Editor</h3>
+          <p className="text-sm text-muted-foreground">Click the <strong>Upload JSON File</strong> button or drag and drop your newly saved `.json` file to instantly build your test.</p>
+        </div>
+      </div>
+
+
+      {/* --- DETAILED SECTION (Collapsible) --- */}
+      <div className="border-t pt-6">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-2">
+          <div className="flex items-center justify-between space-x-4 px-4">
+            <h4 className="text-sm font-semibold">Need more details? (Full Documentation)</h4>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-9 p-0">
+                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                <span className="sr-only">Toggle</span>
+              </Button>
+            </CollapsibleTrigger>
           </div>
 
+          <CollapsibleContent className="space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg text-sm space-y-6">
 
-          {/* --- DETAILED SECTION (Collapsible) --- */}
-          <div className="border-t pt-6">
-            <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full space-y-2">
-              <div className="flex items-center justify-between space-x-4 px-4">
-                <h4 className="text-sm font-semibold">Need more details? (Full Documentation)</h4>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-9 p-0">
-                    {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <span className="sr-only">Toggle</span>
-                  </Button>
-                </CollapsibleTrigger>
-              </div>
-
-              <CollapsibleContent className="space-y-4">
-                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg text-sm space-y-6">
-
-                  <div>
-                    <h5 className="font-bold mb-2">1. Standard File Structure (Flat)</h5>
-                    <p className="text-muted-foreground mb-2">The standard JSON file contains a single object with a questions array at the root.</p>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`{
+              <div>
+                <h5 className="font-bold mb-2">1. Standard File Structure (Flat)</h5>
+                <p className="text-muted-foreground mb-2">The standard JSON file contains a single object with a questions array at the root.</p>
+                <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                  {`{
   "title": "Required: Test Title",
   "description": "Optional: Short description",
   "duration": 30,            // Duration in minutes
@@ -1376,14 +1354,14 @@ Check every section's header or overall syllabus instructions to determine if at
     // Array of Question objects (see below)
   ]
 }`}
-                    </pre>
-                  </div>
+                </pre>
+              </div>
 
-                  <div>
-                    <h5 className="font-bold mb-2">2. Section-Wise File Structure</h5>
-                    <p className="text-muted-foreground mb-2">For multi-section exams, use a sections array instead of keeping questions at the root.</p>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`{
+              <div>
+                <h5 className="font-bold mb-2">2. Section-Wise File Structure</h5>
+                <p className="text-muted-foreground mb-2">For multi-section exams, use a sections array instead of keeping questions at the root.</p>
+                <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                  {`{
   "title": "Required: Test Title",
   "duration": 180,
   "sections": [
@@ -1397,14 +1375,14 @@ Check every section's header or overall syllabus instructions to determine if at
     }
   ]
 }`}
-                    </pre>
-                  </div>
+                </pre>
+              </div>
 
-                  <div>
-                    <h5 className="font-bold mb-2">3. Question Object Types</h5>
-                    <p className="text-muted-foreground mb-2">Each question can be <code>single</code>, <code>multiple</code>, or <code>numerical</code>.</p>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`// Single Choice
+              <div>
+                <h5 className="font-bold mb-2">3. Question Object Types</h5>
+                <p className="text-muted-foreground mb-2">Each question can be <code>single</code>, <code>multiple</code>, or <code>numerical</code>.</p>
+                <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                  {`// Single Choice
 {
   "id": 1, 
   "type": "single",
@@ -1429,14 +1407,14 @@ Check every section's header or overall syllabus instructions to determine if at
   "question": "Value of Pi up to 2 decimals?",
   "correctAnswer": { "min": 3.14, "max": 3.14 } // Use empty "options": {}
 }`}
-                    </pre>
-                  </div>
+                </pre>
+              </div>
 
-                  <div>
-                    <h5 className="font-bold mb-2">4. Image & Comprehension Questions</h5>
-                    <p className="text-muted-foreground mb-2">Attach images as specific keys, and link passage groups using <code>groupId</code> or <code>passageContent</code>.</p>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`{
+              <div>
+                <h5 className="font-bold mb-2">4. Image & Comprehension Questions</h5>
+                <p className="text-muted-foreground mb-2">Attach images as specific keys, and link passage groups using <code>groupId</code> or <code>passageContent</code>.</p>
+                <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                  {`{
   "id": 4,
   "type": "single",
   "question": "Identify this logo:",
@@ -1447,14 +1425,14 @@ Check every section's header or overall syllabus instructions to determine if at
   "groupId": "passage_grp_1",
   "correctAnswer": "A"
 }`}
-                    </pre>
-                  </div>
+                </pre>
+              </div>
 
-                  <div>
-                    <h5 className="font-bold mb-2">5. Advanced Formatting (KaTeX & Tables)</h5>
-                    <p className="text-muted-foreground mb-2">The platform fully supports KaTeX for math. Tables and "Match-the-following" grids should also be built using KaTeX arrays.</p>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`{
+              <div>
+                <h5 className="font-bold mb-2">5. Advanced Formatting (KaTeX & Tables)</h5>
+                <p className="text-muted-foreground mb-2">The platform fully supports KaTeX for math. Tables and "Match-the-following" grids should also be built using KaTeX arrays.</p>
+                <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                  {`{
   "id": 5,
   "type": "single",
   "question": "Solve the integral: $$\\int_{0}^{1} x^{2} dx$$ <br><br> Match the columns:<br> $$ \\\\begin{array}{|c|c|} \\\\hline A & 1 \\\\\\\\ \\\\hline B & 2 \\\\\\\\ \\\\hline \\\\end{array} $$",
@@ -1463,14 +1441,14 @@ Check every section's header or overall syllabus instructions to determine if at
   "marks": "4",          // Override section defaults per question
   "negativeMarks": "1"
 }`}
-                    </pre>
-                  </div>
+                </pre>
+              </div>
 
-                  <div>
-                    <h5 className="font-bold mb-2">6. Advanced Attempt Controls</h5>
-                    <p className="text-muted-foreground mb-2">In section-wise tests, you can restrict how many questions a student can attempt per section using <code>attempt_control</code>.</p>
-                    <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                      {`{
+              <div>
+                <h5 className="font-bold mb-2">6. Advanced Attempt Controls</h5>
+                <p className="text-muted-foreground mb-2">In section-wise tests, you can restrict how many questions a student can attempt per section using <code>attempt_control</code>.</p>
+                <pre className="bg-slate-950 text-slate-50 p-3 rounded text-xs font-mono overflow-x-auto">
+                  {`{
   "id": "section-2",
   "name": "Chemistry",
   "instructions": "Attempt any 5 questions out of 10.",
@@ -1482,15 +1460,46 @@ Check every section's header or overall syllabus instructions to determine if at
   },
   "questions": [ ... ]
 }`}
-                    </pre>
-                  </div>
+                </pre>
+              </div>
 
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
 
-        </div>
+    </div>
+  );
+
+  if (isInline) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {trigger ? (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      ) : controlledOpen === undefined ? (
+        <DialogTrigger asChild>
+          <Button variant="link" className="text-xs text-muted-foreground h-auto p-0 underline decoration-dashed underline-offset-4 hover:text-primary">
+            format the file. (Guide)
+          </Button>
+        </DialogTrigger>
+      ) : null}
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <FileText className="h-6 w-6 text-blue-600" />
+            Upload Guide
+          </DialogTitle>
+          <DialogDescription className="text-base">
+            Follow these 4 simple steps to upload tests in bulk.
+          </DialogDescription>
+        </DialogHeader>
+
+        {content}
       </DialogContent>
     </Dialog>
   );
