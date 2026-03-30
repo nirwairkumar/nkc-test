@@ -2609,6 +2609,28 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     )}
                     <Button onClick={handleSave} disabled={loading} size="lg" className="min-w-[150px]">{loading ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2" />} Save Test</Button>
                 </div>
+
+                {/* Floating Navigation Arrows */}
+                <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[9999]">
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="rounded-full shadow-lg border border-slate-200 bg-white/90 backdrop-blur-sm hover:bg-white hover:text-indigo-600 transition-all h-10 w-10 shrink-0 group/scroll"
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        title="Scroll to Top"
+                    >
+                        <ChevronUp className="h-6 w-6 text-slate-500 group-hover/scroll:scale-110 transition-transform" />
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="rounded-full shadow-lg border border-slate-200 bg-white/90 backdrop-blur-sm hover:bg-white hover:text-indigo-600 transition-all h-10 w-10 shrink-0 group/scroll"
+                        onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
+                        title="Scroll to Bottom"
+                    >
+                        <ChevronDown className="h-6 w-6 text-slate-500 group-hover/scroll:scale-110 transition-transform" />
+                    </Button>
+                </div>
             </div>
             <ScreenshotCaptureModal
                 isOpen={isCaptureModalOpen}
