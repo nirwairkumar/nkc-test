@@ -452,6 +452,302 @@ Pay special attention to:
 • Mixed question types
 
 Return ONLY RAW JSON.`;
+
+  //------section wise questions 2.0-------->
+  //   const jsonTemplateSection = `ROLE:
+  // You are a high-precision AI exam parser specialized in complex multi-section competitive exams (JEE/NEET/GATE/SSC/UPSC style).
+
+  // -> Give full output in one **code snippet** only.
+
+  // GOAL:
+  // Convert the PROVIDED PDF/IMAGE/TEXT into a STRICTLY VALID JSON test file that exactly matches the required structure.
+
+  // The platform supports:
+  // • Mixed question types inside same section
+  // • Section fallback marking
+  // • Per-question marking override
+  // • Comprehension groups using groupId
+  // • KaTeX + Markdown rendering
+  // • Mathematical expressions
+  // • Tables
+  // • Match-the-following
+  // • Optional images
+  // • Numerical range answers
+
+  // --------------------------------------------------
+
+  // ABSOLUTE OUTPUT RULES
+
+  // 1. RETURN ONLY RAW JSON
+  // 2. NO explanation
+  // 3. NO markdown formatting
+  // 4. NO text before or after JSON
+  // 5. JSON must be syntactically valid
+  // 6. DO NOT include keys if their value is null or truly absent
+  // 7. Question IDs must be sequential integers (1,2,3,...)
+  // 8. Deeply scan mathematical syntax before finalizing
+  // 9. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+
+  // FILE STRUCTURE
+  // {
+  //   "title": "write relevant title",     
+  //   "description": "write relevant description",     
+  //   "maxMarks": "", 
+  //   "duration": "analyse and find total duration of exam in minutes",
+  //   "sections": [...]
+  // }
+
+
+  // SECTION STRUCTURE
+
+  // Each section must follow:
+
+  // {
+  //   "id": "section-1",
+  //   "name": "Section Name",
+  //   "questions": [...],
+  // }
+
+  // NOTE:
+  // question_type is only a default hint.
+  // Each question must independently detect its correct type.
+
+  // --------------------------------------------------
+
+  // QUESTION OBJECT STRUCTURE
+
+  // Each question must follow:
+
+  // {
+  //   "id": 1,
+  //   "type": "single | multiple | numerical",
+  //   "question": "Exact extracted text (KaTeX preserved)",
+  //   "marks": "2",
+  //   "negativeMarks": "0",
+  //   "groupId": "",
+  //   "options": {...},
+  //   "correctAnswer": ...,
+  //   "passageContent": ""
+  // }
+
+  // --------------------------------------------------
+
+  // QUESTION TYPE DETECTION (MANDATORY)
+
+  // Detect automatically:
+
+  // "type": "single"
+  // → exactly one correct option
+
+  // "type": "multiple"
+  // → more than one correct option OR instruction like:
+  //    - Select all correct
+  //    - Choose correct statements
+
+  // "type": "numerical"
+  // → No options OR integer/decimal answer required
+
+  // NEVER default all questions to single.
+
+  // --------------------------------------------------
+
+  // MARKING RULES
+
+  // ✔ "marks"
+  // - Always include
+  // - Must be string
+  // - If not given per question → inherit from section
+
+  // ✔ "negativeMarks"
+  // - Always include
+  // - Must be string
+  // - If not given → inherit from section
+
+  // --------------------------------------------------
+
+  // GROUPING RULE (COMPREHENSION)
+
+  // If multiple questions share a passage:
+
+  // - Assign SAME groupId (e.g., "grp1")
+  // - Include SAME passageContent inside each question
+  // - If not comprehension:
+  //     groupId = ""
+  //     passageContent = ""
+
+  // These two keys must ALWAYS exist.
+
+  // --------------------------------------------------
+
+  // IMAGE RULES
+
+  // If question contains image:
+  //     include "image": "base64_or_image-true"
+
+  // If no image:
+  //     DO NOT include "image" key
+
+  // If any option contains image:
+  //     include "optionImages": { ... }
+
+  // If no option images:
+  //     DO NOT include "optionImages"
+
+  // --------------------------------------------------
+
+  // OPTIONS RULE
+
+  // For single & multiple:
+  //     "options": {
+  //       "A": "Exact extracted text (KaTeX preserved)",
+  //       "B": "Exact extracted text (KaTeX preserved)",
+  //       "C": "Exact extracted text (KaTeX preserved)",
+  //       "D": "Exact extracted text (KaTeX preserved)"
+  //     }
+
+  // For numerical:
+  //     Provide empty options structure:
+  //     "options": {
+  //       "A": "",
+  //       "B": "",
+  //       "C": "",
+  //       "D": ""
+  //     }
+
+  // --------------------------------------------------
+
+  // CORRECT ANSWER FORMAT
+
+  // Single:
+  //     "correctAnswer": "C"
+
+  // Multiple:
+  //     "correctAnswer": ["A","B"]
+
+  // Numerical:
+  //     "correctAnswer": { "min": 3, "max": 3 }
+
+  // --------------------------------------------------
+
+  // MATHEMATICAL EXPRESSION RULES
+
+  // 1. Deeply scan for:
+  //    • Fractions
+  //    • Integrals
+  //    • Limits
+  //    • Summations
+  //    • Roots
+  //    • Powers
+  //    • Matrices
+  //    • Greek letters
+  //    • Subscripts
+  //    • Superscripts
+
+  // 2. Convert to KaTeX-compatible LaTeX.
+
+  // 3. Do NOT simplify.
+
+  // 4. Preserve symbols exactly.
+
+  // 5. Example:
+  // √(x^2 + y^2)
+  // → "$\\sqrt{x^2 + y^2}$"
+
+  // --------------------------------------------------
+
+  // 🔥 TABLE DETECTION RULE (CRITICAL)
+
+  // If a question contains a TABLE or tabular data:
+
+  // You MUST convert it into KaTeX array format.
+
+  // Example conversion:
+
+  // Original table:
+
+  // | A | B |
+  // |---|---|
+  // | 1 | 2 |
+  // | 3 | 4 |
+
+  // Convert to:
+  // $$
+  // \\begin{array}{|c|c|}
+  // \\hline
+  // A & B \\\\
+  // \\hline
+  // 1 & 2 \\\\
+  // 3 & 4 \\\\
+  // \\hline
+  // \\end{array}
+  // $$
+
+  // Embed this directly inside the "question" string.
+
+  // NEVER output HTML table.
+  // NEVER output raw markdown table.
+
+  // Always convert to LaTeX array environment.
+
+  // --------------------------------------------------
+
+  // 🔥 MATCH-THE-FOLLOWING RULE
+
+  // If question is "Match the Following" OR has two columns:
+
+  // Convert into structured KaTeX format:
+
+  // Example:
+
+  // Column I      Column II
+  // A. Apple      1. Fruit
+  // B. Car        2. Vehicle
+
+  // Convert to:
+  // $$
+  // \\begin{array}{ll}
+  // \\text{Column I} & \\text{Column II} \\\\
+  // A.\\ \\text{Apple} & 1.\\ \\text{Fruit} \\\\
+  // B.\\ \\text{Car} & 2.\\ \\text{Vehicle}
+  // \\end{array}
+  // $$
+
+  // Embed this inside the question text.
+
+  // DO NOT output HTML.
+  // DO NOT output plain text table.
+
+  // Always use LaTeX array.
+
+  // --------------------------------------------------
+
+  // STRICT VALIDATION BEFORE OUTPUT
+
+  // Internally verify:
+
+  // ✔ IDs sequential integers
+  // ✔ No duplicate IDs
+  // ✔ Single → string correctAnswer
+  // ✔ Multiple → array correctAnswer
+  // ✔ Numerical → object correctAnswer
+  // ✔ groupId consistent for comprehension
+  // ✔ No null fields written
+  // ✔ Valid JSON
+
+  // --------------------------------------------------
+
+  // FINAL COMMAND
+
+  // Deep scan entire document.
+  // Pay special attention to:
+  // • Mathematical syntax
+  // • Tables
+  // • Match-the-following
+  // • Comprehension blocks
+  // • Mixed question types
+  // -> Give full output in ONLY RAW JSON in one **code snippet** only.
+  // `;
+
   const jsonTemplateSection = `ROLE:
 You are a high-precision AI exam parser specialized in complex multi-section competitive exams (JEE/NEET/GATE/SSC/UPSC style).
 
@@ -484,15 +780,15 @@ ABSOLUTE OUTPUT RULES
 6. DO NOT include keys if their value is null or truly absent
 7. Question IDs must be sequential integers (1,2,3,...)
 8. Deeply scan mathematical syntax before finalizing
-9. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+9. CRITICAL: Use DOUBLE BACKSLASHES (\\) for all LaTeX commands (e.g., use \\frac instead of \frac).
 
 FILE STRUCTURE
 {
-  "title": "write relevant title",     
-  "description": "write relevant description",     
-  "maxMarks": "", 
-  "duration": "analyse and find total duration of exam in minutes",
-  "sections": [...]
+  "title": "write relevant title",     
+  "description": "write relevant description",     
+  "maxMarks": "", 
+  "duration": "analyse and find total duration of exam in minutes",
+  "sections": [...]
 }
 
 
@@ -501,9 +797,9 @@ SECTION STRUCTURE
 Each section must follow:
 
 {
-  "id": "section-1",
-  "name": "Section Name",
-  "questions": [...],
+  "id": "section-1",
+  "name": "Section Name",
+  "questions": [...],
 }
 
 NOTE:
@@ -517,15 +813,15 @@ QUESTION OBJECT STRUCTURE
 Each question must follow:
 
 {
-  "id": 1,
-  "type": "single | multiple | numerical",
-  "question": "Exact extracted text (KaTeX preserved)",
-  "marks": "2",
-  "negativeMarks": "0",
-  "groupId": "",
-  "options": {...},
-  "correctAnswer": ...,
-  "passageContent": ""
+  "id": 1,
+  "type": "single | multiple | numerical",
+  "question": "Exact extracted text (KaTeX preserved)",
+  "marks": "2",
+  "negativeMarks": "0",
+  "groupId": "",
+  "options": {...},
+  "correctAnswer": ...,
+  "passageContent": ""
 }
 
 --------------------------------------------------
@@ -539,8 +835,8 @@ Detect automatically:
 
 "type": "multiple"
 → more than one correct option OR instruction like:
-   - Select all correct
-   - Choose correct statements
+   - Select all correct
+   - Choose correct statements
 
 "type": "numerical"
 → No options OR integer/decimal answer required
@@ -570,8 +866,8 @@ If multiple questions share a passage:
 - Assign SAME groupId (e.g., "grp1")
 - Include SAME passageContent inside each question
 - If not comprehension:
-    groupId = ""
-    passageContent = ""
+    groupId = ""
+    passageContent = ""
 
 These two keys must ALWAYS exist.
 
@@ -580,66 +876,66 @@ These two keys must ALWAYS exist.
 IMAGE RULES
 
 If question contains image:
-    include "image": "base64_or_image-true"
+    include "image": "base64_or_image-true"
 
 If no image:
-    DO NOT include "image" key
+    DO NOT include "image" key
 
 If any option contains image:
-    include "optionImages": { ... }
+    include "optionImages": { ... }
 
 If no option images:
-    DO NOT include "optionImages"
+    DO NOT include "optionImages"
 
 --------------------------------------------------
 
 OPTIONS RULE
 
 For single & multiple:
-    "options": {
-      "A": "Exact extracted text (KaTeX preserved)",
-      "B": "Exact extracted text (KaTeX preserved)",
-      "C": "Exact extracted text (KaTeX preserved)",
-      "D": "Exact extracted text (KaTeX preserved)"
-    }
+    "options": {
+      "A": "Exact extracted text (KaTeX preserved)",
+      "B": "Exact extracted text (KaTeX preserved)",
+      "C": "Exact extracted text (KaTeX preserved)",
+      "D": "Exact extracted text (KaTeX preserved)"
+    }
 
 For numerical:
-    Provide empty options structure:
-    "options": {
-      "A": "",
-      "B": "",
-      "C": "",
-      "D": ""
-    }
+    Provide empty options structure:
+    "options": {
+      "A": "",
+      "B": "",
+      "C": "",
+      "D": ""
+    }
 
 --------------------------------------------------
 
 CORRECT ANSWER FORMAT
 
 Single:
-    "correctAnswer": "C"
+    "correctAnswer": "C"
 
 Multiple:
-    "correctAnswer": ["A","B"]
+    "correctAnswer": ["A","B"]
 
 Numerical:
-    "correctAnswer": { "min": 3, "max": 3 }
+    "correctAnswer": { "min": 3, "max": 3 }
 
 --------------------------------------------------
 
 MATHEMATICAL EXPRESSION RULES
 
 1. Deeply scan for:
-   • Fractions
-   • Integrals
-   • Limits
-   • Summations
-   • Roots
-   • Powers
-   • Matrices
-   • Greek letters
-   • Subscripts
-   • Superscripts
+   • Fractions
+   • Integrals
+   • Limits
+   • Summations
+   • Roots
+   • Powers
+   • Matrices
+   • Greek letters
+   • Subscripts
+   • Superscripts
 
 2. Convert to KaTeX-compatible LaTeX.
 
@@ -649,7 +945,7 @@ MATHEMATICAL EXPRESSION RULES
 
 5. Example:
 √(x^2 + y^2)
-→ "$\\sqrt{x^2 + y^2}$"
+→ "$\sqrt{x^2 + y^2}$"
 
 --------------------------------------------------
 
@@ -670,14 +966,14 @@ Original table:
 
 Convert to:
 $$
-\\begin{array}{|c|c|}
-\\hline
-A & B \\\\
-\\hline
-1 & 2 \\\\
-3 & 4 \\\\
-\\hline
-\\end{array}
+\begin{array}{|c|c|}
+\hline
+A & B \\
+\hline
+1 & 2 \\
+3 & 4 \\
+\hline
+\end{array}
 $$
 
 Embed this directly inside the "question" string.
@@ -686,6 +982,11 @@ NEVER output HTML table.
 NEVER output raw markdown table.
 
 Always convert to LaTeX array environment.
+
+--------------------------------------------------
+Line break:
+if no LaTeX/KaTeX format used in any particular text area, then use visible line break.
+if LaTeX/KaTex format used in any particular text area, then use </br> for line break
 
 --------------------------------------------------
 
@@ -697,17 +998,17 @@ Convert into structured KaTeX format:
 
 Example:
 
-Column I      Column II
-A. Apple      1. Fruit
-B. Car        2. Vehicle
+Column I      Column II
+A. Apple      1. Fruit
+B. Car        2. Vehicle
 
 Convert to:
 $$
-\\begin{array}{ll}
-\\text{Column I} & \\text{Column II} \\\\
-A.\\ \\text{Apple} & 1.\\ \\text{Fruit} \\\\
-B.\\ \\text{Car} & 2.\\ \\text{Vehicle}
-\\end{array}
+\begin{array}{ll}
+\text{Column I} & \text{Column II} \\
+A.\ \text{Apple} & 1.\ \text{Fruit} \\
+B.\ \text{Car} & 2.\ \text{Vehicle}
+\end{array}
 $$
 
 Embed this inside the question text.
@@ -744,7 +1045,69 @@ Pay special attention to:
 • Comprehension blocks
 • Mixed question types
 -> Give full output in ONLY RAW JSON in one **code snippet** only.
-`;
+-----------------------------------------
+question id should same as question number. analyse question and make is perfect and complete without any skipping.
+
+--------------------------------------------------
+
+CHEMISTRY & SCIENTIFIC NOTATION RULES
+
+The platform supports KaTeX + mhchem.
+
+When converting chemistry content:
+
+1. Chemical formulas must use mhchem inside KaTeX.
+
+Examples:
+H2SO4 → "$\\ce{H2SO4}$"
+Fe3+ → "$\\ce{Fe^3+}$"
+SO4^2- → "$\\ce{SO4^2-}$"
+
+2. Chemical reactions must use mhchem arrows.
+
+Example:
+2Na + 2H2O → 2NaOH + H2
+
+Convert to:
+"$\\ce{2Na + 2H2O -> 2NaOH + H2}$"
+
+3. Structural formulas (organic chains) must use mhchem when possible.
+
+Example:
+CH3-CH=CH-CO-CH3  
+→ "$\\ce{CH3-CH=CH-CO-CH3}$"
+$\ce{CH3-CH=CH-\overset{O}{\overset{||}{C}}-CH3}$
+4. Units must use the "\pu{ }" syntax.
+
+Example:
+4.18 J g⁻¹ K⁻¹  
+→ "$\\pu{4.18 J g-1 K-1}$"
+
+5. If a question contains complex chemical diagrams such as:
+• benzene rings  
+• Haworth projections  
+• resonance structures  
+• skeletal organic structures  
+• reaction mechanisms  
+
+DO NOT convert them to LaTeX.
+
+Instead mark them as images using:
+
+"image": "image-true"
+
+or
+
+"optionImages": { ... }
+
+--------------------------------------------------
+question id same as question number
+-> Give full output in ONLY RAW JSON in one **code snippet** only.
+->each question should have different id (you can go sequencely).
+-> consider only english part. scan each question, and extract the same without any change.
+->reverify each question/options until adjectly same as question paper.
+-> remove [cite:$$$] then add in json.
+-> you must match the answer from solution pdf correctly.`;
 
   const jsonTemplateSectionAddon = `--------------------------------------------------
 
