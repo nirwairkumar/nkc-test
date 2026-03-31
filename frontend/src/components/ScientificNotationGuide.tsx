@@ -153,9 +153,9 @@ export function ScientificNotationGuide({ isInline = false }: { isInline?: boole
                                     className="group bg-white rounded-3xl border border-slate-200 overflow-hidden transition-all hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-100/30 flex flex-col"
                                 >
                                     {/* Professional Visual Representation Row */}
-                                    <div className="p-8 flex items-center justify-center bg-slate-50/50 border-b border-slate-100 min-h-[160px] flex-1">
+                                    <div className="p-6 flex items-center justify-center bg-slate-50/50 border-b border-slate-100 min-h-[120px] flex-1">
                                         <div className="w-full">
-                                            <LatexRenderer children={visualContent} className="!text-3xl text-slate-900" />
+                                            <LatexRenderer children={visualContent} className="!text-xl text-slate-900" />
                                         </div>
                                     </div>
 
