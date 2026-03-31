@@ -4,6 +4,7 @@ import { SEO } from '@/components/SEO';
 import { BookOpen, FileText, FlaskConical, Sparkles, ChevronRight } from 'lucide-react';
 import { SolutionUploadGuide } from '@/components/SolutionUploadGuide';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
+import { ScientificNotationGuide } from '@/components/ScientificNotationGuide';
 import { cn } from '@/lib/utils';
 
 // --- Guide Registry ---
@@ -49,11 +50,11 @@ const GUIDES: GuideEntry[] = [
     {
         slug: 'chemistry-notation',
         title: 'Chemistry & Scientific Notation',
-        description: 'Guide for using mhchem and KaTeX for chemistry and scientific formulas.',
+        description: 'Comprehensive guide for using mhchem and KaTeX for chemistry and scientific formulas.',
         icon: <FlaskConical className="h-5 w-5" />,
         color: 'text-emerald-600',
         bgColor: 'bg-emerald-50',
-        status: 'coming-soon',
+        status: 'available',
     },
 ];
 
@@ -180,6 +181,7 @@ export default function UserGuidePage() {
                                 <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
                                     {slug === 'solution-upload-guide' && <SolutionUploadGuide isInline />}
                                     {slug === 'json-test-upload-guide' && <TestUploadFormatGuide isInline />}
+                                    {slug === 'chemistry-notation' && <ScientificNotationGuide isInline />}
                                 </div>
                             </div>
                         ) : (
