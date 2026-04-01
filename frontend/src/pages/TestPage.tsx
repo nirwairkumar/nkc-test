@@ -29,6 +29,7 @@ import ScientificCalculator from '@/components/ScientificCalculator';
 import { submitReport } from '@/lib/reportsApi';
 import { analyticsApi } from '@/lib/analyticsApi';
 import { Progress } from '@/components/ui/progress';
+import ExitFeedbackDialog from '@/components/ExitFeedbackDialog';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -74,6 +75,7 @@ export default function TestPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
 
   // Reporting State
   const [reportReason, setReportReason] = useState<string>('');
@@ -1290,6 +1292,15 @@ export default function TestPage() {
             </>
           )}
 
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+            onClick={() => setShowExitDialog(true)}
+          >
+            Exit
+          </Button>
+
           <Button onClick={attemptSubmit} disabled={isSubmitting} variant="destructive" size="sm" className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold shadow-sm ml-auto md:ml-0 overflow-hidden shrink-0">
             Submit Test
           </Button>
@@ -1987,6 +1998,14 @@ export default function TestPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ExitFeedbackDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+        testId={id || test.id}
+        userId={user?.id}
+        onConfirmExit={() => navigate('/')}
+      />
     </div >
   );
 }
