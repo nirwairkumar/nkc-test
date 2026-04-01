@@ -348,7 +348,7 @@ async def get_test_by_id(
         raise
     except Exception as e:
         print(f"Error fetching test details: {e}")
-        raise HTTPException(status_code=404, detail="Test not found")
+        raise HTTPException(status_code=500, detail=f"Server error fetching test: {str(e)}")
 
 
 @router.get("/slug/{slug}")
@@ -409,4 +409,4 @@ async def get_test_by_slug(
         raise
     except Exception as e:
         print(f"Error fetching test by slug: {e}")
-        raise HTTPException(status_code=404, detail="Test not found")
+        raise HTTPException(status_code=500, detail=f"Server error fetching test: {str(e)}")
