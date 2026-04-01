@@ -380,16 +380,45 @@ export async function fetchTestById(id: string, onCacheHit?: (data: any) => void
     if (cached && onCacheHit) {
         onCacheHit(cached);
     }
-    try {
-        const response = await apiClient.get(`tests/${id}`);
-        const data = response.data;
-        _setCachedTest(id, data);
-        return { data, error: null };
-    } catch (error: any) {
-        if (cached) return { data: cached, error: null }; // fallback to cache on error
-        console.error("Error fetching test details:", error);
-        return { data: null, error: error };
+
+    const maxRetries = 3;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await apiClient.get(`tests/${id}`);
+            const data = response.data;
+            _setCachedTest(id, data);
+            return { data, error: null };
+        } catch (error: any) {
+            // Don't retry on 404 (test genuinely doesn't exist)
+            if (error.response?.status === 404) {
+                if (cached) return { data: cached, error: null };
+                return { data: null, error: error };
+            }
+
+            // Retryable: network errors, timeouts, 5xx server errors
+            const isRetryable = !error.response ||
+                error.response?.status >= 500 ||
+                error.code === 'ECONNABORTED' ||
+                error.message?.includes('timeout') ||
+                error.message?.includes('Network Error');
+
+            if (isRetryable && attempt < maxRetries) {
+                console.warn(`[testsApi] fetchTestById attempt ${attempt + 1} failed, retrying in ${(attempt + 1)}s...`);
+                await new Promise(r => setTimeout(r, (attempt + 1) * 1000));
+                continue;
+            }
+
+            // All retries exhausted
+            if (cached) return { data: cached, error: null }; // fallback to cache on error
+            console.error("Error fetching test details:", error);
+            return { data: null, error: error };
+        }
     }
+
+    // Should not reach here, but safety fallback
+    if (cached) return { data: cached, error: null };
+    return { data: null, error: new Error('Max retries exceeded') };
 }
 
 // --- Aliases for Backend Unified Lookup ---

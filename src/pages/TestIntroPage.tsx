@@ -102,6 +102,8 @@ export default function TestIntroPage() {
     const [loading, setLoading] = useState(true);
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const MAX_AUTO_RETRIES = 2;
 
     // Logic State
     const [showFullScreenDialog, setShowFullScreenDialog] = useState(false);
@@ -151,8 +153,9 @@ export default function TestIntroPage() {
         }
     };
 
-    const loadTestBySlug = async (testSlug: string) => {
+    const loadTestBySlug = async (testSlug: string, attempt: number = 0) => {
         setLoading(true);
+        setError(null);
         try {
             const { data, error } = await fetchTestBySlug(testSlug, (cachedData) => {
                 setTest(cachedData);
@@ -166,15 +169,22 @@ export default function TestIntroPage() {
                 setTimeout(() => setLoading(false), 300);
             }
         } catch (err: any) {
-            console.error("Error loading test by slug:", err);
+            console.error(`Error loading test by slug (attempt ${attempt + 1}):`, err);
+            const is404 = err?.response?.status === 404 || err?.message === 'Test not found';
+            if (!is404 && attempt < MAX_AUTO_RETRIES) {
+                setRetryCount(attempt + 1);
+                await new Promise(r => setTimeout(r, 2000));
+                return loadTestBySlug(testSlug, attempt + 1);
+            }
             setError(err.message || "Failed to load test details.");
         } finally {
             setLoading(false);
         }
     };
 
-    const loadTestById = async (testId: string) => {
+    const loadTestById = async (testId: string, attempt: number = 0) => {
         setLoading(true);
+        setError(null);
         try {
             const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(testId);
             let data, error;
@@ -208,7 +218,13 @@ export default function TestIntroPage() {
 
             setTest(data);
         } catch (err: any) {
-            console.error("Error loading test:", err);
+            console.error(`Error loading test (attempt ${attempt + 1}):`, err);
+            const is404 = err?.response?.status === 404 || err?.message === 'Test not found';
+            if (!is404 && attempt < MAX_AUTO_RETRIES) {
+                setRetryCount(attempt + 1);
+                await new Promise(r => setTimeout(r, 2000));
+                return loadTestById(testId, attempt + 1);
+            }
             setError(err.message || "Failed to load test details.");
         } finally {
             setLoading(false);
@@ -362,7 +378,7 @@ export default function TestIntroPage() {
                         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-indigo-500">
                             <span className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></div>
-                                Loading Data
+                                {retryCount > 0 ? `Retrying (${retryCount}/${MAX_AUTO_RETRIES})...` : 'Loading Data'}
                             </span>
                             <span>{Math.round(loadingProgress)}%</span>
                         </div>
