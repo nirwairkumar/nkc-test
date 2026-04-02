@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Save, ArrowLeft, Upload, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
-import { fetchTestById, fetchSolutions, saveSolutions } from '@/lib/testsApi';
+import { Loader2, Save, ArrowLeft, Upload, Trash2, ChevronUp, ChevronDown, Pencil, Sparkles } from 'lucide-react';
+import { fetchTestById, fetchSolutions, saveSolutions, updateTest } from '@/lib/testsApi';
 import { IMEInput } from '@/components/ui/IMEInput';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 
@@ -14,6 +14,7 @@ export default function SolutionEditorPage() {
 
     const [test, setTest] = useState<any>(null);
     const [solutions, setSolutions] = useState<Record<string, string>>({});
+    const [topics, setTopics] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -37,6 +38,17 @@ export default function SolutionEditorPage() {
                 if (solRes.data && solRes.data.solutions) {
                     setSolutions(solRes.data.solutions);
                 }
+
+                // Initialize topics from test questions
+                const allQs = testD.enable_section_mode && testD.sections
+                    ? testD.sections.flatMap((s: any) => s.questions || [])
+                    : testD.questions || [];
+                
+                const initialTopics: Record<string, string> = {};
+                allQs.forEach((q: any) => {
+                    if (q.topic) initialTopics[String(q.id)] = q.topic;
+                });
+                setTopics(initialTopics);
             } catch (err: any) {
                 toast.error("Failed to load test or solutions");
                 console.error(err);
@@ -50,6 +62,13 @@ export default function SolutionEditorPage() {
 
     const handleSolutionChange = (questionId: string | number, value: string) => {
         setSolutions(prev => ({
+            ...prev,
+            [String(questionId)]: value
+        }));
+    };
+
+    const handleTopicChange = (questionId: string | number, value: string) => {
+        setTopics(prev => ({
             ...prev,
             [String(questionId)]: value
         }));
@@ -74,12 +93,37 @@ export default function SolutionEditorPage() {
                 }
             }
 
-            const { error } = await saveSolutions(testId, cleanedSolutions);
-            if (error) throw new Error(error.message || "Failed to save");
+            const { error: solErr } = await saveSolutions(testId, cleanedSolutions);
+            if (solErr) throw new Error(solErr.message || "Failed to save solutions");
 
-            toast.success("Solutions saved successfully!");
+            // 2. Save Topics (Update Test Object)
+            const allQs = test.enable_section_mode && test.sections
+                ? test.sections.flatMap((s: any) => s.questions || [])
+                : test.questions || [];
+
+            const updatedQuestions = allQs.map((q: any) => ({
+                ...q,
+                topic: topics[String(q.id)] || ''
+            }));
+
+            let updatePayload: any = {};
+            if (test.enable_section_mode && test.sections) {
+                let qIndex = 0;
+                const updatedSections = test.sections.map((sec: any) => {
+                    const secQs = (sec.questions || []).map(() => updatedQuestions[qIndex++]);
+                    return { ...sec, questions: secQs };
+                });
+                updatePayload = { sections: updatedSections };
+            } else {
+                updatePayload = { questions: updatedQuestions };
+            }
+
+            const { error: testErr } = await updateTest(testId, updatePayload);
+            if (testErr) throw new Error("Failed to save topics");
+
+            toast.success("Solutions and Topics saved successfully!");
         } catch (err: any) {
-            toast.error(err.message || "Failed to save solutions");
+            toast.error(err.message || "Failed to save data");
         } finally {
             setSaving(false);
         }
@@ -257,8 +301,22 @@ export default function SolutionEditorPage() {
                                 </CardHeader>
                                 <CardContent className="pt-4 pl-6 pb-4">
                                     <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detailed Solution</label>
+                                         <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Detailed Solution</label>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-md shadow-sm">
+                                                    <Sparkles className="w-3 h-3 text-indigo-500" />
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Topic:</span>
+                                                    <input 
+                                                        className="text-xs font-medium bg-transparent border-none focus:ring-0 p-0 w-32 placeholder:text-slate-300"
+                                                        placeholder="Add Topic..."
+                                                        value={topics[q.id] || ''}
+                                                        onChange={(e) => handleTopicChange(q.id, e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
                                             {activeQuestionId === String(q.id) && (
                                                 <span className="text-[10px] text-indigo-500 font-medium animate-pulse">Editing Mode</span>
                                             )}

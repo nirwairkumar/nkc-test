@@ -4,6 +4,7 @@ from supabase import Client
 
 from typing import Optional, List, Dict, Any
 from app.routers.tests.utils import enrich_tests
+from app.routers.tests.cache_config import bust_test_cache
 
 router = APIRouter()
 
@@ -106,6 +107,8 @@ async def admin_update_test(
         from app.core.database import supabase as admin_db
         # Update using Service Role Key (bypasses RLS)
         response = admin_db.table("tests").update(payload).eq("id", test_id).execute()
+        if response.data:
+            bust_test_cache(test_id)
         return response.data[0] if response.data else None
     except Exception as e:
         print(f"Error updating test (admin): {e}")
@@ -120,6 +123,7 @@ async def admin_delete_test(
         from app.core.database import supabase as admin_db
         # Delete using Service Role Key (bypasses RLS)
         response = admin_db.table("tests").delete().eq("id", test_id).execute()
+        bust_test_cache(test_id)
         return {"success": True}
     except Exception as e:
         print(f"Error deleting test (admin): {e}")

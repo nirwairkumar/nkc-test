@@ -98,6 +98,7 @@ export interface Question {
     negativeMarks?: number | string;
     typingMode?: 'en' | 'hi';
     originalIndex?: number; // Added to strictly track index when shuffling
+    topic?: string; // AI generated or manual topic
 }
 
 // ---------------- TEST MANAGEMENT (BACKEND) ----------------
@@ -184,6 +185,19 @@ export async function deleteTest(id: string, isAdmin: boolean = false) {
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
+    }
+}
+
+// ---------------- AI & UTILITIES ----------------
+
+export async function generateTopics(questions: { id: string | number; text: string }[]) {
+    try {
+        const response = await apiClient.post('ai/generate/topics', {
+            questions: questions.map(q => ({ id: String(q.id), text: q.text }))
+        });
+        return { data: response.data.topics as Record<string, string>, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
     }
 }
 
