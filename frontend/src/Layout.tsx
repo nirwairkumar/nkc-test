@@ -36,7 +36,10 @@ export default function Layout() {
     }, [user, profile, navigate, location.pathname]);
     // Hide navbar only on live test page (/test/:id)
     // Also hiding on /test-intro/:id as requested
+    const isResultsPage = location.pathname.startsWith('/results');
     const isLiveTestPage = location.pathname.startsWith('/test/') || location.pathname.startsWith('/test-intro/') || location.pathname.startsWith('/live/') || location.pathname.startsWith('/test-submitted');
+
+    const hideFooter = isLiveTestPage || isResultsPage;
 
     return (
         <div className="min-h-screen bg-slate-50 dashboard-mesh-bg flex flex-col">
@@ -48,7 +51,7 @@ export default function Layout() {
             <main className="flex-grow">
                 <Outlet />
             </main>
-            {!isLiveTestPage && <Footer />}
+            {!hideFooter && <Footer />}
         </div>
     );
 }

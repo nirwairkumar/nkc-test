@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
 import { FeedbackForm } from '@/components/FeedbackForm';
+import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import 'katex/dist/katex.min.css';
 import LatexRenderer from '@/components/ui/LatexRenderer';
@@ -891,6 +892,7 @@ const ResultsPage = () => {
             )}
           </AnimatePresence>
         </div>
+        <Footer />
       </div>
 
       {/* Ad-like Sliding Popup */}
