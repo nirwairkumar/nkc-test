@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Test, TestSettings, updateTest } from '@/lib/testsApi';
+import { Test, TestSettings, updateTest, generateTopics, Question, fetchTestById } from '@/lib/testsApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown } from 'lucide-react';
+import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2 } from 'lucide-react';
 import { ClassItem, fetchClasses } from '@/lib/classesApi';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
@@ -40,8 +40,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
     // Manage class_id separately as it's not part of TestSettings jsonb
     const [classId, setClassId] = useState<string | null>(test.class_id || null);
+    const [currentTest, setCurrentTest] = useState<Test>(test);
 
     const [loading, setLoading] = useState(false);
+    const [topicGenerating, setTopicGenerating] = useState(false);
     const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
 
     // Premium status check
@@ -49,6 +51,24 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const navigate = useNavigate();
 
     useEffect(() => {
+        const loadFullTest = async () => {
+            const hasQuestionsOrSections = (test.questions && test.questions.length > 0) || 
+                                         (test.sections && test.sections.length > 0);
+            
+            if (!hasQuestionsOrSections) {
+                const { data } = await fetchTestById(test.id);
+                if (data) {
+                    setCurrentTest(data);
+                    if (data.settings) {
+                        setSettings(prev => ({ ...prev, ...data.settings }));
+                    }
+                    setClassId(data.class_id || null);
+                }
+            } else {
+                setCurrentTest(test);
+            }
+        };
+
         if (test.settings) {
             setSettings(prev => ({ ...prev, ...test.settings }));
         }
@@ -59,6 +79,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 if (data) setAvailableClasses(data);
             });
         }
+
+        loadFullTest();
     }, [test]);
 
     const handleSave = async () => {
@@ -107,6 +129,68 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
     const updateSetting = (key: string, value: any) => {
         setSettings(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleAutoAssignTopics = async () => {
+        if (!isPremium && !overridePremium) {
+            showPremiumToast();
+            return;
+        }
+
+        setTopicGenerating(true);
+        try {
+            // Flatten questions from both modes
+            const questions: Question[] = currentTest.enable_section_mode && currentTest.sections
+                ? currentTest.sections.flatMap(s => s.questions || [])
+                : currentTest.questions || [];
+
+            if (questions.length === 0) {
+                toast.error("No questions found in this test.");
+                return;
+            }
+
+            const payload = questions.map(q => ({
+                id: q.id,
+                text: q.question
+            }));
+
+            const { data: topicsMap, error } = await generateTopics(payload);
+
+            if (error) throw new Error(error);
+            if (!topicsMap) throw new Error("No topics returned");
+
+            // Update local test object (passed as prop, so we need to tell parent or update via API)
+            // The cleanest way is to update the question objects in the 'test' and then call updateTest.
+
+            const updatedQuestions = (questions || []).map(q => ({
+                ...q,
+                topic: topicsMap[String(q.id)] || q.topic
+            }));
+
+            let updatePayload: any = {};
+            if (currentTest.enable_section_mode && currentTest.sections) {
+                // We need to re-structure them back into sections
+                let qIndex = 0;
+                const updatedSections = currentTest.sections.map(sec => {
+                    const secQs = (sec.questions || []).map(() => updatedQuestions[qIndex++]);
+                    return { ...sec, questions: secQs };
+                });
+                updatePayload = { sections: updatedSections };
+            } else {
+                updatePayload = { questions: updatedQuestions };
+            }
+
+            const { error: saveErr } = await updateTest(test.id, updatePayload, overridePremium);
+            if (saveErr) throw saveErr;
+
+            toast.success(`Successfully assigned topics for ${Object.keys(topicsMap).length} questions!`);
+            onUpdate(); // Trigger refresh in parent
+        } catch (err: any) {
+            console.error("Failed to generate topics", err);
+            toast.error("Failed to generate topics: " + err.message);
+        } finally {
+            setTopicGenerating(false);
+        }
     };
 
     const renderProctoring = (mode: string) => (
@@ -417,6 +501,43 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         </div>
     );
 
+    const renderAIUtilities = () => (
+        <div className="space-y-6">
+            <Card className="border-indigo-100 bg-indigo-50/30 dark:bg-indigo-900/10 dark:border-indigo-900/50">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5" /> AI Topic Analyzer
+                    </CardTitle>
+                    <CardDescription>
+                        Automatically categorize your questions into relevant topics using Gemini 2.0 Flash.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-800 space-y-3">
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                            This will analyze question text and assign topics like "Kinematics", "Trigonometry", etc. 
+                            These topics will be used for **Topic-Wise Analysis** on the student results page.
+                        </p>
+                        <Button 
+                            onClick={handleAutoAssignTopics} 
+                            disabled={topicGenerating}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                        >
+                            {topicGenerating ? (
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing Questions...</>
+                            ) : (
+                                <><Sparkles className="w-4 h-4 mr-2" /> ✨ Auto-Assign Topics (AI)</>
+                            )}
+                        </Button>
+                    </div>
+                    <p className="text-[10px] text-center text-slate-400 italic">
+                        Note: You can manually review and edit assigned topics in the "Upload Solutions" page.
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+
     return (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-0 md:p-4">
             <Card className="w-full max-w-4xl h-[100dvh] md:h-[90vh] flex flex-col shadow-xl border-none md:border">
@@ -452,6 +573,11 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         <section>
                             <h3 className="font-bold flex items-center gap-2 mb-4 text-primary bg-primary/5 p-2 rounded"><Eye className="w-5 h-5" /> Results & Timing</h3>
                             {renderResults('mobile')}
+                        </section>
+
+                        <section>
+                            <h3 className="font-bold flex items-center gap-2 mb-4 text-indigo-600 bg-indigo-50 p-2 rounded"><Sparkles className="w-5 h-5" /> AI Utilities</h3>
+                            {renderAIUtilities()}
                         </section>
                     </div>
 
@@ -491,10 +617,11 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <div className="flex-1 overflow-hidden">
                         <Tabs defaultValue="proctoring" className="h-full flex flex-col">
                             <div className="px-6 pt-4">
-                                <TabsList className="grid w-full grid-cols-3">
+                                <TabsList className="grid w-full grid-cols-4">
                                     <TabsTrigger value="proctoring" className="flex gap-2"><Shield className="w-4 h-4" /> Proctoring & Security</TabsTrigger>
                                     <TabsTrigger value="access" className="flex gap-2"><Lock className="w-4 h-4" /> Access & Control</TabsTrigger>
                                     <TabsTrigger value="results" className="flex gap-2"><Eye className="w-4 h-4" /> Results & Timing</TabsTrigger>
+                                    <TabsTrigger value="ai" className="flex gap-2"><Sparkles className="w-4 h-4" /> AI Utilities</TabsTrigger>
                                 </TabsList>
                             </div>
 
@@ -509,6 +636,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
                                 <TabsContent value="results" className="space-y-6 mt-0">
                                     {renderResults('desktop')}
+                                </TabsContent>
+
+                                <TabsContent value="ai" className="space-y-6 mt-0">
+                                    {renderAIUtilities()}
                                 </TabsContent>
                             </div>
                         </Tabs>
