@@ -6,6 +6,7 @@ import json
 from app.routers.tests.schemas import *
 import uuid
 from app.utils.google_indexing import notify_test_created, notify_test_updated
+from app.routers.tests.cache_config import bust_test_cache
 
 router = APIRouter()
 
@@ -98,6 +99,7 @@ async def update_test(
         try:
              response = db.table("tests").update(payload).eq("id", test_id).execute()
              if response.data:
+                bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
                 return response.data[0]
              return None
@@ -114,6 +116,7 @@ async def update_test(
             safe_payload = {k: v for k, v in payload.items() if k in legacy_keys}
             response = db.table("tests").update(safe_payload).eq("id", test_id).execute()
             if response.data:
+                bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
                 return response.data[0]
             return None
@@ -127,6 +130,7 @@ async def update_test(
 async def delete_test(test_id: str, db: Client = Depends(get_db)):
     try:
         response = db.table("tests").delete().eq("id", test_id).execute()
+        bust_test_cache(test_id)
         return {"success": True}
     except Exception as e:
         print(f"Error deleting test: {e}")

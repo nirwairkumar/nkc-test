@@ -132,25 +132,27 @@ async def analyze_test_results(payload: AnalyzeRequest):
         "numerical": {"name": "Numerical", "correct": 0, "wrong": 0, "count": 0}
     }
 
+    topic_data = {}
+
     questions = test.get("questions", [])
-    
+    if enable_section and sections:
+        # If in section mode, source questions from sections
+        questions = []
+        for sec in sections:
+            sec_qs = sec.get("questions", [])
+            # Inject section info into questions if needed for marking
+            for q in sec_qs:
+                q["_section_id"] = str(sec.get("id"))
+                q["_section_marks"] = sec.get("marks_per_question")
+                q["_section_neg"] = sec.get("negative_marks")
+            questions.extend(sec_qs)
+
     for index, q in enumerate(questions):
-        current_section_id = "default"
+        current_section_id = q.get("_section_id", "default")
         q_id = str(q.get("id"))
         
-        marks = parse_mark(test.get("marks_per_question"), 4.0)
-        neg = parse_mark(test.get("negative_marks"), 1.0)
-        
-        if enable_section and sections:
-            r_count = 0
-            for sec in sections:
-                sec_q_len = len(sec.get("questions", []))
-                if index >= r_count and index < r_count + sec_q_len:
-                    current_section_id = str(sec.get("id"))
-                    marks = parse_mark(sec.get("marks_per_question"), 4.0)
-                    neg = parse_mark(sec.get("negative_marks"), 1.0)
-                    break
-                r_count += sec_q_len
+        marks = parse_mark(q.get("_section_marks") or test.get("marks_per_question"), 4.0)
+        neg = parse_mark(q.get("_section_neg") or test.get("negative_marks"), 1.0)
                 
         if q.get("marks") is not None:
             marks = parse_mark(q.get("marks"), marks)
@@ -164,6 +166,21 @@ async def analyze_test_results(payload: AnalyzeRequest):
         q_type = q.get("type", "single")
         if q_type in type_data:
             type_data[q_type]["count"] += 1
+            
+        q_topic = q.get("topic") or "Uncategorized"
+        if q_topic not in topic_data:
+            topic_data[q_topic] = {
+                "name": q_topic,
+                "correct": 0,
+                "wrong": 0,
+                "partial": 0,
+                "skipped": 0,
+                "score": 0.0,
+                "maxScore": 0.0,
+                "count": 0
+            }
+        topic_data[q_topic]["count"] += 1
+        topic_data[q_topic]["maxScore"] += marks
             
         # user answer might be in key as string or int since JSON
         ans = answers.get(q_id)
@@ -265,6 +282,13 @@ async def analyze_test_results(payload: AnalyzeRequest):
             if is_wrong: section_data[current_section_id]["wrong"] += 1
             section_data[current_section_id]["score"] += q_score
             
+        if q_topic in topic_data:
+            if is_skipped: topic_data[q_topic]["skipped"] += 1
+            elif is_correct: topic_data[q_topic]["correct"] += 1
+            elif is_partial: topic_data[q_topic]["partial"] += 1
+            elif is_wrong: topic_data[q_topic]["wrong"] += 1
+            topic_data[q_topic]["score"] += q_score
+            
     total_questions = len(questions)
     accuracy = 0
     total_attempted = correct_count + partial_count + wrong_count
@@ -329,6 +353,21 @@ async def analyze_test_results(payload: AnalyzeRequest):
                 "maxScore": round(merged_max, 2)
             })
             
+    # Post-process topicData for performance labels
+    formatted_topics = []
+    for t in topic_data.values():
+        percentage = 0
+        if t["maxScore"] > 0:
+            percentage = (t["score"] / t["maxScore"]) * 100
+        
+        performance = "Weak"
+        if percentage >= 75: performance = "Strong"
+        elif percentage >= 40: performance = "Moderate"
+        
+        t["percentage"] = round(percentage, 2)
+        t["performance"] = performance
+        formatted_topics.append(t)
+            
     return {
         "finalScore": round(calculated_score, 2),
         "totalMaxMarks": total_max_marks,
@@ -346,5 +385,6 @@ async def analyze_test_results(payload: AnalyzeRequest):
         "radarData": radar_data,
         "barData": bar_data,
         "typeChartData": type_chart_data,
-        "mergedSectionData": merged_section_data
+        "mergedSectionData": merged_section_data,
+        "topicData": formatted_topics
     }

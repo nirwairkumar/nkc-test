@@ -26,6 +26,13 @@ class GenerateYoutubeRequest(BaseModel):
     creator_avatar: Optional[str] = None
     user_id: str 
 
+class QuestionItem(BaseModel):
+    id: str
+    text: str
+
+class GenerateTopicsRequest(BaseModel):
+    questions: List[QuestionItem]
+
 def extract_video_id(url: str) -> Optional[str]:
     """
     Extract YouTube video ID using yt-dlp for maximum compatibility.
@@ -552,3 +559,51 @@ async def parse_document_stream(
         }
         )
 
+
+@router.post("/generate/topics")
+async def generate_topics(
+    payload: GenerateTopicsRequest
+):
+    if not client:
+        raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
+    
+    if not payload.questions:
+        return {"topics": {}}
+
+    try:
+        # Prepare the questions text for the prompt
+        questions_text = "\n".join([f"ID: {q.id} | Question: {q.text}" for q in payload.questions])
+
+        prompt = f"""
+        You are an expert educational content analyzer. 
+        Analyze the following questions and assign a specific, concise 'Topic' to each.
+        The topic should be the primary subject matter (e.g., 'Kinematics', 'Ionic Equilibrium', 'Vectors', 'Cell Biology').
+        Return the result as a raw JSON object where keys are the question IDs and values are the topic names.
+        
+        Questions:
+        {questions_text}
+
+        Return ONLY the JSON object. Example:
+        {{
+            "id1": "Topic A",
+            "id2": "Topic B"
+        }}
+        """
+
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
+        )
+
+        if not response.text:
+            raise HTTPException(status_code=500, detail="Gemini failed to generate content")
+
+        topics_map = json.loads(clean_json(response.text))
+        return {"topics": topics_map}
+
+    except Exception as e:
+        print(f"Error generating topics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

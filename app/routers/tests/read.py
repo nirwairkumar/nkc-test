@@ -12,24 +12,7 @@ import threading
 
 router = APIRouter()
 
-# ─── In-Memory TTL Caches ────────────────────────────────
-_cache_lock = threading.Lock()
-# Cache individual test data for 5 minutes (300s)
-_test_cache: TTLCache = TTLCache(maxsize=500, ttl=300)
-# Cache feed page 1 for 2 minutes
-_feed_cache: TTLCache = TTLCache(maxsize=50, ttl=120)
-
-def _cache_set(cache: TTLCache, key: str, value: Any):
-    with _cache_lock:
-        cache[key] = value
-
-def _cache_get(cache: TTLCache, key: str):
-    with _cache_lock:
-        return cache.get(key)
-
-def _cache_bust(cache: TTLCache, key: str):
-    with _cache_lock:
-        cache.pop(key, None)
+from app.routers.tests.cache_config import test_cache, feed_cache, cache_get, cache_set, cache_bust
 
 
 
@@ -67,7 +50,7 @@ async def get_tests_feed(
         # ─ Cache key for pages 1-2, no search (most common loads)
         feed_cache_key = f"feed:p{page}:l{limit}:c{category_id or ''}:ids{ids_only}" if page <= 2 and not search_query else None
         if feed_cache_key:
-            cached = _cache_get(_feed_cache, feed_cache_key)
+            cached = cache_get(feed_cache, feed_cache_key)
             if cached is not None:
                 return cached
 
@@ -148,7 +131,7 @@ async def get_tests_feed(
                 }
             }
             if feed_cache_key:
-                _cache_set(_feed_cache, feed_cache_key, result)
+                cache_set(feed_cache, feed_cache_key, result)
             return result
 
         # 4. Enrich Test Objects
@@ -162,7 +145,7 @@ async def get_tests_feed(
             }
         }
         if feed_cache_key:
-            _cache_set(_feed_cache, feed_cache_key, result)
+            cache_set(feed_cache, feed_cache_key, result)
         return result
 
     except Exception as e:
@@ -280,7 +263,7 @@ async def get_test_by_id(
     try:
         # ─ Cache check (5 min TTL for individual tests)
         cache_key = f"test:{test_id}"
-        cached = _cache_get(_test_cache, cache_key)
+        cached = cache_get(test_cache, cache_key)
         if cached is not None:
             return cached
 
@@ -341,7 +324,7 @@ async def get_test_by_id(
         # Add computed max marks info
         test["computed_max_marks"] = calculate_test_max_marks(test)
 
-        _cache_set(_test_cache, cache_key, test)
+        cache_set(test_cache, cache_key, test)
         return test
 
     except HTTPException:
@@ -359,7 +342,7 @@ async def get_test_by_slug(
     try:
         # ─ Cache check
         slug_cache_key = f"test:slug:{slug}"
-        cached = _cache_get(_test_cache, slug_cache_key)
+        cached = cache_get(test_cache, slug_cache_key)
         if cached is not None:
             return cached
 
@@ -402,7 +385,7 @@ async def get_test_by_slug(
 
         test["computed_max_marks"] = calculate_test_max_marks(test)
 
-        _cache_set(_test_cache, slug_cache_key, test)
+        cache_set(test_cache, slug_cache_key, test)
         return test
 
     except HTTPException:
