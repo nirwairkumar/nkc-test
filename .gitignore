@@ -14,3 +14,4 @@ out/
 frontend/dist/
 backend/dist/
 frontend/vite.config.ts.timestamp-*
+google-indexing-key.json
