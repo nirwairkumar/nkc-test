@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const keyFile = process.env.GOOGLE_INDEXING_KEY_PATH || 'service-account.json';
+const keyFile = process.env.GOOGLE_INDEXING_KEY_PATH || path.resolve(__dirname, '../../google-indexing-key.json');
 const siteUrl = process.env.VITE_SITE_URL || 'https://testoza.com';
 
 if (!fs.existsSync(keyFile)) {
