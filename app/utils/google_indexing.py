@@ -14,8 +14,8 @@ SCOPES = ["https://www.googleapis.com/auth/indexing"]
 INDEXING_ENDPOINT = "https://indexing.googleapis.com/v3/urlNotifications:publish"
 SITE_URL = os.getenv("SITE_URL", "https://www.testoza.com")
 
-# Path to service account key (relative to backend root)
-KEY_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "service-account.json")
+# Path to service account key (in project root)
+KEY_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "google-indexing-key.json")
 
 _credentials = None
 
