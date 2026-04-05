@@ -28,6 +28,7 @@ from typing import Dict, List, Optional, Tuple, Callable
 from utils.logger import get_logger
 from app.core.config import settings
 from PIL import Image
+from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
 logger = get_logger(__name__)
 
@@ -216,18 +217,32 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
    - For EVERY question belonging to that passage, include a "passageContent" field.
 
 --------------------------------------------------
-MATH & FORMATTING RULES:
+MATH & FORMATTING RULES (CRITICAL):
 - Use LaTeX for ALL math: \\frac, \\sqrt, \\int, x^2, etc.
 - Escape ALL backslashes for JSON: use \\\\ instead of \\.
 - Inline math: $...$
-- No block math: $$...$$
-- Do NOT simplify expressions.
+- Block equations: $$...$$ 
+- NEVER use align environments, use \\begin{aligned} ... \\end{aligned} instead.
+
+CHEMISTRY FORMATTING (mhchem) - CRITICAL:
+- Use \\\\ce{} for ALL chemical formulas: \\\\ce{H2O}, \\\\ce{NaCl}, \\\\ce{CO2}
+- Chemical equations MUST be in \\\\ce: \\\\ce{2H2 + O2 -> 2H2O}
+- Reversible reactions: \\\\ce{N2 + 3H2 <=> 2NH3}
+- Ions: \\\\ce{Na+}, \\\\ce{SO4^{2-}}, \\\\ce{Fe^{3+}}
+- Organic: \\\\ce{CH3-CH2-OH}, \\\\ce{C6H12O6}
+- State symbols: \\\\ce{H2O (l)}, \\\\ce{CO2 (g)}, \\\\ce{NaCl (aq)}
+- Isotopes: \\\\ce{^{14}C}, \\\\ce{^{235}U}
 
 TEXT & LINE-BREAK RULES:
 - DO NOT use escaped newline characters or real line breaks inside strings.
 - Use <br> tags for line breaks in questions and options.
 - Multi-line questions should use <br> tags to separate lines.
-- Do NOT use other HTML tags or markdown.
+- Do NOT use other HTML tags or markdown EXCEPT for images.
+
+IMAGE INSERTION RULE:
+- If you matched a diagram to a question, set its diagramPage. By default the backend will attach it.
+- If a diagram MUST be deeply inline within the text, use: ![image](DIAGRAM_PAGE_X)
+- If an option text contains an image, you MUST also set diagramOption to "A", "B", etc.
 
 --------------------------------------------------
 STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
@@ -322,14 +337,28 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
 2. **Questions must be original** — do not copy questions verbatim if they exist in the document.
 3. **Cover all topics** in the document proportionally.
 4. **Vary difficulty**: mix easy, medium, and hard questions.
-5. **CRITICAL - Mathematical content**: Write math in PLAIN TEXT using Unicode symbols.
-   - Use ^ for superscripts: x^2, e^(ikx)
-   - Use / for fractions: 1/2, a/b
-   - Use sqrt() for roots: sqrt(3)
-   - Use Unicode: π, θ, α, β, ω, Σ, ∫, ∞, ≥, ≤, ≠, ±, ×, →
-   - Do NOT use LaTeX backslash commands.
-6. **All questions must have exactly one correct answer** specified.
-7. **Create plausible distractors** — wrong options should be reasonable, not obviously wrong.
+5. **CRITICAL - Mathematical content**:
+   - Use LaTeX for ALL math: \\frac, \\sqrt, \\int, x^2, etc.
+   - Escape ALL backslashes for JSON: use \\\\ instead of \\.
+   - Inline math: $...$
+   - Block equations: $$...$$ 
+   - NEVER use align environments, use \\begin{aligned} ... \\end{aligned} instead.
+
+6. **CHEMISTRY FORMATTING (mhchem) - CRITICAL**:
+   - Use \\\\ce{} for ALL chemical formulas: \\\\ce{H2O}, \\\\ce{NaCl}, \\\\ce{CO2}
+   - Chemical equations MUST be in \\\\ce: \\\\ce{2H2 + O2 -> 2H2O}
+   - Reversible reactions: \\\\ce{N2 + 3H2 <=> 2NH3}
+   - Ions: \\\\ce{Na+}, \\\\ce{SO4^{2-}}, \\\\ce{Fe^{3+}}
+   - Organic: \\\\ce{CH3-CH2-OH}, \\\\ce{C6H12O6}
+   - State symbols: \\\\ce{H2O (l)}, \\\\ce{CO2 (g)}, \\\\ce{NaCl (aq)}
+   - Isotopes: \\\\ce{^{14}C}, \\\\ce{^{235}U}
+
+7. **All questions must have exactly one correct answer** specified.
+8. **Create plausible distractors** — wrong options should be reasonable, not obviously wrong.
+
+9. **IMAGE INSERTION RULE**:
+   - If a generated question requires a diagram from the page, output diagramPage = <page_number>.
+   - For deeply inline insertions or option diagrams, use ![image](DIAGRAM_PAGE_X) or set diagramOption.
 
 ## CROSS-PAGE HANDLING:
 - Questions may span multiple pages - combine them into complete questions
@@ -607,6 +636,60 @@ def merge_cross_page_questions(all_questions: List[Dict]) -> List[Dict]:
     return merged_questions
 
 
+async def _call_gemini_with_retry(content_parts: List[Dict], batch_num: int, max_retries: int = 3) -> str:
+    """
+    Call Gemini API with retry logic, exponential backoff, and fallback models/settings.
+    """
+    base_model = "gemini-2.0-flash"
+    fallback_model = "gemini-2.0-flash-lite"
+    
+    for attempt in range(max_retries):
+        try:
+            # Adjust settings based on attempt
+            if attempt == 0:
+                model = base_model
+                temp = 0.1
+                max_tokens = 65536
+            elif attempt == 1:
+                logger.warning(f"Batch {batch_num}: Attempt {attempt + 1}. Using higher temperature.")
+                model = base_model
+                temp = 0.3  # Slightly higher temperature for different generation path
+                max_tokens = 65536
+            else:
+                logger.warning(f"Batch {batch_num}: Attempt {attempt + 1}. Falling back to {fallback_model}.")
+                model = fallback_model
+                temp = 0.2
+                max_tokens = 65536
+
+            response = client.models.generate_content(
+                model=model,
+                contents=content_parts,
+                config=types.GenerateContentConfig(
+                    temperature=temp,
+                    top_p=0.95,
+                    max_output_tokens=max_tokens,
+                )
+            )
+            
+            if not response.text:
+                raise ValueError("Empty response received from Gemini.")
+                
+            return response.text
+
+        except Exception as e:
+            logger.error(f"Batch {batch_num}: Attempt {attempt + 1} failed: {e}")
+            if attempt == max_retries - 1:
+                raise Exception(f"Failed after {max_retries} attempts: {e}")
+            
+            # Check for rate limits or overloaded service
+            if "429" in str(e) or "503" in str(e):
+                wait_time = (2 ** attempt) + 2  # 3s, 4s, 6s...
+                logger.info(f"Batch {batch_num}: Rate limit/overload detected. Waiting {wait_time}s before retry.")
+                await asyncio.sleep(wait_time)
+            else:
+                # Short delay for other errors
+                await asyncio.sleep(1)
+
 def merge_question_parts(parts: List[Dict]) -> Dict:
     """
     Merge multiple parts of the same question into one complete question.
@@ -729,6 +812,30 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         raise ValueError("No pages/images could be extracted from the provided files")
 
     logger.info(f"Total pages/images to process: {len(all_page_images)}")
+    
+    # 2.5: Upload all embedded images to Cloudinary in parallel
+    logger.info(f"Uploading {len(all_embedded_images)} extracted diagrams to Cloudinary...")
+    upload_tasks = []
+    
+    async def upload_and_update(img_info):
+        # We need the raw data for upload
+        import base64
+        try:
+            # Decode the base64 we created earlier
+            raw_bytes = base64.b64decode(img_info["data"])
+            cloudinary_url = await upload_image_to_cloudinary(raw_bytes)
+            if cloudinary_url:
+                img_info["cloudinary_url"] = cloudinary_url
+                # Switch the base64_uri to the much lighter Cloudinary URL
+                img_info["base64_uri"] = cloudinary_url
+        except Exception as e:
+            logger.error(f"Failed to upload diagram on page {img_info['page']} to Cloudinary: {e}")
+            
+    # Launch all uploads concurrently
+    upload_tasks = [upload_and_update(img) for img in all_embedded_images]
+    if upload_tasks:
+        await asyncio.gather(*upload_tasks)
+        logger.info("All diagram uploads completed.")
 
     # Step 3: Process pages with overlap for cross-page questions
     MAX_PAGES_PER_BATCH = 5
@@ -769,17 +876,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         logger.info(f"Sending batch {batch_num} to Gemini...")
         
         try:
-            model = "gemini-2.0-flash"
-            response = client.models.generate_content(
-                model=model,
-                contents=content_parts,
-                config=types.GenerateContentConfig(
-                    temperature=0.1,
-                    top_p=0.95,
-                    max_output_tokens=65536,
-                )
-            )
-            raw_text = response.text
+            raw_text = await _call_gemini_with_retry(content_parts, batch_num)
             
             logger.info(f"Batch {batch_num} response received. Length: {len(raw_text)}")
             
@@ -789,7 +886,9 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             if questions:
                 logger.info(f"Extracted {len(questions)} questions from batch {batch_num}")
                 all_questions.extend(questions)
-            
+            else:
+                logger.warning(f"Batch {batch_num} returned 0 questions despite successful API call.")
+                
         except Exception as e:
             logger.error(f"Error processing batch {batch_num}: {e}")
             # Continue to next batch instead of failing entire document
@@ -976,6 +1075,32 @@ def _repair_truncated_json(text: str) -> str:
     return text
 
 
+def _extract_questions_regex(text: str) -> List[Dict]:
+    """
+    Last resort: Try to extract question objects using regex if JSON is completely broken.
+    Looks for { ... "question": ... } structures.
+    """
+    questions = []
+    # Try to find all blocks that look like question objects
+    pattern = r'\{[^{]*?"question"\s*:\s*".*?[^{]*?\}'
+    matches = re.finditer(pattern, text, re.DOTALL)
+    
+    for match in matches:
+        try:
+            q_text = match.group(0)
+            # Try to fix truncated ending if needed
+            if not q_text.rstrip().endswith('}'):
+                q_text = q_text[:text.rfind('"')] + '"}'
+            
+            q_dict = json.loads(q_text)
+            if "question" in q_dict:
+                questions.append(q_dict)
+        except:
+            pass
+            
+    return questions
+
+
 def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
     """Parse Gemini's JSON response and match diagrams to questions."""
     # Clean markdown code fences if present
@@ -991,20 +1116,28 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
     # Try parsing raw first, then sanitize if needed
     try:
         data = json.loads(clean)
-    except json.JSONDecodeError:
-        logger.info("Raw JSON parse failed, applying sanitization...")
+    except json.JSONDecodeError as e:
+        logger.info(f"Raw JSON parse failed: {e}. Applying sanitization...")
         sanitized = _sanitize_gemini_json(clean)
         try:
             data = json.loads(sanitized)
             logger.info("Sanitized JSON parsed successfully")
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON parse error after sanitization: {e}")
-            logger.error(f"Raw text (first 2000 chars): {clean[:2000]}")
-            raise ValueError(f"AI returned invalid JSON: {e}")
+        except json.JSONDecodeError as e2:
+            logger.error(f"JSON parse error after sanitization: {e2}")
+            # Last resort: try regex extraction of questions
+            logger.info("Attempting regex fallback extraction...")
+            questions_fallback = _extract_questions_regex(sanitized)
+            if questions_fallback:
+                logger.info(f"Regex extracted {len(questions_fallback)} questions")
+                data = {"questions": questions_fallback}
+            else:
+                raise ValueError(f"AI returned invalid JSON: {e2}")
 
     questions = data.get("questions", [])
     if not questions:
-        raise ValueError("AI returned 0 questions. The document may not contain extractable content.")
+        logger.warning(f"AI returned 0 questions. Raw snippet: {clean[:500]}")
+        # Don't raise error, just return empty so batch can fail gracefully without breaking pipeline
+        return {"questions": []}
 
     # Build page → images lookup for diagram matching
     page_images_map = {}
@@ -1034,24 +1167,29 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         if q_image and isinstance(q_image, str) and (q_image.startswith("data:") or q_image.startswith("http")):
             pass  # keep as-is
         elif diagram_page and diagram_page in page_images_map:
-            # Get images from that page
             page_imgs = page_images_map[diagram_page]
             if page_imgs:
-                # If diagramOption is specified, try to find image near that option
-                if diagram_option:
-                    # For now, use position-based selection (could be enhanced with OCR)
-                    best = page_imgs[0]  # Use first image as fallback
-                else:
-                    # Pick the most relevant image (considering size but not filtering small ones)
-                    # Sort by size but don't exclude small ones
-                    sorted_imgs = sorted(page_imgs, key=lambda x: x["width"] * x["height"], reverse=True)
-                    # Use the largest as default, but small diagrams are still available
-                    best = sorted_imgs[0] if sorted_imgs else None
+                # Better matching strategy:
+                # If there's an option specified, try to find an image vertically lower,
+                # otherwise default to largest/closest image.
+                # In the future, we can map text bbox to image bbox exactly.
+                sorted_imgs = sorted(page_imgs, key=lambda x: x["width"] * x["height"], reverse=True)
+                
+                # Pick best match based on option vs overall question
+                # Just take the best available for now if no specific match
+                best = sorted_imgs[0]
                 
                 if best:
-                    q_image = best["base64_uri"]
+                    img_url = best.get("cloudinary_url", best["base64_uri"])
+                    if diagram_option:
+                        if "optionImages" not in q or not q["optionImages"]:
+                            q["optionImages"] = {}
+                        q["optionImages"][diagram_option] = img_url
+                    else:
+                        q_image = img_url
         else:
-            q_image = None
+            if not q_image:
+                q_image = None
 
         # Ensure options exist (not for numerical type)
         options = q.get("options", {})
@@ -1065,7 +1203,7 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             "question": question_text,
             "image": q_image,
             "options": options,
-            "optionImages": {k: None for k in options.keys()} if options else {},
+            "optionImages": q.get("optionImages", {k: None for k in options.keys()} if options else {}),
             "correctAnswer": q.get("correctAnswer"),
             "marks": q.get("marks", 4),
             "negativeMarks": q.get("negativeMarks", 1),
@@ -1273,6 +1411,30 @@ async def process_files_stream(
     
     logger.info(f"✅ Rendered {total_pages} pages at {selected_dpi} DPI")
     
+    # 4.5 Upload all embedded images to Cloudinary concurrently
+    if progress_callback:
+        await progress_callback({
+            'stage': 'processing',
+            'percent': 35,
+            'message': f'Uploading {len(all_embedded_images)} diagrams to Cloudinary...'
+        })
+        
+    upload_tasks = []
+    async def upload_and_update(img_info):
+        try:
+            # Decode the base64 we created earlier
+            raw_bytes = base64.b64decode(img_info["data"])
+            cloudinary_url = await upload_image_to_cloudinary(raw_bytes)
+            if cloudinary_url:
+                img_info["cloudinary_url"] = cloudinary_url
+                img_info["base64_uri"] = cloudinary_url
+        except Exception as e:
+            logger.error(f"Failed to upload diagram on page {img_info['page']}: {e}")
+            
+    upload_tasks = [upload_and_update(img) for img in all_embedded_images]
+    if upload_tasks:
+        await asyncio.gather(*upload_tasks)
+    
     # Step 5: Create ULTRA-FAST batches with intelligent sizing
     MAX_PAGES_PER_BATCH = 5
     OVERLAP_PAGES = 1
@@ -1375,6 +1537,11 @@ async def process_files_stream(
     
     if failed_batches:
         logger.warning(f"⚠️ {len(failed_batches)} batches failed: {[b['batch'] for b in failed_batches]}")
+        if len(failed_batches) == total_batches:
+            errors = [b.get('error', 'Unknown Error') for b in failed_batches]
+            unique_errors = list(set(errors))
+            error_details = "\n".join(f"- {err}" for err in unique_errors)
+            raise ValueError(f"Extraction aborted. All {total_batches} batches failed due to the following API errors:\n{error_details}")
     
     logger.info(f"📊 Total questions extracted: {len(all_questions)}")
     
@@ -1484,19 +1651,8 @@ async def _process_single_batch_stream(
             "data": base64.b64encode(page_img).decode("utf-8")
         })
     
-    # Call Gemini
-    model = "gemini-2.0-flash"
-    
-    response = client.models.generate_content(
-        model=model,
-        contents=content_parts,
-        config=types.GenerateContentConfig(
-            temperature=0.1,
-            top_p=0.95,
-            max_output_tokens=65536,
-        )
-    )
-    raw_text = response.text
+    # Call Gemini with retry
+    raw_text = await _call_gemini_with_retry(content_parts, batch_num)
     
     # Parse response
     batch_result = _parse_response(raw_text, embedded_images)

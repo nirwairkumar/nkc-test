@@ -1,0 +1,346 @@
+# 🧠 How `/generate-with-ai` — Extract Questions Feature Works
+
+A complete beginner-friendly visual guide to how the "Extract Questions from PDF/Image" feature works, step by step.
+
+---
+
+## 🗺️ The Big Picture — End-to-End Flow
+
+```mermaid
+flowchart TD
+    A["👤 User visits /generate-with-ai"] --> B["📂 Upload Files\n(PDF or Images)"]
+    B --> C{"Choose Mode"}
+    C -->|Extract| D["🔍 Extract Mode\nKeep original questions"]
+    C -->|Generate| E["✨ Generate Mode\nCreate new MCQs"]
+    D --> F["📡 Frontend sends files\nto Backend API via SSE"]
+    E --> F
+    F --> G["🖼️ Backend converts\nPDF → PNG images"]
+    G --> H["📊 Quality Analysis\n(OpenCV checks sharpness,\ncontrast, noise)"]
+    H --> I["🤖 Gemini 2.0 Flash\n(AI does OCR + Extraction\nin ONE step)"]
+    I --> J["📝 JSON Response\n(Questions, Options, Answers)"]
+    J --> K["🔗 Cross-page Merge\n+ Answer Key Matching"]
+    K --> L["📡 Stream results back\nto Frontend via SSE"]
+    L --> M["👀 User Preview\nReview & Edit Questions"]
+    M --> N["✅ Import to TestBuilder\nCreate the Test!"]
+
+    style A fill:#e1f5fe
+    style I fill:#fff3e0
+    style N fill:#e8f5e9
+```
+
+---
+
+## 📂 File Map — Which File Does What?
+
+| Layer | File | Role |
+|:------|:-----|:-----|
+| 🌐 **Route** | [App.tsx](file:///d:/ziptrip/projects/nkc-test/frontend/src/App.tsx#L67-L70) | Registers `/generate-with-ai` route → `AIImportRoute` |
+| 🖥️ **UI** | [AITestImporter.tsx](file:///d:/ziptrip/projects/nkc-test/frontend/src/pages/AITestImporter.tsx) | Full upload UI, SSE streaming, preview, import |
+| 🖥️ **Builder** | [CreateTestPage.tsx](file:///d:/ziptrip/projects/nkc-test/frontend/src/pages/CreateTestPage.tsx) | Receives imported data → populates TestBuilder |
+| ⚙️ **API Router** | [ai.py](file:///d:/ziptrip/projects/nkc-test/backend/app/routers/ai.py) | FastAPI endpoints: `/api/ai/parse-stream`, `/api/ai/parse` |
+| 🧠 **AI Pipeline** | [pdf_vision_pipeline.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py) | Core processing: render → analyze → AI → parse → merge |
+| 📊 **Quality** | [quality_analyzer.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/quality_analyzer.py) | OpenCV image quality analysis (sharpness, contrast, noise) |
+| ⚙️ **Main** | [main.py](file:///d:/ziptrip/projects/nkc-test/backend/app/main.py#L77-L78) | Registers AI router at `/api/ai` prefix |
+
+---
+
+## 🔄 Detailed Step-by-Step Execution Flow
+
+### Step 1: User Opens the Page
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant App.tsx
+    participant AITestImporter
+
+    User->>Browser: Goes to /generate-with-ai
+    Browser->>App.tsx: Route match → AIImportRoute
+    App.tsx->>AITestImporter: Renders with onImport callback
+    AITestImporter->>User: Shows upload screen (PDF or Image cards)
+```
+
+**What happens:** `App.tsx` line 67–70 creates the `AIImportRoute` component. When user navigates to `/generate-with-ai`, it renders `AITestImporter` with an `onImport` callback that navigates to `/create-test` with the extracted data.
+
+---
+
+### Step 2: File Upload
+
+```mermaid
+flowchart LR
+    A["📄 PDF Upload"] --> C["Files stored in\nReact state"]
+    B["📸 Image Upload\n(Browse or Camera)"] --> C
+    D["🔑 Answer Key\n(Optional)"] --> C
+    C --> E{"User picks mode"}
+    E -->|Extract| F["Keep original Qs"]
+    E -->|Generate| G["Create new MCQs"]
+```
+
+**Files involved:** `AITestImporter.tsx` lines 161–239
+
+The user can:
+- Upload **PDF documents** (exam papers, textbooks)
+- Upload **images** (JPG, PNG, WEBP) — browse or use camera
+- Optionally upload an **answer key** file
+- Choose **Extract** mode (keep exact questions) or **Generate** mode (create new MCQs)
+
+---
+
+### Step 3: Frontend Sends to Backend (SSE Streaming)
+
+```mermaid
+sequenceDiagram
+    participant AITestImporter
+    participant Backend as "/api/ai/parse-stream"
+
+    AITestImporter->>AITestImporter: Creates FormData with files
+    AITestImporter->>Backend: POST /api/ai/parse-stream?mode=extract
+    Note over Backend: Returns Server-Sent Events (SSE)
+    Backend-->>AITestImporter: event: progress (10% uploading...)
+    Backend-->>AITestImporter: event: progress (20% analyzing...)
+    Backend-->>AITestImporter: event: progress (40% processing...)
+    Backend-->>AITestImporter: event: question (Q1 extracted)
+    Backend-->>AITestImporter: event: question (Q2 extracted)
+    Backend-->>AITestImporter: event: complete (final result)
+```
+
+**Files involved:**
+- Frontend: `AITestImporter.tsx` [handleStreamProcess](file:///d:/ziptrip/projects/nkc-test/frontend/src/pages/AITestImporter.tsx#L369-L473) — line 369
+- Backend: `ai.py` [parse_document_stream](file:///d:/ziptrip/projects/nkc-test/backend/app/routers/ai.py#L386-L560) — line 386
+
+**API URL:** `POST http://localhost:8000/api/ai/parse-stream?mode=extract`
+
+---
+
+### Step 4: Backend Processing Pipeline (The Core Engine)
+
+This is where the magic happens. Here's the inside of `process_files_stream()`:
+
+```mermaid
+flowchart TD
+    A["📥 Receive files"] --> B["📄 Identify type\n(PDF or Image?)"]
+    B -->|PDF| C["📑 Render PDF → PNG\nUsing PyMuPDF (fitz)\nat adaptive DPI"]
+    B -->|Image| D["🖼️ Convert to\nstandard PNG"]
+    
+    C --> E["📊 QUALITY ANALYSIS\n(OpenCV)"]
+    D --> E
+    
+    E --> F{"Quality Score?"}
+    F -->|≥ 0.8 High| G["Use 150 DPI\n(Fast!)"]
+    F -->|≥ 0.5 Medium| H["Use 200 DPI\n(Balanced)"]
+    F -->|< 0.5 Low| I["Use 300 DPI\n(Max Quality)"]
+    
+    G --> J["📦 Create Batches\n(5 pages per batch\n+ 1 page overlap)"]
+    H --> J
+    I --> J
+    
+    J --> K["🚀 PARALLEL Processing\nUp to 15 concurrent batches\nusing asyncio.Semaphore"]
+    
+    K --> L["🤖 Each batch →\nGemini 2.0 Flash Vision API"]
+    
+    L --> M["📝 Parse JSON response\n(sanitize LaTeX, fix truncation)"]
+    M --> N["🔗 Merge cross-page\nquestions (by ID)"]
+    N --> O{"Answer Key\nprovided?"}
+    O -->|Yes| P["🔑 Match answers\nto questions"]
+    O -->|No| Q["Use inline\nanswers only"]
+    P --> R["✅ Return final result"]
+    Q --> R
+
+    style E fill:#fff3e0
+    style L fill:#e8eaf6
+```
+
+**File:** `pdf_vision_pipeline.py` [process_files_stream](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#L1094-L1421) — line 1094
+
+---
+
+### Step 5: Where OCR and AI Trigger — The Key Insight
+
+> [!IMPORTANT]
+> **There is NO separate OCR step!** Gemini 2.0 Flash does **both OCR and question extraction in a single API call**. The AI model reads the images visually (like a human would) and outputs structured JSON directly.
+
+```mermaid
+flowchart TD
+    A["Traditional Approach\n(NOT used here)"] --> B["Step 1: OCR\n(Tesseract extracts text)"]
+    B --> C["Step 2: AI\n(Gemini processes text)"]
+    
+    D["TestoZa's Approach\n(USED here)"] --> E["Single Step:\nGemini 2.0 Flash VISION\nreads images directly\n(OCR + AI combined)"]
+    
+    E --> F["Output: Structured JSON\nwith questions, options,\nanswers, diagrams"]
+
+    style A fill:#ffebee
+    style D fill:#e8f5e9
+    style E fill:#c8e6c9
+```
+
+**The only place Tesseract OCR appears:** Line 34–40 of `pdf_vision_pipeline.py` — it's imported as **optional** but never used in the main pipeline. The entire OCR is done by Gemini Vision.
+
+**The only place OpenCV is used:** `quality_analyzer.py` — to check image quality (sharpness, contrast, noise, brightness) and decide the DPI for rendering.
+
+---
+
+### Step 6: The AI Model & Prompts
+
+#### 🤖 AI Model Used
+
+| Setting | Value |
+|:--------|:------|
+| **Model** | `gemini-2.0-flash` |
+| **Temperature** | `0.1` (very deterministic — no hallucination) |
+| **Top-P** | `0.95` |
+| **Max Output Tokens** | `65,536` |
+| **API** | Google Gemini `genai.Client` Python SDK |
+
+#### 📜 Three Prompts Used
+
+````carousel
+### 1️⃣ EXTRACT_PROMPT (for "Extract" mode)
+**File:** [pdf_vision_pipeline.py:L54-L288](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#L54-L288)
+
+**Purpose:** Extract EXACT questions from exam papers as-is.
+
+**Key instructions to Gemini:**
+- "You are an AI document parser, OCR analyst, and exam-content extractor"
+- "DO NOT generate new questions — ONLY extract"
+- Detect question types: Single, Multiple choice, Numerical
+- Handle cross-page questions (merge split questions)
+- Extract diagrams and match to questions by page
+- Convert all math to LaTeX with high precision
+- Extract inline answers (checkmarks, bold, "Ans:" markers)
+- Output strict JSON format
+
+**Output JSON structure:**
+```json
+{
+  "title": "Extracted from document",
+  "questions": [{
+    "id": 1,
+    "type": "single",
+    "question": "Exact extracted text with LaTeX",
+    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+    "correctAnswer": "A",
+    "diagramPage": null,
+    "marks": 4,
+    "negativeMarks": 1
+  }]
+}
+```
+<!-- slide -->
+### 2️⃣ GENERATE_PROMPT (for "Generate" mode)
+**File:** [pdf_vision_pipeline.py:L314-L357](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#L314-L357)
+
+**Purpose:** Create NEW, original MCQs based on the content.
+
+**Key instructions to Gemini:**
+- "You are an expert educator and exam setter"
+- Generate minimum 10, aim for 15-25 questions
+- Questions must be ORIGINAL — don't copy from document
+- Cover all topics proportionally
+- Mix difficulty: easy, medium, hard
+- Create plausible distractors (wrong options should look reasonable)
+- Include revision notes for studying
+<!-- slide -->
+### 3️⃣ ANSWER_KEY_PROMPT (for answer key files)
+**File:** [pdf_vision_pipeline.py:L290-L312](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#L290-L312)
+
+**Purpose:** Extract correct answers from a separate answer key document.
+
+**Key instructions to Gemini:**
+- Extract answer mappings: question number → correct answer
+- Handle all formats: "1. A", "Q1: B", "Answer 1: C"
+- Support single choice, multiple choice, and numerical answers
+- Return JSON like: `{"answer_key": [{"question_number": 1, "answer": "A"}]}`
+````
+
+---
+
+### Step 7: Quality Analysis Details
+
+```mermaid
+flowchart LR
+    A["📸 Sample Pages\n(first 3 pages)"] --> B["OpenCV Analysis"]
+    
+    B --> C["🔍 Sharpness\n(Laplacian variance)\nWeight: 40%"]
+    B --> D["🎨 Contrast\n(min/max pixel range)\nWeight: 30%"]
+    B --> E["📡 Noise Level\n(median filter diff)\nWeight: 20%"]
+    B --> F["💡 Brightness\n(average pixel value)\nWeight: 10%"]
+    
+    C --> G["Final Score\n(weighted average 0-1)"]
+    D --> G
+    E --> G
+    F --> G
+    
+    G -->|"≥ 0.8"| H["✅ 150 DPI — Fast"]
+    G -->|"≥ 0.5"| I["⚡ 200 DPI — Balanced"]
+    G -->|"< 0.5"| J["🐢 300 DPI — Max Quality"]
+    G -->|"< 0.3"| K["❌ Rejected\n(Too low quality)"]
+```
+
+**File:** [quality_analyzer.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/quality_analyzer.py)
+
+---
+
+### Step 8: Batch Processing & Cross-Page Merging
+
+```mermaid
+flowchart TD
+    A["20-page PDF"] --> B["Batch 1: Pages 1-5"]
+    A --> C["Batch 2: Pages 5-10\n(page 5 overlaps!)"]
+    A --> D["Batch 3: Pages 10-15"]
+    A --> E["Batch 4: Pages 15-20"]
+    
+    B --> F["🚀 All batches run\nIN PARALLEL\n(asyncio.Semaphore ≤15)"]
+    C --> F
+    D --> F
+    E --> F
+    
+    F --> G["Collect all questions\nfrom all batches"]
+    G --> H{"Same question ID\nin multiple batches?"}
+    H -->|Yes| I["🔗 MERGE:\nCombine text + options\nfrom both batches"]
+    H -->|No| J["Keep as-is"]
+    I --> K["Final question list"]
+    J --> K
+```
+
+**Why overlap?** A question might start on page 5 (end of batch 1) and its options might be on page 6 (start of batch 2). The 1-page overlap ensures Gemini sees the full question in at least one batch.
+
+---
+
+### Step 9: Results Flow Back to Frontend
+
+```mermaid
+sequenceDiagram
+    participant Pipeline as pdf_vision_pipeline.py
+    participant Router as ai.py (SSE)
+    participant Frontend as AITestImporter.tsx
+    participant Builder as CreateTestPage.tsx
+
+    Pipeline->>Router: Returns final result dict
+    Router->>Frontend: SSE event: complete (full JSON)
+    Frontend->>Frontend: setParsedData(data)
+    Frontend->>User: Shows preview with all questions
+    User->>Frontend: Reviews, edits, clicks "Import"
+    Frontend->>Frontend: Transforms data for builder
+    Frontend->>Builder: navigate('/create-test', {importedData})
+    Builder->>Builder: Populates TestBuilder with questions
+```
+
+---
+
+## 🧮 Summary — Technology at Each Stage
+
+| Stage | Technology | Why? |
+|:------|:-----------|:-----|
+| PDF → Images | **PyMuPDF (fitz)** | Fast, pure-Python PDF rendering |
+| Image Quality | **OpenCV + NumPy** | Sharpness, contrast, noise detection |
+| OCR + Extraction | **Gemini 2.0 Flash Vision** | Does OCR + understanding in one step |
+| Batch Processing | **Python asyncio** | 15 parallel API calls for speed |
+| Answer Key | **Gemini 2.0 Flash** | Reads answer key images visually |
+| JSON Repair | **Custom regex sanitizer** | Fixes broken LaTeX, truncated JSON |
+| Frontend Streaming | **Server-Sent Events (SSE)** | Real-time progress updates |
+| Math Rendering | **KaTeX + remark-math** | Renders LaTeX in preview |
+| Diagram Extraction | **PyMuPDF `extract_image`** | Pulls embedded images from PDF |
+
+> [!TIP]
+> The **single biggest design decision** in this system is that **Gemini Vision replaces traditional OCR entirely**. Instead of Tesseract → text → AI, it sends page images directly to Gemini, which simultaneously reads the text AND understands the structure. This is faster and more accurate.

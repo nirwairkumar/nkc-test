@@ -232,3 +232,37 @@ TestoZa provides:
 ## 1️⃣ Clone the Repository
 
 ```bash
+git clone https://github.com/nirwairkumar/nkc-test.git
+cd nkc-test
+```
+
+## 2️⃣ Backend Setup
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Copy the `.env.example` file to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Open `.env` and fill in your **Supabase URL** and **Supabase Keys**.
+4. Run the backend:
+   ```bash
+   python -m uvicorn app.main:app --reload
+   ```
+
+## 3️⃣ Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
