@@ -120,6 +120,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [showCamera, setShowCamera] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [uploadType, setUploadType] = useState<UploadType>(null);
+    const [extractionMeta, setExtractionMeta] = useState<{ quality_tier?: string, dpi?: number, warning?: boolean } | null>(null);
 
     // ULTRA-FAST Streaming State
     const [isStreaming, setIsStreaming] = useState(false);
@@ -232,6 +233,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         setIsStreaming(false);
         setStreamProgress(null);
         setStreamingQuestions([]);
+        setExtractionMeta(null);
         if (abortController) {
             abortController.abort();
             setAbortController(null);
@@ -258,13 +260,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             setShowCamera(true);
             setUploadType('image'); // Ensure we enter the image workflow
             setError(null);
-            // Removed direct srcObject assignment here as videoRef might be null 
-            // before the dialog renders the video element.
-            /*
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
-            */
         } catch (err) {
             setError("Could not access camera. Please ensure you have granted camera permissions.");
         }
@@ -438,6 +433,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         message: data.message,
                                         data: data.data
                                     });
+                                    if (data.data && data.data.quality_tier) {
+                                        setExtractionMeta({
+                                            quality_tier: data.data.quality_tier,
+                                            dpi: data.data.dpi,
+                                            warning: data.data.warning
+                                        });
+                                    }
                                     break;
 
                                 case 'question':
@@ -571,37 +573,20 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleImport = () => {
-        console.log("[AITestImporter] handleImport called");
-        console.log("[AITestImporter] parsedData:", parsedData);
-        console.log("[AITestImporter] onImport exists:", !!onImport);
+        if (!parsedData || !onImport) return;
 
-        if (!parsedData || !onImport) {
-            console.error("[AITestImporter] Cannot import: parsedData or onImport is missing", {
-                hasParsedData: !!parsedData,
-                hasOnImport: !!onImport
-            });
-            return;
-        }
-
-        // Clean and prepare extraction data for the builder
         const questions = parsedData.questions.map((q, index) => {
-            console.log(`[AITestImporter] Processing question ${index + 1}:`, q);
-
-            // Handle different question types
             let processedOptions: { [key: string]: { text: string; image: string | null } } = {};
 
-            // Only process options for single/multiple choice questions
             if (q.type !== 'numerical' && q.options && typeof q.options === 'object') {
                 Object.entries(q.options).forEach(([key, val]) => {
                     const optionVal = val as any;
                     if (optionVal && typeof optionVal === 'object' && 'text' in optionVal) {
-                        // Already in nested format
                         processedOptions[key] = {
                             text: optionVal.text || '',
                             image: optionVal.image || null
                         };
                     } else {
-                        // Flat format, convert to nested
                         processedOptions[key] = {
                             text: String(val || ''),
                             image: q.optionImages?.[key] || null
@@ -610,7 +595,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 });
             }
 
-            const processedQuestion = {
+            return {
                 id: q.id || index + 1,
                 type: q.type || 'single',
                 question: q.question,
@@ -624,9 +609,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 passageContent: q.passageContent || "",
                 typingMode: 'en' as const
             };
-
-            console.log(`[AITestImporter] Processed question ${index + 1}:`, processedQuestion);
-            return processedQuestion;
         });
 
         const importPayload: any = {
@@ -640,10 +622,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         if (parsedData.description) importPayload.description = parsedData.description;
         if (parsedData.revision_notes) importPayload.revision_notes = parsedData.revision_notes;
 
-        console.log("[AITestImporter] Final import payload:", importPayload);
-        console.log("[AITestImporter] Calling onImport with payload...");
         onImport(importPayload);
-        console.log("[AITestImporter] onImport called successfully");
     };
 
 
@@ -1139,7 +1118,18 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             {generatingMore ? 'Generating More Questions...' : (mode === 'extract' ? 'Extracting Questions...' : 'Generating Questions...')}
                         </h2>
                         <p className="text-muted-foreground animate-pulse">{progress}</p>
-                        <p className="text-xs text-muted-foreground/60">Processing...</p>
+                        
+                        {extractionMeta && (
+                            <div className="flex items-center justify-center gap-2 mt-2">
+                                <Badge variant={extractionMeta.warning ? "destructive" : "secondary"} className="text-xs">
+                                    Quality: {extractionMeta.quality_tier?.toUpperCase()} ({extractionMeta.dpi} DPI)
+                                </Badge>
+                                {extractionMeta.warning && (
+                                    <span className="text-xs text-destructive">Low quality may affect accuracy</span>
+                                )}
+                            </div>
+                        )}
+                        <p className="text-xs text-muted-foreground/60 mt-2">Processing...</p>
                     </div>
                 </div>
             </div>
@@ -1148,21 +1138,34 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
     // Step 4: Preview & Import
     if (parsedData) {
-        console.log("Rendering Preview for:", parsedData);
-
         try {
             const questions = parsedData.questions || [];
             if (questions.length === 0) {
                 return (
                     <div className="container mx-auto p-4 text-center">
-                        <Alert variant="destructive" className="max-w-md mx-auto">
+                        <Alert variant="destructive" className="max-w-md mx-auto text-left">
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Extraction Failed</AlertTitle>
-                            <AlertDescription>No questions could be found in the response.</AlertDescription>
+                            <AlertDescription className="mt-2 space-y-2">
+                                <p>No extractable questions could be found.</p>
+                                {error && (
+                                    <div className="bg-destructive/10 p-2 rounded text-xs mt-2 overflow-auto max-h-32">
+                                        <p className="font-semibold mb-1">Details:</p>
+                                        <p className="whitespace-pre-wrap">{error}</p>
+                                    </div>
+                                )}
+                            </AlertDescription>
                         </Alert>
-                        <Button variant="outline" className="mt-4" onClick={() => { setParsedData(null); setMode(null); }}>
-                            Try Again
-                        </Button>
+                        <div className="flex gap-2 justify-center mt-4">
+                            <Button variant="outline" onClick={() => { setParsedData(null); setMode(null); }}>
+                                Try Another Document
+                            </Button>
+                            {mode === 'extract' && (
+                                <Button variant="secondary" onClick={() => handleProcess('generate')}>
+                                    Try Generate Mode Instead
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 );
             }
@@ -1199,6 +1202,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         {numericalCount > 0 && (
                                             <Badge variant="outline" className="text-xs">
                                                 {numericalCount} Numerical
+                                            </Badge>
+                                        )}
+                                        {extractionMeta && (
+                                            <Badge variant={extractionMeta.warning ? "secondary" : "secondary"} className="text-xs bg-slate-100 dark:bg-slate-800">
+                                                🖥️ {extractionMeta.dpi} DPI ({extractionMeta.quality_tier})
                                             </Badge>
                                         )}
                                     </div>
@@ -1247,7 +1255,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             <ScrollArea className="h-[600px] border rounded-md p-4 bg-muted/20">
                                 {questions.map((q, idx) => (
                                     <Card key={idx} className="mb-4 hover:shadow-md transition-shadow">
-                                        <CardContent className="p-4 space-y-4">
+                                        <CardContent className="p-4 sm:p-6 space-y-4">
+                                            {/* Question Diagram if present */}
+                                            {q.image && (
+                                                <div className="mb-4 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-md border text-center">
+                                                    <span className="text-xs text-muted-foreground block mb-2">Diagram Extracted</span>
+                                                    <img src={q.image} alt="Question Diagram" className="max-h-48 mx-auto object-contain rounded" />
+                                                </div>
+                                            )}
+                                            
                                             <div className="flex gap-4">
                                                 <div className="font-bold text-lg min-w-[30px] pt-1 text-primary">{q.id}.</div>
                                                 <div className="flex-1 space-y-3">
