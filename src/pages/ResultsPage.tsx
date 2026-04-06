@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -116,7 +116,9 @@ const ResultsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [showPopup, setShowPopup] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'topics' | 'solutions' | 'feedback'>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
+
   const [popupDismissed, setPopupDismissed] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
 
@@ -280,90 +282,7 @@ const ResultsPage = () => {
   // Determine testId for feedback
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50 flex flex-col md:flex-row">
-      {/* Sidebar Navigation */}
-      <div className="w-full md:w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-shrink-0 md:sticky md:top-0 md:h-screen overflow-y-auto z-20">
-        <div className="p-6">
-          <h1 className="text-xl font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-            <Trophy className="w-6 h-6" /> Result Hub
-          </h1>
-          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Analytics Dashboard</p>
-        </div>
-
-        <nav className="px-3 space-y-1 mb-8">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === 'overview'
-              ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-bold shadow-sm'
-              : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-          >
-            <div className="flex items-center gap-3">
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="text-sm">Overview</span>
-            </div>
-            {activeTab === 'overview' && <ChevronRight className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('topics')}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === 'topics'
-              ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-bold shadow-sm'
-              : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-          >
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm">Topic Analysis</span>
-            </div>
-            {activeTab === 'topics' && <ChevronRight className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('solutions')}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === 'solutions'
-              ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-bold shadow-sm'
-              : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-          >
-            <div className="flex items-center gap-3">
-              <FileText className="w-4 h-4" />
-              <span className="text-sm">Solution Key</span>
-            </div>
-            {activeTab === 'solutions' && <ChevronRight className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('feedback')}
-            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${activeTab === 'feedback'
-              ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 font-bold shadow-sm'
-              : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
-          >
-            <div className="flex items-center gap-3">
-              <MessageSquare className="w-4 h-4" />
-              <span className="text-sm">Feedback</span>
-            </div>
-            {activeTab === 'feedback' && <ChevronRight className="w-4 h-4" />}
-          </button>
-        </nav>
-
-        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 mt-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-slate-500 hover:text-indigo-600"
-            onClick={() => navigate('/')}
-          >
-            <Home className="w-4 h-4 mr-2" /> Back Home
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-slate-500 hover:text-indigo-600 mt-2"
-            onClick={handleRetakeTest}
-          >
-            <RotateCcw className="w-4 h-4 mr-2" /> Retake Test
-          </Button>
-        </div>
-      </div>
-
+    <div className="min-h-screen flex flex-col md:flex-row w-full">
       <div className="flex-1 overflow-y-auto bg-slate-50/30 dark:bg-slate-950/30 min-h-screen">
         <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
 
@@ -379,7 +298,6 @@ const ResultsPage = () => {
                 {/* Stats Header Area */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-2">
                   <div>
-                    <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">{selectedTest?.title}</h2>
                     <div className="flex items-center gap-3 mt-2 text-slate-500 font-medium">
                       <span className="flex items-center gap-1.5"><Timer className="w-4 h-4" /> Final Submission</span>
                       <Separator orientation="vertical" className="h-4" />
@@ -664,9 +582,9 @@ const ResultsPage = () => {
               </motion.div>
             )}
 
-            {activeTab === 'solutions' && (
+            {activeTab === 'solution-key' && (
               <motion.div
-                key="solutions"
+                key="solution-key"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -862,6 +780,32 @@ const ResultsPage = () => {
                     </Accordion>
                   </CardContent>
                 </Card>
+              </motion.div>
+            )}
+
+            {activeTab === 'solutions' && (
+              <motion.div
+                key="solutions"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4"
+              >
+                <CheckCircle className="w-12 h-12 opacity-20" />
+                <p className="font-bold">Solutions page content coming soon.</p>
+              </motion.div>
+            )}
+
+            {activeTab === 'advance-analysis' && (
+              <motion.div
+                key="advance-analysis"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4"
+              >
+                <Target className="w-12 h-12 opacity-20" />
+                <p className="font-bold">Advance Analysis content coming soon.</p>
               </motion.div>
             )}
 

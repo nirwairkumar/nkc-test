@@ -1,5 +1,5 @@
 /* Font Import with display=swap for better loading performance */
-@import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&family=Dancing+Script:wght@400;700&display=swap');
 
 /* Critical CSS - Inline for above-the-fold content */
 /* Prevent FOIT (Flash of Invisible Text) */

@@ -7,6 +7,7 @@ import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import { ScientificNotationGuide } from '@/components/ScientificNotationGuide';
 import { cn } from '@/lib/utils';
 
+
 // --- Guide Registry ---
 // Add new guides here. The component will automatically pick them up.
 interface GuideEntry {
@@ -88,7 +89,7 @@ export default function UserGuidePage() {
                 {/* --- Sidebar --- */}
                 <aside className="w-full lg:w-72 xl:w-80 shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white/70 backdrop-blur-sm lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto">
                     <div className="p-5">
-                        <div 
+                        <div
                             className="flex items-center gap-3 mb-6 cursor-pointer hover:opacity-80 transition-opacity"
                             onClick={() => navigate('/user-guide')}
                         >
