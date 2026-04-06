@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useParams, useLocation } from 'react-router-dom';
-import { Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit } from 'lucide-react';
+import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
@@ -46,6 +46,7 @@ export default function ResultsLayout() {
     const { testId } = useParams();
     const location = useLocation();
     const { user } = useAuth();
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     // Default to 'Guest User' or the metadata name
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
 
@@ -63,49 +64,86 @@ export default function ResultsLayout() {
             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
         }`;
 
-    const NavigationLinks = () => (
-        <div className="flex flex-col gap-2">
-            <NavLink
-                to={basePath}
-                end
-                state={stateData}
-                className={({ isActive }) => getLinkStyle(isActive)}
-            >
-                <Target className="h-5 w-5" />
-                Overview
-            </NavLink>
-            {currentTestId && (
+    const NavigationLinks = ({ onItemClick }: { onItemClick?: () => void }) => {
+        // Read current tab from URL parameters to highlight proper NavLinks
+        const searchParams = new URLSearchParams(location.search);
+        const currentTab = searchParams.get('tab') || 'overview';
+        
+        return (
+            <div className="flex flex-col gap-2">
+                <div className="px-4 py-2 mt-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Overview</span>
+                </div>
+                
                 <NavLink
-                    to={`${basePath}/solutions/${currentTestId}`}
+                    to={`${basePath}?tab=overview`}
+                    end
                     state={stateData}
-                    className={({ isActive }) => getLinkStyle(isActive)}
+                    className={getLinkStyle(currentTab === 'overview' && location.pathname === basePath)}
+                    onClick={onItemClick}
+                >
+                    <Target className="h-5 w-5" />
+                    Overview
+                </NavLink>
+
+                <NavLink
+                    to={`${basePath}?tab=topics`}
+                    state={stateData}
+                    className={getLinkStyle(currentTab === 'topics' && location.pathname === basePath)}
+                    onClick={onItemClick}
                 >
                     <BookOpen className="h-5 w-5" />
-                    Solutions
+                    Topic Analysis
                 </NavLink>
-            )}
-            <NavLink
-                to={`${basePath}/analytics`}
-                state={stateData}
-                className={({ isActive }) => getLinkStyle(isActive)}
-            >
-                <Target className="h-5 w-5" />
-                Advance Analytics
-            </NavLink>
 
-            <div className="my-4 border-t border-slate-200 dark:border-slate-800"></div>
-
-            {currentTestId && (
                 <NavLink
-                    to={`${basePath}/feedback/${currentTestId}`}
+                    to={`${basePath}?tab=solution-key`}
+                    state={stateData}
+                    className={getLinkStyle(currentTab === 'solution-key' && location.pathname === basePath)}
+                    onClick={onItemClick}
+                >
+                    <BookOpen className="h-5 w-5" />
+                    Solution Key
+                </NavLink>
+
+                <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
+
+                {currentTestId && (
+                    <NavLink
+                        to={`${basePath}/solutions/${currentTestId}`}
+                        state={stateData}
+                        className={({ isActive }) => getLinkStyle(isActive)}
+                        onClick={onItemClick}
+                    >
+                        <BookOpen className="h-5 w-5" />
+                        Solutions
+                    </NavLink>
+                )}
+                
+                <NavLink
+                    to={`${basePath}/analytics`}
                     state={stateData}
                     className={({ isActive }) => getLinkStyle(isActive)}
-                    id="left-menu-feedback-btn"
+                    onClick={onItemClick}
                 >
-                    <CustomFeedbackIcon className="h-5 w-5" />
-                    Give Feedback
+                    <Target className="h-5 w-5" />
+                    Advance Analysis
                 </NavLink>
-            )}
+
+                <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
+
+                {currentTestId && (
+                    <NavLink
+                        to={`${basePath}/feedback/${currentTestId}`}
+                        state={stateData}
+                        className={({ isActive }) => getLinkStyle(isActive)}
+                        id="left-menu-feedback-btn"
+                        onClick={onItemClick}
+                    >
+                        <CustomFeedbackIcon className="h-5 w-5" />
+                        Give Feedback
+                    </NavLink>
+                )}
 
             <Button
                 variant="ghost"
@@ -181,21 +219,29 @@ export default function ResultsLayout() {
             <NavLink
                 to="/"
                 className={({ isActive }) => getLinkStyle(isActive)}
+                onClick={onItemClick}
             >
                 <Home className="h-5 w-5" />
                 Home
             </NavLink>
         </div>
-    );
+        );
+    };
 
     return (
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
             {/* Desktop Sidebar (Permanent) */}
             <aside className="hidden lg:flex flex-col w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-6 fixed h-full z-10">
-                <div className="mb-8 px-2">
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Results Area</h2>
+                <div className="mb-8 px-4 flex items-center gap-3">
+                    <div className="bg-indigo-600 p-2 rounded-lg">
+                        <Trophy className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Result Hub</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dashboard</p>
+                    </div>
                 </div>
-                <nav className="flex-1">
+                <nav className="flex-1 overflow-y-auto custom-scrollbar pr-2">
                     <NavigationLinks />
                 </nav>
             </aside>
@@ -205,22 +251,26 @@ export default function ResultsLayout() {
 
                 {/* Mobile Header with Hamburger */}
                 <header className="lg:hidden flex items-center h-16 px-4 bg-white dark:bg-slate-900 border-b shadow-sm sticky top-0 z-20">
-                    <Sheet>
+                    <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className="-ml-2 mr-2">
                                 <Menu className="h-6 w-6" />
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="w-[280px] p-0">
-                            <SheetHeader className="p-6 text-left border-b">
-                                <SheetTitle>Results Area</SheetTitle>
+                        <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+                            <SheetHeader className="p-6 text-left border-b bg-indigo-600 dark:bg-indigo-900">
+                                <SheetTitle className="text-white flex items-center gap-2 text-xl font-bold">
+                                    <Trophy className="h-6 w-6 text-yellow-400" />
+                                    Result Hub
+                                </SheetTitle>
+                                <p className="text-indigo-100/70 text-[10px] font-bold uppercase tracking-widest mt-1">Analytics Dashboard</p>
                             </SheetHeader>
-                            <div className="p-4">
-                                <NavigationLinks />
+                            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                                <NavigationLinks onItemClick={() => setIsDrawerOpen(false)} />
                             </div>
                         </SheetContent>
                     </Sheet>
-                    <h1 className="font-semibold text-lg line-clamp-1 ml-2">
+                    <h1 className="text-base font-medium text-slate-800 dark:text-slate-100 ml-2 tracking-wide leading-relaxed" style={{ fontFamily: "'Dancing Script', cursive" }}>
                         {userName}'s Results
                     </h1>
                 </header>
