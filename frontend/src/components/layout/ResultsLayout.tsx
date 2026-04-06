@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useParams, useLocation } from 'react-router-dom';
-import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit } from 'lucide-react';
+import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
@@ -48,7 +48,8 @@ export default function ResultsLayout() {
     const { user } = useAuth();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     // Default to 'Guest User' or the metadata name
-    const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
+    const fullUserName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User";
+    const userName = fullUserName.split(' ')[0];
 
     // Try to extract State Data so we can pass it down through Outlet context or links
     const stateData = location.state as any;
@@ -121,13 +122,13 @@ export default function ResultsLayout() {
                 )}
                 
                 <NavLink
-                    to={`${basePath}/analytics`}
+                    to={`${basePath}?tab=${currentTab}&ai_chat=true`}
                     state={stateData}
-                    className={({ isActive }) => getLinkStyle(isActive)}
+                    className={({ isActive }) => getLinkStyle(searchParams.get('ai_chat') === 'true')}
                     onClick={onItemClick}
                 >
-                    <Target className="h-5 w-5" />
-                    Advance Analysis
+                    <Sparkles className="h-5 w-5 text-indigo-500" />
+                    Analysis with AI
                 </NavLink>
 
                 <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
@@ -270,7 +271,7 @@ export default function ResultsLayout() {
                             </div>
                         </SheetContent>
                     </Sheet>
-                    <h1 className="text-base font-medium text-slate-800 dark:text-slate-100 ml-2 tracking-wide leading-relaxed" style={{ fontFamily: "'Dancing Script', cursive" }}>
+                    <h1 className="text-sm font-medium text-slate-800 dark:text-slate-100 ml-2 tracking-wide leading-relaxed" style={{ fontFamily: "'Dancing Script', cursive" }}>
                         {userName}'s Results
                     </h1>
                 </header>

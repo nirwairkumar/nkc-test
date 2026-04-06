@@ -607,3 +607,105 @@ async def generate_topics(
     except Exception as e:
         print(f"Error generating topics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class PredictRankRequest(BaseModel):
+    test_title: str
+    description: Optional[str] = None
+    score: float
+    total_marks: float
+    difficulty: Optional[str] = "Medium"
+
+@router.post("/predict-rank")
+async def predict_rank(payload: PredictRankRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
+    
+    prompt = f"""
+    You are an expert AI educational counselor.
+    The student has taken a mock test titled "{payload.test_title}".
+    Test Description: {payload.description or "N/A"}
+    Difficulty: {payload.difficulty}
+    Student Score: {payload.score} out of {payload.total_marks}
+    
+    Task: Search the internet for the most recent historical cutoffs, marks vs rank data, and statistics for this specific exam.
+    Based on the student's score, predict their ALL INDIA RANK (AIR) or equivalent rank/percentile.
+    
+    IMPORTANT FORMAT RULES - Follow strictly:
+    - Output ONLY a short result. No long paragraphs.
+    - Line 1: "🏆 **Predicted AIR Range: X,XXX - Y,YYY**" (bolded rank range)
+    - Line 2: "📊 **Estimated Percentile: XX.X%**"
+    - Line 3: One short encouraging sentence (max 15 words).
+    - Do NOT write any analysis, explanation, or historical data. Just the rank range and percentile.
+    """
+    
+    try:
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[{"google_search": {}}],
+                temperature=0.7
+            )
+        )
+        return {"rank_prediction": response.text}
+    except Exception as e:
+        logger.error(f"Rank Prediction Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class AIChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    test_context: Dict[str, Any]
+
+@router.post("/chat")
+async def chat_with_ai(payload: AIChatRequest):
+    if not client:
+        raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
+    
+    # System prompt injecting context
+    context = payload.test_context
+    system_prompt = f"""You are 'TestoZa AI', an expert, encouraging AI teacher helping a student analyze their test performance.
+    
+    Here is the student's current test performance context:
+    - Test Name: {context.get('testName', 'Unknown')}
+    - Total Score: {context.get('score', 0)} / {context.get('totalMarks', 0)}
+    - Correct Answers: {context.get('correct', 0)}
+    - Wrong Answers: {context.get('wrong', 0)}
+    - Skipped Questions: {context.get('skipped', 0)}
+    - Accuracy: {context.get('accuracy', 0)}%
+    
+    Guidelines:
+    - Provide concise, actionable, and encouraging feedback.
+    - If they ask about weak areas, refer to their score context.
+    - If they ask about college predictions, give general estimates based on their score but remind them it's just a mock test. Feel free to use your own knowledge.
+    - Use Markdown and format math equations using LaTeX (e.g., $E=mc^2$ or $$E=mc^2$$).
+    - Limit responses to a few short paragraphs. Be conversational to keep the student motivated.
+    - Do NOT roleplay as a student. You are the AI mentor.
+    """
+    
+    contents = [{"role": "user", "parts": [{"text": system_prompt}]}]
+    contents.append({"role": "model", "parts": [{"text": "Understood. I will act as TestoZa AI using this context."}]})
+    
+    for msg in payload.messages:
+        role = "user" if msg.role == "user" else "model"
+        contents.append({"role": role, "parts": [{"text": msg.content}]})
+        
+    try:
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model="gemini-2.0-flash",
+            contents=contents,
+            config=types.GenerateContentConfig(
+                temperature=0.7
+            )
+        )
+        return {"reply": response.text}
+    except Exception as e:
+        logger.error(f"AI Chat Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

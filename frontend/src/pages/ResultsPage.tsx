@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
 import confetti from 'canvas-confetti';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Accordion,
@@ -38,6 +39,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import 'katex/dist/katex.min.css';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import TestVoteButtons from '@/components/TestVoteButtons';
+import ReactMarkdown from 'react-markdown';
+import { AIChatBot } from '@/components/AIChatBot';
 import {
   BarChart,
   Bar,
@@ -118,12 +121,52 @@ const ResultsPage = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
+  const showAIChatFromParams = searchParams.get('ai_chat') === 'true';
+  const [isAIChatOpen, setIsAIChatOpen] = useState(showAIChatFromParams);
+
+  useEffect(() => {
+    if (showAIChatFromParams) {
+      setIsAIChatOpen(true);
+    }
+  }, [showAIChatFromParams]);
 
   const [popupDismissed, setPopupDismissed] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
 
   const justSubmitted = stateData?.justSubmitted;
   const testId = selectedTest?.id;
+
+  const [rankPrediction, setRankPrediction] = useState<string | null>(null);
+  const [isPredictingRank, setIsPredictingRank] = useState(false);
+
+  const handlePredictRank = async () => {
+    setIsPredictingRank(true);
+    setRankPrediction(null);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/ai/predict-rank`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          test_title: selectedTest?.title || 'Unknown Test',
+          description: selectedTest?.description || '',
+          score: analysisData?.finalScore || 0,
+          total_marks: analysisData?.totalMaxMarks || 0
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to predict rank.');
+      }
+      const data = await response.json();
+      setRankPrediction(data.rank_prediction);
+    } catch (err: any) {
+      toast.error(err.message || 'Error communicating with AI predictor.');
+    } finally {
+      setIsPredictingRank(false);
+    }
+  };
 
   useEffect(() => {
     const confettiShownKey = testId ? `confetti_shown_${testId}` : null;
@@ -324,7 +367,7 @@ const ResultsPage = () => {
                           </div>
                           <div className="mb-1 md:mb-2">
                             <Badge variant="secondary" className="text-sm md:text-lg px-2 md:px-3 py-1">
-                              {percentage}% Score
+                              {parseFloat(Number(percentage || 0).toFixed(3))}% Score
                             </Badge>
                           </div>
                         </div>
@@ -373,6 +416,47 @@ const ResultsPage = () => {
                       </div>
                     </div>
                   </Card>
+                </div>
+
+                {/* AI Rank Predictor */}
+                <div className="mt-6 mb-8 relative">
+                   <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm overflow-hidden group">
+                     {isPredictingRank && (
+                        <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-2" />
+                          <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300 animate-pulse">Searching historical data and predicting rank...</p>
+                        </div>
+                     )}
+                     <CardContent className="p-6">
+                       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                         <div className="flex-1">
+                           <h3 className="text-xl font-bold flex items-center gap-2 text-indigo-900 dark:text-indigo-300 mb-2">
+                             <Sparkles className="w-5 h-5 text-purple-500" />
+                             Predict Your Rank with AI ✨
+                           </h3>
+                           <p className="text-sm text-slate-600 dark:text-slate-400">
+                             Estimate your All India Rank based on your score of <strong>{parseFloat((finalScore || 0).toFixed(2))}/{totalMaxMarks}</strong>.
+                           </p>
+                         </div>
+                         <Button 
+                           onClick={handlePredictRank} 
+                           disabled={isPredictingRank}
+                           className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all shrink-0 w-full md:w-auto"
+                         >
+                           <Trophy className="w-4 h-4 mr-2" /> 
+                           Predict My Rank
+                         </Button>
+                       </div>
+                       
+                       {rankPrediction && (
+                         <div className="mt-6 p-4 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-slate-800 shadow-inner">
+                           <div className="prose prose-sm dark:prose-invert prose-indigo max-w-none">
+                             <ReactMarkdown>{rankPrediction}</ReactMarkdown>
+                           </div>
+                         </div>
+                       )}
+                     </CardContent>
+                   </Card>
                 </div>
 
                 {/* Section Wise Analysis */}
@@ -544,7 +628,7 @@ const ResultsPage = () => {
                                       {topicScore}
                                       <span className="text-sm font-medium text-slate-400 align-top ml-1">/{topicMax}</span>
                                     </div>
-                                    <p className={`text-[10px] font-black text-${perfColor}-600`}>{topicPercentage}% Mastered</p>
+                                    <p className={`text-[10px] font-black text-${perfColor}-600`}>{parseFloat(Number(topicPercentage).toFixed(3))}% Mastered</p>
                                   </div>
 
                                   <div className="flex gap-2">
@@ -887,6 +971,31 @@ const ResultsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* TestoZa AI Chatbot */}
+      {showPersonalResults && analysisData && selectedTest && (
+        <AIChatBot 
+          isOpen={isAIChatOpen}
+          onOpenChange={(open) => {
+             setIsAIChatOpen(open);
+             if (!open && showAIChatFromParams) {
+                 // Remove ai_chat from params if closed
+                 searchParams.delete('ai_chat');
+                 setSearchParams(searchParams, { replace: true });
+             }
+          }}
+          testContext={{
+            testName: selectedTest.title,
+            score: analysisData.finalScore || 0,
+            totalMarks: analysisData.totalMaxMarks || 0,
+            correct: analysisData.correctCount || 0,
+            wrong: analysisData.wrongCount || 0,
+            skipped: analysisData.skippedCount || 0,
+            accuracy: parseFloat(Number(analysisData.percentage || 0).toFixed(3)),
+            topics: analysisData.topicData || []
+          }}
+        />
+      )}
     </div>
   );
 };
