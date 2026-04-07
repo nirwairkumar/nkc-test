@@ -89,6 +89,7 @@ const getDisplayMark = (value: string | number | undefined, defaultVal: number =
 
 const ResultsPage = () => {
   const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const rawState = location.state;
@@ -421,43 +422,43 @@ const ResultsPage = () => {
 
                 {/* AI Rank Predictor */}
                 <div className="mt-6 mb-8 relative">
-                   <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm overflow-hidden group">
-                     {isPredictingRank && (
-                        <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-2" />
-                          <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300 animate-pulse">Searching historical data and predicting rank...</p>
+                  <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm overflow-hidden group">
+                    {isPredictingRank && (
+                      <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-2" />
+                        <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300 animate-pulse">Searching historical data and predicting rank...</p>
+                      </div>
+                    )}
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold flex items-center gap-2 text-indigo-900 dark:text-indigo-300 mb-2">
+                            <Sparkles className="w-5 h-5 text-purple-500" />
+                            Predict Your Rank with AI ✨
+                          </h3>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Estimate your All India Rank based on your score of <strong>{parseFloat((finalScore || 0).toFixed(2))}/{totalMaxMarks}</strong>.
+                          </p>
                         </div>
-                     )}
-                     <CardContent className="p-6">
-                       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                         <div className="flex-1">
-                           <h3 className="text-xl font-bold flex items-center gap-2 text-indigo-900 dark:text-indigo-300 mb-2">
-                             <Sparkles className="w-5 h-5 text-purple-500" />
-                             Predict Your Rank with AI ✨
-                           </h3>
-                           <p className="text-sm text-slate-600 dark:text-slate-400">
-                             Estimate your All India Rank based on your score of <strong>{parseFloat((finalScore || 0).toFixed(2))}/{totalMaxMarks}</strong>.
-                           </p>
-                         </div>
-                         <Button 
-                           onClick={handlePredictRank} 
-                           disabled={isPredictingRank}
-                           className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all shrink-0 w-full md:w-auto"
-                         >
-                           <Trophy className="w-4 h-4 mr-2" /> 
-                           Predict My Rank
-                         </Button>
-                       </div>
-                       
-                       {rankPrediction && (
-                         <div className="mt-6 p-4 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-slate-800 shadow-inner">
-                           <div className="prose prose-sm dark:prose-invert prose-indigo max-w-none">
-                             <ReactMarkdown>{rankPrediction}</ReactMarkdown>
-                           </div>
-                         </div>
-                       )}
-                     </CardContent>
-                   </Card>
+                        <Button
+                          onClick={handlePredictRank}
+                          disabled={isPredictingRank}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all shrink-0 w-full md:w-auto"
+                        >
+                          <Trophy className="w-4 h-4 mr-2" />
+                          Predict My Rank
+                        </Button>
+                      </div>
+
+                      {rankPrediction && (
+                        <div className="mt-6 p-4 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-slate-800 shadow-inner">
+                          <div className="prose prose-sm dark:prose-invert prose-indigo max-w-none">
+                            <ReactMarkdown>{rankPrediction}</ReactMarkdown>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
 
                 {/* Section Wise Analysis */}
@@ -976,29 +977,74 @@ const ResultsPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {/* TestoZa AI Chatbot */}
       {showPersonalResults && analysisData && selectedTest && (
-        <AIChatBot 
+        <AIChatBot
           isOpen={isAIChatOpen}
           onOpenChange={(open) => {
-             setIsAIChatOpen(open);
-             if (!open && showAIChatFromParams) {
-                 // Remove ai_chat from params if closed
-                 searchParams.delete('ai_chat');
-                 setSearchParams(searchParams, { replace: true });
-             }
+            setIsAIChatOpen(open);
+            if (!open && showAIChatFromParams) {
+              // Remove ai_chat from params if closed
+              searchParams.delete('ai_chat');
+              setSearchParams(searchParams, { replace: true });
+            }
           }}
-          testContext={{
-            testName: selectedTest.title,
-            score: analysisData.finalScore || 0,
-            totalMarks: analysisData.totalMaxMarks || 0,
-            correct: analysisData.correctCount || 0,
-            wrong: analysisData.wrongCount || 0,
-            skipped: analysisData.skippedCount || 0,
-            accuracy: parseFloat(Number(analysisData.percentage || 0).toFixed(3)),
-            topics: analysisData.topicData || []
-          }}
+          testContext={(() => {
+            // Build question details for AI context
+            const allQuestions = selectedTest.enable_section_mode && selectedTest.sections
+              ? selectedTest.sections.flatMap((s: any) => s.questions || [])
+              : selectedTest.questions || [];
+
+            const questionDetails = allQuestions.map((q: any) => {
+              const qId = String(q.id);
+              const status = analysisData.questionStatus?.[qId];
+              return {
+                id: q.id,
+                question: q.question?.substring(0, 200) || '',
+                type: q.type || 'single',
+                topic: q.topic || 'Uncategorized',
+                correctAnswer: q.correctAnswer,
+                userAnswer: answers[q.id as any] ?? null,
+                status: status?.status || 'skipped',
+                marks: q.marks,
+                options: q.options,
+              };
+            });
+
+            // Build section performance
+            const sectionPerformance = analysisData.sectionData
+              ? Object.values(analysisData.sectionData).map((s: any) => ({
+                name: s.name,
+                correct: s.correct,
+                wrong: s.wrong,
+                skipped: s.skipped,
+                score: s.score,
+                maxScore: s.maxScore,
+                totalQ: s.totalQ,
+              }))
+              : undefined;
+
+            return {
+              testName: selectedTest.title,
+              testDescription: selectedTest.description || '',
+              score: analysisData.finalScore || 0,
+              totalMarks: analysisData.totalMaxMarks || 0,
+              correct: analysisData.correctCount || 0,
+              wrong: analysisData.wrongCount || 0,
+              skipped: analysisData.skippedCount || 0,
+              accuracy: parseFloat(Number(analysisData.percentage || 0).toFixed(3)),
+              percentage: analysisData.percentage || 0,
+              duration: selectedTest.duration,
+              totalQuestions: analysisData.totalQuestions || allQuestions.length,
+              topicAnalysis: analysisData.topicData || [],
+              questionDetails,
+              sectionPerformance,
+              userId: user?.id,
+              hasSolutions: !!selectedTest.solutions,
+              justSubmitted: justSubmitted,
+            };
+          })()}
         />
       )}
     </div>
