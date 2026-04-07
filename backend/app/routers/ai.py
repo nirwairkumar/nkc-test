@@ -663,34 +663,218 @@ class AIChatRequest(BaseModel):
     messages: List[ChatMessage]
     test_context: Dict[str, Any]
 
+
+def _build_mentor_system_prompt(context: Dict[str, Any], past_history: List[Dict] = None) -> str:
+    """Build a comprehensive, data-rich system prompt for the AI mentor."""
+    
+    # ── 1. Test Overview ──
+    test_name = context.get('testName', 'Unknown Test')
+    test_desc = context.get('testDescription', '')
+    duration = context.get('duration', 0)
+    total_qs = context.get('totalQuestions', 0)
+    score = context.get('score', 0)
+    total_marks = context.get('totalMarks', 0)
+    correct = context.get('correct', 0)
+    wrong = context.get('wrong', 0)
+    skipped = context.get('skipped', 0)
+    accuracy = context.get('accuracy', 0)
+    percentage = context.get('percentage', 0)
+    
+    prompt = f"""You are **TestoZa AI**, an elite AI mentor and educational counselor. You have DEEP, COMPLETE access to this student's test data. You are not a generic chatbot — you are a **real mentor** with full knowledge of every question, every answer, and every mistake the student made.
+
+═══════════════════════════════════════════
+📋 CURRENT TEST: {test_name}
+═══════════════════════════════════════════
+{f'Description: {test_desc}' if test_desc else ''}
+Duration: {duration} minutes | Total Questions: {total_qs}
+
+📊 SCORE CARD:
+• Score: {score} / {total_marks} ({percentage}%)
+• Correct: {correct} | Wrong: {wrong} | Skipped: {skipped}
+• Accuracy: {accuracy}%
+"""
+
+    # ── 2. Topic Analysis ──
+    topic_analysis = context.get('topicAnalysis', [])
+    if topic_analysis:
+        prompt += "\n═══════════════════════════════════════════\n"
+        prompt += "📈 TOPIC-WISE PERFORMANCE ANALYSIS:\n"
+        prompt += "═══════════════════════════════════════════\n"
+        
+        weak_topics = []
+        strong_topics = []
+        moderate_topics = []
+        
+        for t in topic_analysis:
+            name = t.get('name', 'Unknown')
+            perf = t.get('performance', 'Weak')
+            t_correct = t.get('correct', 0)
+            t_wrong = t.get('wrong', 0)
+            t_skipped = t.get('skipped', 0)
+            t_score = t.get('score', 0)
+            t_max = t.get('maxScore', 0)
+            t_pct = t.get('percentage', 0)
+            t_count = t.get('count', 0)
+            
+            emoji = "🟢" if perf == "Strong" else "🟡" if perf == "Moderate" else "🔴"
+            prompt += f"  {emoji} {name}: {t_score}/{t_max} ({t_pct}%) — {t_correct}✓ {t_wrong}✗ {t_skipped}⊘ [{t_count} Qs] → {perf}\n"
+            
+            if perf == "Weak": weak_topics.append(name)
+            elif perf == "Strong": strong_topics.append(name)
+            else: moderate_topics.append(name)
+        
+        if weak_topics:
+            prompt += f"\n⚠️ WEAK TOPICS REQUIRING ATTENTION: {', '.join(weak_topics)}\n"
+        if strong_topics:
+            prompt += f"✅ STRONG TOPICS: {', '.join(strong_topics)}\n"
+        if moderate_topics:
+            prompt += f"🔄 MODERATE TOPICS (can improve): {', '.join(moderate_topics)}\n"
+
+    # ── 3. Section Performance ──
+    section_perf = context.get('sectionPerformance', [])
+    if section_perf and len(section_perf) > 1:
+        prompt += "\n═══════════════════════════════════════════\n"
+        prompt += "📑 SECTION-WISE PERFORMANCE:\n"
+        prompt += "═══════════════════════════════════════════\n"
+        for s in section_perf:
+            s_name = s.get('name', 'Unknown')
+            s_score = s.get('score', 0)
+            s_max = s.get('maxScore', 0)
+            s_pct = round((s_score / s_max * 100) if s_max > 0 else 0, 1)
+            prompt += f"  • {s_name}: {s_score}/{s_max} ({s_pct}%) — {s.get('correct', 0)}✓ {s.get('wrong', 0)}✗ {s.get('skipped', 0)}⊘\n"
+
+    # ── 4. Question-Level Detail (Wrong & Skipped Only — most actionable) ──
+    question_details = context.get('questionDetails', [])
+    if question_details:
+        wrong_qs = [q for q in question_details if q.get('status') == 'wrong']
+        skipped_qs = [q for q in question_details if q.get('status') == 'skipped']
+        
+        if wrong_qs:
+            prompt += "\n═══════════════════════════════════════════\n"
+            prompt += f"❌ WRONG ANSWERS ({len(wrong_qs)} questions):\n"
+            prompt += "═══════════════════════════════════════════\n"
+            for i, q in enumerate(wrong_qs[:30], 1):
+                q_text = q.get('question', '')[:150]
+                q_topic = q.get('topic', 'Uncategorized')
+                correct_ans = q.get('correctAnswer', '?')
+                user_ans = q.get('userAnswer', '?')
+                q_type = q.get('type', 'single')
+                options = q.get('options', {})
+                
+                prompt += f"\n  Q{q.get('id', i)}. [{q_topic}] ({q_type})\n"
+                prompt += f"     Question: {q_text}\n"
+                if options and q_type != 'numerical':
+                    # Show option text for user answer and correct answer
+                    user_option_text = options.get(str(user_ans), str(user_ans)) if user_ans else '?'
+                    correct_option_text = options.get(str(correct_ans), str(correct_ans)) if correct_ans else '?'
+                    prompt += f"     Student chose: ({user_ans}) {user_option_text[:80]}\n"
+                    prompt += f"     Correct answer: ({correct_ans}) {correct_option_text[:80]}\n"
+                else:
+                    prompt += f"     Student answered: {user_ans} | Correct: {correct_ans}\n"
+        
+        if skipped_qs:
+            prompt += f"\n⊘ SKIPPED QUESTIONS ({len(skipped_qs)}):\n"
+            for q in skipped_qs[:15]:
+                q_topic = q.get('topic', 'Uncategorized')
+                prompt += f"  • Q{q.get('id', '?')} [{q_topic}]: {q.get('question', '')[:100]}\n"
+
+    # ── 5. Past Exam History ──
+    if past_history and len(past_history) > 0:
+        prompt += "\n═══════════════════════════════════════════\n"
+        prompt += f"📚 PAST EXAM HISTORY ({len(past_history)} recent attempts):\n"
+        prompt += "═══════════════════════════════════════════\n"
+        for i, attempt in enumerate(past_history, 1):
+            a_title = attempt.get('test_title', 'Unknown')
+            a_score = attempt.get('score', 0)
+            a_date = attempt.get('created_at', '')[:10]
+            prompt += f"  {i}. {a_title} — Score: {a_score} ({a_date})\n"
+        prompt += "\nUse this history to identify trends, improvement patterns, and recurring weak areas.\n"
+
+    # ── 6. Mentor Personality & Guidelines ──
+    prompt += """
+═══════════════════════════════════════════
+🎯 YOUR ROLE & GUIDELINES:
+═══════════════════════════════════════════
+
+**Identity**: You are TestoZa AI — an experienced, warm, data-driven mentor. Think of yourself as a combination of a brilliant tutor and a caring older sibling who genuinely wants this student to succeed.
+
+**Core Principles**:
+1. **Be SPECIFIC** — Never give vague advice. Always reference actual question numbers, topic names, scores, and percentages from the data above.
+2. **Be ACTIONABLE** — Every suggestion must be something the student can DO right now. "Study more" is BAD. "Spend 45 minutes solving 10 Kinematics problems focusing on projectile motion" is GOOD.
+3. **Be HONEST but ENCOURAGING** — If performance is poor, acknowledge it kindly but don't sugarcoat. Pair every criticism with a concrete improvement path.
+4. **Be DATA-DRIVEN** — When discussing weak topics, cite the exact score breakdown. When suggesting priorities, rank by impact (most wrong questions first).
+5. **Be a REAL MENTOR** — Share study strategies, time management tips, exam-day techniques, and mental health advice when relevant.
+
+**Response Format**:
+- Use Markdown formatting with headers, bullet points, and emphasis.
+- Format math equations using LaTeX (e.g., $E=mc^2$ or $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$).
+- Use emojis sparingly for visual structure (✅ ❌ 📊 💡 🎯).
+- Keep responses focused and scannable — use headers to organize if response is long.
+- For study plans, use tables or numbered lists with specific time allocations.
+
+**When asked about colleges/rank prediction**: Use your knowledge of Indian competitive exams (JEE, NEET, GATE, etc.) to give realistic estimates based on the score percentage marked. Always mention it's an estimate from a mock test.
+
+**When explaining wrong answers**: Reference the exact question, show what the student chose vs. correct answer, and explain the concept briefly. If you can identify a pattern (e.g., careless errors vs. conceptual gaps), highlight it.
+
+**When creating study plans**: Be hyper-specific. Include: which topics, how many hours, what type of practice (conceptual vs. numerical), and specific resources if possible.
+
+**IMPORTANT**: You must NEVER make up data that isn't provided above. If you don't have certain information, say so.
+"""
+    
+    return prompt
+
+
 @router.post("/chat")
-async def chat_with_ai(payload: AIChatRequest):
+async def chat_with_ai(
+    payload: AIChatRequest,
+    db: Client = Depends(get_db)
+):
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
     
-    # System prompt injecting context
     context = payload.test_context
-    system_prompt = f"""You are 'TestoZa AI', an expert, encouraging AI teacher helping a student analyze their test performance.
     
-    Here is the student's current test performance context:
-    - Test Name: {context.get('testName', 'Unknown')}
-    - Total Score: {context.get('score', 0)} / {context.get('totalMarks', 0)}
-    - Correct Answers: {context.get('correct', 0)}
-    - Wrong Answers: {context.get('wrong', 0)}
-    - Skipped Questions: {context.get('skipped', 0)}
-    - Accuracy: {context.get('accuracy', 0)}%
+    # ── Fetch past exam history from database (if user ID provided) ──
+    past_history = []
+    user_id = context.get('userId')
+    if user_id:
+        try:
+            from app.core.database import supabase as admin_db
+            attempts_res = admin_db.table("user_tests")\
+                .select("test_id, score, created_at")\
+                .eq("user_id", user_id)\
+                .order("created_at", desc=True)\
+                .limit(10)\
+                .execute()
+            
+            if attempts_res.data:
+                # Fetch test titles for these attempts
+                test_ids = list(set([a["test_id"] for a in attempts_res.data if a.get("test_id")]))
+                tests_map = {}
+                if test_ids:
+                    tests_res = admin_db.table("tests")\
+                        .select("id, title")\
+                        .in_("id", test_ids)\
+                        .execute()
+                    if tests_res.data:
+                        tests_map = {t["id"]: t["title"] for t in tests_res.data}
+                
+                for attempt in attempts_res.data:
+                    tid = attempt.get("test_id", "")
+                    past_history.append({
+                        "test_title": tests_map.get(tid, "Unknown Test"),
+                        "score": attempt.get("score", 0),
+                        "created_at": attempt.get("created_at", "")
+                    })
+        except Exception as e:
+            logger.error(f"Error fetching past history for AI chat: {e}")
+            # Non-critical, continue without history
     
-    Guidelines:
-    - Provide concise, actionable, and encouraging feedback.
-    - If they ask about weak areas, refer to their score context.
-    - If they ask about college predictions, give general estimates based on their score but remind them it's just a mock test. Feel free to use your own knowledge.
-    - Use Markdown and format math equations using LaTeX (e.g., $E=mc^2$ or $$E=mc^2$$).
-    - Limit responses to a few short paragraphs. Be conversational to keep the student motivated.
-    - Do NOT roleplay as a student. You are the AI mentor.
-    """
+    # ── Build comprehensive system prompt ──
+    system_prompt = _build_mentor_system_prompt(context, past_history)
     
     contents = [{"role": "user", "parts": [{"text": system_prompt}]}]
-    contents.append({"role": "model", "parts": [{"text": "Understood. I will act as TestoZa AI using this context."}]})
+    contents.append({"role": "model", "parts": [{"text": "Understood. I have full access to the student's test data including every question, answer, topic analysis, and performance metrics. I will act as TestoZa AI — their dedicated mentor. I'm ready to provide specific, data-driven guidance."}]})
     
     for msg in payload.messages:
         role = "user" if msg.role == "user" else "model"
