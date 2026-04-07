@@ -591,7 +591,7 @@ const ResultsPage = () => {
                               {topicData.map((entry: any, index: number) => (
                                 <Cell
                                   key={`cell-${index}`}
-                                  fill={entry.percentage >= 75 ? '#10b981' : entry.percentage >= 40 ? '#f59e0b' : '#ef4444'}
+                                  fill={entry.performance === 'Strong' ? '#10b981' : entry.performance === 'Moderate' ? '#f59e0b' : '#ef4444'}
                                 />
                               ))}
                             </Bar>
