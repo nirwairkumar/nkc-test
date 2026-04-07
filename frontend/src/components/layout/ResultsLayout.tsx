@@ -127,8 +127,15 @@ export default function ResultsLayout() {
                     className={({ isActive }) => getLinkStyle(searchParams.get('ai_chat') === 'true')}
                     onClick={onItemClick}
                 >
-                    <Sparkles className="h-5 w-5 text-indigo-500" />
-                    Analysis with AI
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-3">
+                            <Sparkles className="h-5 w-5 text-indigo-500" />
+                            Analysis with AI
+                        </div>
+                        <span className="text-[10px] font-black bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-md animate-pulse">
+                            NEW
+                        </span>
+                    </div>
                 </NavLink>
 
                 <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
@@ -251,11 +258,25 @@ export default function ResultsLayout() {
             <div className="flex-1 lg:ml-64 flex flex-col w-full min-h-screen">
 
                 {/* Mobile Header with Hamburger */}
-                <header className="lg:hidden flex items-center h-16 px-4 bg-white dark:bg-slate-900 border-b shadow-sm sticky top-0 z-20">
+                <header className="lg:hidden flex items-center h-16 pl-0 pr-4 bg-white dark:bg-slate-900 border-b shadow-sm sticky top-0 z-20">
                     <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="-ml-2 mr-2">
-                                <Menu className="h-6 w-6" />
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="relative h-10 px-4 rounded-r-3xl rounded-l-none bg-indigo-50/80 dark:bg-indigo-900/40 backdrop-blur-md border border-l-0 border-indigo-200/50 dark:border-indigo-800/50 shadow-[2px_2px_10px_rgba(0,0,0,0.05)] transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/60 active:scale-95 group flex items-center gap-3"
+                            >
+                                <div className="relative">
+                                    <Menu className="h-5 w-5 text-indigo-600 dark:text-indigo-400 group-hover:rotate-180 transition-transform duration-500" />
+                                    {/* iOS-style Notification Dot / Pulse */}
+                                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                                    </span>
+                                </div>
+                                <span className="text-[11px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300 group-hover:text-indigo-800 dark:group-hover:text-indigo-200 transition-colors">
+                                    More
+                                </span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
