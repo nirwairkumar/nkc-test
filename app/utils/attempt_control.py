@@ -175,7 +175,7 @@ def calculate_test_max_marks(test: Dict[str, Any]) -> Dict[str, Any]:
                 q_marks.append(m_val)
                 
             attempt_control = sec.get("attempt_control", {})
-            if attempt_control and attempt_control.get("enabled"):
+            if attempt_control and attempt_control.get("enabled") is not False:
                 max_attempts = attempt_control.get("max_attempts", 0)
                 if max_attempts > 0 and len(q_marks) > max_attempts:
                     # Sort descending and take top max_attempts
