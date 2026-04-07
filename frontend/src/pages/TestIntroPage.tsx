@@ -439,26 +439,59 @@ export default function TestIntroPage() {
 
     const questionCount = test.questions?.length || 0;
 
-    // Calculate Total Marks (Prefer backend computed value over manual calculation to respect attempt control)
-    let totalMaxMarks = 0;
+    const getSectionDetails = (sec: any) => {
+        const totalQs = sec.questions?.length || 0;
+        const attemptControl = sec.attempt_control;
+        const isEnabled = attemptControl && (attemptControl.enabled !== false);
+        const maxAllowed = isEnabled && attemptControl.max_attempts ? Math.min(attemptControl.max_attempts, totalQs) : totalQs;
+        
+        let sectionMaxMarks = 0;
+        // Check computed_max_marks with both string and potentially un-stringified keys
+        const computedSectionMarks = test.computed_max_marks?.section_max_marks;
+        if (computedSectionMarks) {
+            const sid = String(sec.id);
+            if (computedSectionMarks[sid] !== undefined) {
+                sectionMaxMarks = computedSectionMarks[sid];
+            } else if (computedSectionMarks[sec.id] !== undefined) {
+                sectionMaxMarks = computedSectionMarks[sec.id];
+            }
+        }
+        
+        if (sectionMaxMarks === 0 && sec.questions) {
+            const marksList = sec.questions.map((q: any) => {
+                const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
+                return isNaN(m) ? 0 : m;
+            });
+            
+            if (isEnabled && attemptControl.max_attempts && attemptControl.max_attempts < totalQs) {
+                // Best N logic to find max possible marks
+                marksList.sort((a, b) => b - a);
+                sectionMaxMarks = marksList.slice(0, attemptControl.max_attempts).reduce((a, b) => a + b, 0);
+            } else {
+                sectionMaxMarks = marksList.reduce((a, b) => a + b, 0);
+            }
+        }
+        
+        return { totalQs, maxAllowed, sectionMaxMarks, isEnabled };
+    };
 
+    const hasAnyAttemptControl = test.enable_section_mode && test.sections?.some((s: any) => s.attempt_control && (s.attempt_control.enabled !== false));
+
+    let totalMaxMarks = 0;
     if (test.computed_max_marks?.total_max_marks !== undefined) {
         totalMaxMarks = test.computed_max_marks.total_max_marks;
     } else if (test.enable_section_mode && test.sections) {
-        test.sections.forEach((sec: any) => {
-            if (sec.questions) {
-                sec.questions.forEach((q: any) => {
-                    const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
-                    totalMaxMarks += isNaN(m) ? 0 : m;
-                });
-            }
-        });
+        totalMaxMarks = test.sections.reduce((acc, sec) => acc + getSectionDetails(sec).sectionMaxMarks, 0);
     } else if (test.questions) {
         test.questions.forEach((q: any) => {
             const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (test.marks_per_question ? parseFloat(String(test.marks_per_question)) : 4);
             totalMaxMarks += isNaN(m) ? 0 : m;
         });
     }
+
+    const totalAllowedQuestions = test.enable_section_mode && test.sections
+        ? test.sections.reduce((acc, sec) => acc + getSectionDetails(sec).maxAllowed, 0)
+        : questionCount;
 
     return (
         <div className="container mx-auto max-w-3xl py-2 px-4 space-y-4 relative">
@@ -518,7 +551,14 @@ export default function TestIntroPage() {
                         <div className="flex flex-col items-center justify-center text-center">
                             <HelpCircle className="h-6 w-6 text-blue-500 mb-2" />
                             <span className="text-sm text-muted-foreground">Questions</span>
-                            <span className="font-bold text-lg">{test.questions?.length || 0}</span>
+                            <div className="flex flex-col items-center">
+                                <span className="font-bold text-lg">{questionCount}</span>
+                                {totalAllowedQuestions < questionCount && (
+                                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 rounded-full border border-blue-100">
+                                        Attempt: {totalAllowedQuestions}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <div className="flex flex-col items-center justify-center text-center">
                             <Clock className="h-6 w-6 text-orange-500 mb-2" />
@@ -542,8 +582,11 @@ export default function TestIntroPage() {
                         {test.enable_section_mode && (
                             <div className="flex flex-col items-center justify-center text-center col-span-2 md:col-span-2 bg-white dark:bg-slate-800 rounded border border-dashed">
                                 <BookOpen className="h-6 w-6 text-purple-500 mb-1" />
-                                <span className="text-sm font-medium">Section-wise Pattern</span>
-                                <span className="text-xs text-muted-foreground">{test.sections?.length || 0} Sections</span>
+                                <span className="text-sm font-medium">Section-wise {hasAnyAttemptControl ? "& Attempt Control" : "Pattern"}</span>
+                                <span className="text-xs text-muted-foreground">
+                                    {test.sections?.length || 0} Sections
+                                    {hasAnyAttemptControl && " • Limits Applied"}
+                                </span>
                             </div>
                         )}
                     </div>
@@ -560,22 +603,29 @@ export default function TestIntroPage() {
                                 </thead>
                                 <tbody className="divide-y dark:divide-slate-800">
                                     {test.sections.map((sec: any) => {
-                                        // Use backend computed marks if available
-                                        let sectionTotal = 0;
-                                        if (test.computed_max_marks?.section_max_marks?.[sec.id] !== undefined) {
-                                            sectionTotal = test.computed_max_marks.section_max_marks[sec.id];
-                                        } else if (sec.questions) {
-                                            sec.questions.forEach((q: any) => {
-                                                const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
-                                                sectionTotal += isNaN(m) ? 0 : m;
-                                            });
-                                        }
+                                        const { totalQs, maxAllowed, sectionMaxMarks, isEnabled } = getSectionDetails(sec);
 
                                         return (
-                                            <tr key={sec.id}>
-                                                <td className="p-3 font-medium">{sec.name}</td>
-                                                <td className="p-3 text-center">{sec.questions?.length || 0}</td>
-                                                <td className="p-3 text-center text-emerald-600 font-bold">{sectionTotal}</td>
+                                            <tr key={sec.id} className={isEnabled ? "bg-indigo-50/30" : ""}>
+                                                <td className="p-3 font-medium">
+                                                    {sec.name}
+                                                    {isEnabled && (
+                                                        <Badge variant="outline" className="ml-2 text-[9px] h-4 px-1 bg-indigo-100 text-indigo-700 border-indigo-200">
+                                                            Limit
+                                                        </Badge>
+                                                    )}
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <div className="flex flex-col items-center">
+                                                        <span className={isEnabled ? "text-slate-400 text-xs line-through" : ""}>{totalQs}</span>
+                                                        {isEnabled && (
+                                                            <span className="text-indigo-600 font-bold">
+                                                                {maxAllowed}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3 text-center text-emerald-600 font-bold">{sectionMaxMarks}</td>
                                             </tr>
                                         );
                                     })}
@@ -618,6 +668,12 @@ export default function TestIntroPage() {
                                     <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground mt-2">
                                         {test.settings.attempt_limit && test.settings.attempt_limit > 0 && (
                                             <li><strong>Attempt Limit:</strong> Only {test.settings.attempt_limit} attempt(s) allowed.</li>
+                                        )}
+
+                                        {hasAnyAttemptControl && (
+                                            <li className="text-indigo-600 font-medium">
+                                                <strong>Section Attempt Control:</strong> Some sections have a limit on the number of questions you can attempt.
+                                            </li>
                                         )}
 
                                         {test.settings.start_form?.enabled && (

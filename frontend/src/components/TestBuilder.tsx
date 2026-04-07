@@ -1770,7 +1770,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                         checked={!!section.attempt_control}
                                                                         onCheckedChange={(checked) => {
                                                                             if (checked) {
-                                                                                updateSection(sIdx, 'attempt_control', { max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
+                                                                                updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
                                                                             } else {
                                                                                 updateSection(sIdx, 'attempt_control', undefined);
                                                                             }

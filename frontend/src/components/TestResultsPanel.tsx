@@ -54,21 +54,24 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
     // ... (Total Marks calc unchanged) ...
     // Calculate Total Marks
-    let totalMaxMarks = 0;
-    if (test.enable_section_mode && test.sections) {
-        test.sections.forEach((sec: any) => {
-            if (sec.questions) {
-                sec.questions.forEach((q: any) => {
-                    const m = q.marks !== undefined ? parseFloat(q.marks) : (sec.marks_per_question ? parseFloat(sec.marks_per_question) : 4);
-                    totalMaxMarks += isNaN(m) ? 0 : m;
-                });
-            }
-        });
-    } else if (test.questions) {
-        test.questions.forEach((q: any) => {
-            const m = q.marks !== undefined ? parseFloat(q.marks) : (test.marks_per_question ? parseFloat(test.marks_per_question) : 4);
-            totalMaxMarks += isNaN(m) ? 0 : m;
-        });
+    let totalMaxMarks = test.computed_max_marks?.total_max_marks || 0;
+    
+    if (!totalMaxMarks) {
+        if (test.enable_section_mode && test.sections) {
+            test.sections.forEach((sec: any) => {
+                if (sec.questions) {
+                    sec.questions.forEach((q: any) => {
+                        const m = q.marks !== undefined ? parseFloat(q.marks) : (sec.marks_per_question ? parseFloat(sec.marks_per_question) : 4);
+                        totalMaxMarks += isNaN(m) ? 0 : m;
+                    });
+                }
+            });
+        } else if (test.questions) {
+            test.questions.forEach((q: any) => {
+                const m = q.marks !== undefined ? parseFloat(q.marks) : (test.marks_per_question ? parseFloat(test.marks_per_question) : 4);
+                totalMaxMarks += isNaN(m) ? 0 : m;
+            });
+        }
     }
 
     useEffect(() => {

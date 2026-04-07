@@ -533,7 +533,7 @@ export default function TestPage() {
       }
     }
 
-    if (targetSection && targetSection.attempt_control?.enabled && targetSection.attempt_control?.mode === 'hard') {
+    if (targetSection && targetSection.attempt_control && targetSection.attempt_control.mode === 'hard') {
       let attemptCount = 0;
       targetSection.questions.forEach((q: any) => {
         const ans = answers[q.id];
@@ -659,7 +659,7 @@ export default function TestPage() {
           .map(([qId, ans]) => ({ id: Number(qId), ans }));
 
         const control = (section as any).attempt_control;
-        if (control?.enabled && control.mode === 'soft') {
+        if (control && control.mode === 'soft') {
           const max = control.max_attempts || 0;
           if (sectionAnswers.length > max) {
             if (control.soft_type === 'first_n') {
