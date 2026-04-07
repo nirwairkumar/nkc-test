@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useParams, useLocation } from 'react-router-dom';
-import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles } from 'lucide-react';
+import { NavLink, Outlet, useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles, LayoutDashboard, RotateCcw, LayoutGrid } from 'lucide-react';
+import { useTest } from '@/contexts/TestContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
@@ -56,6 +57,9 @@ export default function ResultsLayout() {
     // We get testId either from URL or state
     const currentTestId = testId || stateData?.test?.id;
 
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const { resetTest } = useTest();
     // Build base URL for navigation
     const basePath = '/results';
 
@@ -302,6 +306,58 @@ export default function ResultsLayout() {
                     {/* We pass stateData through Outlet context just in case child routes need it */}
                     <Outlet context={{ stateData }} />
                 </main>
+
+                {/* Mobile Sticky Bottom Navigation */}
+                <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+                    <div className="flex justify-around items-center h-16">
+                        <button 
+                            onClick={() => navigate('/dashboard')}
+                            className="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors"
+                        >
+                            <LayoutGrid className="w-5 h-5" />
+                            <span className="text-[10px] font-bold uppercase tracking-tighter">Dashboard</span>
+                        </button>
+                        
+                        <button 
+                            onClick={() => setIsDrawerOpen(true)}
+                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${isDrawerOpen ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
+                        >
+                            <Trophy className="w-5 h-5" />
+                            <span className="text-[10px] font-bold uppercase tracking-tighter">Hub</span>
+                        </button>
+
+                        <button 
+                            onClick={() => navigate(`${basePath}?tab=topics`, { state: stateData })}
+                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'topics' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
+                        >
+                            <Target className="w-5 h-5" />
+                            <span className="text-[10px] font-bold uppercase tracking-tighter">Topics</span>
+                        </button>
+
+                        <button 
+                            onClick={() => navigate(`${basePath}?tab=solution-key`, { state: stateData })}
+                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'solution-key' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
+                        >
+                            <BookOpen className="w-5 h-5" />
+                            <span className="text-[10px] font-bold uppercase tracking-tighter">Solution Key</span>
+                        </button>
+
+                        <button 
+                            onClick={() => {
+                                if (currentTestId) {
+                                    resetTest();
+                                    navigate(`/test/${currentTestId}`);
+                                } else {
+                                    navigate('/');
+                                }
+                            }}
+                            className="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors"
+                        >
+                            <RotateCcw className="w-5 h-5" />
+                            <span className="text-[10px] font-bold uppercase tracking-tighter">Retake</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -20,7 +20,8 @@ import {
   LayoutDashboard,
   FileText,
   MessageSquare,
-  ChevronRight
+  ChevronRight,
+  BookOpen
 } from 'lucide-react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
 import confetti from 'canvas-confetti';
@@ -920,8 +921,12 @@ const ResultsPage = () => {
             )}
           </AnimatePresence>
         </div>
-        <Footer />
+        <div className="hidden md:block">
+          <Footer />
+        </div>
       </div>
+
+
 
       {/* Ad-like Sliding Popup */}
       <AnimatePresence>
@@ -934,7 +939,7 @@ const ResultsPage = () => {
             }
             exit={{ opacity: 0, scale: 0 }}
             transition={{ type: "spring", damping: 20, stiffness: 100 }}
-            className="fixed bottom-6 right-6 lg:right-12 z-50 w-[350px] shadow-2xl rounded-2xl overflow-hidden border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900"
+            className="fixed bottom-20 md:bottom-6 right-6 lg:right-12 z-50 w-[350px] shadow-2xl rounded-2xl overflow-hidden border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900"
           >
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 relative">
               <button
