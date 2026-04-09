@@ -100,7 +100,16 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
+  const [hasDismissedBubble, setHasDismissedBubble] = useState(() => {
+    return sessionStorage.getItem('aicatbot_bubble_dismissed') === 'true';
+  });
   const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleDismissBubble = () => {
+    setHasDismissedBubble(true);
+    setShowBubble(false);
+    sessionStorage.setItem('aicatbot_bubble_dismissed', 'true');
+  };
 
   const scrollToBottom = () => {
     if (chatScrollRef.current) {
@@ -113,7 +122,7 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
   }, [messages, isTyping]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen && !hasDismissedBubble) {
       if (testContext.justSubmitted) {
         // Show after 4 seconds for new submissions
         const timer = setTimeout(() => setShowBubble(true), 4000);
@@ -123,7 +132,7 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
         setShowBubble(true);
       }
     }
-  }, [isOpen, testContext.justSubmitted]);
+  }, [isOpen, testContext.justSubmitted, hasDismissedBubble]);
 
   const handleSendMessage = async (text: string = inputValue) => {
     if (!text.trim()) return;
@@ -160,9 +169,9 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
   };
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-20 md:bottom-6 right-0 z-50 flex flex-col items-end">
       <AnimatePresence mode="wait">
-        {!isOpen && showBubble && (
+        {!isOpen && showBubble && !hasDismissedBubble && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.5, transformOrigin: 'bottom right' }}
             animate={{
@@ -185,31 +194,29 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
               },
               default: { duration: 0.5, type: 'spring' }
             }}
-            className="mb-4 bg-white dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 shadow-xl rounded-2xl p-4 w-64 cursor-pointer hover:shadow-2xl transition-all relative group"
+            className="mb-4 bg-white dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 shadow-xl rounded-2xl py-3 px-5 w-fit cursor-pointer hover:shadow-2xl transition-all relative group"
           >
             <Button
               variant="ghost"
               size="icon"
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 opacity-100 transition-opacity shadow-sm z-10"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowBubble(false);
+                handleDismissBubble();
               }}
             >
               <X className="w-3 h-3 text-slate-500" />
             </Button>
 
             <div onClick={() => onOpenChange(true)}>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-indigo-500" />
-                <span className="font-bold text-sm text-slate-800 dark:text-white">Analysis with AI</span>
+                <span className="font-bold text-sm text-slate-800 dark:text-white">Analyse with me</span>
               </div>
-              <p className="text-xs text-slate-500 animate-pulse">
-                Any help? Want to ask something about your results? Click here!
-              </p>
             </div>
           </motion.div>
         )}
+
       </AnimatePresence>
 
       <AnimatePresence>
@@ -261,13 +268,14 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
               )}
 
               {messages.map((m, idx) => (
-                <div key={idx} className={`flex gap-3 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  {m.role === 'model' && (
-                    <div className="w-8 h-8 rounded-full shrink-0 mt-1 overflow-hidden">
-                      <img src="/ai-assistant.png" alt="AI" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <div className={`p-3 rounded-2xl max-w-[80%] shadow-sm ${m.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-sm'}`}>
+                <div key={idx} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`p-3 rounded-2xl shadow-sm ${m.role === 'user' ? 'max-w-[80%] bg-indigo-600 text-white rounded-tr-sm' : 'flex-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-sm'}`}>
+                    {m.role === 'model' && (
+                      <div className="flex items-center gap-2 mb-2 pb-1 border-b border-indigo-50 dark:border-slate-700/50">
+                        <img src="/ai-assistant.png" alt="AI" className="w-5 h-5 rounded-full object-cover" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">TestoZa AI</span>
+                      </div>
+                    )}
                     {m.role === 'user' ? (
                       <p className="text-sm">{m.content}</p>
                     ) : (
@@ -285,14 +293,19 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
               ))}
 
               {isTyping && (
-                <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0 mt-1">
-                    <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></span>
-                    <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                    <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                <div className="flex justify-start w-full">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl rounded-tl-sm shadow-sm flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
+                        <Bot className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">TestoZa AI</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
                   </div>
                 </div>
               )}
