@@ -328,25 +328,30 @@ html {
     radial-gradient(at 0% 50%, hsla(355,100%,93%,0.03) 0px, transparent 50%);
 }
 
-/* Custom Scrollbar Styling */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+/* Global Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   @apply bg-indigo-200 dark:bg-indigo-900/50 rounded-full transition-colors;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   @apply bg-indigo-300 dark:bg-indigo-800;
 }
 
 /* Hide Scrollbar Buttons (Arrows) */
-.custom-scrollbar::-webkit-scrollbar-button {
+::-webkit-scrollbar-button {
   display: none;
+}
+
+/* For specific components that still use the class */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
 }
