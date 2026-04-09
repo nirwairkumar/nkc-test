@@ -78,6 +78,7 @@ export default function TestPage() {
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
   const [fullScreenLogs, setFullScreenLogs] = useState<{ event: string, timestamp: number }[]>([]);
+  const [isFullScreen, setIsFullScreen] = useState(true);
 
   // Reporting State
   const [reportReason, setReportReason] = useState<string>('');
@@ -423,22 +424,39 @@ export default function TestPage() {
     };
 
     // 3. Full Screen Check
-    const handleFullScreenChange = () => {
-      const isFullScreen = !!(
+    const checkFullScreenState = () => {
+      const isAPIFullScreen = !!(
         document.fullscreenElement ||
         (document as any).webkitFullscreenElement ||
         (document as any).mozFullScreenElement ||
         (document as any).msFullscreenElement
       );
+      
+      // Fallback check using window dimensions (useful when API doesn't fire events)
+      const isWindowFullScreen = window.innerWidth === window.screen.width && window.innerHeight === window.screen.height;
+      const currentFullScreen = isAPIFullScreen || isWindowFullScreen;
+      
+      setIsFullScreen(currentFullScreen);
 
-      if (!isFullScreen && settings.force_fullscreen) {
+      if (!currentFullScreen && settings.force_fullscreen) {
         setFullScreenLogs(prev => [...prev, { event: 'Exit Full Screen', timestamp: Date.now() }]);
         setShowFullScreenWarning(true);
         handleViolation("Exited Full Screen");
-      } else if (isFullScreen) {
-        setFullScreenLogs(prev => [...prev, { event: 'Entered Full Screen', timestamp: Date.now() }]);
+      } else if (currentFullScreen) {
+        // Only log if we transitioned from not full screen, or if it's the first check and we are in full screen
+        setFullScreenLogs(prev => {
+           const lastEvent = prev.length > 0 ? prev[prev.length - 1].event : null;
+           if (lastEvent !== 'Entered Full Screen') {
+             return [...prev, { event: 'Entered Full Screen', timestamp: Date.now() }];
+           }
+           return prev;
+        });
         setShowFullScreenWarning(false);
       }
+    };
+
+    const handleFullScreenChange = () => {
+      checkFullScreenState();
     };
 
     if (settings.tab_switch_mode !== 'off') {
@@ -450,11 +468,9 @@ export default function TestPage() {
       document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
       document.addEventListener('mozfullscreenchange', handleFullScreenChange);
       document.addEventListener('MSFullscreenChange', handleFullScreenChange);
+      window.addEventListener('resize', handleFullScreenChange);
       // Initial Check
-      if (!document.fullscreenElement) {
-        // Maybe give a grace period or dialog to re-enter?
-        // For now, we'll just warn if they start without it or exit
-      }
+      setTimeout(checkFullScreenState, 500);
     }
 
     return () => {
@@ -467,6 +483,7 @@ export default function TestPage() {
       document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
       document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
+      window.removeEventListener('resize', handleFullScreenChange);
     };
   }, [test, isSubmitting, isTimeUp, warnings]); // Re-bind if warnings change? No, better handleViolation internally
 
@@ -1262,36 +1279,19 @@ export default function TestPage() {
         {/* Right Side: Timer & Controls */}
         <div className="flex items-center justify-between md:justify-end gap-1.5 md:gap-3 w-full md:w-auto mt-0.5 md:mt-0">
           
-          {/* Full Screen Toggle Button */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              const isFullScreen = !!(
-                document.fullscreenElement ||
-                (document as any).webkitFullscreenElement ||
-                (document as any).mozFullScreenElement ||
-                (document as any).msFullscreenElement
-              );
-              
-              if (isFullScreen) {
-                if (document.exitFullscreen) {
-                  document.exitFullscreen();
-                } else if ((document as any).webkitExitFullscreen) {
-                  (document as any).webkitExitFullscreen();
-                } else if ((document as any).mozCancelFullScreen) {
-                  (document as any).mozCancelFullScreen();
-                } else if ((document as any).msExitFullscreen) {
-                  (document as any).msExitFullscreen();
-                }
-              } else {
+          {/* Full Screen Toggle Button (Enter Only) */}
+          {!isFullScreen && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
                 enterFullScreen();
-              }
-            }}
-            className="flex items-center justify-center p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-            title="Toggle Full Screen"
-          >
-            <Maximize className="w-4 h-4 md:w-4.5 md:h-4.5" />
-          </button>
+              }}
+              className="flex items-center justify-center p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+              title="Enter Full Screen"
+            >
+              <Maximize className="w-4 h-4 md:w-4.5 md:h-4.5" />
+            </button>
+          )}
 
           {/* Timer Block */}
           {(() => {
