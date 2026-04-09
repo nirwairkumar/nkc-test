@@ -199,7 +199,7 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
             <Button
               variant="ghost"
               size="icon"
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 opacity-100 transition-opacity shadow-sm z-10"
+              className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 opacity-100 transition-opacity shadow-sm z-10"
               onClick={(e) => {
                 e.stopPropagation();
                 handleDismissBubble();
