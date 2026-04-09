@@ -1272,7 +1272,7 @@ export default function TestPage() {
 
       <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2.5 md:px-5 md:py-2.5 relative md:sticky top-0 z-10 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
         {/* Left Side: Test Title (Dim, grayish, aesthetic) */}
-        <div className="flex items-center justify-between gap-2 w-full md:w-auto md:max-w-[40%] md:flex-1">
+        <div className="flex items-center justify-between gap-0 w-full md:w-auto md:max-w-[40%] md:flex-1">
           <div className="text-[13px] md:text-sm font-medium text-slate-400 tracking-wide truncate text-left">
             {test?.title || "Live Test"}
           </div>
