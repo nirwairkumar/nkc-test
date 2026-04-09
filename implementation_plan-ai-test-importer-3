@@ -1,0 +1,188 @@
+# World-Class AI Extraction Upgrade
+
+Upgrade the `/generate-with-ai` pipeline to reliably extract/create questions with diagrams, LaTeX/KaTeX/mhchem formatting, and Cloudinary-hosted images.
+
+## User Review Required
+
+> [!IMPORTANT]
+> This plan modifies the core AI extraction pipeline. The Cloudinary credentials (`cloud_name: dma0h19mk`, `upload_preset: TestoZa_cloudinary`) are reused from [TestBuilder.tsx](file:///d:/ziptrip/projects/nkc-test/frontend/src/components/TestBuilder.tsx). Please confirm these are correct for backend use too.
+
+> [!WARNING]
+> The backend currently has **no Cloudinary SDK installed**. We will add `cloudinary` to [requirements.txt](file:///d:/ziptrip/projects/nkc-test/requirements.txt).
+
+---
+
+## Proposed Changes
+
+### Phase 1 — Fix "No Questions Found" Bug
+
+The error occurs at [AITestImporter.tsx:L1155](file:///d:/ziptrip/projects/nkc-test/frontend/src/pages/AITestImporter.tsx#L1155) when `parsedData.questions` is empty. Root causes:
+1. Gemini returns empty/malformed JSON → [_parse_response](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#979-1088) raises `ValueError`
+2. All batches fail silently (caught at line 793) → `all_questions` stays empty
+3. No retry logic — a single API failure kills the entire extraction
+
+---
+
+#### [MODIFY] [pdf_vision_pipeline.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py)
+
+- Add **retry with exponential backoff** (3 attempts) for each Gemini API call in [_process_single_batch_stream](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#1460-1518)
+- Add **fallback prompt simplification** — if first attempt fails, retry with a shorter, more focused prompt
+- Improve [_parse_response](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#979-1088) — if JSON parse fails after sanitization, attempt regex extraction of individual question objects
+- Add detailed error logging with raw response snippets for debugging
+- Handle Gemini safety blocks / empty `response.text` gracefully
+
+#### [MODIFY] [ai.py](file:///d:/ziptrip/projects/nkc-test/backend/app/routers/ai.py)
+
+- Stream detailed error info (raw response length, parse stage) in SSE `error` events
+- Add `retry_count` to progress events so frontend can show "Retrying batch 2..."
+
+#### [MODIFY] [AITestImporter.tsx](file:///d:/ziptrip/projects/nkc-test/frontend/src/pages/AITestImporter.tsx)
+
+- Replace generic "No questions found" with specific error details from backend
+- Show "Retry with different settings" button that re-submits with higher DPI
+
+---
+
+### Phase 2 — Cloudinary Upload for Extracted Diagrams
+
+Currently, extracted images are stored as **base64 data URIs** (huge strings embedded in JSON). This causes:
+- Slow SSE streaming (megabytes of base64)
+- TestBuilder can't save them properly
+
+**Solution:** Upload extracted images to Cloudinary during pipeline processing and replace with URLs.
+
+---
+
+#### [NEW] [cloudinary_uploader.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/cloudinary_uploader.py)
+
+```python
+# Reuses same Cloudinary account as TestBuilder.tsx
+CLOUD_NAME = "dma0h19mk"
+UPLOAD_PRESET = "TestoZa_cloudinary"
+
+async def upload_image_to_cloudinary(image_bytes, filename) -> str:
+    """Upload image bytes → returns Cloudinary secure_url"""
+    # Uses unsigned upload with preset (no API key needed)
+    # Returns: "https://res.cloudinary.com/dma0h19mk/image/upload/..."
+```
+
+#### [MODIFY] [pdf_vision_pipeline.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py)
+
+- After [extract_embedded_images](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#385-442), upload each to Cloudinary in parallel
+- Replace `base64_uri` with `cloudinary_url` in the image data
+- In [_parse_response](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#979-1088) diagram matching: set `q["image"]` to Cloudinary URL instead of base64
+- Add option-level image upload for diagrams within options
+
+#### [MODIFY] [requirements.txt](file:///d:/ziptrip/projects/nkc-test/backend/requirements.txt)
+
+- Add `aiohttp` for async Cloudinary uploads (using REST API, not SDK — lightweight)
+
+---
+
+### Phase 3 — Enhanced Prompts: LaTeX/KaTeX + mhchem
+
+#### [MODIFY] [pdf_vision_pipeline.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py)
+
+Add to both `EXTRACT_PROMPT` and `GENERATE_PROMPT`:
+
+```
+CHEMISTRY FORMATTING (mhchem):
+- Use \\ce{} for ALL chemical formulas: \\ce{H2O}, \\ce{NaCl}, \\ce{CO2}
+- Chemical equations: \\ce{2H2 + O2 -> 2H2O}
+- Reversible: \\ce{N2 + 3H2 <=> 2NH3}
+- Ions: \\ce{Na+}, \\ce{SO4^{2-}}, \\ce{Fe^{3+}}
+- Organic: \\ce{CH3-CH2-OH}, \\ce{C6H12O6}
+- State symbols: \\ce{H2O (l)}, \\ce{CO2 (g)}, \\ce{NaCl (aq)}
+- Isotopes: \\ce{^{14}C}, \\ce{^{235}U}
+
+IMAGE REFERENCES FOR DIAGRAMS:
+- When a question has a diagram, reference it as: ![diagram](DIAGRAM_PAGE_X)
+- When an option has a diagram: ![option_diagram](DIAGRAM_PAGE_X_OPT_Y)
+- The backend will replace these references with actual image URLs
+```
+
+Also update existing LaTeX rules to explicitly use KaTeX-compatible syntax:
+- `$...$` for inline math
+- `$$...$$` for display math  
+- Avoid `\begin{align}` (use `\begin{aligned}` which KaTeX supports)
+
+---
+
+### Phase 4 — Smarter Image Extraction & Matching
+
+#### [MODIFY] [pdf_vision_pipeline.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py)
+
+Improve [_parse_response](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#979-1088) diagram matching logic (currently at line 1028-1054):
+
+- **Position-based matching:** Use `bbox` from [extract_embedded_images](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#385-442) to match diagrams spatially near questions
+- **Multiple diagrams per page:** When page has 2+ diagrams, use vertical position to assign to correct question
+- **Option-level diagrams:** If Gemini reports `diagramOption: "B"`, find the image closest to that option area
+- **Upload matched diagrams to Cloudinary** and set as `question.image` or `question.optionImages[key]`
+
+#### [MODIFY] [_parse_response](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#L979)
+
+Update validated question output to include Cloudinary URLs:
+```python
+validated.append({
+    "image": cloudinary_url_or_none,        # Question diagram
+    "optionImages": {                        # Option-level diagrams
+        "A": cloudinary_url_or_none,
+        "B": cloudinary_url_or_none, ...
+    },
+    ...
+})
+```
+
+---
+
+### Phase 5 — Error Recovery & Robustness
+
+#### [MODIFY] [pdf_vision_pipeline.py](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py)
+
+- **Retry logic:** New `_call_gemini_with_retry(content_parts, max_retries=3)` helper
+  - Attempt 1: Normal call
+  - Attempt 2: Increase `max_output_tokens` to 100K, slightly higher temperature
+  - Attempt 3: Simplify prompt (remove image extraction instructions, focus on text)
+- **Rate limit handling:** Detect `429` status, wait `retry-after` seconds
+- **Batch recovery:** If a batch fails all retries, split into single-page sub-batches and retry each
+- **JSON repair:** Improve [_repair_truncated_json](file:///d:/ziptrip/projects/nkc-test/backend/ai_preview_importer/pdf_vision_pipeline.py#935-977) to handle more edge cases
+
+---
+
+### Phase 6 — Frontend UX Polish
+
+#### [MODIFY] [AITestImporter.tsx](file:///d:/ziptrip/projects/nkc-test/frontend/src/pages/AITestImporter.tsx)
+
+- Show **quality tier badge** (High/Medium/Low) during processing
+- Show **batch progress** — "Processing batch 3/5 (12 questions found so far)"
+- Replace empty-result screen with actionable options:
+  - "Retry with higher quality" (re-sends at 300 DPI)
+  - "Try Generate mode" (if Extract mode returned no results)
+  - Show raw error details in expandable section
+- Display Cloudinary image URLs in preview cards (already works with `<img>`)
+- Add KaTeX + mhchem rendering in preview (update `rehypeKatex` config)
+
+#### [MODIFY] [AITestImporter.tsx](file:///d:/ziptrip/projects/nkc-test/frontend/src/pages/AITestImporter.tsx) — KaTeX + mhchem
+
+```tsx
+import 'katex/contrib/mhchem'; // Add mhchem extension
+
+// Already using remarkMath + rehypeKatex — just need mhchem import
+```
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1. Upload a sample PDF with mixed content (text + diagrams + chemistry) → verify extraction
+2. Upload a blurry/low-quality image → verify quality analysis triggers higher DPI
+3. Upload a multi-page PDF → verify cross-page merging works
+4. Force a Gemini error (invalid API key) → verify retry logic and error display
+
+### Manual Verification
+1. Extract from a real JEE/NEET paper → verify questions, options, answers, diagrams
+2. Check extracted images appear as Cloudinary URLs (not base64)
+3. Import to TestBuilder → verify images display correctly inline
+4. Check LaTeX/mhchem renders in both AI preview and TestBuilder
+5. Test with chemistry paper → verify `\ce{}` formatting works
