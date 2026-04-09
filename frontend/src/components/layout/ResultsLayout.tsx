@@ -73,13 +73,13 @@ export default function ResultsLayout() {
         // Read current tab from URL parameters to highlight proper NavLinks
         const searchParams = new URLSearchParams(location.search);
         const currentTab = searchParams.get('tab') || 'overview';
-        
+
         return (
             <div className="flex flex-col gap-2">
                 <div className="px-4 py-2 mt-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Overview</span>
                 </div>
-                
+
                 <NavLink
                     to={`${basePath}?tab=overview`}
                     end
@@ -124,7 +124,7 @@ export default function ResultsLayout() {
                         Solutions
                     </NavLink>
                 )}
-                
+
                 <NavLink
                     to={`${basePath}?tab=${currentTab}&ai_chat=true`}
                     state={stateData}
@@ -157,86 +157,86 @@ export default function ResultsLayout() {
                     </NavLink>
                 )}
 
-            <Button
-                variant="ghost"
-                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                onClick={() => {
-                    const test = stateData?.test || { id: currentTestId, title: "Test" };
-                    const score = stateData?.score || 0;
-                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                    shareWithFriends(test, score, totalMarks);
-                }}
-            >
-                <Share2 className="mr-3 h-5 w-5" />
-                Share with friends
-            </Button>
+                <Button
+                    variant="ghost"
+                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                    onClick={() => {
+                        const test = stateData?.test || { id: currentTestId, title: "Test" };
+                        const score = stateData?.score || 0;
+                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                        shareWithFriends(test, score, totalMarks);
+                    }}
+                >
+                    <Share2 className="mr-3 h-5 w-5" />
+                    Share with friends
+                </Button>
 
-            <Button
-                variant="ghost"
-                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                onClick={() => {
-                    const test = stateData?.test || { id: currentTestId, title: "Test" };
-                    const score = stateData?.score || 0;
-                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                    shareResultWhatsApp(test, score, totalMarks);
-                }}
-            >
-                <MessageCircle className="mr-3 h-5 w-5 text-green-500" />
-                Share on WhatsApp
-            </Button>
+                <Button
+                    variant="ghost"
+                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                    onClick={() => {
+                        const test = stateData?.test || { id: currentTestId, title: "Test" };
+                        const score = stateData?.score || 0;
+                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                        shareResultWhatsApp(test, score, totalMarks);
+                    }}
+                >
+                    <MessageCircle className="mr-3 h-5 w-5 text-green-500" />
+                    Share on WhatsApp
+                </Button>
 
-            <Button
-                variant="ghost"
-                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                onClick={() => {
-                    const test = stateData?.test || { id: currentTestId, title: "Test" };
-                    const score = stateData?.score || 0;
-                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                    shareResultImage(test, score, totalMarks);
-                }}
-            >
-                <Download className="mr-3 h-5 w-5 text-blue-500" />
-                Share Result Image
-            </Button>
+                <Button
+                    variant="ghost"
+                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                    onClick={() => {
+                        const test = stateData?.test || { id: currentTestId, title: "Test" };
+                        const score = stateData?.score || 0;
+                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                        shareResultImage(test, score, totalMarks);
+                    }}
+                >
+                    <Download className="mr-3 h-5 w-5 text-blue-500" />
+                    Share Result Image
+                </Button>
 
-            <Button
-                variant="ghost"
-                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                onClick={() => {
-                    const test = stateData?.test || { id: currentTestId, title: "Test" };
-                    const url = `${window.location.origin}/test/${test.id}`;
-                    shareToFacebook(url);
-                }}
-            >
-                <Facebook className="mr-3 h-5 w-5 text-blue-600" />
-                Share on Facebook
-            </Button>
+                <Button
+                    variant="ghost"
+                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                    onClick={() => {
+                        const test = stateData?.test || { id: currentTestId, title: "Test" };
+                        const url = `${window.location.origin}/test/${test.id}`;
+                        shareToFacebook(url);
+                    }}
+                >
+                    <Facebook className="mr-3 h-5 w-5 text-blue-600" />
+                    Share on Facebook
+                </Button>
 
-            <Button
-                variant="ghost"
-                className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                onClick={() => {
-                    const test = stateData?.test || { id: currentTestId, title: "Test" };
-                    const score = stateData?.score || 0;
-                    const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                    const url = `${window.location.origin}/test/${test.id}`;
-                    const title = `I scored ${score}/${totalMarks} in "${test.title}"!`;
-                    shareToReddit(url, title);
-                }}
-            >
-                <Reddit className="mr-3 h-5 w-5 text-orange-600" />
-                Share on Reddit
-            </Button>
+                <Button
+                    variant="ghost"
+                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                    onClick={() => {
+                        const test = stateData?.test || { id: currentTestId, title: "Test" };
+                        const score = stateData?.score || 0;
+                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                        const url = `${window.location.origin}/test/${test.id}`;
+                        const title = `I scored ${score}/${totalMarks} in "${test.title}"!`;
+                        shareToReddit(url, title);
+                    }}
+                >
+                    <Reddit className="mr-3 h-5 w-5 text-orange-600" />
+                    Share on Reddit
+                </Button>
 
-            <NavLink
-                to="/"
-                className={({ isActive }) => getLinkStyle(isActive)}
-                onClick={onItemClick}
-            >
-                <Home className="h-5 w-5" />
-                Home
-            </NavLink>
-        </div>
+                <NavLink
+                    to="/"
+                    className={({ isActive }) => getLinkStyle(isActive)}
+                    onClick={onItemClick}
+                >
+                    <Home className="h-5 w-5" />
+                    Home
+                </NavLink>
+            </div>
         );
     };
 
@@ -265,9 +265,9 @@ export default function ResultsLayout() {
                 <header className="lg:hidden flex items-center h-16 pl-0 pr-4 bg-white dark:bg-slate-900 border-b shadow-sm sticky top-0 z-20">
                     <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
                         <SheetTrigger asChild>
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
+                            <Button
+                                variant="ghost"
+                                size="sm"
                                 className="relative h-10 px-4 rounded-r-3xl rounded-l-none bg-indigo-50/80 dark:bg-indigo-900/40 backdrop-blur-md border border-l-0 border-indigo-200/50 dark:border-indigo-800/50 shadow-[2px_2px_10px_rgba(0,0,0,0.05)] transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/60 active:scale-95 group flex items-center gap-3"
                             >
                                 <div className="relative">
@@ -310,15 +310,15 @@ export default function ResultsLayout() {
                 {/* Mobile Sticky Bottom Navigation */}
                 <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
                     <div className="flex justify-around items-center h-16">
-                        <button 
+                        <button
                             onClick={() => navigate('/dashboard')}
                             className="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors"
                         >
                             <LayoutGrid className="w-5 h-5" />
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Dashboard</span>
                         </button>
-                        
-                        <button 
+
+                        <button
                             onClick={() => setIsDrawerOpen(true)}
                             className={`flex-1 flex flex-col items-center gap-1 transition-colors ${isDrawerOpen ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
                         >
@@ -326,7 +326,7 @@ export default function ResultsLayout() {
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Hub</span>
                         </button>
 
-                        <button 
+                        <button
                             onClick={() => navigate(`${basePath}?tab=topics`, { state: stateData })}
                             className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'topics' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
                         >
@@ -334,7 +334,7 @@ export default function ResultsLayout() {
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Topics</span>
                         </button>
 
-                        <button 
+                        <button
                             onClick={() => navigate(`${basePath}?tab=solution-key`, { state: stateData })}
                             className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'solution-key' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
                         >
@@ -342,7 +342,7 @@ export default function ResultsLayout() {
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Solution Key</span>
                         </button>
 
-                        <button 
+                        <button
                             onClick={() => {
                                 if (currentTestId) {
                                     resetTest();

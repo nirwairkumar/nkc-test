@@ -432,21 +432,17 @@ const ResultsPage = () => {
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex-1">
-                          <h3 className="text-xl font-bold flex items-center gap-2 text-indigo-900 dark:text-indigo-300 mb-2">
+                          <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-purple-500" />
-                            Predict Your Rank with AI ✨
+                            Predict your rank
                           </h3>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Estimate your All India Rank based on your score of <strong>{parseFloat((finalScore || 0).toFixed(2))}/{totalMaxMarks}</strong>.
-                          </p>
                         </div>
                         <Button
                           onClick={handlePredictRank}
                           disabled={isPredictingRank}
                           className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all shrink-0 w-full md:w-auto"
                         >
-                          <Trophy className="w-4 h-4 mr-2" />
-                          Predict My Rank
+                          Predict
                         </Button>
                       </div>
 
