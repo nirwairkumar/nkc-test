@@ -424,11 +424,18 @@ export default function TestPage() {
 
     // 3. Full Screen Check
     const handleFullScreenChange = () => {
-      if (!document.fullscreenElement && settings.force_fullscreen) {
+      const isFullScreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+
+      if (!isFullScreen && settings.force_fullscreen) {
         setFullScreenLogs(prev => [...prev, { event: 'Exit Full Screen', timestamp: Date.now() }]);
         setShowFullScreenWarning(true);
         handleViolation("Exited Full Screen");
-      } else if (document.fullscreenElement) {
+      } else if (isFullScreen) {
         setFullScreenLogs(prev => [...prev, { event: 'Entered Full Screen', timestamp: Date.now() }]);
         setShowFullScreenWarning(false);
       }
@@ -440,6 +447,9 @@ export default function TestPage() {
 
     if (settings.force_fullscreen) {
       document.addEventListener('fullscreenchange', handleFullScreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullScreenChange);
+      document.addEventListener('MSFullscreenChange', handleFullScreenChange);
       // Initial Check
       if (!document.fullscreenElement) {
         // Maybe give a grace period or dialog to re-enter?
@@ -454,6 +464,9 @@ export default function TestPage() {
       document.removeEventListener('paste', handleCopyPaste);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('fullscreenchange', handleFullScreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
     };
   }, [test, isSubmitting, isTimeUp, warnings]); // Re-bind if warnings change? No, better handleViolation internally
 
@@ -1248,6 +1261,37 @@ export default function TestPage() {
 
         {/* Right Side: Timer & Controls */}
         <div className="flex items-center justify-between md:justify-end gap-1.5 md:gap-3 w-full md:w-auto mt-0.5 md:mt-0">
+          
+          {/* Full Screen Toggle Button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              const isFullScreen = !!(
+                document.fullscreenElement ||
+                (document as any).webkitFullscreenElement ||
+                (document as any).mozFullScreenElement ||
+                (document as any).msFullscreenElement
+              );
+              
+              if (isFullScreen) {
+                if (document.exitFullscreen) {
+                  document.exitFullscreen();
+                } else if ((document as any).webkitExitFullscreen) {
+                  (document as any).webkitExitFullscreen();
+                } else if ((document as any).mozCancelFullScreen) {
+                  (document as any).mozCancelFullScreen();
+                } else if ((document as any).msExitFullscreen) {
+                  (document as any).msExitFullscreen();
+                }
+              } else {
+                enterFullScreen();
+              }
+            }}
+            className="flex items-center justify-center p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+            title="Toggle Full Screen"
+          >
+            <Maximize className="w-4 h-4 md:w-4.5 md:h-4.5" />
+          </button>
 
           {/* Timer Block */}
           {(() => {
