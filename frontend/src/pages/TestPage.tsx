@@ -1808,14 +1808,15 @@ export default function TestPage() {
                   variant="outline"
                   onClick={handlePrevious}
                   disabled={currentQuestionIndex === 0}
-                  size="icon"
-                  className="h-9 w-9"
+                  size={window.innerWidth < 768 ? "default" : "icon"}
+                  className="h-9 w-9 md:w-9 flex-1 md:flex-none"
                   title="Previous Question"
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-6 h-6 mr-1 md:mr-0" />
+                  <span className="md:hidden">Back</span>
                 </Button>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-[2] md:flex-none justify-end">
                   {/* Clear Response */}
                   <Button
                     variant="outline"
@@ -1824,45 +1825,63 @@ export default function TestPage() {
                     size="sm"
                     className="text-muted-foreground border-dashed md:border-solid md:text-slate-600 md:hover:text-slate-900 h-9"
                   >
-                    <span className="hidden md:inline">Clear</span>
-                    <span className="md:hidden">Clear</span>
+                    <span>Clear</span>
                   </Button>
 
-                  {/* Mark for Review (Purple - Toggle) */}
+                  {/* Mobile-Only Flag Button */}
+                  <Button
+                    variant={markedForReview.has(currentQuestion.id) ? "secondary" : "outline"}
+                    onClick={() => {
+                      if (answers[currentQuestion.id]) {
+                        handleSaveAndMarkReview();
+                      } else {
+                        toggleMarkForReview(currentQuestion.id);
+                      }
+                    }}
+                    className={`
+                      md:hidden h-9 px-3 transition-all
+                      ${answers[currentQuestion.id]
+                        ? "bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                        : markedForReview.has(currentQuestion.id)
+                          ? "border-purple-200 bg-purple-50 text-purple-800"
+                          : "text-slate-600 border-slate-200"}
+                    `}
+                    title="Flag Question"
+                    size="sm"
+                  >
+                    <Flag className={`w-4 h-4 ${markedForReview.has(currentQuestion.id) ? "fill-current" : ""}`} />
+                  </Button>
+
+                  {/* Desktop-Only Mark for Review */}
                   <Button
                     variant={markedForReview.has(currentQuestion.id) ? "secondary" : "ghost"}
                     onClick={() => toggleMarkForReview(currentQuestion.id)}
                     className={`
-                            ${markedForReview.has(currentQuestion.id)
+                      hidden md:flex
+                      ${markedForReview.has(currentQuestion.id)
                         ? "border-purple-200 bg-purple-50 text-purple-800"
                         : "text-slate-600 hover:text-slate-900"}
-                        `}
+                    `}
                     title="Mark for Review"
                     size="sm"
                   >
                     <Flag className={`w-4 h-4 ${markedForReview.has(currentQuestion.id) ? "md:mr-2 fill-purple-500 text-purple-500" : ""}`} />
-                    <span className={`hidden ${markedForReview.has(currentQuestion.id) ? "md:inline" : ""}`}>
-                      Review
-                    </span>
-                    <span className={`hidden ${!markedForReview.has(currentQuestion.id) ? "md:inline" : ""}`}>
-                      Review
-                    </span>
+                    <span>Review</span>
                   </Button>
 
-                  {/* Save & Mark for Review (Purple + Green intent) */}
+                  {/* Desktop-Only Save & Mark for Review */}
                   <Button
                     onClick={handleSaveAndMarkReview}
                     size="sm"
                     disabled={!answers[currentQuestion.id]}
                     className={`
-                    px-3 md:px-4 md:py-1 h-9 text-white transition-all
-                    ${!answers[currentQuestion.id]
+                      hidden md:flex px-3 md:px-4 md:py-1 h-9 text-white transition-all
+                      ${!answers[currentQuestion.id]
                         ? "bg-purple-300 dark:bg-purple-900/50 cursor-not-allowed opacity-70"
                         : "bg-purple-600 hover:bg-purple-700"}
-                  `}
+                    `}
                   >
-                    <span className="hidden md:inline">Ans & Review</span>
-                    <span className="md:hidden">Ans & Rev</span>
+                    <span>Ans & Review</span>
                   </Button>
 
                   {/* Save & Next (Blue) */}
@@ -1876,7 +1895,6 @@ export default function TestPage() {
                     <span className="md:hidden">Save & Next</span>
                     <ChevronRight className="w-4 h-4 ml-0.5 md:ml-0" />
                   </Button>
-
                 </div>
               </div>
             </div>
