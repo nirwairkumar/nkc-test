@@ -56,195 +56,244 @@ EXTRACT_PROMPT = """
 ROLE:
 You are an AI document parser, OCR analyst, and exam-content extractor.
 
+-> Give full output in one code snippet only.
+
 GOAL:
 Convert the PROVIDED document pages/images into a STRICT, VALID JSON test file.
 DO NOT generate new questions.
 ONLY extract and restructure content that exists in the file.
 
+--------------------------------------------------
+
+ABSOLUTE OUTPUT RULES
+
+1. RETURN ONLY RAW JSON
+2. NO explanation
+3. NO markdown formatting
+4. NO text before or after JSON
+5. JSON must be syntactically valid
+6. DO NOT include keys if their value is null or truly absent
+7. Question IDs must be sequential integers (1,2,3,...)
+8. Deeply scan mathematical syntax before finalizing
+9. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+10. ALL mathematical expressions MUST be wrapped in $...$ (inline) or $$...$$ (block). Never output bare LaTeX commands.
+11. DO NOT include any citation markers like [cite: ...] or [cite:N] in the output. Strip them completely.
+
+--------------------------------------------------
+
 CRITICAL BEHAVIOR RULES:
 - Read the uploaded pages/images visually (OCR + layout reasoning).
-- Identify QUESTIONS, OPTIONS, ANSWERS, and IMAGES based on layout.
-- If a diagram/image appears immediately before or after a question, note the page number.
+- Identify QUESTIONS, OPTIONS, ANSWERS, IMAGES, TABLES, and COLUMN STRUCTURES based on layout.
+- If a diagram/image appears immediately before or after a question, attach it to that question.
 - NEVER hallucinate or invent content.
 - If something is unclear, infer conservatively from the document layout.
 - Output ONLY valid JSON. No markdown. No explanations. No comments.
 
 --------------------------------------------------
-QUESTION TYPE DETECTION (CRITICAL):
-For EACH question, you MUST detect the type based on these indicators:
 
-1. SINGLE CHOICE (type: "single"):
-   - Has options A, B, C, D (or 1, 2, 3, 4)
-   - Instructions say "Select ONE" or similar
-   - Answer key shows single letter/number
-   - Most common type - use this as DEFAULT if unclear
+DOCUMENT ANALYSIS STEPS (MANDATORY):
 
-2. MULTIPLE CHOICE (type: "multiple"):
-   - Has options A, B, C, D
-   - Instructions say "Select ALL that apply", "Choose one or more", "Multiple correct"
-   - Answer key shows multiple letters like "A, C" or "B, D"
-   - Checkboxes instead of radio buttons
+1. Detect each question boundary using:
+   - Question numbers
+   - Line breaks
+   - Bullets (Q., 1., 1), etc.)
 
-3. NUMERICAL (type: "numerical"):
-   - NO options A/B/C/D
-   - Asks for a numerical value, calculation result
-   - Has answer like "3.14" or range "2.5 to 3.5"
-   - Fill-in-the-blank with numbers
+2. For each question:
+   - Extract full question text EXACTLY as written — preserve ALL numbers with full precision (e.g., 64.97 NOT 97).
+   - Detect if it is:
+     - Single choice
+     - Multiple choice
+     - Numerical
+     - Match-the-following
+     - Table-based
+
+3. Extract options (A/B/C/D or similar).
+   - CRITICAL: Preserve ALL numeric values with full precision (e.g., "64.97 g" NOT "97 g").
+   - Do NOT strip any digits from option values.
+   - If the PDF shows option labels like (1), (2), (3), (4) instead of A, B, C, D:
+     * Map (1) → A, (2) → B, (3) → C, (4) → D
+     * Remove the (1)/(2)/(3)/(4) prefix from the option VALUE
+     * But NEVER strip numbers that are part of the actual content (e.g., "64.97 g of HCl")
+
+4. Detect correct answers using:
+   - Answer keys
+   - Highlighted/marked answers
+   - End-of-page answer sections.
+
+5. Convert ALL mathematical expressions into LaTeX.
+
+6. Preserve original wording (do NOT rewrite).
+
+7. Attach diagrams/images to the correct question using imagePlaceholder.
+
+8. FOR PASSAGE/COMPREHENSION QUESTIONS:
+   - Extract the passage text ONCE.
+   - For EVERY question belonging to that passage, include a "passageContent" field.
+   - Set "passageContent" to the FULL passage text for each question in the group.
 
 --------------------------------------------------
+
+NUMERICAL TYPE DETECTION (CRITICAL):
+You MUST correctly identify NUMERICAL type questions:
+
+1. A question is NUMERICAL (type: "numerical") if:
+   - It has NO options A/B/C/D listed
+   - It asks for a calculated value, integer, or decimal
+   - Instructions say "fill in", "enter value", "answer is", "integer type", "numerical value"
+   - The answer is a number, not a letter choice
+
+2. For numerical questions:
+   - Do NOT create fake options {A,B,C,D}
+   - Set options to null or omit entirely
+   - Set correctAnswer to {"min": value, "max": value}
+
+3. Common TRAPS to avoid:
+   - Options labeled (1), (2), (3), (4) ARE real options → type is "single", NOT numerical
+   - Only set type to "numerical" when there are truly NO options at all
+
+--------------------------------------------------
+
+IMAGE/DIAGRAM QUESTION HANDLING (CRITICAL - DO NOT SKIP):
+
+1. NEVER skip a question just because it contains a diagram
+2. If a question has a diagram, you MUST still extract:
+   - The question text
+   - All options
+   - The correct answer
+   - Set imagePlaceholder to the matching "image_X"
+3. Even if the question is ONLY a diagram with no text, create an entry with:
+   - question: "[Refer to the diagram]"
+   - imagePlaceholder: "image_X"
+4. Questions with diagrams are JUST AS IMPORTANT as text-only questions
+
+--------------------------------------------------
+
+OPTION vs QUESTION TEXT BOUNDARY (CRITICAL):
+
+1. CAREFULLY distinguish between question text and options:
+   - Question text is everything BEFORE the options begin
+   - Options begin when you see A., B., C., D. or (a), (b), (c), (d) or (1), (2), (3), (4)
+   - Do NOT include option text inside the question field
+   - Do NOT include question continuation text inside options
+
+2. If question text appears to continue after options:
+   - It is likely a SEPARATE question — check numbering
+   - Or it might be instructions for the next set of questions
+
+3. For each option, verify:
+   - Does this text logically answer the question?
+   - If not, it might be misidentified — it could be part of the question itself
+
+4. CORRECT ANSWER DETECTION:
+   - Look for answer keys at the end of the page or document
+   - Look for bold/highlighted/circled options
+   - If no answer is found, set correctAnswer to null — do NOT guess
+
+--------------------------------------------------
+
 CROSS-PAGE QUESTION HANDLING (CRITICAL):
 When processing multiple pages, you MUST handle questions that span across pages:
 
 1. DETECT split questions:
    - If a question starts on page N but options/answer continue on page N+1
-   - If question text ends abruptly at page bottom and continues on next page
+   - Question text ends abruptly at page bottom and continues on next page
    - Look for question numbers to identify continuity
 
 2. MERGE split questions:
    - COMBINE question text from all pages into ONE complete question
-   - COMBINE all options (A, B, C, D) even if spread across pages
-   - Preserve the single question number (e.g., "Question 5")
-   - Set diagramPage to the page where the diagram appears
+   - COMBINE all options even if spread across pages
+   - Preserve the single question number
+   - Mark crossPage: true
 
-3. NEVER create duplicate questions:
-   - Do NOT create two Question 5 entries if it spans 2 pages
-   - Use the SAME question ID for the merged question
-   - Mark crossPage: true in the output for questions that span multiple pages
-
-4. ANSWER KEY LOCATION:
-   - Answers may appear anywhere: inline with questions, at end of page, or separate answer sheet
-   - Look for marked answers (checkmarks, bold, circles, "Ans:", "Answer:")
-   - Common formats: "Ans: A", "Answer: B", "✓ C", "• D", "5. B" (question 5 answer is B)
+3. NEVER create duplicate questions for the same question number.
 
 --------------------------------------------------
-DIAGRAM AND IMAGE EXTRACTION (CRITICAL):
-You MUST extract and include ALL diagrams, figures, and images:
 
-1. DETECT diagrams in:
-   - Question text area
-   - Within options (A, B, C, D)
-   - Separate figure references ("Figure 1", "Diagram A")
+TABLE DETECTION RULE (CRITICAL):
 
-2. For EACH question, check:
-   - Is there a diagram immediately above/below the question?
-   - Are there images embedded in the options?
-   - Does the question reference a figure/diagram?
+If a question contains a table (rows/columns/grid structure):
 
-3. DIAGRAM TYPES to extract:
-   - Mathematical: graphs, curves, geometric shapes, coordinate systems
-   - Scientific: chemical structures, physics diagrams, biology illustrations
-   - Charts: bar charts, pie charts, line graphs, tables
-   - Circuit diagrams, flowcharts, maps, anatomical drawings
-   - Small icons/symbols if they are part of the question
+- Convert the table into KaTeX array format.
+- NEVER output HTML table.
+- NEVER output markdown table.
+- Embed the LaTeX array inside the "question" field.
 
-4. SIZE HANDLING:
-   - Extract diagrams regardless of size (small chemical structures are important!)
-   - If diagram is very large, note it but still extract
-   - Do NOT filter out images based on size - if it's in the question area, extract it
+Example conversion:
 
-5. MATCHING:
-   - Set "diagramPage" to the page number where the diagram appears
-   - If diagram appears in options, note which option (A/B/C/D) in "diagramOption"
-   - For multi-part diagrams, reference the main diagram page
+Original:
+| A | B |
+|---|---|
+| 1 | 2 |
+
+Convert to:
+$$\\\\begin{array}{|c|c|} \\\\hline A & B \\\\\\\\ \\\\hline 1 & 2 \\\\\\\\ \\\\hline \\\\end{array}$$
 
 --------------------------------------------------
-MATHEMATICAL CONTENT EXTRACTION (CRITICAL):
-Extract ALL mathematical expressions with HIGH PRECISION:
 
-1. LaTeX Format:
-   - Use proper LaTeX syntax: \\frac, \\sqrt, \\int, \\sum, \\prod
-   - Escape ALL backslashes for JSON: use \\\\ instead of \\.
-   - Inline math: $...$ (e.g., $x^2 + y^2 = z^2$)
-   - Block math: $$...$$ for complex equations
+MATCH-THE-FOLLOWING RULE (CRITICAL):
 
-2. Common Symbols - TRANSCRIBE CAREFULLY:
-   - Fractions: \\frac{numerator}{denominator}
-   - Roots: \\sqrt{x}, \\sqrt[3]{x} for cube roots
-   - Integrals: \\int, \\oint, \\iint with limits as subscripts/superscripts
-   - Sums: \\sum_{i=1}^{n}
-   - Limits: \\lim_{x \\to \\infty}
-   - Greek letters: \\alpha, \\beta, \\gamma, \\delta, \\theta, \\pi, \\sigma, \\omega
-   - Operators: \\pm, \\times, \\div, \\cdot, \\equiv, \\approx, \\neq
-   - Arrows: \\rightarrow, \\leftarrow, \\Rightarrow, \\Leftrightarrow
-   - Subscripts: x_1, x_{ij}
-   - Superscripts: x^2, x^{2n}
+If question is "Match the Following" OR contains two-column pairing:
 
-3. PRECISION CHECKS:
-   - ∫ (integral) vs S
-   - α (alpha) vs a
-   - β (beta) vs B  
-   - θ (theta) vs 0 (zero) or O (letter O)
-   - π (pi) vs n
-   - μ (mu) vs u
-   - ν (nu) vs v
-   - ρ (rho) vs p
-   - ω (omega) vs w
-   - σ (sigma) vs s
+- Convert the two columns into structured LaTeX array format.
+- Keep original numbering/labels.
+- Embed inside the "question" field.
 
-4. Complex Expressions:
-   - Matrices: Use \\begin{pmatrix} ... \\end{pmatrix}
-   - Align equations: Use \\begin{align} ... \\end{align}
-   - Piecewise: Use \\begin{cases} ... \\end{cases}
-
-5. VERIFY each mathematical expression by:
-   - Reading it back to ensure it makes sense
-   - Checking that LaTeX compiles mentally
-   - Ensuring no symbols are missing or misidentified
+Example:
+$$\\\\begin{array}{ll} \\\\text{Column I} & \\\\text{Column II} \\\\\\\\ A.\\\\ \\\\text{Apple} & 1.\\\\ \\\\text{Fruit} \\\\\\\\ B.\\\\ \\\\text{Car} & 2.\\\\ \\\\text{Vehicle} \\\\end{array}$$
 
 --------------------------------------------------
-DOCUMENT ANALYSIS STEPS (MANDATORY):
-1. Scan ALL pages first to understand document structure
-2. Detect each question boundary using:
-   - Question numbers (1, 2, 3... or Q1, Q2, Q3...)
-   - Line breaks and spacing
-   - Bullets (Q., 1., 1), etc.)
-3. For each question:
-   - Extract full question text (MERGE if across multiple pages)
-   - DETECT TYPE based on indicators above
-   - Extract options (A/B/C/D) ONLY for single/multiple choice (COLLECT from all pages)
-   - Extract ALL diagrams associated with the question
-   - Look for inline answers or markings
-4. Detect correct answers using:
-   - Answer keys (if provided separately)
-   - Highlighted/marked answers within the document
-   - End-of-page answer sections
-   - Inline markings (bold, checkmarks, circles)
-   - Look for patterns like: "1. A", "Q1: B", "Answer: C"
-5. Convert all mathematical expressions into LaTeX with HIGH PRECISION.
-6. Preserve original wording (do NOT rewrite).
-7. FOR PASSAGE/COMPREHENSION QUESTIONS:
-   - Extract the passage text ONCE.
-   - For EVERY question belonging to that passage, include a "passageContent" field.
+
+MATRIX / COLUMN STRUCTURE RULE:
+
+If content appears vertically aligned (like vector, matrix, determinant):
+
+Convert to proper LaTeX:
+
+Matrix: $$\\\\begin{pmatrix} a & b \\\\\\\\ c & d \\\\end{pmatrix}$$
+Determinant: $$\\\\begin{vmatrix} a & b \\\\\\\\ c & d \\\\end{vmatrix}$$
 
 --------------------------------------------------
+
 MATH & FORMATTING RULES (CRITICAL):
-- Use LaTeX for ALL math: \\frac, \\sqrt, \\int, x^2, etc.
-- Escape ALL backslashes for JSON: use \\\\ instead of \\.
+
+- Use LaTeX for ALL math: \\\\frac, \\\\sqrt, \\\\int, x^2, etc.
+- CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands inside the JSON strings.
+- ALL math MUST be wrapped in $...$ for inline or $$...$$ for block. Never write bare LaTeX.
 - Inline math: $...$
-- Block equations: $$...$$ 
-- NEVER use align environments, use \\begin{aligned} ... \\end{aligned} instead.
+- Block math: $$...$$
+- Do NOT simplify expressions.
+- Preserve spacing and symbols exactly.
+- NEVER use align environments, use \\\\begin{aligned} ... \\\\end{aligned} instead.
 
 CHEMISTRY FORMATTING (mhchem) - CRITICAL:
-- Use \\\\ce{} for ALL chemical formulas: \\\\ce{H2O}, \\\\ce{NaCl}, \\\\ce{CO2}
-- Chemical equations MUST be in \\\\ce: \\\\ce{2H2 + O2 -> 2H2O}
-- Reversible reactions: \\\\ce{N2 + 3H2 <=> 2NH3}
-- Ions: \\\\ce{Na+}, \\\\ce{SO4^{2-}}, \\\\ce{Fe^{3+}}
-- Organic: \\\\ce{CH3-CH2-OH}, \\\\ce{C6H12O6}
-- State symbols: \\\\ce{H2O (l)}, \\\\ce{CO2 (g)}, \\\\ce{NaCl (aq)}
-- Isotopes: \\\\ce{^{14}C}, \\\\ce{^{235}U}
-
-TEXT & LINE-BREAK RULES:
-- DO NOT use escaped newline characters or real line breaks inside strings.
-- Use <br> tags for line breaks in questions and options.
-- Multi-line questions should use <br> tags to separate lines.
-- Do NOT use other HTML tags or markdown EXCEPT for images.
-
-IMAGE INSERTION RULE:
-- If you matched a diagram to a question, set its diagramPage. By default the backend will attach it.
-- If a diagram MUST be deeply inline within the text, use: ![image](DIAGRAM_PAGE_X)
-- If an option text contains an image, you MUST also set diagramOption to "A", "B", etc.
+- Use \\\\ce{} for ALL chemical formulas: $\\\\ce{H2O}$, $\\\\ce{NaCl}$, $\\\\ce{CO2}$
+- Chemical equations MUST be in \\\\ce: $\\\\ce{2H2 + O2 -> 2H2O}$
+- Reversible reactions: $\\\\ce{N2 + 3H2 <=> 2NH3}$
+- Ions: $\\\\ce{Na+}$, $\\\\ce{SO4^{2-}}$, $\\\\ce{Fe^{3+}}$
+- Organic: $\\\\ce{CH3-CH2-OH}$, $\\\\ce{C6H12O6}$
+- State symbols: $\\\\ce{H2O (l)}$, $\\\\ce{CO2 (g)}$, $\\\\ce{NaCl (aq)}$
+- Isotopes: $\\\\ce{^{14}C}$, $\\\\ce{^{235}U}$
+- IMPORTANT: Always wrap \\\\ce{...} inside $...$
 
 --------------------------------------------------
+
+TEXT & LINE-BREAK RULES:
+- DO NOT use escaped newline characters (\\n).
+- DO NOT use real line breaks.
+- Use <br> tags for line breaks in questions and options.
+- Multi-line questions must use <br>.
+- Do NOT use other HTML tags.
+- Do NOT use markdown formatting.
+
+--------------------------------------------------
+
+DIAGRAM AND IMAGE EXTRACTION (CRITICAL):
+- If a diagram/image appears near a question, set imagePlaceholder to "image_X" (X = visual order across document, top-left to bottom-right).
+- For inline image references in text or options, use markdown: ![image](image_X)
+- Ensure placeholder numbering matches visual order across all pages.
+
+--------------------------------------------------
+
 STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
 {
   "title": "Extracted from document or inferred",
@@ -254,52 +303,72 @@ STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
       "id": 1,
       "type": "single",
       "question": "Exact extracted question text with LaTeX",
-      "diagramPage": null,
-      "diagramOption": null,
+      "imagePlaceholder": null,
       "options": {
-        "A": "Option text",
-        "B": "Option text",
-        "C": "Option text",
-        "D": "Option text"
+        "A": "Option text only - no numbering prefix",
+        "B": "Option text only",
+        "C": "Option text only",
+        "D": "Option text only"
       },
       "correctAnswer": "A",
       "marks": 4,
       "negativeMarks": 1,
-      "crossPage": false
+      "crossPage": false,
+      "passageContent": null
     }
   ]
 }
 
 --------------------------------------------------
+
 ANSWER RULES BY TYPE:
-- Single choice: 
-  * type: "single"
-  * options: { "A": "...", "B": "...", "C": "...", "D": "..." }
-  * correctAnswer: "A" (single string)
-
-- Multiple choice:
-  * type: "multiple" 
-  * options: { "A": "...", "B": "...", "C": "...", "D": "..." }
-  * correctAnswer: ["A", "C"] (array of strings)
-
-- Numerical:
-  * type: "numerical"
-  * options: null (DO NOT include options field)
-  * correctAnswer: { "min": 3.14, "max": 3.14 } (use same value for exact answer)
+- Single choice: correctAnswer: "A" (single string)
+- Multiple choice: correctAnswer: ["A", "C"] (array of strings)
+- Numerical: NO options field, correctAnswer: { "min": 3.14, "max": 3.14 }
 
 --------------------------------------------------
+
 FAIL-SAFE RULES:
 - If an image-only question exists -> still create a question entry.
-- If question type is unclear -> default to "single".
+- If options are missing -> infer from alignment or labels.
 - If answer key exists separately -> map carefully to question IDs.
 - If ANY field is missing -> set it to null (never omit keys).
 - If correctAnswer cannot be determined, set it to null.
-- If diagram extraction fails, set diagramPage to null but keep the question.
+- If table or match structure is unclear, preserve structure using LaTeX array format.
 
 --------------------------------------------------
-FINAL OUTPUT RULE:
-RETURN ONLY RAW JSON.
-NO TEXT BEFORE OR AFTER.
+
+STRICT VALIDATION BEFORE OUTPUT
+
+Internally verify:
+
+✔ IDs sequential integers starting from 1
+✔ No duplicate IDs
+✔ Single → string correctAnswer
+✔ Multiple → array correctAnswer
+✔ Numerical → object correctAnswer
+✔ ALL math wrapped in $...$ or $$...$$
+✔ ALL LaTeX commands use double backslashes (\\\\)
+✔ ALL chemical formulas use $\\\\ce{...}$
+✔ NO citation markers [cite: ...] remain
+✔ NO option values start with numbering like "1.", "(a)", "(1)"
+✔ Valid JSON
+
+--------------------------------------------------
+
+FINAL COMMAND
+
+Deep scan entire document.
+Pay special attention to:
+• Mathematical syntax with proper $...$ wrapping
+• Tables → KaTeX arrays
+• Match-the-following → LaTeX arrays
+• Comprehension blocks
+• Mixed question types
+• Chemical formulas with \\\\ce{}
+• Remove any [cite:...] artifacts
+
+Return ONLY RAW JSON.
 """
 
 ANSWER_KEY_PROMPT = """
@@ -357,8 +426,8 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
 8. **Create plausible distractors** — wrong options should be reasonable, not obviously wrong.
 
 9. **IMAGE INSERTION RULE**:
-   - If a generated question requires a diagram from the page, output diagramPage = <page_number>.
-   - For deeply inline insertions or option diagrams, use ![image](DIAGRAM_PAGE_X) or set diagramOption.
+   - If a generated question requires a diagram from the page, output "imagePlaceholder": "image_X" based on its visual sequence.
+   - For deeply inline insertions or option diagrams, use ![image](image_X).
 
 ## CROSS-PAGE HANDLING:
 - Questions may span multiple pages - combine them into complete questions
@@ -466,7 +535,21 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                 logger.warning(f"Failed to extract image from page {page_num + 1}: {e}")
 
     doc.close()
-    logger.info(f"Extracted {len(images)} images from PDF")
+    
+    # Sort images by page, then Y-coordinate (top to bottom), then X-coordinate (left to right)
+    def sort_key(img):
+        bbox = img["bbox"]
+        if bbox:
+            return (img["page"], bbox[1], bbox[0])
+        return (img["page"], 0, 0)
+        
+    images.sort(key=sort_key)
+    
+    # Assign sequential IDs mapping to the expected placeholders
+    for i, img in enumerate(images):
+        img["id"] = f"image_{i+1}"
+        
+    logger.info(f"Extracted and ordered {len(images)} images from PDF")
     return images
 
 
@@ -559,14 +642,18 @@ async def process_answer_key(answer_key_data: Dict) -> List[Dict]:
     try:
         model = "gemini-2.0-flash"
         
-        response = client.models.generate_content(
-            model=model,
-            contents=content_parts,
-            config=types.GenerateContentConfig(
-                temperature=0.1,
-                top_p=0.95,
-                max_output_tokens=4096,
-            )
+        response = await asyncio.wait_for(
+            asyncio.to_thread(
+                client.models.generate_content,
+                model=model,
+                contents=content_parts,
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    top_p=0.95,
+                    max_output_tokens=4096,
+                )
+            ),
+            timeout=120.0
         )
         raw_text = response.text
         
@@ -636,7 +723,7 @@ def merge_cross_page_questions(all_questions: List[Dict]) -> List[Dict]:
     return merged_questions
 
 
-async def _call_gemini_with_retry(content_parts: List[Dict], batch_num: int, max_retries: int = 3) -> str:
+async def _call_gemini_with_retry(content_parts: list, batch_num: int, max_retries: int = 3) -> str:
     """
     Call Gemini API with retry logic, exponential backoff, and fallback models/settings.
     """
@@ -661,14 +748,19 @@ async def _call_gemini_with_retry(content_parts: List[Dict], batch_num: int, max
                 temp = 0.2
                 max_tokens = 65536
 
-            response = client.models.generate_content(
-                model=model,
-                contents=content_parts,
-                config=types.GenerateContentConfig(
-                    temperature=temp,
-                    top_p=0.95,
-                    max_output_tokens=max_tokens,
-                )
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    client.models.generate_content,
+                    model=model,
+                    contents=content_parts,
+                    config=types.GenerateContentConfig(
+                        temperature=temp,
+                        top_p=0.95,
+                        max_output_tokens=max_tokens,
+                        response_mime_type="application/json",
+                    )
+                ),
+                timeout=120.0
             )
             
             if not response.text:
@@ -868,10 +960,9 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         for i, page_img in enumerate(batch_images):
             actual_page_num = batch_start_page + i + 1
             content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
-            content_parts.append({
-                "mime_type": "image/png",
-                "data": base64.b64encode(page_img).decode("utf-8")
-            })
+            content_parts.append(
+                types.Part.from_bytes(data=page_img, mime_type="image/png")
+            )
 
         logger.info(f"Sending batch {batch_num} to Gemini...")
         
@@ -1081,19 +1172,17 @@ def _extract_questions_regex(text: str) -> List[Dict]:
     Looks for { ... "question": ... } structures.
     """
     questions = []
-    # Try to find all blocks that look like question objects
-    pattern = r'\{[^{]*?"question"\s*:\s*".*?[^{]*?\}'
-    matches = re.finditer(pattern, text, re.DOTALL)
+    # Try to find all blocks that look like question objects using a non-backtracking approach
+    # We look for "question": "..." using standard JSON string parsing logic.
+    # No re.DOTALL, strict linear matching to prevent backtracking hangs.
+    pattern = r'"question"\s*:\s*"((?:[^"\\]|\\.)*)"'
+    matches = re.finditer(pattern, text)
     
     for match in matches:
         try:
-            q_text = match.group(0)
-            # Try to fix truncated ending if needed
-            if not q_text.rstrip().endswith('}'):
-                q_text = q_text[:text.rfind('"')] + '"}'
-            
-            q_dict = json.loads(q_text)
-            if "question" in q_dict:
+            q_text = match.group(1)
+            if q_text:
+                q_dict = {"question": q_text.strip()}
                 questions.append(q_dict)
         except:
             pass
@@ -1102,7 +1191,16 @@ def _extract_questions_regex(text: str) -> List[Dict]:
 
 
 def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
-    """Parse Gemini's JSON response and match diagrams to questions."""
+    """Parse Gemini response into our strict Question format"""
+    
+    # DEBUG: dump raw response to analyze
+    try:
+        with open("/tmp/gemini_raw_output_debug.txt", "a", encoding="utf-8") as f:
+            f.write("\n\n==== NEW RESPONSE ====\n\n")
+            f.write(raw_text)
+    except:
+        pass
+
     # Clean markdown code fences if present
     clean = raw_text.strip()
     if clean.startswith("```json"):
@@ -1135,17 +1233,32 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
 
     questions = data.get("questions", [])
     if not questions:
+        # User prompt structure might nest questions inside a 'sections' array
+        sections = data.get("sections", [])
+        if sections and isinstance(sections, list):
+            if questions is None:
+                questions = []
+            for section in sections:
+                if isinstance(section, dict):
+                    questions.extend(section.get("questions", []))
+            
+    if not questions:
         logger.warning(f"AI returned 0 questions. Raw snippet: {clean[:500]}")
         # Don't raise error, just return empty so batch can fail gracefully without breaking pipeline
         return {"questions": []}
 
-    # Build page → images lookup for diagram matching
-    page_images_map = {}
+    # Build image lookup for placeholder replacement
+    placeholder_map = {}
     for img in embedded_images:
-        page = img["page"]
-        if page not in page_images_map:
-            page_images_map[page] = []
-        page_images_map[page].append(img)
+        placeholder_map[img["id"]] = img.get("cloudinary_url", img.get("base64_uri"))
+
+    def replace_placeholders(text: str) -> str:
+        if not text:
+            return text
+        for placeholder, url in placeholder_map.items():
+            text = text.replace(f"![image]({placeholder})", f"![image]({url})")
+            text = text.replace(f"![diagram]({placeholder})", f"![image]({url})")
+        return text
 
     # Validate and match diagrams
     validated = []
@@ -1158,35 +1271,17 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             logger.warning(f"Question {i + 1} has no text, skipping")
             continue
 
-        # Match diagram by page number
+        question_text = replace_placeholders(question_text)
+
+        # Match main question image placeholder
         q_image = q.get("image")
-        diagram_page = q.get("diagramPage")
-        diagram_option = q.get("diagramOption")  # New field for option-specific diagrams
+        image_placeholder = q.get("imagePlaceholder")
 
         # If image is already a data URI or URL, keep it
         if q_image and isinstance(q_image, str) and (q_image.startswith("data:") or q_image.startswith("http")):
             pass  # keep as-is
-        elif diagram_page and diagram_page in page_images_map:
-            page_imgs = page_images_map[diagram_page]
-            if page_imgs:
-                # Better matching strategy:
-                # If there's an option specified, try to find an image vertically lower,
-                # otherwise default to largest/closest image.
-                # In the future, we can map text bbox to image bbox exactly.
-                sorted_imgs = sorted(page_imgs, key=lambda x: x["width"] * x["height"], reverse=True)
-                
-                # Pick best match based on option vs overall question
-                # Just take the best available for now if no specific match
-                best = sorted_imgs[0]
-                
-                if best:
-                    img_url = best.get("cloudinary_url", best["base64_uri"])
-                    if diagram_option:
-                        if "optionImages" not in q or not q["optionImages"]:
-                            q["optionImages"] = {}
-                        q["optionImages"][diagram_option] = img_url
-                    else:
-                        q_image = img_url
+        elif image_placeholder and image_placeholder in placeholder_map:
+            q_image = placeholder_map[image_placeholder]
         else:
             if not q_image:
                 q_image = None
@@ -1196,6 +1291,14 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         q_type = q.get("type", "single")
         if not options and q_type != "numerical":
             options = {"A": "", "B": "", "C": "", "D": ""}
+        
+        # Replace placeholders in options
+        if isinstance(options, dict):
+            for k, v in options.items():
+                if isinstance(v, str):
+                    options[k] = replace_placeholders(v)
+                elif isinstance(v, dict) and "text" in v:
+                    v["text"] = replace_placeholders(v["text"])
 
         validated.append({
             "id": q.get("id", i + 1),
@@ -1208,11 +1311,71 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             "marks": q.get("marks", 4),
             "negativeMarks": q.get("negativeMarks", 1),
             "crossPage": q.get("crossPage", False),
+            "groupId": q.get("groupId", ""),
+            "passageContent": q.get("passageContent", ""),
         })
+
+    # ── POST-PROCESSING ──────────────────────────────────────────────────
+    
+    # Regex to strip ONLY single-digit (1-4) option numbering prefixes
+    # IMPORTANT: Must NOT match multi-digit numbers like "64.97" which are actual content
+    option_prefix_re = re.compile(r'^\s*(?:[1-4]\)\s+|\([1-4]\)\s+|\([a-dA-D]\)\s+|[A-Da-d]\.\s+)')
+    
+    # Regex to strip citation markers like [cite: 23] or [cite:44 45]
+    citation_re = re.compile(r'\[cite:\s*[^\]]*\]')
+    
+    def _strip_citations(text: str) -> str:
+        """Remove all [cite: ...] markers from text."""
+        if not text:
+            return text
+        return citation_re.sub('', text).strip()
+    
+    def _strip_option_prefix(text: str) -> str:
+        """Remove leading numbering from option text (e.g. '1. answer' → 'answer')."""
+        if not text:
+            return text
+        return option_prefix_re.sub('', text).strip()
+    
+    for vq in validated:
+        # 1. Strip citation markers from question text, options, and passage
+        vq["question"] = _strip_citations(vq.get("question", ""))
+        if vq.get("passageContent"):
+            vq["passageContent"] = _strip_citations(vq["passageContent"])
+        
+        # 2. Strip option numbering prefixes and citations from option values
+        if isinstance(vq.get("options"), dict):
+            for k, v in vq["options"].items():
+                if isinstance(v, str):
+                    v = _strip_citations(v)
+                    v = _strip_option_prefix(v)
+                    vq["options"][k] = v
+                elif isinstance(v, dict) and "text" in v:
+                    v["text"] = _strip_citations(v["text"])
+                    v["text"] = _strip_option_prefix(v["text"])
+        
+        # 3. Resolve imagePlaceholder → Cloudinary URL if not already done
+        if not vq.get("image") and vq.get("imagePlaceholder"):
+            placeholder = vq["imagePlaceholder"]
+            if placeholder in placeholder_map:
+                vq["image"] = placeholder_map[placeholder]
+    
+    # 4. Sort by original ID (as extracted) and re-assign sequential IDs
+    try:
+        validated.sort(key=lambda x: int(x.get("id", 0)))
+    except (ValueError, TypeError):
+        pass  # If IDs aren't integers, keep original order
+    
+    for idx, vq in enumerate(validated):
+        vq["id"] = idx + 1
+    
+    logger.info(f"Post-processed {len(validated)} questions (sequential IDs, stripped prefixes, resolved images)")
+    # ── END POST-PROCESSING ───────────────────────────────────────────────
 
     result = {
         "title": data.get("title", ""),
         "description": data.get("description", ""),
+        "duration": data.get("duration", "180"),
+        "maxMarks": data.get("maxMarks", ""),
         "questions": validated,
         "canConfirm": all(q.get("correctAnswer") is not None for q in validated),
         "unansweredCount": sum(1 for q in validated if q.get("correctAnswer") is None),
@@ -1556,6 +1719,48 @@ async def process_files_stream(
     # Merge cross-page questions
     unique_questions = merge_cross_page_questions(all_questions)
     
+    # ── STREAM POST-PROCESSING (same as _parse_response) ─────────────────
+    # IMPORTANT: Only match single-digit 1-4 numbering, NOT multi-digit content like "64.97"
+    option_prefix_re = re.compile(r'^\s*(?:[1-4]\)\s+|\([1-4]\)\s+|\([a-dA-D]\)\s+|[A-Da-d]\.\s+)')
+    citation_re = re.compile(r'\[cite:\s*[^\]]*\]')
+    
+    # Build placeholder → Cloudinary URL lookup
+    placeholder_map = {}
+    for img in all_embedded_images:
+        placeholder_map[img.get("id", "")] = img.get("cloudinary_url", img.get("base64_uri", ""))
+    
+    for vq in unique_questions:
+        # Strip citations
+        if isinstance(vq.get("question"), str):
+            vq["question"] = citation_re.sub('', vq["question"]).strip()
+        if isinstance(vq.get("passageContent"), str) and vq["passageContent"]:
+            vq["passageContent"] = citation_re.sub('', vq["passageContent"]).strip()
+        
+        # Strip option numbering prefixes and citations
+        if isinstance(vq.get("options"), dict):
+            for k, v in vq["options"].items():
+                if isinstance(v, str):
+                    v = citation_re.sub('', v).strip()
+                    v = option_prefix_re.sub('', v).strip()
+                    vq["options"][k] = v
+        
+        # Resolve imagePlaceholder → Cloudinary URL
+        if not vq.get("image"):
+            placeholder = vq.get("imagePlaceholder", "")
+            if placeholder and placeholder in placeholder_map:
+                vq["image"] = placeholder_map[placeholder]
+    
+    # Sort by original ID and re-assign sequential IDs
+    try:
+        unique_questions.sort(key=lambda x: int(x.get("id", 0)))
+    except (ValueError, TypeError):
+        pass
+    for idx, vq in enumerate(unique_questions):
+        vq["id"] = idx + 1
+    
+    logger.info(f"Post-processed {len(unique_questions)} streaming questions")
+    # ── END STREAM POST-PROCESSING ────────────────────────────────────────
+    
     # Match answer key if provided
     if answer_key:
         answer_key_mappings = await process_answer_key(answer_key)
@@ -1646,10 +1851,9 @@ async def _process_single_batch_stream(
     for i, page_img in enumerate(images):
         actual_page_num = start_page + i + 1
         content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
-        content_parts.append({
-            "mime_type": "image/png",
-            "data": base64.b64encode(page_img).decode("utf-8")
-        })
+        content_parts.append(
+            types.Part.from_bytes(data=page_img, mime_type="image/png")
+        )
     
     # Call Gemini with retry
     raw_text = await _call_gemini_with_retry(content_parts, batch_num)
