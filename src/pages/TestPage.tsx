@@ -1283,7 +1283,7 @@ export default function TestPage() {
               e.preventDefault();
               enterFullScreen();
             }}
-            className="md:hidden flex items-center justify-center p-1 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shrink-0 -mr-1.5"
+            className="md:hidden flex items-center justify-center p-1 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shrink-0 -mr-3"
             title="Enter Full Screen"
           >
             <Maximize className="w-3.5 h-3.5" />
