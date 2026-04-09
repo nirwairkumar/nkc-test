@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -76,6 +76,8 @@ export default function TestPage() {
   const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
+  const [fullScreenLogs, setFullScreenLogs] = useState<{ event: string, timestamp: number }[]>([]);
 
   // Reporting State
   const [reportReason, setReportReason] = useState<string>('');
@@ -423,7 +425,12 @@ export default function TestPage() {
     // 3. Full Screen Check
     const handleFullScreenChange = () => {
       if (!document.fullscreenElement && settings.force_fullscreen) {
+        setFullScreenLogs(prev => [...prev, { event: 'Exit Full Screen', timestamp: Date.now() }]);
+        setShowFullScreenWarning(true);
         handleViolation("Exited Full Screen");
+      } else if (document.fullscreenElement) {
+        setFullScreenLogs(prev => [...prev, { event: 'Entered Full Screen', timestamp: Date.now() }]);
+        setShowFullScreenWarning(false);
       }
     };
 
@@ -469,6 +476,21 @@ export default function TestPage() {
     }
 
     // Ideally log this violation to DB (to be implemented in next step)
+  };
+  
+  const enterFullScreen = () => {
+    const elem = document.documentElement;
+    try {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if ((elem as any).webkitRequestFullscreen) {
+        (elem as any).webkitRequestFullscreen();
+      } else if ((elem as any).msRequestFullscreen) {
+        (elem as any).msRequestFullscreen();
+      }
+    } catch (err) {
+      console.error("Error attempting to enable full-screen mode:", err);
+    }
   };
 
   // Mark current question as visited
@@ -2013,6 +2035,55 @@ export default function TestPage() {
           <AlertDialogFooter>
             {!isRefresh && <AlertDialogCancel onClick={cancelResume}>Start Over</AlertDialogCancel>}
             <AlertDialogAction onClick={handleResumeTest}>Continue Test</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Full Screen Warning Dialog */}
+      <AlertDialog open={showFullScreenWarning}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600 flex items-center gap-2 text-xl font-bold uppercase tracking-tight">
+              <Maximize className="w-6 h-6 stroke-[2.5px]" /> Full Screen Required
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-slate-700 dark:text-slate-300">
+              This test must be taken in Full Screen mode for proctoring purposes. Please return to full screen to continue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-800 my-4">
+            <div className="flex items-center gap-2 mb-3 text-slate-500 text-xs font-bold uppercase tracking-wider">
+              <ScrollText className="w-4 h-4" /> Full Screen Working Log
+            </div>
+            <div className="max-h-32 overflow-y-auto space-y-2 custom-scrollbar pr-2">
+              {fullScreenLogs.length === 0 ? (
+                <div className="text-slate-400 text-sm italic py-2 text-center">No events recorded.</div>
+              ) : (
+                fullScreenLogs.slice().reverse().map((log, i) => (
+                  <div key={i} className="flex justify-between items-center text-xs border-b border-slate-200 dark:border-slate-800 pb-2 last:border-0 last:pb-0">
+                    <span className={`flex items-center gap-1.5 ${log.event === 'Exit Full Screen' ? 'text-red-600 font-semibold' : 'text-green-600 font-semibold'}`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${log.event === 'Exit Full Screen' ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`} />
+                      {log.event}
+                    </span>
+                    <span className="text-slate-500 font-mono">
+                      {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault();
+                enterFullScreen();
+              }}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-11 text-base shadow-md"
+            >
+              <Maximize2 className="w-5 h-5" /> Return to Full Screen
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
