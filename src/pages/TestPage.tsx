@@ -1279,19 +1279,17 @@ export default function TestPage() {
         {/* Right Side: Timer & Controls */}
         <div className="flex items-center justify-between md:justify-end gap-1.5 md:gap-3 w-full md:w-auto mt-0.5 md:mt-0">
           
-          {/* Full Screen Toggle Button (Enter Only) */}
-          {!isFullScreen && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                enterFullScreen();
-              }}
-              className="flex items-center justify-center p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-              title="Enter Full Screen"
-            >
-              <Maximize className="w-4 h-4 md:w-4.5 md:h-4.5" />
-            </button>
-          )}
+          {/* Full Screen Button (Enter Only) */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              enterFullScreen();
+            }}
+            className="flex items-center justify-center p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+            title="Enter Full Screen"
+          >
+            <Maximize className="w-4 h-4 md:w-4.5 md:h-4.5" />
+          </button>
 
           {/* Timer Block */}
           {(() => {
