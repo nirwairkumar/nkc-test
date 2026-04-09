@@ -1272,20 +1272,34 @@ export default function TestPage() {
 
       <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2.5 md:px-5 md:py-2.5 relative md:sticky top-0 z-10 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
         {/* Left Side: Test Title (Dim, grayish, aesthetic) */}
-        <div className="text-[13px] md:text-sm font-medium text-slate-400 tracking-wide truncate w-full md:max-w-[40%] md:flex-1 text-left">
-          {test?.title || "Live Test"}
-        </div>
-
-        {/* Right Side: Timer & Controls */}
-        <div className="flex items-center justify-between md:justify-end gap-1.5 md:gap-3 w-full md:w-auto mt-0.5 md:mt-0">
+        <div className="flex items-center justify-between gap-2 w-full md:w-auto md:max-w-[40%] md:flex-1">
+          <div className="text-[13px] md:text-sm font-medium text-slate-400 tracking-wide truncate text-left">
+            {test?.title || "Live Test"}
+          </div>
           
-          {/* Full Screen Button (Enter Only) */}
+          {/* Mobile Full Screen Button (Visible only on phone screens) */}
           <button
             onClick={(e) => {
               e.preventDefault();
               enterFullScreen();
             }}
-            className="flex items-center justify-center p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+            className="md:hidden flex items-center justify-center p-1 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shrink-0"
+            title="Enter Full Screen"
+          >
+            <Maximize className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Right Side: Timer & Controls */}
+        <div className="flex items-center justify-between md:justify-end gap-1.5 md:gap-3 w-full md:w-auto mt-0.5 md:mt-0">
+          
+          {/* Desktop Full Screen Button (Hidden on mobile) */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              enterFullScreen();
+            }}
+            className="hidden md:flex items-center justify-center p-1.5 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
             title="Enter Full Screen"
           >
             <Maximize className="w-4 h-4 md:w-4.5 md:h-4.5" />
