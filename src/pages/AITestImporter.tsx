@@ -3,7 +3,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap } from "lucide-react";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -447,9 +447,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     break;
 
                                 case 'complete':
+                                    if (!data.questions || data.questions.length === 0) {
+                                        throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
+                                    }
                                     setParsedData(data);
                                     setIsStreaming(false);
                                     setLoading(false);
+                                    setStreamProgress(null);
                                     setAbortController(null);
                                     return;
 
@@ -624,6 +628,16 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
         onImport(importPayload);
     };
+
+    // Auto-navigate to Test Editor upon successful test generation (Step 7)
+    useEffect(() => {
+        if (parsedData && parsedData.questions && parsedData.questions.length > 0) {
+            const timer = setTimeout(() => {
+                handleImport();
+            }, 500); // Small delay to let user realize success before redirecting
+            return () => clearTimeout(timer);
+        }
+    }, [parsedData, onImport]);
 
 
 
@@ -1082,17 +1096,35 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 </div>
                             </ScrollArea>
 
-                            {/* Cancel Button */}
-                            <div className="flex justify-center">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleCancelStream}
-                                    className="text-muted-foreground hover:text-destructive"
-                                >
-                                    <X className="w-4 h-4 mr-1" />
-                                    Cancel Processing
-                                </Button>
+                            {/* Actions Area */}
+                            <div className="flex flex-col items-center mt-6 w-full">
+                                {streamProgress.stage === 'complete' ? (
+                                    <div className="w-full mt-4 border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                                        <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                            <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                            Review complete? Send these questions to the editor to finalize.
+                                        </div>
+                                        <Button
+                                            onClick={() => onImport && onImport({ questions: streamingQuestions })}
+                                            size="lg"
+                                            className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md text-white font-medium px-8 w-full md:w-auto"
+                                        >
+                                            <Sparkles className="w-5 h-5 text-amber-300" />
+                                            Continue to Test Builder
+                                            <ArrowLeft className="w-5 h-5 ml-1 rotate-180" />
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleCancelStream}
+                                        className="text-muted-foreground hover:text-destructive"
+                                    >
+                                        <X className="w-4 h-4 mr-1" />
+                                        Cancel Processing
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     )}
@@ -1424,6 +1456,23 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     </CardContent>
                                 </Card>
                             )}
+
+                            {/* Proceed to test builder button */}
+                            <div className="mt-8 mb-4 border-t pt-8 flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                    Review complete? Send these questions to the editor to finalize.
+                                </div>
+                                <Button
+                                    onClick={() => onImport && onImport(parsedData)}
+                                    size="lg"
+                                    className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md text-white font-medium px-8"
+                                >
+                                    <Sparkles className="w-5 h-5 text-amber-300" />
+                                    Continue to Test Builder
+                                    <ArrowLeft className="w-5 h-5 ml-1 rotate-180" />
+                                </Button>
+                            </div>
                         </div>
                     </ErrorBoundary>
                 </div>
