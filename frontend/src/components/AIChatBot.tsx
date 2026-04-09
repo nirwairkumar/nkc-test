@@ -269,7 +269,7 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
 
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3 rounded-2xl shadow-sm ${m.role === 'user' ? 'max-w-[80%] bg-indigo-600 text-white rounded-tr-sm' : 'flex-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-sm'}`}>
+                  <div className={`p-3 rounded-2xl shadow-sm ${m.role === 'user' ? 'max-w-[80%] bg-indigo-600 text-white rounded-tr-sm' : 'max-w-[90%] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-sm'}`}>
                     {m.role === 'model' && (
                       <div className="flex items-center gap-2 mb-2 pb-1 border-b border-indigo-50 dark:border-slate-700/50">
                         <img src="/ai-assistant.png" alt="AI" className="w-5 h-5 rounded-full object-cover" />
@@ -294,7 +294,7 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
 
               {isTyping && (
                 <div className="flex justify-start w-full">
-                  <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl rounded-tl-sm shadow-sm flex flex-col gap-2">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl rounded-tl-sm shadow-sm flex flex-col gap-2 max-w-[90%]">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0">
                         <Bot className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
