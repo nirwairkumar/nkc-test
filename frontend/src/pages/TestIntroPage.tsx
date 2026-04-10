@@ -865,7 +865,7 @@ export default function TestIntroPage() {
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="w-full"
+                                className="w-full border-indigo-500/50 hover:border-indigo-500 bg-indigo-50/30 hover:bg-indigo-50/50 transition-all duration-200 animate-google-border"
                                 onClick={handleGoogleLogin}
                                 disabled={isAuthLoading}
                             >
