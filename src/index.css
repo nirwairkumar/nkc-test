@@ -305,6 +305,19 @@ html {
   animation: glow-pulse 3s ease-in-out infinite;
 }
 
+@keyframes google-border-move {
+  0% { border-color: rgba(99, 102, 241, 0.2); border-left-color: #312e81; }
+  25% { border-color: rgba(99, 102, 241, 0.2); border-top-color: #312e81; }
+  50% { border-color: rgba(99, 102, 241, 0.2); border-right-color: #312e81; }
+  75% { border-color: rgba(99, 102, 241, 0.2); border-bottom-color: #312e81; }
+  100% { border-color: rgba(99, 102, 241, 0.2); border-left-color: #312e81; }
+}
+
+.animate-google-border {
+  animation: google-border-move 3s linear infinite;
+  border-width: 1.5px !important;
+}
+
 /* Stagger Children Utility */
 .stagger-1 { animation-delay: 100ms; }
 .stagger-2 { animation-delay: 200ms; }
