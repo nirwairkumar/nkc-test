@@ -105,6 +105,9 @@ app.include_router(posts.router, prefix="/api/posts", tags=["Posts"])
 from app.routers import solutions
 app.include_router(solutions.router, prefix="/api/tests", tags=["Solutions"])
 
+from app.routers import combined_sessions
+app.include_router(combined_sessions.router, prefix="/api/combined-sessions", tags=["Combined Sessions"])
+
 @app.get("/api/health")
 def health_check():
     return {
