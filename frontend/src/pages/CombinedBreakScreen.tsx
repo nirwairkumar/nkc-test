@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Coffee, ArrowRight, CheckCircle, Flame, Droplets, Zap, Brain, Wind, Clock, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -84,10 +85,15 @@ export default function CombinedBreakScreen() {
         setCanStart(true);
     }, []);
 
-    // Rotate tips
     useEffect(() => {
         const t = setInterval(() => setTipIndex(i => (i + 1) % TIPS.length), 8000);
         return () => clearInterval(t);
+    }, []);
+
+    const [showSuccessBanner, setShowSuccessBanner] = useState(true);
+    useEffect(() => {
+        const timer = setTimeout(() => setShowSuccessBanner(false), 7000);
+        return () => clearTimeout(timer);
     }, []);
 
     const handleStartPaper2 = useCallback(() => {
@@ -122,13 +128,42 @@ export default function CombinedBreakScreen() {
             <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-700/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
             <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-indigo-700/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
 
-            <div className="relative z-10 w-full max-w-lg text-center space-y-8">
-                {/* Paper 1 Complete Badge */}
-                <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-5 py-2.5 rounded-full font-bold text-sm backdrop-blur-sm animate-in fade-in slide-in-from-top-4 duration-700">
-                    <CheckCircle className="w-4 h-4" />
-                    {sessionCtx?.paper1Label || 'Paper I'} Submitted Successfully
-                </div>
+            {/* Pop-down Success Banner */}
+            <AnimatePresence>
+                {showSuccessBanner && (
+                    <motion.div
+                        initial={{ y: -100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -100, opacity: 0 }}
+                        className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm px-4 md:px-0"
+                    >
+                        <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 rounded-xl overflow-hidden shadow-2xl shadow-emerald-500/20">
+                            <div className="px-6 py-4 flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/40">
+                                    <CheckCircle className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-emerald-100 font-bold text-sm tracking-tight">
+                                        {sessionCtx?.paper1Label || 'Paper I'} Submitted Successfully
+                                    </p>
+                                    <p className="text-emerald-300/50 text-[10px] font-black uppercase tracking-widest mt-0.5">
+                                        Session Progress Saved
+                                    </p>
+                                </div>
+                            </div>
+                            {/* Decreasing line */}
+                            <motion.div 
+                                initial={{ width: "100%" }}
+                                animate={{ width: "0%" }}
+                                transition={{ duration: 7, ease: "linear" }}
+                                className="h-1 bg-emerald-500"
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
+            <div className="relative z-10 w-full max-w-lg text-center space-y-8">
                 {/* Break Heading */}
                 <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
                     <div className="flex items-center justify-center gap-3 mb-4">
