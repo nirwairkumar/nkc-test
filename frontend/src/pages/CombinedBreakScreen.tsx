@@ -137,7 +137,7 @@ export default function CombinedBreakScreen() {
                         exit={{ y: -100, opacity: 0 }}
                         className="fixed top-6 left-0 right-0 flex justify-center z-[100] px-4 md:px-0"
                     >
-                        <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 rounded-xl overflow-hidden shadow-2xl shadow-emerald-500/20">
+                        <div className="w-full max-w-lg bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 rounded-xl overflow-hidden shadow-2xl shadow-emerald-500/20 mx-4 md:mx-0">
                             <div className="px-6 py-4 flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/40">
                                     <CheckCircle className="w-6 h-6 text-white" />
