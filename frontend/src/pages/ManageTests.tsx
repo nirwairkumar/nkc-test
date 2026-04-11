@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -27,6 +27,11 @@ import { fetchUsers, fetchUserDetails, verifyCreator, revokeVerification } from 
 import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category, SubCategory, fetchSubCategories, fetchAllSubCategories, createSubCategory, updateSubCategory, deleteSubCategory, assignSubCategoryToTest } from '@/lib/categoriesApi';
 import { fetchUserAttempts } from '@/lib/attemptsApi';
 import { fetchAllClasses } from '@/lib/classesApi';
+import {
+    createCombinedSession,
+    fetchAdminCombinedSessions,
+    deleteCombinedAttempt as deleteCombinedSessionAdmin,
+} from '@/lib/combinedSessionsApi';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
@@ -107,6 +112,20 @@ export default function ManageTests() {
 
     // Three-dot menu state
     const [allClasses, setAllClasses] = useState<any[]>([]);
+
+    // Combined Sessions State
+    const [combinedSessions, setCombinedSessions] = useState<any[]>([]);
+    const [combinedLoading, setCombinedLoading] = useState(false);
+    const [newSession, setNewSession] = useState({
+        title: '',
+        paper1_label: 'Paper I',
+        paper2_label: 'Paper II',
+        test1_id: '',
+        test2_id: '',
+        break_duration_minutes: 30,
+        is_public: true,
+    });
+    const [isSavingSession, setIsSavingSession] = useState(false);
 
     const observerTarget = React.useRef(null);
 
@@ -200,6 +219,7 @@ export default function ManageTests() {
         loadUsers();
         loadAllClasses();
         loadAllSubCategoriesData();
+        loadCombinedSessions();
     }, []);
 
     useEffect(() => {
@@ -316,6 +336,51 @@ export default function ManageTests() {
 
     const handleShare = (test: any) => {
         shareTest(test);
+    };
+
+    // --- Combined Sessions ---
+    const loadCombinedSessions = async () => {
+        setCombinedLoading(true);
+        try {
+            const { data } = await fetchAdminCombinedSessions();
+            setCombinedSessions(data || []);
+        } catch (e) {
+            toast.error('Failed to load combined sessions');
+        } finally {
+            setCombinedLoading(false);
+        }
+    };
+
+    const handleCreateCombinedSession = async () => {
+        if (!newSession.title.trim()) { toast.error('Title is required'); return; }
+        if (!newSession.test1_id) { toast.error('Paper I test is required'); return; }
+        if (!newSession.test2_id) { toast.error('Paper II test is required'); return; }
+        if (newSession.test1_id === newSession.test2_id) { toast.error('Paper I and Paper II must be different tests'); return; }
+        setIsSavingSession(true);
+        try {
+            await createCombinedSession({
+                created_by: user!.id,
+                ...newSession,
+            });
+            toast.success('Combined session created!');
+            setNewSession({ title: '', paper1_label: 'Paper I', paper2_label: 'Paper II', test1_id: '', test2_id: '', break_duration_minutes: 30, is_public: true });
+            loadCombinedSessions();
+        } catch (e: any) {
+            toast.error('Failed to create combined session: ' + e.message);
+        } finally {
+            setIsSavingSession(false);
+        }
+    };
+
+    const handleDeleteCombinedSession = async (id: string, title: string) => {
+        if (!confirm(`Delete combined session "${title}"?`)) return;
+        try {
+            await deleteCombinedSessionAdmin(id);
+            toast.success('Session deleted');
+            loadCombinedSessions();
+        } catch {
+            toast.error('Failed to delete session');
+        }
     };
 
     const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'unlisted' | 'private') => {
@@ -632,11 +697,14 @@ export default function ManageTests() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full md:w-[800px] grid-cols-4 mb-4">
+                <TabsList className="grid w-full md:w-[900px] grid-cols-5 mb-4">
                     <TabsTrigger value="tests">Manage Tests</TabsTrigger>
                     <TabsTrigger value="categories">Categories</TabsTrigger>
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="verified_creators">Verified</TabsTrigger>
+                    <TabsTrigger value="combined">
+                        <Layers className="w-3.5 h-3.5 mr-1.5" />Combined
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* --- TESTS TAB --- */}
@@ -1168,7 +1236,213 @@ export default function ManageTests() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+                {/* --- COMBINED TESTS TAB --- */}
+                <TabsContent value="combined" className="space-y-6">
+                    {/* Create Combined Session Card */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Layers className="w-5 h-5 text-indigo-600" />
+                                Create Combined Session
+                            </CardTitle>
+                            <CardDescription>
+                                Merge two existing tests into a single session (e.g. JEE Advanced Paper I + Paper II). Only admins can create combined sessions.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Session Title */}
+                                <div className="md:col-span-2 grid gap-1.5">
+                                    <Label htmlFor="cs-title">Session Title <span className="text-red-500">*</span></Label>
+                                    <Input
+                                        id="cs-title"
+                                        placeholder="e.g. JEE Advanced 2025"
+                                        value={newSession.title}
+                                        onChange={e => setNewSession(p => ({ ...p, title: e.target.value }))}
+                                    />
+                                </div>
+
+                                {/* Paper I */}
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="cs-test1">Paper I — Select Test <span className="text-red-500">*</span></Label>
+                                    <select
+                                        id="cs-test1"
+                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        value={newSession.test1_id}
+                                        onChange={e => setNewSession(p => ({ ...p, test1_id: e.target.value }))}
+                                    >
+                                        <option value="">— Choose a test —</option>
+                                        {tests.map(t => (
+                                            <option key={t.id} value={t.id} disabled={t.id === newSession.test2_id}>
+                                                {t.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Paper II */}
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="cs-test2">Paper II — Select Test <span className="text-red-500">*</span></Label>
+                                    <select
+                                        id="cs-test2"
+                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                        value={newSession.test2_id}
+                                        onChange={e => setNewSession(p => ({ ...p, test2_id: e.target.value }))}
+                                    >
+                                        <option value="">— Choose a test —</option>
+                                        {tests.map(t => (
+                                            <option key={t.id} value={t.id} disabled={t.id === newSession.test1_id}>
+                                                {t.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Paper I Label */}
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="cs-p1label">Paper I Label</Label>
+                                    <Input
+                                        id="cs-p1label"
+                                        placeholder="Paper I"
+                                        value={newSession.paper1_label}
+                                        onChange={e => setNewSession(p => ({ ...p, paper1_label: e.target.value }))}
+                                    />
+                                </div>
+
+                                {/* Paper II Label */}
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="cs-p2label">Paper II Label</Label>
+                                    <Input
+                                        id="cs-p2label"
+                                        placeholder="Paper II"
+                                        value={newSession.paper2_label}
+                                        onChange={e => setNewSession(p => ({ ...p, paper2_label: e.target.value }))}
+                                    />
+                                </div>
+
+                                {/* Break Duration */}
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="cs-break">Break Duration (minutes)</Label>
+                                    <Input
+                                        id="cs-break"
+                                        type="number"
+                                        min={0}
+                                        max={180}
+                                        value={newSession.break_duration_minutes}
+                                        onChange={e => setNewSession(p => ({ ...p, break_duration_minutes: parseInt(e.target.value) || 30 }))}
+                                    />
+                                </div>
+
+                                {/* Visibility */}
+                                <div className="grid gap-1.5">
+                                    <Label>Visibility</Label>
+                                    <div className="flex items-center gap-3 h-9">
+                                        <Checkbox
+                                            id="cs-public"
+                                            checked={newSession.is_public}
+                                            onCheckedChange={v => setNewSession(p => ({ ...p, is_public: !!v }))}
+                                        />
+                                        <label htmlFor="cs-public" className="text-sm font-medium cursor-pointer">
+                                            {newSession.is_public ? 'Public (visible to all users)' : 'Private (admin only)'}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                        <CardFooter>
+                            <Button
+                                onClick={handleCreateCombinedSession}
+                                disabled={isSavingSession || !newSession.title || !newSession.test1_id || !newSession.test2_id}
+                                className="bg-indigo-600 hover:bg-indigo-700"
+                            >
+                                {isSavingSession ? (
+                                    <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+                                ) : (
+                                    <><Plus className="w-4 h-4 mr-2" /> Create Combined Session</>
+                                )}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+
+                    {/* Existing Combined Sessions */}
+                    <Card>
+                        <CardHeader className="flex-row items-center justify-between">
+                            <CardTitle>Existing Sessions ({combinedSessions.length})</CardTitle>
+                            <Button variant="outline" size="sm" onClick={loadCombinedSessions} disabled={combinedLoading}>
+                                <RefreshCw className={`h-4 w-4 mr-2 ${combinedLoading ? 'animate-spin' : ''}`} />
+                                Refresh
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Paper I</TableHead>
+                                        <TableHead>Paper II</TableHead>
+                                        <TableHead>Break</TableHead>
+                                        <TableHead>Visibility</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {combinedLoading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-8">
+                                                <RefreshCw className="w-5 h-5 animate-spin mx-auto text-indigo-500" />
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : combinedSessions.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                                No combined sessions yet. Create one above.
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        combinedSessions.map(session => (
+                                            <TableRow key={session.id}>
+                                                <TableCell className="font-medium">
+                                                    <div>{session.title}</div>
+                                                    <div className="text-xs text-slate-400 font-mono">{session.id.slice(0, 8)}…</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="text-xs font-bold text-violet-600">{session.paper1_label || 'Paper I'}</div>
+                                                    <div className="text-xs text-slate-500 line-clamp-1">{session.test1_id}</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="text-xs font-bold text-blue-600">{session.paper2_label || 'Paper II'}</div>
+                                                    <div className="text-xs text-slate-500 line-clamp-1">{session.test2_id}</div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">{session.break_duration_minutes ?? 30}m</Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={session.is_public ? 'default' : 'secondary'}>
+                                                        {session.is_public ? 'Public' : 'Private'}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-red-500 hover:text-red-600"
+                                                        onClick={() => handleDeleteCombinedSession(session.id, session.title)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
             </Tabs>
+
 
             {/* TEST EDIT DIALOG - Leaving this logic even if using router, for backwards compat/safety */}
             <Dialog open={isTestEditOpen} onOpenChange={setIsTestEditOpen}>

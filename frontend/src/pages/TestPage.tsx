@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
@@ -56,8 +56,16 @@ const parseMark = (value: string | number | undefined, defaultVal: number = 0): 
 export default function TestPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+
+  // Combined mode state (from CombinedIntroPage navigation)
+  const combinedState = (location.state as any) || {};
+  const isCombinedMode = !!combinedState.combinedMode;
+  const combinedSessionId = combinedState.combinedSessionId as string | undefined;
+  const combinedPaper = combinedState.paper as 1 | 2 | undefined; // 1 or 2
+  const combinedPaper2TestId = combinedState.paper2TestId as string | undefined;
 
   const [test, setTest] = useState<Test | null>(null);
   const [loading, setLoading] = useState(true);
@@ -925,7 +933,6 @@ export default function TestPage() {
       toast.error('Failed to save results. Please try again.');
       setIsSubmitting(false);
     } else {
-      toast.success('Test Submitted Successfully!');
       // Clear saved session on submit
       localStorage.removeItem(`test_session_${user.id}_${test.id}`);
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
@@ -939,6 +946,115 @@ export default function TestPage() {
         }
       }
 
+      // ── COMBINED MODE HANDLING ──────────────────────────────
+      if (isCombinedMode && combinedSessionId) {
+        // Get combined session context
+        let sessionCtx: any = null;
+        try { sessionCtx = JSON.parse(sessionStorage.getItem(`combined_active_${combinedSessionId}`) || 'null'); } catch {}
+
+        // Compute total marks for this test
+        let totalMaxMarks = 0;
+        if (test.computed_max_marks?.total_max_marks !== undefined) {
+          totalMaxMarks = test.computed_max_marks.total_max_marks;
+        } else {
+          const qs = test.enable_section_mode
+            ? test.sections?.flatMap((s: any) => s.questions || []) || []
+            : test.questions || [];
+          totalMaxMarks = qs.reduce((acc: number, q: any) => acc + parseMark(q.marks ?? test.marks_per_question ?? 4, 4), 0);
+        }
+
+        if (combinedPaper === 1) {
+          // Paper 1 done → go to break screen
+          toast.success('Paper I Submitted! Enjoy your break.');
+          navigate(`/combined-break/${combinedSessionId}`, {
+            state: {
+              paper1Answers: finalAnswers,
+              paper1Score: finalScore,
+              paper1TotalMarks: totalMaxMarks,
+              paper1TestId: test.id,
+              paper1TestTitle: test.title,
+              paper1Test: test,
+              paper2TestId: sessionCtx?.test2Id,
+              sessionTitle: sessionCtx?.sessionTitle || combinedState.sessionTitle,
+              paper2Label: sessionCtx?.paper2Label || combinedState.paper2Label,
+              breakDuration: sessionCtx?.breakDuration || 30,
+            },
+            replace: true
+          });
+        } else if (combinedPaper === 2) {
+          // Paper 2 done → retrieve Paper 1 data and show combined results
+          let p1Data: any = null;
+          try { p1Data = JSON.parse(sessionStorage.getItem(`combined_p1_${combinedSessionId}`) || 'null'); } catch {}
+
+          if (!p1Data) {
+            toast.warning('Could not retrieve Paper I results. Showing Paper II results only.');
+            navigate('/results', {
+              state: { test, answers: finalAnswers, score: finalScore, justSubmitted: true },
+              replace: true
+            });
+            return;
+          }
+
+          // Save combined attempt to DB
+          try {
+            const { saveCombinedAttempt } = await import('@/lib/combinedSessionsApi');
+            await saveCombinedAttempt({
+              user_id: user.id,
+              combined_session_id: combinedSessionId,
+              paper1_data: {
+                test_id: p1Data.test_id,
+                answers: p1Data.answers,
+                score: p1Data.score,
+                total_marks: p1Data.total_marks,
+                test_title: p1Data.test_title,
+              },
+              paper2_data: {
+                test_id: test.id,
+                answers: finalAnswers,
+                score: finalScore,
+                total_marks: totalMaxMarks,
+                test_title: test.title,
+              },
+              total_score: (p1Data.score || 0) + finalScore,
+            });
+          } catch (saveErr) {
+            console.error('Failed to save combined attempt:', saveErr);
+          }
+
+          // Clean up sessionStorage
+          sessionStorage.removeItem(`combined_p1_${combinedSessionId}`);
+          sessionStorage.removeItem(`combined_active_${combinedSessionId}`);
+
+          toast.success('Both papers completed! Here are your combined results.');
+          navigate('/results', {
+            state: {
+              isCombined: true,
+              combinedSessionId,
+              sessionTitle: sessionCtx?.sessionTitle || combinedState.sessionTitle || 'Combined Test',
+              paper1Label: sessionCtx?.paper1Label || combinedState.paper1Label || 'Paper I',
+              paper2Label: sessionCtx?.paper2Label || combinedState.paper2Label || 'Paper II',
+              p1: {
+                test: p1Data.test,
+                answers: p1Data.answers,
+                score: p1Data.score,
+                totalMarks: p1Data.total_marks,
+              },
+              p2: {
+                test,
+                answers: finalAnswers,
+                score: finalScore,
+                totalMarks: totalMaxMarks,
+              },
+              justSubmitted: true,
+            },
+            replace: true
+          });
+        }
+        return;
+      }
+      // ── END COMBINED MODE ───────────────────────────────────
+
+      toast.success('Test Submitted Successfully!');
       // Handle Result Visibility
       if (test.settings?.show_results_immediate === false) {
         // Navigate to thank you page when results are hidden

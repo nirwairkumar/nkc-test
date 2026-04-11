@@ -53,6 +53,8 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
 const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
+const CombinedIntroPage = lazy(() => import("./pages/CombinedIntroPage"));
+const CombinedBreakScreen = lazy(() => import("./pages/CombinedBreakScreen"));
 
 // News & Posts
 const NewsFeed = lazy(() => import("./pages/NewsFeed"));
@@ -182,6 +184,11 @@ const App = () => (
                       path="/live/:id"
                       element={<TestPage />}
                     />
+
+                    {/* Combined Session Routes */}
+                    <Route path="/combined-intro/:combinedId" element={<CombinedIntroPage />} />
+                    <Route path="/combined-break/:combinedId" element={<CombinedBreakScreen />} />
+
                     {/* Legacy/Compat: Redirect /test/:id to /live/:id if it's a UUID, but we can't easily differentiate in routing config alone without regex.
                         Since we claimed /test/:slug, if a UUID is passed, it might match :slug. 
                         We will handle this in TestIntroPage if we route /test/:slug (slug can be ID).

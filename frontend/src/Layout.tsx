@@ -37,7 +37,12 @@ export default function Layout() {
     // Hide navbar only on live test page (/test/:id)
     // Also hiding on /test-intro/:id as requested
     const isResultsPage = location.pathname.startsWith('/results');
-    const isLiveTestPage = location.pathname.startsWith('/test/') || location.pathname.startsWith('/test-intro/') || location.pathname.startsWith('/live/') || location.pathname.startsWith('/test-submitted');
+    const isLiveTestPage = 
+        location.pathname.startsWith('/test/') || 
+        location.pathname.startsWith('/test-intro/') || 
+        location.pathname.startsWith('/live/') || 
+        location.pathname.startsWith('/test-submitted') ||
+        location.pathname.startsWith('/combined-');
 
     const hideFooter = isLiveTestPage || isResultsPage;
 

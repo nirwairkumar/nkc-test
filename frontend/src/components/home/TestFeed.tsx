@@ -12,6 +12,7 @@ import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import IndependentTestCard from '@/components/IndependentTestCard';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import { useCombinedExclusion } from '@/hooks/useCombinedExclusion';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -23,6 +24,7 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
     const [page, setPage] = useState(1); // Backend handles pagination logic, start at 1
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const { isExcluded } = useCombinedExclusion();
 
     const navigate = useNavigate();
 
@@ -50,10 +52,13 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
         const { data, meta } = await fetchTests({ page: pageNum, limit: ITEMS_PER_PAGE, idsOnly: true });
 
         if (data && data.length > 0) {
+            // Filter out tests that are part of a combined session
+            const filteredData = data.filter((t: Test) => !isExcluded(t.id));
+
             setTests(prev => {
                 // Avoid duplicates if any
-                if (pageNum === 1) return data;
-                const newTests = data.filter((d: Test) => !prev.find(p => p.id === d.id));
+                if (pageNum === 1) return filteredData;
+                const newTests = filteredData.filter((d: Test) => !prev.find(p => p.id === d.id));
                 return [...prev, ...newTests];
             });
 
