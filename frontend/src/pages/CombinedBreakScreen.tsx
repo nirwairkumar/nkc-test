@@ -135,7 +135,7 @@ export default function CombinedBreakScreen() {
                         initial={{ y: -100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: -100, opacity: 0 }}
-                        className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-sm px-4 md:px-0"
+                        className="fixed top-6 left-0 right-0 flex justify-center z-[100] px-4 md:px-0"
                     >
                         <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 rounded-xl overflow-hidden shadow-2xl shadow-emerald-500/20">
                             <div className="px-6 py-4 flex items-center gap-4">
