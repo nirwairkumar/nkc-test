@@ -12,6 +12,7 @@ import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import IndependentTestCard from '@/components/IndependentTestCard';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import { useCombinedExclusion } from '@/hooks/useCombinedExclusion';
 
 export default function FeaturedTests({ user, onManageTest }: { user: any, onManageTest: (test: any) => void }) {
     // Initialize with unique pending IDs
@@ -19,6 +20,7 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
         Array.from({ length: 6 }, (_, i) => ({ id: `pending-featured-${i}-${Math.random()}` }))
     );
     const [loadingIds, setLoadingIds] = useState(true);
+    const { isExcluded, loading: vLoading } = useCombinedExclusion();
     const navigate = useNavigate();
 
     // YouTube-style lazy loading hook
@@ -35,16 +37,19 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
 
     useEffect(() => {
         async function loadData() {
-            // Load Tests (Backend now provides enriched data: categories, verification, etc.)
-            const { data: testData } = await fetchTests({ page: 1, limit: 6, idsOnly: true });
+            if (vLoading) return; // Wait for exclusions to load first for cleaner UI
+            
+            const { data: testData } = await fetchTests({ page: 1, limit: 10, idsOnly: true });
 
             if (testData) {
-                setTests(testData);
+                // Filter out tests that are part of a combined session
+                const filtered = testData.filter((t: any) => !isExcluded(t.id)).slice(0, 6);
+                setTests(filtered);
             }
             setLoadingIds(false);
         }
         loadData();
-    }, []);
+    }, [vLoading]);
 
     const handleShare = (e: React.MouseEvent, testId: string) => {
         e.stopPropagation();

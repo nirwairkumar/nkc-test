@@ -21,7 +21,8 @@ import {
   FileText,
   MessageSquare,
   ChevronRight,
-  BookOpen
+  BookOpen,
+  Layers
 } from 'lucide-react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
 import confetti from 'canvas-confetti';
@@ -87,7 +88,181 @@ const getDisplayMark = (value: string | number | undefined, defaultVal: number =
   return isNaN(num) ? defaultVal : num;
 };
 
+// ─── COMBINED RESULTS VIEW ────────────────────────────────────────────────────
+const CombinedResultsView = ({ state, navigate }: { state: any; navigate: any }) => {
+  const { p1, p2, sessionTitle, paper1Label = 'Paper I', paper2Label = 'Paper II' } = state;
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'paper1' | 'paper2'>('overview');
+  const [p1Analysis, setP1Analysis] = useState<any>(null);
+  const [p2Analysis, setP2Analysis] = useState<any>(null);
+
+  const combinedTotal = (p1?.score ?? 0) + (p2?.score ?? 0);
+  const combinedMaxMarks = (p1?.totalMarks ?? 0) + (p2?.totalMarks ?? 0);
+  const combinedPct = combinedMaxMarks > 0 ? ((combinedTotal / combinedMaxMarks) * 100) : 0;
+
+  useEffect(() => {
+    if (p1?.test) fetchAdvancedAnalysis(p1.test, p1.answers).then(r => setP1Analysis(r.data));
+    if (p2?.test) fetchAdvancedAnalysis(p2.test, p2.answers).then(r => setP2Analysis(r.data));
+  }, []);
+
+  const pctColor = combinedPct >= 75 ? 'text-emerald-400' : combinedPct >= 50 ? 'text-amber-400' : 'text-red-400';
+
+  const PaperSummaryBox = ({ label, paperData, analysis, color }: { label: string; paperData: any; analysis: any; color: 'violet' | 'blue' }) => {
+    const pct = paperData?.totalMarks > 0 ? ((paperData.score / paperData.totalMarks) * 100).toFixed(1) : '0';
+    const colorMap = {
+      violet: { border: 'border-violet-200 dark:border-violet-800', bg: 'bg-violet-50 dark:bg-violet-950/20', num: 'text-violet-700 dark:text-violet-300', badge: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300' },
+      blue: { border: 'border-blue-200 dark:border-blue-800', bg: 'bg-blue-50 dark:bg-blue-950/20', num: 'text-blue-700 dark:text-blue-300', badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
+    }[color];
+
+    return (
+      <div className={`rounded-2xl border p-5 ${colorMap.border} ${colorMap.bg}`}>
+        <div className="flex items-center justify-between mb-4">
+          <span className={`text-xs font-black uppercase tracking-wider ${colorMap.num}`}>{label}</span>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${colorMap.badge}`}>{pct}%</span>
+        </div>
+        <div className="flex items-end gap-2 mb-2">
+          <span className={`text-3xl font-black ${colorMap.num}`}>{(paperData?.score ?? 0).toFixed(2)}</span>
+          <span className="text-slate-400 text-sm mb-1 font-medium">/ {paperData?.totalMarks ?? 0}</span>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium line-clamp-1">{paperData?.test?.title || label}</p>
+        {analysis && (
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="text-center p-1.5 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+              <div className="text-sm font-black text-emerald-600">{analysis.correctCount ?? 0}</div>
+              <div className="text-[9px] text-slate-400 uppercase font-bold">Correct</div>
+            </div>
+            <div className="text-center p-1.5 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+              <div className="text-sm font-black text-red-500">{analysis.wrongCount ?? 0}</div>
+              <div className="text-[9px] text-slate-400 uppercase font-bold">Wrong</div>
+            </div>
+            <div className="text-center p-1.5 bg-white/60 dark:bg-slate-800/40 rounded-lg">
+              <div className="text-sm font-black text-slate-500">{analysis.skippedCount ?? 0}</div>
+              <div className="text-[9px] text-slate-400 uppercase font-bold">Skipped</div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="container mx-auto max-w-4xl py-6 px-4 space-y-6 animate-in fade-in duration-500">
+      {/* Combined Score Card (blue gradient — matches existing ResultsPage hero) */}
+      <div className="relative rounded-3xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_70%)]" />
+        <div className="relative p-8 text-white">
+          <div className="flex items-center gap-2 mb-3">
+            <Layers className="w-5 h-5 text-white/70" />
+            <span className="text-white/70 text-sm font-medium">Combined Session Results</span>
+          </div>
+          <h1 className="text-3xl font-black mb-1">{sessionTitle || 'Combined Test'}</h1>
+
+          {/* Combined total score */}
+          <div className="flex flex-wrap items-end gap-4 mt-5">
+            <div>
+              <div className="text-white/60 text-xs font-black uppercase tracking-wider mb-1">Total Marks Obtained</div>
+              <div className={`text-6xl font-black ${pctColor}`}>{combinedTotal.toFixed(2)}</div>
+              <div className="text-white/60 text-sm font-medium">out of {combinedMaxMarks}</div>
+            </div>
+            <div className="pb-2">
+              <div className="text-white/60 text-xs font-black uppercase tracking-wider mb-1">Combined Percentage</div>
+              <div className={`text-4xl font-black ${pctColor}`}>{combinedPct.toFixed(3)}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab switcher */}
+      <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl">
+        {[
+          { key: 'overview', label: 'Overview' },
+          { key: 'paper1', label: paper1Label },
+          { key: 'paper2', label: paper2Label },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all ${activeTab === key
+              ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            onClick={() => setActiveTab(key as any)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview Tab */}
+      {activeTab === 'overview' && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <PaperSummaryBox label={paper1Label} paperData={p1} analysis={p1Analysis} color="violet" />
+            <PaperSummaryBox label={paper2Label} paperData={p2} analysis={p2Analysis} color="blue" />
+          </div>
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+            <h3 className="font-black text-slate-800 dark:text-white mb-4">Combined Statistics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: 'Total Correct', value: ((p1Analysis?.correctCount ?? 0) + (p2Analysis?.correctCount ?? 0)), color: 'text-emerald-600' },
+                { label: 'Total Wrong', value: ((p1Analysis?.wrongCount ?? 0) + (p2Analysis?.wrongCount ?? 0)), color: 'text-red-500' },
+                { label: 'Total Partial', value: ((p1Analysis?.partialCount ?? 0) + (p2Analysis?.partialCount ?? 0)), color: 'text-amber-500' },
+                { label: 'Total Skipped', value: ((p1Analysis?.skippedCount ?? 0) + (p2Analysis?.skippedCount ?? 0)), color: 'text-slate-400' },
+              ].map(({ label, value, color }) => (
+                <div key={label} className="text-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className={`text-2xl font-black ${color}`}>{value}</div>
+                  <div className="text-[10px] text-slate-500 uppercase font-bold mt-0.5">{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => navigate('/history')} className="flex-1">
+              <History className="w-4 h-4 mr-2" /> View History
+            </Button>
+            <Button onClick={() => navigate('/')} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Home className="w-4 h-4 mr-2" /> Dashboard
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Paper I Tab */}
+      {activeTab === 'paper1' && p1?.test && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-950/20 px-5 py-3 flex items-center justify-between">
+            <span className="font-bold text-violet-700 dark:text-violet-300">{paper1Label}: {p1.test.title}</span>
+            <span className="font-black text-violet-700 dark:text-violet-300">{p1.score.toFixed(2)} / {p1.totalMarks}</span>
+          </div>
+          {p1Analysis ? (
+            <PaperSummaryBox label={paper1Label} paperData={p1} analysis={p1Analysis} color="violet" />
+          ) : (
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-violet-500" /></div>
+          )}
+        </div>
+      )}
+
+      {/* Paper II Tab */}
+      {activeTab === 'paper2' && p2?.test && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 px-5 py-3 flex items-center justify-between">
+            <span className="font-bold text-blue-700 dark:text-blue-300">{paper2Label}: {p2.test.title}</span>
+            <span className="font-black text-blue-700 dark:text-blue-300">{p2.score.toFixed(2)} / {p2.totalMarks}</span>
+          </div>
+          {p2Analysis ? (
+            <PaperSummaryBox label={paper2Label} paperData={p2} analysis={p2Analysis} color="blue" />
+          ) : (
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+// ─── END COMBINED RESULTS VIEW ────────────────────────────────────────────────
+
 const ResultsPage = () => {
+
   const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -104,7 +279,21 @@ const ResultsPage = () => {
     marksPerQuestion: number;
     negativeMark: number;
     justSubmitted?: boolean;
+    // Combined mode
+    isCombined?: boolean;
+    combinedSessionId?: string;
+    sessionTitle?: string;
+    paper1Label?: string;
+    paper2Label?: string;
+    p1?: { test: any; answers: any; score: number; totalMarks: number };
+    p2?: { test: any; answers: any; score: number; totalMarks: number };
   } | undefined;
+
+  // ─── COMBINED RESULTS EARLY RETURN ─────────────────────────────────
+  if (stateData?.isCombined && stateData.p1 && stateData.p2) {
+    return <CombinedResultsView state={stateData} navigate={navigate} />;
+  }
+  // ────────────────────────────────────────────────────────────────
 
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
   const selectedTest = stateData?.test || contextSelectedTest;

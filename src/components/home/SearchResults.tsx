@@ -12,6 +12,7 @@ import FolderCard from '@/components/home/FolderCard';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import { useCombinedExclusion } from '@/hooks/useCombinedExclusion';
 import { shareTest } from '@/utils/shareUtils';
 
 export default function SearchResults({ searchQuery, user, onManageTest }: { searchQuery: string, user: any, onManageTest: (test: any) => void }) {
@@ -19,6 +20,7 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
     const [profiles, setProfiles] = useState<any[]>([]);
     const [matchedFolders, setMatchedFolders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { isExcluded } = useCombinedExclusion();
     const abortControllerRef = React.useRef<AbortController | null>(null);
 
     const navigate = useNavigate();
@@ -65,8 +67,8 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
                 const query = searchQuery.toLowerCase();
 
                 // 3. Filter Tests (Client-side refinement)
-                // Backend handles primary search. We trust it for now.
-                const filtered = allData;
+                // Filter out tests that belong to a combined session
+                const filtered = allData.filter((t: Test) => !isExcluded(t.id));
                 setTests(filtered);
 
                 // 4. Extract Matching Profiles (from the tests we found)

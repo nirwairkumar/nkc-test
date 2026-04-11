@@ -19,6 +19,7 @@ const YouTubeGenerator = React.lazy(() => import('@/components/YouTubeGenerator'
 const TestSettingsPanel = React.lazy(() => import('@/components/TestSettingsPanel'));
 const CategoryFolderCards = React.lazy(() => import('@/components/home/CategoryFolderCards'));
 const TestLinkPaster = React.lazy(() => import('@/components/TestLinkPaster'));
+const CombinedSessionsSection = React.lazy(() => import('@/components/home/CombinedSessionsSection'));
 
 // Skeletons
 function SectionSkeleton() {
@@ -133,6 +134,13 @@ export default function TestList() {
                         <CategoryFolderCards />
                     </Suspense>
                     
+                    <div className="section-divider" />
+
+                    {/* 6b. Combined Sessions */}
+                    <Suspense fallback={null}>
+                        <CombinedSessionsSection user={user} />
+                    </Suspense>
+
                     <div className="section-divider" />
 
                     {/* 6. Featured Tests */}

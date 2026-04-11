@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import IndependentTestCard from '@/components/IndependentTestCard';
+import { useCombinedExclusion } from '@/hooks/useCombinedExclusion';
 
 export default function UserRecentTests({ user, onManageTest }: { user: any, onManageTest: (test: any) => void }) {
     const [userTests, setUserTests] = useState<any[]>(
@@ -17,6 +18,7 @@ export default function UserRecentTests({ user, onManageTest }: { user: any, onM
     );
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const { isExcluded } = useCombinedExclusion();
     const navigate = useNavigate();
 
     const loadUserTests = useCallback(async () => {
@@ -26,7 +28,8 @@ export default function UserRecentTests({ user, onManageTest }: { user: any, onM
         try {
             const { data, error: fetchError } = await fetchTestsByUserId(user.id, { idsOnly: true });
             if (data) {
-                setUserTests(data as Test[]);
+                const filtered = (data as Test[]).filter(t => !isExcluded(t.id));
+                setUserTests(filtered);
             } else if (fetchError) {
                 console.error('Failed to load user tests:', fetchError);
                 setError(true);

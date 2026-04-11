@@ -4,10 +4,11 @@ import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchCategories, fetchSubCategories, fetchCategoryTestSubCategoryMap, SubCategory } from '@/lib/categoriesApi';
 import { fetchTests } from '@/lib/testsApi';
+import CombinedSessionsSection from '@/components/home/CombinedSessionsSection';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Loader2, Edit } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, Layers } from 'lucide-react';
 import TestVoteButtons from '@/components/TestVoteButtons';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import { toSlug } from '@/lib/slugUtils';
@@ -15,6 +16,7 @@ import { toast } from 'sonner';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import IndependentTestCard from '@/components/IndependentTestCard';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import { useCombinedExclusion } from '@/hooks/useCombinedExclusion';
 import {
     Accordion,
     AccordionContent,
@@ -30,6 +32,8 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
     const [tests, setTests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [categoryName, setCategoryName] = useState("");
+    const [testIdsSet, setTestIdsSet] = useState<Set<string>>(new Set());
+    const { isExcluded } = useCombinedExclusion();
 
     const [currentCategoryId, setCurrentCategoryId] = useState<string | null>(null);
     const [allCategories, setAllCategories] = useState<any[]>([]);
@@ -72,7 +76,13 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                     limit: 100,
                     idsOnly: true
                 });
-                setTests(testData || []);
+
+                if (testData) {
+                    setTestIdsSet(new Set((testData as any[]).map(t => t.id)));
+                }
+
+                const filteredTests = (testData || []).filter((t: any) => !isExcluded(t.id));
+                setTests(filteredTests);
 
                 // Fetch sub-categories for this category
                 const { data: subCats } = await fetchSubCategories(matchedCat.id);
@@ -90,7 +100,13 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                         limit: 100,
                         idsOnly: true
                     });
-                    setTests(testData || []);
+
+                    if (testData) {
+                        setTestIdsSet(new Set((testData as any[]).map(t => t.id)));
+                    }
+
+                    const filteredTests = (testData || []).filter((t: any) => !isExcluded(t.id));
+                    setTests(filteredTests);
 
                     // Fetch sub-categories for this category
                     const { data: subCats } = await fetchSubCategories(directMatch.id);
@@ -144,7 +160,14 @@ const CategoryPage: React.FC<CategoryPageProps> = () => {
                 <h1 className="text-2xl font-bold capitalize mb-2">{categoryName} Practice Tests</h1>
             </div>
 
-            {tests.length === 0 ? (
+            {/* Combined Tests Section — Replaced with unified Component */}
+            {testIdsSet.size > 0 && (
+                <div className="mb-14">
+                    <CombinedSessionsSection user={user} filterTestIds={testIdsSet} />
+                </div>
+            )}
+
+            {tests.length === 0 && testIdsSet.size === 0 ? (
                 <div className="text-center py-20 border-2 border-dashed rounded-xl">
                     <p className="text-muted-foreground">No tests found for this category.</p>
                 </div>
