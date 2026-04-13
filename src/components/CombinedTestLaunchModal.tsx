@@ -114,9 +114,9 @@ export default function CombinedTestLaunchModal({ session, open, onClose }: Comb
 
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-            <DialogContent className="max-w-2xl p-0 overflow-hidden gap-0 rounded-2xl">
+            <DialogContent className="max-w-2xl p-0 overflow-hidden gap-0 rounded-2xl flex flex-col max-h-[95vh] md:max-h-[85vh]">
                 {/* Header */}
-                <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 p-6 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 p-4 md:p-6 text-white relative overflow-hidden flex-shrink-0">
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_70%)]" />
                     <div className="relative">
                         <div className="flex items-center gap-2 mb-2">
@@ -135,7 +135,7 @@ export default function CombinedTestLaunchModal({ session, open, onClose }: Comb
                     </div>
                 </div>
 
-                <div className="p-6 space-y-5 bg-slate-50 dark:bg-slate-950">
+                <div className="p-4 md:p-6 space-y-5 bg-slate-50 dark:bg-slate-950 overflow-y-auto flex-1 custom-scrollbar">
                     {/* Individual paper options */}
                     <div>
                         <p className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Start Individually</p>
