@@ -474,12 +474,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             return;
         }
 
-        const hasQuestions = data.questions && Array.isArray(data.questions);
-        const hasSections = data.sections && Array.isArray(data.sections);
+        let parsedQuestions = data.questions;
+        if (typeof parsedQuestions === 'string') {
+            try { parsedQuestions = JSON.parse(parsedQuestions); } catch (e) { parsedQuestions = []; }
+        }
+        
+        let parsedSections = data.sections;
+        if (typeof parsedSections === 'string') {
+            try { parsedSections = JSON.parse(parsedSections); } catch (e) { parsedSections = []; }
+        }
+
+        const hasQuestions = parsedQuestions && Array.isArray(parsedQuestions);
+        const hasSections = parsedSections && Array.isArray(parsedSections);
 
         if (!hasQuestions && !hasSections) {
-            console.error("[TestBuilder] populateData received data without questions or sections array:", data);
-            return;
+            console.warn("[TestBuilder] populateData received data without valid questions or sections array or they are empty.");
         }
 
         console.log("[TestBuilder] Setting title:", data.title);
@@ -545,18 +554,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         // Defer actual population by 1 tick so React commits the empty arrays first
         setTimeout(() => {
             if (data.enable_section_mode && hasSections) {
-                console.log("[TestBuilder] Processing section mode with", data.sections.length, "sections");
+                console.log("[TestBuilder] Processing section mode with", parsedSections.length, "sections");
                 setEnableSectionMode(true);
-                setSections(data.sections.map((s: any) => ({
+                setSections(parsedSections.map((s: any) => ({
                     ...s,
                     questions: (s.questions || []).map(mapQuestion)
                 })));
             } else if (hasQuestions) {
-                console.log("[TestBuilder] Processing", data.questions.length, "questions");
-                const mappedQuestions = (data.questions as any[]).map(mapQuestion);
+                console.log("[TestBuilder] Processing", parsedQuestions.length, "questions");
+                const mappedQuestions = (parsedQuestions as any[]).map(mapQuestion);
                 console.log("[TestBuilder] Setting questions:", mappedQuestions);
                 setQuestions(mappedQuestions);
                 console.log("[TestBuilder] Questions set successfully");
+            } else {
+                // Fallback to default if somehow completely empty
+                setQuestions([{ ...DEFAULT_QUESTION }]);
             }
         }, 0);
 
