@@ -171,10 +171,10 @@ export default function SolutionsViewPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 {/* Your Answer */}
                 <div className={`rounded-xl px-4 py-3 border ${userAnswer !== undefined && userAnswer !== null
-                        ? isCorrect
-                            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                            : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'
-                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                    ? isCorrect
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                        : 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800'
+                    : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
                     }`}>
                     <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Your Answer</div>
                     {userAnswer !== undefined && userAnswer !== null ? (

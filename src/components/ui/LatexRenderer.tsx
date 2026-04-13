@@ -120,10 +120,10 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             const processMathBlock = (tex: string, displayMode: boolean): string => {
                 try {
                     const safeTex = extractImagesFromTex(tex);
-                    
+
                     let arrayIndex = 0;
                     const arrayMap: Record<string, string> = {};
-                    
+
                     const texWithoutArrays = safeTex.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
                         const key = `ARRAYPH${arrayIndex++}`;
                         arrayMap[key] = renderSingleLatexArray(matchStr);
@@ -136,7 +136,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                         trust: true,
                         strict: false,
                     });
-                    
+
                     let finalHtml = swapPlaceholders(html);
                     for (const [key, tableHtml] of Object.entries(arrayMap)) {
                         finalHtml = finalHtml.split(key).join(tableHtml);
@@ -157,7 +157,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             if (result.includes('\\begin{array}')) {
                 let arrayIndex = 0;
                 const arrayMap: Record<string, string> = {};
-                
+
                 result = result.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
                     const safeMatch = extractImagesFromTex(matchStr);
                     const tableHtml = renderSingleLatexArray(safeMatch);
@@ -165,7 +165,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                     arrayMap[key] = tableHtml;
                     return key; // Here we are outside math mode, just use direct string replacement
                 });
-                
+
                 result = swapPlaceholders(result);
                 for (const [key, tableHtml] of Object.entries(arrayMap)) {
                     result = result.split(key).join(tableHtml);

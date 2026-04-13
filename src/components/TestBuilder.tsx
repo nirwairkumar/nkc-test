@@ -1861,12 +1861,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 </h3>
                                                                             </div>
                                                                             <div className="p-6">
-                                                                                <RichTextEditor
-                                                                                    value={q.passageContent || ''}
-                                                                                    onChange={(val) => updatePassageContentInSection(sIdx, q.groupId!, val)}
-                                                                                    placeholder="Write or paste the passage text here..."
-                                                                                    className="min-h-[150px] bg-white border-indigo-100 shadow-sm rounded-lg"
-                                                                                />
+                                                                                <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
+                                                                                    <IMEInput
+                                                                                        as="textarea"
+                                                                                        typingMode={q.typingMode}
+                                                                                        value={q.passageContent || ''}
+                                                                                        onChange={(val: string) => updatePassageContentInSection(sIdx, q.groupId!, val)}
+                                                                                        placeholder="Write or paste the passage text here... (Markdown & MathJax/KaTeX supported)"
+                                                                                        className="text-base leading-relaxed min-h-[150px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
+                                                                                    />
+                                                                                    <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
+                                                                                        <div className="group/info relative cursor-help">
+                                                                                            <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                                                                                            <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                                                                Markdown and MathJax/KaTeX support
+                                                                                                <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     )}
@@ -2218,12 +2231,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                     </h3>
                                                 </div>
                                                 <div className="p-6">
-                                                    <RichTextEditor
-                                                        value={q.passageContent || ''}
-                                                        onChange={(val) => updatePassageContent(q.groupId!, val)}
-                                                        placeholder="Write or paste the passage text here..."
-                                                        className="min-h-[150px] bg-white border-indigo-100 shadow-sm rounded-lg"
-                                                    />
+                                                    <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
+                                                        <IMEInput
+                                                            as="textarea"
+                                                            typingMode={q.typingMode}
+                                                            value={q.passageContent || ''}
+                                                            onChange={(val: string) => updatePassageContent(q.groupId!, val)}
+                                                            placeholder="Write or paste the passage text here... (Markdown & MathJax/KaTeX supported)"
+                                                            className="text-base leading-relaxed min-h-[150px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
+                                                        />
+                                                        <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
+                                                            <div className="group/info relative cursor-help">
+                                                                <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                                                                <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                                    Markdown and MathJax/KaTeX support
+                                                                    <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
