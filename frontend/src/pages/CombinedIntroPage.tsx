@@ -157,26 +157,26 @@ export default function CombinedIntroPage() {
     const p2Marks = getMaxMarks(t2);
 
     return (
-        <div className="container mx-auto max-w-3xl py-6 px-4 space-y-6 animate-in fade-in duration-500">
+        <div className="container mx-auto max-w-3xl pt-12 pb-24 px-4 sm:px-6 space-y-6 md:space-y-8 animate-in fade-in duration-500">
             {/* Header */}
-            <div className="relative rounded-3xl overflow-hidden">
+            <div className="relative rounded-3xl overflow-hidden shadow-lg shadow-indigo-900/5">
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600" />
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15)_0%,_transparent_70%)]" />
-                <div className="relative p-8 text-white">
+                <div className="relative p-6 md:p-8 text-white">
                     <div className="flex items-center gap-2 mb-3">
                         <Badge className="bg-white/20 text-white border-0 text-[10px] font-black tracking-widest uppercase">
                             <Layers className="w-3 h-3 mr-1" /> Combined Session
                         </Badge>
                     </div>
-                    <h1 className="text-3xl font-black leading-tight mb-2">{session.title}</h1>
+                    <h1 className="text-2xl md:text-3xl font-black leading-tight mb-2 md:mb-3">{session.title}</h1>
                     {session.description && (
                         <p className="text-white/80 text-sm">{session.description}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-4 mt-5 text-sm">
-                        <span className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full font-semibold">
+                    <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-5 text-xs md:text-sm">
+                        <span className="flex items-center gap-1.5 md:gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full font-semibold">
                             <Clock className="w-4 h-4" /> {totalDuration}m total
                         </span>
-                        <span className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full font-semibold">
+                        <span className="flex items-center gap-1.5 md:gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full font-semibold">
                             <BookOpen className="w-4 h-4" /> {p1Qs + p2Qs} Questions
                         </span>
                         <span className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full font-semibold">
@@ -187,64 +187,64 @@ export default function CombinedIntroPage() {
             </div>
 
             {/* Session Flow */}
-            <div className="flex items-stretch gap-2">
+            <div className="flex flex-col md:flex-row items-stretch gap-4 md:gap-2">
                 {/* Paper 1 */}
-                <div className="flex-1 rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-xs font-black">I</div>
+                <div className="flex-1 rounded-2xl border border-violet-200 dark:border-violet-800 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-950/20 dark:to-indigo-950/20 p-5 md:p-4 shadow-sm">
+                    <div className="flex items-center gap-3 md:gap-2 mb-4 md:mb-3">
+                        <div className="w-10 h-10 md:w-8 md:h-8 rounded-full bg-violet-600 flex items-center justify-center text-white text-sm md:text-xs font-black shadow-md flex-shrink-0">I</div>
                         <div>
                             <span className="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-wider">{session.paper1_label}</span>
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight line-clamp-1">{t1?.title || 'Paper I'}</p>
+                            <p className="text-base md:text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight line-clamp-1">{t1?.title || 'Paper I'}</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="text-center p-2 bg-white/60 dark:bg-slate-800/40 rounded-lg">
-                            <div className="font-black text-slate-800 dark:text-white text-base">{p1Qs}</div>
+                        <div className="text-center p-3 md:p-2 bg-white/60 dark:bg-slate-800/40 rounded-xl shadow-sm border border-white/40 dark:border-slate-800/60">
+                            <div className="font-black text-slate-800 dark:text-white text-lg md:text-base">{p1Qs}</div>
                             <div className="text-slate-500 text-[10px] uppercase font-bold">Questions</div>
                         </div>
-                        <div className="text-center p-2 bg-white/60 dark:bg-slate-800/40 rounded-lg">
-                            <div className="font-black text-slate-800 dark:text-white text-base">{t1?.duration || 0}m</div>
+                        <div className="text-center p-3 md:p-2 bg-white/60 dark:bg-slate-800/40 rounded-xl shadow-sm border border-white/40 dark:border-slate-800/60">
+                            <div className="font-black text-slate-800 dark:text-white text-lg md:text-base">{t1?.duration || 0}m</div>
                             <div className="text-slate-500 text-[10px] uppercase font-bold">Duration</div>
                         </div>
-                        <div className="text-center p-2 bg-white/60 dark:bg-slate-800/40 rounded-lg col-span-2">
-                            <div className="font-black text-emerald-600 text-base">{p1Marks}</div>
+                        <div className="text-center p-3 md:p-2 bg-white/60 dark:bg-slate-800/40 rounded-xl col-span-2 shadow-sm border border-white/40 dark:border-slate-800/60">
+                            <div className="font-black text-emerald-600 text-lg md:text-base">{p1Marks}</div>
                             <div className="text-slate-500 text-[10px] uppercase font-bold">Max Marks</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Break Arrow */}
-                <div className="flex flex-col items-center justify-center gap-1 px-1 min-w-[64px]">
-                    <ArrowRight className="w-4 h-4 text-slate-300" />
-                    <div className="flex flex-col items-center bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-2 py-2 text-center">
-                        <Coffee className="w-4 h-4 text-amber-500 mb-1" />
-                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">{session.break_duration_minutes}</span>
-                        <span className="text-[8px] text-amber-500 uppercase font-bold">min</span>
-                        <span className="text-[8px] text-amber-500 uppercase font-bold">break</span>
+                <div className="flex flex-col items-center justify-center gap-2 md:gap-1 px-1 py-1 md:py-0 min-w-[64px]">
+                    <ArrowRight className="w-5 h-5 text-slate-300 md:rotate-0 rotate-90" />
+                    <div className="flex flex-row md:flex-col items-center justify-center bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-5 md:px-2 py-2.5 md:py-2 text-center gap-2 md:gap-0 w-[80%] md:w-auto shadow-sm">
+                        <Coffee className="w-5 h-5 md:w-4 md:h-4 text-amber-500 md:mb-1" />
+                        <span className="text-base md:text-[10px] font-black text-amber-600 dark:text-amber-400">{session.break_duration_minutes}</span>
+                        <span className="text-xs md:text-[8px] text-amber-500 uppercase font-bold">min<span className="md:hidden"> break</span></span>
+                        <span className="hidden md:block text-[8px] text-amber-500 uppercase font-bold">break</span>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-slate-300" />
+                    <ArrowRight className="w-5 h-5 text-slate-300 md:rotate-0 rotate-90 hidden md:block" />
                 </div>
 
                 {/* Paper 2 */}
-                <div className="flex-1 rounded-2xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-black">II</div>
+                <div className="flex-1 rounded-2xl border border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-5 md:p-4 shadow-sm">
+                    <div className="flex items-center gap-3 md:gap-2 mb-4 md:mb-3">
+                        <div className="w-10 h-10 md:w-8 md:h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm md:text-xs font-black shadow-md flex-shrink-0">II</div>
                         <div>
                             <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">{session.paper2_label}</span>
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight line-clamp-1">{t2?.title || 'Paper II'}</p>
+                            <p className="text-base md:text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight line-clamp-1">{t2?.title || 'Paper II'}</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="text-center p-2 bg-white/60 dark:bg-slate-800/40 rounded-lg">
-                            <div className="font-black text-slate-800 dark:text-white text-base">{p2Qs}</div>
+                        <div className="text-center p-3 md:p-2 bg-white/60 dark:bg-slate-800/40 rounded-xl shadow-sm border border-white/40 dark:border-slate-800/60">
+                            <div className="font-black text-slate-800 dark:text-white text-lg md:text-base">{p2Qs}</div>
                             <div className="text-slate-500 text-[10px] uppercase font-bold">Questions</div>
                         </div>
-                        <div className="text-center p-2 bg-white/60 dark:bg-slate-800/40 rounded-lg">
-                            <div className="font-black text-slate-800 dark:text-white text-base">{t2?.duration || 0}m</div>
+                        <div className="text-center p-3 md:p-2 bg-white/60 dark:bg-slate-800/40 rounded-xl shadow-sm border border-white/40 dark:border-slate-800/60">
+                            <div className="font-black text-slate-800 dark:text-white text-lg md:text-base">{t2?.duration || 0}m</div>
                             <div className="text-slate-500 text-[10px] uppercase font-bold">Duration</div>
                         </div>
-                        <div className="text-center p-2 bg-white/60 dark:bg-slate-800/40 rounded-lg col-span-2">
-                            <div className="font-black text-emerald-600 text-base">{p2Marks}</div>
+                        <div className="text-center p-3 md:p-2 bg-white/60 dark:bg-slate-800/40 rounded-xl col-span-2 shadow-sm border border-white/40 dark:border-slate-800/60">
+                            <div className="font-black text-emerald-600 text-lg md:text-base">{p2Marks}</div>
                             <div className="text-slate-500 text-[10px] uppercase font-bold">Max Marks</div>
                         </div>
                     </div>
@@ -252,28 +252,28 @@ export default function CombinedIntroPage() {
             </div>
 
             {/* Instructions */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-                <h3 className="font-black text-slate-800 dark:text-white mb-3 flex items-center gap-2">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm">
+                <h3 className="font-black text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-500" /> Important Instructions
                 </h3>
-                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" /><span><strong>Paper I</strong> runs first ({t1?.duration || 0} minutes). Submit when done.</span></li>
-                    <li className="flex items-start gap-2"><Coffee className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" /><span>A <strong>{session.break_duration_minutes}-minute break</strong> follows. Relax, hydrate, stretch.</span></li>
-                    <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" /><span><strong>Paper II</strong> starts after the break ({t2?.duration || 0} minutes).</span></li>
-                    <li className="flex items-start gap-2"><Trophy className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" /><span><strong>Results are shown only after both papers</strong> are completed.</span></li>
+                <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                    <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" /><span className="pt-0.5"><strong>Paper I</strong> runs first ({t1?.duration || 0} minutes). Submit when done.</span></li>
+                    <li className="flex items-start gap-3"><Coffee className="w-5 h-5 text-amber-500 flex-shrink-0" /><span className="pt-0.5">A <strong>{session.break_duration_minutes}-minute break</strong> follows. Relax, hydrate, stretch.</span></li>
+                    <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" /><span className="pt-0.5"><strong>Paper II</strong> starts after the break ({t2?.duration || 0} minutes).</span></li>
+                    <li className="flex items-start gap-3"><Trophy className="w-5 h-5 text-indigo-500 flex-shrink-0" /><span className="pt-0.5"><strong>Results are shown only after both papers</strong> are completed.</span></li>
                 </ul>
             </div>
 
             {/* Confirmation and Start */}
-            <div className="space-y-3">
-                <label className="flex items-start gap-3 p-4 border rounded-xl bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            <div className="space-y-4">
+                <label className="flex items-start gap-3 p-4 md:p-5 border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
                     <input
                         type="checkbox"
-                        className="mt-0.5 w-4 h-4 rounded border-slate-300"
+                        className="mt-1 w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                         checked={confirmed}
                         onChange={(e) => setConfirmed(e.target.checked)}
                     />
-                    <span className="text-sm text-slate-700 dark:text-slate-200 leading-snug">
+                    <span className="text-sm md:text-base text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
                         I understand that results will only be shown after both papers are completed. I am ready to begin.
                     </span>
                 </label>
