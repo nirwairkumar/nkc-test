@@ -1150,7 +1150,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             {generatingMore ? 'Generating More Questions...' : (mode === 'extract' ? 'Extracting Questions...' : 'Generating Questions...')}
                         </h2>
                         <p className="text-muted-foreground animate-pulse">{progress}</p>
-                        
+
                         {extractionMeta && (
                             <div className="flex items-center justify-center gap-2 mt-2">
                                 <Badge variant={extractionMeta.warning ? "destructive" : "secondary"} className="text-xs">
@@ -1295,7 +1295,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                     <img src={q.image} alt="Question Diagram" className="max-h-48 mx-auto object-contain rounded" />
                                                 </div>
                                             )}
-                                            
+
                                             <div className="flex gap-4">
                                                 <div className="font-bold text-lg min-w-[30px] pt-1 text-primary">{q.id}.</div>
                                                 <div className="flex-1 space-y-3">
