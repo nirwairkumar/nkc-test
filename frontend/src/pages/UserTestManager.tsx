@@ -199,8 +199,8 @@ export default function UserTestManager() {
     };
 
     const openTestEditor = (test: any) => {
-        setEditingTest(test);
-        setIsTestEditOpen(true);
+        // Navigate to the full editor instead of the limited dialog
+        navigate(`/edit-test/${test.id}`);
     };
 
     const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'unlisted' | 'private') => {
@@ -307,22 +307,7 @@ export default function UserTestManager() {
         );
     }
 
-    if (isTestEditOpen) {
-        return (
-            <TestBuilder
-                initialData={editingTest}
-                onSuccess={() => {
-                    setIsTestEditOpen(false);
-                    setEditingTest(null);
-                    loadUserTests();
-                }}
-                onCancel={() => {
-                    setIsTestEditOpen(false);
-                    setEditingTest(null);
-                }}
-            />
-        );
-    }
+
 
     return (
         <div className="container mx-auto max-w-5xl py-6 space-y-6">
