@@ -82,6 +82,14 @@ export default function CombinedIntroPage() {
             breakDuration: session.break_duration_minutes,
         }));
 
+        // Request Fullscreen
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch((err) => {
+                console.log("Fullscreen request denied:", err);
+            });
+        }
+
         // Navigate to Paper 1 with combined mode context
         navigate(`/live/${session.test1_id}`, {
             state: {
