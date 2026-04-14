@@ -10,7 +10,8 @@ export function usePremiumStatus() {
         isPremium,
         premiumLoading: loading,
         isGlobalUnlock,
-        hasActivePlans
+        hasActivePlans,
+        profile
     } = useAuth();
 
     // Determine the reason for premium access
@@ -30,8 +31,8 @@ export function usePremiumStatus() {
     return {
         isPremium,
         loading,
-        expiryDate: null, // Legacy support, can be removed if not used
-        planId: null, // Legacy support, can be removed if not used
+        expiryDate: profile?.premium_expiry || null, 
+        planId: profile?.plan_id || null, 
         isGlobalUnlock,
         hasActivePlans,
         reason
