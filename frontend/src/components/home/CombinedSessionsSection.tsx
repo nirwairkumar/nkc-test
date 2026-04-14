@@ -19,28 +19,9 @@ export default function CombinedSessionsSection({ user, filterTestIds }: Combine
                 const { data } = await fetchPublicCombinedSessions();
                 if (!data || !Array.isArray(data)) { setLoading(false); return; }
 
-                // Enrich any session where test1/test2 are missing (backend enrichment failed)
-                const enriched = await Promise.all(
-                    data.map(async (session: any) => {
-                        let { test1, test2 } = session;
-
-                        // Fallback: fetch test data directly if backend didn't enrich
-                        if (!test1 && session.test1_id) {
-                            const res = await fetchTestById(session.test1_id).catch(() => ({ data: null }));
-                            test1 = res.data ?? null;
-                        }
-                        if (!test2 && session.test2_id) {
-                            const res = await fetchTestById(session.test2_id).catch(() => ({ data: null }));
-                            test2 = res.data ?? null;
-                        }
-
-                        return { ...session, test1, test2 };
-                    })
-                );
-
-                let processed = enriched;
+                let processed = data;
                 if (filterTestIds) {
-                    processed = enriched.filter(s => filterTestIds.has(s.test1_id) || filterTestIds.has(s.test2_id));
+                    processed = data.filter(s => filterTestIds.has(s.test1_id) || filterTestIds.has(s.test2_id));
                 }
 
                 setSessions(processed);

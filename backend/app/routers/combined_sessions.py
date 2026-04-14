@@ -50,39 +50,9 @@ def _verify_auth_token(request: Request, db: Client):
 
 
 def _enrich_session(session: dict) -> dict:
-    """Attach test details to a combined session record."""
-    # Always initialize these keys so frontend never gets KeyError
+    """Safely initialize test keys; tests are now batched independently by frontend."""
     session.setdefault("test1", None)
     session.setdefault("test2", None)
-
-    try:
-        test_ids = [tid for tid in [session.get("test1_id"), session.get("test2_id")] if tid]
-        if not test_ids:
-            return session
-
-        # Avoid fetching large `questions` blob — frontend will fetch full test separately if needed
-        tests_res = supabase.table("tests")\
-            .select("id, title, duration, total_questions, marks_per_question, negative_marks, computed_max_marks, enable_section_mode, sections")\
-            .in_("id", test_ids)\
-            .execute()
-
-        tests_map = {t["id"]: t for t in (tests_res.data or [])}
-
-        t1_id = session.get("test1_id")
-        t2_id = session.get("test2_id")
-        session["test1"] = tests_map.get(t1_id)
-        session["test2"] = tests_map.get(t2_id)
-
-        if not session["test1"] and t1_id:
-            print(f"[_enrich_session] WARNING: test1_id={t1_id} not found in DB")
-        if not session["test2"] and t2_id:
-            print(f"[_enrich_session] WARNING: test2_id={t2_id} not found in DB")
-
-    except Exception as e:
-        print(f"[_enrich_session] ERROR for session {session.get('id')}: {e}")
-        import traceback as tb
-        tb.print_exc()
-
     return session
 
 
