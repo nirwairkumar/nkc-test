@@ -380,16 +380,98 @@ async def register_start(
 @router.get("/test/{test_id}")
 async def get_test_attempts(
     test_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        # Check authentication
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        token = auth_header.replace("Bearer ", "")
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user_id = user_response.user.id
+
+        # Verify admin status
+        from app.core.database import supabase
+        admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
+        is_admin = admin_res.data and len(admin_res.data) > 0
+
+        # Optional: check if creator
+        # test_res = supabase.table("tests").select("created_by").eq("id", test_id).execute()
+        # test_created_by = test_res.data[0].get("created_by") if test_res.data else None
+        # if not is_admin and user_id != test_created_by:
+        #     raise HTTPException(status_code=403, detail="Not authorized")
+
+        # Determine Premium Access
+        is_premium = False
+        if is_admin:
+            is_premium = True
+        else:
+            # Check global premium unlock and active plans
+            settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
+            unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
+            
+            plans_res = supabase.table("plans").select("id").eq("is_active", True).limit(1).execute()
+            has_active_plans = plans_res.data and len(plans_res.data) > 0
+            
+            is_premium = unlock_all or not has_active_plans
+
+            if not is_premium:
+                profile_res = supabase.table("profiles").select("is_premium, premium_expiry").eq("id", user_id).execute()
+                if profile_res.data:
+                    profile = profile_res.data[0]
+                    if profile.get("is_premium") and profile.get("premium_expiry"):
+                        from datetime import datetime, timezone
+                        try:
+                            # Safely parse UTC string from postgres
+                            expiry = datetime.fromisoformat(profile["premium_expiry"].replace('Z', '+00:00'))
+                            if expiry.tzinfo is None:
+                                expiry = expiry.replace(tzinfo=timezone.utc)
+                            now = datetime.now(timezone.utc)
+                            is_premium = expiry > now
+                        except Exception as parse_error:
+                            print(f"Error parsing expiry date: {parse_error}")
+
         # Fetch all attempts for specific test
-        response = db.table("user_tests")\
+        response = supabase.table("user_tests")\
             .select("*")\
             .eq("test_id", test_id)\
             .order("score", desc=True)\
             .execute()
-        return response.data
+            
+        data = response.data or []
+        
+        # Anonymize data for non-premium
+        if not is_premium:
+            anonymized = []
+            for attempt in data:
+                # hide personal info in metadata using a copy
+                meta = dict(attempt.get("metadata") or {})
+                if "startFormData" in meta:
+                    meta["startFormData"] = {"Candidate": "Anonymous User"}
+                elif "registrationData" in meta:
+                    meta["registrationData"] = {"Candidate": "Anonymous User"}
+                
+                # Strip stats to completely hide the score
+                meta.pop("stats", None)
+                
+                anon_attempt = {
+                    "id": attempt.get("id"),
+                    "test_id": attempt.get("test_id"),
+                    "user_id": None, # Obscure user ID
+                    "score": 0, # Hide score
+                    "answers": {}, # Hide answers
+                    "created_at": attempt.get("created_at"),
+                    "metadata": meta
+                }
+                anonymized.append(anon_attempt)
+            return anonymized
+            
+        return data
     except Exception as e:
         print(f"Error fetching test attempts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
