@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, BookOpen, ArrowRight, Layers, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CombinedTestLaunchModal from './CombinedTestLaunchModal';
+import { fetchTestCardSnippet } from '@/lib/testsApi';
 
 interface CombinedTestCardProps {
     session: {
@@ -13,6 +14,8 @@ interface CombinedTestCardProps {
         paper1_label: string;
         paper2_label: string;
         break_duration_minutes: number;
+        test1_id?: string;
+        test2_id?: string;
         test1?: any;
         test2?: any;
     };
@@ -23,8 +26,26 @@ export default function CombinedTestCard({ session, user }: CombinedTestCardProp
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
 
-    const test1 = session.test1;
-    const test2 = session.test2;
+    const [test1, setTest1] = useState<any>(session.test1 || null);
+    const [test2, setTest2] = useState<any>(session.test2 || null);
+    const [loading, setLoading] = useState(!session.test1 || !session.test2);
+
+    useEffect(() => {
+        let mounted = true;
+        const loadSnippets = async () => {
+            if (!session.test1 && session.test1_id) {
+                const { data } = await fetchTestCardSnippet(session.test1_id);
+                if (mounted) setTest1(data);
+            }
+            if (!session.test2 && session.test2_id) {
+                const { data } = await fetchTestCardSnippet(session.test2_id);
+                if (mounted) setTest2(data);
+            }
+            if (mounted) setLoading(false);
+        };
+        loadSnippets();
+        return () => { mounted = false; };
+    }, [session]);
 
     const totalQuestions = (test1?.questions?.length || 0) + (test2?.questions?.length || 0);
     const totalDuration = (test1?.duration || 0) + (test2?.duration || 0) + session.break_duration_minutes;
@@ -41,6 +62,20 @@ export default function CombinedTestCard({ session, user }: CombinedTestCardProp
 
     const p1Qs = getQuestionCount(test1);
     const p2Qs = getQuestionCount(test2);
+
+    if (loading) {
+        return (
+            <div className="h-[280px] w-full rounded-2xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 shadow-sm animate-pulse p-5">
+                <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded mb-4" />
+                <div className="h-4 w-1/2 bg-slate-100 dark:bg-slate-800 rounded mb-6" />
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                    <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                </div>
+                <div className="h-10 w-full bg-slate-200 dark:bg-slate-800 rounded-md mt-4" />
+            </div>
+        );
+    }
 
     return (
         <>
@@ -176,7 +211,7 @@ export default function CombinedTestCard({ session, user }: CombinedTestCardProp
 
             {showModal && (
                 <CombinedTestLaunchModal
-                    session={session}
+                    session={{ ...session, test1, test2 }}
                     open={showModal}
                     onClose={() => setShowModal(false)}
                 />

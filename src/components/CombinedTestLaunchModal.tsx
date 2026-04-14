@@ -49,7 +49,7 @@ const PaperCard = ({
         }
     }[color];
 
-    const qCount = test?.questions?.length || (test?.sections?.reduce((a: number, s: any) => a + (s.questions?.length || 0), 0) || 0);
+    const qCount = test?.total_questions ?? (test?.questions?.length || (test?.sections?.reduce((a: number, s: any) => a + (s.questions?.length || 0), 0) || 0));
 
     return (
         <div className={`rounded-2xl border p-4 ${colors.border} ${colors.bg} flex flex-col gap-3`}>
@@ -108,8 +108,8 @@ export default function CombinedTestLaunchModal({ session, open, onClose }: Comb
     const hasTest1 = !!(session.test1 || session.test1_id);
     const hasTest2 = !!(session.test2 || session.test2_id);
 
-    const p1Qs = session.test1?.questions?.length || (session.test1?.sections?.reduce((a: number, s: any) => a + (s.questions?.length || 0), 0) || 0);
-    const p2Qs = session.test2?.questions?.length || (session.test2?.sections?.reduce((a: number, s: any) => a + (s.questions?.length || 0), 0) || 0);
+    const p1Qs = session.test1?.total_questions ?? (session.test1?.questions?.length || (session.test1?.sections?.reduce((a: number, s: any) => a + (s.questions?.length || 0), 0) || 0));
+    const p2Qs = session.test2?.total_questions ?? (session.test2?.questions?.length || (session.test2?.sections?.reduce((a: number, s: any) => a + (s.questions?.length || 0), 0) || 0));
     const totalDuration = (session.test1?.duration || 0) + (session.test2?.duration || 0) + session.break_duration_minutes;
 
     return (
