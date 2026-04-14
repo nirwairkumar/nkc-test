@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import apiClient from '@/lib/apiClient';
+import { Loader2 } from 'lucide-react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -126,10 +127,7 @@ export default function AuthForm() {
                     const from = intent || (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
                     if (intent) localStorage.removeItem('auth_redirect_intent');
 
-                    // Short timeout to ensure state propagation
-                    setTimeout(() => {
-                        navigate(from, { replace: true });
-                    }, 100);
+                    navigate(from, { replace: true });
 
                 } catch (err: any) {
                     console.error("Login failed", err);
@@ -191,9 +189,7 @@ export default function AuthForm() {
                     const from = intent || (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
                     if (intent) localStorage.removeItem('auth_redirect_intent');
 
-                    setTimeout(() => {
-                        navigate(from, { replace: true });
-                    }, 100);
+                    navigate(from, { replace: true });
                 } catch (loginErr: any) {
                     console.error("Login after signup failed", loginErr);
                     toast.error("Account created but automatic login failed. Please login manually.");
@@ -260,6 +256,7 @@ export default function AuthForm() {
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
+                            <fieldset disabled={isLoading} className="space-y-4">
                             {(view === 'login' || view === 'signup') && (
                                 <>
                                     <Button
@@ -325,7 +322,7 @@ export default function AuthForm() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Designation</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select designation" />
@@ -392,11 +389,19 @@ export default function AuthForm() {
                             )}
                             */}
 
-                            <Button type="submit" className="w-full" disabled={isLoading}>
-                                {isLoading ? 'Loading...' :
+                            <Button type="submit" className="w-full relative" disabled={isLoading}>
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        {view === 'login' ? 'Signing In...' : 
+                                         view === 'signup' ? 'Signing Up...' : 'Sending...'}
+                                    </>
+                                ) : (
                                     view === 'login' ? 'Sign In' :
-                                        view === 'signup' ? 'Sign Up' : 'Send Reset Link'}
+                                    view === 'signup' ? 'Sign Up' : 'Send Reset Link'
+                                )}
                             </Button>
+                            </fieldset>
 
                         </form>
                     </Form>

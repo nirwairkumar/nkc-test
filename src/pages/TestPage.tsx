@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt } from '@/lib/attemptsApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2 } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -2267,6 +2267,16 @@ export default function TestPage() {
         userId={user?.id}
         onConfirmExit={() => navigate('/')}
       />
+
+      {isSubmitting && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-all animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-2xl flex flex-col items-center border dark:border-slate-800">
+            <Loader2 className="h-12 w-12 text-indigo-600 dark:text-indigo-400 animate-spin mb-4" />
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Submitting Test...</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-center">Please stay on this page.<br/>Finalizing your answers.</p>
+          </div>
+        </div>
+      )}
     </div >
   );
 }
