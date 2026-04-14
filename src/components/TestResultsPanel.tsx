@@ -47,7 +47,7 @@ interface TestResultsPanelProps {
 }
 
 export default function TestResultsPanel({ test, onClose }: TestResultsPanelProps) {
-    const { isAdmin } = useAuth();
+    const { isAdmin, isPremium } = useAuth();
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showRank, setShowRank] = useState(false);
@@ -182,6 +182,11 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const displayedResults = getSortedResults(results);
 
     const downloadCSV = () => {
+        if (!isAdmin && !isPremium) {
+            toast.error("Exporting results to CSV is a premium feature.");
+            return;
+        }
+
         // 1. Identify all unique Start Form Keys dynamically
         const startFormKeys = new Set<string>();
         displayedResults.forEach(r => {

@@ -446,6 +446,8 @@ export default function UserTestManager() {
                                                 onClassChange={handleClassChange}
                                                 getVisibilityColor={getVisibilityColor}
                                                 getVisibilityIcon={getVisibilityIcon}
+                                                onViewResults={(t) => setViewingResultsTest(t)}
+                                                onView={(t) => navigate(`/test-intro/${t.id}`)}
                                             />
                                         );
                                     } else {

@@ -38,6 +38,8 @@ interface UserTestCardProps {
     onClassChange: (test: any, classId: string | null) => void;
     getVisibilityColor: (visibility: string) => string;
     getVisibilityIcon: (visibility: string) => React.ReactNode;
+    onViewResults: (test: any) => void;
+    onView: (test: any) => void;
 }
 
 export function UserTestCard({
@@ -52,6 +54,8 @@ export function UserTestCard({
     onClassChange,
     getVisibilityColor,
     getVisibilityIcon,
+    onViewResults,
+    onView,
 }: UserTestCardProps) {
     const visibility = test.visibility || (test.is_public ? 'public' : 'private');
 
@@ -123,6 +127,20 @@ export function UserTestCard({
 
                             <DropdownMenuSeparator />
 
+                            <DropdownMenuItem onClick={() => onEdit(test)}>
+                                <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => onConfigure(test)}>
+                                <Settings className="mr-2 h-4 w-4 text-slate-500" /> Manage Settings
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => onShare(test)}>
+                                <LinkIcon className="mr-2 h-4 w-4 text-slate-500" /> Share Link
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
                             <DropdownMenuItem onClick={() => onUploadSolutions(test)}>
                                 <FileText className="mr-2 h-4 w-4 text-indigo-500" /> Upload Solutions
                             </DropdownMenuItem>
@@ -178,34 +196,21 @@ export function UserTestCard({
             </div>
 
             {/* --- Zone D: Actions --- */}
-            <div className="mt-auto pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 pl-2">
+            <div className="flex items-center justify-end gap-3 mt-auto pt-3 border-t border-slate-50 dark:border-slate-800/50 pl-2">
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 flex-1 text-slate-600 hover:text-primary hover:border-primary/30 hover:bg-violet-50"
-                    onClick={() => onEdit(test)}
+                    className="h-8 text-xs font-medium px-4 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                    onClick={() => onViewResults(test)}
                 >
-                    <Edit className="h-3.5 w-3.5 mr-1.5" />
-                    Edit
+                    Results
                 </Button>
-
                 <Button
                     size="sm"
-                    className="h-8 flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow transition-all"
-                    onClick={() => onConfigure(test)}
+                    className="h-8 text-xs font-medium px-5 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-300 rounded-md"
+                    onClick={() => onView(test)}
                 >
-                    <Settings className="h-3.5 w-3.5 mr-1.5" />
-                    Manage
-                </Button>
-
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-slate-400 hover:text-primary hover:bg-violet-50 rounded-full"
-                    onClick={() => onShare(test)}
-                    title="Copy Link"
-                >
-                    <LinkIcon className="h-4 w-4" />
+                    View
                 </Button>
             </div>
         </div>
