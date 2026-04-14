@@ -42,8 +42,10 @@ async def get_plans(db: Client = Depends(get_db)):
 async def create_plan(payload: PlanCreate, db: Client = Depends(get_db)):
     try:
         data = payload.dict(exclude_unset=True)
-        response = db.table("plans").insert(data).select().single().execute()
-        return response.data
+        response = db.table("plans").insert(data).execute()
+        if response.data:
+            return response.data[0]
+        return None
     except Exception as e:
         print(f"Error creating plan: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -83,8 +85,10 @@ async def get_promos(db: Client = Depends(get_db)):
 async def create_promo(payload: PromoCodeCreate, db: Client = Depends(get_db)):
     try:
         data = payload.dict(exclude_unset=True)
-        response = db.table("promo_codes").insert(data).select().single().execute()
-        return response.data
+        response = db.table("promo_codes").insert(data).execute()
+        if response.data:
+            return response.data[0]
+        return None
     except Exception as e:
         print(f"Error creating promo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -116,9 +120,11 @@ class ApplyPromoRequest(BaseModel):
 @router.post("/promos/apply")
 async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
     try:
-        code = payload.code.upper()
+        code = payload.code.strip().upper()
+        print(f"DEBUG API: code={code}, plan={payload.plan_id}")
         # Fetch Promo using admin client (to bypass RLS for users)
         promo_res = supabase.table("promo_codes").select("*").eq("code", code).eq("is_active", True).execute()
+        print(f"DEBUG PROMO_RES: {promo_res.data}")
         if not promo_res.data:
             raise HTTPException(status_code=400, detail="Invalid or inactive promo code")
         
@@ -126,7 +132,7 @@ async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
         
         # Check Validity Dates
         import datetime
-        now = datetime.datetime.now().isoformat()
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         if promo.get("valid_from") and promo["valid_from"] > now:
              raise HTTPException(status_code=400, detail="Promo code not yet valid")
         if promo.get("valid_till") and promo["valid_till"] < now:
