@@ -86,18 +86,18 @@ const PricingCard = ({ plan, isCurrentPlan, isPremium, formatPrice }: { plan: Pl
     };
 
     return (
-        <Card key={plan.id} className={`flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-xl ${plan.name.includes('Yearly') ? 'border-primary shadow-lg scale-[1.02]' : ''} ${isCurrentPlan ? 'border-green-500 ring-2 ring-green-500 bg-green-50/10' : ''}`}>
+        <Card key={plan.id} className={`flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-xl ${plan.name.includes('Yearly') && !isCurrentPlan ? 'border-primary shadow-lg scale-[1.02]' : ''} ${isCurrentPlan ? 'border-2 border-emerald-500 shadow-[0_0_30px_-5px_rgba(16,185,129,0.25)] ring-4 ring-emerald-500/10 bg-gradient-to-b from-white to-emerald-50/30 scale-[1.02] z-10' : ''}`}>
             {plan.name.includes('Yearly') && !isCurrentPlan && (
-                <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-1.5 text-sm font-bold rounded-bl-lg shadow-md">
+                <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-1.5 text-sm font-bold rounded-bl-lg shadow-md z-20">
                     POPULAR
                 </div>
             )}
             {isCurrentPlan && (
-                <div className="absolute top-0 right-0 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-1.5 text-sm font-bold rounded-bl-lg flex items-center gap-1.5 shadow-md">
-                    <Check className="w-4 h-4" /> ACTIVE
+                <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white py-2 text-sm font-bold flex items-center justify-center gap-2 shadow-sm w-full">
+                    <Check className="w-5 h-5" /> CURRENT SUBSCRIPTION
                 </div>
             )}
-            <CardHeader className="pb-4">
+            <CardHeader className={`${isCurrentPlan ? 'pt-6 pb-4' : 'pb-4'}`}>
                 <CardTitle className="text-3xl font-bold">{plan.name}</CardTitle>
                 <CardDescription className="text-base mt-2">{plan.description}</CardDescription>
             </CardHeader>
