@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, LogIn, RotateCcw } from 'lucide-react';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
 import { toast } from 'sonner';
+import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 
 /**
  * AuthError — displayed when Google social login fails.
@@ -72,14 +73,10 @@ export default function AuthError() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {/* Retry Google */}
-                    <Button
-                        variant="outline"
-                        className="w-full gap-2"
+                    <GoogleSignInButton
                         onClick={handleRetryGoogle}
-                    >
-                        <RotateCcw className="h-4 w-4" />
-                        Try Google Sign-In Again
-                    </Button>
+                        text="Try Google Sign-In Again"
+                    />
 
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
