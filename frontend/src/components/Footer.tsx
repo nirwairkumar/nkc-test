@@ -12,7 +12,7 @@ export default function Footer() {
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:gap-12">
                     {/* Brand Section */}
                     <div className="flex flex-col gap-2">
-                        <h3 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-serif">
+                        <h3 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent" style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1.5px' }}>
                             TestoZa
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 w-full max-w-[300px] leading-relaxed">
@@ -82,7 +82,7 @@ export default function Footer() {
 
                 {/* Copyright */}
                 <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-                    © {currentYear} TestoZa. All rights reserved.
+                    © {currentYear} <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span>. All rights reserved.
                 </div>
             </div>
         </footer>

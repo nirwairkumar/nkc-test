@@ -54,7 +54,7 @@ const AboutPage = () => {
         >
           <div className="flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-indigo-600 dark:text-indigo-400 mb-5">
             <div className="w-6 h-px bg-indigo-600 dark:bg-indigo-400"></div>
-            About TestoZa
+            About <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1.2px' }}>TestoZa</span>
           </div>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-normal leading-tight tracking-tight mb-6 text-slate-900 dark:text-white">
             Assessments built for how<br />
@@ -93,7 +93,7 @@ const AboutPage = () => {
             <p className="font-display text-xl italic text-slate-800 dark:text-slate-200 mb-2 leading-relaxed">
               "My final exam was going to be on a computer. But every practice test I took was on paper. That gap wasn't anyone's fault — the right tools just didn't exist for people who needed them most."
             </p>
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium">— Founder, TestoZa</p>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium">— Founder, <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span></p>
           </div>
 
           <p className="text-slate-600 dark:text-slate-300 font-light">
@@ -155,7 +155,7 @@ const AboutPage = () => {
               "A true CBT-style test environment that mirrors how major exams actually feel",
               "AI chatbot on the result page with full student performance context",
               "Public sharing and discovery of structured academic materials",
-              "Built for non-technical users — if you can use a smartphone, you can use TestoZa",
+              "Built for non-technical users — if you can use a smartphone, you can use <span style={{ fontFamily: 'Ribeye, serif', letterSpacing: '1px' }}>TestoZa</span>",
               "One unified platform for students, educators, and institutions"
             ].map((text, i) => (
               <li key={i} className="flex gap-3 items-start py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
@@ -243,7 +243,7 @@ const AboutPage = () => {
         >
           <p className="font-display text-3xl text-white mb-2 tracking-tight">Want to be part of what comes next?</p>
           <p className="text-[15px] text-indigo-100 font-light opacity-90 max-w-lg mx-auto">
-            Whether you're a student, an educator, or an institution — there's a place for you on TestoZa.
+            Whether you're a student, an educator, or an institution — there's a place for you on <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span>.
           </p>
         </div>
 
