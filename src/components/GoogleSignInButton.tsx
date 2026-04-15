@@ -23,7 +23,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
         <Button
             type="button"
             variant="outline"
-            className={`w-full h-11 rounded-full border-blue-200 hover:border-blue-400 bg-white hover:bg-blue-50/50 text-slate-700 font-medium transition-all duration-300 shadow-sm flex items-center justify-center ${className}`}
+            className={`w-full h-11 rounded-full border-blue-200 hover:border-blue-400 bg-white hover:bg-blue-50/50 text-slate-700 hover:text-slate-900 font-medium transition-all duration-300 shadow-sm active:scale-[0.98] flex items-center justify-center ${className}`}
             onClick={onClick}
             disabled={isLoading}
         >
