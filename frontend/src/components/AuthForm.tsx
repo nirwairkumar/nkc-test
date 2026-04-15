@@ -258,99 +258,99 @@ export default function AuthForm() {
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
                             <fieldset disabled={isLoading} className="space-y-4">
-                            {(view === 'login' || view === 'signup') && (
-                                <>
-                                    <GoogleSignInButton
-                                        onClick={handleGoogleLogin}
-                                        isLoading={isLoading}
-                                        text="Google"
-                                    />
-                                    <div className="relative">
-                                        <div className="absolute inset-0 flex items-center">
-                                            <span className="w-full border-t" />
+                                {(view === 'login' || view === 'signup') && (
+                                    <>
+                                        <GoogleSignInButton
+                                            onClick={handleGoogleLogin}
+                                            isLoading={isLoading}
+                                            text="Sign in with Google"
+                                        />
+                                        <div className="relative">
+                                            <div className="absolute inset-0 flex items-center">
+                                                <span className="w-full border-t" />
+                                            </div>
+                                            <div className="relative flex justify-center text-xs">
+                                                <span className="bg-background px-2 text-muted-foreground">
+                                                    Or Enter Your Credential
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="relative flex justify-center text-xs">
-                                            <span className="bg-background px-2 text-muted-foreground">
-                                                Or Enter Your Credential
-                                            </span>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-
-                            {view === 'signup' && (
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Full Name</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="John Doe" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            )}
-
-                            {view === 'signup' && (
-                                <FormField
-                                    control={form.control}
-                                    name="designation"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Designation</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select designation" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Student">Student</SelectItem>
-                                                    <SelectItem value="Teacher">Teacher</SelectItem>
-                                                    <SelectItem value="Institution">Institution</SelectItem>
-                                                    <SelectItem value="Guest">Guest</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            )}
-
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Email</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="name@example.com" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
+                                    </>
                                 )}
-                            />
 
-                            {view !== 'forgot' && (
+                                {view === 'signup' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="name"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Full Name</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="John Doe" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {view === 'signup' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="designation"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Designation</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select designation" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Student">Student</SelectItem>
+                                                        <SelectItem value="Teacher">Teacher</SelectItem>
+                                                        <SelectItem value="Institution">Institution</SelectItem>
+                                                        <SelectItem value="Guest">Guest</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
                                 <FormField
                                     control={form.control}
-                                    name="password"
+                                    name="email"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Password</FormLabel>
+                                            <FormLabel>Email</FormLabel>
                                             <FormControl>
-                                                <Input type="password" placeholder="******" {...field} />
+                                                <Input placeholder="name@example.com" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                            )}
 
-                            {/* Commented out confirm password ui
+                                {view !== 'forgot' && (
+                                    <FormField
+                                        control={form.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Password</FormLabel>
+                                                <FormControl>
+                                                    <Input type="password" placeholder="******" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+
+                                {/* Commented out confirm password ui
                             {view === 'signup' && (
                                 <FormField
                                     control={form.control}
@@ -368,18 +368,18 @@ export default function AuthForm() {
                             )}
                             */}
 
-                            <Button type="submit" className="w-full relative" disabled={isLoading}>
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        {view === 'login' ? 'Signing In...' : 
-                                         view === 'signup' ? 'Signing Up...' : 'Sending...'}
-                                    </>
-                                ) : (
-                                    view === 'login' ? 'Sign In' :
-                                    view === 'signup' ? 'Sign Up' : 'Send Reset Link'
-                                )}
-                            </Button>
+                                <Button type="submit" className="w-full relative" disabled={isLoading}>
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            {view === 'login' ? 'Signing In...' :
+                                                view === 'signup' ? 'Signing Up...' : 'Sending...'}
+                                        </>
+                                    ) : (
+                                        view === 'login' ? 'Sign In' :
+                                            view === 'signup' ? 'Sign Up' : 'Send Reset Link'
+                                    )}
+                                </Button>
                             </fieldset>
 
                         </form>
