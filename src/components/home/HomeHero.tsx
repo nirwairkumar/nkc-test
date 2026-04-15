@@ -37,7 +37,7 @@ export default function HomeHero({ onRefresh, isLoading }: HomeHeroProps) {
                         </span>
                     </div>
                     <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
-                        {user ? `${greeting}, ${name}!` : 'Welcome to TestoZa'}
+                        {user ? `${greeting}, ${name}!` : <span>Welcome to <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1.5px' }}>TestoZa</span></span>}
                     </h1>
                     <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-xl">
                         {user 

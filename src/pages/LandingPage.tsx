@@ -71,9 +71,9 @@ export default function LandingPage() {
                         </h2>
                         <div className="prose dark:prose-invert max-w-none">
                             <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                                TestoZa is the ultimate <strong>online test platform</strong> for teachers, students, and institutes.
+                                <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span> is the ultimate <strong>online test platform</strong> for teachers, students, and institutes.
                                 Our <strong>AI test generator</strong> allows you to create quizzes from PDFs, text, and YouTube videos in seconds.
-                                Whether you need a <strong>mock test for JEE, NEET, GATE</strong>, or a simple class quiz, TestoZa provides
+                                Whether you need a <strong>mock test for JEE, NEET, GATE</strong>, or a simple class quiz, <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span> provides
                                 comprehensive tools to assess knowledge effectively.
                             </p>
                         </div>
