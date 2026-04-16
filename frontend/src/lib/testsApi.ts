@@ -82,6 +82,7 @@ export interface TestSettings {
         fields: { label: string; required: boolean }[];
     };
     block_back_button?: boolean;
+    disable_exit_button?: boolean;
 }
 
 

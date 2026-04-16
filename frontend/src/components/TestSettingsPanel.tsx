@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2 } from 'lucide-react';
+import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X } from 'lucide-react';
 import { ClassItem, fetchClasses } from '@/lib/classesApi';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
@@ -52,9 +52,9 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
     useEffect(() => {
         const loadFullTest = async () => {
-            const hasQuestionsOrSections = (test.questions && test.questions.length > 0) || 
-                                         (test.sections && test.sections.length > 0);
-            
+            const hasQuestionsOrSections = (test.questions && test.questions.length > 0) ||
+                (test.sections && test.sections.length > 0);
+
             if (!hasQuestionsOrSections) {
                 const { data } = await fetchTestById(test.id);
                 if (data) {
@@ -226,6 +226,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         />
                     </div>
 
+
                     {/* Violation Limit (only shown if at least one monitoring feature is on) */}
                     {(settings.force_fullscreen || settings.tab_switch_mode !== 'off') && (
                         <>
@@ -322,6 +323,16 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         <Switch
                             checked={settings.block_back_button || false}
                             onCheckedChange={(c) => updateSetting('block_back_button', c)}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between border p-4 rounded-lg">
+                        <div className="space-y-0.5">
+                            <Label>Disable Exit Button</Label>
+                            <p className="text-xs text-muted-foreground">Hide exit button on live test</p>
+                        </div>
+                        <Switch
+                            checked={settings.disable_exit_button}
+                            onCheckedChange={(c) => updateSetting('disable_exit_button', c)}
                         />
                     </div>
                 </div>
@@ -556,11 +567,11 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 <CardContent className="space-y-4">
                     <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-800 space-y-3">
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                            This will analyze question text and assign topics like "Kinematics", "Trigonometry", etc. 
+                            This will analyze question text and assign topics like "Kinematics", "Trigonometry", etc.
                             These topics will be used for **Topic-Wise Analysis** on the student results page.
                         </p>
-                        <Button 
-                            onClick={handleAutoAssignTopics} 
+                        <Button
+                            onClick={handleAutoAssignTopics}
                             disabled={topicGenerating}
                             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                         >

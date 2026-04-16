@@ -439,11 +439,11 @@ export default function TestPage() {
         (document as any).mozFullScreenElement ||
         (document as any).msFullscreenElement
       );
-      
+
       // Fallback check using window dimensions (useful when API doesn't fire events)
       const isWindowFullScreen = window.innerWidth === window.screen.width && window.innerHeight === window.screen.height;
       const currentFullScreen = isAPIFullScreen || isWindowFullScreen;
-      
+
       setIsFullScreen(currentFullScreen);
 
       if (!currentFullScreen && settings.force_fullscreen) {
@@ -453,11 +453,11 @@ export default function TestPage() {
       } else if (currentFullScreen) {
         // Only log if we transitioned from not full screen, or if it's the first check and we are in full screen
         setFullScreenLogs(prev => {
-           const lastEvent = prev.length > 0 ? prev[prev.length - 1].event : null;
-           if (lastEvent !== 'Entered Full Screen') {
-             return [...prev, { event: 'Entered Full Screen', timestamp: Date.now() }];
-           }
-           return prev;
+          const lastEvent = prev.length > 0 ? prev[prev.length - 1].event : null;
+          if (lastEvent !== 'Entered Full Screen') {
+            return [...prev, { event: 'Entered Full Screen', timestamp: Date.now() }];
+          }
+          return prev;
         });
         setShowFullScreenWarning(false);
       }
@@ -519,7 +519,7 @@ export default function TestPage() {
 
     // Ideally log this violation to DB (to be implemented in next step)
   };
-  
+
   const enterFullScreen = () => {
     const elem = document.documentElement;
     try {
@@ -954,7 +954,7 @@ export default function TestPage() {
       if (isCombinedMode && combinedSessionId) {
         // Get combined session context
         let sessionCtx: any = null;
-        try { sessionCtx = JSON.parse(sessionStorage.getItem(`combined_active_${combinedSessionId}`) || 'null'); } catch {}
+        try { sessionCtx = JSON.parse(sessionStorage.getItem(`combined_active_${combinedSessionId}`) || 'null'); } catch { }
 
         // Compute total marks for this test
         let totalMaxMarks = 0;
@@ -988,7 +988,7 @@ export default function TestPage() {
         } else if (combinedPaper === 2) {
           // Paper 2 done → retrieve Paper 1 data and show combined results
           let p1Data: any = null;
-          try { p1Data = JSON.parse(sessionStorage.getItem(`combined_p1_${combinedSessionId}`) || 'null'); } catch {}
+          try { p1Data = JSON.parse(sessionStorage.getItem(`combined_p1_${combinedSessionId}`) || 'null'); } catch { }
 
           if (!p1Data) {
             toast.warning('Could not retrieve Paper I results. Showing Paper II results only.');
@@ -1396,7 +1396,7 @@ export default function TestPage() {
           <div className="text-[13px] md:text-sm font-medium text-slate-400 tracking-wide truncate text-left">
             {test?.title || "Live Test"}
           </div>
-          
+
           {/* Mobile Full Screen Button (Visible only on phone screens) */}
           <button
             onClick={(e) => {
@@ -1412,7 +1412,7 @@ export default function TestPage() {
 
         {/* Right Side: Timer & Controls */}
         <div className="flex items-center justify-between md:justify-end gap-1.5 md:gap-3 w-full md:w-auto mt-0.5 md:mt-0">
-          
+
           {/* Desktop Full Screen Button (Hidden on mobile) */}
           <button
             onClick={(e) => {
@@ -1490,14 +1490,16 @@ export default function TestPage() {
             </>
           )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-            onClick={() => setShowExitDialog(true)}
-          >
-            Exit
-          </Button>
+          {!test.settings?.disable_exit_button && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              onClick={() => setShowExitDialog(true)}
+            >
+              Exit
+            </Button>
+          )}
 
           <Button onClick={attemptSubmit} disabled={isSubmitting} variant="destructive" size="sm" className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold shadow-sm ml-auto md:ml-0 overflow-hidden shrink-0">
             Submit Test
@@ -2226,7 +2228,7 @@ export default function TestPage() {
               This test must be taken in Full Screen mode for proctoring purposes. Please return to full screen to continue.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
+
           <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-800 my-4">
             <div className="flex items-center gap-2 mb-3 text-slate-500 text-xs font-bold uppercase tracking-wider">
               <ScrollText className="w-4 h-4" /> Full Screen Working Log
@@ -2251,7 +2253,7 @@ export default function TestPage() {
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 enterFullScreen();
@@ -2277,7 +2279,7 @@ export default function TestPage() {
           <div className="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-2xl flex flex-col items-center border dark:border-slate-800">
             <Loader2 className="h-12 w-12 text-indigo-600 dark:text-indigo-400 animate-spin mb-4" />
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Submitting Test...</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-center">Please stay on this page.<br/>Finalizing your answers.</p>
+            <p className="text-slate-500 dark:text-slate-400 text-center">Please stay on this page.<br />Finalizing your answers.</p>
           </div>
         </div>
       )}
