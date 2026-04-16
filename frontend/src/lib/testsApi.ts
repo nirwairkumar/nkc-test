@@ -65,12 +65,13 @@ export interface TestSettings {
     attempt_limit?: number; // 1 for single attempt
     strict_timer?: boolean; // Server-side time validation
     allow_flexible_timer?: boolean; // Let user disable timer
-    tab_switch_mode?: 'warming' | 'strict' | 'off'; // 2 warning then submit, or instant submit
+    tab_switch_mode?: 'warming' | 'strict' | 'on' | 'off'; // 'on' = detect, 'off' = ignore, legacy: 'warming'/'strict'
     disable_copy_paste?: boolean;
     disable_actions?: boolean; // Right click, etc
     force_fullscreen?: boolean;
     shuffle_questions?: boolean;
     show_results_immediate?: boolean;
+    violation_limit?: number | null; // null = warn only, number = auto-submit after N violations
     schedule?: {
         enabled: boolean;
         start_time?: string;

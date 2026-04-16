@@ -196,59 +196,100 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const renderProctoring = (mode: string) => (
         <div className="space-y-6">
             <div className="space-y-4">
-                <div className="flex items-center justify-between border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                    <div className="space-y-0.5">
-                        <Label className="text-base flex items-center gap-2"><Maximize className="w-4 h-4 text-blue-500" /> Force Full Screen</Label>
-                        <p className="text-sm text-muted-foreground">User must enter full screen to start. Exiting triggers a warning.</p>
-                    </div>
-                    <Switch
-                        checked={settings.force_fullscreen}
-                        onCheckedChange={(c) => updateSetting('force_fullscreen', c)}
-                    />
-                </div>
+                {/* Unified Monitoring & Violations Card */}
+                <div className="flex flex-col gap-4 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monitoring</p>
 
-                <div className="flex flex-col gap-3 border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
+                    {/* Force Fullscreen Toggle */}
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-base flex items-center gap-2"><Maximize className="w-4 h-4 text-blue-500" /> Force Full Screen</Label>
+                            <p className="text-sm text-muted-foreground">User must enter full screen to start. Exiting counts as a violation.</p>
+                        </div>
+                        <Switch
+                            checked={settings.force_fullscreen}
+                            onCheckedChange={(c) => updateSetting('force_fullscreen', c)}
+                        />
+                    </div>
+
+                    <hr className="border-slate-200 dark:border-slate-700" />
+
+                    {/* Tab Switch Detection Toggle */}
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Tab Switch Detection</Label>
                             <p className="text-sm text-muted-foreground">Detect if user switches tabs or minimizes browser.</p>
                         </div>
+                        <Switch
+                            checked={settings.tab_switch_mode !== 'off'}
+                            onCheckedChange={(c) => updateSetting('tab_switch_mode', c ? 'on' : 'off')}
+                        />
                     </div>
-                    <div className="flex gap-4 pt-2 flex-wrap">
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="radio"
-                                id={`ts_off_${mode}`}
-                                name={`tab_switch_${mode}`}
-                                checked={settings.tab_switch_mode === 'off'}
-                                onChange={() => updateSetting('tab_switch_mode', 'off')}
-                                className="accent-primary"
-                            />
-                            <Label htmlFor={`ts_off_${mode}`} className="font-normal cursor-pointer">Off (Allowed)</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="radio"
-                                id={`ts_warn_${mode}`}
-                                name={`tab_switch_${mode}`}
-                                checked={settings.tab_switch_mode === 'warming'}
-                                onChange={() => updateSetting('tab_switch_mode', 'warming')}
-                                className="accent-primary"
-                            />
-                            <Label htmlFor={`ts_warn_${mode}`} className="font-normal cursor-pointer">2 warning then Submit</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="radio"
-                                id={`ts_strict_${mode}`}
-                                name={`tab_switch_${mode}`}
-                                checked={settings.tab_switch_mode === 'strict'}
-                                onChange={() => updateSetting('tab_switch_mode', 'strict')}
-                                className="accent-red-500"
-                            />
-                            <Label htmlFor={`ts_strict_${mode}`} className="font-normal cursor-pointer text-red-600">Strict (Instant Submit)</Label>
-                        </div>
-                    </div>
+
+                    {/* Violation Limit (only shown if at least one monitoring feature is on) */}
+                    {(settings.force_fullscreen || settings.tab_switch_mode !== 'off') && (
+                        <>
+                            <hr className="border-slate-200 dark:border-slate-700" />
+                            <div className="space-y-3">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Violation Action</p>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="radio"
+                                            id={`vl_none_${mode}`}
+                                            name={`violation_limit_${mode}`}
+                                            checked={settings.violation_limit === null || settings.violation_limit === undefined}
+                                            onChange={() => updateSetting('violation_limit', null)}
+                                            className="accent-primary"
+                                        />
+                                        <Label htmlFor={`vl_none_${mode}`} className="font-normal cursor-pointer">No limit (Warn only)</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="radio"
+                                            id={`vl_strict_${mode}`}
+                                            name={`violation_limit_${mode}`}
+                                            checked={settings.violation_limit === 0}
+                                            onChange={() => updateSetting('violation_limit', 0)}
+                                            className="accent-red-500"
+                                        />
+                                        <Label htmlFor={`vl_strict_${mode}`} className="font-normal cursor-pointer text-red-600">Strict (Instant Submit)</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <input
+                                            type="radio"
+                                            id={`vl_count_${mode}`}
+                                            name={`violation_limit_${mode}`}
+                                            checked={typeof settings.violation_limit === 'number' && settings.violation_limit > 0}
+                                            onChange={() => updateSetting('violation_limit', (settings.violation_limit && settings.violation_limit > 0) ? settings.violation_limit : 2)}
+                                            className="accent-primary"
+                                        />
+                                        <Label htmlFor={`vl_count_${mode}`} className="font-normal cursor-pointer flex items-center gap-2">
+                                            <Select
+                                                value={String(typeof settings.violation_limit === 'number' && settings.violation_limit > 0 ? settings.violation_limit : 2)}
+                                                onValueChange={(val) => updateSetting('violation_limit', Number(val))}
+                                                disabled={!(typeof settings.violation_limit === 'number' && settings.violation_limit > 0)}
+                                            >
+                                                <SelectTrigger className="w-16 h-8">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="2">2</SelectItem>
+                                                    <SelectItem value="3">3</SelectItem>
+                                                    <SelectItem value="4">4</SelectItem>
+                                                    <SelectItem value="5">5</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <span>warnings then Submit</span>
+                                        </Label>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground italic">
+                                    Both fullscreen exits and tab switches count toward this limit.
+                                </p>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -264,7 +305,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     </div>
                     <div className="flex items-center justify-between border p-4 rounded-lg">
                         <div className="space-y-0.5">
-                            <Label>Disable Right Match</Label>
+                            <Label>Disable Right Click</Label>
                             <p className="text-xs text-muted-foreground">Prevent context menu</p>
                         </div>
                         <Switch

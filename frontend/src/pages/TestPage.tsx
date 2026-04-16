@@ -391,7 +391,7 @@ export default function TestPage() {
       localStorage.setItem(`test_warnings_${user.id}_${test.id}`, warnings.toString());
     }
   }, [warnings, test?.id, user?.id]);
-  const MAX_WARNINGS = 2; // Auto-submit on 3rd violation
+  const MAX_WARNINGS = test?.settings?.violation_limit || null; // null = no auto-submit (warn only)
 
   // Proctoring: Full Screen & Tab Switching & Action Blocking
   useEffect(() => {
@@ -424,7 +424,7 @@ export default function TestPage() {
       document.addEventListener('paste', handleCopyPaste);
     }
 
-    // 2. Tab Swithcing / Visibility
+    // 2. Tab Switching / Visibility
     const handleVisibilityChange = () => {
       if (document.hidden && settings.tab_switch_mode !== 'off') {
         handleViolation("Tab Switching / Navigation");
@@ -493,23 +493,27 @@ export default function TestPage() {
       document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
       window.removeEventListener('resize', handleFullScreenChange);
     };
-  }, [test, isSubmitting, isTimeUp, warnings]); // Re-bind if warnings change? No, better handleViolation internally
+  }, [test, isSubmitting, isTimeUp, warnings]);
 
   const handleViolation = (reason: string) => {
     if (!test?.settings) return;
-    const mode = test.settings.tab_switch_mode;
-    const isStrict = mode === 'strict';
 
-    if (isStrict) {
-      toast.error(`Violation Detected: ${reason}. Test Auto-Submitting.`);
-      confirmSubmit(); // Immediate Submit
-    } else if (mode === 'warming') {
+    if (MAX_WARNINGS === null) {
+      // No limit — warn only, never auto-submit
+      setWarnings(prev => prev + 1);
+      toast.warning(`⚠️ Violation: ${reason} is not allowed!`);
+    } else if (MAX_WARNINGS === 0) {
+      // Strict Mode (0 warnings allowed)
+      toast.error(`Strict Mode Violation: ${reason}. Test Auto-Submitting.`);
+      confirmSubmit();
+    } else {
+      // Has a limit (e.g. 2, 3, 4, 5)
       if (warnings >= MAX_WARNINGS) {
         toast.error(`Maximum violations reached (${reason}). Test Auto-Submitting.`);
         confirmSubmit();
       } else {
         setWarnings(prev => prev + 1);
-        toast.warning(`Warning ${warnings + 1}/${MAX_WARNINGS + 1}: ${reason} is not allowed!`);
+        toast.warning(`Warning ${warnings + 1}/${MAX_WARNINGS}: ${reason} is not allowed!`);
       }
     }
 
