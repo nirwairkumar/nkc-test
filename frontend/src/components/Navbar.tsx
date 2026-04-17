@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, BookOpen, ChartSpline, Wrench } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench } from 'lucide-react';
 import NotificationBox from './NotificationBox';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
