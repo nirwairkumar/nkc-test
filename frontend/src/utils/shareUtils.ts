@@ -1,5 +1,6 @@
 export const shareTest = async (test: any) => {
-    const url = `${window.location.origin}/test/${test.id}`;
+    const testPath = test.slug || test.id;
+    const url = `${window.location.origin}/test/${testPath}`;
 
     const message = `Try this test "${test.title}" on Testoza 🚀
 
@@ -14,7 +15,6 @@ https://www.testoza.com`;
             await navigator.share({
                 title: test.title,
                 text: message,
-                url,
             });
         } else {
             await navigator.clipboard.writeText(url);
@@ -33,7 +33,7 @@ export const shareResultWhatsApp = (test: any, score: number | string, totalMark
 My Score: ${score}/${totalMarks}
 
 Try it here:
-${window.location.origin}/test/${test.id}
+${window.location.origin}/test/${test.slug || test.id}
 
 Powered by Testoza
 https://www.testoza.com`;
@@ -74,7 +74,7 @@ export const shareResultImage = async (test: any, score: number | string, totalM
 Can you beat my score?
 
 Try here:
-${window.location.origin}/test/${test.id}
+${window.location.origin}/test/${test.slug || test.id}
 
 Powered by Testoza
 https://www.testoza.com`;
@@ -103,7 +103,8 @@ export const shareToFacebook = (url: string) => {
 };
 
 export const shareWithFriends = async (test: any, score: number | string, totalMarks: number | string) => {
-    const url = `${window.location.origin}/test/${test.id}`;
+    const testPath = test.slug || test.id;
+    const url = `${window.location.origin}/test/${testPath}`;
 
     const message = `I scored ${score}/${totalMarks} in "${test.title}" on Testoza 🚀
 
@@ -120,7 +121,6 @@ https://www.testoza.com`;
             await navigator.share({
                 title: "My Test Result",
                 text: message,
-                url,
             });
         } else {
             await navigator.clipboard.writeText(message);

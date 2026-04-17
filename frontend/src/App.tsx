@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
@@ -50,6 +50,13 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+
+// SEO Redirect Component for Legacy Links
+const TestIntroLegacyRedirect = () => {
+  const { id } = useParams();
+  return <Navigate to={`/test/${id}`} replace />;
+};
+
 const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
 const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
@@ -166,7 +173,7 @@ const App = () => (
                     {/* SEO & Test Routes */}
                     <Route
                       path="/test-intro/:id"
-                      element={<TestIntroPage />}
+                      element={<TestIntroLegacyRedirect />}
                     />
                     <Route
                       path="/test/:slug"

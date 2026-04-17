@@ -517,7 +517,7 @@ export default function TestIntroPage() {
                 title={test.title}
                 description={test.description || `${test.title} - Free Online Mock Test with ${test.questions?.length} questions. Start practicing now on TestoZa.`}
                 image={test.og_image} // Fallback handled in component
-                url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
+                url={`${window.location.origin}/test/${test.slug || test.id}`}
                 categories={[...(test.tags || []), ...(test.custom_category ? [test.custom_category] : [])]}
                 keywords={[
                     ...(test.tags || []),
@@ -534,7 +534,7 @@ export default function TestIntroPage() {
                         "@type": "Quiz",
                         "name": test.title,
                         "description": test.description || `Online Mock Test for ${test.title}`,
-                        "url": `${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`,
+                        "url": `${window.location.origin}/test/${test.slug || test.id}`,
                         "educationLevel": "Intermediate",
                         "datePublished": test.created_at,
                         "dateModified": test.updated_at || test.created_at,

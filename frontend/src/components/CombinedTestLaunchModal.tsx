@@ -90,14 +90,16 @@ export default function CombinedTestLaunchModal({ session, open, onClose }: Comb
 
     const handleStartP1 = () => {
         onClose();
-        const id = session.test1?.id || session.test1_id;
-        if (id) navigate(`/test-intro/${id}`);
+        const test = session.test1;
+        const identifier = test?.slug || test?.id || session.test1_id;
+        if (identifier) navigate(`/test/${identifier}`);
     };
 
     const handleStartP2 = () => {
         onClose();
-        const id = session.test2?.id || session.test2_id;
-        if (id) navigate(`/test-intro/${id}`);
+        const test = session.test2;
+        const identifier = test?.slug || test?.id || session.test2_id;
+        if (identifier) navigate(`/test/${identifier}`);
     };
 
     const handleStartCombined = () => {

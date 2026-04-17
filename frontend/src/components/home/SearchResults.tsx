@@ -262,13 +262,13 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
                                         <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => navigate(`/edit-test/${test.id}`)}>
                                             <Edit className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Edit</span>
                                         </Button>
-                                        <Button size="sm" className="flex-1 h-8 px-3" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                                        <Button size="sm" className="flex-1 h-8 px-3" onClick={() => navigate(`/test/${test.slug || test.id}`)}>
                                             Open <ArrowRight className="ml-2 h-3 w-3" />
                                         </Button>
                                     </div>
                                 ) : (
                                     <div className="flex-1">
-                                        <Button size="sm" className="w-full h-8 text-sm" onClick={() => navigate(`/test-intro/${test.id}`)}>
+                                        <Button size="sm" className="w-full h-8 text-sm" onClick={() => navigate(`/test/${test.slug || test.id}`)}>
                                             Open <ArrowRight className="ml-2 h-3 w-3" />
                                         </Button>
                                     </div>
