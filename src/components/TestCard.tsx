@@ -343,13 +343,13 @@ export default function TestCard({
                         <Button variant="outline" size="sm" className="h-9 px-3 bg-white dark:bg-slate-800 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all font-medium" onClick={() => navigate(`/edit-test/${test.id}`)}>
                             <Edit className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Edit</span>
                         </Button>
-                        <Button size="sm" className={`h-9 px-4 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                        <Button size="sm" className={`h-9 px-4 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test/${test.slug || test.id}`)}>
                             {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </div>
                 ) : (
                     <div className="flex-1 max-w-[140px] ml-auto">
-                        <Button size="sm" className={`w-full h-9 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                        <Button size="sm" className={`w-full h-9 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test/${test.slug || test.id}`)}>
                             {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </div>

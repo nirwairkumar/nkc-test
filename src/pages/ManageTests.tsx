@@ -944,7 +944,7 @@ export default function ManageTests() {
                                                 <Button
                                                     size="sm"
                                                     className="h-8 text-xs font-medium px-5 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-300 rounded-md"
-                                                    onClick={() => navigate(`/test-intro/${test.id}`)}
+                                                    onClick={() => navigate(`/test/${test.slug || test.id}`)}
                                                 >
                                                     View
                                                 </Button>

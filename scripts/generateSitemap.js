@@ -57,7 +57,7 @@ async function generateSitemap() {
 
             allTests.forEach(test => {
                 const lastMod = test.updated_at || test.created_at;
-                const url = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
+                const url = `/test/${test.slug || test.id}`;
 
                 // Prioritize JEE content
                 const isJEE = test.title?.toUpperCase().includes('JEE');
