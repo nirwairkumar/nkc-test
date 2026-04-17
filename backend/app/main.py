@@ -102,6 +102,10 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"]
 from app.routers import posts
 app.include_router(posts.router, prefix="/api/posts", tags=["Posts"])
 
+from app.routers import features
+app.include_router(features.router, prefix="/api/features", tags=["Features"])
+
+
 from app.routers import solutions
 app.include_router(solutions.router, prefix="/api/tests", tags=["Solutions"])
 

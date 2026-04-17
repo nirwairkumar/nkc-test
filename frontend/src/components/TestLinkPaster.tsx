@@ -19,7 +19,7 @@ export default function TestLinkPaster() {
         if (trimmedId) {
             // Remove '#' if present
             trimmedId = trimmedId.replace(/^#/, '');
-            navigate(`/test/${trimmedId}`);
+            navigate(`/test-intro/${trimmedId}`);
             return;
         }
 
@@ -29,8 +29,8 @@ export default function TestLinkPaster() {
                 // Check if it's a full URL
                 const url = new URL(trimmedLink);
 
-                // Allow /test, /live routes
-                if (url.pathname.match(/^\/(test|live)\//)) {
+                // Allow /test, /live, /test-intro routes
+                if (url.pathname.match(/^\/(test|live|test-intro)\//)) {
                     navigate(url.pathname + url.search);
                     return;
                 }
@@ -39,7 +39,7 @@ export default function TestLinkPaster() {
                 const pathSegments = url.pathname.split('/').filter(Boolean);
                 if (pathSegments.length > 0) {
                     const potentialId = pathSegments[pathSegments.length - 1];
-                    navigate(`/test/${potentialId}`);
+                    navigate(`/test-intro/${potentialId}`);
                     return;
                 }
 
@@ -49,12 +49,12 @@ export default function TestLinkPaster() {
                 const cleanInput = trimmedLink.replace(/^#/, '');
                 // Basic check to see if it looks like an ID (no spaces)
                 if (!cleanInput.includes(' ')) {
-                    navigate(`/test/${cleanInput}`);
+                    navigate(`/test-intro/${cleanInput}`);
                     return;
                 }
             }
             // Fallback if parsing failed but we have input
-            navigate(`/test/${trimmedLink.replace(/^#/, '')}`);
+            navigate(`/test-intro/${trimmedLink.replace(/^#/, '')}`);
             return;
         }
 

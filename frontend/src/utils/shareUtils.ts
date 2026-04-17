@@ -1,13 +1,19 @@
 export const shareTest = async (test: any) => {
-    const testPath = test.slug || test.id;
-    const url = `${window.location.origin}/test/${testPath}`;
+    const slugUrl = test.slug ? `${window.location.origin}/test/${test.slug}` : null;
+    const idUrl = `${window.location.origin}/test-intro/${test.id}`;
+    const primaryUrl = slugUrl || idUrl;
 
-    const message = `Try this test "${test.title}" on Testoza 🚀
+    let message = `Try this test "${test.title}" on Testoza 🚀
 
 Practice now:
-${url}
+${primaryUrl}`;
 
-Powered by Testoza
+    if (slugUrl) {
+        message += `\n\nIf above link doesn't work, use this:
+${idUrl}`;
+    }
+
+    message += `\n\nPowered by Testoza
 https://www.testoza.com`;
 
     try {
@@ -17,7 +23,7 @@ https://www.testoza.com`;
                 text: message,
             });
         } else {
-            await navigator.clipboard.writeText(url);
+            await navigator.clipboard.writeText(primaryUrl);
             if (typeof window !== "undefined" && (window as any).toast) {
                 (window as any).toast.success("Link copied!");
             }
@@ -28,14 +34,23 @@ https://www.testoza.com`;
 };
 
 export const shareResultWhatsApp = (test: any, score: number | string, totalMarks: number | string) => {
-    const message = `I just completed "${test.title}" on Testoza 🚀
+    const slugUrl = test.slug ? `${window.location.origin}/test/${test.slug}` : null;
+    const idUrl = `${window.location.origin}/test-intro/${test.id}`;
+    const primaryUrl = slugUrl || idUrl;
+
+    let message = `I just completed "${test.title}" on Testoza 🚀
 
 My Score: ${score}/${totalMarks}
 
 Try it here:
-${window.location.origin}/test/${test.slug || test.id}
+${primaryUrl}`;
 
-Powered by Testoza
+    if (slugUrl) {
+        message += `\n\nIf above link doesn't work:
+${idUrl}`;
+    }
+
+    message += `\n\nPowered by Testoza
 https://www.testoza.com`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -69,14 +84,23 @@ export const shareResultImage = async (test: any, score: number | string, totalM
         .then((res) => res.blob())
         .then((blob) => new File([blob], "testoza-result.png", { type: "image/png" }));
 
-    const text = `I scored ${score}/${totalMarks} in "${test.title}" on Testoza 🚀
+    const slugUrl = test.slug ? `${window.location.origin}/test/${test.slug}` : null;
+    const idUrl = `${window.location.origin}/test-intro/${test.id}`;
+    const primaryUrl = slugUrl || idUrl;
+
+    let text = `I scored ${score}/${totalMarks} in "${test.title}" on Testoza 🚀
 
 Can you beat my score?
 
 Try here:
-${window.location.origin}/test/${test.slug || test.id}
+${primaryUrl}`;
 
-Powered by Testoza
+    if (slugUrl) {
+        text += `\n\nIf above link doesn't work:
+${idUrl}`;
+    }
+
+    text += `\n\nPowered by Testoza
 https://www.testoza.com`;
 
     try {
@@ -103,17 +127,23 @@ export const shareToFacebook = (url: string) => {
 };
 
 export const shareWithFriends = async (test: any, score: number | string, totalMarks: number | string) => {
-    const testPath = test.slug || test.id;
-    const url = `${window.location.origin}/test/${testPath}`;
+    const slugUrl = test.slug ? `${window.location.origin}/test/${test.slug}` : null;
+    const idUrl = `${window.location.origin}/test-intro/${test.id}`;
+    const primaryUrl = slugUrl || idUrl;
 
-    const message = `I scored ${score}/${totalMarks} in "${test.title}" on Testoza 🚀
+    let message = `I scored ${score}/${totalMarks} in "${test.title}" on Testoza 🚀
 
 Can you beat my score?
 
 Try here:
-${url}
+${primaryUrl}`;
 
-Powered by Testoza
+    if (slugUrl) {
+        message += `\n\nIf above link doesn't work:
+${idUrl}`;
+    }
+
+    message += `\n\nPowered by Testoza
 https://www.testoza.com`;
 
     try {

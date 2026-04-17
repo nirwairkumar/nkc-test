@@ -77,7 +77,7 @@ export default function TestFeed({ user, onManageTest }: { user: any, onManageTe
 
     const handleShare = (e: React.MouseEvent, testId: string) => {
         e.stopPropagation();
-        const url = `${window.location.origin}/test/${testId}`;
+        const url = `${window.location.origin}/test-intro/${testId}`;
         navigator.clipboard.writeText(url);
         toast.success("Test link copied!");
     };

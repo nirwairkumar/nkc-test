@@ -18,7 +18,6 @@ from functools import lru_cache
 import asyncio
 from redis import Redis
 import aioredis
-from app.database import get_db
 
 router = APIRouter(prefix="/sitemap", tags=["sitemap"])
 
@@ -311,7 +310,7 @@ async def get_tests_sitemap(
     urls = []
     for test in tests:
         # Use slug if available, otherwise ID-based URL
-        url_path = f"/test/{test['slug'] or test['id']}"
+        url_path = f"/test/{test['slug']}" if test.get('slug') else f"/test-intro/{test['id']}"
         
         # Use updated_at if available, otherwise created_at
         lastmod = test.get('updated_at') or test.get('created_at')

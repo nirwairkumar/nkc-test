@@ -872,7 +872,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     f.follower_id,
                                     `New Test: ${title}`,
                                     `${user.user_metadata?.full_name || 'A creator'} published a new test.`,
-                                    `/test/${data.slug || data.id}`
+                                    `/test-intro/${data.id}`
                                 )
                             );
                             await Promise.all(notifications);

@@ -153,7 +153,7 @@ export default function CombinedTestCard({ session, user }: CombinedTestCardProp
                                 {test1 && (
                                     <button
                                         className="mt-2 w-full text-[10px] font-bold text-violet-600 dark:text-violet-400 hover:text-violet-800 flex items-center justify-center gap-1 py-1 rounded-lg hover:bg-violet-100/50 transition-colors"
-                                        onClick={(e) => { e.stopPropagation(); navigate(`/test/${test1.slug || test1.id}`); }}
+                                        onClick={(e) => { e.stopPropagation(); navigate(`/test-intro/${test1.id}`); }}
                                     >
                                         Start separately <ChevronRight className="w-3 h-3" />
                                     </button>
@@ -186,7 +186,7 @@ export default function CombinedTestCard({ session, user }: CombinedTestCardProp
                                 {test2 && (
                                     <button
                                         className="mt-2 w-full text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 flex items-center justify-center gap-1 py-1 rounded-lg hover:bg-blue-100/50 transition-colors"
-                                        onClick={(e) => { e.stopPropagation(); navigate(`/test/${test2.slug || test2.id}`); }}
+                                        onClick={(e) => { e.stopPropagation(); navigate(`/test-intro/${test2.id}`); }}
                                     >
                                         Start separately <ChevronRight className="w-3 h-3" />
                                     </button>

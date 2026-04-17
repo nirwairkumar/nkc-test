@@ -28,6 +28,7 @@ import { Progress } from '@/components/ui/progress';
 import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/testsApi';
 // import { Helmet } from 'react-helmet-async'; // Replaced by SEO component
 import { SEO } from '@/components/SEO';
+import { fetchFeatureFlags } from '@/lib/featuresApi';
 import { SEOContent } from '@/components/SEOContent';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -119,6 +120,7 @@ export default function TestIntroPage() {
     const [showAuthWarning, setShowAuthWarning] = useState(false);
     const [hasSolutions, setHasSolutions] = useState(false);
     const [isAuthLoading, setIsAuthLoading] = useState(false);
+    const [enableAnonymousTests, setEnableAnonymousTests] = useState(false);
 
     // Logic Functions
     const checkPermissions = async () => {
@@ -245,12 +247,16 @@ export default function TestIntroPage() {
         }
     };
 
-    // 1. Authentication Check
+    // 1. Authentication Check & Feature Flags
     useEffect(() => {
         if (!authLoading && !user) {
             // Optional: Redirect to login logic if required
         }
     }, [user, authLoading]);
+
+    useEffect(() => {
+        fetchFeatureFlags().then(flags => setEnableAnonymousTests(flags.enable_anonymous_tests));
+    }, []);
 
     // 2. Load Test Data
     useEffect(() => {
@@ -517,7 +523,7 @@ export default function TestIntroPage() {
                 title={test.title}
                 description={test.description || `${test.title} - Free Online Mock Test with ${test.questions?.length} questions. Start practicing now on TestoZa.`}
                 image={test.og_image} // Fallback handled in component
-                url={`${window.location.origin}/test/${test.slug || test.id}`}
+                url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
                 categories={[...(test.tags || []), ...(test.custom_category ? [test.custom_category] : [])]}
                 keywords={[
                     ...(test.tags || []),
@@ -534,7 +540,7 @@ export default function TestIntroPage() {
                         "@type": "Quiz",
                         "name": test.title,
                         "description": test.description || `Online Mock Test for ${test.title}`,
-                        "url": `${window.location.origin}/test/${test.slug || test.id}`,
+                        "url": `${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`,
                         "educationLevel": "Intermediate",
                         "datePublished": test.created_at,
                         "dateModified": test.updated_at || test.created_at,
@@ -884,19 +890,23 @@ export default function TestIntroPage() {
                             <Button variant="outline" className="w-full" onClick={() => navigate('/login', { state: { isSignup: true, from: location.pathname } })}>
                                 Create Account
                             </Button>
-                            <div className="relative my-2">
-                                <div className="absolute inset-0 flex items-center">
-                                    <span className="w-full border-t" />
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-background px-2 text-muted-foreground">
-                                        Or
-                                    </span>
-                                </div>
-                            </div>
-                            <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleAnonymousContinue}>
-                                Continue Anonymously
-                            </Button>
+                            {enableAnonymousTests && (
+                                <>
+                                    <div className="relative my-2">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <span className="w-full border-t" />
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-background px-2 text-muted-foreground">
+                                                Or
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleAnonymousContinue}>
+                                        Continue Anonymously
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </DialogContent>

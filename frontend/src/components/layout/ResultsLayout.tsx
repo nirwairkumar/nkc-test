@@ -115,7 +115,7 @@ export default function ResultsLayout() {
 
                 {currentTestId && (
                     <NavLink
-                        to={`${basePath}/solutions/${stateData?.test?.slug || currentTestId}`}
+                        to={`${basePath}/solutions/${currentTestId}`}
                         state={stateData}
                         className={({ isActive }) => getLinkStyle(isActive)}
                         onClick={onItemClick}
@@ -146,7 +146,7 @@ export default function ResultsLayout() {
 
                 {currentTestId && (
                     <NavLink
-                        to={`${basePath}/feedback/${stateData?.test?.slug || currentTestId}`}
+                        to={`${basePath}/feedback/${currentTestId}`}
                         state={stateData}
                         className={({ isActive }) => getLinkStyle(isActive)}
                         id="left-menu-feedback-btn"
@@ -204,7 +204,7 @@ export default function ResultsLayout() {
                     className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
                     onClick={() => {
                         const test = stateData?.test || { id: currentTestId, title: "Test" };
-                        const url = `${window.location.origin}/test/${test.slug || test.id}`;
+                        const url = `${window.location.origin}/test/${test.id}`;
                         shareToFacebook(url);
                     }}
                 >
@@ -219,7 +219,7 @@ export default function ResultsLayout() {
                         const test = stateData?.test || { id: currentTestId, title: "Test" };
                         const score = stateData?.score || 0;
                         const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                        const url = `${window.location.origin}/test/${test.slug || test.id}`;
+                        const url = `${window.location.origin}/test/${test.id}`;
                         const title = `I scored ${score}/${totalMarks} in "${test.title}"!`;
                         shareToReddit(url, title);
                     }}
@@ -346,8 +346,7 @@ export default function ResultsLayout() {
                             onClick={() => {
                                 if (currentTestId) {
                                     resetTest();
-                                    const test = stateData?.test || { id: currentTestId };
-                                    navigate(`/test/${test.slug || test.id}`);
+                                    navigate(`/test/${currentTestId}`);
                                 } else {
                                     navigate('/');
                                 }

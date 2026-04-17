@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
@@ -33,6 +33,7 @@ const AdminMigration = lazy(() => import("./pages/AdminMigration"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminPricing = lazy(() => import("./pages/AdminPricing"));
 const AdminPromoCodes = lazy(() => import("./pages/AdminPromoCodes"));
+const AdminFeatureControl = lazy(() => import("./pages/AdminFeatureControl"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 const ManageTests = lazy(() => import("./pages/ManageTests"));
@@ -50,13 +51,6 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-
-// SEO Redirect Component for Legacy Links
-const TestIntroLegacyRedirect = () => {
-  const { id } = useParams();
-  return <Navigate to={`/test/${id}`} replace />;
-};
-
 const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
 const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
@@ -126,6 +120,14 @@ const App = () => (
                     <Route path="/admin-login" element={<AdminLogin />} />
                     <Route path="/admin-pricing" element={<AdminPricing />} />
                     <Route path="/admin-promo-codes" element={<AdminPromoCodes />} />
+                    <Route 
+                      path="/admin-features" 
+                      element={
+                        <PrivateRoute>
+                          <AdminFeatureControl />
+                        </PrivateRoute>
+                      } 
+                    />
                     <Route
                       path="/admin/analytics"
                       element={
@@ -173,7 +175,7 @@ const App = () => (
                     {/* SEO & Test Routes */}
                     <Route
                       path="/test-intro/:id"
-                      element={<TestIntroLegacyRedirect />}
+                      element={<TestIntroPage />}
                     />
                     <Route
                       path="/test/:slug"

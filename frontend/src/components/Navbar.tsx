@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, BookOpen, ChartSpline } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, BookOpen, ChartSpline, Wrench } from 'lucide-react';
 import NotificationBox from './NotificationBox';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
@@ -274,6 +274,10 @@ export default function Navbar() {
                                             <DropdownMenuItem onClick={() => navigate('/admin-pricing')}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>Manage Pricing</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => navigate('/admin-features')}>
+                                                <Wrench className="mr-2 h-4 w-4" />
+                                                <span>Feature Control</span>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => navigate('/admin-promo-codes')}>
                                                 <TicketPercent className="mr-2 h-4 w-4" />

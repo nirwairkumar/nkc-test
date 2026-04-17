@@ -209,13 +209,13 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                         <Button variant="outline" size="sm" className="h-8 px-2" onClick={() => navigate(`/edit-test/${test.id}`)}>
                             <Edit className="h-4 w-4 mr-1.5" /><span className="hidden sm:inline">Edit</span>
                         </Button>
-                        <Button size="sm" className={`flex-1 h-8 px-3 ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test/${test.slug || test.id}`)}>
+                        <Button size="sm" className={`flex-1 h-8 px-3 ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
                             {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-3 w-3" />
                         </Button>
                     </div>
                 ) : (
                     <div className="flex-1">
-                        <Button size="sm" className={`w-full h-8 text-sm ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test/${test.slug || test.id}`)}>
+                        <Button size="sm" className={`w-full h-8 text-sm ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
                             {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-3 w-3" />
                         </Button>
                     </div>
