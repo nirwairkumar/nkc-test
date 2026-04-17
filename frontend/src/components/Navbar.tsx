@@ -166,7 +166,7 @@ export default function Navbar() {
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => navigate('/user-guide')}>
-                                        <BookOpen className="mr-2 h-4 w-4 text-indigo-600" />
+                                        <Book className="mr-2 h-4 w-4 text-indigo-600" />
                                         <span>User Guide</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
@@ -303,7 +303,7 @@ export default function Navbar() {
 
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => navigate('/user-guide')}>
-                                        <BookOpen className="mr-2 h-4 w-4 text-indigo-600" />
+                                        <Book className="mr-2 h-4 w-4 text-indigo-600" />
                                         <span>User Guide</span>
                                     </DropdownMenuItem>
 
