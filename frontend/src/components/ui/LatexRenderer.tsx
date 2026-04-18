@@ -1,8 +1,17 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo, useState, useRef } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import 'katex/dist/contrib/mhchem'; // Registers \ce{} and \pu{} on this katex instance
 import { cn } from '@/lib/utils';
+import { Maximize2 } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
 
 interface LatexRendererProps {
     children: string;
@@ -14,11 +23,15 @@ interface LatexRendererProps {
  * so that the mhchem extension is properly registered.
  */
 const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) => {
+    const [maximizedTable, setMaximizedTable] = useState<string | null>(null);
+    const tableDataRef = useRef<Record<string, string>>({});
+
     const rendered = useMemo(() => {
         if (!children) return '';
 
         try {
             let result = children;
+            tableDataRef.current = {}; // Clear previous table data
 
             // Image map for placeholders
             const imageMap: Record<string, { src: string; alt: string }> = {};
@@ -47,7 +60,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 return out;
             };
 
-            const renderSingleLatexArray = (matchStr: string): string => {
+            const renderSingleLatexArray = (matchStr: string, tableId: string): string => {
                 const arrayRegex = /\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/;
                 const match = matchStr.match(arrayRegex);
                 if (!match) return matchStr;
@@ -73,7 +86,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 }
                 const hasRightBorder = nextHasBorder;
 
-                let tableHtml = '<table style="border-collapse: collapse; width: auto; margin: 1rem auto; font-family: inherit; line-height: 1.5;">';
+                let tableHtml = '<table>';
 
                 rows.forEach((row, rowIndex) => {
                     const hasHline = row.includes('\\hline');
@@ -103,7 +116,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                             renderedCell = cell.trim();
                         }
 
-                        tableHtml += `<td style="padding: 1rem; text-align: ${align}; border-left: ${bLeft}; border-right: ${bRight}; vertical-align: middle; min-width: max-content;">${swapPlaceholders(renderedCell)}</td>`;
+                        tableHtml += `<td style="text-align: ${align}; border-left: ${bLeft}; border-right: ${bRight}; vertical-align: middle; min-width: max-content;">${swapPlaceholders(renderedCell)}</td>`;
                     });
                     tableHtml += '</tr>';
                 });
@@ -114,7 +127,21 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 }
 
                 tableHtml += '</table>';
-                return tableHtml;
+
+                // Wrap table with interactive controls
+                const wrappedHtml = `
+                    <div class="table-wrapper">
+                        <button class="table-maximize-btn" data-table-id="${tableId}" title="Full Screen View">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize-2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        </button>
+                        <div class="overflow-x-auto">
+                            ${tableHtml}
+                        </div>
+                    </div>
+                `;
+
+                tableDataRef.current[tableId] = tableHtml;
+                return wrappedHtml;
             };
 
             const processMathBlock = (tex: string, displayMode: boolean): string => {
@@ -125,8 +152,9 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                     const arrayMap: Record<string, string> = {};
 
                     const texWithoutArrays = safeTex.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
+                        const tableId = `TABLE_${Math.random().toString(36).substr(2, 9)}`;
                         const key = `ARRAYPH${arrayIndex++}`;
-                        arrayMap[key] = renderSingleLatexArray(matchStr);
+                        arrayMap[key] = renderSingleLatexArray(matchStr, tableId);
                         return `\\text{${key}}`;
                     });
 
@@ -160,10 +188,11 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
                 result = result.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
                     const safeMatch = extractImagesFromTex(matchStr);
-                    const tableHtml = renderSingleLatexArray(safeMatch);
+                    const tableId = `TABLE_FB_${Math.random().toString(36).substr(2, 9)}`;
+                    const tableHtml = renderSingleLatexArray(safeMatch, tableId);
                     const key = `ARRAYPHFB${arrayIndex++}`;
                     arrayMap[key] = tableHtml;
-                    return key; // Here we are outside math mode, just use direct string replacement
+                    return key;
                 });
 
                 result = swapPlaceholders(result);
@@ -181,10 +210,41 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
         }
     }, [children]);
 
+    const handleContainerClick = (e: React.MouseEvent) => {
+        const target = e.target as HTMLElement;
+        const btn = target.closest('.table-maximize-btn') as HTMLElement;
+        if (btn) {
+            const tableId = btn.getAttribute('data-table-id');
+            if (tableId && tableDataRef.current[tableId]) {
+                setMaximizedTable(tableDataRef.current[tableId]);
+            }
+        }
+    };
+
     return (
-        <div className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}>
-            <span dangerouslySetInnerHTML={{ __html: rendered }} />
-        </div>
+        <React.Fragment>
+            <div
+                className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}
+                onClick={handleContainerClick}
+            >
+                <span dangerouslySetInnerHTML={{ __html: rendered }} />
+            </div>
+
+            <Dialog open={!!maximizedTable} onOpenChange={(open) => !open && setMaximizedTable(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-none bg-transparent shadow-none sm:rounded-2xl">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl">
+                        <div className="p-6 overflow-x-auto custom-scrollbar modal-table-content">
+                            {maximizedTable && (
+                                <div
+                                    className="latex-renderer-container"
+                                    dangerouslySetInnerHTML={{ __html: maximizedTable }}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </React.Fragment>
     );
 };
 

@@ -233,6 +233,88 @@ html {
 .latex-renderer-container .katex {
   text-align: left;
 }
+
+/* Enhanced Mobile Table Styles - Ultra-compact for question view */
+.latex-renderer-container table {
+  --table-cell-padding: 0.6rem;
+  --table-font-size: 0.8em;
+  font-size: var(--table-font-size);
+  border-collapse: collapse;
+  width: auto;
+  margin: 0.75rem auto;
+}
+
+@media (max-width: 768px) {
+  .latex-renderer-container table {
+    --table-cell-padding: 0.4rem;
+    --table-font-size: 0.7em;
+    margin: 0.5rem auto;
+  }
+}
+
+.latex-renderer-container table td {
+  padding: var(--table-cell-padding) !important;
+  vertical-align: middle;
+}
+
+/* Maximize Button Styling */
+.table-wrapper {
+  position: relative;
+  margin: 1.5rem 0;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.table-maximize-btn {
+  position: absolute;
+  top: -0.85rem; 
+  right: -0.15rem; /* Moved back to right */
+  left: auto;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  width: 1.2rem; 
+  height: 1.2rem; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6366f1;
+}
+
+.table-maximize-btn:hover {
+  transform: scale(1.2);
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.1); 
+  border-radius: 4px;
+}
+
+.dark .table-maximize-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #818cf8;
+}
+
+.dark .table-maximize-btn:hover {
+  background: #334155;
+}
+
+/* Modal Table Styling */
+.modal-table-content table {
+  width: 100% !important;
+  margin: 0 !important;
+  --table-cell-padding: 1.2rem;
+  --table-font-size: 1.1em;
+}
+
+@media (max-width: 640px) {
+  .modal-table-content table {
+    --table-cell-padding: 0.8rem;
+    --table-font-size: 0.95em;
+  }
+}
+
 /* Dashboard UI Redesign Utilities */
 
 /* Glass Panel Effect */
