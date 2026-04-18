@@ -59,6 +59,7 @@ export interface Test {
         total_max_marks: number;
         section_max_marks?: Record<string, number>;
     };
+    max_attempts_per_question?: number;
 }
 
 export interface TestSettings {

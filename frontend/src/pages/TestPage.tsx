@@ -30,6 +30,7 @@ import { submitReport } from '@/lib/reportsApi';
 import { analyticsApi } from '@/lib/analyticsApi';
 import { Progress } from '@/components/ui/progress';
 import ExitFeedbackDialog from '@/components/ExitFeedbackDialog';
+import VirtualNumericPad from '@/components/test/VirtualNumericPad';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -587,6 +588,20 @@ export default function TestPage() {
   }
 
   const checkAttemptLimit = (questionId: number): boolean => {
+    const isAnswered = answers[questionId] !== undefined && answers[questionId] !== '' && (Array.isArray(answers[questionId]) ? (answers[questionId] as string[]).length > 0 : true);
+    if (!isAnswered && test && test.max_attempts_per_question && test.max_attempts_per_question > 0) {
+      const attemptsCount = test.questions.reduce((acc, q) => {
+        if (answers[q.id] !== undefined && answers[q.id] !== '' && (Array.isArray(answers[q.id]) ? (answers[q.id] as string[]).length > 0 : true)) {
+          return acc + 1;
+        }
+        return acc;
+      }, 0);
+
+      if (attemptsCount >= test.max_attempts_per_question) {
+        toast.error(`Maximum attempt limit of ${test.max_attempts_per_question} questions reached!`);
+        return false;
+      }
+    }
     if (!test || !test.enable_section_mode || !test.sections) return true;
 
     let targetSection: any = null;
@@ -612,6 +627,35 @@ export default function TestPage() {
       }
     }
     return true;
+  };
+
+  const handleNumericKeypadPress = (key: string, questionId: number) => {
+    const currentVal = (answers[questionId] as string) || '';
+    let newVal = currentVal;
+
+    if (key === 'AC') {
+      newVal = '';
+    } else if (key === 'BACKSPACE') {
+      newVal = currentVal.slice(0, -1);
+    } else if (key === '-') {
+      if (currentVal === '') newVal = '-';
+      else if (currentVal.startsWith('-')) newVal = currentVal.slice(1);
+      else newVal = '-' + currentVal;
+    } else if (key === '.') {
+      if (!currentVal.includes('.')) {
+        newVal = currentVal === '' ? '0.' : currentVal + '.';
+      }
+    } else {
+      // Normal numbers
+      newVal = currentVal + key;
+    }
+
+    const isCurrentlyAnswered = currentVal !== '';
+    if (newVal !== '' && !isCurrentlyAnswered) {
+      if (!checkAttemptLimit(questionId)) return;
+    }
+
+    setAnswers(prev => ({ ...prev, [questionId]: newVal }));
   };
 
   const handleAnswerSelect = (questionId: number, optionKey: string) => {
@@ -1731,18 +1775,30 @@ export default function TestPage() {
                     <div className="space-y-4 mt-6">
                       <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
                       {currentQuestion.type === 'numerical' ? (
-                        <div className="max-w-xs">
-                          <Label className="mb-2 block text-slate-600">Your Answer</Label>
-                          <Input
-                            type="number"
-                            step="any"
-                            placeholder="Enter value"
-                            value={answers[currentQuestion.id] || ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
-                            }}
-                            className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12"
+                        <div className="flex flex-col gap-4">
+                          <div className="max-w-xs">
+                            <Label className="mb-2 block text-slate-600">Your Answer</Label>
+                            <Input
+                              type="text"
+                              inputMode="none"
+                              placeholder="Enter value"
+                              value={answers[currentQuestion.id] || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (!/^-?\d*\.?\d*$/.test(val)) return;
+                                const currentAns = answers[currentQuestion.id];
+                                const isCurrentlyAnswered = currentAns !== undefined && currentAns !== '';
+                                if (val !== '' && !isCurrentlyAnswered) {
+                                  if (!checkAttemptLimit(currentQuestion.id)) return;
+                                }
+                                setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+                              }}
+                              className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12 focus-visible:ring-blue-500 font-bold"
+                            />
+                          </div>
+                          <VirtualNumericPad
+                            onKeyPress={(key) => handleNumericKeypadPress(key, currentQuestion.id)}
+                            className="max-w-[280px]"
                           />
                         </div>
                       ) : (
@@ -1905,24 +1961,30 @@ export default function TestPage() {
                   <div className="space-y-4 mt-6">
                     <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
                     {currentQuestion.type === 'numerical' ? (
-                      <div className="max-w-xs">
-                        <Label className="mb-2 block text-slate-600">Your Answer</Label>
-                        <Input
-                          type="number"
-                          step="any"
-                          placeholder="Enter value"
-                          value={answers[currentQuestion.id] || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            const currentAns = answers[currentQuestion.id];
-                            const isCurrentlyAnswered = currentAns !== undefined && currentAns !== '';
-
-                            if (val !== '' && !isCurrentlyAnswered) {
-                              if (!checkAttemptLimit(currentQuestion.id)) return;
-                            }
-                            setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
-                          }}
-                          className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12"
+                      <div className="flex flex-col gap-4">
+                        <div className="max-w-xs">
+                          <Label className="mb-2 block text-slate-600">Your Answer</Label>
+                          <Input
+                            type="text"
+                            inputMode="none"
+                            placeholder="Enter value"
+                            value={answers[currentQuestion.id] || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!/^-?\d*\.?\d*$/.test(val)) return;
+                              const currentAns = answers[currentQuestion.id];
+                              const isCurrentlyAnswered = currentAns !== undefined && currentAns !== '';
+                              if (val !== '' && !isCurrentlyAnswered) {
+                                if (!checkAttemptLimit(currentQuestion.id)) return;
+                              }
+                              setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+                            }}
+                            className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12 focus-visible:ring-blue-500 font-bold"
+                          />
+                        </div>
+                        <VirtualNumericPad
+                          onKeyPress={(key) => handleNumericKeypadPress(key, currentQuestion.id)}
+                          className="max-w-[280px]"
                         />
                       </div>
                     ) : (
