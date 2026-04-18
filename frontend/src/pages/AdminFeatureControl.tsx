@@ -7,7 +7,7 @@ import { Wrench, ShieldAlert, Loader2 } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 
 const AdminFeatureControl = () => {
-    const [flags, setFlags] = useState<FeatureFlags>({ enable_anonymous_tests: false });
+    const [flags, setFlags] = useState<FeatureFlags>({ enable_anonymous_tests: false, enable_ai_test_generation: true, ai_test_generation_notes: "" });
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -36,6 +36,20 @@ const AdminFeatureControl = () => {
             toast.success("Feature updated successfully.");
         } catch (error) {
             toast.error("Failed to update feature.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleTextChange = async (key: keyof FeatureFlags, value: string) => {
+        setIsSaving(true);
+        try {
+            const newFlags = { ...flags, [key]: value };
+            await updateFeatureFlags(newFlags);
+            setFlags(newFlags);
+            toast.success("Notes updated successfully.");
+        } catch (error) {
+            toast.error("Failed to update notes.");
         } finally {
             setIsSaving(false);
         }
@@ -88,6 +102,42 @@ const AdminFeatureControl = () => {
                                     disabled={isSaving}
                                 />
                             </div>
+                        </div>
+
+                        <div className="flex flex-col gap-4 p-4 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors mt-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h3 className="font-medium text-slate-900 dark:text-slate-100">AI Test Generator</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        Enable or disable the "Generate with AI" capability globally.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4 shrink-0">
+                                    {isSaving && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                                    <Switch
+                                        checked={flags.enable_ai_test_generation ?? true}
+                                        onCheckedChange={(checked) => handleToggle('enable_ai_test_generation', checked)}
+                                        disabled={isSaving}
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Notes Textarea (Disabled mode) */}
+                            {!(flags.enable_ai_test_generation ?? true) && (
+                                <div className="mt-2 space-y-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Disable Message / Notes to Users
+                                    </label>
+                                    <textarea
+                                        className="w-full min-h-[80px] p-3 text-sm border rounded-md dark:bg-slate-900 dark:border-slate-800"
+                                        placeholder="e.g. We are currently undergoing maintenance..."
+                                        value={flags.ai_test_generation_notes || ""}
+                                        onChange={(e) => setFlags(prev => ({ ...prev, ai_test_generation_notes: e.target.value }))}
+                                        onBlur={(e) => handleTextChange('ai_test_generation_notes', e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground">This message will be shown to users when they visit the generate-with-ai page while this feature is disabled. Focus away from the text box to save.</p>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

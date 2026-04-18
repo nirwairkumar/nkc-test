@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { Input } from "@/components/ui/input";
 import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -121,6 +122,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [uploadType, setUploadType] = useState<UploadType>(null);
     const [extractionMeta, setExtractionMeta] = useState<{ quality_tier?: string, dpi?: number, warning?: boolean } | null>(null);
+    const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null);
+
+    // Fetch feature flags
+    useEffect(() => {
+        fetchFeatureFlags().then(data => setFeatureFlags(data));
+    }, []);
 
     // ULTRA-FAST Streaming State
     const [isStreaming, setIsStreaming] = useState(false);
@@ -337,6 +344,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleProcess = async (selectedMode: ProcessMode, isContinue: boolean = false) => {
+        if (featureFlags && featureFlags.enable_ai_test_generation === false) {
+            setError(featureFlags.ai_test_generation_notes || "This feature is currently disabled.");
+            return;
+        }
+
         if (files.length === 0 && !isContinue) {
             setError("Please select at least one file first.");
             return;
@@ -956,66 +968,86 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         </Alert>
                     )}
 
-                    <div className="text-center space-y-2">
-                        <h1 className="text-2xl font-bold">How do you want to process {hasImages && hasPDF ? 'these files' : 'this file'}?</h1>
-                        <p className="text-muted-foreground">Choose a mode based on your goal</p>
-                    </div>
+                    {featureFlags && featureFlags.enable_ai_test_generation === false ? (
+                        <div className="mt-8 py-10 flex flex-col items-center justify-center space-y-4 text-center bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-800">
+                            <Sparkles className="w-10 h-10 text-slate-400 mb-2 opacity-50" />
+                            <h3 className="text-xl font-bold">AI Processing Temporarily Disabled</h3>
+                            <p className="text-muted-foreground max-w-lg text-sm">
+                                {featureFlags.ai_test_generation_notes || "This feature is currently disabled by administrators. Please check back later."}
+                            </p>
+                            <div className="flex gap-4 mt-4">
+                                <Button onClick={() => window.location.href = '/create-test'} variant="default">
+                                    Create Manually
+                                </Button>
+                                <Button onClick={() => window.location.href = '/create-test'} variant="outline">
+                                    Import JSON
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="text-center space-y-2 mt-8">
+                                <h1 className="text-2xl font-bold">How do you want to process {hasImages && hasPDF ? 'these files' : 'this file'}?</h1>
+                                <p className="text-muted-foreground">Choose a mode based on your goal</p>
+                            </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                        {/* Extract Mode */}
-                        <Card
-                            className="cursor-pointer border-2 hover:border-blue-500 hover:shadow-lg transition-all group"
-                            onClick={() => handleProcess('extract')}
-                        >
-                            <CardContent className="p-6 text-center space-y-4">
-                                <div className="w-14 h-14 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold">Extract Questions</h3>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        Extract exact questions, options, and diagrams from the exam paper as-is
-                                    </p>
-                                </div>
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    <Badge variant="secondary" className="text-xs">
-                                        Best for: Exam papers, question banks
-                                    </Badge>
-                                    <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                                        <Zap className="w-3 h-3 mr-1" />
-                                        ULTRA-FAST
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
+                                {/* Extract Mode */}
+                                <Card
+                                    className="cursor-pointer border-2 hover:border-blue-500 hover:shadow-lg transition-all group"
+                                    onClick={() => handleProcess('extract')}
+                                >
+                                    <CardContent className="p-6 text-center space-y-4">
+                                        <div className="w-14 h-14 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold">Extract Questions</h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Extract exact questions, options, and diagrams from the exam paper as-is
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            <Badge variant="secondary" className="text-xs">
+                                                Best for: Exam papers, question banks
+                                            </Badge>
+                                            <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                                                <Zap className="w-3 h-3 mr-1" />
+                                                ULTRA-FAST
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
 
-                        {/* Generate Mode */}
-                        <Card
-                            className="cursor-pointer border-2 hover:border-purple-500 hover:shadow-lg transition-all group"
-                            onClick={() => handleProcess('generate')}
-                        >
-                            <CardContent className="p-6 text-center space-y-4">
-                                <div className="w-14 h-14 mx-auto rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold">Generate New Questions</h3>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        AI creates original questions based on the content and topics in the document
-                                    </p>
-                                </div>
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    <Badge variant="secondary" className="text-xs">
-                                        Best for: Textbooks, notes, study material
-                                    </Badge>
-                                    <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                                        <Zap className="w-3 h-3 mr-1" />
-                                        ULTRA-FAST
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                                {/* Generate Mode */}
+                                <Card
+                                    className="cursor-pointer border-2 hover:border-purple-500 hover:shadow-lg transition-all group"
+                                    onClick={() => handleProcess('generate')}
+                                >
+                                    <CardContent className="p-6 text-center space-y-4">
+                                        <div className="w-14 h-14 mx-auto rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold">Generate New Questions</h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                AI creates original questions based on the content and topics in the document
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            <Badge variant="secondary" className="text-xs">
+                                                Best for: Textbooks, notes, study material
+                                            </Badge>
+                                            <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                                                <Zap className="w-3 h-3 mr-1" />
+                                                ULTRA-FAST
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         );

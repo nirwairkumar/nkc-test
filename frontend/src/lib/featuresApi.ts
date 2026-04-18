@@ -2,6 +2,8 @@ import apiClient from './apiClient';
 
 export interface FeatureFlags {
     enable_anonymous_tests: boolean;
+    enable_ai_test_generation?: boolean;
+    ai_test_generation_notes?: string;
 }
 
 export const fetchFeatureFlags = async (): Promise<FeatureFlags> => {
@@ -10,7 +12,7 @@ export const fetchFeatureFlags = async (): Promise<FeatureFlags> => {
         return response.data;
     } catch (error) {
         console.error("Failed to fetch feature flags:", error);
-        return { enable_anonymous_tests: false }; // fallback
+        return { enable_anonymous_tests: false, enable_ai_test_generation: true, ai_test_generation_notes: "" }; // fallback
     }
 };
 

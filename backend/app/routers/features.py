@@ -10,16 +10,18 @@ router = APIRouter()
 async def get_feature_flags(db: Client = Depends(get_db)):
     """Get global feature flags available to everyone"""
     try:
-        response = db.table("app_settings").select("enable_anonymous_tests").limit(1).execute()
+        response = db.table("app_settings").select("enable_anonymous_tests, enable_ai_test_generation, ai_test_generation_notes").limit(1).execute()
         if response.data and len(response.data) > 0:
             return response.data[0]
-        return {"enable_anonymous_tests": False}
+        return {"enable_anonymous_tests": False, "enable_ai_test_generation": True, "ai_test_generation_notes": ""}
     except Exception as e:
         print(f"Error fetching feature flags: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class UpdateFeatureFlagsRequest(BaseModel):
     enable_anonymous_tests: bool
+    enable_ai_test_generation: bool = True
+    ai_test_generation_notes: str = ""
 
 @router.put("/flags")
 async def update_feature_flags(payload: UpdateFeatureFlagsRequest, db: Client = Depends(get_db)):
@@ -32,7 +34,9 @@ async def update_feature_flags(payload: UpdateFeatureFlagsRequest, db: Client = 
             settings_id = settings_res.data[0]["id"]
             # Update existing settings
             response = db.table("app_settings").update({
-                "enable_anonymous_tests": payload.enable_anonymous_tests
+                "enable_anonymous_tests": payload.enable_anonymous_tests,
+                "enable_ai_test_generation": payload.enable_ai_test_generation,
+                "ai_test_generation_notes": payload.ai_test_generation_notes
             }).eq("id", settings_id).execute()
             
             if response.data:
@@ -40,7 +44,9 @@ async def update_feature_flags(payload: UpdateFeatureFlagsRequest, db: Client = 
         else:
             # Insert new settings if none exist
             response = db.table("app_settings").insert({
-                "enable_anonymous_tests": payload.enable_anonymous_tests
+                "enable_anonymous_tests": payload.enable_anonymous_tests,
+                "enable_ai_test_generation": payload.enable_ai_test_generation,
+                "ai_test_generation_notes": payload.ai_test_generation_notes
             }).execute()
             if response.data:
                 return response.data[0]
