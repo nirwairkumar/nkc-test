@@ -1627,11 +1627,11 @@ export default function TestPage() {
 
               {/* Question Pane */}
               <div className="flex-1 h-full overflow-y-auto lg:pr-2 custom-scrollbar">
-                {/* Mobile Passage (Collapsed/Scrollable) */}
+                {/* Mobile Passage (Full View) */}
                 <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
-                  <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Passage Reference</div>
-                  <div className="text-sm leading-relaxed max-h-48 overflow-y-auto bg-slate-50 p-3 rounded border [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
-                    <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Passage</div>
+                  <div className="text-[15px] leading-relaxed h-auto bg-slate-50 p-4 rounded-lg border border-slate-100 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
+                    <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer> 
                   </div>
                 </div>
 
