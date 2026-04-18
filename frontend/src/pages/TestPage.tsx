@@ -1773,7 +1773,9 @@ export default function TestPage() {
 
                     {/* Options Area */}
                     <div className="space-y-4 mt-6">
-                      <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
+                      {currentQuestion.type !== 'numerical' && (
+                        <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
+                      )}
                       {currentQuestion.type === 'numerical' ? (
                         <div className="flex flex-col gap-4">
                           <div className="max-w-xs">
@@ -1959,7 +1961,9 @@ export default function TestPage() {
 
                   {/* Options Area */}
                   <div className="space-y-4 mt-6">
-                    <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
+                    {currentQuestion.type !== 'numerical' && (
+                      <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
+                    )}
                     {currentQuestion.type === 'numerical' ? (
                       <div className="flex flex-col gap-4">
                         <div className="max-w-xs">
