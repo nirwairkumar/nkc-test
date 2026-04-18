@@ -1556,6 +1556,7 @@ export default function TestPage() {
         <div className={`
           flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 relative transition-all duration-300 ease-in-out
         `}>
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
           {/* Collapse Toggle Button (Desktop Only) */}
           <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-50 translate-x-1/2">
             <Button
@@ -1656,7 +1657,7 @@ export default function TestPage() {
           {currentQuestion.passageContent ? (
             /* SPLIT VIEW FOR COMPREHENSION */
             /* SPLIT VIEW FOR COMPREHENSION */
-            <div className="flex-1 w-full overflow-hidden flex flex-col lg:flex-row gap-2 lg:gap-4 pb-0 p-1 pt-1 lg:pt-1">
+            <div className="flex-1 w-full overflow-y-visible lg:overflow-hidden flex flex-col lg:flex-row gap-2 lg:gap-4 pb-0 p-1 pt-1 lg:pt-1">
               {/* Passage Pane (Desktop) */}
               <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-800 shadow-sm custom-scrollbar">
                 <div className="p-4 border-b dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
@@ -1670,7 +1671,7 @@ export default function TestPage() {
               </div>
 
               {/* Question Pane */}
-              <div className="flex-1 h-full overflow-y-auto lg:pr-2 custom-scrollbar">
+              <div className="flex-1 h-auto lg:h-full lg:overflow-y-auto lg:pr-2 overflow-y-visible">
                 {/* Mobile Passage (Full View) */}
                 <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Passage</div>
@@ -1872,7 +1873,7 @@ export default function TestPage() {
           ) : (
             /* STANDARD VIEW */
             /* STANDARD VIEW */
-            <div className="flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col gap-2 lg:gap-6 lg:pr-2 pb-4 p-1 pt-1 lg:pt-1">
+            <div className="flex-1 w-full h-auto flex flex-col gap-2 lg:gap-6 lg:pr-2 pb-4 p-1 pt-1 lg:pt-1 overflow-y-visible overflow-x-hidden">
               <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
                 <CardContent className="p-3 md:p-4 gap-2 flex flex-col h-auto">
                   {/* Question Header */}
@@ -2062,6 +2063,7 @@ export default function TestPage() {
               </Card>
             </div>
           )}
+          </div>
 
           {/* Bottom Controls */}
           {/* Fixed Bottom for Mobile, Absolute for Desktop Column */}
