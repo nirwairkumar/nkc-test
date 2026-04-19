@@ -1174,7 +1174,7 @@ Check every section's header or overall syllabus instructions to determine if at
       {/* Step 1: Generate with AI */}
       <div className="flex gap-4">
         <div className="flex-none w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">1</div>
-        <div className="space-y-3 flex-1">
+        <div className="space-y-3 flex-1 min-w-0">
           <h3 className="font-semibold text-lg text-purple-700">Generate with AI</h3>
           <p className="text-sm text-muted-foreground">
             Paste this prompt into <strong className="text-blue-600 dark:text-blue-400">Google Gemini</strong> (Recommended) or ChatGPT / Perplexity to create your file automatically.
@@ -1266,7 +1266,7 @@ Check every section's header or overall syllabus instructions to determine if at
       {/* Step 2: Upload Source to AI */}
       <div className="flex gap-4">
         <div className="flex-none w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">2</div>
-        <div className="space-y-2 flex-1">
+        <div className="space-y-2 flex-1 min-w-0">
           <h3 className="font-semibold text-lg text-purple-700 flex items-center gap-2">
             Upload Source to AI
             <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">Gemini Recommended</span>
@@ -1285,7 +1285,7 @@ Check every section's header or overall syllabus instructions to determine if at
       {/* Step 3: Save the JSON */}
       <div className="flex gap-4">
         <div className="flex-none w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">3</div>
-        <div className="space-y-4 flex-1">
+        <div className="space-y-4 flex-1 min-w-0">
           <h3 className="font-semibold text-lg">Save the AI Output as a JSON File</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1317,7 +1317,7 @@ Check every section's header or overall syllabus instructions to determine if at
       {/* Step 4: Upload It */}
       <div className="flex gap-4">
         <div className="flex-none w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">4</div>
-        <div className="space-y-2 flex-1">
+        <div className="space-y-2 flex-1 min-w-0">
           <h3 className="font-semibold text-lg">Upload to Editor</h3>
           <p className="text-sm text-muted-foreground">Click the <strong>Upload JSON File</strong> button or drag and drop your newly saved `.json` file to instantly build your test.</p>
         </div>

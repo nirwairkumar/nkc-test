@@ -234,26 +234,26 @@ function NotationRow({ item, sectionId }: { item: NotationItem; sectionId: strin
     return (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden transition-all hover:border-slate-300">
             {/* Top: Label + Live Preview */}
-            <div className="flex items-start gap-4 p-4 sm:p-5 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-start p-4 sm:p-5 border-b border-slate-100">
                 {/* Left: Meta */}
-                <div className="shrink-0 w-40 sm:w-48">
+                <div className="shrink-0 mb-3 sm:mb-0 sm:w-48">
                     <h4 className="text-sm font-semibold text-slate-800 leading-snug">{item.label}</h4>
                     <p className="text-[11px] text-slate-400 mt-0.5">{item.description}</p>
                 </div>
 
                 {/* Right: Live Preview */}
-                <div className="flex-1 min-w-0 flex items-center justify-start px-4 py-2 overflow-x-auto custom-scrollbar">
-                    <LatexRenderer className="!text-lg text-slate-900 whitespace-nowrap mx-auto">
+                <div className="flex-1 w-full min-w-0 flex items-center justify-center sm:justify-start sm:px-4 py-2 overflow-x-auto custom-scrollbar bg-slate-50/50 sm:bg-transparent rounded-lg sm:rounded-none">
+                    <LatexRenderer className="!text-lg text-slate-900 mx-auto sm:mx-0">
                         {previewContent}
                     </LatexRenderer>
                 </div>
             </div>
 
             {/* Bottom: Editable Code + Actions */}
-            <div className="flex items-stretch bg-slate-50/80">
+            <div className="flex flex-col sm:flex-row items-stretch bg-slate-50/80">
                 {/* Editable Code Overlay Area */}
                 <div className={cn(
-                    "flex-1 min-w-0 relative transition-all rounded-l-md",
+                    "flex-1 min-w-0 relative transition-all sm:rounded-bl-md",
                     "focus-within:bg-white focus-within:ring-1 focus-within:ring-inset focus-within:ring-indigo-300",
                     isModified ? "bg-amber-50/50" : "bg-transparent"
                 )}>
@@ -285,7 +285,7 @@ function NotationRow({ item, sectionId }: { item: NotationItem; sectionId: strin
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-0.5 px-2 border-l border-slate-200/80">
+                <div className="flex sm:flex-col items-center justify-end sm:justify-center gap-1 px-2 py-2 sm:py-0 border-t sm:border-t-0 sm:border-l border-slate-200/80">
                     {/* Reset */}
                     <button
                         onClick={resetToOriginal}

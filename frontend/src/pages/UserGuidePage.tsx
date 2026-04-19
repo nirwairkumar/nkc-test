@@ -329,17 +329,17 @@ function GuideDetail({ guide, slug }: { guide: GuideEntry; slug: string }) {
                     <div className="mb-8">
                         <div className="flex items-center gap-3 mb-3">
                             <div className={cn(
-                                "p-2 rounded-lg",
+                                "p-2 rounded-lg shrink-0",
                                 accentStyles[guide.accentColor].bg,
                                 accentStyles[guide.accentColor].text
                             )}>
                                 {guide.icon}
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <span className="text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                     {guide.category}
                                 </span>
-                                <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                                <span className="text-[11px] text-slate-400 flex items-center gap-1 whitespace-nowrap">
                                     <Clock className="h-3 w-3" /> {guide.readTime} read
                                 </span>
                             </div>
@@ -353,7 +353,7 @@ function GuideDetail({ guide, slug }: { guide: GuideEntry; slug: string }) {
                     </div>
 
                     {/* Content card */}
-                    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-8">
+                    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-5 md:p-8">
                         {slug === 'solution-upload-guide' && <SolutionUploadGuide isInline />}
                         {slug === 'json-test-upload-guide' && <TestUploadFormatGuide isInline />}
                         {slug === 'chemistry-notation' && <ScientificNotationGuide isInline />}
@@ -364,13 +364,13 @@ function GuideDetail({ guide, slug }: { guide: GuideEntry; slug: string }) {
                         {prevGuide ? (
                             <button
                                 onClick={() => navigate(`/user-guide/${prevGuide.slug}`)}
-                                className="text-left p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all group"
+                                className="flex flex-col items-start p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all group overflow-hidden w-full text-left"
                             >
                                 <div className="text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
-                                    <ArrowLeft className="h-3 w-3 group-hover:-translate-x-0.5 transition-transform" />
-                                    Previous
+                                    <ArrowLeft className="shrink-0 h-3 w-3 group-hover:-translate-x-0.5 transition-transform" />
+                                    <span>Previous</span>
                                 </div>
-                                <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                                <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors w-full truncate">
                                     {prevGuide.title}
                                 </div>
                             </button>
@@ -379,13 +379,13 @@ function GuideDetail({ guide, slug }: { guide: GuideEntry; slug: string }) {
                         {nextGuide ? (
                             <button
                                 onClick={() => navigate(`/user-guide/${nextGuide.slug}`)}
-                                className="text-right p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all group sm:col-start-2"
+                                className="flex flex-col items-end p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-sm transition-all group sm:col-start-2 overflow-hidden w-full text-right"
                             >
-                                <div className="text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1 justify-end">
-                                    Next
-                                    <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                                <div className="text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1">
+                                    <span>Next</span>
+                                    <ArrowRight className="shrink-0 h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                                 </div>
-                                <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                                <div className="text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors w-full truncate">
                                     {nextGuide.title}
                                 </div>
                             </button>
