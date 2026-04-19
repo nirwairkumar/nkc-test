@@ -4,6 +4,29 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 
+// Highlight LaTeX syntax similar to a code editor
+const highlightLatex = (text: string) => {
+    const tokens = text.split(/(\\\\|\\\w+|[{}]|&|_|\^)/g);
+
+    return tokens.map((token, i) => {
+        if (!token) return null;
+        if (token.startsWith('\\') && token !== '\\\\') {
+            return <span key={i} className="text-pink-400 font-medium">{token}</span>;
+        }
+        if (token === '\\\\') {
+            return <span key={i} className="text-pink-400 font-semibold">{token}</span>;
+        }
+        if (token === '{' || token === '}') {
+            return <span key={i} className="text-amber-500/80 font-normal">{token}</span>;
+        }
+        if (token === '&' || token === '_' || token === '^') {
+            return <span key={i} className="text-cyan-500/90 font-normal">{token}</span>;
+        }
+        // User editable values - bolder and darker to stand out
+        return <span key={i} className="text-slate-900 font-bold">{token}</span>;
+    });
+};
+
 interface NotationItem {
     label: string;
     description: string;
@@ -27,22 +50,45 @@ const SECTIONS: NotationSection[] = [
             {
                 label: 'Line Break',
                 description: 'Move to the next line',
-                latex: 'Line 1 <br> Line 2',
+                latex: 'Line 1 <br> Line 2 or <br> Line 3',
             },
             {
                 label: 'Bold & Italic',
                 description: 'Text styling',
-                latex: '***Bold & Italic***',
+                latex: `$\\mathbf{BoldMath} \\\\
+\\mathit{ItalicText} \\\\ 
+\\textbf{BoldText} \\\\ 
+\\textit{ItalicText}$`,
             },
             {
                 label: 'Simple Table (LaTeX)',
                 description: 'Professional bordered table',
-                latex: '\\begin{array}{|c|c|} \\hline Row 1 & Data \\\\ \\hline Row 2 & Data \\\\ \\hline \\end{array}',
+                latex: `\\begin{array}{|c|c|}
+\\hline
+Row 1 & Data \\\\
+\\hline
+Row 2 & Data \\\\
+\\hline
+\\end{array}`,
             },
             {
                 label: 'Advanced Matching Table',
                 description: 'Match the column format with stacked reagents',
-                latex: '\\begin{array}{|l|l|l|l|} \\hline & \\textbf{List-I} & & \\textbf{List-II} \\\\ \\hline (P) & \\text{Stephen reaction} & (1) & \\text{Toluene} \\xrightarrow{\\text{(i) } \\ce{CrO2Cl2/CS2}} \\\\ \\hline (Q) & \\text{Sandmeyer reaction} & (2) & \\text{Benzoic acid} \\xrightarrow{\\substack{\\text{(i) } \\ce{PCl5} \\\\ \\text{(ii) } \\ce{NH3}}} \\\\ \\hline (R) & \\text{Hoffmann bromamide reaction} & (3) & \\text{Nitrobenzene} \\xrightarrow{\\substack{\\text{(i) } \\ce{Fe, HCl} \\\\ \\text{(ii) } \\ce{HCl, NaNO2} \\\\ \\text{(273-278 K)}}} \\\\ \\hline (S) & \\text{Cannizzaro reaction} & (4) & \\text{Toluene} \\xrightarrow{\\substack{\\text{(i) } \\ce{Cl2/h\\nu, H2O} \\\\ \\text{(ii) Tollen\'s reagent}}} \\\\ \\hline & & (5) & \\text{Aniline} \\xrightarrow{\\substack{\\text{(i) } \\ce{(CH3CO)2O, Pyridine} \\\\ \\text{(ii) } \\ce{HNO3, H2SO4, 288 K}}} \\\\ \\hline \\end{array}',
+                latex: `\\begin{array}{|l|l|l|l|}
+\\hline
+& \\textbf{List-I} & & \\textbf{List-II} \\\\
+\\hline
+(P) & \\text{Stephen reaction} & (1) & \\text{Toluene} \\xrightarrow{\\text{(i) } \\ce{CrO2Cl2/CS2}} \\\\
+\\hline
+(Q) & \\text{Sandmeyer reaction} & (2) & \\text{Benzoic acid} \\xrightarrow{\\substack{\\text{(i) } \\ce{PCl5} \\\\ \\text{(ii) } \\ce{NH3}}} \\\\
+\\hline
+(R) & \\text{Hoffmann bromamide reaction} & (3) & \\text{Nitrobenzene} \\xrightarrow{\\substack{\\text{(i) } \\ce{Fe, HCl} \\\\ \\text{(ii) } \\ce{HCl, NaNO2} \\\\ \\text{(273-278 K)}}} \\\\
+\\hline
+(S) & \\text{Cannizzaro reaction} & (4) & \\text{Toluene} \\xrightarrow{\\substack{\\text{(i) } \\ce{Cl2/h\\nu, H2O} \\\\ \\text{(ii) Tollen's reagent}}} \\\\
+\\hline
+& & (5) & \\text{Aniline} \\xrightarrow{\\substack{\\text{(i) } \\ce{(CH3CO)2O, Pyridine} \\\\ \\text{(ii) } \\ce{HNO3, H2SO4, 288 K}}} \\\\
+\\hline
+\\end{array}`,
                 displayOnly: true,
             }
         ]
@@ -80,25 +126,44 @@ const SECTIONS: NotationSection[] = [
             {
                 label: 'Reaction: 2 Reagents',
                 description: 'Two reagents stacked above arrow',
-                latex: 'X \\xrightarrow{\\substack{\\text{(i) Heat} \\\\ \\text{(ii) KOH}}} Y',
+                latex: `X \\xrightarrow{\\substack{
+  \\text{(i) Heat} \\\\
+  \\text{(ii) KOH}
+}} Y`,
                 displayOnly: true,
             },
             {
                 label: 'Reaction: 3 Reagents',
                 description: 'With chemical formulas',
-                latex: '\\xrightarrow{\\substack{\\text{i) }\\ce{Hg^{2+}}\\text{, }\\ce{H3O+} \\\\ \\text{ii) Zn-Hg/HCl} \\\\ \\text{iii) }\\ce{H3O+}\\text{, }\\Delta}} \\text{ P}',
+                latex: `\\xrightarrow{\\substack{
+  \\text{i) }\\ce{Hg^{2+}}\\text{, }\\ce{H3O+} \\\\
+  \\text{ii) Zn-Hg/HCl} \\\\
+  \\text{iii) }\\ce{H3O+}\\text{, }\\Delta
+}} \\text{ P}`,
                 displayOnly: true,
             },
             {
                 label: 'Above + Below Arrow',
                 description: 'Reagents above and catalyst below',
-                latex: 'X \\xrightarrow[\\text{catalyst}]{\\substack{\\text{(i) Strong heating} \\\\ \\text{(ii) Ethanolic KOH} \\\\ \\text{(iii) R-Br}}} Y',
+                latex: `X \\xrightarrow[\\text{catalyst}]{\\substack{
+  \\text{(i) Strong heating} \\\\
+  \\text{(ii) Ethanolic KOH} \\\\
+  \\text{(iii) R-Br}
+}} Y`,
                 displayOnly: true,
             },
             {
                 label: '6-Step Reaction',
                 description: 'Many stacked reagents (Advanced)',
-                latex: '\\ce{X} \\xrightarrow[\\substack{\\text{iv) a) }\\ce{BH3}\\text{, b) }\\ce{H2O2}\\text{, NaOH} \\\\ \\text{v) }\\ce{H3O+} \\\\ \\text{vi) }\\ce{NaBH4}}]{\\substack{\\text{i) }\\ce{O3}\\text{, Zn} \\\\ \\text{ii) aq. NaOH, }\\Delta \\\\ \\text{iii) ethylene glycol, PTSA}}} \\ce{Y}',
+                latex: `\\ce{X} \\xrightarrow[\\substack{
+  \\text{iv) a) }\\ce{BH3}\\text{, b) }\\ce{H2O2}\\text{, NaOH} \\\\
+  \\text{v) }\\ce{H3O+} \\\\
+  \\text{vi) }\\ce{NaBH4}
+}]{\\substack{
+  \\text{i) }\\ce{O3}\\text{, Zn} \\\\
+  \\text{ii) aq. NaOH, }\\Delta \\\\
+  \\text{iii) ethylene glycol, PTSA}
+}} \\ce{Y}`,
                 displayOnly: true,
             }
         ]
@@ -186,28 +251,34 @@ function NotationRow({ item, sectionId }: { item: NotationItem; sectionId: strin
 
             {/* Bottom: Editable Code + Actions */}
             <div className="flex items-stretch bg-slate-50/80">
-                {/* Editable textarea */}
-                <div className="flex-1 min-w-0 relative">
+                {/* Editable Code Overlay Area */}
+                <div className={cn(
+                    "flex-1 min-w-0 relative transition-all rounded-l-md",
+                    "focus-within:bg-white focus-within:ring-1 focus-within:ring-inset focus-within:ring-indigo-300",
+                    isModified ? "bg-amber-50/50" : "bg-transparent"
+                )}>
+                    {/* Syntax Highlighted Background */}
+                    <div
+                        className="w-full px-4 py-2.5 text-[13px] font-mono whitespace-pre-wrap break-words leading-relaxed min-h-[36px] selection:bg-transparent"
+                        aria-hidden="true"
+                    >
+                        {highlightLatex(editableText)}
+                        {editableText.endsWith('\n') ? <br /> : null}
+                    </div>
+                    {/* Transparent textarea ON TOP */}
                     <textarea
                         value={editableText}
                         onChange={(e) => setEditableText(e.target.value)}
-                        rows={1}
                         spellCheck={false}
                         className={cn(
-                            "w-full px-4 py-2.5 text-xs font-mono bg-transparent border-none outline-none resize-none text-indigo-600 placeholder:text-slate-300",
-                            "focus:bg-white focus:ring-1 focus:ring-inset focus:ring-indigo-200 transition-all",
-                            isModified && "bg-amber-50/50"
+                            "absolute inset-0 w-full h-full px-4 py-2.5 text-[13px] font-mono leading-relaxed m-0",
+                            "bg-transparent text-transparent caret-indigo-600 placeholder:text-slate-300",
+                            "border-none outline-none resize-none"
                         )}
-                        style={{ minHeight: '36px', height: 'auto' }}
-                        onInput={(e) => {
-                            const el = e.target as HTMLTextAreaElement;
-                            el.style.height = 'auto';
-                            el.style.height = el.scrollHeight + 'px';
-                        }}
                     />
                     {isModified && (
-                        <div 
-                            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" 
+                        <div
+                            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)] pointer-events-none"
                             title="Edited"
                         />
                     )}
