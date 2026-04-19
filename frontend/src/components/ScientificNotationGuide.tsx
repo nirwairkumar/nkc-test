@@ -38,6 +38,12 @@ const SECTIONS: NotationSection[] = [
                 label: 'Simple Table (LaTeX)',
                 description: 'Professional bordered table',
                 latex: '\\begin{array}{|c|c|} \\hline Row 1 & Data \\\\ \\hline Row 2 & Data \\\\ \\hline \\end{array}',
+            },
+            {
+                label: 'Advanced Matching Table',
+                description: 'Match the column format with stacked reagents',
+                latex: '\\begin{array}{|l|l|l|l|} \\hline & \\textbf{List-I} & & \\textbf{List-II} \\\\ \\hline (P) & \\text{Stephen reaction} & (1) & \\text{Toluene} \\xrightarrow{\\text{(i) } \\ce{CrO2Cl2/CS2}} \\\\ \\hline (Q) & \\text{Sandmeyer reaction} & (2) & \\text{Benzoic acid} \\xrightarrow{\\substack{\\text{(i) } \\ce{PCl5} \\\\ \\text{(ii) } \\ce{NH3}}} \\\\ \\hline (R) & \\text{Hoffmann bromamide reaction} & (3) & \\text{Nitrobenzene} \\xrightarrow{\\substack{\\text{(i) } \\ce{Fe, HCl} \\\\ \\text{(ii) } \\ce{HCl, NaNO2} \\\\ \\text{(273-278 K)}}} \\\\ \\hline (S) & \\text{Cannizzaro reaction} & (4) & \\text{Toluene} \\xrightarrow{\\substack{\\text{(i) } \\ce{Cl2/h\\nu, H2O} \\\\ \\text{(ii) Tollen\'s reagent}}} \\\\ \\hline & & (5) & \\text{Aniline} \\xrightarrow{\\substack{\\text{(i) } \\ce{(CH3CO)2O, Pyridine} \\\\ \\text{(ii) } \\ce{HNO3, H2SO4, 288 K}}} \\\\ \\hline \\end{array}',
+                displayOnly: true,
             }
         ]
     },
@@ -91,7 +97,7 @@ const SECTIONS: NotationSection[] = [
             },
             {
                 label: '6-Step Reaction',
-                description: 'Many stacked reagents',
+                description: 'Many stacked reagents (Advanced)',
                 latex: '\\ce{X} \\xrightarrow[\\substack{\\text{iv) a) }\\ce{BH3}\\text{, b) }\\ce{H2O2}\\text{, NaOH} \\\\ \\text{v) }\\ce{H3O+} \\\\ \\text{vi) }\\ce{NaBH4}}]{\\substack{\\text{i) }\\ce{O3}\\text{, Zn} \\\\ \\text{ii) aq. NaOH, }\\Delta \\\\ \\text{iii) ethylene glycol, PTSA}}} \\ce{Y}',
                 displayOnly: true,
             }
@@ -171,8 +177,8 @@ function NotationRow({ item, sectionId }: { item: NotationItem; sectionId: strin
                 </div>
 
                 {/* Right: Live Preview */}
-                <div className="flex-1 min-w-0 flex items-center justify-center py-2 overflow-x-auto">
-                    <LatexRenderer className="!text-lg text-slate-900 whitespace-nowrap">
+                <div className="flex-1 min-w-0 flex items-center justify-start px-4 py-2 overflow-x-auto custom-scrollbar">
+                    <LatexRenderer className="!text-lg text-slate-900 whitespace-nowrap mx-auto">
                         {previewContent}
                     </LatexRenderer>
                 </div>

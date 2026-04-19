@@ -60,6 +60,36 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 return out;
             };
 
+            // Brace-aware splitter: splits a string on a delimiter only when
+            // the delimiter occurs at brace depth 0. This preserves nested
+            // commands like \substack{... \\ ...} and \xrightarrow{...&...}.
+            const splitAtDepthZero = (str: string, delimiter: string): string[] => {
+                const parts: string[] = [];
+                let depth = 0;
+                let current = '';
+                let i = 0;
+                while (i < str.length) {
+                    if (str[i] === '{') {
+                        depth++;
+                        current += str[i];
+                        i++;
+                    } else if (str[i] === '}') {
+                        depth = Math.max(0, depth - 1);
+                        current += str[i];
+                        i++;
+                    } else if (depth === 0 && str.startsWith(delimiter, i)) {
+                        parts.push(current);
+                        current = '';
+                        i += delimiter.length;
+                    } else {
+                        current += str[i];
+                        i++;
+                    }
+                }
+                parts.push(current);
+                return parts;
+            };
+
             const renderSingleLatexArray = (matchStr: string, tableId: string): string => {
                 const arrayRegex = /\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/;
                 const match = matchStr.match(arrayRegex);
@@ -67,8 +97,9 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
                 const [, format, content] = match;
 
-                // Split into rows, handling various LaTeX row separators
-                const rows = content.split(/\\\\(?:\s*\[[^\]]*\])?/);
+                // Split into rows using brace-aware splitting on \\
+                // This preserves \\ inside nested braces (e.g. \substack{a \\ b})
+                const rows = splitAtDepthZero(content, '\\\\');
 
                 // Determine alignments and borders from format string (e.g., |l|c|r|)
                 const alignments: string[] = [];
@@ -94,7 +125,8 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                     const cleanRow = row.replace(/\\hline/g, '').trim();
                     if (!cleanRow && rowIndex === rows.length - 1) return;
 
-                    const cells = cleanRow.split('&');
+                    // Brace-aware cell splitting on &
+                    const cells = splitAtDepthZero(cleanRow, '&');
                     const rowStyle = hasHline ? 'border-top: 1px solid #cbd5e1;' : '';
 
                     tableHtml += `<tr style="${rowStyle}">`;
@@ -142,12 +174,23 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
             const processMathBlock = (tex: string, displayMode: boolean): string => {
                 try {
-                    const safeTex = extractImagesFromTex(tex);
+                    let processedTex = extractImagesFromTex(tex);
+
+                    // Add support for \vspace in math blocks
+                    // LaTeX uses \vspace for vertical spacing, but KaTeX requires environments to stack correctly.
+                    // We replace \vspace{1em} with \\[1em] and wrap the content in a gathered environment.
+                    if (processedTex.includes('\\vspace')) {
+                        processedTex = processedTex.replace(/\\vspace\{([^}]*)\}/g, '\\\\[$1]');
+                        // If it contains vertical breaks but isn't wrapped in a stacking environment, wrap it.
+                        if (!processedTex.includes('\\begin{gathered}') && !processedTex.includes('\\begin{aligned}')) {
+                            processedTex = `\\begin{gathered} ${processedTex} \\end{gathered}`;
+                        }
+                    }
 
                     let arrayIndex = 0;
                     const arrayMap: Record<string, string> = {};
 
-                    const texWithoutArrays = safeTex.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
+                    const texWithoutArrays = processedTex.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
                         const tableId = `TABLE_${Math.random().toString(36).substr(2, 9)}`;
                         const key = `ARRAYPH${arrayIndex++}`;
                         arrayMap[key] = renderSingleLatexArray(matchStr, tableId);
