@@ -427,7 +427,8 @@ export default function TestPage() {
 
     // 2. Tab Switching / Visibility
     const handleVisibilityChange = () => {
-      if (document.hidden && settings.tab_switch_mode !== 'off') {
+      const isEnabled = settings.tab_switch_mode && settings.tab_switch_mode !== 'off';
+      if (document.hidden && isEnabled) {
         handleViolation("Tab Switching / Navigation");
       }
     };
@@ -468,7 +469,7 @@ export default function TestPage() {
       checkFullScreenState();
     };
 
-    if (settings.tab_switch_mode !== 'off') {
+    if (settings.tab_switch_mode && settings.tab_switch_mode !== 'off') {
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
@@ -1504,7 +1505,7 @@ export default function TestPage() {
           })()}
 
           {/* Warning Counter - Security Violations */}
-          {(test?.settings?.tab_switch_mode !== 'off' || test?.settings?.force_fullscreen) && (
+          {((test?.settings?.tab_switch_mode && test?.settings?.tab_switch_mode !== 'off') || test?.settings?.force_fullscreen) && (
             <div className={`flex items-center gap-1.5 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full text-[11px] md:text-xs font-bold border transition-colors ${warnings > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
               <TriangleAlert className={`w-3.5 h-3.5 ${warnings > 0 ? 'fill-red-100 text-red-600' : 'fill-amber-100 text-amber-600'}`} />
               <span>
