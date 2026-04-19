@@ -11,7 +11,11 @@
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview",
         "sitemap": "node scripts/generateSitemap.js",
-        "optimize-images": "node scripts/optimize-images.cjs"
+        "optimize-images": "node scripts/optimize-images.cjs",
+        "test:e2e": "playwright test",
+        "test:e2e:ui": "playwright test --ui",
+        "test:e2e:mobile": "playwright test --project='iPhone 14' --project='iPad Pro' --project='Pixel 7' --project='Galaxy Tab S8'",
+        "test:e2e:prod": "PLAYWRIGHT_TEST_BASE_URL=https://www.testoza.com playwright test"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",
@@ -106,6 +110,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.32.0",
+        "@playwright/test": "^1.59.1",
         "@tailwindcss/typography": "^0.5.19",
         "@types/canvas-confetti": "^1.9.0",
         "@types/node": "^22.16.5",
