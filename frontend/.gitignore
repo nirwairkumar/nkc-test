@@ -244,3 +244,4 @@ lint_errors.txt
 playwright-report/
 test-results/
 test-results.xml
+e2e/
