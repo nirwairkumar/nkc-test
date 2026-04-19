@@ -35,16 +35,23 @@ Before running tests for the first time, an intern must:
 
 ## 4. How to Run Tests
 
+### A. Running Tests
 From the `frontend/` directory, use the following commands:
 
-### A. Local Development Testing
-Make sure your local Vite server is running (usually on `http://localhost:5173` or `8081`).
+#### The Core Command
+```bash
+# Run all tests using the Playwright CLI
+npx playwright test
+```
+
+#### Recommended npm Aliases
+We have added convenient aliases in `package.json`. These are the standard way for interns to run tests:
 
 ```bash
-# Run all tests in the background (Headless)
+# Equivalent to: npx playwright test
 npm run test:e2e
 
-# RECOMMENDED: Run with the UI (Interactive)
+# Run with the Interactive UI
 # This lets you see the browser actions and debug step-by-step
 npm run test:e2e:ui
 ```
