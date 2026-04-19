@@ -86,7 +86,8 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 }
                 const hasRightBorder = nextHasBorder;
 
-                let tableHtml = '<table>';
+                const hasBottomBorder = content.trim().endsWith('\\hline');
+                let tableHtml = `<table style="${hasBottomBorder ? 'border-bottom: 1px solid #cbd5e1;' : ''}">`;
 
                 rows.forEach((row, rowIndex) => {
                     const hasHline = row.includes('\\hline');
@@ -120,11 +121,6 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                     });
                     tableHtml += '</tr>';
                 });
-
-                // Final bottom border if the content ends with \hline
-                if (content.trim().endsWith('\\hline')) {
-                    tableHtml = tableHtml.replace(/<\/table>$/, '<tr style="border-top: 1px solid #cbd5e1;"></tr></table>');
-                }
 
                 tableHtml += '</table>';
 
