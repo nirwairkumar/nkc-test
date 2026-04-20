@@ -6,10 +6,10 @@ from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from google import genai
 from google.genai import types
-from youtube_transcript_api import YouTubeTranscriptApi
+# youtube_transcript_api and yt_dlp are lazily imported inside route functions
+# to avoid loading 30-45MB of YouTube libs at server startup
 import json
 import re
-import yt_dlp
 import asyncio
 
 router = APIRouter()
@@ -44,6 +44,7 @@ def extract_video_id(url: str) -> Optional[str]:
     - Shorts: https://www.youtube.com/shorts/VIDEO_ID
     """
     try:
+        import yt_dlp  # lazy-loaded: only used when YouTube URL is submitted
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
@@ -68,7 +69,7 @@ def extract_video_id(url: str) -> Optional[str]:
                 if match:
                     return match.group(1)
                     
-    except yt_dlp.utils.DownloadError as e:
+    except Exception as e:  # catches yt_dlp.utils.DownloadError when lazy-loaded
         # Video might be private, deleted, or URL is invalid
         print(f"yt-dlp extraction error: {e}")
         
@@ -116,6 +117,7 @@ async def generate_youtube_test(
     # 1. Fetch Transcript
     try:
         print(f"Attempting to fetch transcript for video ID: {video_id}")
+        from youtube_transcript_api import YouTubeTranscriptApi  # lazy-loaded
         # Prefer English, Hindi, or auto
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
         transcript_text = " ".join([t['text'] for t in transcript_list])
