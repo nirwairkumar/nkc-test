@@ -3,11 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { fetchFeatureFlags, updateFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { toast } from 'sonner';
-import { Wrench, ShieldAlert, Loader2 } from 'lucide-react';
+import { Wrench, ShieldAlert, Loader2, Youtube } from 'lucide-react';
 import { SEO } from '@/components/SEO';
 
 const AdminFeatureControl = () => {
-    const [flags, setFlags] = useState<FeatureFlags>({ enable_anonymous_tests: false, enable_ai_test_generation: true, ai_test_generation_notes: "" });
+    const [flags, setFlags] = useState<FeatureFlags>({
+        enable_anonymous_tests: false,
+        enable_ai_test_generation: true,
+        ai_test_generation_notes: "",
+        enable_youtube_generation: true,
+        youtube_generation_notes: "",
+    });
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -136,6 +142,45 @@ const AdminFeatureControl = () => {
                                         onBlur={(e) => handleTextChange('ai_test_generation_notes', e.target.value)}
                                     />
                                     <p className="text-xs text-muted-foreground">This message will be shown to users when they visit the generate-with-ai page while this feature is disabled. Focus away from the text box to save.</p>
+                                </div>
+                            )}
+                        </div>
+                        {/* YouTube Generation Toggle */}
+                        <div className="flex flex-col gap-4 p-4 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors mt-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                        <Youtube className="h-4 w-4 text-red-500" />
+                                        YouTube Test Generator
+                                    </h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        Enable or disable the "Generate from YouTube" feature globally.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4 shrink-0">
+                                    {isSaving && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                                    <Switch
+                                        checked={flags.enable_youtube_generation ?? true}
+                                        onCheckedChange={(checked) => handleToggle('enable_youtube_generation', checked)}
+                                        disabled={isSaving}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Notes Textarea (shown when disabled) */}
+                            {!(flags.enable_youtube_generation ?? true) && (
+                                <div className="mt-2 space-y-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Disable Message / Notes to Users
+                                    </label>
+                                    <textarea
+                                        className="w-full min-h-[80px] p-3 text-sm border rounded-md dark:bg-slate-900 dark:border-slate-800"
+                                        placeholder="e.g. YouTube generation is temporarily paused for maintenance..."
+                                        value={flags.youtube_generation_notes || ""}
+                                        onChange={(e) => setFlags(prev => ({ ...prev, youtube_generation_notes: e.target.value }))}
+                                        onBlur={(e) => handleTextChange('youtube_generation_notes', e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground">This message will be shown to users as a popup when they try to use the YouTube generator. Focus away to save.</p>
                                 </div>
                             )}
                         </div>

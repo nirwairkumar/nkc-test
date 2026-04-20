@@ -307,7 +307,7 @@ async def generate_youtube_test(
 # --- PDF/Image Parsing Endpoint (Gemini Full-Page Vision Pipeline) ---
 from fastapi import UploadFile, File, Query
 from utils.logger import get_logger
-from ai_preview_importer.pdf_vision_pipeline import process_files
+# process_files is lazily imported inside the route to avoid loading heavy OCR libs at startup
 
 logger = get_logger("ai_router")
 
@@ -364,6 +364,7 @@ async def parse_document(
             logger.info(f"Answer key '{answer_key.filename}' size: {len(answer_key_content)} bytes")
 
         # 3. Run Vision Pipeline
+        from ai_preview_importer.pdf_vision_pipeline import process_files  # lazy import
         result = await process_files(file_data, mode=mode, answer_key=answer_key_data)
         
         # 4. Return Result
@@ -380,7 +381,7 @@ async def parse_document(
 
 # --- ULTRA-FAST Streaming Endpoint with Real-Time Progress ---
 from fastapi.responses import StreamingResponse
-from ai_preview_importer.pdf_vision_pipeline import process_files_stream
+# process_files_stream is lazily imported inside the route to avoid loading heavy OCR libs at startup
 import asyncio
 
 @router.post("/parse-stream")
@@ -474,6 +475,7 @@ async def parse_document_stream(
             
             try:
                 # Process with streaming (file_data already read above)
+                from ai_preview_importer.pdf_vision_pipeline import process_files_stream  # lazy import
                 result = await process_files_stream(
                     file_data,
                     mode=mode,

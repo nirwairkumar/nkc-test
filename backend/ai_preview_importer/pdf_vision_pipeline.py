@@ -20,25 +20,18 @@ import io
 import re
 import json
 import base64
-import fitz  # PyMuPDF
 import asyncio
 from google import genai
 from google.genai import types
 from typing import Dict, List, Optional, Tuple, Callable
 from utils.logger import get_logger
 from app.core.config import settings
-from PIL import Image
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
 logger = get_logger(__name__)
 
-# Optional: Tesseract OCR for hybrid processing
-try:
-    import pytesseract
-    TESSERACT_AVAILABLE = True
-except ImportError:
-    TESSERACT_AVAILABLE = False
-    logger.warning("Tesseract not available. Using vision-only mode.")
+# Lazy-load flag for optional Tesseract
+TESSERACT_AVAILABLE = None  # None = not yet checked
 
 # Configure Gemini using the app settings (loaded from .env)
 api_key = settings.GEMINI_API_KEY
@@ -461,6 +454,7 @@ Return ONLY valid JSON (no markdown fences, no explanation):
 
 def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
     """Render each PDF page as a PNG image at the specified DPI."""
+    import fitz  # lazy-loaded: only used by OCR pipeline
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     page_images = []
 
@@ -485,6 +479,7 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
     Extract ALL embedded images from the PDF.
     Keeps diagrams of all sizes - even small chemical structures are important.
     """
+    import fitz  # lazy-loaded: only used by OCR pipeline
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     images = []
     seen_hashes = set()
@@ -556,6 +551,7 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
 def convert_image_to_bytes(image_bytes: bytes, target_format: str = "png") -> bytes:
     """Convert any image format to standardized bytes."""
     try:
+        from PIL import Image  # lazy-loaded: only used by OCR pipeline
         img = Image.open(io.BytesIO(image_bytes))
         # Convert to RGB if necessary (for PNG compatibility)
         if img.mode in ('RGBA', 'P'):

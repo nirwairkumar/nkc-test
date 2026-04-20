@@ -1,12 +1,10 @@
 """
 Quality Analyzer Module - Analyzes image quality to determine optimal processing parameters
 """
-import cv2
-import numpy as np
-from PIL import Image
 import io
 from typing import Dict
 from utils.logger import get_logger
+# cv2, numpy, PIL are lazily imported inside methods to avoid loading ~120MB at startup
 
 logger = get_logger(__name__)
 
@@ -27,6 +25,9 @@ class QualityAnalyzer:
                 - metrics: Dict (detailed metric scores)
                 - recommendation: str (user-facing message)
         """
+        import cv2           # lazy-loaded: only used by OCR pipeline
+        import numpy as np  # lazy-loaded: only used by OCR pipeline
+        from PIL import Image  # lazy-loaded: only used by OCR pipeline
         try:
             # Convert to PIL Image
             img = Image.open(io.BytesIO(image_bytes))
@@ -83,8 +84,10 @@ class QualityAnalyzer:
             }
     
     @staticmethod
-    def _calculate_sharpness(gray: np.ndarray) -> float:
+    def _calculate_sharpness(gray) -> float:
         """Calculate image sharpness using Laplacian variance"""
+        import cv2
+        import numpy as np
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
         variance = laplacian.var()
         # Normalize: good sharpness typically > 100
@@ -92,21 +95,25 @@ class QualityAnalyzer:
         return min(variance / 500, 1.0)
     
     @staticmethod
-    def _calculate_contrast(gray: np.ndarray) -> float:
+    def _calculate_contrast(gray) -> float:
         """Calculate contrast ratio"""
+        import numpy as np
         min_val = np.min(gray)
         max_val = np.max(gray)
         contrast = (max_val - min_val) / 255.0
         return contrast
     
     @staticmethod
-    def _calculate_brightness(gray: np.ndarray) -> float:
+    def _calculate_brightness(gray) -> float:
         """Calculate average brightness"""
+        import numpy as np
         return np.mean(gray) / 255.0
     
     @staticmethod
-    def _calculate_noise(gray: np.ndarray) -> float:
+    def _calculate_noise(gray) -> float:
         """Estimate noise level using median filter difference"""
+        import cv2
+        import numpy as np
         # Use median filter to denoise and compare
         denoised = cv2.medianBlur(gray, 5)
         noise = np.mean(np.abs(gray.astype(float) - denoised.astype(float)))
