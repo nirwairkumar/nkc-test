@@ -1,5 +1,6 @@
 import apiClient from './apiClient';
 
+
 export interface PageViewEvent {
     event_type: 'page_view' | 'session_start' | 'session_end';
     fingerprint: string;
