@@ -60,7 +60,8 @@ async def create_test(
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "marks_per_question", "negative_marks", 
                 "is_public", "visibility", "revision_notes", "institution_name",
-                "institution_logo", "slug", "tags", "class_id", "sections", "test_id",
+                "institution_logo", "institution_color", "institution_font",
+                "slug", "tags", "class_id", "sections", "test_id",
                 "enable_section_mode", "section_marking_model", "has_scientific_calculator",
                 "merged_sections"
             }
@@ -109,7 +110,8 @@ async def update_test(
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "marks_per_question", "negative_marks", 
                 "is_public", "visibility", "revision_notes", "institution_name",
-                "institution_logo", "slug", "tags", "class_id", "sections",
+                "institution_logo", "institution_color", "institution_font",
+                "slug", "tags", "class_id", "sections",
                 "enable_section_mode", "section_marking_model", "has_scientific_calculator",
                 "merged_sections"
             }

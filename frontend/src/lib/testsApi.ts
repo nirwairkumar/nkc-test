@@ -35,6 +35,8 @@ export interface Test {
     created_by?: string;
     institution_name?: string;
     institution_logo?: string;
+    institution_color?: string;
+    institution_font?: string;
     slug?: string;
     og_image?: string; // Open Graph Image URL
     tags?: string[]; // Array of strings

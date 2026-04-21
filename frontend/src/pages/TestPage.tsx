@@ -1425,12 +1425,12 @@ export default function TestPage() {
     <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
       {/* Institution Branding Bar */}
       {(test.institution_name || test.institution_logo) && (
-        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2 flex items-center justify-center gap-3">
+        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3">
           {test.institution_logo && (
-            <img src={test.institution_logo} alt="Institution Logo" className="h-10 w-auto object-contain" />
+            <img src={test.institution_logo} alt="Institution Logo" className="h-9 w-auto object-contain" />
           )}
           {test.institution_name && (
-            <span className="text-lg font-bold text-slate-800">{test.institution_name}</span>
+            <span className="text-xl font-bold" style={{ color: test.institution_color || '#475569', fontFamily: test.institution_font || 'inherit' }}>{test.institution_name}</span>
           )}
         </div>
       )}

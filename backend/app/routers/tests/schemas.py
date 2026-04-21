@@ -33,6 +33,8 @@ class CreateTestRequest(BaseModel):
     created_by: str
     institution_name: Optional[str] = None
     institution_logo: Optional[str] = None
+    institution_color: Optional[str] = None
+    institution_font: Optional[str] = None
     slug: Optional[str] = None
     og_image: Optional[str] = None
     tags: Optional[List[str]] = []

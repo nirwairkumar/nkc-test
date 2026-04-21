@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -94,6 +94,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [revisionNotes, setRevisionNotes] = useState('');
     const [institutionName, setInstitutionName] = useState('');
     const [institutionLogo, setInstitutionLogo] = useState('');
+    const [institutionColor, setInstitutionColor] = useState('#475569');
+    const [institutionFont, setInstitutionFont] = useState('inherit');
     const [time, setTime] = useState<number>(30);
     const [marks, setMarks] = useState<number>(1);
     const [negativeMarks, setNegativeMarks] = useState<number>(0);
@@ -196,7 +198,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
 
         const uploadPreset = "TestoZa_cloudinary";
-        const cloudName = "dma0h19mk"; 
+        const cloudName = "dma0h19mk";
 
         const formData = new FormData();
         formData.append("file", file);
@@ -478,7 +480,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         if (typeof parsedQuestions === 'string') {
             try { parsedQuestions = JSON.parse(parsedQuestions); } catch (e) { parsedQuestions = []; }
         }
-        
+
         let parsedSections = data.sections;
         if (typeof parsedSections === 'string') {
             try { parsedSections = JSON.parse(parsedSections); } catch (e) { parsedSections = []; }
@@ -497,6 +499,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setRevisionNotes(data.revision_notes || '');
         setInstitutionName(data.institution_name || '');
         setInstitutionLogo(data.institution_logo || '');
+        setInstitutionColor(data.institution_color || '#475569');
+        setInstitutionFont(data.institution_font || 'inherit');
         setTime(data.duration || 30);
         setMarks(data.marks_per_question || 4);
         setNegativeMarks(data.negative_marks || 1);
@@ -819,6 +823,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 : sanitizedQuestions,
             institution_name: institutionName,
             institution_logo: institutionLogo,
+            institution_color: institutionColor,
+            institution_font: institutionFont,
             slug: title ? slugify(title, { lower: true, strict: true }) + '-' + Math.random().toString(36).substr(2, 4) : undefined,
             tags: tags,
             custom_category: showOtherCategory && customCategory.trim() ? customCategory.trim() : null,
@@ -890,7 +896,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         if (!user) {
             // Save current draft state before redirecting
             const draftData = {
-                title, description, revision_notes: revisionNotes, institution_name: institutionName, institution_logo: institutionLogo,
+                title, description, revision_notes: revisionNotes, institution_name: institutionName, institution_logo: institutionLogo, institution_color: institutionColor, institution_font: institutionFont,
                 duration: time, is_public: isPublic,
                 questions, selectedCategories,
                 // Save new state too
@@ -1021,6 +1027,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             setRevisionNotes('');
             setInstitutionName('');
             setInstitutionLogo('');
+            setInstitutionColor('#475569');
+            setInstitutionFont('inherit');
             setTime(30);
             setMarks(4);
             setNegativeMarks(1);
@@ -1355,37 +1363,72 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 </div>
                             </label>
                         </div>
-                        <div className="w-full max-w-lg flex items-start gap-4">
-                            <div className="flex-1 mr-2 relative group-input">
-                                <Input
-                                    value={institutionName}
-                                    onChange={(e) => setInstitutionName(e.target.value)}
-                                    placeholder={isPremium ? "Add Your Institution Name" : "Add Institution Name (Premium)"}
-                                    className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0 disabled:opacity-100 disabled:cursor-not-allowed"
-                                    disabled={!isPremium}
-                                    title={!isPremium ? "Upgrade to Premium to set Institution Name" : ""}
-                                />
-                                {!isPremium && (
-                                    <div
-                                        className="absolute inset-0 cursor-pointer"
-                                        onClick={() => toast("Upgrade to Premium to set Institution Name", {
-                                            action: { label: "View Plans", onClick: () => navigate('/pricing') }
-                                        })}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 relative group-input">
+                                    <Input
+                                        value={institutionName}
+                                        onChange={(e) => setInstitutionName(e.target.value)}
+                                        placeholder={isPremium ? "Add Your Institution Name" : "Add Institution Name (Premium)"}
+                                        className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0 disabled:opacity-100 disabled:cursor-not-allowed"
+                                        style={{ color: institutionColor, fontFamily: institutionFont }}
+                                        disabled={!isPremium}
+                                        title={!isPremium ? "Upgrade to Premium to set Institution Name" : ""}
                                     />
-                                )}
-                                <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
+                                    {!isPremium && (
+                                        <div
+                                            className="absolute inset-0 cursor-pointer"
+                                            onClick={() => toast("Upgrade to Premium to set Institution Name", {
+                                                action: { label: "View Plans", onClick: () => navigate('/pricing') }
+                                            })}
+                                        />
+                                    )}
+                                    <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
+                                </div>
                             </div>
-                            <div className="flex flex-col justify-start h-full pt-1">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleClear}
-                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                    title="Clear All Data"
-                                >
-                                    <Eraser className="w-5 h-5" />
-                                </Button>
-                            </div>
+                            {/* Color Swatches & Font Picker */}
+                            {isPremium && (
+                                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                    <div className="flex items-center gap-1.5">
+                                        <Palette className="w-3 h-3 text-slate-400" />
+                                        {['#475569','#2563eb','#dc2626','#059669','#7c3aed','#ea580c','#0891b2'].map(c => (
+                                            <button
+                                                key={c}
+                                                onClick={() => setInstitutionColor(c)}
+                                                className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${institutionColor === c ? 'border-slate-800 scale-110 ring-1 ring-offset-1 ring-slate-400' : 'border-transparent'}`}
+                                                style={{ backgroundColor: c }}
+                                                title={c}
+                                            />
+                                        ))}
+                                    </div>
+                                    <div className="h-4 w-px bg-slate-200" />
+                                    <div className="flex items-center gap-1.5">
+                                        <Type className="w-3 h-3 text-slate-400" />
+                                        <select
+                                            value={institutionFont}
+                                            onChange={(e) => setInstitutionFont(e.target.value)}
+                                            className="text-xs bg-transparent border border-slate-200 rounded px-1.5 py-0.5 text-slate-600 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                        >
+                                            <option value="inherit">Default</option>
+                                            <option value="serif">Serif</option>
+                                            <option value="'Courier New', monospace">Mono</option>
+                                            <option value="'Georgia', serif">Georgia</option>
+                                            <option value="'Trebuchet MS', sans-serif">Modern</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex flex-col justify-start h-full pt-1 shrink-0">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleClear}
+                                className="text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                title="Clear All Data"
+                            >
+                                <Eraser className="w-5 h-5" />
+                            </Button>
                         </div>
                     </div>
 
@@ -1721,9 +1764,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     const style = SECTION_STYLES[sIdx % SECTION_STYLES.length];
 
                                     return (
-                                        <Card 
-                                            key={section.id} 
-                                            draggable 
+                                        <Card
+                                            key={section.id}
+                                            draggable
                                             onDragStart={(e) => handleDragStartSection(e, section.id)}
                                             onDragOver={(e) => e.preventDefault()}
                                             onDrop={(e) => handleDropSection(e, section.id)}
@@ -1778,7 +1821,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             <div className="space-y-4">
                                                                 <div className="flex items-center justify-between">
                                                                     <h4 className="font-bold text-sm">Attempt Control</h4>
-                                                                    <Switch 
+                                                                    <Switch
                                                                         checked={!!section.attempt_control}
                                                                         onCheckedChange={(checked) => {
                                                                             if (checked) {
@@ -2687,8 +2730,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     <X className="w-5 h-5" />
                                 </Button>
                             </div>
-                            
-                            <div 
+
+                            <div
                                 ref={cloudUploadBoxRef}
                                 className="border-2 border-dashed border-slate-200 rounded-xl p-8 pb-6 text-center hover:border-indigo-400 hover:bg-indigo-50/50 transition-colors cursor-pointer group outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-indigo-50/30"
                                 tabIndex={0}
@@ -2707,12 +2750,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 </div>
                                 <p className="text-slate-600 font-medium mb-1">Upload from Device</p>
                                 <p className="text-sm text-slate-400 mb-4 px-2">or press <kbd className="hidden sm:inline-block px-1.5 py-0.5 max-w-max mx-1 rounded border border-slate-200 bg-slate-50 text-[10px] font-mono text-slate-500 font-bold shadow-sm whitespace-nowrap">Ctrl+V</kbd> inside this box</p>
-                                <input 
-                                    id="cloud-modal-upload" 
-                                    type="file" 
-                                    className="hidden" 
-                                    accept="image/*" 
-                                    onChange={(e) => handleCloudinaryUpload(e, cloudUploadTarget)} 
+                                <input
+                                    id="cloud-modal-upload"
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) => handleCloudinaryUpload(e, cloudUploadTarget)}
                                 />
                             </div>
                         </div>
