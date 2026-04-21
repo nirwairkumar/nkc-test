@@ -1499,15 +1499,7 @@ export default function TestPage() {
     <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
       {/* Institution Branding Bar */}
       {(test.institution_name || test.institution_logo) && (
-        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3 relative">
-          {/* Connection health dot — top-right corner, subtle */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5" title={connectionStatus === 'online' ? 'Connected' : connectionStatus === 'offline' ? 'No internet — answers saved locally' : 'Reconnecting...'}>
-            <span className={`inline-block w-2 h-2 rounded-full transition-colors ${
-              connectionStatus === 'online' ? 'bg-emerald-400' :
-              connectionStatus === 'offline' ? 'bg-red-400 animate-pulse' :
-              'bg-amber-400 animate-pulse'
-            }`} />
-          </div>
+        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3">
           {test.institution_logo && (
             <img src={test.institution_logo} alt="Institution Logo" className="h-9 w-auto object-contain" />
           )}
@@ -1618,14 +1610,25 @@ export default function TestPage() {
           )}
 
           {!test.settings?.disable_exit_button && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-              onClick={() => setShowExitDialog(true)}
-            >
-              Exit
-            </Button>
+            <>
+              {/* Connection health dot — always visible, beside Exit button */}
+              <span
+                className={`inline-block w-2 h-2 rounded-full transition-colors shrink-0 ${
+                  connectionStatus === 'online' ? 'bg-emerald-400' :
+                  connectionStatus === 'offline' ? 'bg-red-400 animate-pulse' :
+                  'bg-amber-400 animate-pulse'
+                }`}
+                title={connectionStatus === 'online' ? 'Connected' : connectionStatus === 'offline' ? 'No internet — answers saved locally' : 'Reconnecting...'}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                onClick={() => setShowExitDialog(true)}
+              >
+                Exit
+              </Button>
+            </>
           )}
 
           <Button onClick={attemptSubmit} disabled={isSubmitting} variant="destructive" size="sm" className="h-7 md:h-8 rounded-full px-3 md:px-4 text-[11px] md:text-xs font-semibold shadow-sm ml-auto md:ml-0 overflow-hidden shrink-0">
