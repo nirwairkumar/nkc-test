@@ -304,22 +304,28 @@ export default function TestPage() {
   }, [test?.id, user?.id]);
 
   // ── Phase 2: Background auto-sync answers every 3 minutes ──
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   useEffect(() => {
     if (!test || !user || isSubmitting) return;
     const syncInterval = setInterval(async () => {
       if (submittedRef.current) return;
       try {
+        const currentAnswers = answersRef.current;
         const totalQ = test.questions?.length || 1;
-        const answeredQ = Object.keys(answers).length;
+        const answeredQ = Object.keys(currentAnswers).length;
         const pct = Math.round((answeredQ / totalQ) * 100);
         // Reuse the progress endpoint to push current answers to the server
-        await analyticsApi.updateProgress(user.id, test.id, Math.min(pct, 99), answers);
+        await analyticsApi.updateProgress(user.id, test.id, Math.min(pct, 99), currentAnswers);
         // Also flush the vault with a fresh save
-        await AnswerVault.save(user.id, test.id, answers as Record<string, any>);
+        await AnswerVault.save(user.id, test.id, currentAnswers as Record<string, any>);
       } catch { /* non-fatal: will retry next interval */ }
     }, 3 * 60 * 1000); // every 3 minutes
     return () => clearInterval(syncInterval);
-  }, [test, user, isSubmitting, answers]);
+  }, [test, user, isSubmitting]);
 
   // ── Phase 2: Network online/offline listener ──
   useEffect(() => {
