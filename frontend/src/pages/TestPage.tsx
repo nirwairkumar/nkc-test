@@ -327,7 +327,7 @@ export default function TestPage() {
         // Also flush the vault with a fresh save
         await AnswerVault.save(user.id, test.id, currentAnswers as Record<string, any>);
       } catch { /* non-fatal: will retry next interval */ }
-    }, 3 * 60 * 1000); // every 3 minutes
+    }, 2 * 60 * 1000); // every 2 minutes
     return () => clearInterval(syncInterval);
   }, [test, user, isSubmitting]);
 
