@@ -1,14 +1,15 @@
 import apiClient from '@/lib/apiClient';
 import { withExponentialRetry } from '@/lib/testResilience';
 
-export async function saveAttempt(user_id: string, test_id: string, answers: any, score?: number, metadata?: any) {
+export async function saveAttempt(user_id: string, test_id: string, answers: any, score?: number, metadata?: any, completion_percentage?: number) {
     try {
         const response = await apiClient.post('attempts/save', {
             user_id,
             test_id,
             answers,
             score,
-            metadata
+            metadata,
+            completion_percentage
         });
         return { data: response.data?.data, error: null };
     } catch (error: any) {
@@ -27,11 +28,12 @@ export async function saveAttemptWithRetry(
     answers: any,
     score?: number,
     metadata?: any,
+    completion_percentage?: number,
     onRetry?: (attempt: number) => void
 ) {
     try {
         const data = await withExponentialRetry(
-            () => apiClient.post('attempts/save', { user_id, test_id, answers, score, metadata })
+            () => apiClient.post('attempts/save', { user_id, test_id, answers, score, metadata, completion_percentage })
                 .then(res => res.data?.data),
             {
                 maxAttempts: 5,

@@ -7,6 +7,7 @@ class SaveAttemptRequest(BaseModel):
     answers: Dict[str, Any]
     score: Optional[float] = 0
     metadata: Optional[Dict[str, Any]] = None
+    completion_percentage: Optional[float] = None
 
 class RegisterRequest(BaseModel):
     user_id: Optional[str] = None

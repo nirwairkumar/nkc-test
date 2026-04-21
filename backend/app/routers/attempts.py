@@ -57,8 +57,9 @@ async def save_attempt(
         
         # Mark the corresponding test_registration as submitted
         try:
+            pct = payload.completion_percentage if payload.completion_percentage is not None else 100
             supabase.table("test_registrations")\
-                .update({"status": "submitted", "completion_percentage": 100})\
+                .update({"status": "submitted", "completion_percentage": pct})\
                 .eq("user_id", payload.user_id)\
                 .eq("test_id", payload.test_id)\
                 .neq("status", "submitted")\

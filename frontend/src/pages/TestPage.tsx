@@ -305,9 +305,13 @@ export default function TestPage() {
 
   // ── Phase 2: Background auto-sync answers every 3 minutes ──
   const answersRef = useRef(answers);
+  const visitedRef = useRef(visited);
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
+  useEffect(() => {
+    visitedRef.current = visited;
+  }, [visited]);
 
   useEffect(() => {
     if (!test || !user || isSubmitting) return;
@@ -315,9 +319,9 @@ export default function TestPage() {
       if (submittedRef.current) return;
       try {
         const currentAnswers = answersRef.current;
+        const currentVisitedCount = visitedRef.current.size;
         const totalQ = test.questions?.length || 1;
-        const answeredQ = Object.keys(currentAnswers).length;
-        const pct = Math.round((answeredQ / totalQ) * 100);
+        const pct = Math.round((currentVisitedCount / totalQ) * 100);
         // Reuse the progress endpoint to push current answers to the server
         await analyticsApi.updateProgress(user.id, test.id, Math.min(pct, 99), currentAnswers);
         // Also flush the vault with a fresh save
@@ -1007,6 +1011,10 @@ export default function TestPage() {
     };
 
     const finalScore = (isNaN(score) || !isFinite(score)) ? 0 : parseFloat(score.toFixed(2));
+    
+    // Compute exact completion percentage based on visited questions instead of defaulting to 100
+    const totalQ = test.questions?.length || 1;
+    const finalCompletionPercentage = Math.round((visited.size / totalQ) * 100);
 
     // ANONYMOUS SUBMISSION
     if (!user) {
@@ -1045,7 +1053,7 @@ export default function TestPage() {
 
     let retryToastId: string | number | undefined;
     const { error } = await saveAttemptWithRetry(
-      user.id, test.id, answers, finalScore, metadata,
+      user.id, test.id, answers, finalScore, metadata, finalCompletionPercentage,
       (attempt) => {
         // Show a "Retrying..." toast on 2nd attempt onwards
         const msg = `Connection issue — retrying submission (${attempt}/5)...`;
