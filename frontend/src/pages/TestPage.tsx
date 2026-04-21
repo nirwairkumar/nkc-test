@@ -313,7 +313,7 @@ export default function TestPage() {
         const answeredQ = Object.keys(answers).length;
         const pct = Math.round((answeredQ / totalQ) * 100);
         // Reuse the progress endpoint to push current answers to the server
-        await analyticsApi.updateProgress(user.id, test.id, Math.min(pct, 99));
+        await analyticsApi.updateProgress(user.id, test.id, Math.min(pct, 99), answers);
         // Also flush the vault with a fresh save
         await AnswerVault.save(user.id, test.id, answers as Record<string, any>);
       } catch { /* non-fatal: will retry next interval */ }
@@ -1051,7 +1051,15 @@ export default function TestPage() {
 
     if (error) {
       console.error("Save Attempt Error:", error);
-      toast.error('Failed to save results. Please try again.');
+      
+      // Detailed error for admin debugging
+      const errorMsg = error?.response?.data?.detail 
+        || error?.response?.data?.message 
+        || error?.message 
+        || (typeof error === 'string' ? error : JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        
+      window.alert(`Submission Error Log (Take Screenshot):\n\n${JSON.stringify(error?.response?.data || error, null, 2)}\n\nMessage: ${errorMsg}`);
+      toast.error('Failed to save results. See popup for details.', { duration: 10000 });
       setIsSubmitting(false);
     } else {
       // ─── Success: clear all saved state ────────────────────────────────

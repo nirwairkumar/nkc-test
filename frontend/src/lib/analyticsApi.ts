@@ -91,9 +91,9 @@ export const analyticsApi = {
     },
 
     // ─── Progress & Abandonment Tracking ──────────────────────
-    updateProgress: async (user_id: string | null, test_id: string, completion_percentage: number) => {
+    updateProgress: async (user_id: string | null, test_id: string, completion_percentage: number, answers?: any) => {
         try {
-            await apiClient.post('attempts/progress', { user_id, test_id, completion_percentage });
+            await apiClient.post('attempts/progress', { user_id, test_id, completion_percentage, answers });
         } catch (e) { /* non-critical */ }
     },
 

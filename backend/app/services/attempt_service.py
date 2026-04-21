@@ -12,11 +12,15 @@ def process_progress(payload: ProgressUpdateRequest):
     try:
         try:
             status = "submitted" if payload.completion_percentage >= 100 else "in_progress"
-            update_data = {
+            update_data: Dict[str, Any] = {
                 "completion_percentage": min(payload.completion_percentage, 100),
                 "status": status,
                 "last_active_at": datetime.now(timezone.utc).isoformat()
             }
+            if payload.answers is not None:
+                # Store a draft copy of answers inside the metadata jsonb column for emergency admin recovery
+                update_data["metadata"] = {"answers_draft": payload.answers}
+                
             query = supabase.table("test_registrations").update(update_data).eq("test_id", payload.test_id)
             if payload.user_id:
                 query = query.eq("user_id", payload.user_id)

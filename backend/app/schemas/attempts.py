@@ -16,6 +16,7 @@ class ProgressUpdateRequest(BaseModel):
     user_id: Optional[str] = None
     test_id: str
     completion_percentage: float  # 0-100
+    answers: Optional[Dict[str, Any]] = None
 
 class AbandonRequest(BaseModel):
     user_id: Optional[str] = None
