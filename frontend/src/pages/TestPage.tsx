@@ -3,7 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
-import { saveAttempt } from '@/lib/attemptsApi';
+import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
+import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
 import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2 } from 'lucide-react';
 import { useTheme } from "next-themes";
@@ -89,12 +90,20 @@ export default function TestPage() {
   const [fullScreenLogs, setFullScreenLogs] = useState<{ event: string, timestamp: number }[]>([]);
   const [isFullScreen, setIsFullScreen] = useState(true);
 
+  // ── Phase 2: Connection health indicator state ──
+  type ConnectionStatus = 'online' | 'offline' | 'reconnecting';
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('online');
+
   // Reporting State
   const [reportReason, setReportReason] = useState<string>('');
   const [reportDetails, setReportDetails] = useState<string>('');
   const [isReporting, setIsReporting] = useState(false);
   const [reportedQuestions, setReportedQuestions] = useState<Set<number>>(new Set());
   const [isReportPopoverOpen, setIsReportPopoverOpen] = useState(false);
+
+  // ── Resilience: proactive token refresh every 45 min + IndexedDB vault backup ──
+  const vaultSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tokenRefreshCleanupRef = useRef<(() => void) | null>(null);
 
   const handleReportSubmit = async (questionId: number, reason: string, details?: string) => {
     if (!test) return;
@@ -276,6 +285,54 @@ export default function TestPage() {
     localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
   }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id]);
 
+  // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
+  useEffect(() => {
+    if (!user || !test || !id || isSubmitting) return;
+    if (vaultSaveTimerRef.current) clearTimeout(vaultSaveTimerRef.current);
+    vaultSaveTimerRef.current = setTimeout(() => {
+      AnswerVault.save(user.id, test.id, answers as Record<string, any>);
+    }, 30_000); // save after 30s of inactivity
+    return () => { if (vaultSaveTimerRef.current) clearTimeout(vaultSaveTimerRef.current); };
+  }, [answers, user, test, id, isSubmitting]);
+
+  // ─── Proactive token refresh: start when test loads, stop on unmount ────────
+  useEffect(() => {
+    if (!test || !user) return;
+    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '') + '/';
+    tokenRefreshCleanupRef.current = startProactiveTokenRefresh(apiBase);
+    return () => { tokenRefreshCleanupRef.current?.(); };
+  }, [test?.id, user?.id]);
+
+  // ── Phase 2: Background auto-sync answers every 3 minutes ──
+  useEffect(() => {
+    if (!test || !user || isSubmitting) return;
+    const syncInterval = setInterval(async () => {
+      if (submittedRef.current) return;
+      try {
+        const totalQ = test.questions?.length || 1;
+        const answeredQ = Object.keys(answers).length;
+        const pct = Math.round((answeredQ / totalQ) * 100);
+        // Reuse the progress endpoint to push current answers to the server
+        await analyticsApi.updateProgress(user.id, test.id, Math.min(pct, 99));
+        // Also flush the vault with a fresh save
+        await AnswerVault.save(user.id, test.id, answers as Record<string, any>);
+      } catch { /* non-fatal: will retry next interval */ }
+    }, 3 * 60 * 1000); // every 3 minutes
+    return () => clearInterval(syncInterval);
+  }, [test, user, isSubmitting, answers]);
+
+  // ── Phase 2: Network online/offline listener ──
+  useEffect(() => {
+    const handleOnline = () => setConnectionStatus('online');
+    const handleOffline = () => setConnectionStatus('offline');
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   // ─── Analytics: Progress Tracking & Abandon Detection ───────
   const submittedRef = useRef(false);
 
@@ -316,6 +373,11 @@ export default function TestPage() {
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
       if (user) {
+        // Emergency vault save on unload — synchronous fallback
+        try {
+          const draft = JSON.stringify({ key: `${user.id}_${test.id}`, answers, savedAt: new Date().toISOString() });
+          sessionStorage.setItem(`vault_emergency_${user.id}_${test.id}`, draft);
+        } catch { /**/ }
         analyticsApi.markAbandoned(user.id, id, 'tab_closed', pct);
       } else {
         analyticsApi.abandonAnonAttempt(id, 'tab_closed', pct);
@@ -975,16 +1037,28 @@ export default function TestPage() {
       return;
     }
 
-    const { error } = await saveAttempt(user.id, test.id, answers, finalScore, metadata);
+    let retryToastId: string | number | undefined;
+    const { error } = await saveAttemptWithRetry(
+      user.id, test.id, answers, finalScore, metadata,
+      (attempt) => {
+        // Show a "Retrying..." toast on 2nd attempt onwards
+        const msg = `Connection issue — retrying submission (${attempt}/5)...`;
+        if (retryToastId) toast.dismiss(retryToastId);
+        retryToastId = toast.loading(msg, { duration: 10_000 });
+      }
+    );
+    if (retryToastId) toast.dismiss(retryToastId);
 
     if (error) {
       console.error("Save Attempt Error:", error);
       toast.error('Failed to save results. Please try again.');
       setIsSubmitting(false);
     } else {
-      // Clear saved session on submit
+      // ─── Success: clear all saved state ────────────────────────────────
       localStorage.removeItem(`test_session_${user.id}_${test.id}`);
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
+      sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
+      AnswerVault.clear(user.id, test.id); // clean IndexedDB vault
 
       // Exit Full Screen if active
       if (document.fullscreenElement) {
@@ -1425,7 +1499,15 @@ export default function TestPage() {
     <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
       {/* Institution Branding Bar */}
       {(test.institution_name || test.institution_logo) && (
-        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3">
+        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3 relative">
+          {/* Connection health dot — top-right corner, subtle */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5" title={connectionStatus === 'online' ? 'Connected' : connectionStatus === 'offline' ? 'No internet — answers saved locally' : 'Reconnecting...'}>
+            <span className={`inline-block w-2 h-2 rounded-full transition-colors ${
+              connectionStatus === 'online' ? 'bg-emerald-400' :
+              connectionStatus === 'offline' ? 'bg-red-400 animate-pulse' :
+              'bg-amber-400 animate-pulse'
+            }`} />
+          </div>
           {test.institution_logo && (
             <img src={test.institution_logo} alt="Institution Logo" className="h-9 w-auto object-contain" />
           )}

@@ -1,4 +1,5 @@
 import apiClient from '@/lib/apiClient';
+import { withExponentialRetry } from '@/lib/testResilience';
 
 export async function saveAttempt(user_id: string, test_id: string, answers: any, score?: number, metadata?: any) {
     try {
@@ -10,6 +11,36 @@ export async function saveAttempt(user_id: string, test_id: string, answers: any
             metadata
         });
         return { data: response.data?.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
+
+/**
+ * saveAttemptWithRetry — Same as saveAttempt but wraps it with exponential
+ * backoff (up to 5 tries: 1s, 2s, 4s, 8s, 15s). Use this for final submission.
+ * @param onRetry optional callback fired before each retry (use to show toast)
+ */
+export async function saveAttemptWithRetry(
+    user_id: string,
+    test_id: string,
+    answers: any,
+    score?: number,
+    metadata?: any,
+    onRetry?: (attempt: number) => void
+) {
+    try {
+        const data = await withExponentialRetry(
+            () => apiClient.post('attempts/save', { user_id, test_id, answers, score, metadata })
+                .then(res => res.data?.data),
+            {
+                maxAttempts: 5,
+                baseDelayMs: 1000,
+                maxDelayMs: 15000,
+                onRetry: (attempt, _err) => onRetry?.(attempt),
+            }
+        );
+        return { data, error: null };
     } catch (error: any) {
         return { data: null, error };
     }
