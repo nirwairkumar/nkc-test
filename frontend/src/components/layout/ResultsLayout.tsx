@@ -296,9 +296,13 @@ export default function ResultsLayout() {
                             </div>
                         </SheetContent>
                     </Sheet>
-                    <h1 className="text-sm font-medium text-slate-800 dark:text-slate-100 ml-2 tracking-wide leading-relaxed" style={{ fontFamily: "'Dancing Script', cursive" }}>
+                    <span className="text-[17px] font-semibold text-slate-700 dark:text-slate-300 ml-3 tracking-normal leading-tight font-sans block truncate max-w-[180px]">
                         {userName}'s Results
-                    </h1>
+                    </span>
+
+
+
+
                 </header>
 
                 {/* Sub-page Injection Point */}

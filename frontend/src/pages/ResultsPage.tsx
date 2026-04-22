@@ -545,7 +545,7 @@ const ResultsPage = () => {
                     <CardContent className="p-6 flex flex-col justify-between h-full">
                       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                         <div className="pr-12 md:pr-0">
-                          <h2 className="text-lg md:text-2xl font-semibold opacity-90 leading-tight">{selectedTest?.title}</h2>
+                          <div className="text-lg md:text-2xl font-semibold opacity-90 leading-tight">{selectedTest?.title}</div>
                           <p className="text-indigo-100 text-sm md:text-base mt-1">Test Completed Successfully</p>
                         </div>
                       </div>
