@@ -41,6 +41,16 @@ interface CombinedAttempt {
     paper2_label?: string;
 }
 
+// Global helper to handle potential string/JSON mismatch
+const ensureParsed = (val: any) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+        try { return JSON.parse(val); } catch (e) { return []; }
+    }
+    return [];
+};
+
 export default function TestHistory() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -49,6 +59,31 @@ export default function TestHistory() {
     const [loading, setLoading] = useState(true);
     const [expandedAttempt, setExpandedAttempt] = useState<string | null>(null);
     const [testDetails, setTestDetails] = useState<Record<string, any>>({});
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+    const fetchFullTestIfNeeded = async (testId: string) => {
+        let test = testDetails[testId];
+        if (!test?.questions) {
+            try {
+                const { fetchTestById } = await import('@/lib/testsApi');
+                const { data: t } = await fetchTestById(testId);
+                if (t) {
+                    test = { 
+                        ...test, 
+                        ...t, 
+                        questions: ensureParsed(t.questions),
+                        sections: ensureParsed(t.sections),
+                        merged_sections: ensureParsed(t.merged_sections)
+                    };
+                    setTestDetails(prev => ({ ...prev, [testId]: test }));
+                }
+            } catch (error) {
+                console.error(`Failed to fetch test ${testId}`, error);
+                throw error;
+            }
+        }
+        return test;
+    };
 
     useEffect(() => {
         if (user?.id) {
@@ -78,49 +113,24 @@ export default function TestHistory() {
             const details: Record<string, any> = {};
             const uniqueTestIdsToFetch = new Set<string>();
 
-            // Helper to handle potential string/JSON mismatch
-            const ensureParsed = (val: any) => {
-                if (!val) return [];
-                if (Array.isArray(val)) return val;
-                if (typeof val === 'string') {
-                    try { return JSON.parse(val); } catch (e) { return []; }
-                }
-                return [];
-            };
-
             if (data && Array.isArray(data)) {
                 data.forEach((attempt: any) => {
                     if (attempt.test_id) {
-                        // Check if backend provided enriched details (due to our admin fix)
-                        if (attempt.test_title && attempt.test_questions) {
+                        // Mark for fetching to ensure we have FULL metadata (sections, etc.)
+                        // even if basic info was provided. This is the most robust way.
+                        uniqueTestIdsToFetch.add(attempt.test_id);
+                        
+                        // Populate basic info if present to show title immediately
+                        if (attempt.test_title) {
                             details[attempt.test_id] = {
                                 id: attempt.test_id,
                                 title: attempt.test_title,
-                                questions: ensureParsed(attempt.test_questions),
-                                settings: attempt.test_settings
+                                settings: attempt.test_settings || {}
                             };
-                        } else {
-                            // Mark for fetching if details are missing
-                            uniqueTestIdsToFetch.add(attempt.test_id);
                         }
                     }
                 });
             }
-
-            // Fetch missing details only
-            await Promise.all(Array.from(uniqueTestIdsToFetch).map(async (tid) => {
-                try {
-                    const { data: t } = await fetchTestById(tid);
-                    if (t) {
-                        details[tid] = {
-                            ...t,
-                            questions: ensureParsed(t.questions) // Ensure parsed here too
-                        };
-                    }
-                } catch (e) {
-                    console.error(`Failed to fetch test ${tid}`, e);
-                }
-            }));
 
             setTestDetails(details);
 
@@ -140,9 +150,23 @@ export default function TestHistory() {
         }
     }
 
-    const toggleExpand = (id: string, e: React.MouseEvent) => {
+    const handleToggleExpand = async (id: string, testId: string, e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('button')) return;
-        setExpandedAttempt(expandedAttempt === id ? null : id);
+        
+        if (expandedAttempt === id) {
+            setExpandedAttempt(null);
+            return;
+        }
+
+        setActionLoading(`expand-${id}`);
+        try {
+            await fetchFullTestIfNeeded(testId);
+            setExpandedAttempt(id);
+        } catch (error) {
+            toast.error("Failed to load detailed answers.");
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     const handleDelete = async (attemptId: string) => {
@@ -283,8 +307,13 @@ export default function TestHistory() {
                             ) : (
                                 attempts.map((attempt) => (
                                     <React.Fragment key={attempt.id}>
-                                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={(e) => toggleExpand(attempt.id, e)}>
-                                            <TableCell className="font-medium">{attempt.test_title}</TableCell>
+                                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={(e) => handleToggleExpand(attempt.id, attempt.test_id, e)}>
+                                            <TableCell className="font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    {attempt.test_title}
+                                                    {actionLoading === `expand-${attempt.id}` && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center text-muted-foreground">
                                                     <Calendar className="mr-2 h-4 w-4" />
@@ -301,19 +330,32 @@ export default function TestHistory() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={(e) => {
+                                                        onClick={async (e) => {
                                                             e.stopPropagation();
-                                                            navigate('/results', {
-                                                                state: {
-                                                                    test: testDetails[attempt.test_id],
-                                                                    answers: attempt.answers,
-                                                                    timeSpent: 0,
-                                                                    score: attempt.score
-                                                                }
-                                                            });
+                                                            setActionLoading(`view-${attempt.id}`);
+                                                            try {
+                                                                const test = await fetchFullTestIfNeeded(attempt.test_id);
+                                                                navigate('/results', {
+                                                                    state: {
+                                                                        test: test,
+                                                                        answers: attempt.answers,
+                                                                        timeSpent: 0,
+                                                                        score: attempt.score
+                                                                    }
+                                                                });
+                                                            } catch (error) {
+                                                                toast.error("Failed to load result details.");
+                                                            } finally {
+                                                                setActionLoading(null);
+                                                            }
                                                         }}
+                                                        disabled={actionLoading === `view-${attempt.id}`}
                                                     >
-                                                        <Target className="h-4 w-4 mr-1" />
+                                                        {actionLoading === `view-${attempt.id}` ? (
+                                                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                                        ) : (
+                                                            <Target className="h-4 w-4 mr-1" />
+                                                        )}
                                                         View Result
                                                     </Button>
 

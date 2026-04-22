@@ -81,14 +81,9 @@ async def get_user_attempts(
     request: Request,
     db: Client = Depends(get_db)
 ):
-    print(f"\n{'='*60}")
-    print(f"GET /attempts/user/{user_id} - REQUEST RECEIVED")
-    print(f"{'='*60}")
-    
     try:
         # 1. Security Check: Explicitly verify the JWT token
         auth_header = request.headers.get("Authorization")
-        print(f"Auth Header Present: {bool(auth_header)}")
         
         if not auth_header:
              raise HTTPException(status_code=401, detail="Missing Authorization header")
@@ -102,15 +97,11 @@ async def get_user_attempts(
         # Check if requesting user is admin or the user themselves
         requesting_user_id = user_response.user.id
         requesting_user_email = user_response.user.email
-        print(f"Requesting User ID: {requesting_user_id}")
-        print(f"Requesting User Email: {requesting_user_email}")
-        print(f"Target User ID: {user_id}")
         
         # Fetch requesting user's admin status from 'admins' table
         from app.core.database import supabase
         admin_res = supabase.table("admins").select("email").eq("email", requesting_user_email).execute()
         is_admin = admin_res.data and len(admin_res.data) > 0
-        print(f"Is Admin: {is_admin}")
         
         # Allow if admin OR if viewing own data
         if not is_admin and requesting_user_id != user_id:
@@ -119,45 +110,33 @@ async def get_user_attempts(
         # 2. Use Admin Client with Application-Side Join (Bypass Missing FK)
 
         # Step A: Fetch attempts using global supabase client (Service Role) to bypass RLS
-        # This allows admins to view any user's attempts
-        print(f"\nFetching attempts from user_tests table...")
         attempts_res = supabase.table("user_tests")\
             .select("id, test_id, score, created_at, answers")\
             .eq("user_id", user_id)\
             .order("created_at", desc=True)\
             .execute()
-        
-        print(f"Attempts Query Response: {attempts_res}")
-        print(f"Attempts Data: {attempts_res.data}")
-        print(f"Number of attempts found: {len(attempts_res.data) if attempts_res.data else 0}")
             
         attempts_data = attempts_res.data or []
         
         if not attempts_data:
-            print("No attempts found - returning empty array")
             return []
 
         # Step B: Fetch related Test Details
         test_ids = list(set([a["test_id"] for a in attempts_data if a.get("test_id")]))
-        print(f"\nTest IDs to fetch: {test_ids}")
         
         tests_map = {}
         if test_ids:
             try:
                 # Use global 'supabase' client (likely Service Role) to fetch tests
-                # This ensures we get details even if the test is private/unlisted
                 tests_res = supabase.table("tests")\
-                    .select("id, title, questions, settings")\
+                    .select("id, title, settings")\
                     .in_("id", test_ids)\
                     .execute()
-                
-                print(f"Tests fetched: {len(tests_res.data) if tests_res.data else 0}")
                 
                 if tests_res.data:
                     tests_map = {t["id"]: t for t in tests_res.data}
             except Exception as e:
                 print(f"Error fetching related tests: {e}")
-                # Degrade gracefully - return attempts without enriched data
 
         # Step C: Merge Data
         enriched = []
@@ -173,7 +152,6 @@ async def get_user_attempts(
                     "created_at": item["created_at"],
                     "answers": item["answers"],
                     "test_title": "Deleted Test",
-                    "test_questions": [], 
                     "test_settings": {} 
                 }
             else:
@@ -184,9 +162,7 @@ async def get_user_attempts(
                     "created_at": item["created_at"],
                     "answers": item["answers"],
                     "test_title": test.get("title") or "Unknown Test",
-                    # Include questions for detailed view
-                    "test_questions": test.get("questions") or [],
-                    "test_settings": test.get("settings") or {} 
+                    "test_settings": test.get("settings") or {}
                 }
             enriched.append(flat)
             
