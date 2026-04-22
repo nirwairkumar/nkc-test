@@ -89,6 +89,15 @@ export async function fetchAttemptsForTest(testId: string) {
     }
 }
 
+export async function fetchAttemptById(attemptId: string) {
+    try {
+        const response = await apiClient.get(`attempts/${attemptId}`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
+
 export async function deleteAttempt(attemptId: string) {
     try {
         await apiClient.delete(`attempts/${attemptId}`);

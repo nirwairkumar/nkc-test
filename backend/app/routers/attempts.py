@@ -99,7 +99,6 @@ async def get_user_attempts(
         requesting_user_email = user_response.user.email
         
         # Fetch requesting user's admin status from 'admins' table
-        from app.core.database import supabase
         admin_res = supabase.table("admins").select("email").eq("email", requesting_user_email).execute()
         is_admin = admin_res.data and len(admin_res.data) > 0
         
@@ -111,7 +110,7 @@ async def get_user_attempts(
 
         # Step A: Fetch attempts using global supabase client (Service Role) to bypass RLS
         attempts_res = supabase.table("user_tests")\
-            .select("id, test_id, score, created_at, answers")\
+            .select("id, test_id, score, created_at")\
             .eq("user_id", user_id)\
             .order("created_at", desc=True)\
             .execute()
@@ -150,7 +149,6 @@ async def get_user_attempts(
                     "test_id": tid,
                     "score": item["score"],
                     "created_at": item["created_at"],
-                    "answers": item["answers"],
                     "test_title": "Deleted Test",
                     "test_settings": {} 
                 }
@@ -160,7 +158,6 @@ async def get_user_attempts(
                     "test_id": tid,
                     "score": item["score"],
                     "created_at": item["created_at"],
-                    "answers": item["answers"],
                     "test_title": test.get("title") or "Unknown Test",
                     "test_settings": test.get("settings") or {}
                 }
@@ -353,6 +350,47 @@ async def register_start(
         print(f"Error registering start: {e}")
         # Non-critical: don't block the test start
         return {"success": False}
+
+@router.get("/{attempt_id}")
+async def get_attempt_detail(
+    attempt_id: str,
+    request: Request,
+    db: Client = Depends(get_db)
+):
+    try:
+        # Check authentication
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        token = auth_header.replace("Bearer ", "")
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user_id = user_response.user.id
+        
+        # Fetch attempt
+        response = supabase.table("user_tests")\
+            .select("*")\
+            .eq("id", attempt_id)\
+            .single()\
+            .execute()
+            
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Attempt not found")
+            
+        # Verify access: owner or admin
+        attempt = response.data
+        if attempt.get("user_id") != user_id:
+             admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
+             if not (admin_res.data and len(admin_res.data) > 0):
+                 raise HTTPException(status_code=403, detail="Not authorized")
+                 
+        return attempt
+    except Exception as e:
+        print(f"Error fetching attempt detail: {e}")
+        if isinstance(e, HTTPException): raise e
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/test/{test_id}")
 async def get_test_attempts(
