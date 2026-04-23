@@ -10,6 +10,7 @@ const FeaturedTests = lazy(() => import('@/components/home/FeaturedTests'));
 const YouTubeGeneratorSection = lazy(() => import('@/components/landing/YouTubeGeneratorSection'));
 const PlatformStatsSection = lazy(() => import('@/components/landing/PlatformStatsSection'));
 const ManualCreateSection = lazy(() => import('@/components/landing/ManualCreateSection'));
+const SettingsShowcaseSection = lazy(() => import('@/components/landing/SettingsShowcaseSection'));
 
 // Loading component
 const SectionLoader = () => (
@@ -120,6 +121,12 @@ export default function LandingPage() {
                 <div className="landing-section">
                     <Suspense fallback={<SectionLoader />}>
                         <ManualCreateSection />
+                    </Suspense>
+                </div>
+
+                <div className="landing-section">
+                    <Suspense fallback={<SectionLoader />}>
+                        <SettingsShowcaseSection />
                     </Suspense>
                 </div>
 
