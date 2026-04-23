@@ -404,18 +404,30 @@ export default function ManualEditorShowcase() {
 
         /* ── ADD QUESTION CLICK ───────────────────────────── */
         function triggerAdd(cb: () => void) {
-            el.addBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            T(() => {
-                const pos = getCenter(el.addBtn);
-                const dr = el.device.getBoundingClientRect();
-                showCursorAt(dr.left + dr.width * 0.65, pos.y + 50);
-                T(() => {
-                    glideTo(pos.x, pos.y, () => {
-                        el.addBtn.classList.add('hovering');
-                        T(() => { el.addBtn.classList.remove('hovering'); hideCursor(); T(cb, 100); }, 300);
-                    });
-                }, 150);
-            }, 280);
+            // Internal scroll only (sim-body), removed window scroll (scrollIntoView)
+            const target = el.addBtn.offsetTop;
+            const start = el.simBody.scrollTop, dist = target - start, dur = 400;
+            const t0 = performance.now();
+            function step(now: number) {
+                if (aborted) return;
+                const p = Math.min((now - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3);
+                el.simBody.scrollTop = start + dist * e;
+                if (p < 1) requestAnimationFrame(step);
+                else {
+                    T(() => {
+                        const pos = getCenter(el.addBtn);
+                        const dr = el.device.getBoundingClientRect();
+                        showCursorAt(dr.left + dr.width * 0.65, pos.y + 50);
+                        T(() => {
+                            glideTo(pos.x, pos.y, () => {
+                                el.addBtn.classList.add('hovering');
+                                T(() => { el.addBtn.classList.remove('hovering'); hideCursor(); T(cb, 100); }, 300);
+                            });
+                        }, 150);
+                    }, 100);
+                }
+            }
+            requestAnimationFrame(step);
         }
 
         function addNextCard(cb: () => void) {
@@ -531,14 +543,24 @@ export default function ManualEditorShowcase() {
             });
         }
 
-        // Boot
+        // Boot logic with IntersectionObserver to only play when visible
+        let observer: IntersectionObserver | null = null;
         loadKaTeX().then(() => {
-            if (!aborted) T(startSequence, 400);
+            if (aborted) return;
+            let started = false;
+            observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && !started) {
+                    started = true;
+                    T(startSequence, 400);
+                }
+            }, { threshold: 0.15 });
+            observer.observe(el.device);
         });
 
         return () => {
             aborted = true;
             clearAll();
+            if (observer) observer.disconnect();
             if (cursorRef.current) cursorRef.current.style.opacity = '0';
         };
     }, []);
