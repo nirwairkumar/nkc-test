@@ -11,7 +11,7 @@ async def get_feature_flags(db: Client = Depends(get_db)):
     """Get global feature flags available to everyone"""
     try:
         response = db.table("app_settings").select(
-            "enable_anonymous_tests, enable_ai_test_generation, ai_test_generation_notes, enable_youtube_generation, youtube_generation_notes"
+            "enable_anonymous_tests, enable_ai_test_generation, ai_test_generation_notes, enable_youtube_generation, youtube_generation_notes, enable_news_updates, news_updates_notes"
         ).limit(1).execute()
         if response.data and len(response.data) > 0:
             return response.data[0]
@@ -21,6 +21,8 @@ async def get_feature_flags(db: Client = Depends(get_db)):
             "ai_test_generation_notes": "",
             "enable_youtube_generation": True,
             "youtube_generation_notes": "",
+            "enable_news_updates": True,
+            "news_updates_notes": "",
         }
     except Exception as e:
         print(f"Error fetching feature flags: {e}")
@@ -32,6 +34,8 @@ class UpdateFeatureFlagsRequest(BaseModel):
     ai_test_generation_notes: str = ""
     enable_youtube_generation: bool = True
     youtube_generation_notes: str = ""
+    enable_news_updates: bool = True
+    news_updates_notes: str = ""
 
 @router.put("/flags")
 async def update_feature_flags(payload: UpdateFeatureFlagsRequest, db: Client = Depends(get_db)):
@@ -49,6 +53,8 @@ async def update_feature_flags(payload: UpdateFeatureFlagsRequest, db: Client = 
                 "ai_test_generation_notes": payload.ai_test_generation_notes,
                 "enable_youtube_generation": payload.enable_youtube_generation,
                 "youtube_generation_notes": payload.youtube_generation_notes,
+                "enable_news_updates": payload.enable_news_updates,
+                "news_updates_notes": payload.news_updates_notes,
             }).eq("id", settings_id).execute()
             
             if response.data:
@@ -61,6 +67,8 @@ async def update_feature_flags(payload: UpdateFeatureFlagsRequest, db: Client = 
                 "ai_test_generation_notes": payload.ai_test_generation_notes,
                 "enable_youtube_generation": payload.enable_youtube_generation,
                 "youtube_generation_notes": payload.youtube_generation_notes,
+                "enable_news_updates": payload.enable_news_updates,
+                "news_updates_notes": payload.news_updates_notes,
             }).execute()
             if response.data:
                 return response.data[0]

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { postsApi } from '@/lib/postsApi';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Eye, Heart, Calendar, Search, Pin, Edit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 
 const CATEGORIES = ["all", "jee", "neet", "upsc", "ssc", "general"];
 
@@ -21,10 +22,47 @@ export default function NewsFeed() {
 
     const isCreatorOrAdmin = profile?.is_verified_creator || isAdmin;
 
-    const { data: posts, isLoading, error } = useQuery({
+    const { data: posts, isLoading: postsLoading, error } = useQuery({
         queryKey: ['posts', activeCategory, searchQuery],
         queryFn: () => postsApi.getFeed(1, 100, activeCategory, searchQuery),
     });
+
+    const [features, setFeatures] = useState<FeatureFlags | null>(null);
+    const [featuresLoading, setFeaturesLoading] = useState(true);
+
+    useEffect(() => {
+        fetchFeatureFlags().then(data => {
+            setFeatures(data);
+            setFeaturesLoading(false);
+        }).catch(() => setFeaturesLoading(false));
+    }, []);
+
+    const isNewsEnabled = features?.enable_news_updates ?? true;
+
+    if (featuresLoading) {
+        return (
+            <div className="container max-w-6xl mx-auto py-20 px-4 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (!isAdmin && !isNewsEnabled) {
+        return (
+            <div className="container max-w-2xl mx-auto py-20 px-4 text-center">
+                <div className="text-6xl mb-6">🚧</div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent dark:from-slate-100 dark:to-slate-300 mb-4">News & Updates Unavailable</h2>
+                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <p className="text-slate-600 dark:text-slate-400">
+                        {features?.news_updates_notes || "The News & Updates section is currently undergoing maintenance and is temporarily unavailable."}
+                    </p>
+                </div>
+                <Button className="mt-8" onClick={() => navigate('/')}>Return to Home</Button>
+            </div>
+        );
+    }
+
+    const isLoading = postsLoading || featuresLoading;
 
     return (
         <div className="container max-w-6xl mx-auto py-8 px-4 sm:px-6">

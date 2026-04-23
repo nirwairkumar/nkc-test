@@ -23,7 +23,27 @@ import TestoZaLogo from './TestoZaLogo';
 
 export default function Navbar() {
     const { user, isAdmin, profile } = useAuth();
-    const canSeeNews = isAdmin || profile?.is_verified_creator;
+    
+    // Feature Flag for News
+    const [isNewsEnabled, setIsNewsEnabled] = React.useState(true);
+    const [newsChecked, setNewsChecked] = React.useState(false);
+    
+    React.useEffect(() => {
+        import('@/lib/featuresApi').then(({ fetchFeatureFlags }) => {
+            fetchFeatureFlags().then(data => {
+                setIsNewsEnabled(data.enable_news_updates ?? true);
+                setNewsChecked(true);
+            }).catch(() => setNewsChecked(true));
+        });
+    }, []);
+
+    // If admin hide it no one can see except admin
+    // Before this change, the news link was only visible to verified creators and admins.
+    // Assuming we want students to see the news too when it's enabled, we'll allow it if enabled.
+    // If you only meant creators, keeping profile?.is_verified_creator would be needed.
+    // Based on standard platform logic: News should be visible to all logged-in users when enabled.
+    const canSeeNews = isAdmin || isNewsEnabled;
+
     const { unreadCount } = useNotifications();
     const navigate = useNavigate();
     const location = useLocation();

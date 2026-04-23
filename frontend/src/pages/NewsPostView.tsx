@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postsApi } from '@/lib/postsApi';
@@ -23,6 +23,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import Underline from '@tiptap/extension-underline';
+import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 
 export default function NewsPostView() {
     const { slug } = useParams<{ slug: string }>();
@@ -58,6 +59,19 @@ export default function NewsPostView() {
             toast.error("Failed to update like status");
         }
     });
+
+    // Feature Flags Check
+    const [features, setFeatures] = useState<FeatureFlags | null>(null);
+    const [featuresLoading, setFeaturesLoading] = useState(true);
+
+    useEffect(() => {
+        fetchFeatureFlags().then(data => {
+            setFeatures(data);
+            setFeaturesLoading(false);
+        }).catch(() => setFeaturesLoading(false));
+    }, []);
+
+    const isNewsEnabled = features?.enable_news_updates ?? true;
 
     // Tiptap Read-only instance
     const editor = useEditor({
@@ -118,6 +132,21 @@ export default function NewsPostView() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-5/6" />
                 </div>
+            </div>
+        );
+    }
+
+    if (!user?.user_metadata?.roles?.includes('admin') && !isNewsEnabled) {
+        return (
+            <div className="container max-w-2xl mx-auto py-20 px-4 text-center">
+                <div className="text-6xl mb-6">🚧</div>
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent dark:from-slate-100 dark:to-slate-300 mb-4">Content Unavailable</h2>
+                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <p className="text-slate-600 dark:text-slate-400">
+                        {features?.news_updates_notes || "The News & Updates section is currently undergoing maintenance and is temporarily unavailable."}
+                    </p>
+                </div>
+                <Button className="mt-8" onClick={() => window.location.href = '/'}>Return to Home</Button>
             </div>
         );
     }

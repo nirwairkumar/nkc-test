@@ -13,6 +13,8 @@ const AdminFeatureControl = () => {
         ai_test_generation_notes: "",
         enable_youtube_generation: true,
         youtube_generation_notes: "",
+        enable_news_updates: true,
+        news_updates_notes: "",
     });
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -181,6 +183,45 @@ const AdminFeatureControl = () => {
                                         onBlur={(e) => handleTextChange('youtube_generation_notes', e.target.value)}
                                     />
                                     <p className="text-xs text-muted-foreground">This message will be shown to users as a popup when they try to use the YouTube generator. Focus away to save.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* News & Updates Toggle */}
+                        <div className="flex flex-col gap-4 p-4 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors mt-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                                        📰 News & Updates
+                                    </h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        Enable or disable the News & Updates section globally. When disabled, only admins can view or manage news.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4 shrink-0">
+                                    {isSaving && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                                    <Switch
+                                        checked={flags.enable_news_updates ?? true}
+                                        onCheckedChange={(checked) => handleToggle('enable_news_updates', checked)}
+                                        disabled={isSaving}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Notes Textarea (shown when disabled) */}
+                            {!(flags.enable_news_updates ?? true) && (
+                                <div className="mt-2 space-y-2">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Offline Message / Notes to Users
+                                    </label>
+                                    <textarea
+                                        className="w-full min-h-[80px] p-3 text-sm border rounded-md dark:bg-slate-900 dark:border-slate-800"
+                                        placeholder="e.g. News updates are currently being refreshed..."
+                                        value={flags.news_updates_notes || ""}
+                                        onChange={(e) => setFlags(prev => ({ ...prev, news_updates_notes: e.target.value }))}
+                                        onBlur={(e) => handleTextChange('news_updates_notes', e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground">This message will be shown to users if they try to access direct news links. Focus away to save.</p>
                                 </div>
                             )}
                         </div>
