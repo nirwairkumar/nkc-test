@@ -2,6 +2,7 @@
 import { PenTool, CheckCircle2, ListChecks, Settings2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import ManualEditorShowcase from './ManualEditorShowcase';
 
 export default function ManualCreateSection() {
     const navigate = useNavigate();
@@ -82,47 +83,7 @@ export default function ManualCreateSection() {
 
                     {/* Visual Side */}
                     <div className="lg:w-1/2">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 blur-2xl opacity-20 transform rotate-6 rounded-[3rem]"></div>
-                            <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-2xl p-8 overflow-hidden">
-                                {/* Mock UI for Manual Editor */}
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-6">
-                                        <div className="space-y-2">
-                                            <div className="h-2 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
-                                            <div className="h-6 w-48 bg-slate-100 dark:bg-slate-800 rounded"></div>
-                                        </div>
-                                        <div className="h-10 w-32 bg-purple-600 rounded-full opacity-10"></div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                            <div className="flex gap-4">
-                                                <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 shadow-sm flex items-center justify-center font-bold text-slate-400">1</div>
-                                                <div className="flex-1 space-y-3">
-                                                    <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                                                    <div className="h-4 w-1/2 bg-slate-200 dark:bg-slate-700 rounded"></div>
-                                                </div>
-                                            </div>
-                                            <div className="mt-6 grid grid-cols-2 gap-3">
-                                                {[1, 2, 3, 4].map((i) => (
-                                                    <div key={i} className="h-12 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800"></div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm opacity-50">
-                                            <div className="flex gap-4">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-bold text-slate-400">2</div>
-                                                <div className="flex-1 space-y-3">
-                                                    <div className="h-4 w-2/3 bg-slate-100 dark:bg-slate-700 rounded"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <ManualEditorShowcase />
                     </div>
                 </div>
             </div>
