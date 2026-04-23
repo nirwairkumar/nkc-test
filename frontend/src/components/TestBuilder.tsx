@@ -618,9 +618,27 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setQuestions(newQuestions);
     };
 
+    const sanitizeNumericalMark = (val: string): string => {
+        // Remove anything that isn't a digit or a decimal point
+        let sanitized = val.replace(/[^0-9.]/g, '');
+        // Ensure only one decimal point
+        const parts = sanitized.split('.');
+        if (parts.length > 2) {
+            sanitized = parts[0] + '.' + parts.slice(1).join('');
+        }
+        return sanitized;
+    };
+
     const updateQuestion = (index: number, field: keyof QuestionState, value: any) => {
         const newQuestions = [...questions];
-        newQuestions[index] = { ...newQuestions[index], [field]: value };
+        let finalValue = value;
+
+        // Sanitize marks and negativeMarks to prevent negative inputs
+        if ((field === 'marks' || field === 'negativeMarks') && typeof value === 'string') {
+            finalValue = sanitizeNumericalMark(value);
+        }
+
+        newQuestions[index] = { ...newQuestions[index], [field]: finalValue };
         setQuestions(newQuestions);
     };
 
@@ -1112,7 +1130,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     const updateSection = (index: number, field: keyof TestSection, value: any) => {
         const newSections = [...sections];
-        newSections[index] = { ...newSections[index], [field]: value };
+        let finalValue = value;
+
+        // Sanitize marks_per_question and negative_marks to prevent negative inputs
+        if ((field === 'marks_per_question' || field === 'negative_marks') && typeof value === 'string') {
+            finalValue = sanitizeNumericalMark(value);
+        }
+
+        newSections[index] = { ...newSections[index], [field]: finalValue };
         setSections(newSections);
     };
 
@@ -1178,8 +1203,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const updateQuestionInSection = (sectionIndex: number, qIndex: number, field: keyof QuestionState, value: any) => {
         const newSections = [...sections];
         const q = newSections[sectionIndex].questions[qIndex] as QuestionState;
+        
+        let finalValue = value;
+        // Sanitize marks and negativeMarks to prevent negative inputs
+        if ((field === 'marks' || field === 'negativeMarks') && typeof value === 'string') {
+            finalValue = sanitizeNumericalMark(value);
+        }
+
         // @ts-ignore
-        newSections[sectionIndex].questions[qIndex] = { ...q, [field]: value };
+        newSections[sectionIndex].questions[qIndex] = { ...q, [field]: finalValue };
         setSections(newSections);
     };
 
