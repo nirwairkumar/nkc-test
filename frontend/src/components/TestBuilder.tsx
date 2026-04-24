@@ -687,7 +687,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             // Reset answers based on type
             if (type.startsWith('single')) newQ.correctAnswer = '';
             else if (type === 'multiple') newQ.correctAnswer = [];
-            else if (type === 'numerical') newQ.correctAnswer = { min: 0, max: 0 };
+            else if (type === 'numerical') newQ.correctAnswer = { min: 0, max: 0, exactMatch: false, exactAnswers: '' };
         }
 
         newQuestions[index] = newQ;
@@ -967,11 +967,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 if (!hasQuestionContent) return `${context} ${i + 1} must have either text or an image`;
 
                 if (q.type === 'numerical') {
-                    if (!q.correctAnswer || typeof q.correctAnswer !== 'object' || q.correctAnswer.min === undefined || q.correctAnswer.max === undefined) {
-                        return `${context} ${i + 1} (Numerical) must have a Min and Max value`;
+                    const ans = q.correctAnswer as any;
+                    if (!ans || typeof ans !== 'object') {
+                        return `${context} ${i + 1} (Numerical) has invalid config`;
                     }
-                    if (Number(q.correctAnswer.min) > Number(q.correctAnswer.max)) {
-                        return `${context} ${i + 1}: Min cannot be greater than Max`;
+                    if (ans.exactMatch) {
+                        if (!ans.exactAnswers || !ans.exactAnswers.trim()) {
+                            return `${context} ${i + 1} (Numerical) exact answers cannot be empty`;
+                        }
+                    } else {
+                        if (ans.min === undefined || ans.max === undefined) {
+                            return `${context} ${i + 1} (Numerical) must have a Min and Max value`;
+                        }
+                        if (Number(ans.min) > Number(ans.max)) {
+                            return `${context} ${i + 1}: Min cannot be greater than Max`;
+                        }
                     }
                 } else {
                     for (const opt of Object.keys(q.options)) {
@@ -1269,7 +1279,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             newQ.type = type as any;
             if (type.startsWith('single')) newQ.correctAnswer = '';
             else if (type === 'multiple') newQ.correctAnswer = [];
-            else if (type === 'numerical') newQ.correctAnswer = { min: 0, max: 0 };
+            else if (type === 'numerical') newQ.correctAnswer = { min: 0, max: 0, exactMatch: false, exactAnswers: '' };
         }
 
         section.questions[qIdx] = newQ;
@@ -2146,18 +2156,49 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                                                 {q.type === 'numerical' ? (
                                                                                     <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
-
-                                                                                        <div className="flex gap-4 items-center mt-2">
-                                                                                            <div className="text-left">
-                                                                                                <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
-                                                                                                <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
-                                                                                            </div>
-                                                                                            <div className="h-px w-8 bg-slate-300 mt-5"></div>
-                                                                                            <div className="text-left">
-                                                                                                <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
-                                                                                                <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
-                                                                                            </div>
+                                                                                        <div className="flex bg-slate-200/50 p-1 rounded-full w-fit mx-auto mb-2">
+                                                                                            <button
+                                                                                                onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, exactMatch: false }); }}
+                                                                                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'text-slate-500 hover:text-slate-700' : 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200'}`}
+                                                                                            >
+                                                                                                Min-Max Range
+                                                                                            </button>
+                                                                                            <button
+                                                                                                onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, exactMatch: true }); }}
+                                                                                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                                                                            >
+                                                                                                Exact Answers
+                                                                                            </button>
                                                                                         </div>
+
+                                                                                        {(q.correctAnswer as any)?.exactMatch ? (
+                                                                                            <div className="flex flex-col gap-2 items-center w-full max-w-sm mt-2">
+                                                                                                <Label className="text-xs text-slate-500">Correct Answers (comma separated)</Label>
+                                                                                                <Input
+                                                                                                    type="text"
+                                                                                                    placeholder="e.g. 100, 150, 200"
+                                                                                                    className="w-full text-center font-mono font-bold px-4"
+                                                                                                    value={(q.correctAnswer as any)?.exactAnswers || ''}
+                                                                                                    onChange={(e) => {
+                                                                                                        const current = (q.correctAnswer as any) || { min: 0, max: 0 };
+                                                                                                        updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, exactAnswers: e.target.value });
+                                                                                                    }}
+                                                                                                />
+                                                                                                <p className="text-[10px] text-slate-400 mt-1">If a student enters any of these values, it will be marked correct.</p>
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <div className="flex gap-4 items-center mt-2">
+                                                                                                <div className="text-left">
+                                                                                                    <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
+                                                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
+                                                                                                </div>
+                                                                                                <div className="h-px w-8 bg-slate-300 mt-5"></div>
+                                                                                                <div className="text-left">
+                                                                                                    <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
+                                                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
                                                                                     </div>
                                                                                 ) : (
                                                                                     <div className="grid grid-cols-1 gap-3">
@@ -2555,18 +2596,49 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                     {q.type === 'numerical' ? (
                                                         <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
-
-                                                            <div className="flex gap-4 items-center mt-2">
-                                                                <div className="text-left">
-                                                                    <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
-                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
-                                                                </div>
-                                                                <div className="h-px w-8 bg-slate-300 mt-5"></div>
-                                                                <div className="text-left">
-                                                                    <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
-                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
-                                                                </div>
+                                                            <div className="flex bg-slate-200/50 p-1 rounded-full w-fit mx-auto mb-2">
+                                                                <button
+                                                                    onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestion(index, 'correctAnswer', { ...current, exactMatch: false }); }}
+                                                                    className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'text-slate-500 hover:text-slate-700' : 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200'}`}
+                                                                >
+                                                                    Min-Max Range
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestion(index, 'correctAnswer', { ...current, exactMatch: true }); }}
+                                                                    className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                                                >
+                                                                    Exact Answers
+                                                                </button>
                                                             </div>
+
+                                                            {(q.correctAnswer as any)?.exactMatch ? (
+                                                                <div className="flex flex-col gap-2 items-center w-full max-w-sm mt-2">
+                                                                    <Label className="text-xs text-slate-500">Correct Answers (comma separated)</Label>
+                                                                    <Input
+                                                                        type="text"
+                                                                        placeholder="e.g. 100, 150, 200"
+                                                                        className="w-full text-center font-mono font-bold px-4"
+                                                                        value={(q.correctAnswer as any)?.exactAnswers || ''}
+                                                                        onChange={(e) => {
+                                                                            const current = (q.correctAnswer as any) || { min: 0, max: 0 };
+                                                                            updateQuestion(index, 'correctAnswer', { ...current, exactAnswers: e.target.value });
+                                                                        }}
+                                                                    />
+                                                                    <p className="text-[10px] text-slate-400 mt-1">If a student enters any of these values, it will be marked correct.</p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex gap-4 items-center mt-2">
+                                                                    <div className="text-left">
+                                                                        <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
+                                                                        <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
+                                                                    </div>
+                                                                    <div className="h-px w-8 bg-slate-300 mt-5"></div>
+                                                                    <div className="text-left">
+                                                                        <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
+                                                                        <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ) : (
                                                         <div className="grid grid-cols-1 gap-3">

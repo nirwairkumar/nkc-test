@@ -202,10 +202,31 @@ async def analyze_test_results(payload: AnalyzeRequest):
                 try:
                     num_ans = float(ans)
                     correct_ans = q.get("correctAnswer", {})
-                    if isinstance(correct_ans, dict) and "min" in correct_ans and "max" in correct_ans:
-                        if correct_ans["min"] <= num_ans <= correct_ans["max"]:
-                            is_correct = True
-                            q_score = marks
+                    if isinstance(correct_ans, dict):
+                        is_exact_match = correct_ans.get("exactMatch", False)
+                        if is_exact_match:
+                            exact_answers_str = str(correct_ans.get("exactAnswers", ""))
+                            exact_answers = []
+                            for ea in exact_answers_str.split(","):
+                                ea = ea.strip()
+                                if ea:
+                                    try:
+                                        exact_answers.append(float(ea))
+                                    except:
+                                        pass
+                            if num_ans in exact_answers:
+                                is_correct = True
+                                q_score = marks
+                            else:
+                                is_wrong = True
+                                q_score = -neg
+                        elif "min" in correct_ans and "max" in correct_ans:
+                            if correct_ans["min"] <= num_ans <= correct_ans["max"]:
+                                is_correct = True
+                                q_score = marks
+                            else:
+                                is_wrong = True
+                                q_score = -neg
                         else:
                             is_wrong = True
                             q_score = -neg

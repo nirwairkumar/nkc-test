@@ -194,7 +194,7 @@ async def import_json(file: UploadFile = File(...)):
             elif mapped_q["type"] == "numerical":
                 correct = mapped_q.get("correctAnswer")
                 if not isinstance(correct, dict):
-                    mapped_q["correctAnswer"] = {"min": 0, "max": 0}
+                    mapped_q["correctAnswer"] = {"min": 0, "max": 0, "exactMatch": False, "exactAnswers": ""}
                     
             return mapped_q
             
