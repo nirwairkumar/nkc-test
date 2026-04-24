@@ -214,34 +214,42 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 }
             };
 
+            let blockIndex = 0;
+            const blockMap: Record<string, string> = {};
+
+            const saveBlock = (html: string) => {
+                const key = `__BLOCK_PH_${blockIndex++}__`;
+                blockMap[key] = html;
+                return key;
+            };
+
             // 1. Replace display math $$...$$
-            result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex) => processMathBlock(tex, true));
+            result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex) => saveBlock(processMathBlock(tex, true)));
 
             // 2. Replace inline math $...$
-            result = result.replace(/\$([^\$]*?)\$/g, (_match, tex) => processMathBlock(tex, false));
+            result = result.replace(/\$([^\$]*?)\$/g, (_match, tex) => saveBlock(processMathBlock(tex, false)));
 
             // 3. Fallback: Search for \begin{array} OUTSIDE of delimiters
             if (result.includes('\\begin{array}')) {
-                let arrayIndex = 0;
-                const arrayMap: Record<string, string> = {};
-
                 result = result.replace(/\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}/g, (matchStr) => {
                     const safeMatch = extractImagesFromTex(matchStr);
                     const tableId = `TABLE_FB_${Math.random().toString(36).substr(2, 9)}`;
                     const tableHtml = renderSingleLatexArray(safeMatch, tableId);
-                    const key = `ARRAYPHFB${arrayIndex++}`;
-                    arrayMap[key] = tableHtml;
-                    return key;
+                    return saveBlock(tableHtml);
                 });
-
-                result = swapPlaceholders(result);
-                for (const [key, tableHtml] of Object.entries(arrayMap)) {
-                    result = result.split(key).join(tableHtml);
-                }
             }
 
-            // 4. Finally replace remaining images
-            result = result.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, src) => makeImgTag(src, alt));
+            // 4. Finally replace remaining images outside of math
+            result = result.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_m, alt, src) => saveBlock(makeImgTag(src, alt)));
+
+            // 5. Convert newlines to <br/> tags
+            result = result.replace(/\n/g, '<br/>');
+
+            // 6. Restore math blocks and images
+            result = result.replace(/__BLOCK_PH_\d+__/g, (match) => blockMap[match] || match);
+
+            // Just in case any IMGPH placeholders leaked out:
+            result = swapPlaceholders(result);
 
             return result;
         } catch (e) {
