@@ -510,10 +510,38 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setQuestions([]);
         setSections([]);
 
+        const seenIds = new Set<string | number>();
+        let highestId = 0;
+
+        // Auto-scan to find highest existing ID across all incoming data for resilient increments
+        const scanForHighId = (arr: any[]) => {
+            arr.forEach(item => {
+                if (item && typeof item.id === 'number' && item.id > highestId) {
+                    highestId = item.id;
+                }
+            });
+        };
+
+        if (hasQuestions) scanForHighId(parsedQuestions as any[]);
+        if (hasSections) {
+            (parsedSections as any[]).forEach(s => {
+                 if (s.questions && Array.isArray(s.questions)) scanForHighId(s.questions);
+            });
+        }
+
         const mapQuestion = (q: any, index: number) => {
+            let resolvedId = q.id || index + 1;
+
+            // Seamlessly fix duplicate IDs: If we've already registered this ID, auto-increment it natively
+            if (seenIds.has(resolvedId)) {
+                highestId += 1;
+                resolvedId = highestId;
+            }
+            seenIds.add(resolvedId);
+
             let mappedQ = {
                 ...q,
-                id: q.id || index + 1,
+                id: resolvedId,
                 type: q.type || 'single',
                 question: q.question || q.questionText || '',
                 typingMode: 'en' as const,
