@@ -142,11 +142,11 @@ export default function LandingPage() {
                     </Suspense>
                 </div>
 
-                <div className="landing-section">
+                {/* <div className="landing-section">
                     <Suspense fallback={<SectionLoader />}>
                         <YouTubeGeneratorSection />
                     </Suspense>
-                </div>
+                </div> */}
 
                 {/* Platform Statistics - Promotional */}
                 <div className="landing-section">
