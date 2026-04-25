@@ -13,6 +13,16 @@ import { ClassItem, fetchClasses } from '@/lib/classesApi';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TestSettingsPanelProps {
     test: Test;
@@ -20,9 +30,10 @@ interface TestSettingsPanelProps {
     onUpdate: (updatedTest?: Test) => void;
     onViewResults: () => void;
     overridePremium?: boolean;
+    onRequestConductExam?: (test: Test) => void;
 }
 
-export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResults, overridePremium }: TestSettingsPanelProps) {
+export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResults, overridePremium, onRequestConductExam }: TestSettingsPanelProps) {
     const [settings, setSettings] = useState<TestSettings>({
         attempt_limit: undefined,
         strict_timer: false,
@@ -45,6 +56,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const [loading, setLoading] = useState(false);
     const [topicGenerating, setTopicGenerating] = useState(false);
     const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
+    const [showConductPrompt, setShowConductPrompt] = useState(false);
 
     // Premium status check
     const { isPremium, loading: premiumLoading } = usePremiumStatus();
@@ -83,7 +95,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         loadFullTest();
     }, [test]);
 
-    const handleSave = async () => {
+    const handleSave = async (forceSave: boolean = false) => {
         // If overridePremium (admin) is true, skip check
         if (!isPremium && !overridePremium) {
             toast.error("Premium feature required", {
@@ -93,6 +105,14 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     onClick: () => navigate('/pricing')
                 }
             });
+            return;
+        }
+
+        const isConducted = settings.conduct_exam?.enabled === true;
+        const hasStrictSettings = settings.force_fullscreen || settings.tab_switch_mode !== 'off' || settings.disable_copy_paste || settings.disable_actions || settings.block_back_button;
+
+        if (hasStrictSettings && !isConducted && !forceSave && onRequestConductExam) {
+            setShowConductPrompt(true);
             return;
         }
 
@@ -106,7 +126,12 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
             if (error) throw error;
             toast.success("Test settings updated successfully");
             onUpdate(data?.[0]); // Pass updated test back to parent
-            onClose();
+
+            if (forceSave && onRequestConductExam) {
+                onRequestConductExam(data?.[0] || test);
+            } else {
+                onClose();
+            }
         } catch (err: any) {
             console.error("Failed to save settings", err);
             toast.error("Failed to save settings: " + err.message);
@@ -636,7 +661,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <div className="fixed bottom-0 left-0 right-0 p-4 border-t bg-white dark:bg-slate-950 z-20 flex flex-col gap-2">
                         <div className="flex gap-2">
                             <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
-                            <Button className="flex-1" onClick={handleSave} disabled={loading}>{loading ? 'Saving...' : 'Save Settings'}</Button>
+                            <Button className="flex-1" onClick={() => handleSave()} disabled={loading}>{loading ? 'Saving...' : 'Save Settings'}</Button>
                         </div>
                         <Button variant="ghost" size="sm" onClick={onViewResults} className="w-full">
                             <FileText className="w-4 h-4 mr-2" /> View Results
@@ -699,10 +724,32 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
                     <div className="border-t p-4 flex justify-end gap-2 bg-slate-50 dark:bg-slate-900 rounded-b-lg">
                         <Button variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button onClick={handleSave} disabled={loading}>{loading ? 'Saving...' : 'Save Settings'}</Button>
+                        <Button onClick={() => handleSave()} disabled={loading}>{loading ? 'Saving...' : 'Save Settings'}</Button>
                     </div>
                 </div>
             </Card>
+
+            <AlertDialog open={showConductPrompt} onOpenChange={setShowConductPrompt}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Conduct Exam Required</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Strict environment monitoring features (Full Screen, Tab Switching Detection, etc.) can only be applied when an exam is in <strong>Conduct Mode</strong>.
+                            <br /><br />
+                            Do you want to move this test to Conduct Exam mode now?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowConductPrompt(false)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            setShowConductPrompt(false);
+                            handleSave(true);
+                        }} className="bg-indigo-600 hover:bg-indigo-700">
+                            Save & Move to Conduct Exam
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -230,9 +230,20 @@ export default function UserTestManager() {
             ? conductExamSettings.original_slug
             : test.slug;
 
-        const updatedSettings = test.settings
+        let updatedSettings = test.settings
             ? { ...test.settings, conduct_exam: undefined }
             : test.settings;
+
+        if (isPublic && updatedSettings) {
+             updatedSettings = {
+                 ...updatedSettings,
+                 force_fullscreen: false,
+                 tab_switch_mode: 'off',
+                 disable_copy_paste: false,
+                 disable_actions: false,
+                 block_back_button: false,
+             };
+        }
 
         // Optimistic update
         setTests(prev => prev.map(t =>
@@ -788,67 +799,6 @@ export default function UserTestManager() {
                             <Button onClick={() => { setEditingTest(null); setIsTestEditOpen(true); }}>
                                 <Plus className="w-4 h-4 mr-2" /> Create Test
                             </Button>
-
-                            <div className="flex flex-col items-end gap-1">
-                                <label className="cursor-pointer">
-                                    <Input
-                                        type="file"
-                                        accept=".json"
-                                        className="hidden"
-                                        onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            try {
-                                                const text = await file.text();
-                                                const json = JSON.parse(text);
-
-                                                const isValidFlat = json.questions && Array.isArray(json.questions);
-                                                const isValidSection = json.enable_section_mode && json.sections && Array.isArray(json.sections);
-
-                                                if (!json.title || (!isValidFlat && !isValidSection)) {
-                                                    toast.error("Invalid JSON format. Must have 'title' and 'questions' array (or 'sections' if mode is enabled).");
-                                                    return;
-                                                }
-
-                                                const { createTest, getNextTestId } = await import('@/lib/testsApi');
-                                                const customId = await getNextTestId('M');
-
-                                                const {
-                                                    marks_per_question,
-                                                    negative_marks,
-                                                    id,
-                                                    created_at,
-                                                    ...safeJson
-                                                } = json;
-
-                                                const newTest = {
-                                                    ...safeJson,
-                                                    created_by: user.id,
-                                                    custom_id: customId,
-                                                    creator_name: user.user_metadata?.full_name || 'Anonymous',
-                                                    creator_avatar: user.user_metadata?.avatar_url || '',
-                                                    is_public: safeJson.is_public !== undefined ? safeJson.is_public : true,
-                                                    created_at: new Date().toISOString()
-                                                };
-
-                                                const { error } = await createTest(newTest);
-                                                if (error) throw error;
-
-                                                toast.success("Test imported successfully!");
-                                                loadUserTests();
-                                                e.target.value = '';
-                                            } catch (err: any) {
-                                                console.error("Import error:", err);
-                                                toast.error("Failed to import: " + err.message);
-                                            }
-                                        }}
-                                    />
-                                    <Button variant="outline" asChild>
-                                        <span><Upload className="w-4 h-4 mr-2" /> Import JSON</span>
-                                    </Button>
-                                </label>
-                                <TestUploadFormatGuide />
-                            </div>
                         </div>
                     </div>
 
@@ -1040,6 +990,10 @@ export default function UserTestManager() {
                     onUpdate={loadUserTests}
                     onViewResults={() => {
                         setViewingResultsTest(configuringTest);
+                    }}
+                    onRequestConductExam={(t) => {
+                        setConfiguringTest(null);
+                        setConductExamTest(t);
                     }}
                 />
             )}
