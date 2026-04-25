@@ -342,7 +342,7 @@ export default function UserTestManager() {
         setRemoveExamTitle(testTitle);
     };
 
-    const confirmRemoveExam = async () => {
+    const confirmRemoveExam = async (makePublic: boolean = false) => {
         if (!removeExamId) return;
         const test = tests.find(t => t.id === removeExamId);
         if (!test) return;
@@ -363,8 +363,8 @@ export default function UserTestManager() {
         }
 
         const payload: any = {
-            visibility: 'private',
-            is_public: false,
+            visibility: makePublic ? 'public' : 'private',
+            is_public: makePublic,
             settings: newSettings,
         };
         if (originalSlug) payload.slug = originalSlug;
@@ -377,7 +377,7 @@ export default function UserTestManager() {
         try {
             const { error } = await updateTest(removeExamId, payload, isAdmin);
             if (error) throw error;
-            toast.success("Exam removed. Test set to private.");
+            toast.success(`Exam removed. Test set to ${makePublic ? 'public' : 'private'}.`);
         } catch (error: any) {
             toast.error("Failed to remove exam: " + error.message);
             setTests(prev => prev.map(t => t.id === removeExamId ? { ...t, ...test } : t));
@@ -1009,9 +1009,14 @@ export default function UserTestManager() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={() => setRemoveExamId(null)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmRemoveExam} className="bg-red-600 hover:bg-red-700">
-                            Remove & Set Private
-                        </AlertDialogAction>
+                        <div className="flex gap-2 w-full justify-end sm:w-auto">
+                            <AlertDialogAction onClick={() => confirmRemoveExam(true)} className="bg-blue-600 hover:bg-blue-700">
+                                Remove & Set Public
+                            </AlertDialogAction>
+                            <AlertDialogAction onClick={() => confirmRemoveExam(false)} className="bg-red-600 hover:bg-red-700">
+                                Remove & Set Private
+                            </AlertDialogAction>
+                        </div>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
