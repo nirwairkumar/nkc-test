@@ -177,18 +177,18 @@ async def get_user_tests(
                 tests = rpc_res.data
             except Exception as rpc_error:
                 print(f"RPC Error (User Search): {rpc_error}")
-                # Fallback to ILIKE if RPC fails
+                # Fallback to ILIKE if RPC fails — include settings/visibility/slug
                 tests_res = db.table("tests")\
-                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name), test_votes(count)")\
+                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name), test_votes(count)")\
                     .eq("created_by", user_id)\
                     .ilike("title", f"%{search_query}%")\
                     .order("created_at", desc=True)\
                     .execute()
                 tests = tests_res.data
         else:
-            # Default fetch
+            # Default fetch — include settings/visibility/slug for conduct exam detection
             tests_res = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name), test_votes(count)")\
                 .eq("created_by", user_id)\
                 .order("created_at", desc=True)\
                 .execute()
@@ -265,6 +265,21 @@ async def get_test_by_id(
         cache_key = f"test:{test_id}"
         cached = cache_get(test_cache, cache_key)
         if cached is not None:
+            # Re-validate visibility on cached result
+            vis = cached.get("visibility", "public")
+            is_uuid_lookup = False
+            try:
+                uuid.UUID(test_id)
+                is_uuid_lookup = True
+            except ValueError:
+                pass
+            is_slug_lookup = not is_uuid_lookup and test_id == cached.get("slug")
+            # Private: never public
+            if vis == "private":
+                raise HTTPException(status_code=404, detail="Test not found")
+            # Unlisted: only accessible via exact slug match
+            if vis == "unlisted" and not is_slug_lookup:
+                raise HTTPException(status_code=404, detail="Test not found")
             return cached
 
         # Check if UUID
@@ -274,23 +289,38 @@ async def get_test_by_id(
             is_uuid = True
         except ValueError:
             is_uuid = False
-            
+
+        is_slug_match = False
+
         # Fetch test based on ID type
         if is_uuid:
             test_res = db.table("tests").select("*, classes(name)").eq("id", test_id).execute()
         else:
-            # Try custom_id first
-            test_res = db.table("tests").select("*, classes(name)").eq("custom_id", test_id).execute()
-            
-            # If not found, try slug
-            if not test_res.data:
-                test_res = db.table("tests").select("*, classes(name)").eq("slug", test_id).execute()
-        
+            # Try slug first (unlisted tests should ONLY be found via slug)
+            slug_res = db.table("tests").select("*, classes(name)").eq("slug", test_id).execute()
+            if slug_res.data:
+                test_res = slug_res
+                is_slug_match = True
+            else:
+                # Try custom_id (only for public tests)
+                test_res = db.table("tests").select("*, classes(name)").eq("custom_id", test_id).execute()
+
         # Handle response
         if not test_res.data or len(test_res.data) == 0:
             raise HTTPException(status_code=404, detail="Test not found")
-        
+
         test = test_res.data[0]
+
+        # ─ Visibility Enforcement
+        visibility = test.get("visibility", "public" if test.get("is_public") else "private")
+
+        # Private tests: never accessible via public link
+        if visibility == "private":
+            raise HTTPException(status_code=404, detail="Test not found")
+
+        # Unlisted (conducted exam): only accessible via exact slug match
+        if visibility == "unlisted" and not is_slug_match:
+            raise HTTPException(status_code=404, detail="Test not found")
 
         # ─ Fetch creator info + categories IN PARALLEL
         def _fetch_creator():

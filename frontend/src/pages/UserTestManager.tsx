@@ -3,14 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Edit, Plus, Upload } from 'lucide-react';
+import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
 import { fetchClasses } from '@/lib/classesApi';
 import { fetchUserDetails } from '@/lib/usersApi';
 import { fetchCategories } from '@/lib/categoriesApi';
-import { Globe, Link as LinkIcon, Lock, GraduationCap, Search, Inbox, CheckCircle } from 'lucide-react';
+import { Globe, Lock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchCreatorReports, updateReportStatus, Report } from "@/lib/reportsApi";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import { shareTest } from '@/utils/shareUtils';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
+import ConductExamDialog from '@/components/ConductExamDialog';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,6 +30,17 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
+    DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Trash2, MoreVertical, Check, FileText } from 'lucide-react';
 
 // YouTube-style lazy loading imports
 import { UserTestCard } from '@/components/UserTestCard';
@@ -69,6 +81,12 @@ export default function UserTestManager() {
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [viewingResultsTest, setViewingResultsTest] = useState<any>(null);
 
+    // Conduct Exam State
+    const [conductExamTest, setConductExamTest] = useState<any>(null);
+    const [conductExamLoading, setConductExamLoading] = useState(false);
+    const [removeExamId, setRemoveExamId] = useState<string | null>(null);
+    const [removeExamTitle, setRemoveExamTitle] = useState("");
+
     // Creator Check State
     const [isCreator, setIsCreator] = useState<boolean | null>(null);
     const [checkingCreator, setCheckingCreator] = useState(true);
@@ -101,7 +119,7 @@ export default function UserTestManager() {
         }
     };
 
-    // YouTube-style lazy loading - each card loads individually when visible
+    // YouTube-style lazy loading
     const {
         registerSkeleton,
         isItemRendered,
@@ -125,7 +143,6 @@ export default function UserTestManager() {
         }
     }, [user?.id, authLoading, navigate]);
 
-    // Load tests on search
     useEffect(() => {
         if (user?.id) {
             loadUserTests();
@@ -199,30 +216,48 @@ export default function UserTestManager() {
     };
 
     const openTestEditor = (test: any) => {
-        // Navigate to the full editor instead of the limited dialog
         navigate(`/edit-test/${test.id}`);
     };
 
-    const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'unlisted' | 'private') => {
+    const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'private') => {
+        // Only allow public or private — no unlisted directly
         const isPublic = newVisibility === 'public';
         const oldVisibility = test.visibility;
 
+        // Build slug restoration: if going public, restore original_slug if available
+        const conductExamSettings = test.settings?.conduct_exam;
+        const restoredSlug = isPublic && conductExamSettings?.original_slug
+            ? conductExamSettings.original_slug
+            : test.slug;
+
+        const updatedSettings = test.settings
+            ? { ...test.settings, conduct_exam: undefined }
+            : test.settings;
+
         // Optimistic update
-        setTests(prev => prev.map(t => t.id === test.id ? { ...t, visibility: newVisibility, is_public: isPublic } : t));
+        setTests(prev => prev.map(t =>
+            t.id === test.id
+                ? { ...t, visibility: newVisibility, is_public: isPublic, slug: restoredSlug, settings: updatedSettings }
+                : t
+        ));
 
         try {
-            const { error } = await updateTest(test.id, {
+            const payload: any = {
                 visibility: newVisibility,
-                is_public: isPublic
-            }, isAdmin);
+                is_public: isPublic,
+            };
+            if (restoredSlug !== test.slug) payload.slug = restoredSlug;
+            if (updatedSettings !== test.settings) payload.settings = updatedSettings;
 
+            const { error } = await updateTest(test.id, payload, isAdmin);
             if (error) throw error;
             toast.success(`Visibility updated to ${newVisibility}`);
         } catch (error: any) {
             console.error("Failed to update visibility:", error);
             toast.error("Failed to update visibility");
-            // Revert
-            setTests(prev => prev.map(t => t.id === test.id ? { ...t, visibility: oldVisibility, is_public: test.is_public } : t));
+            setTests(prev => prev.map(t =>
+                t.id === test.id ? { ...t, visibility: oldVisibility, is_public: test.is_public, slug: test.slug, settings: test.settings } : t
+            ));
         }
     };
 
@@ -236,24 +271,125 @@ export default function UserTestManager() {
 
     const handleClassChange = async (test: any, classId: string | null) => {
         const oldClassId = test.class_id;
-        // Optimistic update
         setTests(prev => prev.map(t => t.id === test.id ? { ...t, class_id: classId } : t));
 
         const { error } = await updateTest(test.id, { class_id: classId }, isAdmin);
         if (error) {
             console.error("Failed to update class:", error);
             toast.error("Failed to update class assignment");
-            // Revert
             setTests(prev => prev.map(t => t.id === test.id ? { ...t, class_id: oldClassId } : t));
         } else {
             toast.success(classId ? "Class assigned" : "Class removed");
         }
     };
 
+    // ─── Conduct Exam ──────────────────────────────────────────────
+    const handleConductExam = (test: any) => {
+        setConductExamTest(test);
+    };
+
+    const confirmConductExam = async (conductSlug: string) => {
+        if (!conductExamTest) return;
+        setConductExamLoading(true);
+        try {
+            // Preserve original slug (only if test was public and had a slug)
+            const originalSlug = conductExamTest.visibility === 'public' && conductExamTest.slug
+                ? conductExamTest.slug
+                : (conductExamTest.settings?.conduct_exam?.original_slug || null);
+
+            const newSettings = {
+                ...(conductExamTest.settings || {}),
+                conduct_exam: {
+                    enabled: true,
+                    conduct_slug: conductSlug,
+                    original_slug: originalSlug,
+                }
+            };
+
+            const payload = {
+                visibility: 'unlisted' as const,
+                is_public: false,
+                slug: conductSlug,
+                settings: newSettings,
+            };
+
+            // Optimistic update
+            setTests(prev => prev.map(t =>
+                t.id === conductExamTest.id
+                    ? { ...t, ...payload }
+                    : t
+            ));
+
+            const { error } = await updateTest(conductExamTest.id, payload, isAdmin);
+            if (error) throw error;
+
+            toast.success("Exam is now live! Share the secure link with students.");
+            setConductExamTest(null);
+        } catch (error: any) {
+            console.error("Failed to start exam:", error);
+            toast.error("Failed to start exam: " + error.message);
+            // revert
+            setTests(prev => prev.map(t =>
+                t.id === conductExamTest.id ? { ...t, ...conductExamTest } : t
+            ));
+        } finally {
+            setConductExamLoading(false);
+        }
+    };
+
+    const handleRemoveExam = (testId: string, testTitle: string) => {
+        setRemoveExamId(testId);
+        setRemoveExamTitle(testTitle);
+    };
+
+    const confirmRemoveExam = async () => {
+        if (!removeExamId) return;
+        const test = tests.find(t => t.id === removeExamId);
+        if (!test) return;
+
+        const now = new Date();
+        const testHasEnded = !!test.settings?.schedule?.end_time && new Date(test.settings.schedule.end_time) < now;
+        const wasActive = test.settings?.conduct_exam?.enabled && !testHasEnded;
+
+        // Restore original slug if any
+        const originalSlug = test.settings?.conduct_exam?.original_slug || '';
+
+        const newSettings = { ...(test.settings || {}) };
+        
+        if (wasActive) {
+            newSettings.conduct_exam = { ...newSettings.conduct_exam, enabled: false };
+        } else {
+            delete newSettings.conduct_exam;
+        }
+
+        const payload: any = {
+            visibility: 'private',
+            is_public: false,
+            settings: newSettings,
+        };
+        if (originalSlug) payload.slug = originalSlug;
+
+        // Optimistic
+        setTests(prev => prev.map(t =>
+            t.id === removeExamId ? { ...t, ...payload } : t
+        ));
+
+        try {
+            const { error } = await updateTest(removeExamId, payload, isAdmin);
+            if (error) throw error;
+            toast.success("Exam removed. Test set to private.");
+        } catch (error: any) {
+            toast.error("Failed to remove exam: " + error.message);
+            setTests(prev => prev.map(t => t.id === removeExamId ? { ...t, ...test } : t));
+        } finally {
+            setRemoveExamId(null);
+        }
+    };
+
+    // ─── Helpers ──────────────────────────────────────────────────
     const getVisibilityIcon = (visibility: string) => {
         switch (visibility) {
             case 'public': return <Globe className="h-3 w-3" />;
-            case 'unlisted': return <LinkIcon className="h-3 w-3" />;
             case 'private': return <Lock className="h-3 w-3" />;
             default: return <Globe className="h-3 w-3" />;
         }
@@ -262,7 +398,6 @@ export default function UserTestManager() {
     const getVisibilityColor = (visibility: string) => {
         switch (visibility) {
             case 'public': return 'text-green-600 bg-green-50 border-green-200';
-            case 'unlisted': return 'text-blue-600 bg-blue-50 border-blue-200';
             case 'private': return 'text-slate-600 bg-slate-50 border-slate-200';
             default: return 'text-slate-500';
         }
@@ -275,7 +410,6 @@ export default function UserTestManager() {
     if (isCreator === false) {
         return (
             <div className="relative h-[80vh] w-full overflow-hidden flex flex-col items-center justify-center">
-                {/* Blurred Background Content */}
                 <div className="absolute inset-0 blur-sm opacity-50 pointer-events-none select-none overflow-hidden flex flex-col items-center pt-20">
                     <div className="container max-w-5xl opacity-50 grayscale">
                         <div className="flex justify-between items-center mb-8">
@@ -289,8 +423,6 @@ export default function UserTestManager() {
                         </div>
                     </div>
                 </div>
-
-                {/* Overlay Content */}
                 <div className="relative z-10 bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-2xl border text-center max-w-md mx-4">
                     <div className="h-16 w-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Edit className="h-8 w-8" />
@@ -307,7 +439,24 @@ export default function UserTestManager() {
         );
     }
 
+    const now = new Date();
+    const hasEnded = (test: any) => {
+        if (!test.settings?.schedule?.end_time) return false;
+        return new Date(test.settings.schedule.end_time) < now;
+    };
 
+    const hasConductSettings = (t: any) => t.settings?.conduct_exam !== undefined;
+
+    const activeExams = tests.filter(t => 
+        hasConductSettings(t) && 
+        t.settings.conduct_exam.enabled === true && 
+        !hasEnded(t)
+    );
+    const inactiveExams = tests.filter(t => 
+        hasConductSettings(t) && 
+        (t.settings.conduct_exam.enabled === false || hasEnded(t))
+    );
+    const regularTests = tests; // Show all tests in grid (conducted ones also show with LIVE badge)
 
     return (
         <div className="container mx-auto max-w-5xl py-6 space-y-6">
@@ -332,8 +481,297 @@ export default function UserTestManager() {
                 </div>
 
                 <TabsContent value="tests" className="space-y-6 m-0 border-0 p-0">
+
+                    {/* ═══════════════════════════════════════════════
+                        ACTIVE EXAMS CONTAINER
+                    ═══════════════════════════════════════════════ */}
+                    {activeExams.length > 0 && (
+                        <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-50 shadow-sm mb-6">
+                            {/* Decorative glow */}
+                            <div className="absolute inset-0 pointer-events-none">
+                                <div className="absolute top-0 left-0 w-48 h-48 bg-emerald-300/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
+                                <div className="absolute bottom-0 right-0 w-32 h-32 bg-teal-300/10 rounded-full translate-x-1/4 translate-y-1/4" />
+                            </div>
+
+                            {/* Header */}
+                            <div className="relative flex items-center justify-between px-5 pt-4 pb-3 border-b border-emerald-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
+                                        <Radio className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold text-slate-800 text-sm leading-tight">Active Exams</h2>
+                                        <p className="text-xs text-slate-500">Currently being conducted</p>
+                                    </div>
+                                    <span className="ml-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 animate-pulse">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                        {activeExams.length} Live
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <Shield className="w-3.5 h-3.5" />
+                                    Link-only access
+                                </div>
+                            </div>
+
+                            {/* Cards */}
+                            <div className="relative p-4 space-y-3">
+                                {activeExams.map(test => {
+                                    const conductSlug = test.settings?.conduct_exam?.conduct_slug || test.slug;
+                                    const examUrl = conductSlug
+                                        ? `${window.location.origin}/test/${conductSlug}`
+                                        : `${window.location.origin}/test-intro/${test.id}`;
+                                    const questionCount = test.total_questions || test.questions?.length || 0;
+
+                                    return (
+                                        <div
+                                            key={test.id}
+                                            className="group relative bg-white rounded-xl border border-emerald-100 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-200 p-4"
+                                        >
+                                            {/* Left accent */}
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-xl" />
+
+                                            <div className="pl-3 flex flex-col md:flex-row md:items-center gap-3">
+                                                {/* Test Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h3 className="font-semibold text-slate-800 text-sm truncate">{test.title}</h3>
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <Radio className="w-2.5 h-2.5" /> LIVE
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                                                        <span>{questionCount} Qs</span>
+                                                        <span>·</span>
+                                                        <span>{test.duration || 0} min</span>
+                                                        <span>·</span>
+                                                        <span className="font-mono text-slate-300 truncate max-w-[160px]">/test/{conductSlug}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Quick Actions */}
+                                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                                                        onClick={() => setConfiguringTest(test)}
+                                                    >
+                                                        <Settings className="w-3.5 h-3.5 mr-1.5" /> Settings
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                                                        onClick={() => setViewingResultsTest(test)}
+                                                    >
+                                                        <BarChart2 className="w-3.5 h-3.5 mr-1.5" /> Results
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 px-3 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300"
+                                                        onClick={async () => {
+                                                            await navigator.clipboard.writeText(examUrl);
+                                                            toast.success("Exam link copied!");
+                                                        }}
+                                                    >
+                                                        <LinkIcon className="w-3.5 h-3.5 mr-1.5" /> Copy Link
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 px-3 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                                                        onClick={() => handleRemoveExam(test.id, test.title)}
+                                                    >
+                                                        <X className="w-3.5 h-3.5 mr-1.5" /> Remove
+                                                    </Button>
+
+                                                    {/* Full hamburger menu — identical to normal card */}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50">
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-56">
+                                                            <DropdownMenuItem onClick={() => openTestEditor(test)}>
+                                                                <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
+                                                                <Settings className="mr-2 h-4 w-4 text-slate-500" /> Manage Settings
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleShare(test)}>
+                                                                <LinkIcon className="mr-2 h-4 w-4 text-slate-500" /> Share Link
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => handleUploadSolutions(test)}>
+                                                                <FileText className="mr-2 h-4 w-4 text-indigo-500" /> Upload Solutions
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSub>
+                                                                <DropdownMenuSubTrigger>
+                                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
+                                                                </DropdownMenuSubTrigger>
+                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                                    <DropdownMenuItem onClick={() => handleClassChange(test, null)}>
+                                                                        <span className="opacity-50">None</span>
+                                                                        {!test.class_id && <Check className="ml-auto h-4 w-4" />}
+                                                                    </DropdownMenuItem>
+                                                                    {classes.map(cls => (
+                                                                        <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id)}>
+                                                                            {cls.name}
+                                                                            {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
+                                                                        </DropdownMenuItem>
+                                                                    ))}
+                                                                </DropdownMenuSubContent>
+                                                            </DropdownMenuSub>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => handleRemoveExam(test.id, test.title)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                                <X className="mr-2 h-4 w-4" /> Remove from Conduct
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="text-red-700 focus:text-red-700 focus:bg-red-50 font-semibold">
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Test
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══════════════════════════════════════════════
+                        INACTIVE EXAMS CONTAINER
+                    ═══════════════════════════════════════════════ */}
+                    {inactiveExams.length > 0 && (
+                        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-slate-100/50 to-slate-50 shadow-sm">
+                            {/* Header */}
+                            <div className="relative flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-200">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center shadow-sm">
+                                        <X className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold text-slate-800 text-sm leading-tight">Inactive Exams</h2>
+                                        <p className="text-xs text-slate-500">Scheduled time has ended</p>
+                                    </div>
+                                    <span className="ml-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-600 border border-slate-300">
+                                        {inactiveExams.length} Ended
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Cards */}
+                            <div className="relative p-4 space-y-3">
+                                {inactiveExams.map(test => {
+                                    const questionCount = test.total_questions || test.questions?.length || 0;
+
+                                    return (
+                                        <div
+                                            key={test.id}
+                                            className="group relative bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 p-4 opacity-90 hover:opacity-100"
+                                        >
+                                            {/* Left accent */}
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-300 to-slate-500 rounded-l-xl" />
+
+                                            <div className="pl-3 flex flex-col md:flex-row md:items-center gap-3">
+                                                {/* Test Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h3 className="font-semibold text-slate-700 text-sm truncate line-through decoration-slate-300">{test.title}</h3>
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                            Ended
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                                                        <span>{questionCount} Qs</span>
+                                                        <span>·</span>
+                                                        <span>{test.duration || 0} min</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Quick Actions (Results and Remove only) */}
+                                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                                                        onClick={() => setViewingResultsTest(test)}
+                                                    >
+                                                        <BarChart2 className="w-3.5 h-3.5 mr-1.5" /> Results
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 px-3 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                                                        onClick={() => handleRemoveExam(test.id, test.title)}
+                                                    >
+                                                        <X className="w-3.5 h-3.5 mr-1.5" /> Remove
+                                                    </Button>
+
+                                                    {/* Full hamburger menu */}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50">
+                                                                <MoreVertical className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-56">
+                                                            <DropdownMenuItem onClick={() => setViewingResultsTest(test)}>
+                                                                <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => openTestEditor(test)}>
+                                                                <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
+                                                                <Settings className="mr-2 h-4 w-4 text-slate-500" /> Manage Settings
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => handleUploadSolutions(test)}>
+                                                                <FileText className="mr-2 h-4 w-4 text-indigo-500" /> Upload Solutions
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSub>
+                                                                <DropdownMenuSubTrigger>
+                                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
+                                                                </DropdownMenuSubTrigger>
+                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
+                                                                    <DropdownMenuItem onClick={() => handleClassChange(test, null)}>
+                                                                        <span className="opacity-50">None</span>
+                                                                        {!test.class_id && <Check className="ml-auto h-4 w-4" />}
+                                                                    </DropdownMenuItem>
+                                                                    {classes.map(cls => (
+                                                                        <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id)}>
+                                                                            {cls.name}
+                                                                            {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
+                                                                        </DropdownMenuItem>
+                                                                    ))}
+                                                                </DropdownMenuSubContent>
+                                                            </DropdownMenuSub>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => handleRemoveExam(test.id, test.title)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                                <X className="mr-2 h-4 w-4" /> Remove from Conduct
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="text-red-700 focus:text-red-700 focus:bg-red-50 font-semibold">
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Test
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══════════════════════════════════════════════
+                        TOOLBAR
+                    ═══════════════════════════════════════════════ */}
                     <div className="flex items-center justify-between gap-4 flex-wrap">
-                        {/* ... Import buttons ... */}
                         <div className="flex gap-3 items-center flex-wrap">
                             {/* Search Input */}
                             <div className="relative w-full md:w-64">
@@ -378,8 +816,8 @@ export default function UserTestManager() {
                                                 const {
                                                     marks_per_question,
                                                     negative_marks,
-                                                    id, // Don't import ID, let DB generate it
-                                                    created_at, // Don't import timestamp
+                                                    id,
+                                                    created_at,
                                                     ...safeJson
                                                 } = json;
 
@@ -414,6 +852,9 @@ export default function UserTestManager() {
                         </div>
                     </div>
 
+                    {/* ═══════════════════════════════════════════════
+                        ALL TESTS GRID
+                    ═══════════════════════════════════════════════ */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {testsLoading ? (
                             <div className="col-span-full text-center py-10">
@@ -426,7 +867,6 @@ export default function UserTestManager() {
                             </div>
                         ) : (
                             <>
-                                {/* YouTube-style: Each card loads individually when visible */}
                                 {tests.map((test) => {
                                     const testId = test.id;
                                     const isRendered = isItemRendered(testId);
@@ -448,6 +888,7 @@ export default function UserTestManager() {
                                                 getVisibilityIcon={getVisibilityIcon}
                                                 onViewResults={(t) => setViewingResultsTest(t)}
                                                 onView={(t) => navigate(`/test-intro/${t.id}`)}
+                                                onConductExam={handleConductExam}
                                             />
                                         );
                                     } else {
@@ -533,6 +974,7 @@ export default function UserTestManager() {
                 </TabsContent>
             </Tabs>
 
+            {/* ── Delete Test Dialog ── */}
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -548,6 +990,44 @@ export default function UserTestManager() {
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* ── Remove Exam Confirmation Dialog ── */}
+            <AlertDialog open={!!removeExamId} onOpenChange={(open) => !open && setRemoveExamId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <X className="w-5 h-5 text-red-500" />
+                            Remove from Conduct?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-2">
+                            <span className="block">
+                                "<strong>{removeExamTitle}</strong>" will be removed from Active Exams.
+                            </span>
+                            <span className="block text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 text-xs font-medium">
+                                ⚠️ The test will automatically become <strong>Private</strong> and the exam link will stop working.
+                            </span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setRemoveExamId(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmRemoveExam} className="bg-red-600 hover:bg-red-700">
+                            Remove & Set Private
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Conduct Exam Dialog ── */}
+            {conductExamTest && (
+                <ConductExamDialog
+                    test={conductExamTest}
+                    open={!!conductExamTest}
+                    onClose={() => setConductExamTest(null)}
+                    onConfirm={confirmConductExam}
+                    loading={conductExamLoading}
+                />
+            )}
+
+            {/* ── Settings Panel ── */}
             {configuringTest && (
                 <TestSettingsPanel
                     test={configuringTest}
@@ -559,13 +1039,13 @@ export default function UserTestManager() {
                 />
             )}
 
+            {/* ── Results Panel ── */}
             {viewingResultsTest && (
-                // Dynamic Import or Direct Import? Let's use Lazy if needed, but direct is fine for now if we import it
                 <TestResultsPanel
                     test={viewingResultsTest}
                     onClose={() => setViewingResultsTest(null)}
                 />
             )}
-        </div >
+        </div>
     );
 }

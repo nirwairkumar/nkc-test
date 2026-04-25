@@ -86,6 +86,25 @@ export interface TestSettings {
     };
     block_back_button?: boolean;
     disable_exit_button?: boolean;
+    conduct_exam?: {
+        enabled: boolean;
+        conduct_slug: string; // secure slug >10 chars used for exam link
+        original_slug?: string; // preserved original slug (public tests)
+    };
+}
+
+/** Generate a secure conduct slug (always >10 chars): title-slug + 8-char random hex */
+export function generateConductSlug(title: string): string {
+    const base = title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .substring(0, 20);
+    const random = Math.random().toString(36).substring(2, 10); // 8 chars
+    const slug = base ? `${base}-${random}` : `exam-${random}`;
+    // Guarantee minimum length of 11 chars
+    return slug.length >= 11 ? slug : `exam-${slug}-${random}`;
 }
 
 

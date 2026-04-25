@@ -15,14 +15,14 @@ import {
     Trash2,
     Settings,
     Edit,
-    Heart,
     MoreVertical,
     Globe,
-    Link as LinkIcon,
     Lock,
     GraduationCap,
     Check,
-    FileText
+    FileText,
+    Link as LinkIcon,
+    Radio,
 } from 'lucide-react';
 import TestVoteButtons from '@/components/TestVoteButtons';
 
@@ -40,6 +40,7 @@ interface UserTestCardProps {
     getVisibilityIcon: (visibility: string) => React.ReactNode;
     onViewResults: (test: any) => void;
     onView: (test: any) => void;
+    onConductExam: (test: any) => void;
 }
 
 export function UserTestCard({
@@ -56,8 +57,10 @@ export function UserTestCard({
     getVisibilityIcon,
     onViewResults,
     onView,
+    onConductExam,
 }: UserTestCardProps) {
     const visibility = test.visibility || (test.is_public ? 'public' : 'private');
+    const isConducted = test.settings?.conduct_exam?.enabled;
 
     return (
         <div
@@ -65,19 +68,26 @@ export function UserTestCard({
             className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 pb-3.5 shadow-sm hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full overflow-hidden"
         >
             {/* --- Identity Accent --- */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-violet-600 opacity-80 group-hover:opacity-100 transition-opacity" />
+            <div className={`absolute left-0 top-0 bottom-0 w-1 opacity-80 group-hover:opacity-100 transition-opacity ${isConducted ? 'bg-gradient-to-b from-emerald-400 to-teal-600' : 'bg-gradient-to-b from-primary to-violet-600'}`} />
 
             {/* --- Zone A: Header --- */}
             <div className="flex justify-between items-start mb-2.5 gap-3 pl-2">
                 <div className="flex-1 min-w-0">
                     <CardHeader className="p-0 pb-1">
-                        <CardTitle
-                            className="text-[1rem] font-semibold text-red-900 dark:text-slate-100 leading-snug line-clamp-1 group-hover:text-primary transition-colors cursor-pointer"
-                            title={test.title}
-                            onClick={() => onConfigure(test)}
-                        >
-                            {test.title}
-                        </CardTitle>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <CardTitle
+                                className="text-[1rem] font-semibold text-red-900 dark:text-slate-100 leading-snug line-clamp-1 group-hover:text-primary transition-colors cursor-pointer"
+                                title={test.title}
+                                onClick={() => onConfigure(test)}
+                            >
+                                {test.title}
+                            </CardTitle>
+                            {isConducted && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
+                                    <Radio className="w-2.5 h-2.5" /> LIVE
+                                </span>
+                            )}
+                        </div>
                     </CardHeader>
                     {/* --- Zone B: Metadata (Clean Row) --- */}
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1">
@@ -88,11 +98,15 @@ export function UserTestCard({
                         <span className="flex items-center gap-1.5">
                             <span className="opacity-70 font-semibold">{test.duration || 0}</span> min
                         </span>
-                        <span className="text-slate-300">•</span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full border flex items-center gap-1 ${getVisibilityColor(visibility)}`}>
-                            {getVisibilityIcon(visibility)}
-                            <span className="capitalize text-[10px] font-semibold">{visibility === 'unlisted' ? 'Link' : visibility}</span>
-                        </span>
+                        {!isConducted && (
+                            <>
+                                <span className="text-slate-300">•</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full border flex items-center gap-1 ${getVisibilityColor(visibility)}`}>
+                                    {getVisibilityIcon(visibility)}
+                                    <span className="capitalize text-[10px] font-semibold">{visibility}</span>
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -105,6 +119,7 @@ export function UserTestCard({
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
+                            {/* Visibility (only Public / Private — no unlisted) */}
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger>
                                     <Globe className="mr-2 h-4 w-4" /> Visibility
@@ -112,15 +127,11 @@ export function UserTestCard({
                                 <DropdownMenuSubContent>
                                     <DropdownMenuItem onClick={() => onVisibilityChange(test, 'public')}>
                                         <Globe className="mr-2 h-4 w-4 text-green-500" /> Public
-                                        {visibility === 'public' && <Check className="ml-auto h-4 w-4" />}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onVisibilityChange(test, 'unlisted')}>
-                                        <LinkIcon className="mr-2 h-4 w-4 text-primary" /> Link Only
-                                        {visibility === 'unlisted' && <Check className="ml-auto h-4 w-4" />}
+                                        {visibility === 'public' && !isConducted && <Check className="ml-auto h-4 w-4" />}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onVisibilityChange(test, 'private')}>
                                         <Lock className="mr-2 h-4 w-4 text-slate-500" /> Private
-                                        {visibility === 'private' && <Check className="ml-auto h-4 w-4" />}
+                                        {visibility === 'private' && !isConducted && <Check className="ml-auto h-4 w-4" />}
                                     </DropdownMenuItem>
                                 </DropdownMenuSubContent>
                             </DropdownMenuSub>
@@ -138,6 +149,13 @@ export function UserTestCard({
                             <DropdownMenuItem onClick={() => onShare(test)}>
                                 <LinkIcon className="mr-2 h-4 w-4 text-slate-500" /> Share Link
                             </DropdownMenuItem>
+
+                            {/* Conduct Exam */}
+                            {!isConducted && (
+                                <DropdownMenuItem onClick={() => onConductExam(test)} className="text-indigo-600 focus:text-indigo-700 focus:bg-indigo-50">
+                                    <Radio className="mr-2 h-4 w-4" /> Conduct Exam
+                                </DropdownMenuItem>
+                            )}
 
                             <DropdownMenuSeparator />
 
@@ -189,7 +207,6 @@ export function UserTestCard({
                     </div>
                 )}
 
-                {/* Likes info if popular - now handled internally by TestVoteButtons */}
                 <div className="ml-auto">
                     <TestVoteButtons testId={test.id} userId={undefined} isCreatorOrAdmin={true} />
                 </div>
