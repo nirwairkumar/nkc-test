@@ -15,6 +15,7 @@ const AboutPage = () => {
       });
     }, { threshold: 0.1 });
 
+
     revealRefs.current.forEach(el => {
       if (el) observer.observe(el);
     });
@@ -48,7 +49,7 @@ const AboutPage = () => {
       <div className="max-w-3xl mx-auto px-6 font-body">
 
         {/* Hero */}
-        <section 
+        <section
           className="pt-24 pb-16 opacity-0 translate-y-4 reveal-transition"
           ref={addToRefs}
         >
@@ -237,8 +238,8 @@ const AboutPage = () => {
         </section>
 
         {/* CTA */}
-        <div 
-          className="bg-indigo-600 rounded-xl p-10 md:p-12 text-center mt-12 md:mt-16 opacity-0 translate-y-4 reveal-transition shadow-lg shadow-indigo-600/10" 
+        <div
+          className="bg-indigo-600 rounded-xl p-10 md:p-12 text-center mt-12 md:mt-16 opacity-0 translate-y-4 reveal-transition shadow-lg shadow-indigo-600/10"
           ref={addToRefs}
         >
           <p className="font-display text-3xl text-white mb-2 tracking-tight">Want to be part of what comes next?</p>

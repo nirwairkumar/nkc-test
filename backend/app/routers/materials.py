@@ -8,6 +8,7 @@ import random
 
 router = APIRouter()
 
+
 class LinkMaterialCreate(BaseModel):
     user_id: str
     title: str
