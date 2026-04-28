@@ -15,7 +15,6 @@ const AboutPage = () => {
       });
     }, { threshold: 0.1 });
 
-
     revealRefs.current.forEach(el => {
       if (el) observer.observe(el);
     });
