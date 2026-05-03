@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -96,6 +96,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [institutionLogo, setInstitutionLogo] = useState('');
     const [institutionColor, setInstitutionColor] = useState('#475569');
     const [institutionFont, setInstitutionFont] = useState('inherit');
+    const [showInstitutePreview, setShowInstitutePreview] = useState(false);
+    const [previewImageIndex, setPreviewImageIndex] = useState(0);
     const [time, setTime] = useState<number>(30);
     const [marks, setMarks] = useState<number>(1);
     const [negativeMarks, setNegativeMarks] = useState<number>(0);
@@ -1455,6 +1457,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     )}
                                     <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
                                 </div>
+                                {/* Institution Name Preview Info Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => { setPreviewImageIndex(0); setShowInstitutePreview(true); }}
+                                    className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-indigo-100 border border-slate-200 hover:border-indigo-300 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
+                                    title="Preview: how institution name appears on live test"
+                                >
+                                    <Info className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                </button>
                             </div>
                             {/* Color Swatches & Font Picker */}
                             {isPremium && (
@@ -2890,6 +2901,91 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     onChange={(e) => handleCloudinaryUpload(e, cloudUploadTarget)}
                                 />
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Institution Name Preview Lightbox */}
+            {showInstitutePreview && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setShowInstitutePreview(false)}
+                >
+                    <div
+                        className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl mx-4 overflow-hidden animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">Institution Name — Live Preview</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">This is how your institution name will appear on the live test page.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowInstitutePreview(false)}
+                                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Tab Switcher */}
+                        <div className="flex border-b border-slate-100 dark:border-slate-800 px-5 pt-3 gap-1">
+                            <button
+                                type="button"
+                                onClick={() => setPreviewImageIndex(0)}
+                                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${
+                                    previewImageIndex === 0
+                                        ? 'border-indigo-500 text-indigo-600 bg-indigo-50/60'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                }`}
+                            >
+                                <Monitor className="w-3.5 h-3.5" />
+                                Desktop View
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPreviewImageIndex(1)}
+                                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${
+                                    previewImageIndex === 1
+                                        ? 'border-indigo-500 text-indigo-600 bg-indigo-50/60'
+                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                }`}
+                            >
+                                <Smartphone className="w-3.5 h-3.5" />
+                                Phone View
+                            </button>
+                        </div>
+
+                        {/* Image Display */}
+                        <div className="p-5 bg-slate-50 dark:bg-slate-950">
+                            {previewImageIndex === 0 ? (
+                                <div className="rounded-xl overflow-hidden border border-slate-200 shadow-md">
+                                    <img
+                                        src="/institute-name-showcase/testoza-live-test page-for institution-name-computer-view.png"
+                                        alt="Institution name on desktop live test"
+                                        className="w-full h-auto object-contain max-h-[55vh]"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex justify-center">
+                                    <div className="rounded-xl overflow-hidden border border-slate-200 shadow-md max-w-[280px] w-full">
+                                        <img
+                                            src="/institute-name-showcase/testoza-live-test page-for institution-name-phone-view.jpg"
+                                            alt="Institution name on phone live test"
+                                            className="w-full h-auto object-contain max-h-[55vh]"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer hint */}
+                        <div className="px-5 pb-4 pt-0 text-center">
+                            <p className="text-[11px] text-slate-400 italic">
+                                The institution name appears prominently at the top of the test page for all students.
+                            </p>
                         </div>
                     </div>
                 </div>
