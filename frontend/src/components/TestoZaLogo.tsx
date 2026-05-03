@@ -185,8 +185,9 @@ export default function TestoZaLogo({ size = 40, showText = true, className = ''
                     style={{
                         fontFamily: "'Ribeye', serif",
                         fontSize: `${size * 0.5}px`,
+                        fontWeight: 'bold',
                         lineHeight: 1,
-                        background: 'linear-gradient(180deg, #1E3A5F 0%, #2563EB 40%, #06B6D4 100%)',
+                        background: 'linear-gradient(to right, #2563eb, #4f46e5)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
