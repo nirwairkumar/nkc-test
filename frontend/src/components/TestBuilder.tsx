@@ -1466,13 +1466,31 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 >
                                     <Info className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                                 </button>
+                                {/* Clear All Data Button */}
+                                <button
+                                    type="button"
+                                    onClick={handleClear}
+                                    className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
+                                    title="Clear All Data"
+                                >
+                                    <Eraser className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-500 transition-colors" />
+                                </button>
                             </div>
                             {/* Color Swatches & Font Picker */}
-                            {isPremium && (
-                                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                            {/* Color Swatches & Font Picker - Blurred preview for non-premium */}
+                            <div className={`relative mt-2 ${!isPremium ? 'group/premium cursor-pointer' : ''}`}
+                                onClick={() => {
+                                    if (!isPremium) {
+                                        toast("Upgrade to Premium to customize branding", {
+                                            action: { label: "View Plans", onClick: () => navigate('/pricing') }
+                                        });
+                                    }
+                                }}
+                            >
+                                <div className={`flex items-center gap-3 flex-wrap transition-all duration-300 ${!isPremium ? 'blur-[2px] opacity-60 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-1.5">
                                         <Palette className="w-3 h-3 text-slate-400" />
-                                        {['#475569','#2563eb','#dc2626','#059669','#7c3aed','#ea580c','#0891b2'].map(c => (
+                                        {['#475569', '#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2'].map(c => (
                                             <button
                                                 key={c}
                                                 onClick={() => setInstitutionColor(c)}
@@ -1498,20 +1516,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         </select>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                        <div className="flex flex-col justify-start h-full pt-1 shrink-0">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleClear}
-                                className="text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                title="Clear All Data"
-                            >
-                                <Eraser className="w-5 h-5" />
-                            </Button>
-                        </div>
+                            </div>
                     </div>
+                </div>
 
                     <CardHeader className="pb-3"><CardTitle className="text-lg">Test Details</CardTitle></CardHeader>
                     <CardContent className="space-y-4 px-6 pb-6 pt-0">
