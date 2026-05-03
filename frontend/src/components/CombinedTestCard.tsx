@@ -47,9 +47,6 @@ export default function CombinedTestCard({ session, user }: CombinedTestCardProp
         return () => { mounted = false; };
     }, [session]);
 
-    const totalQuestions = (test1?.questions?.length || 0) + (test2?.questions?.length || 0);
-    const totalDuration = (test1?.duration || 0) + (test2?.duration || 0) + session.break_duration_minutes;
-
     const getQuestionCount = (test: any) => {
         if (!test) return 0;
         // total_questions is returned from backend enrichment (integer)
@@ -62,6 +59,8 @@ export default function CombinedTestCard({ session, user }: CombinedTestCardProp
 
     const p1Qs = getQuestionCount(test1);
     const p2Qs = getQuestionCount(test2);
+    const totalQuestions = p1Qs + p2Qs;
+    const totalDuration = (test1?.duration || 0) + (test2?.duration || 0) + session.break_duration_minutes;
 
     if (loading) {
         return (
