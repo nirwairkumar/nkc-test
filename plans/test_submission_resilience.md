@@ -4,11 +4,11 @@ This document explains the architecture and implementation details of the test s
 
 ## Overview
 
-The system is built on **three pillars of resilience** to ensure that student answers are never lost, even if their computer crashes or the internet fails at the exact moment of submission.
+The system is built on **four pillars of resilience** to ensure that student answers are never lost, even if their computer crashes or the internet fails at the exact moment of submission.
 
 ```mermaid
 graph TD
-    A[Student Interface] --> B{Three Pillars}
+    A[Student Interface] --> B{Four Pillars}
     
     subgraph Pillar 1: Answer Vault
     B --> C[IndexedDB Backup]
@@ -27,6 +27,14 @@ graph TD
     E --> E1[5 Attempts]
     E --> E2[Backoff: 1s -> 2s -> 4s -> 8s -> 15s]
     end
+
+    subgraph Pillar 4: Fail-Safe Recovery
+    B --> F[apiClient Interceptor]
+    F --> F1[Supabase SDK Refresh]
+    F --> F2[Backend Refresh Fallback]
+    F --> F3[Graceful Session-Expired Event]
+    F --> F4[Transient 500/503 Retries]
+    end
 ```
 
 ---
@@ -38,17 +46,17 @@ graph TD
 **Solution:** 
 - We use **IndexedDB** (via the `AnswerVault` utility) to save the `answers` object locally on the student's hardware.
 - Unlike `localStorage`, IndexedDB is designed for larger datasets and is more robust.
-- **Trigger:** In `TestPage.tsx`, a `useEffect` saves to the vault ogni 30 seconds of inactivity.
+- **Trigger:** In `TestPage.tsx`, a `useEffect` saves to the vault every 30 seconds of inactivity.
 - **Cleanup:** The vault is cleared **only** after a successful server response.
 
 ## 2. Proactive Security (`startProactiveTokenRefresh`)
 
-**Problem:** Supabase JWT tokens typically expire in 1 hour. If a student starts a 2-hour exam, their session will be invalid by the time they click "Submit".
+**Problem:** Supabase JWT tokens typically expire. If a session invalidates during a 2-hour exam, the student will be unable to submit.
 
 **Solution:**
 - We start a background timer (`startProactiveTokenRefresh`) when the test loads.
-- It silently calls the `/auth/refresh` endpoint every **45 minutes**.
-- This ensures the token is always "fresh" when the student finally submits.
+- It silently calls the refresh logic every **45 minutes**.
+- **Important:** We have also increased the Supabase **JWT Expiry to 8 hours (28800s)**, making this a secondary safety net.
 
 ## 3. Reliable Submission (`saveAttemptWithRetry`)
 
@@ -59,6 +67,17 @@ graph TD
 - **Strategy:** If the first attempt fails, it waits 1s, then 2s, then 4s, etc., up to 5 attempts.
 - **UI Feedback:** The student sees a "Retrying submission..." loading toast instead of a scary error message.
 
+## 4. Fail-Safe Session Recovery (`apiClient.ts`)
+
+**Problem:** If Pillar 2 fails (e.g. internet was down during the 45-min refresh) and the user submits after their token has expired, they get a `401 Unauthorized`.
+
+**Solution:**
+The `apiClient` interceptor automatically runs a **3-Strategy Cascade** on any 401 error:
+- **Strategy A (Supabase SDK):** Immediately tries `supabase.auth.refreshSession()`.
+- **Strategy B (Backend Fallback):** If SDK fails, calls `/auth/refresh` on our server and re-warms the SDK.
+- **Strategy C (Graceful Event):** If all else fails, instead of hard-redirecting to `/login` (which wipes the tab), it fires a `testoza:session-expired` event.
+- **Bonus:** It also automatically retries **500/503 (Cold Start)** errors up to 2 times.
+
 ---
 
 ## Technical Files to Study
@@ -66,6 +85,20 @@ graph TD
 1.  **`src/lib/testResilience.ts`**: Contains the core logic for Retries, IndexedDB, and Token Refresh.
 2.  **`src/lib/attemptsApi.ts`**: See `saveAttemptWithRetry` function.
 3.  **`src/pages/TestPage.tsx`**: Look for "Phase 2" comments to see where effects are mounted.
+
+## Supabase Auth Configuration (Dashboard)
+
+For the resilience system to work perfectly during 7-8 hour exams, the following settings **MUST** be maintained in the Supabase Dashboard:
+
+1.  **JWT Expiry:** `28800` (8 hours). 
+    - *Path:* Authentication -> Configuration -> Sessions.
+    - *Why:* Ensures the initial token remains valid for the full exam duration.
+
+2.  **Persistent Sessions:** `Enabled`.
+    - *Why:* Keeps the student logged in if they accidentally refresh or close the browser.
+
+3.  **Auto Refresh Tokens:** `Enabled`.
+    - *Why:* Allows the Supabase SDK to rotate tokens automatically in the background.
 
 ## Best Practices for Interns
 
