@@ -10,7 +10,6 @@ import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 
 // Lazy Load Components
 const FeaturedTests = React.lazy(() => import('@/components/home/FeaturedTests'));
-const TestFeed = React.lazy(() => import('@/components/home/TestFeed'));
 const UserRecentTests = React.lazy(() => import('@/components/home/UserRecentTests'));
 const SearchResults = React.lazy(() => import('@/components/home/SearchResults'));
 
@@ -148,14 +147,7 @@ export default function TestList() {
                         <FeaturedTests user={user} onManageTest={onManageTest} />
                     </Suspense>
                     
-                    <div className="section-divider" />
-
-                    {/* 7. Infinite Feed */}
-                    <SuspenseFallbackWrapper>
-                        <TestFeed user={user} onManageTest={onManageTest} />
-                    </SuspenseFallbackWrapper>
-
-                    {/* 8. YouTube Generator */}
+                    {/* 7. YouTube Generator */}
                     <div className="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800">
                         {/* <div className="text-center mb-6">
                             <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent inline-block">

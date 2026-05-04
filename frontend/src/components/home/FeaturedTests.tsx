@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Edit, FileText, ChevronRight, Sparkles } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Edit, FileText, ChevronRight, Sparkles, Library } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTests, Test } from '@/lib/testsApi';
@@ -109,6 +109,26 @@ export default function FeaturedTests({ user, onManageTest }: { user: any, onMan
                         </span>
                     </div>
                 )}
+            </div>
+
+            {/* Browse More Tests CTA */}
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100 dark:border-indigo-900/50">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/20 flex-shrink-0">
+                        <Library className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                        <p className="font-semibold text-slate-800 dark:text-white text-sm">Explore the full test catalog</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Search by title, category, description &amp; tags</p>
+                    </div>
+                </div>
+                <Button
+                    onClick={() => navigate('/more-tests')}
+                    className="rounded-full px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all font-semibold text-sm flex-shrink-0 group"
+                >
+                    Browse More Tests
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                </Button>
             </div>
         </div>
     );

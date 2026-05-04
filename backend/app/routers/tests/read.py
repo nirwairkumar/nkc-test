@@ -72,32 +72,60 @@ async def get_tests_feed(
 
         # 2. Build Query
         if search_query:
-            # RPC Search using 'search_tests_ranked'
-            # Note: User must have run the migration 'AdvancedSearchRPC.sql'
-            try:
-                tests_res = db.rpc("search_tests_ranked", {
-                    "search_query": search_query,
-                    "limit_val": limit,
-                    "offset_val": start,
-                    "category_filter": category_id, # Optional
-                    "is_admin": False
-                }).execute()
-                tests = tests_res.data
-            except Exception as rpc_error:
-                print(f"RPC Search Error (maybe migration not run): {rpc_error}")
-                # Fallback to old ILIKE query
-                cleaned_query = search_query.replace(",", "")
-                query = db.table("tests")\
-                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)")\
-                    .eq("is_public", True)\
-                    .order("created_at", desc=True)
+            import re
+            
+            # Use multi-token OR filter in DB to grab candidates efficiently
+            tokens = [t.strip().lower() for t in re.split(r'\W+', search_query) if len(t.strip()) > 1]
+            if not tokens:
+                tokens = [search_query.strip().lower()]
+
+            giant_or = []
+            for tok in tokens:
+                giant_or.append(f"title.ilike.%{tok}%")
+                giant_or.append(f"description.ilike.%{tok}%")
+                giant_or.append(f"custom_category.ilike.%{tok}%")
+                giant_or.append(f"custom_id.ilike.%{tok}%")
+
+            query = db.table("tests")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, description, tags, classes(name)")\
+                .eq("is_public", True)
+
+            if category_test_ids is not None:
+                query = query.in_("id", category_test_ids)
+
+            # DB Filter by ANY token existing in columns, pulling up to 800 candidates
+            query = query.or_(",".join(giant_or)).limit(800)
+            tests_candidates_res = query.execute()
+            candidates = tests_candidates_res.data
+            
+            # --- Python Side YouTube-style Ranking ---
+            scored_tests = []
+            for t in candidates:
+                score = 0
+                t_title = str(t.get("title") or "").lower()
+                t_desc = str(t.get("description") or "").lower()
+                t_cat = str(t.get("custom_category") or "").lower()
+                t_tags = [str(tag).lower() for tag in (t.get("tags") or [])]
                 
-                if category_test_ids:
-                    query = query.in_("id", category_test_ids)
-                
-                query = query.or_(f"title.ilike.%{cleaned_query}%,custom_id.ilike.%{cleaned_query}%")
-                tests_res = query.range(start, end).execute()
-                tests = tests_res.data
+                for tok in tokens:
+                    if tok in t_title:
+                        score += 15  # Title match gets highest weight
+                    elif tok in t_cat:
+                        score += 10  # Custom Category gets mid weight
+                    elif any(tok in tag for tag in t_tags):
+                        score += 8   # Tags get good weight
+                    elif tok in t_desc:
+                        score += 3   # Description gets secondary weight
+
+                if score > 0:
+                    t["_match_score"] = score
+                    scored_tests.append(t)
+            
+            # Sort by score (highest first), then by date
+            scored_tests.sort(key=lambda x: (x["_match_score"], x.get("created_at", "")), reverse=True)
+            
+            # Paginate correctly from the ranked list
+            tests = scored_tests[start:start+limit]
 
         else:
              # Standard Feed Query
@@ -135,7 +163,7 @@ async def get_tests_feed(
             return result
 
         # 4. Enrich Test Objects
-        typesafe_tests = _enrich_tests(tests, db)
+        typesafe_tests = enrich_tests(tests, db)
 
         result = {
             "tests": typesafe_tests,
@@ -164,27 +192,43 @@ async def get_user_tests(
         tests = []
         
         if search_query:
-            # Use Ranking RPC
-            params = {
-                "search_query": search_query,
-                "limit_count": 50,
-                "offset_count": 0,
-                "creator_filter": user_id 
-            }
-            # Try calling RPC
-            try:
-                rpc_res = db.rpc("search_tests_ranked", params).execute()
-                tests = rpc_res.data
-            except Exception as rpc_error:
-                print(f"RPC Error (User Search): {rpc_error}")
-                # Fallback to ILIKE if RPC fails — include settings/visibility/slug
-                tests_res = db.table("tests")\
-                    .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name), test_votes(count)")\
-                    .eq("created_by", user_id)\
-                    .ilike("title", f"%{search_query}%")\
-                    .order("created_at", desc=True)\
-                    .execute()
-                tests = tests_res.data
+            import re
+            tokens = [t.strip().lower() for t in re.split(r'\W+', search_query) if len(t.strip()) > 1]
+            if not tokens:
+                tokens = [search_query.strip().lower()]
+            giant_or = []
+            for tok in tokens:
+                giant_or.append(f"title.ilike.%{tok}%")
+                giant_or.append(f"description.ilike.%{tok}%")
+                giant_or.append(f"custom_category.ilike.%{tok}%")
+                giant_or.append(f"custom_id.ilike.%{tok}%")
+                
+            tests_res = db.table("tests")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, classes(name), test_votes(count)")\
+                .eq("created_by", user_id)\
+                .or_(",".join(giant_or))\
+                .limit(800)\
+                .execute()
+            
+            candidates = tests_res.data
+            scored_tests = []
+            for t in candidates:
+                score = 0
+                t_title = str(t.get("title") or "").lower()
+                t_desc = str(t.get("description") or "").lower()
+                t_cat = str(t.get("custom_category") or "").lower()
+                t_tags = [str(tag).lower() for tag in (t.get("tags") or [])]
+                for tok in tokens:
+                    if tok in t_title: score += 15
+                    elif tok in t_cat: score += 10
+                    elif any(tok in tag for tag in t_tags): score += 8
+                    elif tok in t_desc: score += 3
+                if score > 0:
+                    t["_match_score"] = score
+                    scored_tests.append(t)
+            
+            scored_tests.sort(key=lambda x: (x["_match_score"], x.get("created_at", "")), reverse=True)
+            tests = scored_tests
         else:
             # Default fetch — include settings/visibility/slug for conduct exam detection
             tests_res = db.table("tests")\

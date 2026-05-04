@@ -56,6 +56,7 @@ const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 const CombinedIntroPage = lazy(() => import("./pages/CombinedIntroPage"));
 const CombinedBreakScreen = lazy(() => import("./pages/CombinedBreakScreen"));
+const MoreTestsPage = lazy(() => import("./pages/MoreTestsPage"));
 
 // News & Posts
 const NewsFeed = lazy(() => import("./pages/NewsFeed"));
@@ -90,6 +91,7 @@ const App = () => (
                   <Route element={<Layout />}>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/dashboard" element={<TestList />} />
+                    <Route path="/more-tests" element={<MoreTestsPage />} />
 
                     {/* News & Posts Routes */}
                     <Route path="/news" element={<NewsFeed />} />
