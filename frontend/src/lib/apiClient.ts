@@ -11,14 +11,12 @@ const apiClient = axios.create({
     },
 });
 
-// Request Interceptor: Add Auth Token
+// Request Interceptor: Attach token if logged in
 apiClient.interceptors.request.use(async (config) => {
     const token = localStorage.getItem('testoza_token');
-
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
 }, (error) => {
     return Promise.reject(error);
@@ -38,21 +36,43 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
-// Response Interceptor: Handle Errors and Token Refresh
+// Response Interceptor: Handle Errors, Token Refresh, and Transient Retries
 apiClient.interceptors.response.use((response) => {
     return response;
 }, async (error) => {
     const originalRequest = error.config;
 
-    // Avoid infinite loops for auth endpoints
-    if (originalRequest && originalRequest.url &&
+    // ── 1. TRANSIENT RETRY (500 / 503 / network errors) ─────────────────────────
+    // Handles Railway cold starts and momentary Supabase/network blips transparently.
+    // Retries up to 2 times: first after 800ms, then after 2000ms.
+    const isNetworkError = !error.response && error.request;
+    const isTransient = error.response?.status === 503 || error.response?.status === 500;
+    const retryCount = originalRequest._retryCount || 0;
+
+    if ((isNetworkError || isTransient) && retryCount < 2) {
+        originalRequest._retryCount = retryCount + 1;
+        const delay = retryCount === 0 ? 800 : 2000;
+        await new Promise(r => setTimeout(r, delay));
+        return apiClient(originalRequest);
+    }
+
+    // ── 2. SKIP INTERCEPTOR FOR AUTH ENDPOINTS ────────────────────────────────
+    if (originalRequest?.url &&
         (originalRequest.url.includes('/auth/login') ||
             originalRequest.url.includes('/auth/refresh') ||
             originalRequest.url.includes('/auth/register'))) {
         return Promise.reject(error);
     }
 
+    // ── 3. TOKEN REFRESH ON 401 ───────────────────────────────────────────────
     if (error.response?.status === 401 && !originalRequest._retry) {
+        // GUARD: Only attempt refresh / redirect if the user actually had a token.
+        // Anonymous visitors on public pages should NEVER be sent to /login.
+        const hadToken = !!localStorage.getItem('testoza_token');
+        if (!hadToken) {
+            return Promise.reject(error);
+        }
+
         if (isRefreshing) {
             return new Promise(function (resolve, reject) {
                 failedQueue.push({ resolve, reject });
@@ -74,7 +94,7 @@ apiClient.interceptors.response.use((response) => {
         }
 
         try {
-            // Using standard axios to prevent circular interceptors
+            // Use standard axios to prevent circular interceptors
             const response = await axios.post(`${API_URL}auth/refresh`, { refresh_token: refreshToken }, {
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -100,7 +120,6 @@ apiClient.interceptors.response.use((response) => {
             processQueue(refreshError, null);
             localStorage.removeItem('testoza_token');
             localStorage.removeItem('testoza_refresh_token');
-            // Only redirect if we are in a browser environment
             if (typeof window !== 'undefined') {
                 window.location.href = '/login';
             }
