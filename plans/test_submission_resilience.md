@@ -105,3 +105,29 @@ For the resilience system to work perfectly during 7-8 hour exams, the following
 - **Never delete the vault early:** Only call `AnswerVault.clear()` inside the `.then()` or `success` block of a verified server response.
 - **Throttle your saves:** Don't write to IndexedDB on every keystroke; use the 30s timer currently implemented to prevent performance lag.
 - **Assume network failure:** Always write code as if the internet will disconnect in the next 5 seconds.
+
+---
+
+## Testing & Verification (Interns Guide)
+
+Since actual exams last 8 hours, use these methods to verify the Fail-Safe logic in minutes:
+
+### Method 1: Manual Token Corruption
+*Simulates an invalid signature.*
+1. Log in -> Open **DevTools** (F12) -> **Application** -> **Local Storage**.
+2. Find `testoza_token` and **delete the last 5 characters**.
+3. Trigger a save/submit.
+4. **Expected:** A `401` error in the network tab, followed by an automatic `refreshSession` call, followed by a successful retry.
+
+### Method 2: Hyper-Fast Expiry
+*Simulates a real-world timeout.*
+1. Go to **Supabase Dashboard** -> Auth Settings.
+2. Temporarily set **JWT Expiry** to `60` seconds.
+3. Log in, wait 61 seconds, then click "Submit".
+4. **Expected:** Seamless recovery. (Remember to revert back to `28800` after testing).
+
+### Method 3: Strategy C (The Last Resort)
+*Simulates a total session failure.*
+1. **Delete** `testoza_refresh_token` from Local Storage and corrupt `testoza_token`.
+2. Trigger an action.
+3. **Expected:** Both refreshes fail, and a `testoza:session-expired` event is dispatched. The exam page should show a custom re-login dialog while keeping the `AnswerVault` data safe.
