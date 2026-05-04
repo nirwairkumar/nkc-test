@@ -19,6 +19,7 @@ const TestSettingsPanel = React.lazy(() => import('@/components/TestSettingsPane
 const CategoryFolderCards = React.lazy(() => import('@/components/home/CategoryFolderCards'));
 const TestLinkPaster = React.lazy(() => import('@/components/TestLinkPaster'));
 const CombinedSessionsSection = React.lazy(() => import('@/components/home/CombinedSessionsSection'));
+const SectionWiseBuilderShowcase = React.lazy(() => import('@/components/landing/SectionWiseBuilderShowcase'));
 
 // Skeletons
 function SectionSkeleton() {
@@ -147,6 +148,21 @@ export default function TestList() {
                         <FeaturedTests user={user} onManageTest={onManageTest} />
                     </Suspense>
                     
+                    {/* Advanced Section-Wise Builder Showcase */}
+                     <div className="mt-16 sm:mt-24">
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                Create Advanced Section-Wise Tests
+                            </h2>
+                            <p className="text-muted-foreground max-w-2xl mx-auto">
+                                The best-in-class workflow to create highly specialized exams like JEE Advanced. With flawless support for matrices, rich equations, and diagrams.
+                            </p>
+                        </div>
+                        <Suspense fallback={<div className="h-40 w-full animate-pulse bg-slate-100 rounded-xl" />}>
+                            <SectionWiseBuilderShowcase />
+                        </Suspense>
+                    </div>
+
                     {/* 7. YouTube Generator */}
                     <div className="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800">
                         {/* <div className="text-center mb-6">
