@@ -20,6 +20,10 @@ app = FastAPI(
 # GZip compression for all responses > 1KB (cuts test JSON payload by ~70%)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+@app.get("/")
+def read_root():
+    return {"message": "TestoZa Backend is running on Google Cloud Run!"}
+
 # CORS Middleware
 origins = [
     "https://testoza.com",
