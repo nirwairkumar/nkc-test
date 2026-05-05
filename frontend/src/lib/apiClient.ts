@@ -90,7 +90,7 @@ apiClient.interceptors.response.use(
                 // This is the authoritative method. The SDK automatically uses its
                 // own stored refresh token and handles rotation. It also keeps the
                 // Supabase client's internal session in sync.
-                const { supabase } = await import('@/integrations/supabase/client');
+                const { supabase } = await import('@/integrations/supabase/client.ts');
                 const { data: sdkSession } = await supabase.auth.refreshSession();
 
                 if (sdkSession?.session?.access_token) {
