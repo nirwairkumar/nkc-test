@@ -145,9 +145,11 @@ The platform combines:
 - Latex Rendering (Math Support)
 
 ### Backend
-- Supabase (Auth + Database)
+- FastAPI (Python)
+- Google Cloud Run (Hosting)
+- Cloudflare (Proxy/DNS)
+- Supabase (Auth + Database + Storage)
 - PostgreSQL
-- Supabase Storage
 
 ### Architecture Highlights
 - Section-aware marking model
