@@ -60,6 +60,9 @@ export default function ResultsLayout() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { resetTest } = useTest();
+    
+    const isSingleAttempt = stateData?.test?.settings?.attempt_limit === 1;
+
     // Build base URL for navigation
     const basePath = '/results';
 
@@ -141,6 +144,24 @@ export default function ResultsLayout() {
                         </span>
                     </div>
                 </NavLink>
+
+                {!isSingleAttempt && (
+                    <Button
+                        variant="ghost"
+                        className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400 w-full"
+                        onClick={() => {
+                            if (currentTestId) {
+                                resetTest();
+                                navigate(`/test/${currentTestId}`);
+                            } else {
+                                navigate('/');
+                            }
+                        }}
+                    >
+                        <RotateCcw className="mr-3 h-5 w-5" />
+                        Retake Test
+                    </Button>
+                )}
 
                 <div className="my-2 border-t border-slate-200 dark:border-slate-800"></div>
 
@@ -350,6 +371,12 @@ export default function ResultsLayout() {
 
                         <button
                             onClick={() => {
+                                if (isSingleAttempt) {
+                                    toast.error('Only one attempt allowed', {
+                                        description: 'The creator has restricted this test to a single attempt.',
+                                    });
+                                    return;
+                                }
                                 if (currentTestId) {
                                     resetTest();
                                     navigate(`/test/${currentTestId}`);
@@ -357,7 +384,11 @@ export default function ResultsLayout() {
                                     navigate('/');
                                 }
                             }}
-                            className="flex-1 flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors"
+                            className={`flex-1 flex flex-col items-center gap-1 transition-colors ${
+                                isSingleAttempt 
+                                ? 'text-slate-300 opacity-50 cursor-not-allowed dark:text-slate-600' 
+                                : 'text-slate-500 hover:text-indigo-600'
+                            }`}
                         >
                             <RotateCcw className="w-5 h-5" />
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Retake</span>
