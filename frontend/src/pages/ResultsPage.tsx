@@ -22,7 +22,8 @@ import {
   MessageSquare,
   ChevronRight,
   BookOpen,
-  Layers
+  Layers,
+  PanelBottomClose
 } from 'lucide-react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
 import confetti from 'canvas-confetti';
@@ -863,7 +864,7 @@ const ResultsPage = () => {
               >
                 <div className="space-y-1 mb-8">
                   <h3 className="text-2xl font-black flex items-center gap-2 text-slate-800 dark:text-white">
-                    <FileText className="w-6 h-6 text-indigo-500" /> Solution Key
+                    <PanelBottomClose className="w-6 h-6 text-indigo-500" /> Solution Key
                   </h3>
                   <p className="text-sm text-slate-500 font-medium">Step-by-step solutions and detailed explanation for all questions.</p>
                 </div>

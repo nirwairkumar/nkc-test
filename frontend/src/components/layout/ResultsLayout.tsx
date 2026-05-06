@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles, LayoutDashboard, RotateCcw, LayoutGrid } from 'lucide-react';
+import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles, LayoutDashboard, RotateCcw, LayoutGrid, NotepadText, PanelBottomClose } from 'lucide-react';
 import { useTest } from '@/contexts/TestContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -107,7 +107,7 @@ export default function ResultsLayout() {
                     className={getLinkStyle(currentTab === 'solution-key' && location.pathname === basePath)}
                     onClick={onItemClick}
                 >
-                    <BookOpen className="h-5 w-5" />
+                    <PanelBottomClose className="h-5 w-5" />
                     Solution Key
                 </NavLink>
 
@@ -120,7 +120,7 @@ export default function ResultsLayout() {
                         className={({ isActive }) => getLinkStyle(isActive)}
                         onClick={onItemClick}
                     >
-                        <BookOpen className="h-5 w-5" />
+                        <NotepadText className="h-5 w-5" />
                         Solutions
                     </NavLink>
                 )}
@@ -344,7 +344,7 @@ export default function ResultsLayout() {
                             onClick={() => navigate(`${basePath}?tab=solution-key`, { state: stateData })}
                             className={`flex-1 flex flex-col items-center gap-1 transition-colors ${searchParams.get('tab') === 'solution-key' && location.pathname === basePath ? 'text-indigo-600' : 'text-slate-500 hover:text-indigo-600'}`}
                         >
-                            <BookOpen className="w-5 h-5" />
+                            <PanelBottomClose className="w-5 h-5" />
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Solution Key</span>
                         </button>
 
