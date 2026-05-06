@@ -960,7 +960,7 @@ const ResultsPage = () => {
                             </AccordionTrigger>
                             <AccordionContent className="px-4 pb-4">
                               <div className="space-y-4 pt-2">
-                                <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3">
+                                <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3 overflow-x-auto max-w-full custom-scrollbar pb-2">
                                   <LatexRenderer>{q.question || ""}</LatexRenderer>
                                 </div>
 
@@ -991,9 +991,9 @@ const ResultsPage = () => {
                                 )}
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className={`p-3 rounded-md border ${isCorrect ? 'bg-green-50 border-green-200' : isWrong ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+                                  <div className={`p-3 rounded-md border overflow-x-auto max-w-full custom-scrollbar ${isCorrect ? 'bg-green-50 border-green-200' : isWrong ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
                                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">Your Answer</span>
-                                    <div className={`font-semibold ${isCorrect ? 'text-green-700' : isWrong ? 'text-red-700' : 'text-slate-600'}`}>
+                                    <div className={`font-semibold min-w-max ${isCorrect ? 'text-green-700' : isWrong ? 'text-red-700' : 'text-slate-600'}`}>
                                       {ans ? (
                                         <div className="flex flex-col gap-1">
                                           <span>
@@ -1019,9 +1019,9 @@ const ResultsPage = () => {
                                     </div>
                                   </div>
 
-                                  <div className="p-3 rounded-md border bg-blue-50 border-blue-100">
+                                  <div className="p-3 rounded-md border bg-blue-50 border-blue-100 overflow-x-auto max-w-full custom-scrollbar">
                                     <span className="text-xs font-bold uppercase tracking-wider text-blue-500 block mb-1">Correct Answer</span>
-                                    <div className="font-semibold text-blue-900 flex flex-col gap-1">
+                                    <div className="font-semibold text-blue-900 flex flex-col gap-1 min-w-max">
                                       <span>
                                         {q.type === 'numerical' ? (
                                           `Between ${(q.correctAnswer as any).min} and ${(q.correctAnswer as any).max}`
