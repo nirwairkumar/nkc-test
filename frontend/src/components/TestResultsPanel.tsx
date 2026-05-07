@@ -54,7 +54,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
     // ... (Total Marks calc unchanged) ...
     // Calculate Total Marks
-    let totalMaxMarks = test.computed_max_marks?.total_max_marks || 0;
+    let totalMaxMarks = test.total_max_marks || 0;
     
     if (!totalMaxMarks) {
         if (test.enable_section_mode && test.sections) {

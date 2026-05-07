@@ -93,8 +93,18 @@ async def update_test(
     db: Client = Depends(get_db)
 ):
     try:
-        # Check if test exists
-        # We can just update directly.
+        # Check if we need to update total_max_marks
+        needs_marks_calc = any(k in payload for k in ["questions", "sections", "marks_per_question", "enable_section_mode"])
+        if needs_marks_calc:
+            try:
+                existing = db.table("tests").select("questions, sections, enable_section_mode, marks_per_question, settings").eq("id", test_id).single().execute()
+                if existing.data:
+                    merged = {**existing.data, **payload}
+                    from app.utils.attempt_control import calculate_test_max_marks
+                    calc = calculate_test_max_marks(merged)
+                    payload["total_max_marks"] = calc.get("total_max_marks", 0)
+            except Exception as e:
+                print(f"Warning: Could not proactively calculate total_max_marks on update: {e}")
         
         # 1. Update Test
         try:
@@ -236,6 +246,9 @@ async def import_json(file: UploadFile = File(...)):
         
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON file")
+    except Exception as e:
+        print(f"Error importing JSON: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process JSON: {str(e)}")
     except Exception as e:
         print(f"Error importing JSON: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process JSON: {str(e)}")

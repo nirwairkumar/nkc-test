@@ -57,10 +57,7 @@ export interface Test {
         id: string;
         name: string;
     }[];
-    computed_max_marks?: {
-        total_max_marks: number;
-        section_max_marks?: Record<string, number>;
-    };
+    total_max_marks?: number;
     max_attempts_per_question?: number;
 }
 

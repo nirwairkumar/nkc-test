@@ -19,31 +19,21 @@ async def get_analytics_overview(
 
     try:
         # Count unique visitors
-        visitors_res = supabase.table("visitors")\
-            .select("id", count="exact")\
-            .gte("created_at", start_date)\
-            .execute()
-        total_visitors = visitors_res.count if hasattr(visitors_res, 'count') and visitors_res.count else len(visitors_res.data or [])
+        visitors_res = supabase.table("visitors").select("id", count="exact").gte("created_at", start_date).limit(0).execute()
+        total_visitors = visitors_res.count if hasattr(visitors_res, 'count') and visitors_res.count is not None else 0
 
         # Count sessions
-        sessions_res = supabase.table("sessions")\
-            .select("id, is_bounce", count="exact")\
-            .gte("created_at", start_date)\
-            .execute()
-        total_sessions = sessions_res.count if hasattr(sessions_res, 'count') and sessions_res.count else len(sessions_res.data or [])
+        sessions_res = supabase.table("sessions").select("id", count="exact").gte("created_at", start_date).limit(0).execute()
+        total_sessions = sessions_res.count if hasattr(sessions_res, 'count') and sessions_res.count is not None else 0
 
         # Count page views
-        page_views_res = supabase.table("page_views")\
-            .select("id", count="exact")\
-            .gte("created_at", start_date)\
-            .execute()
-        total_page_views = page_views_res.count if hasattr(page_views_res, 'count') and page_views_res.count else len(page_views_res.data or [])
+        page_views_res = supabase.table("page_views").select("id", count="exact").gte("created_at", start_date).limit(0).execute()
+        total_page_views = page_views_res.count if hasattr(page_views_res, 'count') and page_views_res.count is not None else 0
 
         # Bounce rate
-        bounce_count = 0
-        if sessions_res.data:
-            bounce_count = sum(1 for s in sessions_res.data if s.get("is_bounce") is True)
-
+        bounce_res = supabase.table("sessions").select("id", count="exact").gte("created_at", start_date).eq("is_bounce", True).limit(0).execute()
+        bounce_count = bounce_res.count if hasattr(bounce_res, 'count') and bounce_res.count is not None else 0
+        
         bounce_rate = round((bounce_count / total_sessions * 100), 2) if total_sessions > 0 else 0
 
         return {

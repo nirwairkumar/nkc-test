@@ -62,10 +62,10 @@ export default function TestCard({
                     if (prog.status === 'submitted' && !prog.total_marks) {
                         import('@/lib/testsApi').then(({ fetchTestById }) => {
                             fetchTestById(test.id).then(({ data }) => {
-                                if (data?.computed_max_marks) {
+                                if (data?.total_max_marks !== undefined) {
                                     setProgress(prev => prev ? ({
                                         ...prev,
-                                        total_marks: data.computed_max_marks.total_max_marks
+                                        total_marks: data.total_max_marks
                                     }) : null);
                                 }
                             });
@@ -304,9 +304,9 @@ export default function TestCard({
                         )}
                     </div>
                 </div>
-                
+
                 <div className="w-full h-[1px] bg-slate-100 dark:bg-slate-800 my-3" />
-                
+
                 <div className="flex items-center justify-between gap-2 h-8">
                     <div className="flex items-center gap-2 shrink-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-full pr-3 pl-1 py-1 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700" onClick={(e) => { e.stopPropagation(); navigate(`/creator/${test.created_by}`); }}>
                         <Avatar className="h-7 w-7 border-2 border-white dark:border-slate-900 shadow-sm">
@@ -328,7 +328,7 @@ export default function TestCard({
                     </div>
                 </div>
             </CardContent>
-            
+
             <CardFooter className="p-4 pt-3 mt-auto bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-3">
                 <div className="flex-none bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-200 dark:border-slate-700">
                     <TestVoteButtons testId={test.id} userId={user?.id} isCreatorOrAdmin={user?.id === test.created_by || isAdmin} />
