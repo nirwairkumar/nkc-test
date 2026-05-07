@@ -46,10 +46,10 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                             if (prog.status === 'submitted' && !prog.total_marks) {
                                 import('@/lib/testsApi').then(({ fetchTestById }) => {
                                     fetchTestById(testId).then(({ data }) => {
-                                        if (data?.computed_max_marks) {
+                                        if (data?.total_max_marks !== undefined) {
                                             setProgress(prev => prev ? ({
                                                 ...prev,
-                                                total_marks: data.computed_max_marks.total_max_marks
+                                                total_marks: data.total_max_marks
                                             }) : null);
                                         }
                                     });

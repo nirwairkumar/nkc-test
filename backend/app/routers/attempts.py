@@ -225,34 +225,11 @@ async def get_batch_status(
         submitted_ids = [k for k, v in results.items() if v and v.get("status") == "submitted"]
         if submitted_ids:
             try:
-                tests_res = db.table("tests").select("id, questions, sections, enable_section_mode, marks_per_question").in_("id", submitted_ids).execute()
+                tests_res = db.table("tests").select("id, total_max_marks").in_("id", submitted_ids).execute()
                 for t in tests_res.data or []:
                     tid_str = str(t["id"]).lower()
                     if tid_str in results:
-                        try:
-                            if isinstance(t.get("questions"), str):
-                                try: t["questions"] = json.loads(t["questions"])
-                                except: t["questions"] = []
-                            if not t.get("questions"): t["questions"] = []
-
-                            if isinstance(t.get("sections"), str):
-                                try: t["sections"] = json.loads(t["sections"])
-                                except: t["sections"] = []
-                            if not t.get("sections"): t["sections"] = []
-                                
-                            try:
-                                mpq = t.get("marks_per_question")
-                                if mpq is None or str(mpq).strip() == "": 
-                                    t["marks_per_question"] = 4.0
-                                else:
-                                    t["marks_per_question"] = float(mpq)
-                            except:
-                                t["marks_per_question"] = 4.0
-
-                            max_marks_info = calculate_test_max_marks(t)
-                            results[tid_str]["total_marks"] = max_marks_info.get("total_max_marks", 0)
-                        except Exception as e:
-                            print(f"Error computing total_marks for {tid_str}: {e}")
+                        results[tid_str]["total_marks"] = t.get("total_max_marks", 0)
             except Exception as e:
                 print(f"Batch-status Exception: {e}")
 
@@ -453,7 +430,7 @@ async def get_test_attempts(
 
         # Fetch all attempts for specific test
         response = supabase.table("user_tests")\
-            .select("*")\
+            .select("id, test_id, user_id, score, created_at, metadata")\
             .eq("test_id", test_id)\
             .order("score", desc=True)\
             .execute()

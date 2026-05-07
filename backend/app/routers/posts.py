@@ -98,7 +98,7 @@ async def get_my_posts(
     db: Client = Depends(get_db)
 ):
     try:
-        response = db.table("posts").select("*").eq("author_id", user_id).order("created_at", desc=True).execute()
+        response = db.table("posts").select("id, author_id, title, slug, summary, cover_image, category, tags, status, is_pinned, view_count, like_count, published_at, created_at, updated_at").eq("author_id", user_id).order("created_at", desc=True).execute()
         return response.data
     except Exception as e:
         print(f"Error fetching my posts: {e}")

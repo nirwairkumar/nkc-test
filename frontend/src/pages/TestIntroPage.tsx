@@ -470,16 +470,6 @@ export default function TestIntroPage() {
         const maxAllowed = isEnabled && attemptControl.max_attempts ? Math.min(attemptControl.max_attempts, totalQs) : totalQs;
 
         let sectionMaxMarks = 0;
-        // Check computed_max_marks with both string and potentially un-stringified keys
-        const computedSectionMarks = test.computed_max_marks?.section_max_marks;
-        if (computedSectionMarks) {
-            const sid = String(sec.id);
-            if (computedSectionMarks[sid] !== undefined) {
-                sectionMaxMarks = computedSectionMarks[sid];
-            } else if (computedSectionMarks[sec.id] !== undefined) {
-                sectionMaxMarks = computedSectionMarks[sec.id];
-            }
-        }
 
         if (sectionMaxMarks === 0 && sec.questions) {
             const marksList = sec.questions.map((q: any) => {
@@ -502,8 +492,8 @@ export default function TestIntroPage() {
     const hasAnyAttemptControl = test.enable_section_mode && test.sections?.some((s: any) => s.attempt_control && (s.attempt_control.enabled !== false));
 
     let totalMaxMarks = 0;
-    if (test.computed_max_marks?.total_max_marks !== undefined) {
-        totalMaxMarks = test.computed_max_marks.total_max_marks;
+    if (test.total_max_marks !== undefined) {
+        totalMaxMarks = test.total_max_marks;
     } else if (test.enable_section_mode && test.sections) {
         totalMaxMarks = test.sections.reduce((acc, sec) => acc + getSectionDetails(sec).sectionMaxMarks, 0);
     } else if (test.questions) {

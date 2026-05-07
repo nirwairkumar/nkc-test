@@ -1099,8 +1099,8 @@ export default function TestPage() {
 
         // Compute total marks for this test
         let totalMaxMarks = 0;
-        if (test.computed_max_marks?.total_max_marks !== undefined) {
-          totalMaxMarks = test.computed_max_marks.total_max_marks;
+        if (test.total_max_marks !== undefined) {
+          totalMaxMarks = test.total_max_marks;
         } else {
           const qs = test.enable_section_mode
             ? test.sections?.flatMap((s: any) => s.questions || []) || []

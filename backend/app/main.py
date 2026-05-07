@@ -7,6 +7,8 @@ from supabase import Client
 from app.core.database import get_db
 from pydantic import BaseModel
 
+# this is a test of branch change. I am editing in gcp-migration.
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
@@ -17,6 +19,10 @@ app = FastAPI(
 
 # GZip compression for all responses > 1KB (cuts test JSON payload by ~70%)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+@app.get("/")
+def read_root():
+    return {"message": "TestoZa Backend is running on Google Cloud Run!"}
 
 # CORS Middleware
 origins = [
