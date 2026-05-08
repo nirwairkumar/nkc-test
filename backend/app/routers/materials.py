@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Response
 from app.core.database import get_db
+from app.utils.cache_headers import set_public_cache
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List
@@ -18,8 +19,10 @@ class LinkMaterialCreate(BaseModel):
     class_id: Optional[str] = None
 
 @router.get("/user/{user_id}")
-async def get_user_materials(user_id: str, db: Client = Depends(get_db)):
+async def get_user_materials(user_id: str, fastapi_response: Response = None, db: Client = Depends(get_db)):
     try:
+        if fastapi_response:
+            set_public_cache(fastapi_response, 60, 60)
         # Supabase syntax for joins in py: select("*, classes(name)")
         response = db.table("materials").select("*, classes(name)").eq("user_id", user_id).order("created_at", desc=True).execute()
         return response.data

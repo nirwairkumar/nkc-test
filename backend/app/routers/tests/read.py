@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Response
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
 from app.routers.tests.schemas import *
 from app.utils.attempt_control import calculate_test_max_marks
 from app.routers.tests.utils import enrich_tests
+from app.utils.cache_headers import set_public_cache, set_no_cache, set_private_cache
 import uuid
 from cachetools import TTLCache
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -19,9 +20,12 @@ from app.routers.tests.cache_config import test_cache, feed_cache, cache_get, ca
 @router.get("/batch")
 async def get_tests_batch(
     ids: str = Query(..., description="Comma-separated list of test IDs"),
+    response: Response = None,
     db: Client = Depends(get_db)
 ):
     try:
+        if response:
+            set_public_cache(response)
         id_list = [id.strip() for id in ids.split(",")]
         # Fetch tests metadata but EXCLUDING large questions JSONB
         response = db.table("tests").select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)").in_("id", id_list).execute()
@@ -44,9 +48,12 @@ async def get_tests_feed(
     search_query: Optional[str] = None,
     category_id: Optional[str] = None,
     ids_only: bool = Query(False, description="Faster fetch returning just IDs for progressive loading"),
+    response: Response = None,
     db: Client = Depends(get_db)
 ):
     try:
+        if response:
+            set_public_cache(response)
         # ─ Cache key for pages 1-2, no search (most common loads)
         feed_cache_key = f"feed:p{page}:l{limit}:c{category_id or ''}:ids{ids_only}" if page <= 2 and not search_query else None
         if feed_cache_key:
@@ -186,9 +193,12 @@ async def get_user_tests(
     user_id: str,
     search_query: str = None,
     ids_only: bool = Query(False, description="Faster fetch returning just IDs for progressive loading"),
+    response: Response = None,
     db: Client = Depends(get_db)
 ):
     try:
+        if response:
+            set_public_cache(response, 60, 60)
         tests = []
         
         if search_query:
@@ -302,6 +312,7 @@ async def get_user_tests(
 @router.get("/{test_id}")
 async def get_test_by_id(
     test_id: str,
+    response: Response = None,
     db: Client = Depends(get_db)
 ):
     try:
@@ -324,6 +335,11 @@ async def get_test_by_id(
             # Unlisted: only accessible via exact slug match
             if vis == "unlisted" and not is_slug_lookup:
                 raise HTTPException(status_code=404, detail="Test not found")
+            if response:
+                if vis == "public":
+                    set_public_cache(response)
+                else:
+                    set_no_cache(response)
             return cached
 
         # Check if UUID
@@ -398,6 +414,13 @@ async def get_test_by_id(
         # Add computed max marks info
         test["computed_max_marks"] = calculate_test_max_marks(test)
 
+        if response:
+            visibility = test.get("visibility", "public" if test.get("is_public") else "private")
+            if visibility == "public":
+                set_public_cache(response)
+            else:
+                set_no_cache(response)
+
         cache_set(test_cache, cache_key, test)
         return test
 
@@ -411,6 +434,7 @@ async def get_test_by_id(
 @router.get("/slug/{slug}")
 async def get_test_by_slug(
     slug: str,
+    response: Response = None,
     db: Client = Depends(get_db)
 ):
     try:
@@ -418,6 +442,12 @@ async def get_test_by_slug(
         slug_cache_key = f"test:slug:{slug}"
         cached = cache_get(test_cache, slug_cache_key)
         if cached is not None:
+            if response:
+                vis = cached.get("visibility", "public")
+                if vis == "public":
+                    set_public_cache(response)
+                else:
+                    set_no_cache(response)
             return cached
 
         # Fetch Test by Slug
@@ -458,6 +488,13 @@ async def get_test_by_slug(
             test["categories"] = []
 
         test["computed_max_marks"] = calculate_test_max_marks(test)
+
+        if response:
+            visibility = test.get("visibility", "public" if test.get("is_public") else "private")
+            if visibility == "public":
+                set_public_cache(response)
+            else:
+                set_no_cache(response)
 
         cache_set(test_cache, slug_cache_key, test)
         return test

@@ -16,6 +16,7 @@ _geo_client = httpx.AsyncClient(
     limits=httpx.Limits(max_connections=5, max_keepalive_connections=2),
 )
 
+
 async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Client):
     try:
         # 1. Parse User Agent
