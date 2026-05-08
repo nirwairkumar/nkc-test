@@ -1,0 +1,33 @@
+# Secrets — NEVER copy these into the image
+.env
+.env.*
+
+# Git history
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv
+venv/
+
+# Dev/test artifacts
+scratch/
+*.log
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

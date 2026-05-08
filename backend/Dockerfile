@@ -36,8 +36,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Create a non-root user for security
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
 # Copy the application code
 COPY . .
+
+# Set ownership to non-root user
+RUN chown -R appuser:appgroup /app
+USER appuser
 
 # Expose the port (Cloud Run uses 8080 by default, but $PORT is dynamic)
 EXPOSE 8080
