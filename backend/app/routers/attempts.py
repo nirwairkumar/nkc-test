@@ -404,6 +404,25 @@ async def get_test_attempts(
         if is_admin:
             is_premium = True
         else:
+            # ─ Verify creator ownership — only the test creator or admin can view results
+            test_ownership_res = supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).single().execute()
+            if not test_ownership_res.data:
+                raise HTTPException(status_code=404, detail="Test not found")
+
+            test_data = test_ownership_res.data
+            test_created_by = test_data.get("created_by")
+            test_visibility = test_data.get("visibility", "public")
+            is_conduct_exam = bool(test_data.get("settings", {}) and test_data["settings"].get("conduct_exam"))
+
+            # Only the creator can view results; and ONLY if it's a conduct-exam test
+            if user_id != test_created_by:
+                raise HTTPException(status_code=403, detail="Not authorized to view these results")
+
+            if not is_conduct_exam:
+                # Non-conduct-exam tests: creator cannot view submitted results
+                # (Public test results are private to each student)
+                raise HTTPException(status_code=403, detail="Results are only available for conduct-exam tests")
+
             # Check global premium unlock and active plans
             settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
             unlock_all = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False

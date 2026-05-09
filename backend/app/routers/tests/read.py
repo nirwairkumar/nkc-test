@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, Response
+from fastapi import APIRouter, HTTPException, Depends, Query, Response, Request
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
@@ -317,10 +317,23 @@ async def get_user_tests(
 @router.get("/{test_id}")
 async def get_test_by_id(
     test_id: str,
+    request: Request,
     response: Response = None,
-    db: Client = Depends(get_db)
+    db: Client = Depends(get_db),
 ):
     try:
+        # ─ Optionally extract requester identity (for owner bypass)
+        requesting_user_id: str | None = None
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            try:
+                token = auth_header[7:]
+                user_res = db.auth.get_user(token)
+                if user_res and user_res.user:
+                    requesting_user_id = user_res.user.id
+            except Exception:
+                pass  # Invalid token — treat as anonymous
+
         # ─ Cache check (5 min TTL for individual tests)
         cache_key = f"test:{test_id}"
         cached = cache_get(test_cache, cache_key)
@@ -334,12 +347,16 @@ async def get_test_by_id(
             except ValueError:
                 pass
             is_slug_lookup = not is_uuid_lookup and test_id == cached.get("slug")
-            # Private: never public
-            if vis == "private":
-                raise HTTPException(status_code=404, detail="Test not found")
-            # Unlisted: only accessible via exact slug match
-            if vis == "unlisted" and not is_slug_lookup:
-                raise HTTPException(status_code=404, detail="Test not found")
+
+            # Owner bypass: creator can always see their own test
+            is_owner = requesting_user_id and cached.get("created_by") == requesting_user_id
+            if not is_owner:
+                # Private: never public
+                if vis == "private":
+                    raise HTTPException(status_code=404, detail="Test not found")
+                # Unlisted: only accessible via exact slug match
+                if vis == "unlisted" and not is_slug_lookup:
+                    raise HTTPException(status_code=404, detail="Test not found")
             if response:
                 if vis == "public":
                     set_public_cache(response)
@@ -379,13 +396,17 @@ async def get_test_by_id(
         # ─ Visibility Enforcement
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")
 
-        # Private tests: never accessible via public link
-        if visibility == "private":
-            raise HTTPException(status_code=404, detail="Test not found")
+        # Owner bypass: test creator can always access their own test via UUID
+        is_owner = requesting_user_id and test.get("created_by") == requesting_user_id
 
-        # Unlisted (conducted exam): only accessible via exact slug match
-        if visibility == "unlisted" and not is_slug_match:
-            raise HTTPException(status_code=404, detail="Test not found")
+        if not is_owner:
+            # Private tests: never accessible via public link
+            if visibility == "private":
+                raise HTTPException(status_code=404, detail="Test not found")
+
+            # Unlisted (conducted exam): only accessible via exact slug match
+            if visibility == "unlisted" and not is_slug_match:
+                raise HTTPException(status_code=404, detail="Test not found")
 
         # ─ Fetch creator info + categories IN PARALLEL
         def _fetch_creator():
@@ -447,9 +468,12 @@ async def get_test_by_slug(
         slug_cache_key = f"test:slug:{slug}"
         cached = cache_get(test_cache, slug_cache_key)
         if cached is not None:
+            # ─ Enforce visibility on cached result too
+            cached_vis = cached.get("visibility", "public" if cached.get("is_public") else "private")
+            if cached_vis == "private":
+                raise HTTPException(status_code=404, detail="Test not found")
             if response:
-                vis = cached.get("visibility", "public")
-                if vis == "public":
+                if cached_vis == "public":
                     set_public_cache(response)
                 else:
                     set_no_cache(response)
@@ -462,6 +486,17 @@ async def get_test_by_slug(
         
         if not test:
             raise HTTPException(status_code=404, detail="Test not found")
+
+        # ─ Visibility Enforcement on slug lookup
+        visibility = test.get("visibility", "public" if test.get("is_public") else "private")
+
+        # Private tests: never accessible via any slug (even old public slugs)
+        if visibility == "private":
+            raise HTTPException(status_code=404, detail="Test not found")
+
+        # Unlisted (conduct-exam): accessible ONLY via the exact conduct slug.
+        # Since we found this by slug match, is_slug_match = True — allow access.
+        # (No additional blocking needed; the slug itself IS the access key)
 
         # ─ Fetch creator + categories IN PARALLEL
         def _fetch_creator():
