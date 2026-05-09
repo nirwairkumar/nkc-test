@@ -24,6 +24,7 @@ import {
     Link as LinkIcon,
     Radio,
     BarChart2,
+    GitFork,
 } from 'lucide-react';
 import TestVoteButtons from '@/components/TestVoteButtons';
 
@@ -86,6 +87,11 @@ export function UserTestCard({
                             {isConducted && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
                                     <Radio className="w-2.5 h-2.5" /> LIVE
+                                </span>
+                            )}
+                            {test.is_cloned && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-violet-50 text-violet-600 border border-violet-200">
+                                    <GitFork className="w-2.5 h-2.5" /> Clone
                                 </span>
                             )}
                         </div>

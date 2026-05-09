@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Edit } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Edit, GitFork } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTestCardSnippet, getTestAttemptStatus } from '@/lib/testsApi';
@@ -10,6 +10,9 @@ import { toast } from 'sonner';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { shareTest } from '@/utils/shareUtils';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
+import CloneTestDialog from '@/components/CloneTestDialog';
 
 interface IndependentTestCardProps {
     testId: string;
@@ -23,7 +26,16 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
     const [loading, setLoading] = useState(true);
     const [isRetrying, setIsRetrying] = useState(false);
     const [progress, setProgress] = useState<{ status: 'in_progress' | 'submitted' | null, score: number | null, total_marks: number | null } | null>(null);
+    const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
     const navigate = useNavigate();
+    const { user: authUser, profile } = useAuth();
+    const { isPremium } = usePremiumStatus();
+
+    // Whether this user can see the Clone button:
+    // - must be a creator (is_creator flag or Teacher/Institution designation)
+    // - must not be the owner of this test
+    const isCreator = profile?.is_creator === true || profile?.designation === 'Teacher' || profile?.designation === 'Institution';
+    const isOwnTest = authUser?.id && test?.created_by && authUser.id === test.created_by;
 
     const fetchSnippet = async (isRetry = false) => {
         if (isRetry) setIsRetrying(true);
@@ -110,8 +122,9 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
     const categories = test.categories || [];
 
     return (
+        <>
         <Card className="flex flex-col hover:shadow-lg transition-shadow relative overflow-hidden h-full border-slate-200 dark:border-slate-800 animate-in fade-in duration-500">
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white text-muted-foreground hover:text-primary shadow-sm" onClick={(e) => handleShare(e, test)}>
                     <Share2 className="h-4 w-4" />
                 </Button>
@@ -214,13 +227,36 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex-1">
-                        <Button size="sm" className={`w-full h-8 text-sm ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                    <div className="flex-1 flex gap-2 justify-end">
+                        {isCreator && !isOwnTest && test && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 px-3 border-violet-200 text-violet-600 hover:bg-violet-50 hover:text-violet-700 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-900/50 transition-colors"
+                                title="Clone this test"
+                                onClick={(e) => { e.stopPropagation(); setCloneDialogOpen(true); }}
+                            >
+                                <GitFork className="h-4 w-4 mr-1.5" /> Clone
+                            </Button>
+                        )}
+                        <Button size="sm" className={`h-8 text-sm px-4 ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
                             {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-3 w-3" />
                         </Button>
                     </div>
                 )}
             </CardFooter>
         </Card>
+
+        {/* Clone Dialog */}
+        {test && authUser?.id && (
+            <CloneTestDialog
+                test={test}
+                userId={authUser.id}
+                isPremium={isPremium}
+                open={cloneDialogOpen}
+                onClose={() => setCloneDialogOpen(false)}
+            />
+        )}
+        </>
     );
 }

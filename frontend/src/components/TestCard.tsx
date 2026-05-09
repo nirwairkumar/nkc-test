@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Share2, ArrowRight, Settings, Edit, MoreVertical, Globe, Link as LinkIcon, Lock, GraduationCap, Check } from 'lucide-react';
+import { Clock, Share2, ArrowRight, Settings, Edit, MoreVertical, Globe, Link as LinkIcon, Lock, GraduationCap, Check, GitFork } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import TestVoteButtons from '@/components/TestVoteButtons';
@@ -24,6 +24,8 @@ import { updateTest, getTestAttemptStatus } from '@/lib/testsApi';
 import { fetchClasses } from '@/lib/classesApi';
 import { useState, useEffect } from 'react';
 import { shareTest } from '@/utils/shareUtils';
+import CloneTestDialog from '@/components/CloneTestDialog';
+import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 
 interface TestCardProps {
     test: any;
@@ -44,7 +46,12 @@ export default function TestCard({
     isVerifiedCreator = false
 }: TestCardProps) {
     const navigate = useNavigate();
-    const { isAdmin } = useAuth();
+    const { isAdmin, profile } = useAuth();
+    const { isPremium } = usePremiumStatus();
+
+    const isCreator = profile?.is_creator === true || profile?.designation === 'Teacher' || profile?.designation === 'Institution';
+    const isOwnTest = user?.id === test.created_by;
+    const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
 
     const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(test.visibility || (test.is_public ? 'public' : 'private'));
 
@@ -169,6 +176,7 @@ export default function TestCard({
     };
 
     return (
+        <>
         <Card className="flex flex-col hover-elevate relative h-full bg-white dark:bg-slate-900 overflow-hidden group">
             {/* Top Gradient Accent Strip */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -348,13 +356,36 @@ export default function TestCard({
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex-1 max-w-[140px] ml-auto">
-                        <Button size="sm" className={`w-full h-9 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
+                    <div className="flex-1 flex gap-2 justify-end">
+                        {isCreator && !isOwnTest && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 px-3 border-violet-200 text-violet-600 hover:bg-violet-50 hover:text-violet-700 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-900/50 transition-colors font-medium"
+                                title="Clone this test"
+                                onClick={(e) => { e.stopPropagation(); setCloneDialogOpen(true); }}
+                            >
+                                <GitFork className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Clone</span>
+                            </Button>
+                        )}
+                        <Button size="sm" className={`h-9 px-4 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
                             {progress?.status === 'in_progress' ? 'Resume' : 'Open'} <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </div>
                 )}
             </CardFooter>
         </Card>
+
+        {/* Clone Dialog */}
+        {isCreator && !isOwnTest && user?.id && (
+            <CloneTestDialog
+                test={test}
+                userId={user.id}
+                isPremium={isPremium}
+                open={cloneDialogOpen}
+                onClose={() => setCloneDialogOpen(false)}
+            />
+        )}
+        </>
     );
 }

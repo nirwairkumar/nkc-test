@@ -199,6 +199,24 @@ export async function updateTest(id: string, updates: Partial<Test>, isAdmin: bo
     }
 }
 
+// ---------------- CLONE ----------------
+
+/**
+ * Clone a public test into the cloner's creator dashboard.
+ * The backend validates:
+ *   - Source test is public
+ *   - Cloner is not the original author
+ *   - Cloner has an active subscription
+ */
+export async function cloneTest(testId: string, clonerId: string) {
+    try {
+        const response = await apiClient.post(`tests/${testId}/clone`, { cloner_id: clonerId });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
+    }
+}
+
 export async function deleteTest(id: string, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
@@ -277,15 +295,15 @@ export async function fetchTests(options?: {
 
 export async function fetchTestsByCreator(
     userId: string,
-    options?: { searchQuery?: string; signal?: AbortSignal; idsOnly?: boolean }
+    options?: { searchQuery?: string; signal?: AbortSignal; idsOnly?: boolean; profileView?: boolean }
 ) {
-    const { searchQuery = '', signal, idsOnly = false } = options || {};
+    const { searchQuery = '', signal, idsOnly = false, profileView = false } = options || {};
     const maxRetries = 1;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const response = await apiClient.get(`tests/user/${userId}`, {
-                params: { search_query: searchQuery, ids_only: idsOnly },
+                params: { search_query: searchQuery, ids_only: idsOnly, profile_view: profileView },
                 signal
             });
             return { data: response.data, error: null };
@@ -305,6 +323,7 @@ export async function fetchTestsByCreator(
     }
     return { data: null, error: new Error('Max retries exceeded') };
 }
+
 
 // Alias for compatibility
 export const fetchTestsByUserId = fetchTestsByCreator;

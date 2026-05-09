@@ -12,12 +12,12 @@ async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
         if not profile_res.data:
             raise HTTPException(status_code=404, detail="Creator not found")
         
-        # 2. Fetch Public Tests
-        # Note: In frontend it was: .select('*, classes(name), test_categories(category_id)')
+        # 2. Fetch Public Tests (exclude clones — they must never appear on public profiles)
         tests_res = db.table("tests")\
             .select("*, classes(name), test_categories(category_id)")\
             .eq("created_by", creator_id)\
             .eq("visibility", "public")\
+            .eq("is_cloned", False)\
             .execute()
             
         # 3. Fetch Classes

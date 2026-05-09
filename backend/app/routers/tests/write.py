@@ -246,9 +246,104 @@ async def import_json(file: UploadFile = File(...)):
         
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON file")
+
+@router.post("/{test_id}/clone")
+async def clone_test(
+    test_id: str,
+    payload: CloneTestRequest,
+    db: Client = Depends(get_db)
+):
+    """
+    Clone a public test into the cloner's account.
+    Guards:
+      - Source test must be visibility='public'
+      - Cloner must NOT be the original author
+      - Cloner must have an active premium subscription (profiles.premium_expiry > now)
+    """
+    try:
+        # 1. Fetch the source test in full
+        src_res = db.table("tests").select("*").eq("id", test_id).single().execute()
+        if not src_res.data:
+            raise HTTPException(status_code=404, detail="Source test not found")
+
+        src = src_res.data
+
+        # 2. Source must be public
+        visibility = src.get("visibility", "public" if src.get("is_public") else "private")
+        if visibility != "public":
+            raise HTTPException(status_code=403, detail="Only public tests can be cloned")
+
+        # 3. Cannot clone your own test
+        if src.get("created_by") == payload.cloner_id:
+            raise HTTPException(status_code=400, detail="You cannot clone your own test")
+
+        # 4. Verify cloner has an active subscription
+        profile_res = db.table("profiles").select("premium_expiry").eq("id", payload.cloner_id).single().execute()
+        profile = profile_res.data if profile_res.data else {}
+        premium_expiry = profile.get("premium_expiry")
+        
+        settings_res = db.table("app_settings").select("unlock_all_premium").limit(1).execute()
+        is_global_unlock = settings_res.data[0].get("unlock_all_premium", False) if settings_res.data else False
+
+        if not is_global_unlock:
+            if not premium_expiry:
+                raise HTTPException(status_code=403, detail="Active subscription required to clone tests")
+            from datetime import datetime, timezone
+            expiry_dt = datetime.fromisoformat(premium_expiry.replace("Z", "+00:00"))
+            if expiry_dt < datetime.now(timezone.utc):
+                raise HTTPException(status_code=403, detail="Your subscription has expired. Renew to clone tests")
+
+        # 5. Build the clone payload — strip identity & conduct fields
+        skip_fields = {
+            "id", "created_at", "updated_at", "slug", "custom_id",
+            "is_public", "visibility", "settings", "is_cloned", "cloned_from_id",
+            "og_image", "total_questions", "total_max_marks"
+        }
+        clone_data = {k: v for k, v in src.items() if k not in skip_fields and v is not None}
+
+        # Override with cloner identity
+        clone_data["created_by"] = payload.cloner_id
+        clone_data["title"] = f"Copy of {src.get('title', 'Untitled')}"
+        clone_data["is_public"] = False
+        clone_data["visibility"] = "private"
+        clone_data["is_cloned"] = True
+        clone_data["cloned_from_id"] = test_id
+        clone_data["class_id"] = None  # Don't carry over original class assignment
+
+        # Strip conduct_exam from settings if present
+        src_settings = src.get("settings") or {}
+        safe_settings = {k: v for k, v in src_settings.items() if k != "conduct_exam"}
+        if safe_settings:
+            clone_data["settings"] = safe_settings
+
+        # Remove creator branding fields that belong to original creator
+        for branding_key in ["creator_name", "creator_avatar", "institution_name",
+                              "institution_logo", "institution_color", "institution_font"]:
+            clone_data.pop(branding_key, None)
+
+        # 6. Insert clone
+        insert_res = db.table("tests").insert(clone_data).execute()
+        if not insert_res.data:
+            raise HTTPException(status_code=500, detail="Failed to create clone")
+
+        cloned_test = insert_res.data[0]
+        clone_id = cloned_test["id"]
+
+        # 7. Copy test_categories to the new clone
+        try:
+            tc_res = db.table("test_categories").select("category_id").eq("test_id", test_id).execute()
+            if tc_res.data:
+                new_tc_rows = [{"test_id": clone_id, "category_id": tc["category_id"]} for tc in tc_res.data]
+                db.table("test_categories").insert(new_tc_rows).execute()
+        except Exception as cat_err:
+            print(f"Warning: Failed to copy categories for clone {clone_id}: {cat_err}")
+
+        print(f"[clone] Test {test_id} cloned as {clone_id} by {payload.cloner_id}")
+        return cloned_test
+
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error importing JSON: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to process JSON: {str(e)}")
-    except Exception as e:
-        print(f"Error importing JSON: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to process JSON: {str(e)}")
+        print(f"Error cloning test: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

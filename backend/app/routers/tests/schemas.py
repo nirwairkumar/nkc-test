@@ -47,6 +47,10 @@ class CreateTestRequest(BaseModel):
     section_marking_model: Optional[str] = "section-wise"
     merged_sections: Optional[List[Dict[str, Any]]] = None
 
+class CloneTestRequest(BaseModel):
+    cloner_id: str  # user_id of the person cloning the test
+
+
 class UpdateTestRequest(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None

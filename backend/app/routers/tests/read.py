@@ -193,6 +193,7 @@ async def get_user_tests(
     user_id: str,
     search_query: str = None,
     ids_only: bool = Query(False, description="Faster fetch returning just IDs for progressive loading"),
+    profile_view: bool = Query(False, description="When True (public profile page), excludes cloned tests from results"),
     response: Response = None,
     db: Client = Depends(get_db)
 ):
@@ -213,12 +214,14 @@ async def get_user_tests(
                 giant_or.append(f"custom_category.ilike.%{tok}%")
                 giant_or.append(f"custom_id.ilike.%{tok}%")
                 
-            tests_res = db.table("tests")\
+            query_search = db.table("tests")\
                 .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, classes(name), test_votes(count)")\
                 .eq("created_by", user_id)\
                 .or_(",".join(giant_or))\
-                .limit(800)\
-                .execute()
+                .limit(800)
+            if profile_view:
+                query_search = query_search.eq("is_cloned", False)
+            tests_res = query_search.execute()
             
             candidates = tests_res.data
             scored_tests = []
@@ -241,11 +244,13 @@ async def get_user_tests(
             tests = scored_tests
         else:
             # Default fetch — include settings/visibility/slug for conduct exam detection
-            tests_res = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, classes(name), test_votes(count)")\
+            query_default = db.table("tests")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, classes(name), test_votes(count)")\
                 .eq("created_by", user_id)\
-                .order("created_at", desc=True)\
-                .execute()
+                .order("created_at", desc=True)
+            if profile_view:
+                query_default = query_default.eq("is_cloned", False)
+            tests_res = query_default.execute()
             tests = tests_res.data
         
         if not tests:
