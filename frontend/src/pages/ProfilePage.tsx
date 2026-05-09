@@ -4,31 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+    Dialog, DialogContent, DialogDescription, DialogFooter,
+    DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
-
-import { Loader2, User, Save, Upload, Users, Eye, EyeOff } from 'lucide-react';
+import {
+    Loader2, Save, Upload, Users, Eye, EyeOff, Camera,
+    Pencil, ChevronRight, Star, Shield
+} from 'lucide-react';
 import { toggleCreatorMode, updateFollowingVisibility, getFollowerCount, getFollowingCount } from '@/lib/socialApi';
-import { Profile } from '@/lib/types';
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
@@ -38,13 +29,10 @@ const ProfilePage = () => {
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
 
-    // Form State
     const [fullName, setFullName] = useState('');
     const [bio, setBio] = useState('');
     const [avatarUrl, setAvatarUrl] = useState('');
     const [designation, setDesignation] = useState('');
-
-    // Social State
     const [isCreator, setIsCreator] = useState(false);
     const [isVerifiedCreator, setIsVerifiedCreator] = useState(false);
     const [followingVisibility, setFollowingVisibility] = useState<'public' | 'private'>('public');
@@ -57,14 +45,7 @@ const ProfilePage = () => {
             setFullName(user.user_metadata?.full_name || '');
             setBio(user.user_metadata?.bio || '');
             setAvatarUrl(user.user_metadata?.avatar_url || '');
-
-            if (isAdmin) {
-                setDesignation('Admin');
-            } else {
-                setDesignation(user.user_metadata?.designation || 'Student');
-            }
-
-            // Fetch additional profile data
+            setDesignation(isAdmin ? 'Admin' : (user.user_metadata?.designation || 'Student'));
             fetchProfileSettings();
             fetchSocialCounts();
         }
@@ -73,15 +54,12 @@ const ProfilePage = () => {
     const fetchProfileSettings = async () => {
         if (!user) return;
         const { fetchUserDetails } = await import('@/lib/usersApi');
-        const { data, error } = await fetchUserDetails(user.id);
-
+        const { data } = await fetchUserDetails(user.id);
         if (data) {
-            // Prioritize DB Profile Data over Auth Metadata
             if (data.full_name) setFullName(data.full_name);
             if (data.bio) setBio(data.bio);
             if (data.avatar_url) setAvatarUrl(data.avatar_url);
             if (data.designation && !isAdmin) setDesignation(data.designation);
-
             setIsCreator(data.is_creator || false);
             setIsVerifiedCreator(data.is_verified_creator || false);
             setFollowingVisibility(data.following_visibility as 'public' | 'private' || 'public');
@@ -96,91 +74,52 @@ const ProfilePage = () => {
         setFollowingCount(following || 0);
     };
 
-    const getInitials = (name: string) => {
-        return name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2);
+    const getInitials = (name: string) =>
+        name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+    const designationColor: Record<string, string> = {
+        Admin: 'bg-red-100 text-red-700',
+        Teacher: 'bg-blue-100 text-blue-700',
+        Institution: 'bg-yellow-100 text-yellow-800',
+        Student: 'bg-slate-100 text-slate-600',
+        Guest: 'bg-gray-100 text-gray-500',
     };
 
-    const getBadgeStyle = (role: string) => {
-        switch (role) {
-            case 'Admin': return { backgroundColor: '#dc2626', color: 'white' }; // Red
-            case 'Teacher': return { backgroundColor: '#3b82f6', color: 'white' }; // Blue
-            case 'Institution': return { backgroundColor: '#eab308', color: 'black' }; // Gold
-            case 'Student': return { backgroundColor: '#6b7280', color: 'white' }; // Gray
-            case 'Guest': return { backgroundColor: '#9ca3af', color: 'white' }; // Lighter Gray
-            default: return {};
-        }
-    };
-
-
-    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         try {
             setUploading(true);
-            if (!event.target.files || event.target.files.length === 0) {
-                throw new Error('You must select an image to upload.');
-            }
-
-            const file = event.target.files[0];
+            if (!e.target.files?.length) return;
+            const file = e.target.files[0];
             const { uploadAvatar } = await import('@/lib/usersApi');
             const { publicUrl, error } = await uploadAvatar(user!.id, file);
-
             if (error) throw error;
             if (!publicUrl) throw new Error('Failed to get public URL');
-
             setAvatarUrl(publicUrl);
-            toast.success('Profile picture uploaded!');
-
+            toast.success('Profile picture updated!');
         } catch (error: any) {
             toast.error(error.message || 'Error uploading avatar');
-            console.error(error);
         } finally {
             setUploading(false);
         }
     };
 
-
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-
-        // Force Admin designation if user is admin
         const finalDesignation = isAdmin ? 'Admin' : designation;
-
         try {
-            // Update Auth Session via Backend Proxy
             const { authApi } = await import('@/lib/authApi');
-            const { error } = await authApi.updateMetadata({
-                full_name: fullName,
-                bio: bio,
-                avatar_url: avatarUrl,
-                designation: finalDesignation
-            });
-
+            const { error } = await authApi.updateMetadata({ full_name: fullName, bio, avatar_url: avatarUrl, designation: finalDesignation });
             if (error) throw error;
-
-            // Update Database Profile via API
             const { updateProfile } = await import('@/lib/usersApi');
             const { error: apiError } = await updateProfile(user!.id, {
-                full_name: fullName,
-                bio: bio,
-                avatar_url: avatarUrl,
-                designation: finalDesignation,
-                email: user!.email,
-                is_creator: isCreator,
-                following_visibility: followingVisibility,
+                full_name: fullName, bio, avatar_url: avatarUrl, designation: finalDesignation,
+                email: user!.email, is_creator: isCreator, following_visibility: followingVisibility,
                 updated_at: new Date().toISOString()
             });
-
             if (apiError) throw apiError;
-
-            toast.success('Profile updated successfully!');
-
+            toast.success('Profile updated!');
         } catch (error: any) {
-            console.error('Error updating profile:', error);
             toast.error(error.message || 'Failed to update profile');
         } finally {
             setLoading(false);
@@ -193,7 +132,7 @@ const ProfilePage = () => {
             if (error) throw error;
             setIsCreator(true);
             setShowCreatorDialog(false);
-            toast.success("You are now a Creator! Redirecting to Manage Tests...");
+            toast.success("Creator mode enabled! Redirecting...");
             setTimeout(() => navigate('/my-tests'), 1500);
         } catch (error: any) {
             toast.error("Failed to enable Creator Profile: " + error.message);
@@ -207,239 +146,213 @@ const ProfilePage = () => {
             const { error } = await updateFollowingVisibility(user!.id, newVisibility);
             if (error) throw error;
             toast.success(`Following list is now ${newVisibility}`);
-        } catch (error: any) {
+        } catch {
             toast.error("Failed to update visibility");
-            // Revert on error
             setFollowingVisibility(checked ? 'private' : 'public');
         }
     };
 
-    if (!user) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
+    if (!user) return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        </div>
+    );
+
+    const role = isAdmin ? 'Admin' : designation;
 
     return (
-        <div className="container max-w-2xl py-6">
-            <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            {/* Hero Header */}
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
+                <div className="max-w-2xl mx-auto">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Your Account</p>
+                    <h1 className="text-base sm:text-xl font-bold text-white">Profile</h1>
+                </div>
+            </div>
 
-            <div className="grid gap-8">
-                {/* Profile Header Card */}
-                <Card>
-                    <CardContent className="pt-6 flex flex-col sm:flex-row items-center gap-6">
-                        <div className="relative group">
-                            <Avatar className="h-24 w-24 border-2 border-border">
+            <div className="px-4 -mt-10 pb-8 max-w-2xl mx-auto space-y-4">
+
+                {/* Avatar + Name Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-5">
+                    <div className="flex items-start gap-4">
+                        {/* Avatar with upload */}
+                        <label className="relative cursor-pointer group flex-shrink-0">
+                            <Avatar className="h-20 w-20 border-4 border-white dark:border-slate-800 shadow-md">
                                 <AvatarImage src={avatarUrl} alt={fullName} />
-                                <AvatarFallback className="text-2xl">{getInitials(fullName || user.email || 'U')}</AvatarFallback>
+                                <AvatarFallback className="text-base font-bold bg-indigo-100 text-indigo-700">
+                                    {getInitials(fullName || user.email || 'U')}
+                                </AvatarFallback>
                             </Avatar>
-                        </div>
-
-                        <div className="text-center sm:text-left space-y-2 flex-1">
-                            <div className="flex flex-col sm:flex-row items-center sm:items-baseline gap-2">
-                                <div className="flex items-center gap-1.5">
-                                    {isVerifiedCreator && <VerifiedBadge size={20} />}
-                                    <h2 className="text-2xl font-bold">{fullName || 'User'}</h2>
-                                </div>
-
-                                {isVerifiedCreator ? (
-                                    <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Testoza Authorized Partner</p>
-                                ) : (
-                                    <>
-                                        <Badge style={getBadgeStyle(isAdmin ? 'Admin' : designation)} className="text-xs px-2 py-0.5 pointer-events-none">
-                                            {isAdmin ? 'Admin' : (designation || 'Student')}
-                                        </Badge>
-                                        {isCreator && <Badge variant="secondary" className="bg-purple-100 text-purple-700 hover:bg-purple-100">Creator</Badge>}
-                                    </>
-                                )}
+                            <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                {uploading ? <Loader2 className="h-5 w-5 text-white animate-spin" /> : <Camera className="h-5 w-5 text-white" />}
                             </div>
-                            <p className="text-muted-foreground">{user.email}</p>
+                            <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="hidden" />
+                        </label>
 
-                            <div className="flex items-center justify-center sm:justify-start gap-4 mt-3">
-                                <div className="text-center sm:text-left">
-                                    <p className="font-bold text-lg">{followingCount}</p>
-                                    <p className="text-xs text-muted-foreground">Following</p>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {isVerifiedCreator && <VerifiedBadge size={16} />}
+                                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                                    {fullName || 'Your Name'}
+                                </h2>
+                            </div>
+                            {isVerifiedCreator ? (
+                                <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-0.5">TestoZa Authorized Partner</p>
+                            ) : (
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${designationColor[role] || designationColor.Student}`}>
+                                        {role}
+                                    </span>
+                                    {isCreator && (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                                            Creator
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            <p className="text-xs text-slate-400 mt-1 truncate">{user.email}</p>
+
+                            {/* Stats */}
+                            <div className="flex items-center gap-4 mt-3">
+                                <div>
+                                    <p className="text-sm font-black text-slate-800 dark:text-white leading-none">{followingCount}</p>
+                                    <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Following</p>
                                 </div>
                                 {isCreator && (
-                                    <div className="text-center sm:text-left">
-                                        <p className="font-bold text-lg">{followerCount}</p>
-                                        <p className="text-xs text-muted-foreground">Followers</p>
+                                    <div>
+                                        <p className="text-sm font-black text-slate-800 dark:text-white leading-none">{followerCount}</p>
+                                        <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Followers</p>
                                     </div>
                                 )}
                             </div>
-
-                            {bio && (
-                                <p className="text-sm text-slate-600 mt-2 max-w-sm whitespace-pre-wrap">
-                                    {bio}
-                                </p>
-                            )}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
 
-                {/* Creator Mode & Settings */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Account Settings</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {!isCreator ? (
-                            <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
-                                <div>
-                                    <h3 className="font-semibold">Enable Creator Profile</h3>
-                                    <p className="text-sm text-muted-foreground">Unlock followers and publish public tests.</p>
-                                </div>
-                                <Dialog open={showCreatorDialog} onOpenChange={setShowCreatorDialog}>
-                                    <DialogTrigger asChild>
-                                        <Button>Enable Creator Profile</Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Become a Creator?</DialogTitle>
-                                            <DialogDescription>
-                                                By enabling Creator Profile, your profile will become public. Users can follow you, and your followers will be notified when you publish new tests.
-                                                <br /><br />
-                                                Your followers count and follow button will be visible on your public profile.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <DialogFooter>
-                                            <Button variant="outline" onClick={() => setShowCreatorDialog(false)}>Cancel</Button>
-                                            <Button onClick={handleEnableCreator}>Confirm & Enable</Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
+                    {bio && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 leading-relaxed">
+                            {bio}
+                        </p>
+                    )}
+                </div>
+
+                {/* Creator Status Card */}
+                {!isCreator ? (
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Star className="h-4 w-4 text-white" />
                             </div>
-                        ) : (
-                            <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50 border-green-200">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                                        <Users className="h-5 w-5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-green-800">Creator Profile Active</h3>
-                                        <p className="text-sm text-green-600">You can manage your tests and grow your audience.</p>
-                                    </div>
-                                </div>
-                                <Button variant="outline" className="bg-white text-green-700 border-green-200 hover:bg-green-50" onClick={() => navigate('/my-tests')}>
-                                    Your Tests
+                            <div>
+                                <p className="text-sm font-bold text-white">Become a Creator</p>
+                                <p className="text-[11px] text-indigo-200">Publish tests & grow your audience</p>
+                            </div>
+                        </div>
+                        <Dialog open={showCreatorDialog} onOpenChange={setShowCreatorDialog}>
+                            <DialogTrigger asChild>
+                                <Button size="sm" className="bg-white text-indigo-700 hover:bg-indigo-50 text-xs font-bold px-3 flex-shrink-0">
+                                    Enable
                                 </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Become a Creator?</DialogTitle>
+                                    <DialogDescription>
+                                        Your profile will become public. Users can follow you and get notified when you publish new tests.
+                                        Your follower count and follow button will be visible on your public profile.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setShowCreatorDialog(false)}>Cancel</Button>
+                                    <Button onClick={handleEnableCreator}>Confirm & Enable</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                ) : (
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Users className="h-4 w-4 text-emerald-600" />
                             </div>
-                        )}
-
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <Label className="text-base">Following Visibility</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    {followingVisibility === 'public'
-                                        ? 'Everyone can see who you follow.'
-                                        : 'Only you can see who you follow.'}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-muted-foreground mr-2">{followingVisibility === 'public' ? 'Public' : 'Private'}</span>
-                                <Switch
-                                    checked={followingVisibility === 'public'}
-                                    onCheckedChange={handleVisibilityChange}
-                                />
+                            <div>
+                                <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Creator Profile Active</p>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400">Manage tests & grow your audience</p>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                        <Button size="sm" variant="outline" onClick={() => navigate('/my-tests')}
+                            className="bg-white dark:bg-transparent text-emerald-700 border-emerald-300 text-xs font-bold px-3 flex-shrink-0">
+                            My Tests
+                        </Button>
+                    </div>
+                )}
+
+                {/* Following Visibility */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center flex-shrink-0">
+                                {followingVisibility === 'public' ? <Eye className="h-4 w-4 text-slate-600" /> : <EyeOff className="h-4 w-4 text-slate-600" />}
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Following Visibility</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                    {followingVisibility === 'public' ? 'Everyone can see who you follow' : 'Only you can see who you follow'}
+                                </p>
+                            </div>
+                        </div>
+                        <Switch checked={followingVisibility === 'public'} onCheckedChange={handleVisibilityChange} />
+                    </div>
+                </div>
 
                 {/* Edit Profile Form */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Edit Profile</CardTitle>
-                        <CardDescription>Update your personal information and bio.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleUpdateProfile} className="space-y-6">
-                            {/* Profile Picture Upload */}
-                            <div className="space-y-2">
-                                <Label htmlFor="avatar">Profile Picture</Label>
-                                <div className="flex gap-2 items-center">
-                                    <Input
-                                        id="avatar"
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleAvatarUpload}
-                                        disabled={uploading}
-                                        className="cursor-pointer"
-                                    />
-                                    {uploading && <Loader2 className="h-4 w-4 animate-spin" />}
-                                </div>
-                            </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+                    <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <Pencil className="h-4 w-4 text-indigo-500" />
+                        <h2 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Edit Profile</h2>
+                    </div>
+                    <form onSubmit={handleUpdateProfile} className="p-4 space-y-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Full Name</Label>
+                            <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="e.g. John Doe"
+                                className="h-10 text-sm" />
+                        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="fullName">Full Name</Label>
-                                <Input
-                                    id="fullName"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    placeholder="e.g. John Doe"
-                                />
-                            </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Designation</Label>
+                            {isAdmin ? (
+                                <Input value="Admin" disabled className="h-10 text-sm bg-slate-50 text-slate-400 cursor-not-allowed" />
+                            ) : (
+                                <Select value={designation} onValueChange={setDesignation}>
+                                    <SelectTrigger className="h-10 text-sm">
+                                        <SelectValue placeholder="Select designation" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Student">Student</SelectItem>
+                                        <SelectItem value="Teacher">Teacher</SelectItem>
+                                        <SelectItem value="Institution">Institution</SelectItem>
+                                        <SelectItem value="Guest">Guest</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="designation">Designation</Label>
-                                {isAdmin ? (
-                                    <Input
-                                        value="Admin"
-                                        disabled
-                                        className="bg-slate-100 text-slate-500 cursor-not-allowed font-medium"
-                                        title="Admin designation is managed by the system."
-                                    />
-                                ) : (
-                                    <Select value={designation} onValueChange={setDesignation}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select designation" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Student">Student</SelectItem>
-                                            <SelectItem value="Teacher">Teacher</SelectItem>
-                                            <SelectItem value="Institution">Institution</SelectItem>
-                                            <SelectItem value="Guest">Guest</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                )}
-                                {isAdmin && <p className="text-xs text-muted-foreground">Admin status is linked to your email.</p>}
-                            </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Bio</Label>
+                            <Textarea value={bio} onChange={e => setBio(e.target.value)}
+                                placeholder="Tell us a little about yourself..."
+                                className="text-sm min-h-[90px] resize-none" />
+                            <p className="text-[10px] text-slate-400">Visible on your public profile.</p>
+                        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="bio">Bio / Description</Label>
-                                <Textarea
-                                    id="bio"
-                                    value={bio}
-                                    onChange={(e) => setBio(e.target.value)}
-                                    placeholder="Tell us a little about yourself..."
-                                    className="min-h-[100px]"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    This will be visible on your profile.
-                                </p>
-                            </div>
-
-                            <div className="flex justify-end">
-                                <Button type="submit" disabled={loading || uploading}>
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="mr-2 h-4 w-4" />
-                                            Save Changes
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
-
+                        <Button type="submit" disabled={loading || uploading} className="w-full h-10 text-sm font-semibold">
+                            {loading ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
+                            ) : (
+                                <><Save className="mr-2 h-4 w-4" />Save Changes</>
+                            )}
+                        </Button>
+                    </form>
+                </div>
             </div>
         </div>
     );

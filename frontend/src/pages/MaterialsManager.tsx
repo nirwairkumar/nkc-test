@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -231,200 +231,198 @@ export default function MaterialsManager() {
 
     const files = materials.filter(m => m.type === 'file');
     const videoLinks = materials.filter(m => m.type === 'link');
+    const [activeTab, setActiveTab] = useState<'documents' | 'links' | 'external'>('documents');
     const externalLinks = materials.filter(m => m.type === 'external');
 
     if (!user) return null;
 
     return (
-        <div className="container mx-auto max-w-5xl py-8 px-4">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-slate-900">Class Materials</h1>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            {/* Hero Header */}
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
+                <div className="max-w-5xl mx-auto flex items-end justify-between">
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Creator Tools</p>
+                        <h1 className="text-base sm:text-xl font-bold text-white">Class Materials</h1>
+                    </div>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsClassDialogOpen(true)}
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs font-semibold"
+                    >
+                        <GraduationCap className="mr-1.5 h-3.5 w-3.5" /> Classes
+                    </Button>
                 </div>
-                <Button variant="outline" onClick={() => setIsClassDialogOpen(true)}>
-                    <GraduationCap className="mr-2 h-4 w-4" /> Manage Classes
-                </Button>
             </div>
 
-            <Tabs defaultValue="documents" className="w-full">
-                <TabsList className="grid w-full max-w-2xl grid-cols-3 mb-8">
-                    <TabsTrigger value="documents">Documents</TabsTrigger>
-                    <TabsTrigger value="links">Video Links</TabsTrigger>
-                    <TabsTrigger value="external">External Links</TabsTrigger>
-                </TabsList>
+            <div className="px-4 -mt-10 pb-10 max-w-5xl mx-auto">
+
+                {/* Custom Tab Bar */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-1 flex gap-1 mb-4">
+                    {([
+                        { value: 'documents', label: 'Documents', count: files.length },
+                        { value: 'links', label: 'Videos', count: videoLinks.length },
+                        { value: 'external', label: 'Links', count: externalLinks.length },
+                    ] as const).map(tab => (
+                        <button
+                            key={tab.value}
+                            onClick={() => setActiveTab(tab.value)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                                activeTab === tab.value
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                            }`}
+                        >
+                            <span>{tab.label}</span>
+                            {tab.count > 0 && (
+                                <span className={`text-[9px] font-black rounded-full px-1.5 py-0.5 ${activeTab === tab.value ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    {tab.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+
+                </div>
 
                 {/* DOCUMENTS TAB */}
-                <TabsContent value="documents" className="space-y-4">
-                    {/* ... Existing Files Content ... */}
-                    <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-dashed">
-                        <div>
-                            <h3 className="font-semibold text-slate-700">Upload Documents</h3>
-                            <p className="text-sm text-slate-500">PDFs, PPTs, or Notes.</p>
+                {activeTab === 'documents' && (
+                    <div className="space-y-3">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Upload Documents</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">PDFs, PPTs, or Notes</p>
+                            </div>
+                            <Button size="sm" onClick={() => setIsFileDialogOpen(true)} className="text-xs font-semibold shrink-0">
+                                <Upload className="mr-1.5 h-3.5 w-3.5" /> Upload
+                            </Button>
                         </div>
-                        <Button onClick={() => setIsFileDialogOpen(true)}>
-                            <Upload className="mr-2 h-4 w-4" /> Upload File
-                        </Button>
-                    </div>
-
-                    {loading ? (
-                        <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-primary" /></div>
-                    ) : files.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground bg-slate-50/50 rounded-lg">
-                            <FileText className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                            No documents uploaded yet.
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {files.map(file => (
-                                <Card key={file.id} className="hover:shadow-md transition-shadow relative group">
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDelete(file.id, file.file_path)}>
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                    <CardContent className="p-4 flex items-start gap-3">
-                                        <div className="bg-blue-100 text-blue-600 p-2 rounded-lg">
-                                            <FileText className="h-6 w-6" />
+                        {loading ? (
+                            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-indigo-500 h-7 w-7" /></div>
+                        ) : files.length === 0 ? (
+                            <div className="text-center py-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <FileText className="h-10 w-10 mx-auto mb-3 text-slate-200 dark:text-slate-700" />
+                                <p className="text-sm font-semibold text-slate-500">No documents uploaded yet</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {files.map(file => (
+                                    <div key={file.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 flex items-start gap-3 hover:shadow-md transition-shadow group relative">
+                                        <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <FileText className="h-5 w-5" />
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold truncate" title={file.title}>{file.title}</h4>
-
-                                            {/* @ts-ignore - joined data */}
-                                            {file.classes?.name && (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mb-1">
-                                                    {/* @ts-ignore */}
-                                                    {file.classes.name}
-                                                </span>
-                                            )}
-
-                                            <p className="text-xs text-muted-foreground mb-2 mt-1">{new Date(file.created_at).toLocaleDateString()}</p>
-                                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center">
-                                                View Document <ExternalLink className="ml-1 h-3 w-3" />
+                                        <div className="flex-1 min-w-0 pr-6">
+                                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title={file.title}>{file.title}</p>
+                                            {/* @ts-ignore */}
+                                            {file.classes?.name && <span className="inline-block text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full mt-1">{(file.classes as any).name}</span>}
+                                            <p className="text-[10px] text-slate-400 mt-1">{new Date(file.created_at).toLocaleDateString()}</p>
+                                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 font-medium hover:underline flex items-center mt-1.5">
+                                                View <ExternalLink className="ml-1 h-3 w-3" />
                                             </a>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
-
-                {/* LINKS TAB (VIDEOS) */}
-                <TabsContent value="links" className="space-y-4">
-                    <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-dashed">
-                        <div>
-                            <h3 className="font-semibold text-slate-700">Add Video Links</h3>
-                            <p className="text-sm text-slate-500">YouTube videos or other video resources.</p>
-                        </div>
-                        <Button onClick={() => setIsLinkDialogOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" /> Add Video
-                        </Button>
+                                        <button onClick={() => handleDelete(file.id, file.file_path)} className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50">
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
+                )}
 
-                    {loading ? (
-                        <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-primary" /></div>
-                    ) : videoLinks.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground bg-slate-50/50 rounded-lg">
-                            <Youtube className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                            No video links added yet.
+                {/* VIDEOS TAB */}
+                {activeTab === 'links' && (
+                    <div className="space-y-3">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Video Links</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">YouTube & other video resources</p>
+                            </div>
+                            <Button size="sm" onClick={() => setIsLinkDialogOpen(true)} className="text-xs font-semibold shrink-0">
+                                <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Video
+                            </Button>
                         </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {videoLinks.map(link => (
-                                <Card key={link.id} className="hover:shadow-md transition-shadow overflow-hidden group">
-                                    <div className="relative aspect-video bg-slate-100">
-                                        {link.thumbnail_url ? (
-                                            <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="flex items-center justify-center h-full text-slate-300">
-                                                <LinkIcon className="h-10 w-10" />
-                                            </div>
-                                        )}
-                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                            <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDelete(link.id)}>
-                                                <Trash2 className="h-3 w-3" />
-                                            </Button>
+                        {loading ? (
+                            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-indigo-500 h-7 w-7" /></div>
+                        ) : videoLinks.length === 0 ? (
+                            <div className="text-center py-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <Youtube className="h-10 w-10 mx-auto mb-3 text-slate-200 dark:text-slate-700" />
+                                <p className="text-sm font-semibold text-slate-500">No video links added yet</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {videoLinks.map(link => (
+                                    <div key={link.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-md transition-shadow group relative">
+                                        <div className="relative aspect-video bg-slate-100 dark:bg-slate-800">
+                                            {link.thumbnail_url
+                                                ? <img src={link.thumbnail_url} alt={link.title} className="w-full h-full object-cover" />
+                                                : <div className="flex items-center justify-center h-full"><LinkIcon className="h-8 w-8 text-slate-300" /></div>
+                                            }
+                                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/25 transition-colors">
+                                                <div className="bg-white/90 p-2 rounded-full shadow"><ExternalLink className="h-4 w-4 text-slate-800" /></div>
+                                            </a>
                                         </div>
-                                        {/* Play Overlay for YT */}
-                                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-colors group/play">
-                                            <div className="bg-white/80 p-2 rounded-full group-hover/play:scale-110 transition-transform">
-                                                <ExternalLink className="h-5 w-5 text-slate-800" />
-                                            </div>
-                                        </a>
+                                        <div className="p-3">
+                                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title={link.title}>{link.title}</p>
+                                            {/* @ts-ignore */}
+                                            {link.classes?.name && <span className="inline-block text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full mt-1">{(link.classes as any).name}</span>}
+                                            <p className="text-[10px] text-slate-400 mt-1">{new Date(link.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                        <button onClick={() => handleDelete(link.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-red-600 text-white">
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
                                     </div>
-                                    <div className="p-3">
-                                        <h4 className="font-semibold truncate leading-tight mb-1" title={link.title}>{link.title}</h4>
-                                        {/* @ts-ignore - joined data */}
-                                        {link.classes?.name && (
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mb-1">
-                                                {/* @ts-ignore */}
-                                                {link.classes.name}
-                                            </span>
-                                        )}
-                                        <p className="text-xs text-muted-foreground mt-1">{new Date(link.created_at).toLocaleDateString()}</p>
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* EXTERNAL LINKS TAB */}
-                <TabsContent value="external" className="space-y-4">
-                    <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-dashed">
-                        <div>
-                            <h3 className="font-semibold text-slate-700">Add External Links</h3>
-                            <p className="text-sm text-slate-500">Articles, Websites, References, etc.</p>
+                {activeTab === 'external' && (
+                    <div className="space-y-3">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">External Links</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">Articles, websites, references</p>
+                            </div>
+                            <Button size="sm" onClick={() => setIsExternalLinkDialogOpen(true)} className="text-xs font-semibold shrink-0 bg-pink-600 hover:bg-pink-700 text-white">
+                                <LinkIcon className="mr-1.5 h-3.5 w-3.5" /> Add Link
+                            </Button>
                         </div>
-                        <Button onClick={() => setIsExternalLinkDialogOpen(true)} className="bg-pink-600 hover:bg-pink-700 text-white">
-                            <LinkIcon className="mr-2 h-4 w-4" /> Add External Link
-                        </Button>
-                    </div>
-
-                    {loading ? (
-                        <div className="text-center py-10"><Loader2 className="animate-spin mx-auto text-primary" /></div>
-                    ) : externalLinks.length === 0 ? (
-                        <div className="text-center py-12 text-muted-foreground bg-slate-50/50 rounded-lg">
-                            <ExternalLink className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                            No external links added yet.
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {externalLinks.map(link => (
-                                <Card key={link.id} className="hover:shadow-md transition-shadow relative group border-l-4 border-l-pink-500">
-                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="destructive" size="icon" className="h-7 w-7" onClick={() => handleDelete(link.id)}>
-                                            <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                    </div>
-                                    <CardContent className="p-4 flex items-start gap-4">
-                                        <div className="h-12 w-12 flex items-center justify-center bg-pink-100 text-pink-600 rounded-lg flex-shrink-0">
-                                            <LinkIcon className="h-6 w-6" />
+                        {loading ? (
+                            <div className="flex justify-center py-12"><Loader2 className="animate-spin text-indigo-500 h-7 w-7" /></div>
+                        ) : externalLinks.length === 0 ? (
+                            <div className="text-center py-14 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                <ExternalLink className="h-10 w-10 mx-auto mb-3 text-slate-200 dark:text-slate-700" />
+                                <p className="text-sm font-semibold text-slate-500">No external links added yet</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {externalLinks.map(link => (
+                                    <div key={link.id} className="bg-white dark:bg-slate-900 rounded-2xl border-l-4 border-l-pink-500 border border-slate-100 dark:border-slate-800 p-4 flex items-start gap-3 hover:shadow-md transition-shadow group relative">
+                                        <div className="w-10 h-10 bg-pink-100 text-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <LinkIcon className="h-5 w-5" />
                                         </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold truncate pr-2" title={link.title}>{link.title}</h4>
-                                            {/* @ts-ignore - joined data */}
-                                            {link.classes?.name && (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 mb-1 mt-1">
-                                                    {/* @ts-ignore */}
-                                                    {link.classes.name}
-                                                </span>
-                                            )}
-
-                                            <div className="mt-2 text-xs text-muted-foreground truncate">{link.url}</div>
-
-                                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center text-sm font-medium text-pink-600 hover:text-pink-700 hover:underline">
-                                                Visit Link <ExternalLink className="ml-1 h-3 w-3" />
+                                        <div className="flex-1 min-w-0 pr-6">
+                                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title={link.title}>{link.title}</p>
+                                            {/* @ts-ignore */}
+                                            {link.classes?.name && <span className="inline-block text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full mt-1">{(link.classes as any).name}</span>}
+                                            <div className="text-[10px] text-slate-400 truncate mt-1">{link.url}</div>
+                                            <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-pink-600 font-medium hover:underline flex items-center mt-1.5">
+                                                Visit <ExternalLink className="ml-1 h-3 w-3" />
                                             </a>
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
-            </Tabs>
+                                        <button onClick={() => handleDelete(link.id)} className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50">
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* CLASS MANAGER DIALOG */}
             <Dialog open={isClassDialogOpen} onOpenChange={setIsClassDialogOpen}>
