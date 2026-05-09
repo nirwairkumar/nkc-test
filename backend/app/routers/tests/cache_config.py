@@ -21,4 +21,12 @@ def cache_bust(cache: TTLCache, key: str):
         cache.pop(key, None)
 
 def bust_test_cache(test_id: str):
-    cache_bust(test_cache, f"test:{test_id}")
+    with _cache_lock:
+        keys_to_delete = [f"test:{test_id}"]
+        # Also find any slug caches pointing to this test
+        for key, value in list(test_cache.items()):
+            if isinstance(value, dict) and value.get("id") == test_id:
+                keys_to_delete.append(key)
+                
+        for key in keys_to_delete:
+            test_cache.pop(key, None)

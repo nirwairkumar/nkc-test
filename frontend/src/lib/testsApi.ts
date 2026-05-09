@@ -444,9 +444,9 @@ export async function fetchTestById(id: string, onCacheHit?: (data: any) => void
             _setCachedTest(id, data);
             return { data, error: null };
         } catch (error: any) {
-            // Don't retry on 404 (test genuinely doesn't exist)
+            // Don't retry on 404 (test genuinely doesn't exist or access revoked)
             if (error.response?.status === 404) {
-                if (cached) return { data: cached, error: null };
+                try { localStorage.removeItem(`test_cache_${id}`); } catch {}
                 return { data: null, error: error };
             }
 

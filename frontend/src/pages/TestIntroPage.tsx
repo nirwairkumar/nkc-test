@@ -168,7 +168,7 @@ export default function TestIntroPage() {
                 setLoadingProgress(100);
                 setTimeout(() => setLoading(false), 300);
             });
-            if (error && !test) throw error;
+            if (error) throw error;
             if (data) {
                 setTest(data);
                 setLoadingProgress(100);
@@ -378,7 +378,7 @@ export default function TestIntroPage() {
         }
 
         // Navigate to Live Test
-        navigate(`/live/${test.id}`);
+        navigate(`/live/${test.slug || test.custom_id || test.id}`);
     };
 
     if (loading) {

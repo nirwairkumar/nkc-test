@@ -647,7 +647,7 @@ export default function TestPage() {
         setLoadingProgress(100);
         setTimeout(() => setLoading(false), 400);
       });
-      if (error && !test) throw error;
+      if (error) throw error;
       if (data) {
         processTestData(data);
         setLoadingProgress(100);
