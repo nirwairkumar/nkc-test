@@ -996,7 +996,7 @@ export default function TestPage() {
       console.error("Failed to parse start form data", e);
     }
 
-    const metadata = {
+    const metadata: Record<string, any> = {
       startFormData,
       stats: {
         positiveScore,
@@ -1009,6 +1009,11 @@ export default function TestPage() {
       },
       submittedAt: new Date().toISOString()
     };
+
+    // Tag as conduct exam attempt so creator dashboard can filter correctly
+    if (test.settings?.conduct_exam?.enabled) {
+      metadata.conduct_exam = true;
+    }
 
     const finalScore = (isNaN(score) || !isFinite(score)) ? 0 : parseFloat(score.toFixed(2));
     

@@ -128,7 +128,7 @@ async def get_user_attempts(
             try:
                 # Use global 'supabase' client (likely Service Role) to fetch tests
                 tests_res = supabase.table("tests")\
-                    .select("id, title, settings")\
+                    .select("id, title, settings, total_max_marks")\
                     .in_("id", test_ids)\
                     .execute()
                 
@@ -159,7 +159,8 @@ async def get_user_attempts(
                     "score": item["score"],
                     "created_at": item["created_at"],
                     "test_title": test.get("title") or "Unknown Test",
-                    "test_settings": test.get("settings") or {}
+                    "test_settings": test.get("settings") or {},
+                    "total_max_marks": test.get("total_max_marks") or 0
                 }
             enriched.append(flat)
             
