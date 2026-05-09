@@ -166,7 +166,7 @@ const ProfilePage = () => {
             <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
                 <div className="max-w-2xl mx-auto">
                     <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Your Account</p>
-                    <h1 className="text-base sm:text-xl font-bold text-white">Profile</h1>
+                    <p className="text-xl sm:text-2xl font-bold text-white">Profile</p>
                 </div>
             </div>
 
@@ -192,9 +192,9 @@ const ProfilePage = () => {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                                 {isVerifiedCreator && <VerifiedBadge size={16} />}
-                                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                                <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
                                     {fullName || 'Your Name'}
-                                </h2>
+                                </p>
                             </div>
                             {isVerifiedCreator ? (
                                 <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-0.5">TestoZa Authorized Partner</p>
@@ -308,7 +308,7 @@ const ProfilePage = () => {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                     <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
                         <Pencil className="h-4 w-4 text-indigo-500" />
-                        <h2 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Edit Profile</h2>
+                        <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">Edit Profile</p>
                     </div>
                     <form onSubmit={handleUpdateProfile} className="p-4 space-y-4">
                         <div className="space-y-1.5">

@@ -243,7 +243,7 @@ export default function MaterialsManager() {
                 <div className="max-w-5xl mx-auto flex items-end justify-between">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Creator Tools</p>
-                        <h1 className="text-base sm:text-xl font-bold text-white">Class Materials</h1>
+                        <p className="text-xl sm:text-2xl font-bold text-white">Class Materials</p>
                     </div>
                     <Button
                         size="sm"

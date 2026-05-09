@@ -76,8 +76,8 @@ export default function SupportPage() {
             <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
                 <div className="max-w-2xl mx-auto">
                     <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">We're here to help</p>
-                    <h1 className="text-base sm:text-xl font-bold text-white">Help &amp; Support</h1>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1">Get in touch with our team for issues or suggestions.</p>
+                    <p className="text-xl sm:text-2xl font-bold text-white">Help &amp; Support</p>
+                    <p className="text-sm text-slate-400 mt-1">Get in touch with our team for issues or suggestions.</p>
                 </div>
             </div>
 
@@ -88,8 +88,8 @@ export default function SupportPage() {
                     <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
                         <HeadphonesIcon className="h-4 w-4 text-indigo-500" />
                         <div>
-                            <h2 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Send us a Message</h2>
-                            <p className="text-[10px] sm:text-[11px] text-slate-400">Have a suggestion or facing an issue?</p>
+                            <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">Send us a Message</p>
+                            <p className="text-xs text-slate-400">Have a suggestion or facing an issue?</p>
                         </div>
                     </div>
                     <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -185,7 +185,7 @@ export default function SupportPage() {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                     <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
                         <HelpCircle className="h-4 w-4 text-indigo-500" />
-                        <h2 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Frequently Asked Questions</h2>
+                        <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">Frequently Asked Questions</p>
                     </div>
                     <div className="divide-y divide-slate-100 dark:divide-slate-800">
                         {faqs.map((faq, i) => (

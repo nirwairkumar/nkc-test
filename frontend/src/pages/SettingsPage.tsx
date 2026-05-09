@@ -46,7 +46,7 @@ export default function SettingsPage() {
             <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
                 <div className="max-w-2xl mx-auto">
                     <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Account</p>
-                    <h1 className="text-base sm:text-xl font-bold text-white">Settings</h1>
+                    <p className="text-xl sm:text-2xl font-bold text-white">Settings</p>
                 </div>
             </div>
 
@@ -82,8 +82,8 @@ export default function SettingsPage() {
                         <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
                             <Lock className="h-4 w-4 text-indigo-500" />
                             <div>
-                                <h2 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Change Password</h2>
-                                <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Keep your account secure with a strong password.</p>
+                                <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">Change Password</p>
+                                <p className="text-xs text-slate-400 mt-0.5">Keep your account secure with a strong password.</p>
                             </div>
                         </div>
                         <form onSubmit={handlePasswordChange} className="p-4 space-y-4">
