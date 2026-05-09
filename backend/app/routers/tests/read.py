@@ -460,17 +460,31 @@ async def get_test_by_id(
 @router.get("/slug/{slug}")
 async def get_test_by_slug(
     slug: str,
+    request: Request,
     response: Response = None,
     db: Client = Depends(get_db)
 ):
     try:
+        # ─ Optionally extract requester identity (for owner bypass)
+        requesting_user_id: str | None = None
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            try:
+                token = auth_header[7:]
+                user_res = db.auth.get_user(token)
+                if user_res and user_res.user:
+                    requesting_user_id = user_res.user.id
+            except Exception:
+                pass  # Invalid token — treat as anonymous
         # ─ Cache check
         slug_cache_key = f"test:slug:{slug}"
         cached = cache_get(test_cache, slug_cache_key)
         if cached is not None:
             # ─ Enforce visibility on cached result too
             cached_vis = cached.get("visibility", "public" if cached.get("is_public") else "private")
-            if cached_vis == "private":
+            is_cached_owner = requesting_user_id and cached.get("created_by") == requesting_user_id
+            
+            if cached_vis == "private" and not is_cached_owner:
                 raise HTTPException(status_code=404, detail="Test not found")
             if response:
                 if cached_vis == "public":
@@ -489,9 +503,10 @@ async def get_test_by_slug(
 
         # ─ Visibility Enforcement on slug lookup
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")
+        is_owner = requesting_user_id and test.get("created_by") == requesting_user_id
 
-        # Private tests: never accessible via any slug (even old public slugs)
-        if visibility == "private":
+        # Private tests: never accessible via any slug (even old public slugs) unless owner
+        if visibility == "private" and not is_owner:
             raise HTTPException(status_code=404, detail="Test not found")
 
         # Unlisted (conduct-exam): accessible ONLY via the exact conduct slug.

@@ -6,7 +6,7 @@
 ---
 
 ## Overview
-This document details the visibility and security model implemented for the Test Platform. The system supports three distinct visibility states for tests (`Public`, `Private`, and `Conduct-Exam`) and strictly controls who can view the test, access the test taking environment, and view the submitted results.
+This document details the visibility and security model implemented for the test-cards of Test Platform. The system supports three distinct visibility states for tests (`Public`, `Private`, and `Conduct-Exam`) and strictly controls who can view the test, access the test taking environment, and view the submitted results.
 
 These rules are enforced at both the Backend (FastAPI routing, Supabase data fetching, and Caching layer) and the Frontend (React UI and Client-side routing guards).
 
@@ -18,25 +18,29 @@ These rules are enforced at both the Backend (FastAPI routing, Supabase data fet
 - **Access:** Available to anyone.
 - **URL Routing:** Accessible via its standard slug (e.g., `/test/math-quiz`).
 - **Creator Dashboard:** The test card is visible to the creator.
-- **Results Tracking:** Results are private to the individual student taking the test. The "View Results" panel is **hidden** from the creator's dashboard for public tests, as they are not meant for rigorous cohort tracking.
+- **Results Tracking:** Results are private to the individual student taking the test. The "View Results" panel is still **visible** to the creator's dashboard all the time but only result shows for the students who have given the test in conducted mode (unlisted). And for students who is submitting the test in public test-cards should not reflect creator's dashboard result-page. (public tests, as they are not meant for individual student result tracking.)
 
 ### Private (`visibility: 'private'`)
-- **Access:** Strictly restricted to the test creator. 
+- **Access:** Strictly restricted to any individual or user via any type of links (public-slug, UUID or conduct-slug). Only one person can see from their dashboard a who is the creator of the test.
 - **URL Routing:** 
   - Attempts to access via slug (`/test/{slug}`) return a `404 Not Found`.
-  - Attempts to access via UUID (`/test-intro/{uuid}`) by non-creators return a `404 Not Found`.
+  - Attempts to access via UUID (`/test-intro/{uuid}`) return a `404 Not Found`.
+  - Attempts to access via conduct-slug (`/test/{conduct_slug}`) return a `404 Not Found`.
+  - create a new slug for private tests and access via that slug only(e.g., /test/unlisted-{private_slug}). set into <view> button on creator dashboard's cards of private tests.
+  - share option should be disabled for private tests.
   - Old public slugs do not resolve to private tests.
-- **Creator Dashboard:** The test is visible in the creator's dashboard. The creator can preview the test via the UUID route because the backend specifically grants an owner bypass.
+- **Creator Dashboard:** The test is visible in the creator's dashboard only. The creator can preview the test via the new slug (e.g., /test/unlisted-{private_slug}) because the backend specifically grants an owner bypass.
 
 ### Conduct Exam Mode (`visibility: 'unlisted'`, `conduct_exam.enabled: true`)
-- **Access:** Restricted to students who possess the exact generated secure link (the `conduct_slug`).
+- **Access:** Only Users/students can access this test by conduct mode link only. (the `conduct_slug`).
 - **URL Routing:**
   - Accessible via exact slug match (`/test/{conduct_slug}`).
   - Attempts to access the test via its original public slug will fail.
-  - Attempts to access the test via UUID (`/test-intro/{uuid}`) by non-creators return a `404 Not Found`.
+  - Attempts to access the test via UUID (`/test-intro/{uuid}`) will also fail to all users and return a `404 Not Found`.
 - **Creator Dashboard:** The test is segregated into an "Active Exams" or "Inactive Exams" section. 
 - **Results Tracking:** The creator is granted exclusive access to view cohort results for exams in this mode.
-
+- when creator choose to `exit and make public`: The test `visibility` changes to `public` and `conduct_exam.enabled` changes to `false`. Old conduct slug do not work and old slug `custom_slug` become the new slug. And it also removed from the "Active Exams" section. student given the test can see in their test-history and view result from there.
+- when creator choose to `exit and make private`: The test `visibility` change to `private` and `conduct_exam.enabled` changes to `false`. Students can't see this test history in their test-history page.
 ---
 
 ## 2. Backend Enforcement Mechanisms

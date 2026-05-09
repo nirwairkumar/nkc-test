@@ -37,7 +37,7 @@ async def save_attempt(
 ):
     try:
         # Fetch test details for attempt control validation
-        test_res = supabase.table("tests").select("id, enable_section_mode, sections").eq("id", payload.test_id).single().execute()
+        test_res = supabase.table("tests").select("id, enable_section_mode, sections, settings").eq("id", payload.test_id).single().execute()
         test_data = test_res.data
         
         if test_data and test_data.get("enable_section_mode") and test_data.get("sections"):
@@ -47,12 +47,16 @@ async def save_attempt(
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
 
+        metadata = payload.metadata or {}
+        if test_data and test_data.get("settings", {}).get("conduct_exam", {}).get("enabled", False):
+            metadata["is_conducted_attempt"] = True
+
         response = db.table("user_tests").insert({
             "user_id": payload.user_id,
             "test_id": payload.test_id,
             "answers": payload.answers,
             "score": payload.score,
-            "metadata": payload.metadata
+            "metadata": metadata
         }).execute()
         
         # Mark the corresponding test_registration as submitted
@@ -414,14 +418,9 @@ async def get_test_attempts(
             test_visibility = test_data.get("visibility", "public")
             is_conduct_exam = bool(test_data.get("settings", {}) and test_data["settings"].get("conduct_exam"))
 
-            # Only the creator can view results; and ONLY if it's a conduct-exam test
+            # Only the creator can view results
             if user_id != test_created_by:
                 raise HTTPException(status_code=403, detail="Not authorized to view these results")
-
-            if not is_conduct_exam:
-                # Non-conduct-exam tests: creator cannot view submitted results
-                # (Public test results are private to each student)
-                raise HTTPException(status_code=403, detail="Results are only available for conduct-exam tests")
 
             # Check global premium unlock and active plans
             settings_res = supabase.table("app_settings").select("unlock_all_premium").limit(1).execute()
@@ -456,6 +455,16 @@ async def get_test_attempts(
             .execute()
             
         data = response.data or []
+
+        # Filter for only conducted attempts (or all if the test is currently in conduct mode and legacy)
+        filtered_data = []
+        for a in data:
+            meta = a.get("metadata") or {}
+            # Allow if it's explicitly marked as conducted, OR if the test is currently a conduct exam 
+            # (which covers legacy attempts created before we added this flag, if any)
+            if meta.get("is_conducted_attempt") or is_conduct_exam:
+                filtered_data.append(a)
+        data = filtered_data
         
         # Anonymize data for non-premium
         if not is_premium:

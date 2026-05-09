@@ -148,12 +148,10 @@ export function UserTestCard({
                             <DropdownMenuSeparator />
 
 
-                            {/* View Results — only for conduct-exam tests */}
-                            {isConducted && (
-                                <DropdownMenuItem onClick={() => onViewResults(test)}>
-                                    <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
-                                </DropdownMenuItem>
-                            )}
+                            {/* View Results */}
+                            <DropdownMenuItem onClick={() => onViewResults(test)}>
+                                <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
+                            </DropdownMenuItem>
 
                             <DropdownMenuItem onClick={() => onEdit(test)}>
                                 <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
@@ -163,7 +161,7 @@ export function UserTestCard({
                                 <Settings className="mr-2 h-4 w-4 text-slate-500" /> Manage Settings
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem onClick={() => onShare(test)}>
+                            <DropdownMenuItem onClick={() => onShare(test)} disabled={visibility === 'private'}>
                                 <LinkIcon className="mr-2 h-4 w-4 text-slate-500" /> Share Link
                             </DropdownMenuItem>
 
@@ -251,18 +249,16 @@ export function UserTestCard({
                         Conduct
                     </Button>
                 )}
-                {/* Results button — conduct-exam only */}
-                {isConducted && (
-                    <Button
-                        size="sm"
-                        variant="secondary"
-                        className="h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors duration-200 cursor-pointer"
-                        onClick={() => onViewResults(test)}
-                    >
-                        <BarChart2 className="w-3.5 h-3.5 mr-1" />
-                        Results
-                    </Button>
-                )}
+                {/* Results button */}
+                <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors duration-200 cursor-pointer"
+                    onClick={() => onViewResults(test)}
+                >
+                    <BarChart2 className="w-3.5 h-3.5 mr-1" />
+                    Results
+                </Button>
                 <Button
                     size="sm"
                     className="h-8 text-[11px] sm:text-xs font-medium px-3 sm:px-4 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-200 rounded-md cursor-pointer"

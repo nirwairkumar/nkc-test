@@ -465,8 +465,37 @@ export default function TestIntroPage() {
     const testVisibility = test.visibility || (test.is_public ? 'public' : 'private');
     const isConductExam = !!(test.settings?.conduct_exam?.enabled);
     const isCreatorViewing = user?.id === test.created_by;
+    const isUUIDRoute = location.pathname.startsWith('/test-intro/');
 
-    // Private tests are only visible to their creator
+    // Instruction: Attempts to access the test via UUID (/test-intro/{uuid}) will also fail to all users and return a 404 Not Found.
+    if (isUUIDRoute && (testVisibility === 'private' || isConductExam)) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[80vh] bg-slate-50 dark:bg-slate-950 p-6">
+                <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none animate-in zoom-in duration-300">
+                    <div className="flex flex-col items-center text-center space-y-6">
+                        <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                            <AlertTriangle className="h-10 w-10 text-slate-400" />
+                        </div>
+                        <div className="space-y-2">
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Test Not Available</h2>
+                            <p className="text-slate-500 dark:text-slate-400">
+                                This test is private or in conduct mode, and cannot be accessed via this link.
+                            </p>
+                        </div>
+                        <Button
+                            onClick={() => navigate('/')}
+                            className="w-full py-6 text-lg font-semibold rounded-2xl bg-slate-900 hover:bg-indigo-600 text-white transition-all"
+                        >
+                            <ArrowLeft className="mr-2 h-5 w-5" />
+                            Back to Home
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Private tests are only visible to their creator (via the exact slug link)
     if (testVisibility === 'private' && !isCreatorViewing) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] bg-slate-50 dark:bg-slate-950 p-6">
@@ -495,8 +524,6 @@ export default function TestIntroPage() {
     }
 
     // Conduct-exam tests are not accessible via the public-slug route
-    // (they should only be accessed via the conduct link)
-    // The backend blocks UUID access; this is a belt-and-suspenders UI guard.
     if (isConductExam && !isCreatorViewing && testVisibility !== 'unlisted') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] bg-slate-50 dark:bg-slate-950 p-6">

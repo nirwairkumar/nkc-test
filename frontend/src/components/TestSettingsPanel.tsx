@@ -663,12 +663,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
                             <Button className="flex-1" onClick={() => handleSave()} disabled={loading}>{loading ? 'Saving...' : 'Save Settings'}</Button>
                         </div>
-                        {/* View Results — only shown for conduct-exam tests */}
-                        {settings.conduct_exam?.enabled && (
-                            <Button variant="ghost" size="sm" onClick={onViewResults} className="w-full">
-                                <FileText className="w-4 h-4 mr-2" /> View Results
-                            </Button>
-                        )}
+                        {/* View Results */}
+                        <Button variant="ghost" size="sm" onClick={onViewResults} className="w-full">
+                            <FileText className="w-4 h-4 mr-2" /> View Results
+                        </Button>
                     </div>
                 </div>
 
@@ -686,12 +684,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                 )}
                             </div>
                             <div className="flex gap-2">
-                                {/* View Results — only shown for conduct-exam tests */}
-                                {settings.conduct_exam?.enabled && (
-                                    <Button variant="outline" size="sm" onClick={onViewResults}>
-                                        <FileText className="w-4 h-4 mr-2" /> View Results
-                                    </Button>
-                                )}
+                                {/* View Results */}
+                                <Button variant="outline" size="sm" onClick={onViewResults}>
+                                    <FileText className="w-4 h-4 mr-2" /> View Results
+                                </Button>
                                 <Button variant="ghost" onClick={onClose} size="icon"><span className="text-xl">×</span></Button>
                             </div>
                         </div>

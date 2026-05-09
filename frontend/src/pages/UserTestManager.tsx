@@ -231,11 +231,9 @@ export default function UserTestManager() {
         const isPublic = newVisibility === 'public';
         const oldVisibility = test.visibility;
 
-        // Build slug restoration: if going public, restore original_slug if available
-        const conductExamSettings = test.settings?.conduct_exam;
-        const restoredSlug = isPublic && conductExamSettings?.original_slug
-            ? conductExamSettings.original_slug
-            : test.slug;
+        const restoredSlug = isPublic 
+            ? (test.custom_id || test.id)
+            : `unlisted-${test.custom_id || test.id}`;
 
         let updatedSettings = test.settings
             ? { ...test.settings, conduct_exam: undefined }
@@ -393,7 +391,7 @@ export default function UserTestManager() {
         }
 
         const payload: any = { visibility: makePublic ? 'public' : 'private', is_public: makePublic, settings: newSettings };
-        if (originalSlug) payload.slug = originalSlug;
+        payload.slug = makePublic ? (test.custom_id || test.id) : `unlisted-${test.custom_id || test.id}`;
 
         setTests(prev => prev.map(t => t.id === testId ? { ...t, ...payload } : t));
         setRemoveExamId(null);
@@ -853,7 +851,16 @@ export default function UserTestManager() {
                                                 getVisibilityColor={getVisibilityColor}
                                                 getVisibilityIcon={getVisibilityIcon}
                                                 onViewResults={(t) => setViewingResultsTest(t)}
-                                                onView={(t) => navigate(`/test-intro/${t.id}`)}
+                                                onView={(t) => {
+                                                    if (t.settings?.conduct_exam?.enabled) {
+                                                        const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
+                                                        navigate(`/test/${conductSlug}`);
+                                                    } else if (t.visibility === 'private' || !t.is_public) {
+                                                        navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
+                                                    } else {
+                                                        navigate(`/test-intro/${t.id}`);
+                                                    }
+                                                }}
                                                 onConductExam={handleConductExam}
                                             />
                                         );
