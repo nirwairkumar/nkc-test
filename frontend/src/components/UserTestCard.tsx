@@ -23,6 +23,7 @@ import {
     FileText,
     Link as LinkIcon,
     Radio,
+    BarChart2,
 } from 'lucide-react';
 import TestVoteButtons from '@/components/TestVoteButtons';
 
@@ -65,7 +66,7 @@ export function UserTestCard({
     return (
         <div
             key={test.id}
-            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 pb-3.5 shadow-sm hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full overflow-hidden"
+            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pb-3 sm:p-4 sm:pb-3.5 shadow-sm hover:shadow-md hover:border-primary/40 dark:hover:border-primary/50 transition-all duration-200 flex flex-col h-full overflow-hidden cursor-pointer"
         >
             {/* --- Identity Accent --- */}
             <div className={`absolute left-0 top-0 bottom-0 w-1 opacity-80 group-hover:opacity-100 transition-opacity ${isConducted ? 'bg-gradient-to-b from-emerald-400 to-teal-600' : 'bg-gradient-to-b from-primary to-violet-600'}`} />
@@ -73,10 +74,10 @@ export function UserTestCard({
             {/* --- Zone A: Header --- */}
             <div className="flex justify-between items-start mb-2.5 gap-3 pl-2">
                 <div className="flex-1 min-w-0">
-                    <CardHeader className="p-0 pb-1">
-                        <div className="flex items-center gap-2 flex-wrap">
+                    <CardHeader className="p-0 pb-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                             <CardTitle
-                                className="text-[1rem] font-semibold text-red-900 dark:text-slate-100 leading-snug line-clamp-1 group-hover:text-primary transition-colors cursor-pointer"
+                                className="text-[0.875rem] sm:text-[0.9375rem] font-semibold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2 group-hover:text-primary transition-colors duration-200 cursor-pointer"
                                 title={test.title}
                                 onClick={() => onConfigure(test)}
                             >
@@ -90,20 +91,22 @@ export function UserTestCard({
                         </div>
                     </CardHeader>
                     {/* --- Zone B: Metadata (Clean Row) --- */}
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1">
-                        <span className="flex items-center gap-1.5">
-                            <span className="opacity-70 font-semibold">{test.total_questions || test.questions?.length || 0}</span> Qs
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-500 font-medium mt-1">
+                        <span className="flex items-center gap-1">
+                            <span className="font-semibold text-slate-600">{test.total_questions || test.questions?.length || 0}</span>
+                            <span className="text-slate-400">Qs</span>
                         </span>
                         <span className="text-slate-300">•</span>
-                        <span className="flex items-center gap-1.5">
-                            <span className="opacity-70 font-semibold">{test.duration || 0}</span> min
+                        <span className="flex items-center gap-1">
+                            <span className="font-semibold text-slate-600">{test.duration || 0}</span>
+                            <span className="text-slate-400">min</span>
                         </span>
                         {!isConducted && (
                             <>
                                 <span className="text-slate-300">•</span>
-                                <span className={`text-xs px-1.5 py-0.5 rounded-full border flex items-center gap-1 ${getVisibilityColor(visibility)}`}>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border flex items-center gap-1 ${getVisibilityColor(visibility)}`}>
                                     {getVisibilityIcon(visibility)}
-                                    <span className="capitalize text-[10px] font-semibold">{visibility}</span>
+                                    <span className="capitalize font-semibold">{visibility}</span>
                                 </span>
                             </>
                         )}
@@ -137,6 +140,10 @@ export function UserTestCard({
                             </DropdownMenuSub>
 
                             <DropdownMenuSeparator />
+
+                            <DropdownMenuItem onClick={() => onViewResults(test)}>
+                                <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
+                            </DropdownMenuItem>
 
                             <DropdownMenuItem onClick={() => onEdit(test)}>
                                 <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
@@ -191,17 +198,17 @@ export function UserTestCard({
 
 
             {/* --- Zone C: Context / Tags --- */}
-            <div className="mb-3 pl-2 flex items-center gap-2 min-h-[20px] mt-1">
+            <div className="mb-2.5 pl-2 flex items-center gap-2 min-h-[20px] mt-1.5">
                 {/* ID Tag */}
-                <span className="text-xs text-slate-400 font-mono tracking-wide">
+                <span className="text-[10px] sm:text-xs text-slate-400 font-mono tracking-wide">
                     #{test.custom_id || 'N/A'}
                 </span>
 
                 {/* Optional Class Badge */}
                 {test.class_id && classes.find(c => c.id === test.class_id) && (
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-50 text-primary border border-violet-100">
-                        <GraduationCap className="h-3 w-3" />
-                        <span className="uppercase tracking-wide">
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-violet-50 text-primary border border-violet-100">
+                        <GraduationCap className="h-2.5 w-2.5" />
+                        <span className="uppercase tracking-wide truncate max-w-[80px]">
                             {classes.find(c => c.id === test.class_id)?.name}
                         </span>
                     </div>
@@ -213,18 +220,30 @@ export function UserTestCard({
             </div>
 
             {/* --- Zone D: Actions --- */}
-            <div className="flex items-center justify-end gap-3 mt-auto pt-3 border-t border-slate-50 dark:border-slate-800/50 pl-2">
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2 mt-auto pt-2.5 border-t border-slate-100 dark:border-slate-800/50 pl-2 flex-wrap">
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 text-xs font-medium px-4 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors"
-                    onClick={() => onViewResults(test)}
+                    className="h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
+                    onClick={() => onConfigure(test)}
                 >
-                    Results
+                    <Settings className="w-3.5 h-3.5 mr-1" />
+                    Settings
                 </Button>
+                {!isConducted && (
+                    <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors duration-200 cursor-pointer"
+                        onClick={() => onConductExam(test)}
+                    >
+                        <Radio className="w-3.5 h-3.5 mr-1" />
+                        Conduct
+                    </Button>
+                )}
                 <Button
                     size="sm"
-                    className="h-8 text-xs font-medium px-5 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-300 rounded-md"
+                    className="h-8 text-[11px] sm:text-xs font-medium px-3 sm:px-4 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-200 rounded-md cursor-pointer"
                     onClick={() => onView(test)}
                 >
                     View

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -143,6 +143,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
     ]);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    const [swappedSections, setSwappedSections] = useState<Set<string>>(new Set());
+    const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
+    const [showSupportedFormats, setShowSupportedFormats] = useState(false);
 
     // Merged Section Marks State
     const [mergedSections, setMergedSections] = useState<{ label: string; section_ids: string[] }[]>([]);
@@ -527,7 +530,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         if (hasQuestions) scanForHighId(parsedQuestions as any[]);
         if (hasSections) {
             (parsedSections as any[]).forEach(s => {
-                 if (s.questions && Array.isArray(s.questions)) scanForHighId(s.questions);
+                if (s.questions && Array.isArray(s.questions)) scanForHighId(s.questions);
             });
         }
 
@@ -1118,6 +1121,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         const [draggedSection] = newSections.splice(draggedIdx, 1);
         newSections.splice(targetIdx, 0, draggedSection);
         setSections(newSections);
+        // iOS-style swap animation: flash the swapped cards
+        const swappedIds = new Set([draggedSectionId, targetSectionId]);
+        setSwappedSections(swappedIds);
+        setTimeout(() => setSwappedSections(new Set()), 600);
+        // After 3s, trigger a left-to-right gradient glow to show color settled
+        setTimeout(() => {
+            setSwapGlowSections(swappedIds);
+            setTimeout(() => setSwapGlowSections(new Set()), 1200);
+        }, 3000);
     };
 
     // Section Helpers
@@ -1243,7 +1255,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const updateQuestionInSection = (sectionIndex: number, qIndex: number, field: keyof QuestionState, value: any) => {
         const newSections = [...sections];
         const q = newSections[sectionIndex].questions[qIndex] as QuestionState;
-        
+
         let finalValue = value;
         // Sanitize marks and negativeMarks to prevent negative inputs
         if ((field === 'marks' || field === 'negativeMarks') && typeof value === 'string') {
@@ -1336,31 +1348,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     }
 
     return (
-        <div className="container mx-auto py-4 px-0 sm:px-6">
-            <div className="mb-6 flex flex-wrap gap-y-4 items-center justify-between px-4 sm:px-0">
-                <div className="flex items-center gap-4">
-                    {onCancel && (
-                        <Button variant="ghost" size="icon" onClick={onCancel}>
-                            <ArrowLeft className="w-5 h-5" />
-                        </Button>
-                    )}
-                    <h1 className="text-2xl font-bold text-slate-800">{isEditMode ? 'Edit Test' : 'Create New Test'}</h1>
-                </div>
-
+        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 w-full max-w-5xl overflow-x-hidden">
+            <div className="mb-2 sm:mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-0 gap-2 sm:gap-4">
                 <div className="flex items-center gap-3">
-                    {onAiImport && !isEditMode && (
-                        <Button onClick={onAiImport} variant="outline" className="gap-2 shrink-0">
-                            <FileText className="w-4 h-4" />
-                            Import PDF
+                    {onCancel && (
+                        <Button variant="ghost" size="icon" onClick={onCancel} className="h-9 w-9 rounded-full bg-white border border-slate-200 shadow-sm hover:bg-slate-50 hover:text-indigo-600 transition-colors shrink-0">
+                            <ArrowLeft className="w-4 h-4" />
                         </Button>
                     )}
-                    <div className="flex flex-col items-end gap-1">
-                        <JsonImporter onImportSuccess={populateData} />
-                        <TestUploadFormatGuide />
+                    <div className="flex flex-col gap-1">
+                        <span className="text-sm font-extrabold text-slate-700 uppercase tracking-wider md:text-xl md:normal-case md:font-bold md:text-slate-800 md:tracking-tight md:leading-none">Test Builder</span>
                     </div>
-
                     {isEditMode && (
-                        <div className="flex items-center gap-2 text-sm font-medium animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="flex items-center gap-2 text-xs font-medium animate-in fade-in slide-in-from-right-4 duration-300 bg-white border border-slate-200 px-3 py-1.5 rounded-full shadow-sm ml-2">
                             {saveStatus === 'saving' && (
                                 <span className="text-muted-foreground flex items-center gap-1.5">
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1370,17 +1370,37 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                             {saveStatus === 'saved' && (
                                 <span className="text-emerald-600 flex items-center gap-1.5">
                                     <Cloud className="w-4 h-4" />
-                                    All changes saved
+                                    Saved
                                 </span>
                             )}
                             {saveStatus === 'error' && (
                                 <span className="text-red-500 flex items-center gap-1.5">
                                     <CloudOff className="w-4 h-4" />
-                                    Save failed
+                                    Failed
                                 </span>
                             )}
                         </div>
                     )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                    {onAiImport && !isEditMode && (
+                        <Button onClick={onAiImport} variant="outline" className="h-9 gap-2 shrink-0 border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors shadow-sm text-xs font-medium rounded-xl">
+                            <FileText className="w-3.5 h-3.5" />
+                            Import PDF
+                        </Button>
+                    )}
+                    <div className="flex items-center h-9 shadow-sm rounded-xl border border-slate-200 overflow-hidden bg-white hover:border-indigo-200 transition-colors">
+                        <div className="h-full [&>label]:h-full [&>label]:flex [&>label]:items-center [&>label]:px-3 [&>label]:bg-transparent [&>label]:hover:bg-indigo-50 [&>label]:text-indigo-600 [&>label]:text-xs [&>label]:font-semibold [&>label]:cursor-pointer [&>label]:border-none">
+                            <JsonImporter onImportSuccess={populateData} />
+                        </div>
+                        <div className="w-px h-full bg-slate-200" />
+                        <TestUploadFormatGuide trigger={
+                            <button className="h-full flex items-center justify-center bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer px-1.5 border-none outline-none focus:outline-none" title="Upload Format Guide">
+                                <span className="text-[8px] font-bold uppercase tracking-wider [writing-mode:vertical-lr] rotate-180">Guide</span>
+                            </button>
+                        } />
+                    </div>
                 </div>
             </div>
 
@@ -1392,136 +1412,143 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             )}
 
             <div className="grid gap-6">
-                <Card className="rounded-none sm:rounded-xl border-x-0 sm:border">
-                    <div className="flex items-center justify-center gap-6 p-6 pb-0">
-                        <div className="relative group shrink-0">
-                            {institutionLogo && isPremium && (
-                                <button
-                                    onClick={(e) => { e.preventDefault(); setInstitutionLogo(''); }}
-                                    className="absolute -top-2 -right-2 z-20 bg-destructive text-white rounded-full p-1 shadow-md hover:bg-destructive/90"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            )}
-                            <label
-                                className={`block ${isPremium ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
-                                onDragOver={isPremium ? handleDragOver : undefined}
-                                onDragLeave={isPremium ? handleDragLeave : undefined}
-                                onDrop={isPremium ? handleDrop : undefined}
-                                onClick={(e) => {
-                                    if (!isPremium) {
-                                        e.preventDefault();
-                                        toast("Upgrade to Premium to add your logo", {
-                                            action: { label: "View Plans", onClick: () => navigate('/pricing') }
-                                        });
-                                    }
-                                }}
-                            >
-                                <input type="file" className="hidden" accept="image/*" disabled={!isPremium} onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f, setInstitutionLogo); }} />
-                                <div className={`w-16 h-16 rounded-lg border-2 border-dashed flex flex-col items-center justify-center transition-all relative overflow-hidden ${isDragging ? 'border-primary bg-primary/10' : institutionLogo ? 'border-primary/50' : 'border-slate-300'}`}>
-                                    {institutionLogo ? (
-                                        <img src={institutionLogo} alt="Logo" className="w-full h-full object-contain" />
-                                    ) : (
-                                        <>
-                                            <Upload className="w-5 h-5 text-slate-400" />
-                                            <span className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Logo</span>
-                                        </>
-                                    )}
-                                    {!isPremium && !institutionLogo && (
-                                        <div className="absolute inset-0 bg-slate-100/80 flex items-center justify-center">
-                                            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wide">Locked</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </label>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                <div className="flex-1 relative group-input">
-                                    <Input
-                                        value={institutionName}
-                                        onChange={(e) => setInstitutionName(e.target.value)}
-                                        placeholder={isPremium ? "Add Your Institution Name" : "Add Institution Name (Premium)"}
-                                        className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0 disabled:opacity-100 disabled:cursor-not-allowed"
-                                        style={{ color: institutionColor, fontFamily: institutionFont }}
-                                        disabled={!isPremium}
-                                        title={!isPremium ? "Upgrade to Premium to set Institution Name" : ""}
-                                    />
-                                    {!isPremium && (
-                                        <div
-                                            className="absolute inset-0 cursor-pointer"
-                                            onClick={() => toast("Upgrade to Premium to set Institution Name", {
+                <Card className="rounded-none sm:rounded-2xl border-x-0 sm:border-slate-200 shadow-sm overflow-hidden">
+                    {/* --- Branding / Institution Header --- */}
+                    <div className="bg-slate-50/50 dark:bg-slate-900/20 border-b border-slate-100 dark:border-slate-800/50 p-4 sm:p-6">
+                        <div className="flex items-center justify-start sm:justify-center gap-4 sm:gap-6 max-w-2xl mx-auto pl-2 sm:pl-0">
+                            <div className="relative group shrink-0">
+                                {institutionLogo && isPremium && (
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); setInstitutionLogo(''); }}
+                                        className="absolute -top-2 -right-2 z-20 bg-destructive text-white rounded-full p-1 shadow-md hover:bg-destructive/90"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                )}
+                                <label
+                                    className={`block ${isPremium ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
+                                    onDragOver={isPremium ? handleDragOver : undefined}
+                                    onDragLeave={isPremium ? handleDragLeave : undefined}
+                                    onDrop={isPremium ? handleDrop : undefined}
+                                    onClick={(e) => {
+                                        if (!isPremium) {
+                                            e.preventDefault();
+                                            toast("Upgrade to Premium to add your logo", {
                                                 action: { label: "View Plans", onClick: () => navigate('/pricing') }
-                                            })}
+                                            });
+                                        }
+                                    }}
+                                >
+                                    <input type="file" className="hidden" accept="image/*" disabled={!isPremium} onChange={(e) => { const f = e.target.files?.[0]; if (f) processFile(f, setInstitutionLogo); }} />
+                                    <div className={`w-16 h-16 rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all relative overflow-hidden bg-white shadow-sm ${isDragging ? 'border-indigo-400 bg-indigo-50/50' : institutionLogo ? 'border-slate-200' : 'border-slate-300 hover:border-indigo-300 hover:bg-slate-50'}`}>
+                                        {institutionLogo ? (
+                                            <img src={institutionLogo} alt="Logo" className="w-full h-full object-contain" />
+                                        ) : (
+                                            <>
+                                                <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors mb-0.5" />
+                                                <span className="text-[9px] text-slate-400 group-hover:text-indigo-400 font-bold uppercase tracking-wider">Logo</span>
+                                            </>
+                                        )}
+                                        {!isPremium && !institutionLogo && (
+                                            <div className="absolute inset-0 bg-slate-100/90 backdrop-blur-[1px] flex items-center justify-center">
+                                                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Locked</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </label>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 relative group-input">
+                                        <Input
+                                            value={institutionName}
+                                            onChange={(e) => setInstitutionName(e.target.value)}
+                                            placeholder={isPremium ? "Institution Name" : "Institution Name (Premium)"}
+                                            className="text-xl font-bold border-none shadow-none focus-visible:ring-0 placeholder:text-slate-300 px-0 disabled:opacity-100 disabled:cursor-not-allowed bg-transparent"
+                                            style={{ color: institutionColor, fontFamily: institutionFont }}
+                                            disabled={!isPremium}
+                                            title={!isPremium ? "Upgrade to Premium to set Institution Name" : ""}
                                         />
-                                    )}
-                                    <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
-                                </div>
-                                {/* Institution Name Preview Info Button */}
-                                <button
-                                    type="button"
-                                    onClick={() => { setPreviewImageIndex(0); setShowInstitutePreview(true); }}
-                                    className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-indigo-100 border border-slate-200 hover:border-indigo-300 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
-                                    title="Preview: how institution name appears on live test"
-                                >
-                                    <Info className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                                </button>
-                                {/* Clear All Data Button */}
-                                <button
-                                    type="button"
-                                    onClick={handleClear}
-                                    className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
-                                    title="Clear All Data"
-                                >
-                                    <Eraser className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-500 transition-colors" />
-                                </button>
-                            </div>
-                            {/* Color Swatches & Font Picker */}
-                            {/* Color Swatches & Font Picker - Blurred preview for non-premium */}
-                            <div className={`relative mt-2 ${!isPremium ? 'group/premium cursor-pointer' : ''}`}
-                                onClick={() => {
-                                    if (!isPremium) {
-                                        toast("Upgrade to Premium to customize branding", {
-                                            action: { label: "View Plans", onClick: () => navigate('/pricing') }
-                                        });
-                                    }
-                                }}
-                            >
-                                <div className={`flex items-center gap-3 flex-wrap transition-all duration-300 ${!isPremium ? 'blur-[2px] opacity-60 pointer-events-none' : ''}`}>
-                                    <div className="flex items-center gap-1.5">
-                                        <Palette className="w-3 h-3 text-slate-400" />
-                                        {['#475569', '#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2'].map(c => (
-                                            <button
-                                                key={c}
-                                                onClick={() => setInstitutionColor(c)}
-                                                className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${institutionColor === c ? 'border-slate-800 scale-110 ring-1 ring-offset-1 ring-slate-400' : 'border-transparent'}`}
-                                                style={{ backgroundColor: c }}
-                                                title={c}
+                                        {!isPremium && (
+                                            <div
+                                                className="absolute inset-0 cursor-pointer"
+                                                onClick={() => toast("Upgrade to Premium to set Institution Name", {
+                                                    action: { label: "View Plans", onClick: () => navigate('/pricing') }
+                                                })}
                                             />
-                                        ))}
+                                        )}
+                                        <div className="h-[1px] bg-gradient-to-r from-slate-200 to-transparent w-full" />
                                     </div>
-                                    <div className="h-4 w-px bg-slate-200" />
-                                    <div className="flex items-center gap-1.5">
-                                        <Type className="w-3 h-3 text-slate-400" />
-                                        <select
-                                            value={institutionFont}
-                                            onChange={(e) => setInstitutionFont(e.target.value)}
-                                            className="text-xs bg-transparent border border-slate-200 rounded px-1.5 py-0.5 text-slate-600 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-300"
-                                        >
-                                            <option value="inherit">Default</option>
-                                            <option value="serif">Serif</option>
-                                            <option value="'Courier New', monospace">Mono</option>
-                                            <option value="'Georgia', serif">Georgia</option>
-                                            <option value="'Trebuchet MS', sans-serif">Modern</option>
-                                        </select>
+                                    {/* Institution Name Preview Info Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => { setPreviewImageIndex(0); setShowInstitutePreview(true); }}
+                                        className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-indigo-100 border border-slate-200 hover:border-indigo-300 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
+                                        title="Preview: how institution name appears on live test"
+                                    >
+                                        <Info className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                    </button>
+                                    {/* Clear All Data Button */}
+                                    <button
+                                        type="button"
+                                        onClick={handleClear}
+                                        className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
+                                        title="Clear All Data"
+                                    >
+                                        <Eraser className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-500 transition-colors" />
+                                    </button>
+                                </div>
+                                {/* Color Swatches & Font Picker */}
+                                {/* Color Swatches & Font Picker - Blurred preview for non-premium */}
+                                <div className={`relative mt-2 ${!isPremium ? 'group/premium cursor-pointer' : ''}`}
+                                    onClick={() => {
+                                        if (!isPremium) {
+                                            toast("Upgrade to Premium to customize branding", {
+                                                action: { label: "View Plans", onClick: () => navigate('/pricing') }
+                                            });
+                                        }
+                                    }}
+                                >
+                                    <div className={`flex items-center gap-3 flex-wrap transition-all duration-300 ${!isPremium ? 'blur-[2px] opacity-60 pointer-events-none' : ''}`}>
+                                        <div className="flex items-center gap-1.5">
+                                            <Palette className="w-3 h-3 text-slate-400" />
+                                            {['#475569', '#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2'].map(c => (
+                                                <button
+                                                    key={c}
+                                                    onClick={() => setInstitutionColor(c)}
+                                                    className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${institutionColor === c ? 'border-slate-800 scale-110 ring-1 ring-offset-1 ring-slate-400' : 'border-transparent'}`}
+                                                    style={{ backgroundColor: c }}
+                                                    title={c}
+                                                />
+                                            ))}
+                                        </div>
+                                        <div className="h-4 w-px bg-slate-200" />
+                                        <div className="flex items-center gap-1.5">
+                                            <Type className="w-3 h-3 text-slate-400" />
+                                            <select
+                                                value={institutionFont}
+                                                onChange={(e) => setInstitutionFont(e.target.value)}
+                                                className="text-xs bg-transparent border border-slate-200 rounded px-1.5 py-0.5 text-slate-600 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                            >
+                                                <option value="inherit">Default</option>
+                                                <option value="serif">Serif</option>
+                                                <option value="'Courier New', monospace">Mono</option>
+                                                <option value="'Georgia', serif">Georgia</option>
+                                                <option value="'Trebuchet MS', sans-serif">Modern</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
                     </div>
-                </div>
 
-                    <CardHeader className="pb-3"><CardTitle className="text-lg">Test Details</CardTitle></CardHeader>
-                    <CardContent className="space-y-4 px-6 pb-6 pt-0">
+                    <CardHeader className="pb-4 pt-6 px-6">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg font-bold text-slate-800">Test Details</CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6 pt-0">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Left Column: Title & Description */}
                             <div className="space-y-4">
@@ -1692,7 +1719,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                             <div><Label className="text-slate-600 font-semibold">Time (mins)</Label><Input type="number" value={time} onChange={e => setTime(parseInt(e.target.value))} className="text-slate-800" /></div>
                             <div>
                                 <Label className="text-slate-600 font-semibold">Visibility</Label>
@@ -1817,15 +1844,39 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 </Card>
 
                 {/* Format Support Note */}
-                <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md text-sm flex items-start gap-3">
-                    <Info className="w-5 h-5 shrink-0 mt-0.5 text-blue-600" />
-                    <div>
-                        <p className="font-semibold mb-1">Supported Formats</p>
-                        <p className="text-blue-700/80">
-                            You can use <strong>LaTeX</strong> for mathematical equations (e.g., <code className="bg-blue-100 px-1 rounded">\( E = mc^2 \)</code>).
-                            Markdown formatting is also supported for bold, italics, and lists to help you create the best test experience.
-                        </p>
-                    </div>
+                <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm overflow-hidden transition-all duration-300">
+                    <button 
+                        onClick={() => setShowSupportedFormats(!showSupportedFormats)}
+                        className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-blue-100/50 transition-colors"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Info className="w-5 h-5 shrink-0 text-blue-600" />
+                            <p className="font-semibold">Supported Formats</p>
+                        </div>
+                        {showSupportedFormats ? (
+                            <ChevronUp className="w-4 h-4 text-blue-400" />
+                        ) : (
+                            <ChevronDown className="w-4 h-4 text-blue-400" />
+                        )}
+                    </button>
+                    
+                    {showSupportedFormats && (
+                        <div className="px-4 pb-3 pt-1 border-t border-blue-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <p className="text-blue-700/80 pl-8">
+                                You can use <strong>LaTeX</strong> for mathematical equations (e.g., <code className="bg-blue-100 px-1 rounded">\( E = mc^2 \)</code>).
+                                Markdown formatting is also supported for bold, italics, and lists to help you create the best test experience.
+                                <a 
+                                    href="/user-guide/chemistry-notation" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium ml-1 underline decoration-blue-200 underline-offset-2 hover:decoration-blue-400 transition-all"
+                                >
+                                    Read more
+                                    <ExternalLink className="w-3 h-3" />
+                                </a>
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Question List */}
@@ -1833,10 +1884,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     {enableSectionMode ? (
                         <>
                             <div className="space-y-8">
-                                <div className="flex justify-between items-center bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                                <div className="flex justify-between items-end mb-2">
                                     <div>
-                                        <h2 className="text-xl font-bold text-blue-900">Sections ({sections.length})</h2>
-                                        <p className="text-sm text-blue-700">Manage your test sections below. Each section can have its own marking scheme.</p>
+                                        <span className="text-[10px] sm:text-xs text-slate-500 font-medium uppercase tracking-wider block">Sections ({sections.length})</span>
+                                        <p className="text-[10px] text-slate-400 mt-0.5">Manage your test sections below.</p>
                                     </div>
                                 </div>
 
@@ -1858,126 +1909,151 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             onDragStart={(e) => handleDragStartSection(e, section.id)}
                                             onDragOver={(e) => e.preventDefault()}
                                             onDrop={(e) => handleDropSection(e, section.id)}
-                                            className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2 transition-all duration-300`}
+                                            className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2 transition-all duration-300 ${
+                                                swappedSections.has(section.id) ? 'scale-[1.01] shadow-lg brightness-105' : ''
+                                            } ${swapGlowSections.has(section.id) ? 'section-swap-glow' : ''}`}
                                         >
-                                            <div className={`${style.header} px-4 py-3 border-b flex flex-wrap gap-4 items-end transition-colors`}>
-                                                <div className="flex-1 space-y-1 flex items-center gap-3">
-                                                    <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-black/5 rounded transition-colors mr-1">
-                                                        <Grip className="w-4 h-4 text-slate-400" />
-                                                    </div>
-                                                    <div className="flex-1 space-y-1">
-                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Section Name</Label>
-                                                        <Input
-                                                            value={section.name}
-                                                            onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
-                                                            className="font-bold text-lg bg-white"
-                                                            placeholder="e.g. Physics"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 self-end mb-0.5">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-slate-400 hover:text-blue-600 transition-colors"
-                                                        onClick={() => {
-                                                            const newCollapsed = new Set(collapsedSections);
-                                                            if (newCollapsed.has(section.id)) {
+                                            <div className={`${style.header} border-b flex items-center transition-colors duration-300 ${collapsedSections.has(section.id) ? 'px-3 py-2' : 'px-4 py-3 flex-wrap gap-4'}`}>
+                                                {/* Collapsed: show only drag handle + section name chip + expand button */}
+                                                {collapsedSections.has(section.id) ? (
+                                                    <div className="flex items-center gap-2 w-full">
+                                                        <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-black/5 rounded transition-colors">
+                                                            <Grip className="w-4 h-4 text-slate-400" />
+                                                        </div>
+                                                        <span className="text-sm font-bold text-slate-600 flex-1 truncate">{section.name || `Section ${sIdx + 1}`}</span>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-slate-400 hover:text-blue-600 transition-colors h-7 w-7"
+                                                            onClick={() => {
+                                                                const newCollapsed = new Set(collapsedSections);
                                                                 newCollapsed.delete(section.id);
-                                                            } else {
-                                                                newCollapsed.add(section.id);
-                                                            }
-                                                            setCollapsedSections(newCollapsed);
-                                                        }}
-                                                        title={collapsedSections.has(section.id) ? "Expand Section" : "Collapse Section"}
-                                                    >
-                                                        {collapsedSections.has(section.id) ? (
-                                                            <ChevronDown className="w-5 h-5" />
-                                                        ) : (
-                                                            <ChevronUp className="w-5 h-5" />
-                                                        )}
-                                                    </Button>
+                                                                setCollapsedSections(newCollapsed);
+                                                            }}
+                                                            title="Expand Section"
+                                                        >
+                                                            <ChevronDown className="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    /* Expanded header */
+                                                    <>
+                                                        <div className="flex-1 space-y-1 flex items-center gap-3">
+                                                            <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-black/5 rounded transition-colors mr-1">
+                                                                <Grip className="w-4 h-4 text-slate-400" />
+                                                            </div>
+                                                            <div className="flex-1 space-y-0">
+                                                                <Input
+                                                                    value={section.name}
+                                                                    onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
+                                                                    className="font-bold text-lg bg-white/60 border-0 shadow-none focus-visible:ring-1 focus-visible:ring-slate-300 focus-visible:bg-white px-2 h-9"
+                                                                    placeholder={`Section ${sIdx + 1}`}
+                                                                />
+                                                            </div>
+                                                        </div>
 
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="mb-0.5 text-slate-400 hover:text-slate-600">
-                                                                <MoreVertical className="w-5 h-5" />
+                                                        <div className="flex items-center gap-1 self-center">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="text-slate-400 hover:text-blue-600 transition-colors h-8 w-8"
+                                                                onClick={() => {
+                                                                    const newCollapsed = new Set(collapsedSections);
+                                                                    if (newCollapsed.has(section.id)) {
+                                                                        newCollapsed.delete(section.id);
+                                                                    } else {
+                                                                        newCollapsed.add(section.id);
+                                                                    }
+                                                                    setCollapsedSections(newCollapsed);
+                                                                }}
+                                                                title="Collapse Section"
+                                                            >
+                                                                <ChevronUp className="w-4 h-4" />
                                                             </Button>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-80 p-4" align="end">
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <h4 className="font-bold text-sm">Attempt Control</h4>
-                                                                    <Switch
-                                                                        checked={!!section.attempt_control}
-                                                                        onCheckedChange={(checked) => {
-                                                                            if (checked) {
-                                                                                updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
-                                                                            } else {
-                                                                                updateSection(sIdx, 'attempt_control', undefined);
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                </div>
 
-                                                                {section.attempt_control && (
-                                                                    <>
-                                                                        <div className="space-y-2">
-                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
-                                                                            <Input
-                                                                                type="number"
-                                                                                value={section.attempt_control?.max_attempts || 0}
-                                                                                onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
-                                                                                placeholder="e.g. 5"
+                                                            <Popover>
+                                                                <PopoverTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600 h-8 w-8">
+                                                                        <MoreVertical className="w-4 h-4" />
+                                                                    </Button>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-80 p-4" align="end">
+                                                                    <div className="space-y-4">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <h4 className="font-bold text-sm">Attempt Control</h4>
+                                                                            <Switch
+                                                                                checked={!!section.attempt_control}
+                                                                                onCheckedChange={(checked) => {
+                                                                                    if (checked) {
+                                                                                        updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
+                                                                                    } else {
+                                                                                        updateSection(sIdx, 'attempt_control', undefined);
+                                                                                    }
+                                                                                }}
                                                                             />
                                                                         </div>
 
-                                                                        <div className="space-y-2">
-                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
-                                                                            <RadioGroup
-                                                                                value={section.attempt_control?.mode || 'hard'}
-                                                                                onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
-                                                                                className="flex gap-4"
-                                                                            >
-                                                                                <div className="flex items-center space-x-2">
-                                                                                    <RadioGroupItem value="hard" id={`hard-${sIdx}`} />
-                                                                                    <Label htmlFor={`hard-${sIdx}`} className="text-sm">Hard</Label>
+                                                                        {section.attempt_control && (
+                                                                            <>
+                                                                                <div className="space-y-2">
+                                                                                    <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
+                                                                                    <Input
+                                                                                        type="number"
+                                                                                        value={section.attempt_control?.max_attempts || 0}
+                                                                                        onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
+                                                                                        placeholder="e.g. 5"
+                                                                                    />
                                                                                 </div>
-                                                                                <div className="flex items-center space-x-2">
-                                                                                    <RadioGroupItem value="soft" id={`soft-${sIdx}`} />
-                                                                                    <Label htmlFor={`soft-${sIdx}`} className="text-sm">Soft</Label>
-                                                                                </div>
-                                                                            </RadioGroup>
-                                                                        </div>
 
-                                                                        {section.attempt_control?.mode === 'soft' && (
-                                                                            <div className="space-y-2">
-                                                                                <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
-                                                                                <RadioGroup
-                                                                                    value={section.attempt_control?.soft_type || 'first_n'}
-                                                                                    onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
-                                                                                    className="flex flex-col gap-2"
-                                                                                >
-                                                                                    <div className="flex items-center space-x-2">
-                                                                                        <RadioGroupItem value="first_n" id={`first_n-${sIdx}`} />
-                                                                                        <Label htmlFor={`first_n-${sIdx}`} className="text-sm">First N Questions</Label>
+                                                                                <div className="space-y-2">
+                                                                                    <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
+                                                                                    <RadioGroup
+                                                                                        value={section.attempt_control?.mode || 'hard'}
+                                                                                        onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
+                                                                                        className="flex gap-4"
+                                                                                    >
+                                                                                        <div className="flex items-center space-x-2">
+                                                                                            <RadioGroupItem value="hard" id={`hard-${sIdx}`} />
+                                                                                            <Label htmlFor={`hard-${sIdx}`} className="text-sm">Hard</Label>
+                                                                                        </div>
+                                                                                        <div className="flex items-center space-x-2">
+                                                                                            <RadioGroupItem value="soft" id={`soft-${sIdx}`} />
+                                                                                            <Label htmlFor={`soft-${sIdx}`} className="text-sm">Soft</Label>
+                                                                                        </div>
+                                                                                    </RadioGroup>
+                                                                                </div>
+
+                                                                                {section.attempt_control?.mode === 'soft' && (
+                                                                                    <div className="space-y-2">
+                                                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
+                                                                                        <RadioGroup
+                                                                                            value={section.attempt_control?.soft_type || 'first_n'}
+                                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
+                                                                                            className="flex flex-col gap-2"
+                                                                                        >
+                                                                                            <div className="flex items-center space-x-2">
+                                                                                                <RadioGroupItem value="first_n" id={`first_n-${sIdx}`} />
+                                                                                                <Label htmlFor={`first_n-${sIdx}`} className="text-sm">First N Questions</Label>
+                                                                                            </div>
+                                                                                            <div className="flex items-center space-x-2">
+                                                                                                <RadioGroupItem value="best_n" id={`best_n-${sIdx}`} />
+                                                                                                <Label htmlFor={`best_n-${sIdx}`} className="text-sm">Best N Questions</Label>
+                                                                                            </div>
+                                                                                        </RadioGroup>
                                                                                     </div>
-                                                                                    <div className="flex items-center space-x-2">
-                                                                                        <RadioGroupItem value="best_n" id={`best_n-${sIdx}`} />
-                                                                                        <Label htmlFor={`best_n-${sIdx}`} className="text-sm">Best N Questions</Label>
-                                                                                    </div>
-                                                                                </RadioGroup>
-                                                                            </div>
+                                                                                )}
+                                                                            </>
                                                                         )}
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        </PopoverContent>
-                                                    </Popover>
+                                                                    </div>
+                                                                </PopoverContent>
+                                                            </Popover>
 
-                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="mb-0.5 text-slate-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></Button>
-                                                </div>
+                                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="text-slate-400 hover:text-red-500 h-8 w-8">
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
 
                                             {!collapsedSections.has(section.id) && (
@@ -2034,35 +2110,41 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     `}>
 
                                                                         {/* Header Bar */}
-                                                                        <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-wrap gap-4 items-center justify-between">
-                                                                            <div className="flex items-center gap-3">
-                                                                                <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
-                                                                                    <GripVertical className="h-4 w-4" />
-                                                                                </div>
-                                                                                <span className="font-bold text-slate-400 text-sm">Q{qIdx + 1}</span>
+                                                                        <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
+                                                                            <div className="flex items-center justify-between w-full sm:w-auto">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                                                                        <GripVertical className="h-4 w-4" />
+                                                                                    </div>
+                                                                                    <span className="font-bold text-slate-400 text-sm">Q{qIdx + 1}</span>
 
-                                                                                <div onClick={(e) => e.stopPropagation()}>
-                                                                                    <Select value={q.type || 'single'} onValueChange={(val: any) => updateQuestionTypeInSection(sIdx, qIdx, val)}>
-                                                                                        <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
-                                                                                            <SelectValue placeholder="Type" />
-                                                                                        </SelectTrigger>
-                                                                                        <SelectContent>
-                                                                                            <SelectItem value="single">Single Choice</SelectItem>
-                                                                                            <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                                                                            <SelectItem value="numerical">Numerical</SelectItem>
-                                                                                            {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
-                                                                                        </SelectContent>
-                                                                                    </Select>
-                                                                                </div>
+                                                                                    <div onClick={(e) => e.stopPropagation()}>
+                                                                                        <Select value={q.type || 'single'} onValueChange={(val: any) => updateQuestionTypeInSection(sIdx, qIdx, val)}>
+                                                                                            <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
+                                                                                                <SelectValue placeholder="Type" />
+                                                                                            </SelectTrigger>
+                                                                                            <SelectContent>
+                                                                                                <SelectItem value="single">Single Choice</SelectItem>
+                                                                                                <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                                                <SelectItem value="numerical">Numerical</SelectItem>
+                                                                                                {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
+                                                                                            </SelectContent>
+                                                                                        </Select>
+                                                                                    </div>
 
-                                                                                {isInGroup && (
-                                                                                    <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase">
-                                                                                        Passage Q
-                                                                                    </Badge>
-                                                                                )}
+                                                                                    {isInGroup && (
+                                                                                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase hidden sm:inline-flex">
+                                                                                            Passage Q
+                                                                                        </Badge>
+                                                                                    )}
+                                                                                </div>
+                                                                                
+                                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full sm:hidden ml-2 shrink-0" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}>
+                                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                                </Button>
                                                                             </div>
 
-                                                                            <div className="flex items-center gap-3">
+                                                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                                                                 <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
                                                                                     <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
                                                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
@@ -2086,6 +2168,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     </div>
                                                                                 </div>
 
+                                                                                <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
                                                                                 <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
                                                                                     <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
                                                                                     <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => updateQuestionInSection(sIdx, qIdx, 'typingMode', val)}>
@@ -2099,7 +2183,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     </Select>
                                                                                 </div>
 
-                                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}>
+                                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1 hidden sm:flex" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}>
                                                                                     <Trash2 className="w-3.5 h-3.5" />
                                                                                 </Button>
                                                                             </div>
@@ -2130,7 +2214,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                     <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-4 w-4" /></Button>
                                                                                                 </div>
                                                                                             ) : (
-                                                                                                <div className="flex items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                                                <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
                                                                                                     <div className="flex-1 flex gap-2 items-center px-2">
                                                                                                         <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
                                                                                                             <ImageIcon className="w-4 h-4 text-slate-500" />
@@ -2379,8 +2463,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     ) : (
                         <>
                             <div className="flex items-end justify-between mb-2">
-                                <h2 className="text-xl font-bold text-slate-800">Questions ({questions.length})</h2>
-                                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Standard Mode</span>
+                                <span className="text-[10px] sm:text-xs text-slate-500 font-medium uppercase tracking-wider block">Questions ({questions.length})</span>
+                                <span className="text-[10px] sm:text-xs text-slate-500 font-medium uppercase tracking-wider">Standard Mode</span>
                             </div>
 
                             {questions.map((q, index) => {
@@ -2444,36 +2528,43 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         >
 
                                             {/* Header Bar: Metadata & Actions */}
-                                            <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-wrap gap-4 items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
-                                                        <GripVertical className="h-4 w-4" />
-                                                    </div>
-                                                    <span className="font-bold text-slate-400 text-sm">#{index + 1}</span>
+                                            <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
+                                                <div className="flex items-center justify-between w-full sm:w-auto">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                                            <GripVertical className="h-4 w-4" />
+                                                        </div>
+                                                        <span className="font-bold text-slate-400 text-sm">#{index + 1}</span>
 
-                                                    {/* Type Selector Pill */}
-                                                    <div onClick={(e) => e.stopPropagation()}>
-                                                        <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
-                                                            <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
-                                                                <SelectValue placeholder="Type" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="single">Single Choice</SelectItem>
-                                                                <SelectItem value="multiple">Multiple Choice</SelectItem>
-                                                                <SelectItem value="numerical">Numerical</SelectItem>
-                                                                {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
+                                                        {/* Type Selector Pill */}
+                                                        <div onClick={(e) => e.stopPropagation()}>
+                                                            <Select value={q.type || 'single'} onValueChange={(val: any) => handleQuestionTypeChange(index, val)}>
+                                                                <SelectTrigger className="h-7 w-auto min-w-[130px] text-xs font-semibold border-slate-200 bg-white shadow-sm rounded-full px-3">
+                                                                    <SelectValue placeholder="Type" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="single">Single Choice</SelectItem>
+                                                                    <SelectItem value="multiple">Multiple Choice</SelectItem>
+                                                                    <SelectItem value="numerical">Numerical</SelectItem>
+                                                                    {!isInGroup && <SelectItem value="comprehension">Passage / Case Study</SelectItem>}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
 
-                                                    {isInGroup && (
-                                                        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase">
-                                                            Passage Q
-                                                        </Badge>
-                                                    )}
+                                                        {isInGroup && (
+                                                            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border-indigo-200 text-[10px] uppercase hidden sm:inline-flex">
+                                                                Passage Q
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* MOBILE Trash Icon */}
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full sm:hidden ml-2 shrink-0" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}>
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
                                                 </div>
 
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                                     {/* Quick Settings Pills */}
                                                     <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
                                                         <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
@@ -2498,7 +2589,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         </div>
                                                     </div>
 
-                                                    <div className="h-6 w-px bg-slate-200 mx-1"></div>
+                                                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
                                                     <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
                                                         <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
@@ -2513,7 +2604,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         </Select>
                                                     </div>
 
-                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}>
+                                                    {/* DESKTOP Trash Icon */}
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full ml-1 hidden sm:flex" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}>
                                                         <Trash2 className="w-3.5 h-3.5" />
                                                     </Button>
                                                 </div>
@@ -2560,7 +2652,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                         </Button>
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="flex items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                    <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
                                                                         <div className="flex-1 flex gap-2 items-center px-2">
                                                                             <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
                                                                                 <ImageIcon className="w-4 h-4 text-slate-500" />
@@ -2942,11 +3034,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                             <button
                                 type="button"
                                 onClick={() => setPreviewImageIndex(0)}
-                                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${
-                                    previewImageIndex === 0
-                                        ? 'border-indigo-500 text-indigo-600 bg-indigo-50/60'
-                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                                }`}
+                                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${previewImageIndex === 0
+                                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50/60'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    }`}
                             >
                                 <Monitor className="w-3.5 h-3.5" />
                                 Desktop View
@@ -2954,11 +3045,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                             <button
                                 type="button"
                                 onClick={() => setPreviewImageIndex(1)}
-                                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${
-                                    previewImageIndex === 1
-                                        ? 'border-indigo-500 text-indigo-600 bg-indigo-50/60'
-                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                                }`}
+                                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-all ${previewImageIndex === 1
+                                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50/60'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                    }`}
                             >
                                 <Smartphone className="w-3.5 h-3.5" />
                                 Phone View

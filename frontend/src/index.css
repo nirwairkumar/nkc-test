@@ -512,3 +512,45 @@ html {
 .docs-sidebar-item.active {
   background: rgba(99, 102, 241, 0.06);
 }
+
+/* ===== Section Swap Animation ===== */
+@keyframes section-swap-glow-anim {
+  0% {
+    background-position: -200% 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0;
+  }
+}
+
+.section-swap-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.section-swap-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 40%,
+    rgba(255, 255, 255, 0.75) 50%,
+    rgba(255, 255, 255, 0.55) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: section-swap-glow-anim 1.2s ease-in-out forwards;
+  pointer-events: none;
+  z-index: 10;
+  border-radius: inherit;
+}

@@ -185,7 +185,7 @@ export default function Navbar() {
                                         <span>Admin</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => navigate('/user-guide')}>
+                                    <DropdownMenuItem onClick={() => window.open('/user-guide', '_blank')}>
                                         <Book className="mr-2 h-4 w-4 text-indigo-600" />
                                         <span>User Guide</span>
                                     </DropdownMenuItem>
@@ -322,7 +322,7 @@ export default function Navbar() {
                                     )}
 
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => navigate('/user-guide')}>
+                                    <DropdownMenuItem onClick={() => window.open('/user-guide', '_blank')}>
                                         <Book className="mr-2 h-4 w-4 text-indigo-600" />
                                         <span>User Guide</span>
                                     </DropdownMenuItem>

@@ -10,7 +10,13 @@ import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
 import { fetchClasses } from '@/lib/classesApi';
 import { fetchUserDetails } from '@/lib/usersApi';
 import { fetchCategories } from '@/lib/categoriesApi';
-import { Globe, Lock } from 'lucide-react';
+import { Globe, Lock, Info } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchCreatorReports, updateReportStatus, Report } from "@/lib/reportsApi";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +92,7 @@ export default function UserTestManager() {
     const [conductExamLoading, setConductExamLoading] = useState(false);
     const [removeExamId, setRemoveExamId] = useState<string | null>(null);
     const [removeExamTitle, setRemoveExamTitle] = useState("");
+    const [removeInfoOpen, setRemoveInfoOpen] = useState<'public' | 'private' | null>(null);
 
     // Creator Check State
     const [isCreator, setIsCreator] = useState<boolean | null>(null);
@@ -235,14 +242,14 @@ export default function UserTestManager() {
             : test.settings;
 
         if (isPublic && updatedSettings) {
-             updatedSettings = {
-                 ...updatedSettings,
-                 force_fullscreen: false,
-                 tab_switch_mode: 'off',
-                 disable_copy_paste: false,
-                 disable_actions: false,
-                 block_back_button: false,
-             };
+            updatedSettings = {
+                ...updatedSettings,
+                force_fullscreen: false,
+                tab_switch_mode: 'off',
+                disable_copy_paste: false,
+                disable_actions: false,
+                block_back_button: false,
+            };
         }
 
         // Optimistic update
@@ -348,53 +355,62 @@ export default function UserTestManager() {
         }
     };
 
-    const handleRemoveExam = (testId: string, testTitle: string) => {
+    const handleRemoveExam = async (testId: string, testTitle: string) => {
+        const test = tests.find(t => t.id === testId);
+        if (!test) return;
+
+        const now = new Date();
+        const testHasEnded = !!test.settings?.schedule?.end_time && new Date(test.settings.schedule.end_time) < now;
+        const isActive = test.settings?.conduct_exam?.enabled && !testHasEnded;
+
+        if (!isActive) {
+            // Inactive exam — remove silently, preserve current visibility
+            setRemoveExamId(testId);
+            setRemoveExamTitle(testTitle);
+            await confirmRemoveExamById(testId, test.is_public ?? false);
+            return;
+        }
+
+        // Active exam — show confirmation popup
         setRemoveExamId(testId);
         setRemoveExamTitle(testTitle);
     };
 
-    const confirmRemoveExam = async (makePublic: boolean = false) => {
-        if (!removeExamId) return;
-        const test = tests.find(t => t.id === removeExamId);
+    const confirmRemoveExamById = async (testId: string, makePublic: boolean) => {
+        const test = tests.find(t => t.id === testId);
         if (!test) return;
 
         const now = new Date();
         const testHasEnded = !!test.settings?.schedule?.end_time && new Date(test.settings.schedule.end_time) < now;
         const wasActive = test.settings?.conduct_exam?.enabled && !testHasEnded;
-
-        // Restore original slug if any
         const originalSlug = test.settings?.conduct_exam?.original_slug || '';
-
         const newSettings = { ...(test.settings || {}) };
-        
+
         if (wasActive) {
             newSettings.conduct_exam = { ...newSettings.conduct_exam, enabled: false };
         } else {
             delete newSettings.conduct_exam;
         }
 
-        const payload: any = {
-            visibility: makePublic ? 'public' : 'private',
-            is_public: makePublic,
-            settings: newSettings,
-        };
+        const payload: any = { visibility: makePublic ? 'public' : 'private', is_public: makePublic, settings: newSettings };
         if (originalSlug) payload.slug = originalSlug;
 
-        // Optimistic
-        setTests(prev => prev.map(t =>
-            t.id === removeExamId ? { ...t, ...payload } : t
-        ));
+        setTests(prev => prev.map(t => t.id === testId ? { ...t, ...payload } : t));
+        setRemoveExamId(null);
 
         try {
-            const { error } = await updateTest(removeExamId, payload, isAdmin);
+            const { error } = await updateTest(testId, payload, isAdmin);
             if (error) throw error;
             toast.success(`Exam removed. Test set to ${makePublic ? 'public' : 'private'}.`);
         } catch (error: any) {
-            toast.error("Failed to remove exam: " + error.message);
-            setTests(prev => prev.map(t => t.id === removeExamId ? { ...t, ...test } : t));
-        } finally {
-            setRemoveExamId(null);
+            toast.error('Failed to remove exam: ' + error.message);
+            setTests(prev => prev.map(t => t.id === testId ? { ...t, ...test } : t));
         }
+    };
+
+    const confirmRemoveExam = async (makePublic: boolean = false) => {
+        if (!removeExamId) return;
+        await confirmRemoveExamById(removeExamId, makePublic);
     };
 
     // ─── Helpers ──────────────────────────────────────────────────
@@ -458,40 +474,40 @@ export default function UserTestManager() {
 
     const hasConductSettings = (t: any) => t.settings?.conduct_exam !== undefined;
 
-    const activeExams = tests.filter(t => 
-        hasConductSettings(t) && 
-        t.settings.conduct_exam.enabled === true && 
+    const activeExams = tests.filter(t =>
+        hasConductSettings(t) &&
+        t.settings.conduct_exam.enabled === true &&
         !hasEnded(t)
     );
-    const inactiveExams = tests.filter(t => 
-        hasConductSettings(t) && 
+    const inactiveExams = tests.filter(t =>
+        hasConductSettings(t) &&
         (t.settings.conduct_exam.enabled === false || hasEnded(t))
     );
     const regularTests = tests; // Show all tests in grid (conducted ones also show with LIVE badge)
 
     return (
-        <div className="container mx-auto max-w-5xl py-6 space-y-6">
+        <div className="container mx-auto max-w-5xl py-3 px-3 sm:py-5 sm:px-4 space-y-4">
             <Tabs defaultValue="tests" onValueChange={(v) => v === 'reports' && loadReports()}>
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Creator Dashboard</h1>
-                        <p className="text-muted-foreground text-sm">Manage your tests and user reports.</p>
+                        <p className="text-[12px] font-medium text-slate-400 uppercase tracking-widest leading-none mb-1">Creator</p>
+                        <p className="text-[27px] font-semibold text-slate-800 tracking-tight leading-tight">Dashboard</p>
                     </div>
-                    <TabsList>
-                        <TabsTrigger value="tests">My Tests</TabsTrigger>
-                        <TabsTrigger value="reports" className="relative">
+                    <TabsList className="h-8">
+                        <TabsTrigger value="tests" className="text-xs px-3 h-7">My Tests</TabsTrigger>
+                        <TabsTrigger value="reports" className="relative text-xs px-3 h-7">
                             Reports
                             {reports.filter(r => r.status === 'open').length > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                                 </span>
                             )}
                         </TabsTrigger>
                     </TabsList>
                 </div>
 
-                <TabsContent value="tests" className="space-y-6 m-0 border-0 p-0">
+                <TabsContent value="tests" className="space-y-3 m-0 border-0 p-0">
 
                     {/* ═══════════════════════════════════════════════
                         ACTIVE EXAMS CONTAINER
@@ -505,28 +521,25 @@ export default function UserTestManager() {
                             </div>
 
                             {/* Header */}
-                            <div className="relative flex items-center justify-between px-5 pt-4 pb-3 border-b border-emerald-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
-                                        <Radio className="w-4 h-4 text-white" />
+                            <div className="relative flex items-center justify-between px-3.5 py-2.5 border-b border-emerald-100">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                                        <Radio className="w-3 h-3 text-white" />
                                     </div>
-                                    <div>
-                                        <h2 className="font-bold text-slate-800 text-sm leading-tight">Active Exams</h2>
-                                        <p className="text-xs text-slate-500">Currently being conducted</p>
-                                    </div>
-                                    <span className="ml-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 animate-pulse">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                    <span className="font-semibold text-slate-800 text-xs">Active Exams</span>
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 animate-pulse shrink-0">
+                                        <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
                                         {activeExams.length} Live
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                    <Shield className="w-3.5 h-3.5" />
-                                    Link-only access
+                                <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                                    <Shield className="w-3 h-3" />
+                                    <span className="hidden sm:inline">Link-only</span>
                                 </div>
                             </div>
 
                             {/* Cards */}
-                            <div className="relative p-4 space-y-3">
+                            <div className="relative px-3 py-2.5 space-y-2">
                                 {activeExams.map(test => {
                                     const conductSlug = test.settings?.conduct_exam?.conduct_slug || test.slug;
                                     const examUrl = conductSlug
@@ -537,65 +550,69 @@ export default function UserTestManager() {
                                     return (
                                         <div
                                             key={test.id}
-                                            className="group relative bg-white rounded-xl border border-emerald-100 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-200 p-4"
+                                            className="group relative bg-white rounded-lg border border-emerald-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-200 p-3"
                                         >
                                             {/* Left accent */}
                                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-xl" />
 
-                                            <div className="pl-3 flex flex-col md:flex-row md:items-center gap-3">
+                                            <div className="pl-3 flex flex-col gap-3">
                                                 {/* Test Info */}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <h3 className="font-semibold text-slate-800 text-sm truncate">{test.title}</h3>
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                            <Radio className="w-2.5 h-2.5" /> LIVE
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <h3 className="font-semibold text-slate-800 text-xs truncate">{test.title}</h3>
+                                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <Radio className="w-2 h-2" /> LIVE
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                                                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400 flex-wrap">
                                                         <span>{questionCount} Qs</span>
                                                         <span>·</span>
                                                         <span>{test.duration || 0} min</span>
-                                                        <span>·</span>
-                                                        <span className="font-mono text-slate-300 truncate max-w-[160px]">/test/{conductSlug}</span>
+                                                        <span className="hidden sm:inline">·</span>
+                                                        <span className="hidden sm:inline font-mono text-slate-300 truncate max-w-[140px]">/test/{conductSlug}</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Quick Actions */}
-                                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                                                        className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
                                                         onClick={() => setConfiguringTest(test)}
                                                     >
-                                                        <Settings className="w-3.5 h-3.5 mr-1.5" /> Settings
+                                                        <Settings className="w-3.5 h-3.5 sm:mr-1.5" />
+                                                        <span className="hidden sm:inline">Settings</span>
                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                                                        className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
                                                         onClick={() => setViewingResultsTest(test)}
                                                     >
-                                                        <BarChart2 className="w-3.5 h-3.5 mr-1.5" /> Results
+                                                        <BarChart2 className="w-3.5 h-3.5 sm:mr-1.5" />
+                                                        <span className="hidden sm:inline">Results</span>
                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 px-3 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300"
+                                                        className="h-8 px-2 sm:px-3 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-colors duration-200 cursor-pointer"
                                                         onClick={async () => {
                                                             await navigator.clipboard.writeText(examUrl);
                                                             toast.success("Exam link copied!");
                                                         }}
                                                     >
-                                                        <LinkIcon className="w-3.5 h-3.5 mr-1.5" /> Copy Link
+                                                        <LinkIcon className="w-3.5 h-3.5 sm:mr-1.5" />
+                                                        <span className="hidden sm:inline">Copy Link</span>
                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 px-3 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                                                        className="h-8 px-2 sm:px-3 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors duration-200 cursor-pointer"
                                                         onClick={() => handleRemoveExam(test.id, test.title)}
                                                     >
-                                                        <X className="w-3.5 h-3.5 mr-1.5" /> Remove
+                                                        <X className="w-3.5 h-3.5 sm:mr-1.5" />
+                                                        <span className="hidden sm:inline">Remove</span>
                                                     </Button>
 
                                                     {/* Full hamburger menu — identical to normal card */}
@@ -658,76 +675,75 @@ export default function UserTestManager() {
                         INACTIVE EXAMS CONTAINER
                     ═══════════════════════════════════════════════ */}
                     {inactiveExams.length > 0 && (
-                        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-slate-100/50 to-slate-50 shadow-sm">
+                        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 shadow-sm">
                             {/* Header */}
-                            <div className="relative flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-200">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center shadow-sm">
-                                        <X className="w-4 h-4 text-white" />
+                            <div className="relative flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-lg bg-slate-400 flex items-center justify-center shrink-0">
+                                        <X className="w-3 h-3 text-white" />
                                     </div>
-                                    <div>
-                                        <h2 className="font-bold text-slate-800 text-sm leading-tight">Inactive Exams</h2>
-                                        <p className="text-xs text-slate-500">Scheduled time has ended</p>
-                                    </div>
-                                    <span className="ml-1 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-600 border border-slate-300">
+                                    <span className="font-semibold text-slate-600 text-xs">Inactive Exams</span>
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-500 border border-slate-300 shrink-0">
                                         {inactiveExams.length} Ended
                                     </span>
                                 </div>
                             </div>
 
                             {/* Cards */}
-                            <div className="relative p-4 space-y-3">
+                            <div className="relative px-3 py-2.5 space-y-2">
                                 {inactiveExams.map(test => {
                                     const questionCount = test.total_questions || test.questions?.length || 0;
 
                                     return (
                                         <div
                                             key={test.id}
-                                            className="group relative bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 p-4 opacity-90 hover:opacity-100"
+                                            className="group relative bg-white rounded-lg border border-slate-200 shadow-sm p-3 opacity-80 hover:opacity-100 transition-opacity duration-200"
                                         >
                                             {/* Left accent */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-300 to-slate-500 rounded-l-xl" />
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-300 to-slate-400 rounded-l-lg" />
 
-                                            <div className="pl-3 flex flex-col md:flex-row md:items-center gap-3">
+                                            <div className="pl-3 flex flex-col gap-2">
                                                 {/* Test Info */}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <h3 className="font-semibold text-slate-700 text-sm truncate line-through decoration-slate-300">{test.title}</h3>
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <h3 className="font-semibold text-slate-500 text-xs truncate line-through decoration-slate-300">{test.title}</h3>
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
                                                             Ended
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                                                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
                                                         <span>{questionCount} Qs</span>
                                                         <span>·</span>
                                                         <span>{test.duration || 0} min</span>
                                                     </div>
                                                 </div>
 
-                                                {/* Quick Actions (Results and Remove only) */}
-                                                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                                                {/* Quick Actions */}
+                                                <div className="flex items-center gap-2 flex-wrap">
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300"
+                                                        className="h-7 px-2 sm:px-3 text-[11px] border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
                                                         onClick={() => setViewingResultsTest(test)}
                                                     >
-                                                        <BarChart2 className="w-3.5 h-3.5 mr-1.5" /> Results
+                                                        <BarChart2 className="w-3 h-3 sm:mr-1" />
+                                                        <span className="hidden sm:inline">Results</span>
                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="h-8 px-3 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                                                        className="h-7 px-2 sm:px-3 text-[11px] border-red-100 text-red-400 hover:bg-red-50 hover:border-red-200 transition-colors duration-200 cursor-pointer"
                                                         onClick={() => handleRemoveExam(test.id, test.title)}
                                                     >
-                                                        <X className="w-3.5 h-3.5 mr-1.5" /> Remove
+                                                        <X className="w-3 h-3 sm:mr-1" />
+                                                        <span className="hidden sm:inline">Remove</span>
                                                     </Button>
 
-                                                    {/* Full hamburger menu */}
+                                                    {/* Hamburger menu */}
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50">
-                                                                <MoreVertical className="h-4 w-4" />
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50">
+                                                                <MoreVertical className="h-3.5 w-3.5" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end" className="w-56">
@@ -782,22 +798,22 @@ export default function UserTestManager() {
                     {/* ═══════════════════════════════════════════════
                         TOOLBAR
                     ═══════════════════════════════════════════════ */}
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
-                        <div className="flex gap-3 items-center flex-wrap">
+                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 sm:items-center">
                             {/* Search Input */}
-                            <div className="relative w-full md:w-64">
+                            <div className="relative w-full sm:w-64">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="search"
                                     placeholder="Search tests..."
-                                    className="pl-9 bg-white"
+                                    className="pl-9 bg-white text-sm h-9"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
 
-                            <Button onClick={() => { setEditingTest(null); setIsTestEditOpen(true); }}>
-                                <Plus className="w-4 h-4 mr-2" /> Create Test
+                            <Button size="sm" className="h-9 text-sm w-full sm:w-auto" onClick={() => { setEditingTest(null); setIsTestEditOpen(true); }}>
+                                <Plus className="w-4 h-4 mr-1.5" /> Create Test
                             </Button>
                         </div>
                     </div>
@@ -940,34 +956,83 @@ export default function UserTestManager() {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* ── Remove Exam Confirmation Dialog ── */}
+            {/* ── Remove Exam Confirmation Dialog (Active exams only) ── */}
             <AlertDialog open={!!removeExamId} onOpenChange={(open) => !open && setRemoveExamId(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                            <X className="w-5 h-5 text-red-500" />
-                            Remove from Conduct?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="space-y-2">
-                            <span className="block">
-                                "<strong>{removeExamTitle}</strong>" will be removed from Active Exams.
-                            </span>
-                            <span className="block text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 text-xs font-medium">
-                                ⚠️ The test will automatically become <strong>Private</strong> and the exam link will stop working.
-                            </span>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setRemoveExamId(null)}>Cancel</AlertDialogCancel>
-                        <div className="flex gap-2 w-full justify-end sm:w-auto">
-                            <AlertDialogAction onClick={() => confirmRemoveExam(true)} className="bg-blue-600 hover:bg-blue-700">
-                                Remove & Set Public
-                            </AlertDialogAction>
-                            <AlertDialogAction onClick={() => confirmRemoveExam(false)} className="bg-red-600 hover:bg-red-700">
-                                Remove & Set Private
-                            </AlertDialogAction>
+                <AlertDialogContent className="max-w-[min(380px,calc(100vw-32px))] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+                    {/* Dark header */}
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-6 pt-6 pb-5 text-center">
+                        <div className="w-11 h-11 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <X className="w-5 h-5 text-red-400" />
                         </div>
-                    </AlertDialogFooter>
+                        <AlertDialogTitle className="text-white text-base font-bold leading-tight">
+                            Stop conducting?
+                        </AlertDialogTitle>
+
+                    </div>
+
+                    {/* Actions */}
+                    <div className="p-4 space-y-2.5">
+                        {/* Public option */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-stretch gap-2">
+                                <AlertDialogAction
+                                    onClick={() => confirmRemoveExam(true)}
+                                    className="flex-1 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl border-0 text-xs font-semibold shadow-lg shadow-indigo-200/50 transition-all active:scale-[0.98] cursor-pointer"
+                                >
+                                    <Globe className="w-3.5 h-3.5 mr-1.5" /> Stop & Make Public
+                                </AlertDialogAction>
+                                <button
+                                    onClick={() => setRemoveInfoOpen(removeInfoOpen === 'public' ? null : 'public')}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
+                                        removeInfoOpen === 'public'
+                                            ? 'bg-indigo-200 text-indigo-700'
+                                            : 'bg-indigo-50 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100'
+                                    }`}
+                                >
+                                    <Info className="w-4 h-4" />
+                                </button>
+                            </div>
+                            {removeInfoOpen === 'public' && (
+                                <div className="text-[11px] leading-relaxed bg-indigo-50 text-indigo-800 border border-indigo-100 rounded-lg px-3 py-2">
+                                    Allow candidates to analyse exam. Anonymous students can also access.
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Private option */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-stretch gap-2">
+                                <AlertDialogAction
+                                    onClick={() => confirmRemoveExam(false)}
+                                    className="flex-1 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl border-0 text-xs font-semibold shadow-lg shadow-red-200/50 transition-all active:scale-[0.98] cursor-pointer"
+                                >
+                                    <Lock className="w-3.5 h-3.5 mr-1.5" /> Stop & Make Private
+                                </AlertDialogAction>
+                                <button
+                                    onClick={() => setRemoveInfoOpen(removeInfoOpen === 'private' ? null : 'private')}
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
+                                        removeInfoOpen === 'private'
+                                            ? 'bg-red-200 text-red-700'
+                                            : 'bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100'
+                                    }`}
+                                >
+                                    <Info className="w-4 h-4" />
+                                </button>
+                            </div>
+                            {removeInfoOpen === 'private' && (
+                                <div className="text-[11px] leading-relaxed bg-red-50 text-red-800 border border-red-100 rounded-lg px-3 py-2">
+                                    Restrict all further access. Results and exam not visible to anyone.
+                                </div>
+                            )}
+                        </div>
+
+                        <AlertDialogCancel
+                            onClick={() => { setRemoveExamId(null); setRemoveInfoOpen(null); }}
+                            className="w-full h-9 border-0 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                    </div>
                 </AlertDialogContent>
             </AlertDialog>
 
