@@ -46,7 +46,7 @@ These rules are enforced at both the Backend (FastAPI routing, Supabase data fet
 ## 2. Backend Enforcement Mechanisms
 
 ### Route: `/tests/slug/{slug}`
-1. **Cache Layer Validation:** Before returning a cached test, the system inspects `visibility`. If a test is cached as `private`, it raises an immediate 404.
+1. **Cache Layer Validation & Purging:** Before returning a cached test, the system inspects `visibility`. If a test is cached as `private`, it raises an immediate 404. When a creator changes a test's visibility (e.g., exiting conduct-exam mode), the backend aggressively purges not only the UUID cache but **all associated slug caches**, ensuring old `conduct_slug`s instantly stop working.
 2. **Slug Matching:** For conduct-exam tests (unlisted), the system relies on the fact that the slug itself serves as the access key. If the slug matches, access is granted.
 3. **Hard Blocking:** Any test returning `visibility == "private"` triggers an immediate 404, preventing slug-based enumeration or access via legacy links.
 
@@ -68,6 +68,11 @@ These rules are enforced at both the Backend (FastAPI routing, Supabase data fet
 Provides a client-side safety net in the event of stale links or bypassed checks.
 - If a test is `private` and the viewer is not the creator, renders a "Test Not Available" screen.
 - If a test is `conduct_exam` and accessed via the wrong route pattern by a non-creator, renders an "Access Restricted" screen instructing the user to use the link provided by their examiner.
+- **Slug-Based Navigation:** When transitioning a student from the Intro Page to the Live Exam (`TestPage`), it strictly navigates using the exact `test.slug` (`/live/{conduct_slug}`) rather than the `test.id`. This prevents the backend's anti-UUID lock from blocking legitimate conduct-exam access.
+
+### `testsApi.ts` & Local Storage Caching
+- **Strict 404 Enforcement:** The frontend API client aggressively clears stale `localStorage` cache data upon receiving a `404 Not Found`. Previously, an aggressive stale-while-revalidate strategy suppressed 404s and allowed "ghost access" to revoked tests via local cache. Now, revoked tests immediately eject the user.
+- **Immediate Error Throwing:** Test and Intro pages are strictly configured to throw access errors even if a fast local cache hit occurred, immediately replacing the stale test UI with an access denied or 404 screen.
 
 ### `UserTestManager.tsx` & `UserTestCard.tsx`
 - **Result Button Conditional Rendering:** The "View Results" action in dropdown menus and action bars is conditionally hidden unless `test.settings.conduct_exam.enabled === true`.
