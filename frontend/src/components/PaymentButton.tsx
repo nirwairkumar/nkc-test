@@ -63,8 +63,8 @@ export default function PaymentButton({ planId, amount, currency = 'INR', promoC
                 key: key,
                 amount: amount,
                 currency: currency,
-                name: "Testoza",
-                description: "Premium Subscription",
+                name: "TestoZa",
+                // description: "Premium Subscription",
                 order_id: order_id,
                 handler: async function (response: any) {
                     // 4. Verify Payment (Start Verification Overlay)
