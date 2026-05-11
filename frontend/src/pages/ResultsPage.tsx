@@ -411,7 +411,7 @@ const ResultsPage = () => {
 
     if (justSubmitted && !popupDismissed && !isAlreadyShown) {
       const timer = setTimeout(() => {
-        setShowPopup(true);
+        // setShowPopup(true); // Temporarily disabled
       }, 5000); // 5 seconds delay
       return () => clearTimeout(timer);
     }

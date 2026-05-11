@@ -81,7 +81,7 @@ const TermsAndConditions = () => {
           ref={addToRefs}
         >
           <p className="text-[15px] text-slate-600 dark:text-slate-300 font-light leading-relaxed">
-            <strong className="text-indigo-600 dark:text-indigo-400 font-medium">Plain-language summary:</strong> By using TestoZa, you agree to use the platform responsibly and honestly. You own the content you create, but give us permission to host it. We are not liable for exam outcomes or results. Violations of these terms — such as cheating or abuse — may result in account suspension. The full details are below.
+            <strong className="text-indigo-600 dark:text-indigo-400 font-medium">Plain-language summary:</strong> By using TestoZa, you agree to use the platform responsibly and honestly. You own the content you create, but give us permission to host it. <strong className="text-indigo-600 dark:text-indigo-400 font-medium">Note: Public tests may be used, modified, or monetized by TestoZa.</strong> We are not liable for exam outcomes or results. Violations of these terms — such as cheating or abuse — may result in account suspension. The full details are below.
           </p>
         </div>
 
@@ -299,8 +299,11 @@ const TermsAndConditions = () => {
           <p className="text-slate-600 dark:text-slate-300 font-light leading-relaxed mb-4">
             You retain full ownership of the content you create on the Platform — including tests, questions, notes, and educational materials ("Your Content"). By submitting or publishing Your Content on the Platform, you grant TestoZa a non-exclusive, royalty-free, worldwide licence to host, store, display, and distribute Your Content solely for the purpose of operating and improving the Platform.
           </p>
+          <p className="text-slate-600 dark:text-slate-300 font-light leading-relaxed mb-4 bg-indigo-50/30 dark:bg-indigo-950/20 p-4 rounded-lg border-l-2 border-indigo-500">
+            <strong className="text-slate-900 dark:text-white font-medium">Public Content Usage:</strong> If you choose to make Your Content (such as tests or materials) **Public** on the Platform, you acknowledge and agree that TestoZa reserves the right to use such content for any purpose at its sole discretion. This includes, without limitation, the right to edit, modify, publish, monetize, sell, distribute, allow other users to copy or conduct exams using said content, or remove it from the Platform without further notice or compensation to you.
+          </p>
           <p className="text-slate-600 dark:text-slate-300 font-light leading-relaxed mb-6">
-            This licence ends when you delete Your Content or close your account, except where copies have been made as part of backups or shared by other users.
+            This licence for private content ends when you delete Your Content or close your account, except where copies have been made as part of backups or shared by other users.
           </p>
           <p className="font-medium text-[15px] text-slate-800 dark:text-slate-200 mb-3">By submitting Your Content, you represent and warrant that:</p>
           <ul className="space-y-3 mb-6">
