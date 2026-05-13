@@ -562,7 +562,10 @@ export default function TestIntroPage() {
 
         let sectionMaxMarks = 0;
 
-        if (sectionMaxMarks === 0 && sec.questions) {
+        // Use backend computed marks if available
+        if (test.computed_max_marks?.section_max_marks && test.computed_max_marks.section_max_marks[sec.id] !== undefined) {
+            sectionMaxMarks = test.computed_max_marks.section_max_marks[sec.id];
+        } else if (sec.questions) {
             const marksList = sec.questions.map((q: any) => {
                 const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
                 return isNaN(m) ? 0 : m;
@@ -583,9 +586,16 @@ export default function TestIntroPage() {
     const hasAnyAttemptControl = test.enable_section_mode && test.sections?.some((s: any) => s.attempt_control && (s.attempt_control.enabled !== false));
 
     let totalMaxMarks = 0;
-    if (test.total_max_marks !== undefined) {
+    // 1. Prioritize the pre-calculated database column (Bypassing calculations)
+    if (test.total_max_marks !== undefined && test.total_max_marks !== 0) {
         totalMaxMarks = test.total_max_marks;
-    } else if (test.enable_section_mode && test.sections) {
+    } 
+    // 2. Fallback to backend enrichment only if DB column is missing/zero
+    else if (test.computed_max_marks?.total_max_marks !== undefined) {
+        totalMaxMarks = test.computed_max_marks.total_max_marks;
+    } 
+    // 3. Last resort fallback to local calculation
+    else if (test.enable_section_mode && test.sections) {
         totalMaxMarks = test.sections.reduce((acc, sec) => acc + getSectionDetails(sec).sectionMaxMarks, 0);
     } else if (test.questions) {
         test.questions.forEach((q: any) => {

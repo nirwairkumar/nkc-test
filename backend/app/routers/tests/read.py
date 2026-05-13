@@ -28,7 +28,7 @@ async def get_tests_batch(
             set_public_cache(response)
         id_list = [id.strip() for id in ids.split(",")]
         # Fetch tests metadata but EXCLUDING large questions JSONB
-        response = db.table("tests").select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)").in_("id", id_list).execute()
+        response = db.table("tests").select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, total_max_marks, classes(name)").in_("id", id_list).execute()
         
         # Enrich with creator info and categories
         tests = response.data
@@ -94,7 +94,7 @@ async def get_tests_feed(
                 giant_or.append(f"custom_id.ilike.%{tok}%")
 
             query = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, description, tags, classes(name)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, description, tags, total_max_marks, classes(name)")\
                 .eq("is_public", True)
 
             if category_test_ids is not None:
@@ -137,7 +137,7 @@ async def get_tests_feed(
         else:
              # Standard Feed Query
             query = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, classes(name)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, total_max_marks, classes(name)")\
                 .eq("is_public", True)\
                 .order("created_at", desc=True)
 
@@ -215,7 +215,7 @@ async def get_user_tests(
                 giant_or.append(f"custom_id.ilike.%{tok}%")
                 
             query_search = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, total_max_marks, classes(name), test_votes(count)")\
                 .eq("created_by", user_id)\
                 .or_(",".join(giant_or))\
                 .limit(800)
@@ -245,7 +245,7 @@ async def get_user_tests(
         else:
             # Default fetch — include settings/visibility/slug for conduct exam detection
             query_default = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks, classes(name), test_votes(count)")\
                 .eq("created_by", user_id)\
                 .order("created_at", desc=True)
             if profile_view:
@@ -438,7 +438,15 @@ async def get_test_by_id(
             test["categories"] = []
 
         # Add computed max marks info
-        test["computed_max_marks"] = calculate_test_max_marks(test)
+        # Optimization: Only calculate marks if the pre-calculated DB column is empty or zero
+        if not test.get("total_max_marks"):
+            test["computed_max_marks"] = calculate_test_max_marks(test)
+        else:
+            # Still provide the object structure for frontend consistency, using the DB value
+            test["computed_max_marks"] = {
+                "total_max_marks": test["total_max_marks"],
+                "section_max_marks": {} # Sections will fallback to calculation if needed
+            }
 
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")
