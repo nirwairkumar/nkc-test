@@ -101,7 +101,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [time, setTime] = useState<number>(30);
     const [marks, setMarks] = useState<number>(1);
     const [negativeMarks, setNegativeMarks] = useState<number>(0);
-    const [isPublic, setIsPublic] = useState(true);
+    const [isPublic, setIsPublic] = useState(false);
 
     // Category State
     const [categories, setCategories] = useState<any[]>([]);
@@ -516,7 +516,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setTime(data.duration || 30);
         setMarks(data.marks_per_question || 4);
         setNegativeMarks(data.negative_marks || 1);
-        setIsPublic(data.is_public ?? true);
+        setIsPublic(data.is_public ?? false);
 
         // CLEAR old data so React registers a sharp state transition
         setQuestions([]);
@@ -1100,7 +1100,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             setTime(30);
             setMarks(4);
             setNegativeMarks(1);
-            setIsPublic(true);
+            setIsPublic(false);
             setQuestions([{ ...DEFAULT_QUESTION, id: 1, options: { ...DEFAULT_QUESTION.options } }]);
             setSelectedCategories([]);
             setTags([]);
