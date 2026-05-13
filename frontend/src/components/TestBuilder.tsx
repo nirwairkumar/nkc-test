@@ -276,15 +276,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         };
     }, []);
 
-    // Smooth scroll behavior on page load
-    useEffect(() => {
-        // Blur any focused element (prevents cursor on option D)
-        if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-        }
+        // Track initial mount to prevent re-triggering scroll effects
+        const hasInitialScrolled = React.useRef(false);
 
-        // First, scroll to top instantly
-        window.scrollTo({ top: 0, behavior: 'instant' });
+        // Smooth scroll behavior on page load
+        useEffect(() => {
+            if (hasInitialScrolled.current) return;
+            hasInitialScrolled.current = true; // Set it immediately to prevent multiple timers on rapid re-renders
+
+            // Blur any focused element (prevents cursor on option D)
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
+
+            // First, scroll to top instantly
+            window.scrollTo({ top: 0, behavior: 'instant' });
 
         // Then, after a brief delay, smoothly scroll to the first question
         const timer = setTimeout(() => {
@@ -312,6 +318,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 };
 
                 requestAnimationFrame(animation);
+                hasInitialScrolled.current = true;
             }
         }, 1000); // 1 second delay to show the top of the page
 
@@ -453,7 +460,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const handleAutoSave = async () => {
         if (!title.trim()) return; // Silent fail if no title
 
-        setSaveStatus('saving');
+        if (saveStatus !== 'saving') setSaveStatus('saving');
         try {
             await performSave(true);
             setSaveStatus('saved');
@@ -1348,7 +1355,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     }
 
     return (
-        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 w-full max-w-5xl overflow-x-hidden">
+        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 w-full max-w-5xl overflow-x-hidden" style={{ overflowAnchor: 'none', overscrollBehaviorY: 'contain' }}>
             <div className="mb-2 sm:mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-0 gap-2 sm:gap-4">
                 <div className="flex items-center gap-3">
                     {onCancel && (
@@ -1845,7 +1852,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                 {/* Format Support Note */}
                 <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-md text-sm overflow-hidden transition-all duration-300">
-                    <button 
+                    <button
                         onClick={() => setShowSupportedFormats(!showSupportedFormats)}
                         className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-blue-100/50 transition-colors"
                     >
@@ -1859,15 +1866,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                             <ChevronDown className="w-4 h-4 text-blue-400" />
                         )}
                     </button>
-                    
+
                     {showSupportedFormats && (
                         <div className="px-4 pb-3 pt-1 border-t border-blue-100 animate-in fade-in slide-in-from-top-2 duration-300">
                             <p className="text-blue-700/80 pl-8">
                                 You can use <strong>LaTeX</strong> for mathematical equations (e.g., <code className="bg-blue-100 px-1 rounded">\( E = mc^2 \)</code>).
                                 Markdown formatting is also supported for bold, italics, and lists to help you create the best test experience.
-                                <a 
-                                    href="/user-guide/chemistry-notation" 
-                                    target="_blank" 
+                                <a
+                                    href="/user-guide/chemistry-notation"
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium ml-1 underline decoration-blue-200 underline-offset-2 hover:decoration-blue-400 transition-all"
                                 >
@@ -1909,9 +1916,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             onDragStart={(e) => handleDragStartSection(e, section.id)}
                                             onDragOver={(e) => e.preventDefault()}
                                             onDrop={(e) => handleDropSection(e, section.id)}
-                                            className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2 transition-all duration-300 ${
-                                                swappedSections.has(section.id) ? 'scale-[1.01] shadow-lg brightness-105' : ''
-                                            } ${swapGlowSections.has(section.id) ? 'section-swap-glow' : ''}`}
+                                            className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2 transition-all duration-300 ${swappedSections.has(section.id) ? 'scale-[1.01] shadow-lg brightness-105' : ''
+                                                } ${swapGlowSections.has(section.id) ? 'section-swap-glow' : ''}`}
                                         >
                                             <div className={`${style.header} border-b flex items-center transition-colors duration-300 ${collapsedSections.has(section.id) ? 'px-3 py-2' : 'px-4 py-3 flex-wrap gap-4'}`}>
                                                 {/* Collapsed: show only drag handle + section name chip + expand button */}
@@ -2104,7 +2110,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     )}
 
                                                                     <Card className={`
-                                                                        group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
+                                                                        group relative shadow-sm hover:shadow-md transition-all duration-300 bg-white
                                                                         ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
                                                                         ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
                                                                     `}>
@@ -2138,7 +2144,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         </Badge>
                                                                                     )}
                                                                                 </div>
-                                                                                
+
                                                                                 <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full sm:hidden ml-2 shrink-0" onClick={() => handleRemoveQuestionFromSection(sIdx, qIdx)} disabled={section.questions.length === 1}>
                                                                                     <Trash2 className="w-3.5 h-3.5" />
                                                                                 </Button>
@@ -2557,7 +2563,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             </Badge>
                                                         )}
                                                     </div>
-                                                    
+
                                                     {/* MOBILE Trash Icon */}
                                                     <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full sm:hidden ml-2 shrink-0" onClick={() => handleRemoveQuestion(index)} disabled={questions.length === 1}>
                                                         <Trash2 className="w-3.5 h-3.5" />

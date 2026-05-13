@@ -149,6 +149,12 @@ export function ScientificCalculator({ onClose, className }: { onClose?: () => v
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't intercept if user is typing in a textarea or input
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                return;
+            }
+
             if (e.key >= '0' && e.key <= '9') handlePress(e.key);
             if (e.key === '.') handlePress('.');
             if (e.key === '+') handlePress('+');

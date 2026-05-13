@@ -56,7 +56,7 @@ export default function CreateTestPage() {
                 keywords={["create test online", "free quiz maker", "exam builder", "test generator"]}
             />
             <TestBuilder
-                key={importedData ? `imported-${importedData.questions?.length || 0}` : 'new'}
+                key={importedData ? 'imported-test' : 'new-test'}
                 initialData={importedData}
                 onAiImport={() => setShowImporter(true)}
             />
