@@ -23,7 +23,11 @@ This update covers multiple critical enhancements across the platform, including
 - **Keyboard Hijack Fix**: Patched `ScientificCalculator.tsx` to ignore global keyboard shortcuts (like `Enter`) when the user is actively typing in an input, textarea, or contenteditable element.
 - **Layout Anchoring**: Added `overflow-anchor: none` and `overscroll-behavior-y: contain` to the main editor container to suppress browser-native scroll adjustments during LaTeX rendering.
 
-### 4. Search & Analytics Performance
+### 4. Visibility & Access Control
+- **Default to Private**: Updated the `TestBuilder` state so that all new tests now default to **Private** visibility instead of Public. This ensures that creators have a chance to review their work before sharing it with the community.
+- **Form Reset Logic**: The "Clear Form" action now also resets the visibility to Private.
+
+### 5. Search & Analytics Performance
 - **Backend Query Optimization**: Updated `read.py` to include `total_max_marks` in common test selection queries, ensuring marks are available on test cards without extra API calls.
 
 ## Modified Files
