@@ -21,7 +21,7 @@ This update covers multiple critical enhancements across the platform, including
 - **Mount Scroll Stability**: Implemented a `hasInitialScrolled` ref in `TestBuilder.tsx` to ensure the welcome scroll animation only runs once on the initial mount.
 - **Remount Prevention**: Updated `CreateTestPage.tsx` to use a stable key for the `TestBuilder` component, preventing unnecessary unmounting/remounting during state updates.
 - **Keyboard Hijack Fix**: Patched `ScientificCalculator.tsx` to ignore global keyboard shortcuts (like `Enter`) when the user is actively typing in an input, textarea, or contenteditable element.
-- **Layout Anchoring**: Added `overflow-anchor: none` and `overscroll-behavior-y: contain` to the main editor container to suppress browser-native scroll adjustments during LaTeX rendering.
+- **Layout Anchoring**: Added `overflow-anchor: none` to the main editor container to suppress browser-native scroll anchor jumping during LaTeX rendering. ⚠️ `overscroll-behavior-y: contain` was **removed** as it incorrectly trapped scroll events inside the container, blocking all page-level scrolling in the Test Builder.
 
 ### 4. Visibility & Access Control
 - **Default to Private**: Updated the `TestBuilder` state so that all new tests now default to **Private** visibility instead of Public. This ensures that creators have a chance to review their work before sharing it with the community.

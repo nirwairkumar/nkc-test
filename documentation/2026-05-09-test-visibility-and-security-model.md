@@ -80,3 +80,20 @@ Provides a client-side safety net in the event of stale links or bypassed checks
 
 ### `TestSettingsPanel.tsx`
 - "View Results" buttons within the settings interface are hidden for non-conduct tests, ensuring visual consistency with backend capabilities.
+
+---
+
+## 4. Link Patterns Summary
+
+For future reference, here are the exact URL patterns used by the platform for various test states:
+
+| Test Mode | Test-Intro Page Link | Live Test Link | Access Logic |
+| :--- | :--- | :--- | :--- |
+| **Public** | `/test/:slug` | `/live/:slug` | Open to all users via slug or UUID. |
+| **Private** | `/test/unlisted-:id` | `/live/unlisted-:id` | Restricted to Creator; slug contains `unlisted-` prefix. |
+| **Conduct** | `/test/:conduct_slug` | `/live/:conduct_slug` | Accessible ONLY via the unique Conduct Slug. |
+
+### Key Navigation Rules:
+- **Intro to Live:** The "Start Test" mechanism always navigates to `/live/${test.slug || test.id}`.
+- **Conduct Mode Lock:** In Conduct Mode, accessing the test via its original public slug or UUID will result in an "Access Restricted" or "404" screen for non-creators.
+- **Slug Management:** Switching visibility from Public to Private automatically prepends `unlisted-` to the slug, effectively breaking any legacy public links.

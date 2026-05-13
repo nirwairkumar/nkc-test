@@ -47,12 +47,14 @@ const EmptyState = ({ isAdmin }: { isAdmin: boolean }) => {
 const PricingCard = ({
     plan,
     isCurrentPlan,
+    isExpiredPlan,
     isPremium,
     formatPrice,
     isPopular,
 }: {
     plan: Plan;
     isCurrentPlan: boolean;
+    isExpiredPlan: boolean;
     isPremium: boolean;
     formatPrice: (p: number) => string;
     isPopular: boolean;
@@ -87,6 +89,13 @@ const PricingCard = ({
         setPromoCode('');
     };
 
+    const getDurationLabel = (days: number) => {
+        if (days >= 365) return 'year';
+        if (days >= 28) return 'month';
+        if (days >= 7) return 'week';
+        return 'day';
+    };
+    const durationLabel = getDurationLabel(plan.duration_days);
     const isYearly = plan.duration_days >= 365;
 
     return (
@@ -94,6 +103,8 @@ const PricingCard = ({
             className={`relative flex flex-col rounded-2xl overflow-hidden border transition-all duration-300
                 ${isCurrentPlan
                     ? 'border-emerald-400 shadow-[0_0_30px_-5px_rgba(16,185,129,0.25)] ring-2 ring-emerald-400/20 bg-gradient-to-b from-white to-emerald-50/30 dark:from-slate-900 dark:to-emerald-950/20'
+                    : isExpiredPlan
+                    ? 'border-red-300 shadow-[0_0_20px_-5px_rgba(239,68,68,0.15)] ring-2 ring-red-200/40 bg-gradient-to-b from-white to-red-50/20 dark:from-slate-900 dark:to-red-950/10'
                     : isPopular
                     ? 'border-indigo-400 shadow-xl bg-white dark:bg-slate-900'
                     : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-800'
@@ -101,7 +112,7 @@ const PricingCard = ({
             `}
         >
             {/* Popular banner */}
-            {isPopular && !isCurrentPlan && (
+            {isPopular && !isCurrentPlan && !isExpiredPlan && (
                 <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2 text-xs font-bold flex items-center justify-center gap-1.5 tracking-wider">
                     <Star className="w-3 h-3" /> MOST POPULAR
                 </div>
@@ -111,6 +122,13 @@ const PricingCard = ({
             {isCurrentPlan && (
                 <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white py-2 text-xs font-bold flex items-center justify-center gap-1.5 tracking-wider">
                     <Check className="w-3.5 h-3.5" /> CURRENT SUBSCRIPTION
+                </div>
+            )}
+
+            {/* Expired plan banner */}
+            {isExpiredPlan && (
+                <div className="bg-gradient-to-r from-red-500 to-rose-600 text-white py-2 text-xs font-bold flex items-center justify-center gap-1.5 tracking-wider">
+                    ⚠️ SUBSCRIPTION EXPIRED — RENEW NOW
                 </div>
             )}
 
@@ -140,7 +158,7 @@ const PricingCard = ({
                             <span className="text-3xl sm:text-4xl font-extrabold text-emerald-600 dark:text-emerald-400">
                                 {formatPrice(appliedPromo.finalPrice)}
                             </span>
-                            <span className="text-sm text-slate-500 font-medium">/ {isYearly ? 'year' : 'month'}</span>
+                            <span className="text-sm text-slate-500 font-medium">/ {durationLabel}</span>
                         </div>
                         <Badge variant="outline" className="border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs mt-1">
                             💰 Save {formatPrice(appliedPromo.discount)} with {appliedPromo.code}
@@ -152,7 +170,7 @@ const PricingCard = ({
                             {formatPrice(plan.price)}
                         </span>
                         <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                            / {isYearly ? 'year' : 'month'}
+                            / {durationLabel}
                         </span>
                     </div>
                 )}
@@ -227,13 +245,15 @@ const PricingCard = ({
                         amount={appliedPromo ? appliedPromo.finalPrice : plan.price}
                         promoCode={appliedPromo ? appliedPromo.code : undefined}
                         className={`w-full h-11 text-sm font-bold shadow-sm ${
-                            isPopular
+                            isExpiredPlan
+                                ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700'
+                                : isPopular
                                 ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
                                 : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
                         }`}
                         onSuccess={() => window.location.reload()}
                     >
-                        {isPremium ? '🔄 Switch Plan' : '🚀 Get Started'}
+                        {isExpiredPlan ? '🔄 Renew Plan' : isPremium ? '🔄 Switch Plan' : '🚀 Get Started'}
                     </PaymentButton>
                 )}
             </div>
@@ -243,7 +263,7 @@ const PricingCard = ({
 
 export default function PricingPage() {
     const { isAdmin } = useAuth();
-    const { isPremium, planId: currentPlanId } = usePremiumStatus();
+    const { isPremium, planId: currentPlanId, expiryDate } = usePremiumStatus();
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -321,7 +341,8 @@ export default function PricingPage() {
                             <PricingCard
                                 key={plan.id}
                                 plan={plan}
-                                isCurrentPlan={currentPlanId === plan.id}
+                                isCurrentPlan={isPremium && currentPlanId === plan.id}
+                                isExpiredPlan={!isPremium && currentPlanId === plan.id}
                                 isPremium={isPremium}
                                 formatPrice={formatPrice}
                                 isPopular={plan.id === popularPlanId}
