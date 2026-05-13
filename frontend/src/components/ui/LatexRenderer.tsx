@@ -223,11 +223,13 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 return key;
             };
 
-            // 1. Replace display math $$...$$
+            // 1. Replace display math $$...$$ and \[...\]
             result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex) => saveBlock(processMathBlock(tex, true)));
+            result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_match, tex) => saveBlock(processMathBlock(tex, true)));
 
-            // 2. Replace inline math $...$
+            // 2. Replace inline math $...$ and \(...\)
             result = result.replace(/\$([^\$]*?)\$/g, (_match, tex) => saveBlock(processMathBlock(tex, false)));
+            result = result.replace(/\\\(([\s\S]*?)\\\)/g, (_match, tex) => saveBlock(processMathBlock(tex, false)));
 
             // 3. Fallback: Search for \begin{array} OUTSIDE of delimiters
             if (result.includes('\\begin{array}')) {
