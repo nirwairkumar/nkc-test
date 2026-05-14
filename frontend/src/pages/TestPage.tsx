@@ -1017,7 +1017,7 @@ export default function TestPage() {
     }
 
     const finalScore = (isNaN(score) || !isFinite(score)) ? 0 : parseFloat(score.toFixed(2));
-    
+
     // Compute exact completion percentage based on visited questions instead of defaulting to 100
     const totalQ = test.questions?.length || 1;
     const finalCompletionPercentage = Math.round((visited.size / totalQ) * 100);
@@ -1071,13 +1071,13 @@ export default function TestPage() {
 
     if (error) {
       console.error("Save Attempt Error:", error);
-      
+
       // Detailed error for admin debugging
-      const errorMsg = error?.response?.data?.detail 
-        || error?.response?.data?.message 
-        || error?.message 
+      const errorMsg = error?.response?.data?.detail
+        || error?.response?.data?.message
+        || error?.message
         || (typeof error === 'string' ? error : JSON.stringify(error, Object.getOwnPropertyNames(error)));
-        
+
       window.alert(`Submission Error Log (Take Screenshot):\n\n${JSON.stringify(error?.response?.data || error, null, 2)}\n\nMessage: ${errorMsg}`);
       toast.error('Failed to save results. See popup for details.', { duration: 10000 });
       setIsSubmitting(false);
@@ -1641,11 +1641,10 @@ export default function TestPage() {
             <>
               {/* Connection health dot — always visible, beside Exit button */}
               <span
-                className={`inline-block w-2 h-2 rounded-full transition-colors shrink-0 ${
-                  connectionStatus === 'online' ? 'bg-emerald-400' :
+                className={`inline-block w-2 h-2 rounded-full transition-colors shrink-0 ${connectionStatus === 'online' ? 'bg-emerald-400' :
                   connectionStatus === 'offline' ? 'bg-red-400 animate-pulse' :
-                  'bg-amber-400 animate-pulse'
-                }`}
+                    'bg-amber-400 animate-pulse'
+                  }`}
                 title={connectionStatus === 'online' ? 'Connected' : connectionStatus === 'offline' ? 'No internet — answers saved locally' : 'Reconnecting...'}
               />
               <Button
@@ -1670,134 +1669,354 @@ export default function TestPage() {
         <div className={`
           flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 relative transition-all duration-300 ease-in-out
         `}>
-          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
-          {/* Collapse Toggle Button (Desktop Only) */}
-          <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-50 translate-x-1/2">
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={() => setIsPaletteCollapsed(!isPaletteCollapsed)}
-              className="h-8 w-8 rounded-full shadow-md border border-slate-200 bg-white hover:bg-slate-100 text-slate-600"
-              title={isPaletteCollapsed ? "Expand Palette" : "Collapse Palette"}
-            >
-              {isPaletteCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </Button>
-          </div>
-          {/* Section Tabs */}
-          {test.enable_section_mode && test.sections && (
-            <div className="flex-none flex gap-2 p-2 overflow-x-auto bg-white dark:bg-slate-900 scrollbar-hide">
-              {(() => {
-                let runningIndex = 0;
-                return test.sections.map((section: any, idx: number) => {
-                  const startIndex = runningIndex;
-                  const count = section.questions.length; // Assumes structure is preserved in JSON even if flat list used for render
-                  const endIndex = startIndex + count - 1;
-                  runningIndex += count;
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {/* Collapse Toggle Button (Desktop Only) */}
+            <div className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 z-50 translate-x-1/2">
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={() => setIsPaletteCollapsed(!isPaletteCollapsed)}
+                className="h-8 w-8 rounded-full shadow-md border border-slate-200 bg-white hover:bg-slate-100 text-slate-600"
+                title={isPaletteCollapsed ? "Expand Palette" : "Collapse Palette"}
+              >
+                {isPaletteCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </Button>
+            </div>
+            {/* Section Tabs */}
+            {test.enable_section_mode && test.sections && (
+              <div className="flex-none flex gap-2 p-2 overflow-x-auto bg-white dark:bg-slate-900 scrollbar-hide">
+                {(() => {
+                  let runningIndex = 0;
+                  return test.sections.map((section: any, idx: number) => {
+                    const startIndex = runningIndex;
+                    const count = section.questions.length; // Assumes structure is preserved in JSON even if flat list used for render
+                    const endIndex = startIndex + count - 1;
+                    runningIndex += count;
 
-                  const isActive = currentQuestionIndex >= startIndex && currentQuestionIndex <= endIndex;
+                    const isActive = currentQuestionIndex >= startIndex && currentQuestionIndex <= endIndex;
 
-                  return (
-                    <button
-                      key={section.id}
-                      onClick={() => setCurrentQuestionIndex(startIndex)}
-                      title={section.name}
-                      className={`
+                    return (
+                      <button
+                        key={section.id}
+                        onClick={() => setCurrentQuestionIndex(startIndex)}
+                        title={section.name}
+                        className={`
                                 flex items-center justify-between gap-2 px-4 py-2 text-sm font-bold border transition-colors whitespace-nowrap min-w-[140px]
                                 ${isActive
-                          ? 'bg-[#0073E6] text-white border-[#0073E6]'
-                          : 'bg-white text-[#0073E6] border-slate-300 hover:bg-blue-50'}
+                            ? 'bg-[#0073E6] text-white border-[#0073E6]'
+                            : 'bg-white text-[#0073E6] border-slate-300 hover:bg-blue-50'}
                             `}
-                    >
-                      <span className="truncate">{section.name}</span>
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Info
-                              className={`w-4 h-4 cursor-pointer hover:scale-110 active:scale-95 transition-transform ${isActive ? 'text-white/80' : 'text-[#0073E6]/70'}`}
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-2 text-sm max-w-[200px]" side="top">
-                            <p className="font-semibold text-center">{section.name}</p>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </button>
-                  );
-                });
-              })()}
-            </div>
-          )}
-
-          {/* Mobile Palette Trigger (Floating Action Button) */}
-          <div className="lg:hidden fixed bottom-[55px] right-0 z-50">
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  size="icon"
-                  className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-transform hover:scale-105"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[80%] sm:w-[380px] flex flex-col h-full">
-                <SheetHeader>
-                  <SheetTitle>Questions</SheetTitle>
-                </SheetHeader>
-                <div className="py-4 flex-1 overflow-y-auto pb-6">
-                  {/* Legend - Above Palette */}
-                  <div className="mb-4">
-                    <div className="grid grid-cols-2 gap-y-2 mb-2 text-[10px] text-muted-foreground">
-                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-white border border-slate-200 rounded-md text-[9px] flex items-center justify-center font-bold">1</div> Not Visited</div>
-                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-red-500 border border-red-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white">2</div> Not Answered</div>
-                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-green-500 border border-green-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white">3</div> Answered</div>
-                      <div className="flex items-center gap-2"><div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white">4</div> Review</div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white relative">
-                          5
-                          <div className="absolute -bottom-1 -right-1 bg-white rounded-full"><CheckCircle className="w-2.5 h-2.5 text-green-500 fill-white" /></div>
+                      >
+                        <span className="truncate">{section.name}</span>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Info
+                                className={`w-4 h-4 cursor-pointer hover:scale-110 active:scale-95 transition-transform ${isActive ? 'text-white/80' : 'text-[#0073E6]/70'}`}
+                              />
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-2 text-sm max-w-[200px]" side="top">
+                              <p className="font-semibold text-center">{section.name}</p>
+                            </PopoverContent>
+                          </Popover>
                         </div>
-                        <span className="ml-2">Ans & Review</span>
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+            )}
+
+            {/* Mobile Palette Trigger (Floating Action Button) */}
+            <div className="lg:hidden fixed bottom-[55px] right-0 z-50">
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    size="icon"
+                    className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-transform hover:scale-105"
+                  >
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[80%] sm:w-[380px] flex flex-col h-full">
+                  <SheetHeader>
+                    <SheetTitle>Questions</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4 flex-1 overflow-y-auto pb-6">
+                    {/* Legend - Above Palette */}
+                    <div className="mb-4">
+                      <div className="grid grid-cols-2 gap-y-2 mb-2 text-[10px] text-muted-foreground">
+                        <div className="flex items-center gap-2"><div className="w-5 h-5 bg-white border border-slate-200 rounded-md text-[9px] flex items-center justify-center font-bold">1</div> Not Visited</div>
+                        <div className="flex items-center gap-2"><div className="w-5 h-5 bg-red-500 border border-red-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white">2</div> Not Answered</div>
+                        <div className="flex items-center gap-2"><div className="w-5 h-5 bg-green-500 border border-green-600 rounded-md text-[9px] flex items-center justify-center font-bold text-white">3</div> Answered</div>
+                        <div className="flex items-center gap-2"><div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white">4</div> Review</div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 bg-purple-600 border border-purple-700 rounded-md text-[9px] flex items-center justify-center font-bold text-white relative">
+                            5
+                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full"><CheckCircle className="w-2.5 h-2.5 text-green-500 fill-white" /></div>
+                          </div>
+                          <span className="ml-2">Ans & Review</span>
+                        </div>
                       </div>
+                      <hr className="border-slate-200 dark:border-slate-700" />
                     </div>
-                    <hr className="border-slate-200 dark:border-slate-700" />
+
+                    <QuestionPalette onQuestionClick={() => setIsMobileMenuOpen(false)} />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {currentQuestion.passageContent ? (
+              /* SPLIT VIEW FOR COMPREHENSION */
+              /* SPLIT VIEW FOR COMPREHENSION */
+              <div className="flex-1 w-full overflow-y-visible lg:overflow-hidden flex flex-col lg:flex-row gap-2 lg:gap-4 pb-0 p-1 pt-1 lg:pt-1">
+                {/* Passage Pane (Desktop) */}
+                <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-800 shadow-sm custom-scrollbar">
+                  <div className="p-4 border-b dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
+                    <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                      <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px]">Passage</span>
+                    </h3>
+                  </div>
+                  <div className="p-6 text-base leading-relaxed text-slate-800 dark:text-slate-200 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
+                    <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer>
+                  </div>
+                </div>
+
+                {/* Question Pane */}
+                <div className="flex-1 h-auto lg:h-full lg:overflow-y-auto lg:pr-2 overflow-y-visible">
+                  {/* Mobile Passage (Full View) */}
+                  <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
+                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Passage</div>
+                    <div className="text-[15px] leading-relaxed h-auto bg-slate-50 p-4 rounded-lg border border-slate-100 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
+                      <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer>
+                    </div>
                   </div>
 
-                  <QuestionPalette onQuestionClick={() => setIsMobileMenuOpen(false)} />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+                  <Card className="min-h-[400px] shadow-sm border-0 bg-white dark:bg-slate-900 w-full h-auto block">
+                    <CardContent className="p-3 md:p-4 gap-2 flex flex-col h-auto">
+                      {/* Question Header */}
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">Question {currentQuestionIndex + 1}</span>
+                          <span className="inline-flex items-center rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 border border-slate-200">
+                            {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
+                              currentQuestion.type === 'numerical' ? 'Numerical' :
+                                currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
+                          </span>
+                        </div>
 
-          {currentQuestion.passageContent ? (
-            /* SPLIT VIEW FOR COMPREHENSION */
-            /* SPLIT VIEW FOR COMPREHENSION */
-            <div className="flex-1 w-full overflow-y-visible lg:overflow-hidden flex flex-col lg:flex-row gap-2 lg:gap-4 pb-0 p-1 pt-1 lg:pt-1">
-              {/* Passage Pane (Desktop) */}
-              <div className="hidden lg:block w-1/2 h-full overflow-y-auto bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-800 shadow-sm custom-scrollbar">
-                <div className="p-4 border-b dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 sticky top-0 z-10 backdrop-blur-sm">
-                  <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                    <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded text-[10px]">Passage</span>
-                  </h3>
-                </div>
-                <div className="p-6 text-base leading-relaxed text-slate-800 dark:text-slate-200 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
-                  <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer>
+                        {(() => {
+                          // 1. Determine Fallback Pattern (Section Default or Test Default)
+                          let fallbackMarks = 4;
+                          let fallbackNeg = 1;
+                          let targetQ = currentQuestion; // Default to flat question
+                          let forceSectionMarks = false;
+
+                          if (test.enable_section_mode && test.sections) {
+                            const markingModel = test.section_marking_model || 'section-wise';
+                            if (markingModel === 'section-wise') {
+                              forceSectionMarks = true;
+                            }
+
+                            let runningCount = 0;
+                            for (const section of test.sections) {
+                              if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
+                                fallbackMarks = parseMark(section.marks_per_question, 4);
+                                fallbackNeg = parseMark(section.negative_marks, 1);
+                                const localIdx = currentQuestionIndex - runningCount;
+                                if (section.questions[localIdx]) {
+                                  targetQ = section.questions[localIdx];
+                                }
+                                break;
+                              }
+                              runningCount += section.questions.length;
+                            }
+                          } else {
+                            fallbackMarks = parseMark(test.marks_per_question, 4);
+                            fallbackNeg = parseMark(test.negative_marks, 1);
+                          }
+
+                          const marksVal = forceSectionMarks
+                            ? fallbackMarks
+                            : parseMark(targetQ.marks, fallbackMarks);
+
+                          const negVal = forceSectionMarks
+                            ? fallbackNeg
+                            : parseMark(targetQ.negativeMarks, fallbackNeg);
+
+                          return (
+                            <div className="flex items-center gap-1">
+                              <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded border border-slate-100 dark:border-slate-800">
+                                <span className="text-emerald-700">+{parseFloat(marksVal.toFixed(2))}</span>
+                                <span className="text-slate-300">|</span>
+                                <span className="text-red-600">-{parseFloat(negVal.toFixed(2))}</span>
+                              </div>
+                              {renderReportQuestionButton(targetQ.id)}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Divider */}
+                      <hr className="border-slate-200 mb-3" />
+
+                      {/* Question Text */}
+                      <div
+                        className="relative text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words px-2 py-4 md:px-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]"
+                        style={{ fontSize: `${fontSize}px` }}
+                      >
+                        {/* Subtle Font Size Adjuster */}
+                        <div className="absolute -top-3 -right-2 flex items-center gap-0 opacity-10 hover:opacity-100 transition-opacity z-10 print:hidden">
+                          <button
+                            onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
+                            className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                            title="Decrease font size"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
+                            className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                            title="Increase font size"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="overflow-x-auto max-w-full">
+                          <LatexRenderer>{currentQuestion.question}</LatexRenderer>
+                        </div>
+                      </div>
+
+                      {/* Question Image */}
+                      {currentQuestion.image && (
+                        <div className="mb-8 flex justify-center">
+                          <img
+                            src={currentQuestion.image.trim()}
+                            alt={`Question ${currentQuestionIndex + 1}`}
+                            referrerPolicy="no-referrer"
+                            className="max-w-full max-h-[400px] rounded-lg border border-slate-200 shadow-sm object-contain bg-white"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Options Area */}
+                      <div className="space-y-4 mt-6">
+                        {currentQuestion.type !== 'numerical' && (
+                          <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
+                        )}
+                        {currentQuestion.type === 'numerical' ? (
+                          <div className="flex flex-col gap-4">
+                            <div className="max-w-xs">
+                              <Label className="mb-2 block text-slate-600">Your Answer</Label>
+                              <Input
+                                type="text"
+                                inputMode="none"
+                                placeholder="Enter value"
+                                value={answers[currentQuestion.id] || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (!/^-?\d*\.?\d*$/.test(val)) return;
+                                  const currentAns = answers[currentQuestion.id];
+                                  const isCurrentlyAnswered = currentAns !== undefined && currentAns !== '';
+                                  if (val !== '' && !isCurrentlyAnswered) {
+                                    if (!checkAttemptLimit(currentQuestion.id)) return;
+                                  }
+                                  setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+                                }}
+                                className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12 focus-visible:ring-blue-500 font-bold"
+                              />
+                            </div>
+                            <VirtualNumericPad
+                              onKeyPress={(key) => handleNumericKeypadPress(key, currentQuestion.id)}
+                              className="max-w-[280px]"
+                            />
+                          </div>
+                        ) : (
+                          Object.entries(currentQuestion.options || {}).map(([key, text]) => {
+                            const isSelected = currentQuestion.type === 'multiple'
+                              ? (Array.isArray(answers[currentQuestion.id]) && (answers[currentQuestion.id] as any).includes(key))
+                              : answers[currentQuestion.id] === key;
+
+                            const optionImage = currentQuestion.optionImages?.[key];
+
+                            return (
+                              <div
+                                key={key}
+                                onClick={() => {
+                                  if (currentQuestion.type === 'multiple') {
+                                    const current = (answers[currentQuestion.id] as any) || [];
+                                    const newAnswers = Array.isArray(current) ? [...current] : [];
+
+                                    if (newAnswers.includes(key)) {
+                                      newAnswers.splice(newAnswers.indexOf(key), 1);
+                                    } else {
+                                      newAnswers.push(key);
+                                    }
+                                    newAnswers.sort();
+                                    setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
+                                  } else {
+                                    handleAnswerSelect(currentQuestion.id, key);
+                                  }
+                                }}
+                                className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all group relative
+                                                 ${isSelected
+                                    ? 'border-blue-500 bg-blue-50/50 shadow-sm ring-1 ring-blue-500/20'
+                                    : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'}
+                                             `}
+                              >
+                                <div className={`h-7 w-7 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors mt-0.5
+                                                 ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
+                                                 ${isSelected
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-blue-400 group-hover:text-blue-600'}
+                                             `}>
+                                  {currentQuestion.type === 'multiple' && isSelected ? <CheckCircle className="w-4 h-4" /> : key}
+                                </div>
+
+                                <div className="flex-1 flex flex-col gap-2">
+                                  {text && (
+                                    <div
+                                      className="text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"
+                                      style={{ fontSize: `${Math.max(14, fontSize - 2)}px` }}
+                                    >
+                                      <LatexRenderer>{text}</LatexRenderer>
+                                    </div>
+                                  )}
+                                  {optionImage && (
+                                    <img
+                                      src={optionImage.trim()}
+                                      alt={`Option ${key}`}
+                                      referrerPolicy="no-referrer"
+                                      className="max-w-[200px] max-h-[200px] rounded-md border border-slate-200 object-contain bg-white"
+                                      onError={(e) => {
+                                        const target = e.currentTarget;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
-
-              {/* Question Pane */}
-              <div className="flex-1 h-auto lg:h-full lg:overflow-y-auto lg:pr-2 overflow-y-visible">
-                {/* Mobile Passage (Full View) */}
-                <div className="lg:hidden bg-white p-4 rounded-lg border mb-4 shadow-sm">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Passage</div>
-                  <div className="text-[15px] leading-relaxed h-auto bg-slate-50 p-4 rounded-lg border border-slate-100 [&_a]:pointer-events-none [&_a]:cursor-text [&_a]:no-underline [&_a]:text-current">
-                    <LatexRenderer>{currentQuestion.passageContent}</LatexRenderer> 
-                  </div>
-                </div>
-
-                <Card className="min-h-[400px] shadow-sm border-0 bg-white dark:bg-slate-900 w-full h-auto block">
+            ) : (
+              /* STANDARD VIEW */
+              /* STANDARD VIEW */
+              <div className="flex-1 w-full h-auto flex flex-col gap-2 lg:gap-6 lg:pr-2 pb-4 px-0 py-1 lg:px-1 lg:pt-1 overflow-y-visible overflow-x-hidden">
+                <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
                   <CardContent className="p-3 md:p-4 gap-2 flex flex-col h-auto">
                     {/* Question Header */}
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex justify-between items-center mb-1">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">Question {currentQuestionIndex + 1}</span>
                         <span className="inline-flex items-center rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 border border-slate-200">
@@ -1808,75 +2027,46 @@ export default function TestPage() {
                       </div>
 
                       {(() => {
-                        // 1. Determine Fallback Pattern (Section Default or Test Default)
-                        let fallbackMarks = 4;
-                        let fallbackNeg = 1;
-                        let targetQ = currentQuestion; // Default to flat question
-                        let forceSectionMarks = false;
+                        const getDisplayVal = (val: any, fallback: string | number) => {
+                          if (val !== undefined && val !== null && val !== '') return val;
+                          return fallback;
+                        };
+
+                        let marks = getDisplayVal(test.marks_per_question, 4);
+                        let neg = getDisplayVal(test.negative_marks, 1);
 
                         if (test.enable_section_mode && test.sections) {
-                          const markingModel = test.section_marking_model || 'section-wise';
-                          if (markingModel === 'section-wise') {
-                            forceSectionMarks = true;
-                          }
-
                           let runningCount = 0;
                           for (const section of test.sections) {
                             if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
-                              fallbackMarks = parseMark(section.marks_per_question, 4);
-                              fallbackNeg = parseMark(section.negative_marks, 1);
+                              marks = getDisplayVal(section.marks_per_question, 4);
+                              neg = getDisplayVal(section.negative_marks, 1);
                               const localIdx = currentQuestionIndex - runningCount;
                               if (section.questions[localIdx]) {
-                                targetQ = section.questions[localIdx];
+                                const qMarks = section.questions[localIdx].marks;
+                                const qNeg = section.questions[localIdx].negativeMarks;
+                                if (qMarks !== undefined && qMarks !== '') marks = qMarks;
+                                if (qNeg !== undefined && qNeg !== '') neg = qNeg;
                               }
                               break;
                             }
                             runningCount += section.questions.length;
                           }
                         } else {
-                          fallbackMarks = parseMark(test.marks_per_question, 4);
-                          fallbackNeg = parseMark(test.negative_marks, 1);
+                          const qMarks = currentQuestion.marks;
+                          const qNeg = currentQuestion.negativeMarks;
+                          if (qMarks !== undefined && qMarks !== '') marks = qMarks;
+                          if (qNeg !== undefined && qNeg !== '') neg = qNeg;
                         }
 
-                        const marksVal = forceSectionMarks
-                          ? fallbackMarks
-                          : parseMark(targetQ.marks, fallbackMarks);
-
-                        const negVal = forceSectionMarks
-                          ? fallbackNeg
-                          : parseMark(targetQ.negativeMarks, fallbackNeg);
-
                         return (
-                          <div className="flex items-center gap-2">
-                            {/* Font Size Adjuster */}
-                            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                                onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
-                                title="Decrease Font Size"
-                              >
-                                <Minus className="w-3.5 h-3.5" />
-                              </Button>
-                              <span className="text-[10px] font-bold text-slate-400 min-w-[14px] text-center">{fontSize}</span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                                onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
-                                title="Increase Font Size"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-
+                          <div className="flex items-center gap-1">
                             <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded border border-slate-100 dark:border-slate-800">
-                              <span className="text-emerald-700">+{parseFloat(marksVal.toFixed(2))}</span>
+                              <span className="text-emerald-700">+{marks}</span>
                               <span className="text-slate-300">|</span>
-                              <span className="text-red-600">-{parseFloat(negVal.toFixed(2))}</span>
+                              <span className="text-red-600">-{neg}</span>
                             </div>
-                            {renderReportQuestionButton(targetQ.id)}
+                            {renderReportQuestionButton(currentQuestion.id)}
                           </div>
                         );
                       })()}
@@ -1887,10 +2077,27 @@ export default function TestPage() {
 
                     {/* Question Text */}
                     {/* Question Text */}
-                    <div 
-                      className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]"
+                    <div
+                      className="relative text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words px-2 py-4 md:px-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]"
                       style={{ fontSize: `${fontSize}px` }}
                     >
+                      {/* Subtle Font Size Adjuster */}
+                      <div className="absolute -top-4 -right-1 flex items-center gap-0 opacity-10 hover:opacity-100 transition-opacity z-10 print:hidden">
+                        <button
+                          onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
+                          className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                          title="Decrease font size"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
+                          className="p-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                          title="Increase font size"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
                       <div className="overflow-x-auto max-w-full">
                         <LatexRenderer>{currentQuestion.question}</LatexRenderer>
                       </div>
@@ -1959,12 +2166,19 @@ export default function TestPage() {
                                 if (currentQuestion.type === 'multiple') {
                                   const current = (answers[currentQuestion.id] as any) || [];
                                   const newAnswers = Array.isArray(current) ? [...current] : [];
+                                  const isCurrentlyAnswered = newAnswers.length > 0;
 
                                   if (newAnswers.includes(key)) {
                                     newAnswers.splice(newAnswers.indexOf(key), 1);
                                   } else {
                                     newAnswers.push(key);
                                   }
+
+                                  const willBeAnswered = newAnswers.length > 0;
+                                  if (!isCurrentlyAnswered && willBeAnswered) {
+                                    if (!checkAttemptLimit(currentQuestion.id)) return;
+                                  }
+
                                   newAnswers.sort();
                                   setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
                                 } else {
@@ -1977,6 +2191,7 @@ export default function TestPage() {
                                   : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'}
                                              `}
                             >
+                              {/* Option Key (A, B, C...) */}
                               <div className={`h-7 w-7 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors mt-0.5
                                                  ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
                                                  ${isSelected
@@ -1986,9 +2201,10 @@ export default function TestPage() {
                                 {currentQuestion.type === 'multiple' && isSelected ? <CheckCircle className="w-4 h-4" /> : key}
                               </div>
 
+                              {/* Option Text/Image */}
                               <div className="flex-1 flex flex-col gap-2">
                                 {text && (
-                                  <div 
+                                  <div
                                     className="text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"
                                     style={{ fontSize: `${Math.max(14, fontSize - 2)}px` }}
                                   >
@@ -2001,10 +2217,6 @@ export default function TestPage() {
                                     alt={`Option ${key}`}
                                     referrerPolicy="no-referrer"
                                     className="max-w-[200px] max-h-[200px] rounded-md border border-slate-200 object-contain bg-white"
-                                    onError={(e) => {
-                                      const target = e.currentTarget;
-                                      target.style.display = 'none';
-                                    }}
                                   />
                                 )}
                               </div>
@@ -2016,233 +2228,7 @@ export default function TestPage() {
                   </CardContent>
                 </Card>
               </div>
-            </div>
-          ) : (
-            /* STANDARD VIEW */
-            /* STANDARD VIEW */
-            <div className="flex-1 w-full h-auto flex flex-col gap-2 lg:gap-6 lg:pr-2 pb-4 p-1 pt-1 lg:pt-1 overflow-y-visible overflow-x-hidden">
-              <Card className="min-h-[500px] shadow-none border-none bg-transparent w-full h-auto block">
-                <CardContent className="p-3 md:p-4 gap-2 flex flex-col h-auto">
-                  {/* Question Header */}
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">Question {currentQuestionIndex + 1}</span>
-                      <span className="inline-flex items-center rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 border border-slate-200">
-                        {currentQuestion.type === 'multiple' ? 'Multiple Choice' :
-                          currentQuestion.type === 'numerical' ? 'Numerical' :
-                            currentQuestion.type === 'comprehension' ? 'Passage' : 'Single Choice'}
-                      </span>
-                    </div>
-
-                    {(() => {
-                      const getDisplayVal = (val: any, fallback: string | number) => {
-                        if (val !== undefined && val !== null && val !== '') return val;
-                        return fallback;
-                      };
-
-                      let marks = getDisplayVal(test.marks_per_question, 4);
-                      let neg = getDisplayVal(test.negative_marks, 1);
-
-                      if (test.enable_section_mode && test.sections) {
-                        let runningCount = 0;
-                        for (const section of test.sections) {
-                          if (currentQuestionIndex >= runningCount && currentQuestionIndex < runningCount + section.questions.length) {
-                            marks = getDisplayVal(section.marks_per_question, 4);
-                            neg = getDisplayVal(section.negative_marks, 1);
-                            const localIdx = currentQuestionIndex - runningCount;
-                            if (section.questions[localIdx]) {
-                              const qMarks = section.questions[localIdx].marks;
-                              const qNeg = section.questions[localIdx].negativeMarks;
-                              if (qMarks !== undefined && qMarks !== '') marks = qMarks;
-                              if (qNeg !== undefined && qNeg !== '') neg = qNeg;
-                            }
-                            break;
-                          }
-                          runningCount += section.questions.length;
-                        }
-                      } else {
-                        const qMarks = currentQuestion.marks;
-                        const qNeg = currentQuestion.negativeMarks;
-                        if (qMarks !== undefined && qMarks !== '') marks = qMarks;
-                        if (qNeg !== undefined && qNeg !== '') neg = qNeg;
-                      }
-
-                      return (
-                        <div className="flex items-center gap-2">
-                          {/* Font Size Adjuster */}
-                          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                              onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
-                              title="Decrease Font Size"
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </Button>
-                            <span className="text-[10px] font-bold text-slate-400 min-w-[14px] text-center">{fontSize}</span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
-                              onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
-                              title="Increase Font Size"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-
-                          <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded border border-slate-100 dark:border-slate-800">
-                            <span className="text-emerald-700">+{marks}</span>
-                            <span className="text-slate-300">|</span>
-                            <span className="text-red-600">-{neg}</span>
-                          </div>
-                          {renderReportQuestionButton(currentQuestion.id)}
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Divider */}
-                  <hr className="border-slate-200 mb-3" />
-
-                  {/* Question Text */}
-                  {/* Question Text */}
-                  <div 
-                    className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]"
-                    style={{ fontSize: `${fontSize}px` }}
-                  >
-                    <div className="overflow-x-auto max-w-full">
-                      <LatexRenderer>{currentQuestion.question}</LatexRenderer>
-                    </div>
-                  </div>
-
-                  {/* Question Image */}
-                  {currentQuestion.image && (
-                    <div className="mb-8 flex justify-center">
-                      <img
-                        src={currentQuestion.image.trim()}
-                        alt={`Question ${currentQuestionIndex + 1}`}
-                        referrerPolicy="no-referrer"
-                        className="max-w-full max-h-[400px] rounded-lg border border-slate-200 shadow-sm object-contain bg-white"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Options Area */}
-                  <div className="space-y-4 mt-6">
-                    {currentQuestion.type !== 'numerical' && (
-                      <div className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-1">Options</div>
-                    )}
-                    {currentQuestion.type === 'numerical' ? (
-                      <div className="flex flex-col gap-4">
-                        <div className="max-w-xs">
-                          <Label className="mb-2 block text-slate-600">Your Answer</Label>
-                          <Input
-                            type="text"
-                            inputMode="none"
-                            placeholder="Enter value"
-                            value={answers[currentQuestion.id] || ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (!/^-?\d*\.?\d*$/.test(val)) return;
-                              const currentAns = answers[currentQuestion.id];
-                              const isCurrentlyAnswered = currentAns !== undefined && currentAns !== '';
-                              if (val !== '' && !isCurrentlyAnswered) {
-                                if (!checkAttemptLimit(currentQuestion.id)) return;
-                              }
-                              setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
-                            }}
-                            className="text-lg bg-white dark:bg-slate-950 dark:border-slate-800 h-12 focus-visible:ring-blue-500 font-bold"
-                          />
-                        </div>
-                        <VirtualNumericPad
-                          onKeyPress={(key) => handleNumericKeypadPress(key, currentQuestion.id)}
-                          className="max-w-[280px]"
-                        />
-                      </div>
-                    ) : (
-                      Object.entries(currentQuestion.options || {}).map(([key, text]) => {
-                        const isSelected = currentQuestion.type === 'multiple'
-                          ? (Array.isArray(answers[currentQuestion.id]) && (answers[currentQuestion.id] as any).includes(key))
-                          : answers[currentQuestion.id] === key;
-
-                        const optionImage = currentQuestion.optionImages?.[key];
-
-                        return (
-                          <div
-                            key={key}
-                            onClick={() => {
-                              if (currentQuestion.type === 'multiple') {
-                                const current = (answers[currentQuestion.id] as any) || [];
-                                const newAnswers = Array.isArray(current) ? [...current] : [];
-                                const isCurrentlyAnswered = newAnswers.length > 0;
-
-                                if (newAnswers.includes(key)) {
-                                  newAnswers.splice(newAnswers.indexOf(key), 1);
-                                } else {
-                                  newAnswers.push(key);
-                                }
-
-                                const willBeAnswered = newAnswers.length > 0;
-                                if (!isCurrentlyAnswered && willBeAnswered) {
-                                  if (!checkAttemptLimit(currentQuestion.id)) return;
-                                }
-
-                                newAnswers.sort();
-                                setAnswers(prev => ({ ...prev, [currentQuestion.id]: newAnswers }));
-                              } else {
-                                handleAnswerSelect(currentQuestion.id, key);
-                              }
-                            }}
-                            className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all group relative
-                                                 ${isSelected
-                                ? 'border-blue-500 bg-blue-50/50 shadow-sm ring-1 ring-blue-500/20'
-                                : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 bg-white'}
-                                             `}
-                          >
-                            {/* Option Key (A, B, C...) */}
-                            <div className={`h-7 w-7 flex items-center justify-center font-bold text-sm border shrink-0 transition-colors mt-0.5
-                                                 ${currentQuestion.type === 'multiple' ? 'rounded-md' : 'rounded-full'}
-                                                 ${isSelected
-                                ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-slate-50 text-slate-500 border-slate-200 group-hover:border-blue-400 group-hover:text-blue-600'}
-                                             `}>
-                              {currentQuestion.type === 'multiple' && isSelected ? <CheckCircle className="w-4 h-4" /> : key}
-                            </div>
-
-                            {/* Option Text/Image */}
-                            <div className="flex-1 flex flex-col gap-2">
-                              {text && (
-                                <div 
-                                  className="text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"
-                                  style={{ fontSize: `${Math.max(14, fontSize - 2)}px` }}
-                                >
-                                  <LatexRenderer>{text}</LatexRenderer>
-                                </div>
-                              )}
-                              {optionImage && (
-                                <img
-                                  src={optionImage.trim()}
-                                  alt={`Option ${key}`}
-                                  referrerPolicy="no-referrer"
-                                  className="max-w-[200px] max-h-[200px] rounded-md border border-slate-200 object-contain bg-white"
-                                />
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+            )}
           </div>
 
           {/* Bottom Controls */}
