@@ -6,7 +6,7 @@ import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
 import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -73,6 +73,7 @@ export default function TestPage() {
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [fontSize, setFontSize] = useState(18);
 
   // State
   const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
@@ -1846,8 +1847,31 @@ export default function TestPage() {
                           : parseMark(targetQ.negativeMarks, fallbackNeg);
 
                         return (
-                          <div className="flex items-center gap-1">
-                            <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                          <div className="flex items-center gap-2">
+                            {/* Font Size Adjuster */}
+                            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                                onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
+                                title="Decrease Font Size"
+                              >
+                                <Minus className="w-3.5 h-3.5" />
+                              </Button>
+                              <span className="text-[10px] font-bold text-slate-400 min-w-[14px] text-center">{fontSize}</span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                                onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
+                                title="Increase Font Size"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+
+                            <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded border border-slate-100 dark:border-slate-800">
                               <span className="text-emerald-700">+{parseFloat(marksVal.toFixed(2))}</span>
                               <span className="text-slate-300">|</span>
                               <span className="text-red-600">-{parseFloat(negVal.toFixed(2))}</span>
@@ -1863,7 +1887,10 @@ export default function TestPage() {
 
                     {/* Question Text */}
                     {/* Question Text */}
-                    <div className="text-lg md:text-xl text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]">
+                    <div 
+                      className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]"
+                      style={{ fontSize: `${fontSize}px` }}
+                    >
                       <div className="overflow-x-auto max-w-full">
                         <LatexRenderer>{currentQuestion.question}</LatexRenderer>
                       </div>
@@ -1960,7 +1987,14 @@ export default function TestPage() {
                               </div>
 
                               <div className="flex-1 flex flex-col gap-2">
-                                {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><LatexRenderer>{text}</LatexRenderer></div>}
+                                {text && (
+                                  <div 
+                                    className="text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"
+                                    style={{ fontSize: `${Math.max(14, fontSize - 2)}px` }}
+                                  >
+                                    <LatexRenderer>{text}</LatexRenderer>
+                                  </div>
+                                )}
                                 {optionImage && (
                                   <img
                                     src={optionImage.trim()}
@@ -2034,8 +2068,31 @@ export default function TestPage() {
                       }
 
                       return (
-                        <div className="flex items-center gap-1">
-                          <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                        <div className="flex items-center gap-2">
+                          {/* Font Size Adjuster */}
+                          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                              onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
+                              title="Decrease Font Size"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </Button>
+                            <span className="text-[10px] font-bold text-slate-400 min-w-[14px] text-center">{fontSize}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 p-0 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50"
+                              onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
+                              title="Increase Font Size"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+
+                          <div className="text-xs font-medium flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded border border-slate-100 dark:border-slate-800">
                             <span className="text-emerald-700">+{marks}</span>
                             <span className="text-slate-300">|</span>
                             <span className="text-red-600">-{neg}</span>
@@ -2051,7 +2108,10 @@ export default function TestPage() {
 
                   {/* Question Text */}
                   {/* Question Text */}
-                  <div className="text-lg md:text-xl text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]">
+                  <div 
+                    className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed break-words p-4 rounded-lg selection:bg-blue-100 selection:text-blue-900 tracking-wide [word-spacing:1.5px] [&_.katex]:[word-spacing:normal]"
+                    style={{ fontSize: `${fontSize}px` }}
+                  >
                     <div className="overflow-x-auto max-w-full">
                       <LatexRenderer>{currentQuestion.question}</LatexRenderer>
                     </div>
@@ -2157,7 +2217,14 @@ export default function TestPage() {
 
                             {/* Option Text/Image */}
                             <div className="flex-1 flex flex-col gap-2">
-                              {text && <div className="text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"><LatexRenderer>{text}</LatexRenderer></div>}
+                              {text && (
+                                <div 
+                                  className="text-slate-700 dark:text-slate-300 leading-relaxed max-w-[95%] break-words pt-0.5"
+                                  style={{ fontSize: `${Math.max(14, fontSize - 2)}px` }}
+                                >
+                                  <LatexRenderer>{text}</LatexRenderer>
+                                </div>
+                              )}
                               {optionImage && (
                                 <img
                                   src={optionImage.trim()}
