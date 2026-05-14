@@ -17,14 +17,13 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { updateProfile } from '@/lib/usersApi';
-
+import { UserCircle2, Loader2, Sparkles } from 'lucide-react';
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -101,63 +100,118 @@ export default function OnboardingPage() {
     }
 
     if (loading) {
-        return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+        return (
+            <div className="flex justify-center items-center min-h-screen bg-slate-50 dark:bg-slate-950">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+            </div>
+        );
     }
 
     return (
-        <div className="flex flex-col justify-center items-center min-h-screen bg-slate-50">
-            <Card className="w-[400px]">
-                <CardHeader>
-                    <CardTitle>Welcome to Testoza</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Full Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="John Doe" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            {/* Hero Header */}
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
+                <div className="max-w-2xl mx-auto">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">
+                        Welcome aboard
+                    </p>
+                    <p className="text-xl sm:text-2xl font-bold text-white">
+                        Set Up Your Profile
+                    </p>
+                    {/* <p className="text-sm text-slate-400 mt-1">
+                        Tell us a little about yourself to get started.
+                    </p> */}
+                </div>
+            </div>
 
-                            <FormField
-                                control={form.control}
-                                name="designation"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Designation</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+            {/* Content pulled up over the hero */}
+            <div className="px-4 -mt-10 pb-10 max-w-2xl mx-auto space-y-4">
+
+                {/* Form Card */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+                    {/* Card Header */}
+                    <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                        <UserCircle2 className="h-4 w-4 text-indigo-500" />
+                        <div>
+                            <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">
+                                Your Details
+                            </p>
+                            {/* <p className="text-xs text-slate-400">
+                                This helps us personalise your experience.
+                            </p> */}
+                        </div>
+                    </div>
+
+                    {/* Form Body */}
+                    <div className="p-4">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                                Full Name <span className="text-red-400 normal-case tracking-normal font-normal">*</span>
+                                            </FormLabel>
                                             <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select designation" />
-                                                </SelectTrigger>
+                                                <Input
+                                                    placeholder="e.g. Arjun Sharma"
+                                                    className="h-10 text-sm"
+                                                    {...field}
+                                                />
                                             </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="Student">Student</SelectItem>
-                                                <SelectItem value="Teacher">Teacher</SelectItem>
-                                                <SelectItem value="Institution">Institution</SelectItem>
-                                                <SelectItem value="Guest">Guest</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                            <Button type="submit" className="w-full" disabled={isLoading}>
-                                {isLoading ? 'Saving...' : 'Continue'}
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+                                <FormField
+                                    control={form.control}
+                                    name="designation"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                                                I am a <span className="text-red-400 normal-case tracking-normal font-normal">*</span>
+                                            </FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-10 text-sm">
+                                                        <SelectValue placeholder="Select your role" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Student">Student</SelectItem>
+                                                    <SelectItem value="Teacher">Teacher</SelectItem>
+                                                    <SelectItem value="Institution">Institution</SelectItem>
+                                                    <SelectItem value="Guest">Guest</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-10 text-sm font-semibold"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
+                                    ) : (
+                                        <><Sparkles className="mr-2 h-4 w-4" />Continue to TestoZa</>
+                                    )}
+                                </Button>
+                            </form>
+                        </Form>
+                    </div>
+                </div>
+
+                {/* Info blurb */}
+
+
+            </div>
         </div>
     );
 }
