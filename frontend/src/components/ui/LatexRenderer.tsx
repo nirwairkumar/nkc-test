@@ -224,11 +224,13 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
             };
 
             // 1. Replace display math $$...$$ and \[...\]
-            result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex) => saveBlock(processMathBlock(tex, true)));
+            // Using lookbehind to ignore escaped \$$
+            result = result.replace(/(?<!\\)\$\$\s*([\s\S]*?)\s*(?<!\\)\$\$/g, (_match, tex) => saveBlock(processMathBlock(tex, true)));
             result = result.replace(/\\\[([\s\S]*?)\\\]/g, (_match, tex) => saveBlock(processMathBlock(tex, true)));
 
             // 2. Replace inline math $...$ and \(...\)
-            result = result.replace(/\$([^\$]*?)\$/g, (_match, tex) => saveBlock(processMathBlock(tex, false)));
+            // Using lookbehind to ignore escaped \$
+            result = result.replace(/(?<!\\)\$((?:\\\$|[^\$])*?)(?<!\\)\$/g, (_match, tex) => saveBlock(processMathBlock(tex, false)));
             result = result.replace(/\\\(([\s\S]*?)\\\)/g, (_match, tex) => saveBlock(processMathBlock(tex, false)));
 
             // 3. Fallback: Search for \begin{array} OUTSIDE of delimiters
@@ -246,6 +248,9 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
             // 5. Convert newlines to <br/> tags
             result = result.replace(/\n/g, '<br/>');
+
+            // 5.5 Replace escaped dollars with literal dollars outside of math blocks
+            result = result.replace(/\\\$/g, '$');
 
             // 6. Restore math blocks and images
             result = result.replace(/__BLOCK_PH_\d+__/g, (match) => blockMap[match] || match);
