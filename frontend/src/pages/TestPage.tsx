@@ -90,6 +90,7 @@ export default function TestPage() {
   const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
   const [fullScreenLogs, setFullScreenLogs] = useState<{ event: string, timestamp: number }[]>([]);
   const [isFullScreen, setIsFullScreen] = useState(true);
+  const [violationWarningData, setViolationWarningData] = useState<{show: boolean, title: string, message: string}>({show: false, title: '', message: ''});
 
   // ── Phase 2: Connection health indicator state ──
   type ConnectionStatus = 'online' | 'offline' | 'reconnecting';
@@ -573,22 +574,38 @@ export default function TestPage() {
   const handleViolation = (reason: string) => {
     if (!test?.settings) return;
 
+    const isFullScreenReason = reason === "Exited Full Screen";
+
     if (MAX_WARNINGS === null) {
       // No limit — warn only, never auto-submit
       setWarnings(prev => prev + 1);
-      toast.warning(`⚠️ Violation: ${reason} is not allowed!`);
+      if (!isFullScreenReason) {
+        setViolationWarningData({ show: true, title: "⚠️ Violation Detected", message: `${reason} is not allowed!` });
+      } else {
+        toast.warning(`⚠️ Violation: ${reason} is not allowed!`);
+      }
     } else if (MAX_WARNINGS === 0) {
       // Strict Mode (0 warnings allowed)
+      if (!isFullScreenReason) {
+        setViolationWarningData({ show: true, title: "Strict Mode Violation", message: `${reason} is not allowed. Test Auto-Submitting.` });
+      }
       toast.error(`Strict Mode Violation: ${reason}. Test Auto-Submitting.`);
       confirmSubmit();
     } else {
       // Has a limit (e.g. 2, 3, 4, 5)
       if (warnings >= MAX_WARNINGS) {
+        if (!isFullScreenReason) {
+          setViolationWarningData({ show: true, title: "Maximum Violations Reached", message: `You have reached the maximum limit of violations (${reason}). Test Auto-Submitting.` });
+        }
         toast.error(`Maximum violations reached (${reason}). Test Auto-Submitting.`);
         confirmSubmit();
       } else {
         setWarnings(prev => prev + 1);
-        toast.warning(`Warning ${warnings + 1}/${MAX_WARNINGS}: ${reason} is not allowed!`);
+        if (!isFullScreenReason) {
+          setViolationWarningData({ show: true, title: "⚠️ Warning", message: `Warning ${warnings + 1}/${MAX_WARNINGS}: ${reason} is not allowed!` });
+        } else {
+          toast.warning(`Warning ${warnings + 1}/${MAX_WARNINGS}: ${reason} is not allowed!`);
+        }
       }
     }
 
@@ -2495,6 +2512,28 @@ export default function TestPage() {
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-11 text-base shadow-md"
             >
               <Maximize2 className="w-5 h-5" /> Return to Full Screen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* General Violation Warning Dialog */}
+      <AlertDialog open={violationWarningData.show}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600 flex items-center gap-2 text-xl font-bold uppercase tracking-tight">
+              <TriangleAlert className="w-6 h-6 stroke-[2.5px]" /> {violationWarningData.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-slate-700 dark:text-slate-300">
+              {violationWarningData.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setViolationWarningData(prev => ({ ...prev, show: false }))}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white gap-2 h-11 text-base shadow-md"
+            >
+              Understand & Continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
