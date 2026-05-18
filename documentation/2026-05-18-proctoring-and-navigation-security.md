@@ -52,6 +52,17 @@ We integrated the standard **W3C Screen Wake Lock API** inside `TestPage.tsx` fo
   * **Clean Release:** The wake lock is released instantly upon test submission, time exhaustion (`isTimeUp`), or component unmount.
   * **Graceful Fallback:** If a student is using a legacy browser that lacks support for the Wake Lock API, the system silently catches the exception and logs a warning in the console without breaking the test-taking experience.
 
+### Browser Compatibility & Fallbacks
+
+| Feature | Browser | Supported Versions | Fallback Behavior |
+|---|---|---|---|
+| **Screen Wake Lock API** | Chrome / Chromium | Chrome 84+ (Released July 2020) | Silently bypassed. Device falls back to default system screen sleep timeout. |
+| | Microsoft Edge | Edge 84+ | Silently bypassed. |
+| | Safari (macOS / iOS) | Safari 16.4+ (Released March 2023) | Silently bypassed. |
+| | Firefox | Firefox 126+ (Released May 2024) | Silently bypassed. |
+| **History sentinel / Popstate Guard** | All modern browsers | Standard HTML5 (Chrome 5+, Safari 5.1+, Firefox 4+, Edge 12+) | Standard browser back navigation. If popstate isn't supported, the mount check redirecting via `localStorage` is used as a secure secondary wall. |
+| **LocalStorage Submission Flag** | All modern browsers | Standard HTML5 (Fully supported since 2011) | Standard session/cookie checks. |
+
 ---
 
 ## 3. Scoping Proctoring Violations to Conduct-Exam Mode
