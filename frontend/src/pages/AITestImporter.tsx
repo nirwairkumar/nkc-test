@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,6 +110,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
+    const navigate = useNavigate();
 
     const [files, setFiles] = useState<SelectedFile[]>([]);
     const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
@@ -651,7 +653,32 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         }
     }, [parsedData, onImport]);
 
-
+    if (featureFlags && featureFlags.enable_ai_test_generation === false) {
+        return (
+            <div className="container mx-auto p-4 max-w-4xl flex items-center justify-center min-h-[60vh]">
+                <Card className="max-w-md w-full shadow-lg border-2 border-red-100 dark:border-red-900/30">
+                    <CardHeader className="text-center space-y-2">
+                        <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                            <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                        </div>
+                        <CardTitle className="text-2xl font-bold">Feature Disabled</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center space-y-6">
+                        <p className="text-muted-foreground text-lg">
+                            {featureFlags.ai_test_generation_notes || "AI Test Generation is currently disabled by the administrator."}
+                        </p>
+                        <Button 
+                            size="lg" 
+                            className="w-full"
+                            onClick={() => navigate('/create-test')}
+                        >
+                            Create Test Manually
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     // Step 1: File Upload - Separate sections for Documents and Images
     if (files.length === 0 && !uploadType) {
