@@ -106,6 +106,7 @@ export default function TestPage() {
   // ── Resilience: proactive token refresh every 45 min + IndexedDB vault backup ──
   const vaultSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tokenRefreshCleanupRef = useRef<(() => void) | null>(null);
+  const isFullScreenViolationLoggedRef = useRef(false);
 
   const handleReportSubmit = async (questionId: number, reason: string, details?: string) => {
     if (!test) return;
@@ -523,10 +524,14 @@ export default function TestPage() {
       setIsFullScreen(currentFullScreen);
 
       if (!currentFullScreen && settings.force_fullscreen) {
-        setFullScreenLogs(prev => [...prev, { event: 'Exit Full Screen', timestamp: Date.now() }]);
-        setShowFullScreenWarning(true);
-        handleViolation("Exited Full Screen");
+        if (!isFullScreenViolationLoggedRef.current) {
+          isFullScreenViolationLoggedRef.current = true;
+          setFullScreenLogs(prev => [...prev, { event: 'Exit Full Screen', timestamp: Date.now() }]);
+          setShowFullScreenWarning(true);
+          handleViolation("Exited Full Screen");
+        }
       } else if (currentFullScreen) {
+        isFullScreenViolationLoggedRef.current = false;
         // Only log if we transitioned from not full screen, or if it's the first check and we are in full screen
         setFullScreenLogs(prev => {
           const lastEvent = prev.length > 0 ? prev[prev.length - 1].event : null;
