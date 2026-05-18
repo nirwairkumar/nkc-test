@@ -107,6 +107,8 @@ export default function TestPage() {
   const vaultSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tokenRefreshCleanupRef = useRef<(() => void) | null>(null);
   const isFullScreenViolationLoggedRef = useRef(false);
+  // ── Screen Wake Lock: prevents screen sleep during conduct-exam tests ──
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const handleReportSubmit = async (questionId: number, reason: string, details?: string) => {
     if (!test) return;
@@ -491,13 +493,59 @@ export default function TestPage() {
   }, [warnings, test?.id, user?.id]);
   const MAX_WARNINGS = test?.settings?.violation_limit || null; // null = no auto-submit (warn only)
 
+  // ── Screen Wake Lock: prevent screen sleep during conduct-exam tests ─────────
+  // Uses the W3C Screen Wake Lock API (supported in Chrome 84+, Edge 84+, Firefox 126+).
+  // Automatically re-acquires the lock when the page becomes visible again.
+  useEffect(() => {
+    if (!test || isSubmitting || isTimeUp) return;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    if (!isConductExam) return; // Only apply wake lock for proctored conduct-exam tests
+
+    const acquireWakeLock = async () => {
+      if (!('wakeLock' in navigator)) return; // Browser doesn't support Wake Lock API
+      try {
+        if (wakeLockRef.current) return; // Already acquired
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        wakeLockRef.current.addEventListener('release', () => {
+          wakeLockRef.current = null;
+        });
+      } catch (err: any) {
+        // Permission denied or API unavailable — non-fatal, don't bother user
+        console.warn('[WakeLock] Could not acquire screen wake lock:', err.message);
+      }
+    };
+
+    // Re-acquire after tab becomes visible again (lock is released on hide)
+    const handleVisibilityForWakeLock = () => {
+      if (document.visibilityState === 'visible') {
+        acquireWakeLock();
+      }
+    };
+
+    acquireWakeLock();
+    document.addEventListener('visibilitychange', handleVisibilityForWakeLock);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityForWakeLock);
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+        wakeLockRef.current = null;
+      }
+    };
+  }, [test?.id, isSubmitting, isTimeUp]);
+
   // Proctoring: Full Screen & Tab Switching & Action Blocking
+  // NOTE: Violations (tab switch, fullscreen exit) only apply to conduct-exam tests.
+  // Regular public/private tests never trigger violation warnings.
   useEffect(() => {
     if (!test || isSubmitting || isTimeUp) return;
     const settings = test.settings;
     if (!settings) return;
 
-    // 1. Action Blocking
+    // Only conduct-exam tests have proctoring violations
+    const isConductExam = !!settings.conduct_exam?.enabled;
+
+    // 1. Action Blocking (applies to all test types if enabled)
     const handleContextMenu = (e: Event) => {
       if (settings.disable_actions) {
         e.preventDefault();
@@ -522,15 +570,16 @@ export default function TestPage() {
       document.addEventListener('paste', handleCopyPaste);
     }
 
-    // 2. Tab Switching / Visibility
+    // 2. Tab Switching / Visibility — violations ONLY for conduct-exam tests
     const handleVisibilityChange = () => {
+      if (!isConductExam) return; // Skip violations for public/private tests
       const isEnabled = settings.tab_switch_mode && settings.tab_switch_mode !== 'off';
       if (document.hidden && isEnabled) {
         handleViolation("Tab Switching / Navigation");
       }
     };
 
-    // 3. Full Screen Check
+    // 3. Full Screen Check — violations ONLY for conduct-exam tests
     const checkFullScreenState = () => {
       const isAPIFullScreen = !!(
         document.fullscreenElement ||
@@ -539,22 +588,24 @@ export default function TestPage() {
         (document as any).msFullscreenElement
       );
 
-      // Fallback check using window dimensions (useful when API doesn't fire events)
       const isWindowFullScreen = window.innerWidth === window.screen.width && window.innerHeight === window.screen.height;
       const currentFullScreen = isAPIFullScreen || isWindowFullScreen;
 
       setIsFullScreen(currentFullScreen);
 
       if (!currentFullScreen && settings.force_fullscreen) {
-        if (!isFullScreenViolationLoggedRef.current) {
+        if (isConductExam && !isFullScreenViolationLoggedRef.current) {
+          // Count as violation only for conduct-exam tests
           isFullScreenViolationLoggedRef.current = true;
           setFullScreenLogs(prev => [...prev, { event: 'Exit Full Screen', timestamp: Date.now() }]);
           setShowFullScreenWarning(true);
           handleViolation("Exited Full Screen");
+        } else if (!isConductExam) {
+          // For non-conduct tests: just show the dialog, no violation count
+          setShowFullScreenWarning(true);
         }
       } else if (currentFullScreen) {
         isFullScreenViolationLoggedRef.current = false;
-        // Only log if we transitioned from not full screen, or if it's the first check and we are in full screen
         setFullScreenLogs(prev => {
           const lastEvent = prev.length > 0 ? prev[prev.length - 1].event : null;
           if (lastEvent !== 'Entered Full Screen') {
@@ -580,7 +631,6 @@ export default function TestPage() {
       document.addEventListener('mozfullscreenchange', handleFullScreenChange);
       document.addEventListener('MSFullscreenChange', handleFullScreenChange);
       window.addEventListener('resize', handleFullScreenChange);
-      // Initial Check
       setTimeout(checkFullScreenState, 500);
     }
 
