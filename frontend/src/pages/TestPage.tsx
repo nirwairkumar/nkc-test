@@ -400,11 +400,33 @@ export default function TestPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [test, user, id, answers]);
 
+  // ─── Guard: Redirect away if this test was already submitted ─────────────
+  useEffect(() => {
+    if (!id || !user) return;
+    const submittedKey = `test_submitted_${user.id}_${id}`;
+    const alreadySubmitted = localStorage.getItem(submittedKey) === 'true';
+    if (alreadySubmitted) {
+      // The session localStorage was cleared on submit, so no resume data exists.
+      // Redirect student away from the test page — they cannot go back.
+      toast.error('This test has already been submitted. You cannot re-enter it.');
+      navigate('/', { replace: true });
+    }
+  }, [user, id]);
+
   // Check for saved session on mount
   useEffect(() => {
     if (!id) return;
     // Only check persistence if user is logged in
     if (!user) return;
+
+    // If the student arrived here with a fresh intro-page entry (combinedMode, or
+    // location.state has introEntry flag), clear any stale submitted marker so
+    // unlimited-attempt tests can start a new attempt.
+    const isFromIntro = !!(location.state as any)?.fromIntro;
+    if (isFromIntro) {
+      localStorage.removeItem(`test_submitted_${user.id}_${id}`);
+    }
+
     const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
     const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
 
@@ -1109,6 +1131,8 @@ export default function TestPage() {
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
       sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
       AnswerVault.clear(user.id, test.id); // clean IndexedDB vault
+      // Mark this test as submitted — prevents student going back to live test page
+      localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
 
       // Exit Full Screen if active
       if (document.fullscreenElement) {

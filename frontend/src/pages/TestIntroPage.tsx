@@ -377,8 +377,8 @@ export default function TestIntroPage() {
             }
         }
 
-        // Navigate to Live Test
-        navigate(`/live/${test.slug || test.custom_id || test.id}`);
+        // Navigate to Live Test — mark as a legitimate intro-page entry
+        navigate(`/live/${test.slug || test.custom_id || test.id}`, { state: { fromIntro: true } });
     };
 
     if (loading) {

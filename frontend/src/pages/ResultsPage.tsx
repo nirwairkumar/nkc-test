@@ -322,6 +322,22 @@ const ResultsPage = () => {
     }
   }, [showAIChatFromParams]);
 
+  // ── Block back navigation to live test page ─────────────────────────────────
+  // After a test is submitted, pressing "Back" should never return to the live test.
+  // We do this by replacing the current history entry (so the test page URL is gone)
+  // and intercepting popstate to redirect to home.
+  useEffect(() => {
+    // Push a sentinel entry so back-button goes to THIS page first before home
+    window.history.pushState(null, '', window.location.href);
+    const handlePopState = () => {
+      // When student tries to go back from results, redirect to home
+      window.history.pushState(null, '', window.location.href);
+      navigate('/', { replace: true });
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const [popupDismissed, setPopupDismissed] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
 
