@@ -232,32 +232,32 @@ export function UserTestCard({
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
+                    className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
                     onClick={() => onConfigure(test)}
                 >
-                    <Settings className="w-3.5 h-3.5 mr-1" />
-                    Settings
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>Settings</span>
                 </Button>
                 {!isConducted && (
                     <Button
                         size="sm"
                         variant="secondary"
-                        className="h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors duration-200 cursor-pointer"
+                        className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors duration-200 cursor-pointer"
                         onClick={() => onConductExam(test)}
                     >
-                        <Radio className="w-3.5 h-3.5 mr-1" />
-                        Conduct
+                        <Radio className="w-3.5 h-3.5" />
+                        <span>Conduct</span>
                     </Button>
                 )}
                 {/* Results button */}
                 <Button
                     size="sm"
                     variant="secondary"
-                    className="h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors duration-200 cursor-pointer"
+                    className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors duration-200 cursor-pointer"
                     onClick={() => onViewResults(test)}
                 >
-                    <BarChart2 className="w-3.5 h-3.5 mr-1" />
-                    Results
+                    <BarChart2 className="w-3.5 h-3.5" />
+                    <span>Results</span>
                 </Button>
                 <Button
                     size="sm"
