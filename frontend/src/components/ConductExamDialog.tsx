@@ -88,9 +88,11 @@ export default function ConductExamDialog({
                         <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
                             <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                             <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Exam</p>
-                            <p className="text-[13px] font-semibold text-slate-800 truncate leading-tight">{test?.title}</p>
+                            <p className="text-[13px] font-semibold text-slate-800 line-clamp-3 whitespace-normal break-words leading-tight">
+                                {test?.title}
+                            </p>
                         </div>
                     </div>
 
