@@ -23,11 +23,11 @@ import TestoZaLogo from './TestoZaLogo';
 
 export default function Navbar() {
     const { user, isAdmin, profile } = useAuth();
-    
+
     // Feature Flag for News
     const [isNewsEnabled, setIsNewsEnabled] = React.useState(true);
     const [newsChecked, setNewsChecked] = React.useState(false);
-    
+
     React.useEffect(() => {
         import('@/lib/featuresApi').then(({ fetchFeatureFlags }) => {
             fetchFeatureFlags().then(data => {
@@ -80,22 +80,69 @@ export default function Navbar() {
                     {/* Visible Navbar Buttons: Order depends on login state */}
                     {user ? (
                         <>
-                            {/* Logged In: Dashboard first, Create Test second */}
+                            {/* Logged In: Dashboard first, Create Test second, Your Tests in between, Support last */}
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/dashboard')}
-                                className="flex items-center"
+                                className={`relative flex items-center h-10 ${
+                                    location.pathname === '/dashboard' 
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
                             >
                                 <LayoutDashboard className="mr-0 sm:mr-2 h-4 w-4" />
                                 <span className="hidden sm:inline">Dashboard</span>
+                                {location.pathname === '/dashboard' && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
                             </Button>
+
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/create-test')}
-                                className="flex items-center"
+                                className={`relative flex items-center h-10 ${
+                                    location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai'
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
                             >
                                 <Plus className="mr-0 sm:mr-2 h-4 w-4" />
                                 <span className="hidden sm:inline">Create Test</span>
+                                {(location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai') && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate(isAdmin ? '/manage-tests' : '/my-tests')}
+                                className={`relative flex items-center h-10 ${
+                                    location.pathname === '/my-tests' || location.pathname === '/manage-tests'
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
+                            >
+                                <FileText className="mr-0 sm:mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">{isAdmin ? 'Manage Tests' : 'Your Tests'}</span>
+                                {(location.pathname === '/my-tests' || location.pathname === '/manage-tests') && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/support')}
+                                className={`relative flex items-center h-10 hidden md:flex ${
+                                    location.pathname === '/support'
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
+                            >
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                <span>Support</span>
+                                {location.pathname === '/support' && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
                             </Button>
                         </>
                     ) : (
@@ -104,55 +151,73 @@ export default function Navbar() {
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/create-test')}
-                                className="flex items-center"
+                                className={`relative flex items-center h-10 ${
+                                    location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai'
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
                             >
                                 <Plus className="mr-0 h-4 w-4" />
                                 <span>Create Test</span>
+                                {(location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai') && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                onClick={() => navigate('/login', { state: { from: '/my-tests' } })}
+                                className={`relative flex items-center h-10 ${
+                                    location.pathname === '/my-tests' || location.pathname === '/manage-tests'
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
+                            >
+                                <FileText className="mr-0 sm:mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Your Tests</span>
+                                {(location.pathname === '/my-tests' || location.pathname === '/manage-tests') && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
                             </Button>
                         </>
                     )}
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-2">
-                        {/* Home is visible only when NOT logged in */}
-                        {!user && (
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/')}
-                                className="flex items-center"
-                            >
-                                <Home className="mr-2 h-4 w-4" />
-                                <span>Home</span>
-                            </Button>
-                        )}
-
-                        <Button
-                            variant="ghost"
-                            onClick={() => navigate('/support')}
-                            className="flex items-center"
-                        >
-                            <HelpCircle className="mr-2 h-4 w-4" />
-                            <span>Support</span>
-                        </Button>
-
                         {!user && (
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/dashboard')}
-                                className="flex items-center text-primary"
+                                className={`relative flex items-center h-10 ${
+                                    location.pathname === '/dashboard'
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
                             >
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
                                 <span>Dashboard</span>
+                                {location.pathname === '/dashboard' && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
                             </Button>
                         )}
 
+                        {/* Support is visible only when NOT logged in (since logged in Support is handled above) */}
                         {!user && (
                             <Button
                                 variant="ghost"
-                                onClick={() => navigate('/admin-login')}
+                                onClick={() => navigate('/support')}
+                                className={`relative flex items-center h-10 ${
+                                    location.pathname === '/support'
+                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
+                                }`}
                             >
-                                <Shield className="mr-2 h-4 w-4" />
-                                Admin
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                <span>Support</span>
+                                {location.pathname === '/support' && (
+                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
                             </Button>
                         )}
                     </div>
@@ -167,22 +232,13 @@ export default function Navbar() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">
-                                    <DropdownMenuItem onClick={() => navigate('/')}>
-                                        <Home className="mr-2 h-4 w-4" />
-                                        <span>Home</span>
-                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                                        <LayoutDashboard className="mr-2 h-4 w-4 text-primary" />
-                                        <span className="text-primary font-medium">Dashboard</span>
+                                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                                        <span>Dashboard</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => navigate('/support')}>
                                         <HelpCircle className="mr-2 h-4 w-4" />
                                         <span>Support</span>
-                                    </DropdownMenuItem>
-
-                                    <DropdownMenuItem onClick={() => navigate('/admin-login')}>
-                                        <Shield className="mr-2 h-4 w-4" />
-                                        <span>Admin</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => window.open('/user-guide', '_blank')}>
