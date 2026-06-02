@@ -57,6 +57,7 @@ const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 const CombinedIntroPage = lazy(() => import("./pages/CombinedIntroPage"));
 const CombinedBreakScreen = lazy(() => import("./pages/CombinedBreakScreen"));
 const MoreTestsPage = lazy(() => import("./pages/MoreTestsPage"));
+const ConvertPage = lazy(() => import("./pages/ConvertPage"));
 
 // News & Posts
 const NewsFeed = lazy(() => import("./pages/NewsFeed"));
@@ -153,6 +154,7 @@ const App = () => (
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                     <Route path="/about" element={<AboutPage />} />
+                    <Route path="/convert" element={<ConvertPage />} />
 
 
                     {/* Protected Routes */}

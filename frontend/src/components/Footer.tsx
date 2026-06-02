@@ -76,6 +76,12 @@ export default function Footer() {
                             >
                                 About Platform
                             </Link>
+                            <Link
+                                to="/convert"
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
+                            >
+                                LaTeX Converter
+                            </Link>
                         </nav>
                     </div>
                 </div>
