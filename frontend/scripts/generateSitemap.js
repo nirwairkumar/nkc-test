@@ -27,6 +27,7 @@ async function generateSitemap() {
             { url: '/premium', changefreq: 'monthly', priority: 0.8 },
             { url: '/about', changefreq: 'monthly', priority: 0.6 },
             { url: '/support', changefreq: 'monthly', priority: 0.6 },
+            { url: '/convert', changefreq: 'monthly', priority: 0.7 },
             { url: '/privacy-policy', changefreq: 'monthly', priority: 0.4 },
             { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.4 },
         ];
