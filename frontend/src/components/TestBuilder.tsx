@@ -1757,13 +1757,35 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     </Label>
                                 </div>
                             </div>
-                            <div>
-                                <Label className="text-slate-600 font-semibold">section-wise-questions</Label>
-                                <div className="flex items-center space-x-2 h-10 border rounded-md px-3 bg-white">
-                                    <Switch checked={enableSectionMode} onCheckedChange={toggleSectionMode} />
-                                    <Label className="cursor-pointer text-slate-700" onClick={() => toggleSectionMode(!enableSectionMode)}>{enableSectionMode ? 'On' : 'Off'}</Label>
+                            <div className="relative rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-violet-50 px-4 py-3 shadow-sm overflow-hidden">
+                                {/* Subtle accent stripe */}
+                                <div className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-gradient-to-b from-indigo-400 to-violet-500" />
+                                <div className="flex items-center justify-between gap-4 pl-2">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold tracking-widest uppercase text-indigo-600 bg-indigo-100 border border-indigo-200 rounded-full px-2 py-0.5">
+                                                Pro
+                                            </span>
+                                            <Label className="text-sm font-bold text-slate-800 cursor-default">
+                                                Section-Wise Questions
+                                            </Label>
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Split your test into named sections with individual marks &amp; controls
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Switch checked={enableSectionMode} onCheckedChange={toggleSectionMode} />
+                                        <Label
+                                            className={`cursor-pointer text-xs font-semibold w-6 ${enableSectionMode ? 'text-indigo-600' : 'text-slate-400'}`}
+                                            onClick={() => toggleSectionMode(!enableSectionMode)}
+                                        >
+                                            {enableSectionMode ? 'On' : 'Off'}
+                                        </Label>
+                                    </div>
                                 </div>
                             </div>
+
                         </div>
 
                         {/* Merge Section Marks Config */}
