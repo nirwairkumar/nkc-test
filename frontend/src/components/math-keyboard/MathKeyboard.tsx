@@ -12,16 +12,89 @@ interface MathKeyboardProps {
 
 function prepareExpressionForKaTeX(expr: string): string {
   let result = '';
-  let placeholderCount = 0;
-  for (let i = 0; i < expr.length; i++) {
+  let i = 0;
+  
+  while (i < expr.length) {
     const char = expr[i];
+    
+    // 1. Handle escape sequences (control words like \frac, \alpha, \begin, etc.)
+    if (char === '\\') {
+      const commandStartIdx = i;
+      i++;
+      
+      // Consume command name
+      let cmdName = '';
+      while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
+        cmdName += expr[i];
+        i++;
+      }
+      
+      // If it's a begin/end/ce command, skip wrapping the command and its environment arguments
+      if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
+        result += '\\' + cmdName;
+        // Consume environment/ce braces
+        while (i < expr.length && expr[i] !== '{') {
+          result += expr[i];
+          i++;
+        }
+        if (i < expr.length && expr[i] === '{') {
+          result += '{';
+          i++;
+          let braceCount = 1;
+          while (i < expr.length && braceCount > 0) {
+            if (expr[i] === '{') braceCount++;
+            if (expr[i] === '}') braceCount--;
+            result += expr[i];
+            i++;
+          }
+        }
+      } else {
+        // It's a standard command (like \alpha, \frac, etc.)
+        // Check if it is followed by braces/arguments ({ or [)
+        let hasBraces = false;
+        let temp = i;
+        while (temp < expr.length && (expr[temp] === ' ' || expr[temp] === '\n')) {
+          temp++;
+        }
+        if (temp < expr.length && (expr[temp] === '{' || expr[temp] === '[')) {
+          hasBraces = true;
+        }
+        
+        if (hasBraces) {
+          // Output structural command normally
+          result += '\\' + cmdName;
+        } else {
+          // Wrap symbol command (like \alpha, \pi, \sum) in htmlClass to make it clickable
+          result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{\\${cmdName}}`;
+        }
+      }
+      continue;
+    }
+    
+    // 2. Handle syntax chars (curly braces, caret, subscript, ampersand, brackets, spaces)
+    if (['{', '}', '^', '_', '&', '[', ']', ' ', '\n', '\t'].includes(char)) {
+      result += char;
+      i++;
+      continue;
+    }
+    
+    // 3. Handle placeholders (question marks)
     if (char === '?') {
-      placeholderCount++;
-      result += `\\htmlClass{math-placeholder placeholder-idx-${i} placeholder-count-${placeholderCount}}{\\color{#1e40af}{?}}`;
+      result += `\\htmlClass{math-placeholder token-idx-${i}}{\\color{#1e40af}{?}}`;
+      i++;
+      continue;
+    }
+    
+    // 4. Handle visible literal content (numbers, letters, operators, variables)
+    if (/[0-9a-zA-Z+\-*/=<>!.,()]/.test(char)) {
+      result += `\\htmlClass{math-token token-idx-${i}}{${char}}`;
+      i++;
     } else {
       result += char;
+      i++;
     }
   }
+  
   return result;
 }
 
@@ -189,22 +262,29 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
   const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    const placeholderEl = target.closest('.math-placeholder');
-    if (placeholderEl) {
-      const classList = Array.from(placeholderEl.classList);
-      const idxClass = classList.find(c => c.startsWith('placeholder-idx-'));
+    const clickableEl = target.closest('.math-placeholder, .math-token');
+    
+    if (clickableEl) {
+      const classList = Array.from(clickableEl.classList);
+      const idxClass = classList.find(c => c.startsWith('placeholder-idx-') || c.startsWith('token-idx-'));
       
       if (idxClass) {
-        const rawIdx = parseInt(idxClass.replace('placeholder-idx-', ''), 10);
+        const rawIdx = parseInt(idxClass.replace(/^(placeholder|token)-idx-/, ''), 10);
+        const isPlaceholder = clickableEl.classList.contains('math-placeholder');
         
-        // 1. Focus internal expression input and select the placeholder
+        // 1. Focus internal expression input and set cursor/selection
         const inputEl = expressionInputRef.current;
         if (inputEl) {
           inputEl.focus();
-          inputEl.setSelectionRange(rawIdx, rawIdx + 1);
+          if (isPlaceholder) {
+            inputEl.setSelectionRange(rawIdx, rawIdx + 1); // select the '?'
+          } else {
+            // Place cursor immediately after the clicked character
+            inputEl.setSelectionRange(rawIdx + 1, rawIdx + 1);
+          }
         }
         
-        // 2. Select corresponding placeholder in active textarea
+        // 2. Select/focus corresponding position in active textarea
         const ta = lastTextareaRef.current;
         if (ta && document.body.contains(ta)) {
           const cursor = ta.selectionStart ?? ta.value.length;
@@ -212,7 +292,11 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           if (subStart !== -1) {
             const targetPos = subStart + rawIdx;
             ta.focus();
-            ta.setSelectionRange(targetPos, targetPos + 1);
+            if (isPlaceholder) {
+              ta.setSelectionRange(targetPos, targetPos + 1);
+            } else {
+              ta.setSelectionRange(targetPos + 1, targetPos + 1);
+            }
           }
         }
       }
@@ -254,6 +338,16 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           background-color: #bfdbfe !important;
           border-color: #3b82f6;
         }
+        .math-token {
+          cursor: text;
+          transition: background-color 0.1s;
+          display: inline-block;
+        }
+        .math-token:hover {
+          background-color: rgba(59, 130, 246, 0.15) !important;
+          border-radius: 2px;
+          outline: 1px solid rgba(59, 130, 246, 0.3);
+        }
       `}</style>
 
       {/* ── Header ─────────── */}
@@ -271,7 +365,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           className="min-h-[50px] flex items-center px-3 py-1.5 rounded-lg bg-white border border-blue-100 overflow-x-auto text-lg cursor-pointer"
           onClick={handlePreviewClick}
           dangerouslySetInnerHTML={{ __html: renderKatex(expression) }}
-          title="Click on any blue '?' box to edit that slot"
+          title="Click on any blue box or math symbol to edit that slot"
         />
         
         {/* Raw LaTeX Input */}
@@ -463,6 +557,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                   {row.map((k, ki) => (
                     <button
                       key={ki}
+                      type="button"
                       onClick={() => {
                         if (k.latex === '__ABC__') setAbcMode(true);
                         else if (k.className !== 'empty') handleInsert(k.latex);
@@ -492,6 +587,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                   {row.map((k, ki) => (
                     <button
                       key={ki}
+                      type="button"
                       onClick={() => handleInsert(k.latex)}
                       className={`flex-1 h-10 rounded-lg text-xs transition-all bg-blue-50 border border-blue-200 text-blue-800 font-semibold hover:bg-blue-100 active:bg-blue-200 ${
                         k.className === 'italic' ? 'italic font-serif text-sm' : ''
@@ -505,10 +601,10 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
               ))}
               {/* Navigation row */}
               <div className="flex gap-1">
-                <button onClick={() => handleInsert('\\leftarrow ')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-lg">◀</button>
-                <button onClick={() => handleInsert('\\rightarrow ')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-lg">▶</button>
-                <button onClick={() => handleInsert('__BACK__')} className="flex-1 h-10 rounded-lg bg-red-100 border border-red-200 text-red-600 font-bold hover:bg-red-200 transition-all text-lg">⌫</button>
-                <button onClick={() => handleInsert('__CLEAR__')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-xs">CLR</button>
+                <button type="button" onClick={() => handleInsert('\\leftarrow ')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-lg">◀</button>
+                <button type="button" onClick={() => handleInsert('\\rightarrow ')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-lg">▶</button>
+                <button type="button" onClick={() => handleInsert('__BACK__')} className="flex-1 h-10 rounded-lg bg-red-100 border border-red-200 text-red-600 font-bold hover:bg-red-200 transition-all text-lg">⌫</button>
+                <button type="button" onClick={() => handleInsert('__CLEAR__')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-xs">CLR</button>
               </div>
             </div>
           </div>
