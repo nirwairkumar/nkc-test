@@ -146,6 +146,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [swappedSections, setSwappedSections] = useState<Set<string>>(new Set());
     const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
     const [showSupportedFormats, setShowSupportedFormats] = useState(false);
+    const [showAdvancedFormats, setShowAdvancedFormats] = useState(false);
 
     // Merged Section Marks State
     const [mergedSections, setMergedSections] = useState<{ label: string; section_ids: string[] }[]>([]);
@@ -1868,20 +1869,92 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     </button>
 
                     {showSupportedFormats && (
-                        <div className="px-4 pb-3 pt-1 border-t border-blue-100 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <p className="text-blue-700/80 pl-8">
-                                You can use <strong>LaTeX</strong> for mathematical equations (e.g., <code className="bg-blue-100 px-1 rounded">\( E = mc^2 \)</code>).
-                                Markdown formatting is also supported for bold, italics, and lists to help you create the best test experience.
+                        <div className="border-t border-blue-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                            {/* Subtitle */}
+                            <p className="text-[11px] text-blue-600/80 px-4 pt-2 pb-1">
+                                Use <code className="bg-blue-100 px-1 rounded font-mono">$...$</code> for inline math. Examples below show raw input → visual form.
+                            </p>
+
+                            {/* Examples table */}
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs border-collapse">
+                                    <thead>
+                                        <tr className="bg-blue-100/60">
+                                            <th className="px-3 py-1.5 text-left font-semibold text-blue-700 border-b border-blue-200 w-[36%]">Category</th>
+                                            <th className="px-3 py-1.5 text-left font-semibold text-blue-700 border-b border-blue-200 w-[38%]">Raw Format ($...$)</th>
+                                            <th className="px-3 py-1.5 text-left font-semibold text-blue-700 border-b border-blue-200">Visual Form</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {/* Basic examples — always visible */}
+                                        {([
+                                            { cat: 'Energy–mass equivalence', raw: '$E = mc^2$',                              visual: 'E = mc²' },
+                                            { cat: 'Acceleration unit',        raw: '$2.4\\,\\text{m/s}^2$',                 visual: '2.4 m/s²' },
+                                            { cat: 'Pythagorean theorem',       raw: '$a^2 + b^2 = c^2$',                     visual: 'a² + b² = c²' },
+                                            { cat: 'Square root',              raw: '$\\sqrt{16} = 4$',                       visual: '√16 = 4' },
+                                            { cat: 'Simple fraction',          raw: '$\\frac{1}{2}$',                         visual: '½' },
+                                            { cat: 'Chemical — Water',         raw: '$\\ce{H2O}$',                          visual: 'H₂O' },
+                                            { cat: 'Chemical — Glucose',       raw: '$\\ce{C6H12O6}$',                       visual: 'C₆H₁₂O₆' },
+                                            { cat: 'Speed of light',           raw: '$c = 3\\times10^8\\,\\text{m/s}$',      visual: 'c = 3×10⁸ m/s' },
+                                        ] as { cat: string; raw: string; visual: string }[]).map((row, i) => (
+                                            <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-blue-50/40'}>
+                                                <td className="px-3 py-1.5 text-blue-800/70 border-b border-blue-100">{row.cat}</td>
+                                                <td className="px-3 py-1.5 border-b border-blue-100">
+                                                    <code className="font-mono text-blue-700 bg-blue-100/60 px-1.5 py-0.5 rounded break-all">{row.raw}</code>
+                                                </td>
+                                                <td className="px-3 py-1.5 border-b border-blue-100 font-medium text-blue-900">{row.visual}</td>
+                                            </tr>
+                                        ))}
+
+                                        {/* Advanced examples — shown when expanded */}
+                                        {showAdvancedFormats && ([
+                                            { cat: 'Quadratic formula',    raw: '$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$',            visual: 'x = (−b ± √(b²−4ac)) / 2a' },
+                                            { cat: 'Definite integral',    raw: '$\\int_0^\\infty e^{-x}\\,dx=1$',                   visual: '∫₀^∞ e⁻ˣ dx = 1' },
+                                            { cat: 'Summation (sigma)',    raw: '$\\sum_{n=1}^{\\infty}\\frac{1}{n^2}=\\frac{\\pi^2}{6}$', visual: 'Σ 1/n² = π²/6' },
+                                            { cat: 'Limit',                raw: '$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$',             visual: 'lim(x→0) sinx/x = 1' },
+                                            { cat: 'Greek letters',        raw: '$\\alpha,\\beta,\\gamma,\\Delta,\\Omega$',           visual: 'α, β, γ, Δ, Ω' },
+                                            { cat: "Newton's 2nd law",     raw: '$\\vec{F}=m\\vec{a}$',                              visual: 'F⃗ = ma⃗' },
+                                            { cat: "Ohm's law",            raw: '$V=IR$',                                            visual: 'V = IR' },
+                                            { cat: 'Chemical rxn — CO₂',  raw: '$\\ce{C + O2 -> CO2}$',                         visual: 'C + O₂ → CO₂' },
+                                            { cat: 'Chemical rxn — NaCl', raw: '$\\ce{Na + Cl -> NaCl}$',                        visual: 'Na + Cl → NaCl' },
+                                            { cat: 'Binomial probability', raw: '$P(X=k)=\\binom{n}{k}p^k(1-p)^{n-k}$',             visual: 'P(X=k) = C(n,k) pᵏ(1−p)ⁿ⁻ᵏ' },
+                                            { cat: 'Matrix (2×2)',         raw: '$\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}$',        visual: '[[a b] [c d]]' },
+                                            { cat: "Euler's identity",     raw: '$e^{i\\pi}+1=0$',                                  visual: 'eⁱᵖⁱ + 1 = 0' },
+                                        ] as { cat: string; raw: string; visual: string }[]).map((row, i) => (
+                                            <tr key={`adv-${i}`} className={i % 2 === 0 ? 'bg-white' : 'bg-blue-50/40'}>
+                                                <td className="px-3 py-1.5 text-blue-800/70 border-b border-blue-100">{row.cat}</td>
+                                                <td className="px-3 py-1.5 border-b border-blue-100">
+                                                    <code className="font-mono text-blue-700 bg-blue-100/60 px-1.5 py-0.5 rounded break-all">{row.raw}</code>
+                                                </td>
+                                                <td className="px-3 py-1.5 border-b border-blue-100 font-medium text-blue-900">{row.visual}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Show advanced toggle */}
+                            <button
+                                onClick={() => setShowAdvancedFormats(v => !v)}
+                                className="w-full flex items-center justify-center gap-1 py-2 text-[11px] font-semibold text-blue-600 hover:bg-blue-100/50 transition-colors border-t border-blue-100"
+                            >
+                                {showAdvancedFormats
+                                    ? <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
+                                    : <><ChevronDown className="w-3.5 h-3.5" /> Show advanced examples</>}
+                            </button>
+
+                            {/* Read more */}
+                            <div className="px-4 py-2 border-t border-blue-100">
                                 <a
                                     href="/user-guide/chemistry-notation"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium ml-1 underline decoration-blue-200 underline-offset-2 hover:decoration-blue-400 transition-all"
+                                    className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 font-medium underline decoration-blue-200 underline-offset-2 hover:decoration-blue-400 transition-all"
                                 >
-                                    Read more
+                                    Read more about supported formats
                                     <ExternalLink className="w-3 h-3" />
                                 </a>
-                            </p>
+                            </div>
                         </div>
                     )}
                 </div>
