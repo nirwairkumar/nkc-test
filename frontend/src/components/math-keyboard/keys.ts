@@ -35,7 +35,7 @@ export const FIXED_ROWS: MathKey[][] = [
     { label: ',', latex: ',' }, { label: '0', latex: '0' },
     { label: '.', latex: '.' }, { label: '%', latex: '\\%' },
     { label: '␣', latex: '\\,' }, { label: '=', latex: '=' },
-    { label: '', latex: '', className: 'empty' },
+    { label: 'Table', latex: '\\begin{array}{c|c} x & y \\\\ \\hline ? & ? \\\\ ? & ? \\\\ ? & ? \\end{array}', display: '田' },
   ],
 ];
 

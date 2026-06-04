@@ -49,6 +49,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
       // If it's a begin/end/ce command, skip wrapping the command and its environment arguments
       if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
         result += '\\' + cmdName;
+        let envName = '';
         // Consume environment/ce braces
         while (i < expr.length && expr[i] !== '{') {
           insertCursorIfNeeded(i);
@@ -64,8 +65,31 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
             insertCursorIfNeeded(i);
             if (expr[i] === '{') braceCount++;
             if (expr[i] === '}') braceCount--;
+            envName += expr[i];
             result += expr[i];
             i++;
+          }
+        }
+        
+        // If the environment is 'array', we must skip the column specification brace (e.g. {c|c}) too
+        if (envName.startsWith('array}')) {
+          while (i < expr.length && expr[i] !== '{') {
+            insertCursorIfNeeded(i);
+            result += expr[i];
+            i++;
+          }
+          if (i < expr.length && expr[i] === '{') {
+            insertCursorIfNeeded(i);
+            result += '{';
+            i++;
+            let braceCount = 1;
+            while (i < expr.length && braceCount > 0) {
+              insertCursorIfNeeded(i);
+              if (expr[i] === '{') braceCount++;
+              if (expr[i] === '}') braceCount--;
+              result += expr[i];
+              i++;
+            }
           }
         }
       } else {
@@ -300,16 +324,83 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   }, [expression]);
 
   const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    const clickableEl = target.closest('.math-placeholder, .math-token');
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
     
-    if (clickableEl) {
-      const classList = Array.from(clickableEl.classList);
+    // Get all clickable elements
+    const elements = Array.from(container.querySelectorAll('.math-placeholder, .math-token'));
+    if (elements.length === 0) {
+      setCaretIndex(0);
+      return;
+    }
+    
+    // Find the closest element based on distance to the click coordinates
+    let closestEl: Element | null = null;
+    let minDistance = Infinity;
+    
+    for (const el of elements) {
+      const elRect = el.getBoundingClientRect();
+      const elX = elRect.left - rect.left + elRect.width / 2;
+      const elY = elRect.top - rect.top + elRect.height / 2;
+      
+      const dist = Math.pow(clickX - elX, 2) + Math.pow(clickY - elY, 2);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestEl = el;
+      }
+    }
+    
+    // Check if the click is far to the left of the first element, or far to the right of the last element
+    const firstRect = elements[0].getBoundingClientRect();
+    const lastRect = elements[elements.length - 1].getBoundingClientRect();
+    
+    if (e.clientX < firstRect.left - 10) {
+      setCaretIndex(0);
+      const inputEl = expressionInputRef.current;
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.setSelectionRange(0, 0);
+      }
+      const ta = lastTextareaRef.current;
+      if (ta && document.body.contains(ta)) {
+        const subStart = findSubstringNearCursor(ta.value, expression, ta.selectionStart ?? ta.value.length);
+        if (subStart !== -1) {
+          ta.focus();
+          ta.setSelectionRange(subStart, subStart);
+        }
+      }
+      return;
+    }
+    
+    if (e.clientX > lastRect.right + 10) {
+      const endIdx = expression.length;
+      setCaretIndex(endIdx);
+      const inputEl = expressionInputRef.current;
+      if (inputEl) {
+        inputEl.focus();
+        inputEl.setSelectionRange(endIdx, endIdx);
+      }
+      const ta = lastTextareaRef.current;
+      if (ta && document.body.contains(ta)) {
+        const subStart = findSubstringNearCursor(ta.value, expression, ta.selectionStart ?? ta.value.length);
+        if (subStart !== -1) {
+          ta.focus();
+          const targetPos = subStart + endIdx;
+          ta.setSelectionRange(targetPos, targetPos);
+        }
+      }
+      return;
+    }
+    
+    if (closestEl) {
+      const classList = Array.from(closestEl.classList);
       const idxClass = classList.find(c => c.startsWith('placeholder-idx-') || c.startsWith('token-idx-'));
       
       if (idxClass) {
         const rawIdx = parseInt(idxClass.replace(/^(placeholder|token)-idx-/, ''), 10);
-        const isPlaceholder = clickableEl.classList.contains('math-placeholder');
+        const isPlaceholder = closestEl.classList.contains('math-placeholder');
         
         // 1. Focus internal expression input and set cursor/selection
         const inputEl = expressionInputRef.current;
@@ -319,9 +410,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             inputEl.setSelectionRange(rawIdx, rawIdx + 1); // select the '?'
             setCaretIndex(rawIdx);
           } else {
-            // Place cursor immediately after the clicked character
-            inputEl.setSelectionRange(rawIdx + 1, rawIdx + 1);
-            setCaretIndex(rawIdx + 1);
+            // Check if click was on the left half or right half of the token
+            const elRect = closestEl.getBoundingClientRect();
+            const clickXInEl = e.clientX - elRect.left;
+            const newCaretIdx = clickXInEl < elRect.width / 2 ? rawIdx : rawIdx + 1;
+            inputEl.setSelectionRange(newCaretIdx, newCaretIdx);
+            setCaretIndex(newCaretIdx);
           }
         }
         
@@ -331,12 +425,16 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           const cursor = ta.selectionStart ?? ta.value.length;
           const subStart = findSubstringNearCursor(ta.value, expression, cursor);
           if (subStart !== -1) {
-            const targetPos = subStart + rawIdx;
             ta.focus();
             if (isPlaceholder) {
+              const targetPos = subStart + rawIdx;
               ta.setSelectionRange(targetPos, targetPos + 1);
             } else {
-              ta.setSelectionRange(targetPos + 1, targetPos + 1);
+              const elRect = closestEl.getBoundingClientRect();
+              const clickXInEl = e.clientX - elRect.left;
+              const newCaretIdx = clickXInEl < elRect.width / 2 ? rawIdx : rawIdx + 1;
+              const targetPos = subStart + newCaretIdx;
+              ta.setSelectionRange(targetPos, targetPos);
             }
           }
         }
