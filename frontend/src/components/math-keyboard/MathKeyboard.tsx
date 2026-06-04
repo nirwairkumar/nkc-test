@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { X, Copy, Check, Trash2 } from 'lucide-react';
 import katex from 'katex';
-import { FIXED_ROWS, ABC_ROWS, TOPICS, type TopicId, type MathKey } from './keys';
+import { FIXED_ROWS, TOPICS, type TopicId, type MathKey } from './keys';
 
 interface MathKeyboardProps {
   isOpen: boolean;
@@ -342,32 +342,115 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         {abcMode ? (
           /* ABC mode */
           <div className="space-y-1">
-            {ABC_ROWS.map((row, ri) => (
-              <div key={ri} className="flex justify-center gap-1">
-                {ri === 2 && (
-                  <button
-                    onClick={() => setShiftOn(s => !s)}
-                    className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
-                      shiftOn ? 'bg-blue-600 text-white' : 'bg-white border border-blue-200 text-blue-700 hover:bg-blue-50'
-                    }`}
-                  >⇧</button>
-                )}
-                {row.map(ch => (
-                  <button
-                    key={ch}
-                    onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)}
-                    className="w-10 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
-                  >{shiftOn ? ch.toUpperCase() : ch}</button>
-                ))}
-                {ri === 2 && (
-                  <button onClick={() => handleInsert('__BACK__')} className="w-10 h-10 rounded-lg bg-white border border-blue-200 text-blue-600 hover:bg-red-50 active:bg-red-100 transition-all text-lg">⌫</button>
-                )}
-              </div>
-            ))}
+            {/* Row 1: Numbers */}
             <div className="flex justify-center gap-1">
-              <button onClick={() => setAbcMode(false)} className="px-4 h-10 rounded-lg bg-blue-200 text-blue-800 font-bold text-xs hover:bg-blue-300 transition-all">123</button>
-              <button onClick={() => handleInsert(' ')} className="flex-1 max-w-[200px] h-10 rounded-lg bg-white border border-blue-200 text-blue-400 text-xs hover:bg-blue-50 transition-all">space</button>
-              <button onClick={() => handleInsert('__BACK__')} className="px-4 h-10 rounded-lg bg-blue-200 text-blue-800 font-bold text-xs hover:bg-blue-300 transition-all">⌫</button>
+              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => handleInsert(n)}
+                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-semibold hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
+                >{n}</button>
+              ))}
+            </div>
+
+            {/* Row 2: QWERTY Row 1 */}
+            <div className="flex justify-center gap-1">
+              {["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"].map(ch => (
+                <button
+                  key={ch}
+                  type="button"
+                  onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)}
+                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
+                >{shiftOn ? ch.toUpperCase() : ch}</button>
+              ))}
+            </div>
+
+            {/* Row 3: QWERTY Row 2 */}
+            <div className="flex justify-center gap-1 px-4">
+              {["a", "s", "d", "f", "g", "h", "j", "k", "l"].map(ch => (
+                <button
+                  key={ch}
+                  type="button"
+                  onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)}
+                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
+                >{shiftOn ? ch.toUpperCase() : ch}</button>
+              ))}
+            </div>
+
+            {/* Row 4: Shift, QWERTY Row 3, Backspace */}
+            <div className="flex justify-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShiftOn(s => !s)}
+                className={`w-12 h-10 rounded-lg text-lg font-bold flex items-center justify-center transition-all ${
+                  shiftOn ? 'bg-blue-600 text-white border border-blue-700 shadow-inner' : 'bg-blue-100 border border-blue-200 text-blue-800 hover:bg-blue-200'
+                }`}
+              >
+                ⇧
+              </button>
+              
+              {["z", "x", "c", "v", "b", "n", "m", ","].map(ch => (
+                <button
+                  key={ch}
+                  type="button"
+                  onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)}
+                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
+                >{shiftOn ? ch.toUpperCase() : ch}</button>
+              ))}
+              
+              <button
+                type="button"
+                onClick={() => handleInsert('__BACK__')}
+                className="w-12 h-10 rounded-lg bg-blue-100 border border-blue-200 text-blue-800 flex items-center justify-center hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all text-lg"
+              >
+                ⌫
+              </button>
+            </div>
+
+            {/* Row 5: Action Keys */}
+            <div className="flex justify-center gap-1">
+              <button
+                type="button"
+                onClick={() => setAbcMode(false)}
+                className="w-14 h-10 rounded-lg bg-blue-200/80 border border-blue-300 text-blue-800 font-bold text-xs hover:bg-blue-300 transition-all"
+              >
+                123
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleInsert('\\quad ')}
+                className="w-14 h-10 rounded-lg bg-blue-200/80 border border-blue-300 text-blue-800 flex items-center justify-center hover:bg-blue-300 transition-all text-lg"
+                title="Tab (Indent)"
+              >
+                ⇄
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleInsert(' ')}
+                className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-400 flex items-center justify-center hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
+              >
+                ␣
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleInsert('.')}
+                className="w-12 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
+              >
+                .
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleInsert('\n')}
+                className="w-14 h-10 rounded-lg bg-blue-200/80 border border-blue-300 text-blue-800 flex items-center justify-center hover:bg-blue-300 transition-all text-lg"
+                title="Enter"
+              >
+                ↵
+              </button>
             </div>
           </div>
         ) : (
