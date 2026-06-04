@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { X, Copy, Check, Trash2 } from 'lucide-react';
 import katex from 'katex';
 import { FIXED_ROWS, TOPICS, type TopicId, type MathKey } from './keys';
+import TableEditor from './TableEditor';
 
 interface MathKeyboardProps {
   isOpen: boolean;
@@ -185,6 +186,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const [caretIndex, setCaretIndex] = useState<number | null>(null);
   const [topic, setTopic] = useState<TopicId>('algebra');
   const [abcMode, setAbcMode] = useState(false);
+  const [tableMode, setTableMode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shiftOn, setShiftOn] = useState(false);
   
@@ -543,7 +545,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
       {/* ── Keyboard Grid ──── */}
       <div className="p-2">
-        {abcMode ? (
+        {tableMode ? (
+          <TableEditor
+            onInsert={latex => { handleInsert(latex); setTableMode(false); }}
+            onClose={() => setTableMode(false)}
+          />
+        ) : abcMode ? (
           /* ABC mode */
           <div className="space-y-1">
             {/* Row 1: Numbers */}
@@ -657,7 +664,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
               </button>
             </div>
           </div>
-        ) : (
+        ) : tableMode ? null : (
           /* Math mode */
           <div className="flex gap-1">
             {/* Fixed section */}
@@ -670,6 +677,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                       type="button"
                       onClick={() => {
                         if (k.latex === '__ABC__') setAbcMode(true);
+                        else if (k.label === 'Table') setTableMode(true);
                         else if (k.className !== 'empty') handleInsert(k.latex);
                       }}
                       disabled={k.className === 'empty'}
