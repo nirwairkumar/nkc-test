@@ -10,11 +10,20 @@ interface MathKeyboardProps {
 
 /* ── helpers ─────────────────────────────────────────── */
 
-function prepareExpressionForKaTeX(expr: string): string {
+function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): string {
   let result = '';
   let i = 0;
   
+  const insertCursorIfNeeded = (idx: number) => {
+    if (caretIndex !== null && idx === caretIndex) {
+      result += '\\htmlClass{math-cursor}{}';
+    }
+  };
+  
   while (i < expr.length) {
+    // Insert cursor before processing the character at index i
+    insertCursorIfNeeded(i);
+    
     const char = expr[i];
     
     // 1. Handle escape sequences (control words like \frac, \alpha, \begin, etc.)
@@ -29,19 +38,30 @@ function prepareExpressionForKaTeX(expr: string): string {
         i++;
       }
       
+      if (cmdName === '') {
+        // Escaped symbol like \\, \&, \{, \}, \_, \%, \#, \$
+        const nextChar = expr[i] || '';
+        result += '\\' + nextChar;
+        i++;
+        continue;
+      }
+      
       // If it's a begin/end/ce command, skip wrapping the command and its environment arguments
       if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
         result += '\\' + cmdName;
         // Consume environment/ce braces
         while (i < expr.length && expr[i] !== '{') {
+          insertCursorIfNeeded(i);
           result += expr[i];
           i++;
         }
         if (i < expr.length && expr[i] === '{') {
+          insertCursorIfNeeded(i);
           result += '{';
           i++;
           let braceCount = 1;
           while (i < expr.length && braceCount > 0) {
+            insertCursorIfNeeded(i);
             if (expr[i] === '{') braceCount++;
             if (expr[i] === '}') braceCount--;
             result += expr[i];
@@ -95,13 +115,16 @@ function prepareExpressionForKaTeX(expr: string): string {
     }
   }
   
+  // Insert cursor at the very end of expression if caretIndex is at expr.length
+  insertCursorIfNeeded(expr.length);
+  
   return result;
 }
 
-function renderKatex(expr: string): string {
+function renderKatex(expr: string, caretIndex: number | null): string {
   if (!expr.trim()) return '<span style="color:#94a3b8">Preview</span>';
   try {
-    const parsedExpr = prepareExpressionForKaTeX(expr);
+    const parsedExpr = prepareExpressionForKaTeX(expr, caretIndex);
     return katex.renderToString(parsedExpr, { throwOnError: false, displayMode: true, trust: true });
   } catch {
     return '<span style="color:#ef4444">Invalid expression</span>';
@@ -152,6 +175,7 @@ function insertTextAtCursor(el: HTMLTextAreaElement | HTMLInputElement, text: st
 
 export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const [expression, setExpression] = useState('');
+  const [caretIndex, setCaretIndex] = useState<number | null>(null);
   const [topic, setTopic] = useState<TopicId>('algebra');
   const [abcMode, setAbcMode] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -159,6 +183,13 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const lastTextareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const expressionInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize caretIndex on open
+  useEffect(() => {
+    if (isOpen) {
+      setCaretIndex(expression.length);
+    }
+  }, [isOpen]);
 
   // Track last focused textarea (before keyboard gets focus)
   useEffect(() => {
@@ -185,13 +216,18 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           const before = expression.slice(0, start - 1);
           const after = expression.slice(inputEl.selectionEnd ?? start);
           setExpression(before + after);
+          setCaretIndex(start - 1);
           setTimeout(() => {
             inputEl.focus();
             inputEl.setSelectionRange(start - 1, start - 1);
           }, 0);
         }
       } else {
-        setExpression(p => p.slice(0, -1));
+        setExpression(p => {
+          const next = p.slice(0, -1);
+          setCaretIndex(next.length);
+          return next;
+        });
       }
 
       // Also backspace in textarea if focused
@@ -214,6 +250,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     
     if (latex === '__CLEAR__') {
       setExpression('');
+      setCaretIndex(0);
       const ta = lastTextareaRef.current;
       if (ta && document.body.contains(ta)) {
         ta.focus();
@@ -243,6 +280,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         nextSelectionStart = start + latex.length;
         nextSelectionEnd = nextSelectionStart;
       }
+      setCaretIndex(nextSelectionStart);
       
       setTimeout(() => {
         inputEl.focus();
@@ -251,6 +289,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     } else {
       newExpr = expression + latex;
       setExpression(newExpr);
+      setCaretIndex(newExpr.length);
     }
     
     // Insert into tracked active textarea
@@ -278,9 +317,11 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           inputEl.focus();
           if (isPlaceholder) {
             inputEl.setSelectionRange(rawIdx, rawIdx + 1); // select the '?'
+            setCaretIndex(rawIdx);
           } else {
             // Place cursor immediately after the clicked character
             inputEl.setSelectionRange(rawIdx + 1, rawIdx + 1);
+            setCaretIndex(rawIdx + 1);
           }
         }
         
@@ -348,6 +389,19 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           border-radius: 2px;
           outline: 1px solid rgba(59, 130, 246, 0.3);
         }
+        .math-cursor {
+          border-left: 2px solid #3b82f6;
+          margin-left: -1px;
+          margin-right: -1px;
+          animation: math-blink 1s step-end infinite;
+          display: inline-block;
+          height: 1.2em;
+          vertical-align: middle;
+        }
+        @keyframes math-blink {
+          from, to { border-color: transparent }
+          50% { border-color: #3b82f6 }
+        }
       `}</style>
 
       {/* ── Header ─────────── */}
@@ -364,7 +418,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         <div
           className="min-h-[50px] flex items-center px-3 py-1.5 rounded-lg bg-white border border-blue-100 overflow-x-auto text-lg cursor-pointer"
           onClick={handlePreviewClick}
-          dangerouslySetInnerHTML={{ __html: renderKatex(expression) }}
+          dangerouslySetInnerHTML={{ __html: renderKatex(expression, caretIndex) }}
           title="Click on any blue box or math symbol to edit that slot"
         />
         
@@ -376,6 +430,9 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             value={expression}
             onChange={e => {
               setExpression(e.target.value);
+            }}
+            onSelect={e => {
+              setCaretIndex(e.currentTarget.selectionStart);
             }}
             placeholder="Type or use keys below..."
             className="flex-1 h-9 px-3 rounded-lg border border-blue-200 text-sm font-mono text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -392,6 +449,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           <button
             onClick={() => {
               setExpression('');
+              setCaretIndex(0);
               const ta = lastTextareaRef.current;
               if (ta && document.body.contains(ta)) {
                 ta.focus();
