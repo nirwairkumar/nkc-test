@@ -46,33 +46,56 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
         continue;
       }
       
-      // If it's a begin/end/ce command, skip wrapping the command and its environment arguments
-      if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
+      // If it's a begin/end/ce/hline/cline command, skip wrapping
+      if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce' || cmdName === 'hline' || cmdName === 'cline') {
         result += '\\' + cmdName;
-        let envName = '';
-        // Consume environment/ce braces
-        while (i < expr.length && expr[i] !== '{') {
-          insertCursorIfNeeded(i);
-          result += expr[i];
-          i++;
-        }
-        if (i < expr.length && expr[i] === '{') {
-          insertCursorIfNeeded(i);
-          result += '{';
-          i++;
-          let braceCount = 1;
-          while (i < expr.length && braceCount > 0) {
+        
+        if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
+          let envName = '';
+          // Consume environment/ce braces
+          while (i < expr.length && expr[i] !== '{') {
             insertCursorIfNeeded(i);
-            if (expr[i] === '{') braceCount++;
-            if (expr[i] === '}') braceCount--;
-            envName += expr[i];
             result += expr[i];
             i++;
           }
-        }
-        
-        // If the environment is 'array', we must skip the column specification brace (e.g. {c|c}) too
-        if (envName.startsWith('array}')) {
+          if (i < expr.length && expr[i] === '{') {
+            insertCursorIfNeeded(i);
+            result += '{';
+            i++;
+            let braceCount = 1;
+            while (i < expr.length && braceCount > 0) {
+              insertCursorIfNeeded(i);
+              if (expr[i] === '{') braceCount++;
+              if (expr[i] === '}') braceCount--;
+              envName += expr[i];
+              result += expr[i];
+              i++;
+            }
+          }
+          
+          // If the environment is 'array', we must skip the column specification brace (e.g. {c|c}) too
+          if (envName.includes('array')) {
+            while (i < expr.length && expr[i] !== '{') {
+              insertCursorIfNeeded(i);
+              result += expr[i];
+              i++;
+            }
+            if (i < expr.length && expr[i] === '{') {
+              insertCursorIfNeeded(i);
+              result += '{';
+              i++;
+              let braceCount = 1;
+              while (i < expr.length && braceCount > 0) {
+                insertCursorIfNeeded(i);
+                if (expr[i] === '{') braceCount++;
+                if (expr[i] === '}') braceCount--;
+                result += expr[i];
+                i++;
+              }
+            }
+          }
+        } else if (cmdName === 'cline') {
+          // cline takes braces: \cline{1-2}
           while (i < expr.length && expr[i] !== '{') {
             insertCursorIfNeeded(i);
             result += expr[i];
@@ -171,28 +194,118 @@ function findSubstringNearCursor(text: string, sub: string, cursor: number): num
   return bestIdx;
 }
 
-function insertTextAtCursor(el: HTMLTextAreaElement | HTMLInputElement, text: string) {
-  const start = el.selectionStart ?? el.value.length;
-  const end = el.selectionEnd ?? start;
-  const before = el.value.slice(0, start);
-  const after = el.value.slice(end);
-  const nativeSetter = Object.getOwnPropertyDescriptor(
-    el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
-    'value'
-  )?.set;
-  nativeSetter?.call(el, before + text + after);
-  el.dispatchEvent(new Event('input', { bubbles: true }));
+function findLaTeXBlockEnd(text: string, startIdx: number): number {
+  let i = startIdx;
+  if (text[i] !== '\\') return -1;
   
-  // Highlight the first '?' in the inserted text
-  const firstPlaceholderOffset = text.indexOf('?');
-  if (firstPlaceholderOffset !== -1) {
-    const targetPos = start + firstPlaceholderOffset;
-    el.setSelectionRange(targetPos, targetPos + 1);
-  } else {
-    const pos = start + text.length;
-    el.setSelectionRange(pos, pos);
+  i++;
+  let cmdName = '';
+  while (i < text.length && /[a-zA-Z]/.test(text[i])) {
+    cmdName += text[i];
+    i++;
   }
-  el.focus();
+  
+  if (cmdName === '') {
+    // Single escaped symbol command, e.g. \\, \&, \{, \}
+    return i + 1;
+  }
+  
+  // If it's a begin environment
+  if (cmdName === 'begin') {
+    while (i < text.length && text[i] !== '{') i++;
+    if (i >= text.length) return -1;
+    i++; // skip '{'
+    let envName = '';
+    while (i < text.length && text[i] !== '}') {
+      envName += text[i];
+      i++;
+    }
+    if (i >= text.length) return -1;
+    i++; // skip '}'
+    
+    // Search for matching \end{envName}
+    const endStr = `\\end{${envName}}`;
+    const endIdx = text.indexOf(endStr, i);
+    if (endIdx !== -1) {
+      return endIdx + endStr.length;
+    }
+    return -1;
+  }
+  
+  // If it's a ce command
+  if (cmdName === 'ce') {
+    while (i < text.length && text[i] !== '{') i++;
+    if (i >= text.length) return -1;
+    i++;
+    let braceCount = 1;
+    while (i < text.length && braceCount > 0) {
+      if (text[i] === '{') braceCount++;
+      if (text[i] === '}') braceCount--;
+      i++;
+    }
+    return braceCount === 0 ? i : -1;
+  }
+  
+  // If it's a structural command like \frac, \sqrt
+  if (cmdName === 'frac' || cmdName === 'sqrt') {
+    let bracesCount = 0;
+    while (i < text.length) {
+      while (i < text.length && (text[i] === ' ' || text[i] === '\n')) i++;
+      if (i < text.length && (text[i] === '{' || text[i] === '[')) {
+        const openChar = text[i];
+        const closeChar = openChar === '{' ? '}' : ']';
+        i++;
+        let depth = 1;
+        while (i < text.length && depth > 0) {
+          if (text[i] === openChar) depth++;
+          if (text[i] === closeChar) depth--;
+          i++;
+        }
+        bracesCount++;
+      } else {
+        break;
+      }
+    }
+    return bracesCount > 0 ? i : -1;
+  }
+  
+  // Otherwise, simple command, read possible sub/superscripts
+  while (i < text.length) {
+    if (text[i] === '_' || text[i] === '^') {
+      i++;
+      while (i < text.length && (text[i] === ' ' || text[i] === '\n')) i++;
+      if (i < text.length && text[i] === '{') {
+        i++;
+        let depth = 1;
+        while (i < text.length && depth > 0) {
+          if (text[i] === '{') depth++;
+          if (text[i] === '}') depth--;
+          i++;
+        }
+      } else {
+        i++;
+      }
+    } else {
+      break;
+    }
+  }
+  
+  return i;
+}
+
+function detectFormulaAtCaret(text: string, pos: number): { start: number, end: number, expr: string } | null {
+  let searchPos = pos;
+  while (searchPos >= 0) {
+    const bsIdx = text.lastIndexOf('\\', searchPos);
+    if (bsIdx === -1) break;
+    
+    const endIdx = findLaTeXBlockEnd(text, bsIdx);
+    if (endIdx !== -1 && pos >= bsIdx && pos <= endIdx) {
+      return { start: bsIdx, end: endIdx, expr: text.slice(bsIdx, endIdx) };
+    }
+    searchPos = bsIdx - 1;
+  }
+  return null;
 }
 
 /* ── component ───────────────────────────────────────── */
@@ -204,7 +317,9 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const [abcMode, setAbcMode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shiftOn, setShiftOn] = useState(false);
+  
   const lastTextareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+  const formulaRangeRef = useRef<{ start: number; end: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const expressionInputRef = useRef<HTMLInputElement>(null);
 
@@ -230,6 +345,96 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     return () => document.removeEventListener('focusin', handler);
   }, [isOpen]);
 
+  // Sync expression to the active textarea (overwriting tracked range or inserting)
+  const syncExpressionToTextarea = useCallback((newExpr: string) => {
+    const ta = lastTextareaRef.current;
+    if (!ta || !document.body.contains(ta)) return;
+    
+    const range = formulaRangeRef.current;
+    
+    if (range) {
+      const before = ta.value.slice(0, range.start);
+      const after = ta.value.slice(range.end);
+      
+      const setter = Object.getOwnPropertyDescriptor(
+        ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+        'value'
+      )?.set;
+      setter?.call(ta, before + newExpr + after);
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      formulaRangeRef.current = { start: range.start, end: range.start + newExpr.length };
+      
+      const inputEl = expressionInputRef.current;
+      if (inputEl) {
+        const inputCaret = inputEl.selectionStart ?? newExpr.length;
+        const newCursorPos = range.start + inputCaret;
+        ta.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    } else {
+      const start = ta.selectionStart ?? ta.value.length;
+      const end = ta.selectionEnd ?? start;
+      const before = ta.value.slice(0, start);
+      const after = ta.value.slice(end);
+      
+      const setter = Object.getOwnPropertyDescriptor(
+        ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+        'value'
+      )?.set;
+      setter?.call(ta, before + newExpr + after);
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      formulaRangeRef.current = { start, end: start + newExpr.length };
+      
+      const inputEl = expressionInputRef.current;
+      if (inputEl) {
+        const inputCaret = inputEl.selectionStart ?? newExpr.length;
+        const newCursorPos = start + inputCaret;
+        ta.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }
+  }, []);
+
+  // Synchronize from textarea focus, cursor position, or selection changes
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const syncFromTextarea = () => {
+      const ta = lastTextareaRef.current;
+      if (!ta || !document.body.contains(ta)) return;
+      
+      const pos = ta.selectionStart ?? ta.value.length;
+      const detected = detectFormulaAtCaret(ta.value, pos);
+      
+      if (detected) {
+        formulaRangeRef.current = { start: detected.start, end: detected.end };
+        setExpression(detected.expr);
+        setCaretIndex(pos - detected.start);
+      } else {
+        formulaRangeRef.current = null;
+      }
+    };
+    
+    const handleEvents = (e: Event) => {
+      if (panelRef.current?.contains(e.target as Node)) return;
+      syncFromTextarea();
+    };
+    
+    document.addEventListener('selectionchange', handleEvents);
+    document.addEventListener('click', handleEvents);
+    document.addEventListener('keyup', handleEvents);
+    document.addEventListener('input', handleEvents);
+    
+    syncFromTextarea();
+    
+    return () => {
+      document.removeEventListener('selectionchange', handleEvents);
+      document.removeEventListener('click', handleEvents);
+      document.removeEventListener('keyup', handleEvents);
+      document.removeEventListener('input', handleEvents);
+    };
+  }, [isOpen]);
+
   const handleInsert = useCallback((latex: string) => {
     if (latex === '__ABC__') { setAbcMode(v => !v); return; }
     if (latex === '__BACK__') {
@@ -239,35 +444,20 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         if (start > 0) {
           const before = expression.slice(0, start - 1);
           const after = expression.slice(inputEl.selectionEnd ?? start);
-          setExpression(before + after);
+          const newExpr = before + after;
+          setExpression(newExpr);
           setCaretIndex(start - 1);
+          syncExpressionToTextarea(newExpr);
           setTimeout(() => {
             inputEl.focus();
             inputEl.setSelectionRange(start - 1, start - 1);
           }, 0);
         }
       } else {
-        setExpression(p => {
-          const next = p.slice(0, -1);
-          setCaretIndex(next.length);
-          return next;
-        });
-      }
-
-      // Also backspace in textarea if focused
-      const ta = lastTextareaRef.current;
-      if (ta && document.body.contains(ta)) {
-        const s = ta.selectionStart ?? ta.value.length;
-        if (s > 0) {
-          const before = ta.value.slice(0, s - 1);
-          const after = ta.value.slice(ta.selectionEnd ?? s);
-          const setter = Object.getOwnPropertyDescriptor(
-            ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value'
-          )?.set;
-          setter?.call(ta, before + after);
-          ta.dispatchEvent(new Event('input', { bubbles: true }));
-          ta.setSelectionRange(s - 1, s - 1);
-        }
+        const newExpr = expression.slice(0, -1);
+        setExpression(newExpr);
+        setCaretIndex(newExpr.length);
+        syncExpressionToTextarea(newExpr);
       }
       return;
     }
@@ -275,6 +465,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     if (latex === '__CLEAR__') {
       setExpression('');
       setCaretIndex(0);
+      syncExpressionToTextarea('');
       const ta = lastTextareaRef.current;
       if (ta && document.body.contains(ta)) {
         ta.focus();
@@ -282,7 +473,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       return;
     }
     
-    // Insert into keyboard's internal expression state at cursor
     const inputEl = expressionInputRef.current;
     let newExpr = expression;
     let nextSelectionStart = expression.length;
@@ -294,7 +484,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       const before = expression.slice(0, start);
       const after = expression.slice(end);
       newExpr = before + latex + after;
-      setExpression(newExpr);
       
       const placeholderOffset = latex.indexOf('?');
       if (placeholderOffset !== -1) {
@@ -304,7 +493,10 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         nextSelectionStart = start + latex.length;
         nextSelectionEnd = nextSelectionStart;
       }
+      
+      setExpression(newExpr);
       setCaretIndex(nextSelectionStart);
+      syncExpressionToTextarea(newExpr);
       
       setTimeout(() => {
         inputEl.focus();
@@ -314,14 +506,9 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       newExpr = expression + latex;
       setExpression(newExpr);
       setCaretIndex(newExpr.length);
+      syncExpressionToTextarea(newExpr);
     }
-    
-    // Insert into tracked active textarea
-    const ta = lastTextareaRef.current;
-    if (ta && document.body.contains(ta)) {
-      insertTextAtCursor(ta, latex);
-    }
-  }, [expression]);
+  }, [expression, syncExpressionToTextarea]);
 
   const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
@@ -329,14 +516,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
     
-    // Get all clickable elements
     const elements = Array.from(container.querySelectorAll('.math-placeholder, .math-token'));
     if (elements.length === 0) {
       setCaretIndex(0);
       return;
     }
     
-    // Find the closest element based on distance to the click coordinates
     let closestEl: Element | null = null;
     let minDistance = Infinity;
     
@@ -352,7 +537,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       }
     }
     
-    // Check if the click is far to the left of the first element, or far to the right of the last element
     const firstRect = elements[0].getBoundingClientRect();
     const lastRect = elements[elements.length - 1].getBoundingClientRect();
     
@@ -402,15 +586,13 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         const rawIdx = parseInt(idxClass.replace(/^(placeholder|token)-idx-/, ''), 10);
         const isPlaceholder = closestEl.classList.contains('math-placeholder');
         
-        // 1. Focus internal expression input and set cursor/selection
         const inputEl = expressionInputRef.current;
         if (inputEl) {
           inputEl.focus();
           if (isPlaceholder) {
-            inputEl.setSelectionRange(rawIdx, rawIdx + 1); // select the '?'
+            inputEl.setSelectionRange(rawIdx, rawIdx + 1);
             setCaretIndex(rawIdx);
           } else {
-            // Check if click was on the left half or right half of the token
             const elRect = closestEl.getBoundingClientRect();
             const clickXInEl = e.clientX - elRect.left;
             const newCaretIdx = clickXInEl < elRect.width / 2 ? rawIdx : rawIdx + 1;
@@ -419,7 +601,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           }
         }
         
-        // 2. Select/focus corresponding position in active textarea
         const ta = lastTextareaRef.current;
         if (ta && document.body.contains(ta)) {
           const cursor = ta.selectionStart ?? ta.value.length;
@@ -527,7 +708,9 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             type="text"
             value={expression}
             onChange={e => {
-              setExpression(e.target.value);
+              const nextVal = e.target.value;
+              setExpression(nextVal);
+              syncExpressionToTextarea(nextVal);
             }}
             onSelect={e => {
               setCaretIndex(e.currentTarget.selectionStart);
@@ -548,6 +731,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             onClick={() => {
               setExpression('');
               setCaretIndex(0);
+              syncExpressionToTextarea('');
               const ta = lastTextareaRef.current;
               if (ta && document.body.contains(ta)) {
                 ta.focus();
