@@ -683,7 +683,15 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                           : 'bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
                       }`}
                     >
-                      {k.display ?? k.label}
+                      {k.latex === '\\frac{?}{?}' ? (
+                        <div className="flex flex-col items-center justify-center gap-[2px] w-4 h-5 mx-auto">
+                          <div className="w-2 h-1.5 bg-current rounded-[1px]" />
+                          <div className="w-3.5 h-[1.5px] bg-current" />
+                          <div className="w-2 h-1.5 bg-current rounded-[1px]" />
+                        </div>
+                      ) : (
+                        k.display ?? k.label
+                      )}
                     </button>
                   ))}
                 </div>
