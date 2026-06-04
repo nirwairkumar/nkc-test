@@ -279,54 +279,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         };
     }, []);
 
-        // Track initial mount to prevent re-triggering scroll effects
-        const hasInitialScrolled = React.useRef(false);
 
-        // Smooth scroll behavior on page load
-        useEffect(() => {
-            if (hasInitialScrolled.current) return;
-            hasInitialScrolled.current = true; // Set it immediately to prevent multiple timers on rapid re-renders
 
-            // Blur any focused element (prevents cursor on option D)
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
-
-            // First, scroll to top instantly
-            window.scrollTo({ top: 0, behavior: 'instant' });
-
-        // Then, after a brief delay, smoothly scroll to the first question
-        const timer = setTimeout(() => {
-            const firstQuestion = document.querySelector('[data-question-card]');
-            if (firstQuestion) {
-                // Custom smooth scroll with slower speed
-                const targetPosition = firstQuestion.getBoundingClientRect().top + window.pageYOffset;
-                const startPosition = window.pageYOffset;
-                const distance = targetPosition - startPosition;
-                const duration = 1500; // 1.5 seconds for slower scroll
-                let start: number | null = null;
-
-                const animation = (currentTime: number) => {
-                    if (start === null) start = currentTime;
-                    const timeElapsed = currentTime - start;
-                    const progress = Math.min(timeElapsed / duration, 1);
-
-                    // Linear easing for constant slow speed
-
-                    window.scrollTo(0, startPosition + distance * progress);
-
-                    if (timeElapsed < duration) {
-                        requestAnimationFrame(animation);
-                    }
-                };
-
-                requestAnimationFrame(animation);
-                hasInitialScrolled.current = true;
-            }
-        }, 1000); // 1 second delay to show the top of the page
-
-        return () => clearTimeout(timer);
-    }, []); // Only run once on mount
+    // Scroll to top on page load and blur active elements to prevent autofocus issues
+    useEffect(() => {
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+        window.scrollTo({ top: 0, behavior: 'instant' });
+    }, []);
 
 
     // Load Categories
@@ -1757,35 +1718,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     </Label>
                                 </div>
                             </div>
-                            <div className="relative rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-violet-50 px-4 py-3 shadow-sm overflow-hidden">
-                                {/* Subtle accent stripe */}
-                                <div className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-gradient-to-b from-indigo-400 to-violet-500" />
-                                <div className="flex items-center justify-between gap-4 pl-2">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold tracking-widest uppercase text-indigo-600 bg-indigo-100 border border-indigo-200 rounded-full px-2 py-0.5">
-                                                Pro
-                                            </span>
-                                            <Label className="text-sm font-bold text-slate-800 cursor-default">
-                                                Section-Wise Questions
-                                            </Label>
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">
-                                            Split your test into named sections with individual marks &amp; controls
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <Switch checked={enableSectionMode} onCheckedChange={toggleSectionMode} />
-                                        <Label
-                                            className={`cursor-pointer text-xs font-semibold w-6 ${enableSectionMode ? 'text-indigo-600' : 'text-slate-400'}`}
-                                            onClick={() => toggleSectionMode(!enableSectionMode)}
-                                        >
-                                            {enableSectionMode ? 'On' : 'Off'}
-                                        </Label>
-                                    </div>
+                            <div>
+                                <Label className="text-slate-600 font-semibold">section-wise-questions</Label>
+                                <div className="flex items-center space-x-2 h-10 border border-indigo-300 rounded-md px-3 bg-white">
+                                    <Switch checked={enableSectionMode} onCheckedChange={toggleSectionMode} />
+                                    <Label className="cursor-pointer text-slate-700" onClick={() => toggleSectionMode(!enableSectionMode)}>{enableSectionMode ? 'On' : 'Off'}</Label>
                                 </div>
                             </div>
-
                         </div>
 
                         {/* Merge Section Marks Config */}
@@ -1912,14 +1851,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     <tbody>
                                         {/* Basic examples — always visible */}
                                         {([
-                                            { cat: 'Energy–mass equivalence', raw: '$E = mc^2$',                              visual: 'E = mc²' },
-                                            { cat: 'Acceleration unit',        raw: '$2.4\\,\\text{m/s}^2$',                 visual: '2.4 m/s²' },
-                                            { cat: 'Pythagorean theorem',       raw: '$a^2 + b^2 = c^2$',                     visual: 'a² + b² = c²' },
-                                            { cat: 'Square root',              raw: '$\\sqrt{16} = 4$',                       visual: '√16 = 4' },
-                                            { cat: 'Simple fraction',          raw: '$\\frac{1}{2}$',                         visual: '½' },
-                                            { cat: 'Chemical — Water',         raw: '$\\ce{H2O}$',                          visual: 'H₂O' },
-                                            { cat: 'Chemical — Glucose',       raw: '$\\ce{C6H12O6}$',                       visual: 'C₆H₁₂O₆' },
-                                            { cat: 'Speed of light',           raw: '$c = 3\\times10^8\\,\\text{m/s}$',      visual: 'c = 3×10⁸ m/s' },
+                                            { cat: 'Energy–mass equivalence', raw: '$E = mc^2$', visual: 'E = mc²' },
+                                            { cat: 'Acceleration unit', raw: '$2.4\\,\\text{m/s}^2$', visual: '2.4 m/s²' },
+                                            { cat: 'Pythagorean theorem', raw: '$a^2 + b^2 = c^2$', visual: 'a² + b² = c²' },
+                                            { cat: 'Square root', raw: '$\\sqrt{16} = 4$', visual: '√16 = 4' },
+                                            { cat: 'Simple fraction', raw: '$\\frac{1}{2}$', visual: '½' },
+                                            { cat: 'Chemical — Water', raw: '$\\ce{H2O}$', visual: 'H₂O' },
+                                            { cat: 'Chemical — Glucose', raw: '$\\ce{C6H12O6}$', visual: 'C₆H₁₂O₆' },
+                                            { cat: 'Speed of light', raw: '$c = 3\\times10^8\\,\\text{m/s}$', visual: 'c = 3×10⁸ m/s' },
                                         ] as { cat: string; raw: string; visual: string }[]).map((row, i) => (
                                             <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-blue-50/40'}>
                                                 <td className="px-3 py-1.5 text-blue-800/70 border-b border-blue-100">{row.cat}</td>
@@ -1932,18 +1871,18 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                         {/* Advanced examples — shown when expanded */}
                                         {showAdvancedFormats && ([
-                                            { cat: 'Quadratic formula',    raw: '$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$',            visual: 'x = (−b ± √(b²−4ac)) / 2a' },
-                                            { cat: 'Definite integral',    raw: '$\\int_0^\\infty e^{-x}\\,dx=1$',                   visual: '∫₀^∞ e⁻ˣ dx = 1' },
-                                            { cat: 'Summation (sigma)',    raw: '$\\sum_{n=1}^{\\infty}\\frac{1}{n^2}=\\frac{\\pi^2}{6}$', visual: 'Σ 1/n² = π²/6' },
-                                            { cat: 'Limit',                raw: '$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$',             visual: 'lim(x→0) sinx/x = 1' },
-                                            { cat: 'Greek letters',        raw: '$\\alpha,\\beta,\\gamma,\\Delta,\\Omega$',           visual: 'α, β, γ, Δ, Ω' },
-                                            { cat: "Newton's 2nd law",     raw: '$\\vec{F}=m\\vec{a}$',                              visual: 'F⃗ = ma⃗' },
-                                            { cat: "Ohm's law",            raw: '$V=IR$',                                            visual: 'V = IR' },
-                                            { cat: 'Chemical rxn — CO₂',  raw: '$\\ce{C + O2 -> CO2}$',                         visual: 'C + O₂ → CO₂' },
-                                            { cat: 'Chemical rxn — NaCl', raw: '$\\ce{Na + Cl -> NaCl}$',                        visual: 'Na + Cl → NaCl' },
-                                            { cat: 'Binomial probability', raw: '$P(X=k)=\\binom{n}{k}p^k(1-p)^{n-k}$',             visual: 'P(X=k) = C(n,k) pᵏ(1−p)ⁿ⁻ᵏ' },
-                                            { cat: 'Matrix (2×2)',         raw: '$\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}$',        visual: '[[a b] [c d]]' },
-                                            { cat: "Euler's identity",     raw: '$e^{i\\pi}+1=0$',                                  visual: 'eⁱᵖⁱ + 1 = 0' },
+                                            { cat: 'Quadratic formula', raw: '$x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}$', visual: 'x = (−b ± √(b²−4ac)) / 2a' },
+                                            { cat: 'Definite integral', raw: '$\\int_0^\\infty e^{-x}\\,dx=1$', visual: '∫₀^∞ e⁻ˣ dx = 1' },
+                                            { cat: 'Summation (sigma)', raw: '$\\sum_{n=1}^{\\infty}\\frac{1}{n^2}=\\frac{\\pi^2}{6}$', visual: 'Σ 1/n² = π²/6' },
+                                            { cat: 'Limit', raw: '$\\lim_{x\\to 0}\\frac{\\sin x}{x}=1$', visual: 'lim(x→0) sinx/x = 1' },
+                                            { cat: 'Greek letters', raw: '$\\alpha,\\beta,\\gamma,\\Delta,\\Omega$', visual: 'α, β, γ, Δ, Ω' },
+                                            { cat: "Newton's 2nd law", raw: '$\\vec{F}=m\\vec{a}$', visual: 'F⃗ = ma⃗' },
+                                            { cat: "Ohm's law", raw: '$V=IR$', visual: 'V = IR' },
+                                            { cat: 'Chemical rxn — CO₂', raw: '$\\ce{C + O2 -> CO2}$', visual: 'C + O₂ → CO₂' },
+                                            { cat: 'Chemical rxn — NaCl', raw: '$\\ce{Na + Cl -> NaCl}$', visual: 'Na + Cl → NaCl' },
+                                            { cat: 'Binomial probability', raw: '$P(X=k)=\\binom{n}{k}p^k(1-p)^{n-k}$', visual: 'P(X=k) = C(n,k) pᵏ(1−p)ⁿ⁻ᵏ' },
+                                            { cat: 'Matrix (2×2)', raw: '$\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}$', visual: '[[a b] [c d]]' },
+                                            { cat: "Euler's identity", raw: '$e^{i\\pi}+1=0$', visual: 'eⁱᵖⁱ + 1 = 0' },
                                         ] as { cat: string; raw: string; visual: string }[]).map((row, i) => (
                                             <tr key={`adv-${i}`} className={i % 2 === 0 ? 'bg-white' : 'bg-blue-50/40'}>
                                                 <td className="px-3 py-1.5 text-blue-800/70 border-b border-blue-100">{row.cat}</td>

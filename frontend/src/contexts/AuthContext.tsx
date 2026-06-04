@@ -155,10 +155,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     localStorage.removeItem('testoza_refresh_token');
                     setUser(null);
                     setSession(null);
+                    await checkPremiumStatus(undefined);
                 }
             } else {
                 setUser(null);
                 setSession(null);
+                await checkPremiumStatus(undefined);
             }
         } catch (error) {
             console.error('Auth initialization error:', error);
