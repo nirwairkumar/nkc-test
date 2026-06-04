@@ -10,19 +10,45 @@ interface MathKeyboardProps {
 
 /* ── helpers ─────────────────────────────────────────── */
 
+function prepareExpressionForKaTeX(expr: string): string {
+  let result = '';
+  let placeholderCount = 0;
+  for (let i = 0; i < expr.length; i++) {
+    const char = expr[i];
+    if (char === '?') {
+      placeholderCount++;
+      result += `\\htmlClass{math-placeholder placeholder-idx-${i} placeholder-count-${placeholderCount}}{\\color{#1e40af}{?}}`;
+    } else {
+      result += char;
+    }
+  }
+  return result;
+}
+
 function renderKatex(expr: string): string {
   if (!expr.trim()) return '<span style="color:#94a3b8">Preview</span>';
   try {
-    return katex.renderToString(expr, { throwOnError: false, displayMode: true, trust: true });
+    const parsedExpr = prepareExpressionForKaTeX(expr);
+    return katex.renderToString(parsedExpr, { throwOnError: false, displayMode: true, trust: true });
   } catch {
     return '<span style="color:#ef4444">Invalid expression</span>';
   }
 }
 
-function getActiveTextarea(): HTMLTextAreaElement | HTMLInputElement | null {
-  const el = document.activeElement;
-  if (el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && el.type === 'text')) return el;
-  return null;
+function findSubstringNearCursor(text: string, sub: string, cursor: number): number {
+  if (!sub) return -1;
+  let bestIdx = -1;
+  let minDiff = Infinity;
+  let idx = text.indexOf(sub);
+  while (idx !== -1) {
+    const diff = Math.abs(idx - cursor);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestIdx = idx;
+    }
+    idx = text.indexOf(sub, idx + 1);
+  }
+  return bestIdx;
 }
 
 function insertTextAtCursor(el: HTMLTextAreaElement | HTMLInputElement, text: string) {
@@ -36,8 +62,17 @@ function insertTextAtCursor(el: HTMLTextAreaElement | HTMLInputElement, text: st
   )?.set;
   nativeSetter?.call(el, before + text + after);
   el.dispatchEvent(new Event('input', { bubbles: true }));
-  const pos = start + text.length;
-  el.setSelectionRange(pos, pos);
+  
+  // Highlight the first '?' in the inserted text
+  const firstPlaceholderOffset = text.indexOf('?');
+  if (firstPlaceholderOffset !== -1) {
+    const targetPos = start + firstPlaceholderOffset;
+    el.setSelectionRange(targetPos, targetPos + 1);
+  } else {
+    const pos = start + text.length;
+    el.setSelectionRange(pos, pos);
+  }
+  el.focus();
 }
 
 /* ── component ───────────────────────────────────────── */
@@ -50,6 +85,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const [shiftOn, setShiftOn] = useState(false);
   const lastTextareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const expressionInputRef = useRef<HTMLInputElement>(null);
 
   // Track last focused textarea (before keyboard gets focus)
   useEffect(() => {
@@ -69,7 +105,22 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const handleInsert = useCallback((latex: string) => {
     if (latex === '__ABC__') { setAbcMode(v => !v); return; }
     if (latex === '__BACK__') {
-      setExpression(p => p.slice(0, -1));
+      const inputEl = expressionInputRef.current;
+      if (inputEl) {
+        const start = inputEl.selectionStart ?? inputEl.value.length;
+        if (start > 0) {
+          const before = expression.slice(0, start - 1);
+          const after = expression.slice(inputEl.selectionEnd ?? start);
+          setExpression(before + after);
+          setTimeout(() => {
+            inputEl.focus();
+            inputEl.setSelectionRange(start - 1, start - 1);
+          }, 0);
+        }
+      } else {
+        setExpression(p => p.slice(0, -1));
+      }
+
       // Also backspace in textarea if focused
       const ta = lastTextareaRef.current;
       if (ta && document.body.contains(ta)) {
@@ -87,14 +138,86 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       }
       return;
     }
-    if (latex === '__CLEAR__') { setExpression(''); return; }
-    setExpression(p => p + latex);
-    // Insert into tracked textarea
+    
+    if (latex === '__CLEAR__') {
+      setExpression('');
+      const ta = lastTextareaRef.current;
+      if (ta && document.body.contains(ta)) {
+        ta.focus();
+      }
+      return;
+    }
+    
+    // Insert into keyboard's internal expression state at cursor
+    const inputEl = expressionInputRef.current;
+    let newExpr = expression;
+    let nextSelectionStart = expression.length;
+    let nextSelectionEnd = expression.length;
+    
+    if (inputEl) {
+      const start = inputEl.selectionStart ?? inputEl.value.length;
+      const end = inputEl.selectionEnd ?? start;
+      const before = expression.slice(0, start);
+      const after = expression.slice(end);
+      newExpr = before + latex + after;
+      setExpression(newExpr);
+      
+      const placeholderOffset = latex.indexOf('?');
+      if (placeholderOffset !== -1) {
+        nextSelectionStart = start + placeholderOffset;
+        nextSelectionEnd = nextSelectionStart + 1;
+      } else {
+        nextSelectionStart = start + latex.length;
+        nextSelectionEnd = nextSelectionStart;
+      }
+      
+      setTimeout(() => {
+        inputEl.focus();
+        inputEl.setSelectionRange(nextSelectionStart, nextSelectionEnd);
+      }, 0);
+    } else {
+      newExpr = expression + latex;
+      setExpression(newExpr);
+    }
+    
+    // Insert into tracked active textarea
     const ta = lastTextareaRef.current;
     if (ta && document.body.contains(ta)) {
       insertTextAtCursor(ta, latex);
     }
-  }, []);
+  }, [expression]);
+
+  const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const placeholderEl = target.closest('.math-placeholder');
+    if (placeholderEl) {
+      const classList = Array.from(placeholderEl.classList);
+      const idxClass = classList.find(c => c.startsWith('placeholder-idx-'));
+      
+      if (idxClass) {
+        const rawIdx = parseInt(idxClass.replace('placeholder-idx-', ''), 10);
+        
+        // 1. Focus internal expression input and select the placeholder
+        const inputEl = expressionInputRef.current;
+        if (inputEl) {
+          inputEl.focus();
+          inputEl.setSelectionRange(rawIdx, rawIdx + 1);
+        }
+        
+        // 2. Select corresponding placeholder in active textarea
+        const ta = lastTextareaRef.current;
+        if (ta && document.body.contains(ta)) {
+          const cursor = ta.selectionStart ?? ta.value.length;
+          const subStart = findSubstringNearCursor(ta.value, expression, cursor);
+          if (subStart !== -1) {
+            const targetPos = subStart + rawIdx;
+            ta.focus();
+            ta.setSelectionRange(targetPos, targetPos + 1);
+          }
+        }
+      }
+    }
+  }, [expression]);
 
   const handleCopy = useCallback(async () => {
     const raw = expression ? `$${expression}$` : '';
@@ -112,8 +235,27 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       ref={panelRef}
       className="fixed bottom-4 left-14 z-[9999] w-[740px] max-w-[95vw] rounded-2xl shadow-2xl border border-blue-200 bg-gradient-to-b from-blue-50 to-slate-100 overflow-hidden select-none"
       style={{ fontFamily: "'Inter', sans-serif" }}
-      onMouseDown={e => e.preventDefault()} /* prevent stealing focus from textareas */
+      onMouseDown={e => e.preventDefault()}
     >
+      <style>{`
+        .math-placeholder {
+          background-color: #dbeafe !important;
+          color: #1e40af !important;
+          border-radius: 4px;
+          padding: 0px 5px;
+          margin: 0px 2px;
+          cursor: pointer;
+          font-weight: bold;
+          display: inline-block;
+          transition: all 0.2s;
+          border: 1px dashed #93c5fd;
+        }
+        .math-placeholder:hover {
+          background-color: #bfdbfe !important;
+          border-color: #3b82f6;
+        }
+      `}</style>
+
       {/* ── Header ─────────── */}
       <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200">
         <span className="text-xs font-bold text-blue-800 tracking-wide uppercase">Math Keyboard</span>
@@ -122,28 +264,51 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         </button>
       </div>
 
-      {/* ── Preview + Copy ── */}
-      <div className="px-3 py-2 border-b border-blue-100 flex items-center gap-2 bg-white/60">
+      {/* ── Preview & Input Area ── */}
+      <div className="px-3 py-2 border-b border-blue-100 space-y-2 bg-white/60">
+        {/* Rendered KaTeX Output */}
         <div
-          className="flex-1 min-h-[40px] flex items-center px-3 py-1 rounded-lg bg-white border border-blue-100 overflow-x-auto text-lg"
+          className="min-h-[50px] flex items-center px-3 py-1.5 rounded-lg bg-white border border-blue-100 overflow-x-auto text-lg cursor-pointer"
+          onClick={handlePreviewClick}
           dangerouslySetInnerHTML={{ __html: renderKatex(expression) }}
+          title="Click on any blue '?' box to edit that slot"
         />
-        <button
-          onClick={handleCopy}
-          disabled={!expression}
-          className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
-          title="Copy raw LaTeX (wrapped in $...$)"
-        >
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
-        <button
-          onClick={() => setExpression('')}
-          className="shrink-0 p-2 rounded-lg text-xs text-red-500 hover:bg-red-50 transition-colors"
-          title="Clear expression"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        
+        {/* Raw LaTeX Input */}
+        <div className="flex items-center gap-2">
+          <input
+            ref={expressionInputRef}
+            type="text"
+            value={expression}
+            onChange={e => {
+              setExpression(e.target.value);
+            }}
+            placeholder="Type or use keys below..."
+            className="flex-1 h-9 px-3 rounded-lg border border-blue-200 text-sm font-mono text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            onClick={handleCopy}
+            disabled={!expression}
+            className="shrink-0 flex items-center gap-1 h-9 px-3 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
+            title="Copy raw LaTeX (wrapped in $...$)"
+          >
+            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+          <button
+            onClick={() => {
+              setExpression('');
+              const ta = lastTextareaRef.current;
+              if (ta && document.body.contains(ta)) {
+                ta.focus();
+              }
+            }}
+            className="shrink-0 p-2 rounded-lg text-xs text-red-500 hover:bg-red-50 transition-colors"
+            title="Clear expression"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* ── Raw format display ── */}

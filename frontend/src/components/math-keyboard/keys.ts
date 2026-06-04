@@ -9,14 +9,14 @@ export const FIXED_ROWS: MathKey[][] = [
   [
     { label: '(', latex: '(' }, { label: ')', latex: ')' }, { label: '|', latex: '|' },
     { label: '[', latex: '[' }, { label: ']', latex: ']' },
-    { label: '√', latex: '\\sqrt{}' }, { label: '∛', latex: '\\sqrt[3]{}' }, { label: '≥', latex: '\\geq ' },
+    { label: '√', latex: '\\sqrt{?}' }, { label: '∛', latex: '\\sqrt[3]{?}' }, { label: '≥', latex: '\\geq ' },
   ],
   [
     { label: 'x', latex: 'x', className: 'italic' }, { label: '7', latex: '7' },
     { label: '8', latex: '8' }, { label: '9', latex: '9' },
-    { label: '⁄', latex: '\\frac{}{}', display: '▫/▫' },
-    { label: '□²', latex: '^{}', display: '□ⁿ' },
-    { label: '□₂', latex: '_{}', display: '□ₙ' }, { label: '≤', latex: '\\leq ' },
+    { label: '⁄', latex: '\\frac{?}{?}', display: '▫/▫' },
+    { label: '□²', latex: '^{?}', display: '□ⁿ' },
+    { label: '□₂', latex: '_{?}', display: '□ₙ' }, { label: '≤', latex: '\\leq ' },
   ],
   [
     { label: 'y', latex: 'y', className: 'italic' }, { label: '4', latex: '4' },
@@ -54,26 +54,26 @@ export const TOPICS: TopicDef[] = [
     id: 'algebra', label: 'Algebra',
     keys: [
       [
-        { label: '\\begin{pmatrix}\\end{pmatrix}', latex: '\\begin{pmatrix} & \\\\ & \\end{pmatrix}', display: '⊞' },
+        { label: '\\begin{pmatrix}\\end{pmatrix}', latex: '\\begin{pmatrix} ? & ? \\\\ ? & ? \\end{pmatrix}', display: '⊞' },
         { label: 'f(x)', latex: 'f(x)', display: 'f(x)' },
         { label: 'e', latex: 'e', className: 'italic' },
         { label: '∞', latex: '\\infty ' },
       ],
       [
         { label: 'ln', latex: '\\ln ' },
-        { label: '×10', latex: '\\times 10^{}', display: '×10ⁿ' },
-        { label: '{ }', latex: '\\{ \\}', display: '{ }' },
+        { label: '×10', latex: '\\times 10^{?}', display: '×10ⁿ' },
+        { label: '{ }', latex: '\\{ ? \\}', display: '{ }' },
         { label: 'i', latex: 'i', className: 'italic' },
       ],
       [
         { label: 'log', latex: '\\log ' },
-        { label: 'log₍₎', latex: '\\log_{}', display: 'logₙ' },
+        { label: 'log₍₎', latex: '\\log_{?}{?}', display: 'logₙ' },
         { label: '∩', latex: '\\cap ' },
         { label: '∪', latex: '\\cup ' },
       ],
       [
         { label: '±', latex: '\\pm ' },
-        { label: '(,)', latex: '(,)', display: '(a,b)' },
+        { label: '(,)', latex: '(?,?)', display: '(a,b)' },
         { label: 'π', latex: '\\pi ' },
         { label: '≠', latex: '\\neq ' },
       ],
@@ -102,7 +102,7 @@ export const TOPICS: TopicDef[] = [
       ],
       [
         { label: '∼', latex: '\\sim ' },
-        { label: '×10', latex: '\\times 10^{}', display: '×10ⁿ' },
+        { label: '×10', latex: '\\times 10^{?}', display: '×10ⁿ' },
         { label: '°', latex: '^{\\circ}', display: '°' },
         { label: '≈', latex: '\\approx ' },
       ],
@@ -127,7 +127,7 @@ export const TOPICS: TopicDef[] = [
         { label: 'tan', latex: '\\tan ' },
         { label: 'π', latex: '\\pi ' },
         { label: 'log', latex: '\\log ' },
-        { label: 'logₙ', latex: '\\log_{}', display: 'logₙ' },
+        { label: 'logₙ', latex: '\\log_{?}{?}', display: 'logₙ' },
       ],
       [
         { label: 'cot', latex: '\\cot ' },
@@ -141,9 +141,9 @@ export const TOPICS: TopicDef[] = [
     id: 'calculus', label: 'Calculus',
     keys: [
       [
-        { label: 'Σ', latex: '\\sum_{}^{}' },
+        { label: 'Σ', latex: '\\sum_{?}^{?}{?}' },
         { label: '∫', latex: '\\int ' },
-        { label: '∫ₐᵇ', latex: '\\int_{}^{}', display: '∫ₐᵇ' },
+        { label: '∫ₐᵇ', latex: '\\int_{?}^{?}{?}', display: '∫ₐᵇ' },
         { label: 'f(x)', latex: 'f(x)' },
       ],
       [
@@ -156,10 +156,10 @@ export const TOPICS: TopicDef[] = [
         { label: 'i', latex: 'i', className: 'italic' },
         { label: 'π', latex: '\\pi ' },
         { label: 'log', latex: '\\log ' },
-        { label: 'logₙ', latex: '\\log_{}', display: 'logₙ' },
+        { label: 'logₙ', latex: '\\log_{?}{?}', display: 'logₙ' },
       ],
       [
-        { label: 'lim', latex: '\\lim_{}' },
+        { label: 'lim', latex: '\\lim_{? \\to ?}{?}' },
         { label: '∞', latex: '\\infty ' },
         { label: 'ln', latex: '\\ln ' },
         { label: "d/dx", latex: '\\frac{d}{dx}' },
@@ -170,8 +170,8 @@ export const TOPICS: TopicDef[] = [
     id: 'statistics', label: 'Statistics',
     keys: [
       [
-        { label: 'nPr', latex: '{}P{}', display: 'ₙPᵣ' },
-        { label: 'nCr', latex: '\\binom{}{}', display: 'ₙCᵣ' },
+        { label: 'nPr', latex: '_{?}P_{?}', display: 'ₙPᵣ' },
+        { label: 'nCr', latex: '\\binom{?}{?}', display: 'ₙCᵣ' },
         { label: 'π', latex: '\\pi ' },
         { label: 'i', latex: 'i', className: 'italic' },
       ],
@@ -179,7 +179,7 @@ export const TOPICS: TopicDef[] = [
         { label: 'P(X)', latex: 'P(X)', display: 'P(X)' },
         { label: 'x̄', latex: '\\bar{x}' },
         { label: 'e', latex: 'e', className: 'italic' },
-        { label: '(,)', latex: '(,)', display: '(a,b)' },
+        { label: '(,)', latex: '(?,?)', display: '(a,b)' },
       ],
       [
         { label: 'α', latex: '\\alpha ' },
@@ -218,7 +218,7 @@ export const TOPICS: TopicDef[] = [
       ],
       [
         { label: '∇', latex: '\\nabla ' },
-        { label: '×10', latex: '\\times 10^{}', display: '×10ⁿ' },
+        { label: '×10', latex: '\\times 10^{?}', display: '×10ⁿ' },
         { label: '→', latex: '\\rightarrow ' },
         { label: '∞', latex: '\\infty ' },
       ],
@@ -234,7 +234,7 @@ export const TOPICS: TopicDef[] = [
         { label: '↓', latex: '\\ce{v}', display: '↓(s)' },
       ],
       [
-        { label: 'ce{}', latex: '\\ce{}', display: '\\ce{ }' },
+        { label: 'ce{}', latex: '\\ce{?}', display: '\\ce{ }' },
         { label: 'Δ', latex: '\\Delta ' },
         { label: '°C', latex: '^{\\circ}\\text{C}' },
         { label: 'K', latex: '\\text{K}' },
