@@ -47,6 +47,7 @@ import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import PremiumGuard from '@/components/premium/PremiumGuard';
 import { JsonImporter } from '@/components/test-builder/JsonImporter';
 import { ScreenshotCaptureModal } from '@/components/test-builder/ScreenshotCaptureModal';
+import { MathKeyboard } from './math-keyboard';
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
@@ -147,6 +148,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
     const [showSupportedFormats, setShowSupportedFormats] = useState(false);
     const [showAdvancedFormats, setShowAdvancedFormats] = useState(false);
+    const [showMathKeyboard, setShowMathKeyboard] = useState(false);
 
     // Merged Section Marks State
     const [mergedSections, setMergedSections] = useState<{ label: string; section_ids: string[] }[]>([]);
@@ -3166,6 +3168,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     </div>
                 </div>
             )}
+
+            {/* Floating Math Keyboard Trigger on Left Screen Edge */}
+            <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[9998]">
+                <button
+                    type="button"
+                    onClick={() => setShowMathKeyboard(v => !v)}
+                    className="flex flex-col items-center justify-center gap-1.5 w-10 py-3 rounded-r-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg border border-l-0 border-blue-400/30 transition-all group hover:w-11"
+                    title="Open Virtual Math Keyboard"
+                >
+                    <Calculator className="w-5 h-5 transition-transform group-hover:scale-110" />
+                    <span className="text-[9px] font-bold tracking-wider uppercase [writing-mode:vertical-lr] select-none">Math</span>
+                </button>
+            </div>
+
+            {/* Virtual Math Keyboard Overlay */}
+            <MathKeyboard
+                isOpen={showMathKeyboard}
+                onClose={() => setShowMathKeyboard(false)}
+            />
         </div >
     );
 }
