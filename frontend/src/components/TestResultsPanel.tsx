@@ -134,18 +134,30 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const topScore = displayedResults.length > 0
         ? Math.max(...displayedResults.map(r => r.score || 0))
         : 0;
+    const isStartFormEnabled = !!test?.settings?.start_form?.enabled;
+    const configuredFormLabels = (test?.settings?.start_form?.fields || []).map((f: any) => f?.label).filter(Boolean);
 
     const getDisplayName = (attempt: any) => {
+        if (isStartFormEnabled && configuredFormLabels.length > 0) {
+            const firstLabel = configuredFormLabels[0];
+            if (attempt.metadata?.startFormData?.[firstLabel] !== undefined && attempt.metadata?.startFormData?.[firstLabel] !== null) {
+                return String(attempt.metadata.startFormData[firstLabel]);
+            }
+        }
         const formData = attempt.metadata?.startFormData || {};
         const formKeys = Object.keys(formData);
         const pk = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
-        if (pk && formData[pk]) return formData[pk];
+        if (pk && formData[pk]) return String(formData[pk]);
         if (isAdmin && attempt.user?.full_name) return attempt.user.full_name;
         if (isAdmin && attempt.user?.email) return attempt.user.email;
         return 'Anonymous Candidate';
     };
 
     const getOtherDetails = (attempt: any) => {
+        if (isStartFormEnabled) {
+            const formData = attempt.metadata?.startFormData || {};
+            return Object.entries(formData).filter(([k]) => !configuredFormLabels.includes(k));
+        }
         const formData = attempt.metadata?.startFormData || {};
         const formKeys = Object.keys(formData);
         const pk = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
@@ -157,46 +169,296 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             toast.error("Exporting results to CSV is a premium feature.");
             return;
         }
+
+        const formatCSVCell = (val: any) => {
+            if (val === null || val === undefined) return '""';
+            const str = String(val).replace(/"/g, '""');
+            return `"${str}"`;
+        };
+
+        const hasSections = !!(test?.enable_section_mode && test?.sections && test?.sections.length > 0);
+
+        // Define start form labels / dynamic headers
         const startFormKeys = new Set<string>();
         displayedResults.forEach(r => {
-            if (r.metadata?.startFormData) Object.keys(r.metadata.startFormData).forEach(k => startFormKeys.add(k));
+            if (r.metadata?.startFormData) {
+                Object.keys(r.metadata.startFormData).forEach(k => startFormKeys.add(k));
+            }
         });
-        let dynamicHeaders = Array.from(startFormKeys).sort((a, b) => {
-            const al = a.toLowerCase(), bl = b.toLowerCase();
-            if (al.includes('name') && !bl.includes('name')) return -1;
-            if (!al.includes('name') && bl.includes('name')) return 1;
-            if (al.includes('roll') && !bl.includes('roll')) return -1;
-            if (!al.includes('roll') && bl.includes('roll')) return 1;
-            return a.localeCompare(b);
-        });
-        const headers: string[] = [];
-        if (showRank) headers.push("Rank");
-        if (isAdmin) headers.push("Profile Name", "Email");
-        headers.push(...dynamicHeaders, "Date", "Time", "Total Marks", "Correct", "Wrong", "Unattempted", "+ve Score", "-ve Score", "Final Score");
 
-        const rows = displayedResults.map((r, i) => {
-            const stats = r.metadata?.stats || {};
-            const formData = r.metadata?.startFormData || {};
-            const dateObj = new Date(r.created_at);
-            const rowData: any[] = [];
-            if (showRank) rowData.push(i + 1);
-            if (isAdmin) rowData.push(r.user?.full_name || 'N/A', r.user?.email || 'N/A');
-            rowData.push(
-                ...dynamicHeaders.map(k => formData[k] || ''),
-                format(dateObj, 'yyyy-MM-dd'), format(dateObj, 'hh:mm:ss a'),
-                totalMaxMarks, stats.correctCount || 0, stats.wrongCount || 0,
-                stats.unattemptedCount || 0, stats.positiveScore || 0, stats.negativeScore || 0, r.score
+        let dynamicHeaders = Array.from(startFormKeys);
+        if (isStartFormEnabled && configuredFormLabels.length > 0) {
+            dynamicHeaders = [...configuredFormLabels];
+            startFormKeys.forEach(k => {
+                if (!dynamicHeaders.includes(k)) dynamicHeaders.push(k);
+            });
+        } else {
+            dynamicHeaders.sort((a, b) => {
+                const al = a.toLowerCase(), bl = b.toLowerCase();
+                if (al.includes('name') && !bl.includes('name')) return -1;
+                if (!al.includes('name') && bl.includes('name')) return 1;
+                if (al.includes('roll') && !bl.includes('roll')) return -1;
+                if (!al.includes('roll') && bl.includes('roll')) return 1;
+                return a.localeCompare(b);
+            });
+        }
+
+        // Base Candidate details
+        const baseHeaders: string[] = [];
+        if (showRank) baseHeaders.push("Rank");
+        if (isStartFormEnabled) {
+            baseHeaders.push(...configuredFormLabels);
+            if (isAdmin) baseHeaders.push("Email");
+        } else {
+            if (isAdmin) baseHeaders.push("Profile Name", "Email");
+            baseHeaders.push(...dynamicHeaders);
+        }
+        baseHeaders.push("Date", "Time");
+
+        let headerRow1: string[] = [];
+        let headerRow2: string[] = [];
+        let flatHeaders: string[] = [];
+
+        // Helper to evaluate marks per question for correct / negative
+        const testMarksPerQ = test?.marks_per_question !== undefined ? parseFloat(test.marks_per_question) : 4;
+        const testNegativeMarks = test?.negative_marks !== undefined ? parseFloat(test.negative_marks) : 1;
+
+        const getQuestionResult = (q: any, userAns: any, defaultMarks: number, defaultNeg: number) => {
+            const maxScore = q.marks !== undefined ? parseFloat(q.marks) : defaultMarks;
+            const negScore = q.negative_marks !== undefined ? parseFloat(q.negative_marks) : defaultNeg;
+
+            if (userAns === undefined || userAns === null) {
+                return { status: "Unattempted", score: 0, userAnswer: "N/A", correctAnswer: String(q.correct_answer || '') };
+            }
+
+            const isMulti = Array.isArray(q.correct_answer);
+            const userAnsStr = Array.isArray(userAns) ? userAns.map(String).sort().join(",") : String(userAns);
+            const correctAnsStr = isMulti ? q.correct_answer.map(String).sort().join(",") : String(q.correct_answer || '');
+
+            if (isMulti) {
+                const correctSet = new Set(q.correct_answer.map(String));
+                const userList = Array.isArray(userAns) ? userAns.map(String) : [String(userAns)];
+                const isCorrect = userList.length === correctSet.size && userList.every(v => correctSet.has(v));
+                if (isCorrect) {
+                    return { status: "Correct", score: maxScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
+                }
+                const partialEnabled = !!q.enable_partial_marks;
+                if (partialEnabled) {
+                    const incorrectCount = userList.filter(v => !correctSet.has(v)).length;
+                    if (incorrectCount === 0 && userList.length > 0) {
+                        const correctCount = userList.length;
+                        const partialMark = q.partial_marks_per_option !== undefined ? parseFloat(q.partial_marks_per_option) : 1;
+                        const earned = correctCount * partialMark;
+                        return { status: "Partial", score: earned, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
+                    }
+                }
+                return { status: "Wrong", score: -negScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
+            } else {
+                const isCorrect = String(userAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase();
+                if (isCorrect) {
+                    return { status: "Correct", score: maxScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
+                }
+                return { status: "Wrong", score: -negScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
+            }
+        };
+
+        if (hasSections) {
+            // Header Row 1: Merge labels
+            headerRow1 = [...baseHeaders];
+            // Header Row 2: Empty fillers for base columns
+            headerRow2 = baseHeaders.map(() => "");
+
+            // Sections loop
+            (test?.sections || []).forEach((sec: any) => {
+                headerRow1.push(sec.name, "", "", "");
+                headerRow2.push("Correct", "Wrong", "-ve Marks", "+ve Marks");
+            });
+
+            // Overall Summary merge headers
+            headerRow1.push("Overall Summary", "", "", "", "", "", "", "");
+            headerRow2.push(
+                "Total Questions",
+                "Total Correct",
+                "Total Incorrect",
+                "Total +ve Score",
+                "Total -ve Score",
+                "Total Partial Mark",
+                "Final Score",
+                "Percentage"
             );
+        } else {
+            flatHeaders = [...baseHeaders];
+            flatHeaders.push(
+                "Total Questions",
+                "Total Correct",
+                "Total Incorrect",
+                "Total +ve Score",
+                "Total -ve Score",
+                "Total Partial Mark",
+                "Final Score",
+                "Percentage"
+            );
+
+            // Append per-question detail columns for flat tests
+            const questions = test?.questions || [];
+            questions.forEach((q: any, qIdx: number) => {
+                const label = q.title ? `Q${qIdx + 1}: ${q.title}` : `Q${qIdx + 1}`;
+                flatHeaders.push(`${label} (Student Ans)`, `${label} (Correct Ans)`, `${label} (Status)`, `${label} (Score)`);
+            });
+        }
+
+        const rows = displayedResults.map((attempt, index) => {
+            const formData = attempt.metadata?.startFormData || {};
+            const dateObj = new Date(attempt.created_at);
+            const userAnswers = attempt.answers || {};
+
+            const rowData: any[] = [];
+            if (showRank) rowData.push(index + 1);
+
+            if (isStartFormEnabled) {
+                configuredFormLabels.forEach((label: string) => {
+                    rowData.push(formData[label] !== undefined ? String(formData[label]) : 'N/A');
+                });
+                if (isAdmin) rowData.push(attempt.user?.email || 'N/A');
+            } else {
+                if (isAdmin) rowData.push(attempt.user?.full_name || 'N/A', attempt.user?.email || 'N/A');
+                dynamicHeaders.forEach(k => {
+                    rowData.push(formData[k] !== undefined ? String(formData[k]) : '');
+                });
+            }
+
+            rowData.push(format(dateObj, 'yyyy-MM-dd'), format(dateObj, 'hh:mm:ss a'));
+
+            let overallQuestions = 0;
+            let overallCorrect = 0;
+            let overallIncorrect = 0;
+            let overallPositive = 0;
+            let overallNegative = 0;
+            let overallPartialMark = 0;
+
+            if (hasSections) {
+                (test?.sections || []).forEach((sec: any) => {
+                    let secCorrect = 0;
+                    let secWrong = 0;
+                    let secNegativeScore = 0;
+                    let secPositiveScore = 0;
+                    const secMarksPerQ = sec.marks_per_question !== undefined ? parseFloat(sec.marks_per_question) : testMarksPerQ;
+                    const secNegativeMarks = sec.negative_marks !== undefined ? parseFloat(sec.negative_marks) : testNegativeMarks;
+
+                    const secQuestions = sec.questions || [];
+                    secQuestions.forEach((q: any) => {
+                        const userAns = userAnswers[q.id];
+                        const res = getQuestionResult(q, userAns, secMarksPerQ, secNegativeMarks);
+
+                        if (res.status === "Correct") {
+                            secCorrect++;
+                            secPositiveScore += res.score;
+                            overallCorrect++;
+                            overallPositive += res.score;
+                        } else if (res.status === "Wrong") {
+                            secWrong++;
+                            secNegativeScore += Math.abs(res.score);
+                            overallIncorrect++;
+                            overallNegative += Math.abs(res.score);
+                        } else if (res.status === "Partial") {
+                            secCorrect++;
+                            secPositiveScore += res.score;
+                            overallCorrect++;
+                            overallPartialMark += res.score;
+                            overallPositive += res.score;
+                        }
+                        overallQuestions++;
+                    });
+
+                    rowData.push(
+                        secCorrect,
+                        secWrong,
+                        parseFloat(secNegativeScore.toFixed(2)),
+                        parseFloat(secPositiveScore.toFixed(2))
+                    );
+                });
+
+                const finalScore = parseFloat((overallPositive - overallNegative).toFixed(2));
+                const percentage = totalMaxMarks > 0 ? parseFloat(((finalScore / totalMaxMarks) * 100).toFixed(2)) : 0;
+
+                rowData.push(
+                    overallQuestions,
+                    overallCorrect,
+                    overallIncorrect,
+                    parseFloat(overallPositive.toFixed(2)),
+                    parseFloat(overallNegative.toFixed(2)),
+                    parseFloat(overallPartialMark.toFixed(2)),
+                    finalScore,
+                    percentage
+                );
+
+            } else {
+                const questions = test?.questions || [];
+                const questionDetailsList: any[] = [];
+
+                questions.forEach((q: any) => {
+                    const userAns = userAnswers[q.id];
+                    const res = getQuestionResult(q, userAns, testMarksPerQ, testNegativeMarks);
+
+                    if (res.status === "Correct") {
+                        overallCorrect++;
+                        overallPositive += res.score;
+                    } else if (res.status === "Wrong") {
+                        overallIncorrect++;
+                        overallNegative += Math.abs(res.score);
+                    } else if (res.status === "Partial") {
+                        overallCorrect++;
+                        overallPartialMark += res.score;
+                        overallPositive += res.score;
+                    }
+                    overallQuestions++;
+
+                    questionDetailsList.push(
+                        res.userAnswer,
+                        res.correctAnswer,
+                        res.status,
+                        parseFloat(res.score.toFixed(2))
+                    );
+                });
+
+                const finalScore = parseFloat((overallPositive - overallNegative).toFixed(2));
+                const percentage = totalMaxMarks > 0 ? parseFloat(((finalScore / totalMaxMarks) * 100).toFixed(2)) : 0;
+
+                rowData.push(
+                    overallQuestions,
+                    overallCorrect,
+                    overallIncorrect,
+                    parseFloat(overallPositive.toFixed(2)),
+                    parseFloat(overallNegative.toFixed(2)),
+                    parseFloat(overallPartialMark.toFixed(2)),
+                    finalScore,
+                    percentage,
+                    ...questionDetailsList
+                );
+            }
+
             return rowData;
         });
 
-        const csv = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+        let csvContent = "";
+        if (hasSections) {
+            csvContent = headerRow1.map(formatCSVCell).join(",") + "\n" +
+                         headerRow2.map(formatCSVCell).join(",") + "\n" +
+                         rows.map(row => row.map(formatCSVCell).join(",")).join("\n");
+        } else {
+            csvContent = flatHeaders.map(formatCSVCell).join(",") + "\n" +
+                         rows.map(row => row.map(formatCSVCell).join(",")).join("\n");
+        }
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", encodeURI(csv));
-        link.setAttribute("download", `${test.title}_results${showRank ? '_ranked' : ''}.csv`);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${test?.title || 'test'}_results${showRank ? '_ranked' : ''}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
 
     return (
@@ -334,7 +596,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                         <span className="text-[10px] font-black text-indigo-700 dark:text-indigo-300">#{index + 1}</span>
                                                     ) : (
                                                         <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">
-                                                            {name.charAt(0).toUpperCase()}
+                                                            {String(name || 'A').charAt(0).toUpperCase()}
                                                         </span>
                                                     )}
                                                 </div>
