@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -48,6 +48,7 @@ import PremiumGuard from '@/components/premium/PremiumGuard';
 import { JsonImporter } from '@/components/test-builder/JsonImporter';
 import { ScreenshotCaptureModal } from '@/components/test-builder/ScreenshotCaptureModal';
 import { MathKeyboard } from './math-keyboard';
+import { AiPromptGuide } from './AiPromptGuide';
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
@@ -149,6 +150,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [showSupportedFormats, setShowSupportedFormats] = useState(false);
     const [showAdvancedFormats, setShowAdvancedFormats] = useState(false);
     const [showMathKeyboard, setShowMathKeyboard] = useState(false);
+    const [showGuide, setShowGuide] = useState(false);
 
     // Merged Section Marks State
     const [mergedSections, setMergedSections] = useState<{ label: string; section_ids: string[] }[]>([]);
@@ -3130,8 +3132,17 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 </div>
             )}
 
-            {/* Floating Math Keyboard Trigger on Left Screen Edge */}
-            <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[9998]">
+            {/* Floating Triggers on Left Screen Edge */}
+            <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[9998] flex flex-col gap-2">
+                <button
+                    type="button"
+                    onClick={() => setShowGuide(v => !v)}
+                    className="flex flex-col items-center justify-center gap-1.5 w-10 py-3 rounded-r-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg border border-l-0 border-indigo-400/30 transition-all group hover:w-11 animate-pulse"
+                    title="How to write complex questions (AI Guide)"
+                >
+                    <Sparkles className="w-5 h-5 transition-transform group-hover:scale-110" />
+                    <span className="text-[9px] font-bold tracking-wider uppercase [writing-mode:vertical-lr] select-none">AI Guide</span>
+                </button>
                 <button
                     type="button"
                     onClick={() => setShowMathKeyboard(v => !v)}
@@ -3147,6 +3158,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             <MathKeyboard
                 isOpen={showMathKeyboard}
                 onClose={() => setShowMathKeyboard(false)}
+            />
+
+            {/* AI Prompt Guide Overlay */}
+            <AiPromptGuide
+                isOpen={showGuide}
+                onClose={() => setShowGuide(false)}
             />
         </div >
     );
