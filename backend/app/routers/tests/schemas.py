@@ -51,6 +51,11 @@ class CloneTestRequest(BaseModel):
     cloner_id: str  # user_id of the person cloning the test
 
 
+class AdminCloneTestRequest(BaseModel):
+    target_user_id: str
+
+
+
 class UpdateTestRequest(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None

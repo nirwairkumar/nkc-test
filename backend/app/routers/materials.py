@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Response
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Response, Request
 from app.core.database import get_db
 from app.utils.cache_headers import set_public_cache
 from supabase import Client
@@ -19,13 +19,46 @@ class LinkMaterialCreate(BaseModel):
     class_id: Optional[str] = None
 
 @router.get("/user/{user_id}")
-async def get_user_materials(user_id: str, fastapi_response: Response = None, db: Client = Depends(get_db)):
+async def get_user_materials(
+    user_id: str,
+    request: Request,
+    fastapi_response: Response = None,
+    db: Client = Depends(get_db)
+):
     try:
+        # 1. Authenticate / Identify the requester
+        requesting_user_id: str | None = None
+        is_admin = False
+        
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            try:
+                token = auth_header[7:]
+                user_res = db.auth.get_user(token)
+                if user_res and user_res.user:
+                    requesting_user_id = user_res.user.id
+                    # Check if admin
+                    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+                    if profile_res.data:
+                        email = profile_res.data[0].get("email")
+                        if email:
+                            admin_res = db.table("admins").select("email").eq("email", email).execute()
+                            is_admin = bool(admin_res.data)
+            except Exception:
+                pass
+
+        # 2. Authorization Enforcement
+        is_owner = (requesting_user_id == user_id)
+        if not is_owner and not is_admin:
+            raise HTTPException(status_code=403, detail="Unauthorized materials access")
+
         if fastapi_response:
             set_public_cache(fastapi_response, 60, 60)
         # Supabase syntax for joins in py: select("*, classes(name)")
         response = db.table("materials").select("*, classes(name)").eq("user_id", user_id).order("created_at", desc=True).execute()
         return response.data
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching materials: {e}")
         raise HTTPException(status_code=500, detail=str(e))

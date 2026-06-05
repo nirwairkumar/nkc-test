@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,13 @@ import {
 import { ClassItem, fetchClasses, createClass, deleteClass } from '@/lib/classesApi';
 
 export default function MaterialsManager() {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
+    const navigate = useNavigate();
+    const queryParams = new URLSearchParams(window.location.search);
+    const impersonateUserId = queryParams.get("userId");
+    const targetUserId = (isAdmin && impersonateUserId) ? impersonateUserId : user?.id;
+    const [targetUserProfile, setTargetUserProfile] = useState<any>(null);
+
     const [materials, setMaterials] = useState<Material[]>([]);
     const [classes, setClasses] = useState<ClassItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,17 +59,30 @@ export default function MaterialsManager() {
     const [creatingClass, setCreatingClass] = useState(false);
 
     useEffect(() => {
-        if (user?.id) {
-            loadData();
+        if (impersonateUserId && !isAdmin) {
+            toast.error("You are not authorized to view this user's materials.");
+            navigate('/materials', { replace: true });
+            return;
         }
-    }, [user?.id]);
+        if (targetUserId) {
+            loadData();
+            if (targetUserId !== user?.id) {
+                const fetchTargetCreator = async () => {
+                    const { fetchUserDetails } = await import('@/lib/usersApi');
+                    const { data } = await fetchUserDetails(targetUserId);
+                    if (data) setTargetUserProfile(data);
+                };
+                fetchTargetCreator();
+            }
+        }
+    }, [targetUserId, impersonateUserId, isAdmin, navigate]);
 
     const loadData = async () => {
-        if (!user) return;
+        if (!targetUserId) return;
         setLoading(true);
         const [matRes, classRes] = await Promise.all([
-            fetchMaterials(user.id),
-            fetchClasses(user.id)
+            fetchMaterials(targetUserId),
+            fetchClasses(targetUserId)
         ]);
 
         if (matRes.error) {
@@ -82,9 +102,9 @@ export default function MaterialsManager() {
 
     // --- Class Handlers ---
     const handleCreateClass = async () => {
-        if (!user || !newClassName.trim()) return;
+        if (!targetUserId || !newClassName.trim()) return;
         setCreatingClass(true);
-        const { data, error } = await createClass(newClassName, user.id);
+        const { data, error } = await createClass(newClassName, targetUserId);
         setCreatingClass(false);
         if (error) {
             toast.error("Failed to create class");
@@ -121,11 +141,11 @@ export default function MaterialsManager() {
     };
 
     const handleFileUpload = async () => {
-        if (!user || !selectedFile || !fileTitle) return;
+        if (!targetUserId || !selectedFile || !fileTitle) return;
         setUploading(true);
         try {
             const classId = selectedClassId === 'none' ? undefined : selectedClassId;
-            const { error } = await uploadFileMaterial(selectedFile, fileTitle, user.id, classId);
+            const { error } = await uploadFileMaterial(selectedFile, fileTitle, targetUserId, classId);
             if (error) throw error;
             toast.success("File uploaded successfully!");
             setIsFileDialogOpen(false);
@@ -163,11 +183,11 @@ export default function MaterialsManager() {
     };
 
     const handleAddLink = async () => {
-        if (!user || !linkUrl || !linkTitle) return;
+        if (!targetUserId || !linkUrl || !linkTitle) return;
         setProcessingLink(true);
         try {
             const classId = selectedClassId === 'none' ? undefined : selectedClassId;
-            const { error } = await addLinkMaterial(linkUrl, linkTitle, user.id, 'link', linkThumbnail, classId);
+            const { error } = await addLinkMaterial(linkUrl, linkTitle, targetUserId, 'link', linkThumbnail, classId);
             if (error) throw error;
             toast.success("Video link added successfully!");
             setIsLinkDialogOpen(false);
@@ -189,12 +209,12 @@ export default function MaterialsManager() {
     };
 
     const handleAddExternalLink = async () => {
-        if (!user || !externalLinkUrl || !externalLinkTitle) return;
+        if (!targetUserId || !externalLinkUrl || !externalLinkTitle) return;
         setProcessingExternalLink(true);
         try {
             const classId = selectedClassId === 'none' ? undefined : selectedClassId;
             // Use 'external' type
-            const { error } = await addLinkMaterial(externalLinkUrl, externalLinkTitle, user.id, 'external', undefined, classId);
+            const { error } = await addLinkMaterial(externalLinkUrl, externalLinkTitle, targetUserId, 'external', undefined, classId);
             if (error) throw error;
             toast.success("External link added successfully!");
             setIsExternalLinkDialogOpen(false);
@@ -238,6 +258,21 @@ export default function MaterialsManager() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+            {isAdmin && impersonateUserId && targetUserProfile && (
+                <div className="max-w-5xl mx-auto px-4 pt-4">
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex justify-between items-center shadow-sm">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                            <span className="text-sm font-medium">
+                                Impersonating materials manager for <strong>{targetUserProfile.full_name || targetUserProfile.email}</strong>
+                            </span>
+                        </div>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs text-amber-800 hover:bg-amber-100" onClick={() => navigate('/manage-tests?tab=users')}>
+                            Back to Admin Dashboard
+                        </Button>
+                    </div>
+                </div>
+            )}
             {/* Hero Header */}
             <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-8 pb-16">
                 <div className="max-w-5xl mx-auto flex items-end justify-between">

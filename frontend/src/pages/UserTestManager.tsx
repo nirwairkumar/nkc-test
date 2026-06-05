@@ -57,6 +57,12 @@ export default function UserTestManager() {
     const { user, isAdmin, loading: authLoading } = useAuth();
     const navigate = useNavigate();
 
+    // Impersonation check
+    const queryParams = new URLSearchParams(window.location.search);
+    const impersonateUserId = queryParams.get("userId");
+    const targetUserId = (isAdmin && impersonateUserId) ? impersonateUserId : user?.id;
+    const [targetUserProfile, setTargetUserProfile] = useState<any>(null);
+
     // Search State
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -105,9 +111,9 @@ export default function UserTestManager() {
     const [reportsLoading, setReportsLoading] = useState(false);
 
     const loadReports = async () => {
-        if (!user?.id) return;
+        if (!targetUserId) return;
         setReportsLoading(true);
-        const { data, error } = await fetchCreatorReports(user.id);
+        const { data, error } = await fetchCreatorReports(targetUserId);
         if (error) {
             toast.error("Failed to load reports");
         } else {
@@ -142,31 +148,37 @@ export default function UserTestManager() {
     useEffect(() => {
         if (!authLoading && !user) {
             navigate('/login');
-        } else if (user?.id) {
+        } else if (impersonateUserId && !isAdmin) {
+            toast.error("You are not authorized to view this user's dashboard.");
+            navigate('/my-tests', { replace: true });
+        } else if (targetUserId) {
             checkCreatorStatus();
             loadCategories();
             loadClasses();
             loadReports();
         }
-    }, [user?.id, authLoading, navigate]);
+    }, [targetUserId, impersonateUserId, isAdmin, authLoading, navigate]);
 
     useEffect(() => {
-        if (user?.id) {
+        if (targetUserId) {
             loadUserTests();
         }
-    }, [user?.id, debouncedSearchQuery]);
+    }, [targetUserId, debouncedSearchQuery]);
 
     const checkCreatorStatus = async () => {
-        if (!user) return;
+        if (!targetUserId) return;
         setCheckingCreator(true);
-        const { data } = await fetchUserDetails(user.id);
-        if (data) setIsCreator(data.is_creator);
+        const { data } = await fetchUserDetails(targetUserId);
+        if (data) {
+            setIsCreator(data.is_creator);
+            setTargetUserProfile(data);
+        }
         setCheckingCreator(false);
     };
 
     const loadClasses = async () => {
-        if (!user) return;
-        const { data } = await fetchClasses(user.id);
+        if (!targetUserId) return;
+        const { data } = await fetchClasses(targetUserId);
         if (data) setClasses(data);
     };
 
@@ -176,7 +188,7 @@ export default function UserTestManager() {
     };
 
     const loadUserTests = React.useCallback(async () => {
-        if (!user) return;
+        if (!targetUserId) return;
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -186,7 +198,7 @@ export default function UserTestManager() {
 
         setTestsLoading(true);
         try {
-            const { data, error } = await fetchTestsByUserId(user.id, {
+            const { data, error } = await fetchTestsByUserId(targetUserId, {
                 searchQuery: debouncedSearchQuery,
                 signal: controller.signal
             });
@@ -195,13 +207,13 @@ export default function UserTestManager() {
         } catch (error: any) {
             if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
             console.error('Error loading tests:', error);
-            toast.error("Failed to load your tests");
+            toast.error("Failed to load tests");
         } finally {
             if (abortControllerRef.current === controller) {
                 setTestsLoading(false);
             }
         }
-    }, [user, debouncedSearchQuery]);
+    }, [targetUserId, debouncedSearchQuery]);
 
     const handleDeleteTest = (testId: string, testTitle: string) => {
         setDeleteId(testId);
@@ -223,7 +235,11 @@ export default function UserTestManager() {
     };
 
     const openTestEditor = (test: any) => {
-        navigate(`/edit-test/${test.id}`);
+        if (isAdmin && impersonateUserId) {
+            navigate(`/edit-test/${test.id}?userId=${impersonateUserId}`);
+        } else {
+            navigate(`/edit-test/${test.id}`);
+        }
     };
 
     const handleVisibilityChange = async (test: any, newVisibility: 'public' | 'private') => {
@@ -282,7 +298,11 @@ export default function UserTestManager() {
     };
 
     const handleUploadSolutions = (test: any) => {
-        navigate(`/solutions-editor/${test.id}`);
+        if (isAdmin && impersonateUserId) {
+            navigate(`/solutions-editor/${test.id}?userId=${impersonateUserId}`);
+        } else {
+            navigate(`/solutions-editor/${test.id}`);
+        }
     };
 
     const handleClassChange = async (test: any, classId: string | null) => {
@@ -485,6 +505,19 @@ export default function UserTestManager() {
 
     return (
         <div className="container mx-auto max-w-5xl py-3 px-3 sm:py-5 sm:px-4 space-y-4">
+            {isAdmin && impersonateUserId && targetUserProfile && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex justify-between items-center shadow-sm mb-4">
+                    <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-sm font-medium">
+                            Impersonating creator dashboard for <strong>{targetUserProfile.full_name || targetUserProfile.email}</strong>
+                        </span>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-amber-800 hover:bg-amber-100" onClick={() => navigate('/manage-tests?tab=users')}>
+                        Back to Admin Dashboard
+                    </Button>
+                </div>
+            )}
             <Tabs defaultValue="tests" onValueChange={(v) => v === 'reports' && loadReports()}>
                 <div className="flex items-center justify-between mb-4">
                     <div>
@@ -810,7 +843,13 @@ export default function UserTestManager() {
                                 />
                             </div>
 
-                            <Button size="sm" className="h-9 text-sm w-full sm:w-auto" onClick={() => { setEditingTest(null); setIsTestEditOpen(true); }}>
+                            <Button size="sm" className="h-9 text-sm w-full sm:w-auto" onClick={() => {
+                                if (isAdmin && impersonateUserId) {
+                                    navigate(`/create-test?userId=${impersonateUserId}`);
+                                } else {
+                                    navigate('/create-test');
+                                }
+                            }}>
                                 <Plus className="w-4 h-4 mr-1.5" /> Create Test
                             </Button>
                         </div>

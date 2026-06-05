@@ -191,6 +191,7 @@ async def get_tests_feed(
 @router.get("/user/{user_id}")
 async def get_user_tests(
     user_id: str,
+    request: Request,
     search_query: str = None,
     ids_only: bool = Query(False, description="Faster fetch returning just IDs for progressive loading"),
     profile_view: bool = Query(False, description="When True (public profile page), excludes cloned tests from results"),
@@ -200,6 +201,37 @@ async def get_user_tests(
     try:
         if response:
             set_public_cache(response, 60, 60)
+            
+        # 1. Authenticate / Identify the requester
+        requesting_user_id: str | None = None
+        is_admin = False
+        
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            try:
+                token = auth_header[7:]
+                user_res = db.auth.get_user(token)
+                if user_res and user_res.user:
+                    requesting_user_id = user_res.user.id
+                    # Check if admin
+                    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+                    if profile_res.data:
+                        email = profile_res.data[0].get("email")
+                        if email:
+                            admin_res = db.table("admins").select("email").eq("email", email).execute()
+                            is_admin = bool(admin_res.data)
+            except Exception:
+                pass
+
+        # 2. Authorization Enforcement
+        is_owner = (requesting_user_id == user_id)
+        
+        if not is_owner and not is_admin:
+            # If they are trying to load the full dashboard tests (profile_view=False)
+            # but they are NOT the owner and NOT an admin, reject access completely!
+            if not profile_view:
+                raise HTTPException(status_code=403, detail="Unauthorized dashboard access")
+                
         tests = []
         
         if search_query:
@@ -220,7 +252,9 @@ async def get_user_tests(
                 .or_(",".join(giant_or))\
                 .limit(800)
             if profile_view:
-                query_search = query_search.eq("is_cloned", False)
+                query_search = query_search.eq("is_cloned", False).eq("visibility", "public")
+            elif not is_owner and not is_admin:
+                query_search = query_search.eq("visibility", "public")
             tests_res = query_search.execute()
             
             candidates = tests_res.data
@@ -249,7 +283,9 @@ async def get_user_tests(
                 .eq("created_by", user_id)\
                 .order("created_at", desc=True)
             if profile_view:
-                query_default = query_default.eq("is_cloned", False)
+                query_default = query_default.eq("is_cloned", False).eq("visibility", "public")
+            elif not is_owner and not is_admin:
+                query_default = query_default.eq("visibility", "public")
             tests_res = query_default.execute()
             tests = tests_res.data
         

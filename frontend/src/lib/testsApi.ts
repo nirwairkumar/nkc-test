@@ -221,6 +221,15 @@ export async function cloneTest(testId: string, clonerId: string) {
     }
 }
 
+export async function adminCloneTest(testId: string, targetUserId: string) {
+    try {
+        const response = await apiClient.post(`tests/admin/${testId}/clone`, { target_user_id: targetUserId });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
+    }
+}
+
 export async function deleteTest(id: string, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
@@ -407,6 +416,15 @@ export async function getNextTestId(prefix: 'M' | 'YT'): Promise<string> {
         console.error("Error generating ID", e);
         // Fallback
         return `${prefix}${Math.floor(Math.random() * 1000)}`;
+    }
+}
+
+export async function fetchConductModeTests() {
+    try {
+        const response = await apiClient.get('tests/admin/conduct-mode-tests');
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error: error.response?.data?.detail || error.message };
     }
 }
 

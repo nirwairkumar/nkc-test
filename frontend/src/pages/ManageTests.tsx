@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers, Copy, Edit, Radio, BarChart2, Loader2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { fetchAllTests, createTest, deleteTest, updateTest, fetchTestsByCreator } from '@/lib/testsApi';
+import { fetchAllTests, createTest, deleteTest, updateTest, fetchTestsByCreator, adminCloneTest, fetchConductModeTests } from '@/lib/testsApi';
 import { fetchAdminUsersReportStats, fetchAdminUserReports, Report } from '@/lib/reportsApi';
 import { fetchUsers, fetchUserDetails, verifyCreator, revokeVerification } from '@/lib/usersApi';
 import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category, SubCategory, fetchSubCategories, fetchAllSubCategories, createSubCategory, updateSubCategory, deleteSubCategory, assignSubCategoryToTest } from '@/lib/categoriesApi';
@@ -109,6 +109,19 @@ export default function ManageTests() {
     // Manage & Results State
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [viewingResultsTest, setViewingResultsTest] = useState<any>(null);
+
+    // Cloning & Conduct States
+    const [isCloneDialogOpen, setIsCloneDialogOpen] = useState(false);
+    const [cloningTestSelected, setCloningTestSelected] = useState<any>(null);
+    const [cloneSearchUserQuery, setCloneSearchUserQuery] = useState('');
+    const [cloneTargetUser, setCloneTargetUser] = useState<any>(null);
+    const [isCloning, setIsCloning] = useState(false);
+    const [cloneSearchTestQuery, setCloneSearchTestQuery] = useState('');
+    const [dialogTests, setDialogTests] = useState<any[]>([]);
+    const [dialogTestsLoading, setDialogTestsLoading] = useState(false);
+
+    const [conductModeTests, setConductModeTests] = useState<any[]>([]);
+    const [conductModeLoading, setConductModeLoading] = useState(false);
 
     // Three-dot menu state
     const [allClasses, setAllClasses] = useState<any[]>([]);
@@ -220,6 +233,7 @@ export default function ManageTests() {
         loadAllClasses();
         loadAllSubCategoriesData();
         loadCombinedSessions();
+        loadConductModeTests();
     }, []);
 
     useEffect(() => {
@@ -286,6 +300,99 @@ export default function ManageTests() {
             setUsersLoading(false);
         }
     };
+
+    const loadConductModeTests = async () => {
+        setConductModeLoading(true);
+        try {
+            const { data, error } = await fetchConductModeTests();
+            if (error) throw error;
+            setConductModeTests(data || []);
+        } catch (error) {
+            console.error('Error loading conduct mode tests:', error);
+        } finally {
+            setConductModeLoading(false);
+        }
+    };
+
+    const handleStopConductMode = async (test: any) => {
+        if (!confirm(`Are you sure you want to stop the live conduct mode for "${test.title}"? This will end the active exam for all students.`)) {
+            return;
+        }
+        const updatedSettings = {
+            ...test.settings,
+            conduct_exam: {
+                ...test.settings?.conduct_exam,
+                enabled: false
+            }
+        };
+        const { error } = await updateTest(test.id, { settings: updatedSettings }, isAdmin);
+        if (error) {
+            toast.error("Failed to stop conduct mode: " + error);
+        } else {
+            toast.success("Conduct mode stopped successfully.");
+            loadConductModeTests();
+        }
+    };
+
+    const handleOpenCloneToUserDialog = (test: any) => {
+        setCloningTestSelected(test);
+        setCloneTargetUser(null);
+        setCloneSearchUserQuery('');
+        setIsCloneDialogOpen(true);
+    };
+
+    const handleOpenCloneDialogForUser = (targetUser: any) => {
+        setCloneTargetUser(targetUser);
+        setCloningTestSelected(null);
+        setCloneSearchTestQuery('');
+        setIsCloneDialogOpen(true);
+    };
+
+    const handleCloneTestToUser = async () => {
+        const testId = cloningTestSelected?.id;
+        const targetUserId = cloneTargetUser?.id;
+        if (!testId || !targetUserId) {
+            toast.error("Please select both a test and a target user.");
+            return;
+        }
+        setIsCloning(true);
+        try {
+            const { error } = await adminCloneTest(testId, targetUserId);
+            if (error) throw new Error(error);
+            toast.success(`Successfully cloned test into target user dashboard!`);
+            setIsCloneDialogOpen(false);
+            setCloningTestSelected(null);
+            setCloneTargetUser(null);
+        } catch (err: any) {
+            console.error(err);
+            toast.error("Failed to clone test: " + err.message);
+        } finally {
+            setIsCloning(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!isCloneDialogOpen || !cloneTargetUser || cloningTestSelected) return;
+
+        const searchTests = async () => {
+            setDialogTestsLoading(true);
+            try {
+                const { data } = await fetchAllTests({
+                    page: 1,
+                    limit: 10,
+                    searchQuery: cloneSearchTestQuery
+                });
+                setDialogTests(data || []);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setDialogTestsLoading(false);
+            }
+        };
+
+        const timeout = setTimeout(searchTests, 300);
+        return () => clearTimeout(timeout);
+    }, [cloneSearchTestQuery, isCloneDialogOpen, cloneTargetUser, cloningTestSelected]);
 
     const handleViewUserDetails = async (user: any) => {
         setViewingUser(user);
@@ -696,14 +803,21 @@ export default function ManageTests() {
                 </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full md:w-[900px] grid-cols-5 mb-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
+                <TabsList className="grid w-full md:w-[1080px] grid-cols-6 mb-4 animate-in fade-in duration-300">
                     <TabsTrigger value="tests">Manage Tests</TabsTrigger>
                     <TabsTrigger value="categories">Categories</TabsTrigger>
                     <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="verified_creators">Verified</TabsTrigger>
-                    <TabsTrigger value="combined">
-                        <Layers className="w-3.5 h-3.5 mr-1.5" />Combined
+                    <TabsTrigger value="combined" className="flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5" />Combined
+                    </TabsTrigger>
+                    <TabsTrigger value="activity" className="flex items-center gap-1.5">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Activity
                     </TabsTrigger>
                 </TabsList>
 
@@ -905,6 +1019,11 @@ export default function ManageTests() {
                                                             {/* Upload Solutions Action */}
                                                             <DropdownMenuItem onClick={() => navigate(`/solutions-editor/${test.id}`)}>
                                                                 <Upload className="mr-2 h-4 w-4" /> Upload Solutions
+                                                            </DropdownMenuItem>
+
+                                                            {/* Clone to User */}
+                                                            <DropdownMenuItem onClick={() => handleOpenCloneToUserDialog(test)}>
+                                                                <Copy className="mr-2 h-4 w-4" /> Clone to User
                                                             </DropdownMenuItem>
 
                                                             <DropdownMenuSeparator />
@@ -1441,6 +1560,105 @@ export default function ManageTests() {
                     </Card>
                 </TabsContent>
 
+                {/* --- ACTIVITY (LIVE EXAMS) TAB --- */}
+                <TabsContent value="activity" className="space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-bold tracking-tight">Active Conduct-Mode Exams</h2>
+                            <p className="text-sm text-muted-foreground">Monitor and control exams currently running live on the platform.</p>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadConductModeTests}
+                            disabled={conductModeLoading}
+                            className="bg-white hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-900 border"
+                        >
+                            <RefreshCw className={`h-4 w-4 mr-2 ${conductModeLoading ? 'animate-spin' : ''}`} />
+                            Refresh Live Status
+                        </Button>
+                    </div>
+
+                    {conductModeLoading ? (
+                        <div className="flex flex-col items-center justify-center py-12 border rounded-xl bg-slate-50/50 dark:bg-slate-950/20">
+                            <Loader2 className="h-8 w-8 text-emerald-500 animate-spin mb-4" />
+                            <p className="text-sm text-muted-foreground">Loading active exams status...</p>
+                        </div>
+                    ) : conductModeTests.length === 0 ? (
+                        <Card className="border border-dashed border-slate-200 dark:border-slate-800 bg-transparent flex flex-col items-center justify-center p-8 text-center">
+                            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center mb-4 text-slate-400 border shadow-sm">
+                                <Radio className="h-6 w-6" />
+                            </div>
+                            <h3 className="font-semibold text-base mb-1">No Active Exams</h3>
+                            <p className="text-sm text-slate-500 max-w-sm">There are currently no tests running in conduct mode. When a creator starts a live test, it will appear here.</p>
+                        </Card>
+                    ) : (
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {conductModeTests.map((t) => (
+                                <Card key={t.id} className="border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between">
+                                    <CardHeader className="pb-3">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="space-y-1">
+                                                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mb-1 bg-emerald-50 dark:bg-emerald-950/40 w-fit px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/50">
+                                                    <span className="relative flex h-2 w-2">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                    </span>
+                                                    Live Now
+                                                </div>
+                                                <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-snug">{t.title}</CardTitle>
+                                                {t.custom_id && (
+                                                    <CardDescription className="text-xs text-slate-400 font-mono">ID: {t.custom_id}</CardDescription>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pb-4 pt-0 space-y-3">
+                                        <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                                            <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                                <GraduationCap className="h-4 w-4 text-indigo-500 shrink-0" />
+                                                <div className="overflow-hidden truncate">
+                                                    <span className="font-semibold block text-slate-700 dark:text-slate-300 truncate">{t.creator_name || 'Unknown'}</span>
+                                                    <span className="text-slate-400 truncate block text-[10px]">{t.creator_email}</span>
+                                                </div>
+                                            </div>
+                                            {t.end_time && (
+                                                <div className="flex items-center gap-2 p-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-lg border border-amber-100/30">
+                                                    <Clock className="h-4 w-4 text-amber-500 shrink-0" />
+                                                    <div>
+                                                        <span className="font-medium text-amber-800 dark:text-amber-300 block">Scheduled Ending</span>
+                                                        <span className="text-slate-400 text-[10px]">{new Date(t.end_time).toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter className="pt-2 border-t border-slate-100 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-950/20 px-6 py-3 flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full h-8 text-xs font-semibold hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/20"
+                                            onClick={() => setViewingResultsTest(t)}
+                                        >
+                                            <BarChart2 className="w-3.5 h-3.5 mr-1.5" />
+                                            Live Results
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="w-full h-8 text-xs font-semibold"
+                                            onClick={() => handleStopConductMode(t)}
+                                        >
+                                            <X className="w-3.5 h-3.5 mr-1.5" />
+                                            Stop Exam
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+
             </Tabs>
 
 
@@ -1632,8 +1850,42 @@ export default function ManageTests() {
                                 <div className="flex-1 text-center md:text-left space-y-1">
                                     <h2 className="text-2xl font-bold">{viewingUser.full_name}</h2>
                                     <p className="text-muted-foreground">{viewingUser.email}</p>
-                                    <div className="flex items-center justify-center md:justify-start gap-2 pt-1 text-xs text-slate-500 font-mono">
+                                    <div className="flex items-center justify-center md:justify-start gap-2 pt-1 text-xs text-slate-500 font-mono mb-2">
                                         ID: {viewingUser.id}
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 text-[11px] flex items-center gap-1 bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950 dark:border-indigo-900 dark:text-indigo-300"
+                                            onClick={() => {
+                                                setViewingUser(null);
+                                                window.open(`/my-tests?userId=${viewingUser.id}`, '_blank');
+                                            }}
+                                        >
+                                            <Edit className="w-3 h-3" /> Dashboard
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 text-[11px] flex items-center gap-1 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:border-purple-900 dark:text-purple-300"
+                                            onClick={() => {
+                                                setViewingUser(null);
+                                                window.open(`/materials?userId=${viewingUser.id}`, '_blank');
+                                            }}
+                                        >
+                                            <Layers className="w-3 h-3" /> Materials
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 text-[11px] flex items-center gap-1 bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:border-emerald-900 dark:text-emerald-300"
+                                            onClick={() => {
+                                                handleOpenCloneDialogForUser(viewingUser);
+                                            }}
+                                        >
+                                            <Copy className="w-3 h-3" /> Clone Test
+                                        </Button>
                                     </div>
                                 </div>
                                 <div className="flex gap-4">
@@ -1774,6 +2026,120 @@ export default function ManageTests() {
                     }}
                     overridePremium={true}
                 />
+            )}
+
+            {isCloneDialogOpen && (
+                <Dialog open={isCloneDialogOpen} onOpenChange={(open) => !open && setIsCloneDialogOpen(false)}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Copy className="w-5 h-5 text-indigo-600" />
+                                Clone Test
+                            </DialogTitle>
+                            <DialogDescription>
+                                Duplicate any test in the system and assign it to a target user's dashboard.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4 py-2">
+                            {/* Case 1: Test is pre-selected, select User */}
+                            {cloningTestSelected && (
+                                <div className="space-y-4">
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-900 border rounded-lg">
+                                        <div className="text-xs text-slate-500 font-medium">Selected Test</div>
+                                        <div className="font-semibold text-slate-800 dark:text-slate-200">{cloningTestSelected.title}</div>
+                                        <div className="text-xs text-slate-400">ID: {cloningTestSelected.id}</div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold">Select Target User</label>
+                                        <Input
+                                            placeholder="Search by name or email..."
+                                            value={cloneSearchUserQuery}
+                                            onChange={(e) => setCloneSearchUserQuery(e.target.value)}
+                                        />
+                                        <div className="max-h-48 overflow-y-auto border rounded-lg divide-y divide-slate-100 dark:divide-slate-800">
+                                            {users
+                                                .filter(u =>
+                                                    u.full_name?.toLowerCase().includes(cloneSearchUserQuery.toLowerCase()) ||
+                                                    u.email?.toLowerCase().includes(cloneSearchUserQuery.toLowerCase())
+                                                )
+                                                .slice(0, 5)
+                                                .map(u => (
+                                                    <div
+                                                        key={u.id}
+                                                        className={`p-2.5 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between ${cloneTargetUser?.id === u.id ? 'bg-indigo-50/50 dark:bg-indigo-900/20' : ''}`}
+                                                        onClick={() => setCloneTargetUser(u)}
+                                                    >
+                                                        <div>
+                                                            <div className="font-medium">{u.full_name || 'N/A'}</div>
+                                                            <div className="text-xs text-slate-500">{u.email}</div>
+                                                        </div>
+                                                        {cloneTargetUser?.id === u.id && <Check className="w-4 h-4 text-indigo-600" />}
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Case 2: User is pre-selected, select Test */}
+                            {cloneTargetUser && !cloningTestSelected && (
+                                <div className="space-y-4">
+                                    <div className="p-3 bg-slate-50 dark:bg-slate-900 border rounded-lg">
+                                        <div className="text-xs text-slate-500 font-medium">Target User</div>
+                                        <div className="font-semibold text-slate-800 dark:text-slate-200">{cloneTargetUser.full_name || 'N/A'}</div>
+                                        <div className="text-xs text-slate-400">{cloneTargetUser.email}</div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-semibold">Search Test to Clone</label>
+                                        <Input
+                                            placeholder="Search test by title or ID..."
+                                            value={cloneSearchTestQuery}
+                                            onChange={(e) => setCloneSearchTestQuery(e.target.value)}
+                                        />
+                                        <div className="max-h-48 overflow-y-auto border rounded-lg divide-y divide-slate-100 dark:divide-slate-800">
+                                            {dialogTestsLoading ? (
+                                                <div className="p-4 text-center text-xs text-slate-500">Searching tests...</div>
+                                            ) : dialogTests.length === 0 ? (
+                                                <div className="p-4 text-center text-xs text-slate-500">No tests found.</div>
+                                            ) : (
+                                                dialogTests.map(t => (
+                                                    <div
+                                                        key={t.id}
+                                                        className={`p-2.5 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between ${cloningTestSelected?.id === t.id ? 'bg-indigo-50/50 dark:bg-indigo-900/20' : ''}`}
+                                                        onClick={() => setCloningTestSelected(t)}
+                                                    >
+                                                        <div>
+                                                            <div className="font-medium">{t.title}</div>
+                                                            <div className="text-xs text-slate-500">Duration: {t.duration}m • Questions: {t.total_questions || t.questions?.length || 0}</div>
+                                                        </div>
+                                                        {cloningTestSelected?.id === t.id && <Check className="w-4 h-4 text-indigo-600" />}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <DialogFooter>
+                            <Button variant="outline" size="sm" onClick={() => setIsCloneDialogOpen(false)} disabled={isCloning}>
+                                Cancel
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={handleCloneTestToUser}
+                                disabled={isCloning || !cloningTestSelected || !cloneTargetUser}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                {isCloning ? 'Cloning...' : 'Confirm Clone'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             )}
 
         </div >
