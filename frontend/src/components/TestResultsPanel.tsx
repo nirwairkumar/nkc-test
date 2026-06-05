@@ -340,50 +340,58 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                 </div>
 
                                                 {/* Main info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div className="min-w-0">
-                                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
-                                                            {isAdmin && attempt.user?.email && (
-                                                                <p className="text-[10px] text-slate-400 truncate">{attempt.user.email}</p>
-                                                            )}
-                                                            {others.length > 0 && (
-                                                                <p className="text-[10px] text-slate-400 truncate">
-                                                                    {others.map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                                                <div className="flex-1 min-w-0 space-y-0.5">
+                                                    {isStartFormEnabled ? (
+                                                        configuredFormLabels.map((label: string) => {
+                                                            const value = attempt.metadata?.startFormData?.[label] || 'N/A';
+                                                            return (
+                                                                <p key={label} className="text-xs text-slate-800 dark:text-slate-200">
+                                                                    <span className="font-bold">{label}:</span> {String(value)}
                                                                 </p>
-                                                            )}
-                                                        </div>
-                                                        {/* Score badge */}
-                                                        <div className="flex-shrink-0 text-right">
-                                                            <div className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black ${isGood ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                                                {attempt.score}
-                                                                {totalMaxMarks > 0 && <span className="opacity-60 font-normal ml-0.5">/{totalMaxMarks}</span>}
-                                                            </div>
-                                                            {pct && (
-                                                                <p className="text-[9px] text-slate-400 text-right mt-0.5">{pct}%</p>
-                                                            )}
-                                                        </div>
+                                                            );
+                                                        })
+                                                    ) : (
+                                                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{name}</p>
+                                                    )}
+                                                    {isAdmin && attempt.user?.email && (
+                                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{attempt.user.email}</p>
+                                                    )}
+                                                    {!isStartFormEnabled && others.length > 0 && (
+                                                        <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                                                            {others.map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Score badge */}
+                                                <div className="flex-shrink-0 text-right">
+                                                    <div className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black ${isGood ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                                        {attempt.score}
+                                                        {totalMaxMarks > 0 && <span className="opacity-60 font-normal ml-0.5">/{totalMaxMarks}</span>}
                                                     </div>
-
-                                                    {/* Stats pills row */}
-                                                    {stats && (
-                                                        <div className="flex items-center gap-2 mt-1.5">
-                                                            <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                                                                <CheckCircle2 className="h-2.5 w-2.5" />{stats.correctCount ?? '-'}
-                                                            </span>
-                                                            <span className="flex items-center gap-0.5 text-[10px] font-semibold text-red-500">
-                                                                <XCircle className="h-2.5 w-2.5" />{stats.wrongCount ?? '-'}
-                                                            </span>
-                                                            <span className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-400">
-                                                                <Clock className="h-2.5 w-2.5" />{stats.unattemptedCount ?? '-'}
-                                                            </span>
-                                                            <span className="ml-auto text-[10px] text-slate-400">
-                                                                {format(new Date(attempt.created_at), 'MMM d, p')}
-                                                            </span>
-                                                        </div>
+                                                    {pct && (
+                                                        <p className="text-[9px] text-slate-400 text-right mt-0.5">{pct}%</p>
                                                     )}
                                                 </div>
                                             </div>
+
+                                            {/* Stats pills row */}
+                                            {stats && (
+                                                <div className="flex items-center gap-2 mt-1.5">
+                                                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
+                                                        <CheckCircle2 className="h-2.5 w-2.5" />{stats.correctCount ?? '-'}
+                                                    </span>
+                                                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-red-500">
+                                                        <XCircle className="h-2.5 w-2.5" />{stats.wrongCount ?? '-'}
+                                                    </span>
+                                                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-400">
+                                                        <Clock className="h-2.5 w-2.5" />{stats.unattemptedCount ?? '-'}
+                                                    </span>
+                                                    <span className="ml-auto text-[10px] text-slate-400">
+                                                        {format(new Date(attempt.created_at), 'MMM d, p')}
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             {/* Action row */}
                                             <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-50 dark:border-slate-800">
@@ -450,15 +458,36 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                         </TableCell>
                                                     )}
                                                     <TableCell>
-                                                        <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">{name}</div>
-                                                        {isAdmin && attempt.user?.email && (
-                                                            <div className="text-xs text-slate-400">{attempt.user.email}</div>
-                                                        )}
-                                                        {others.length > 0 && (
-                                                            <div className="text-xs text-slate-400 space-y-0.5 mt-0.5">
-                                                                {others.map(([k, v]) => (
-                                                                    <div key={k}><span className="opacity-60">{k}:</span> {String(v)}</div>
-                                                                ))}
+                                                        {isStartFormEnabled ? (
+                                                            <div className="space-y-0.5">
+                                                                {configuredFormLabels.map((label: string) => {
+                                                                    const value = attempt.metadata?.startFormData?.[label] || 'N/A';
+                                                                    return (
+                                                                        <div key={label} className="text-sm">
+                                                                            <span className="font-bold text-slate-800 dark:text-slate-100">{label}:</span>{' '}
+                                                                            <span className="text-slate-600 dark:text-slate-300">{String(value)}</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                                {isAdmin && attempt.user?.email && (
+                                                                    <div className="text-xs text-slate-400 mt-1">{attempt.user.email}</div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div>
+                                                                <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">
+                                                                    {name}
+                                                                </div>
+                                                                {isAdmin && attempt.user?.email && (
+                                                                    <div className="text-xs text-slate-400">{attempt.user.email}</div>
+                                                                )}
+                                                                {others.length > 0 && (
+                                                                    <div className="text-xs text-slate-400 space-y-0.5 mt-0.5">
+                                                                        {others.map(([k, v]) => (
+                                                                            <div key={k}><span className="opacity-60">{k}:</span> {String(v)}</div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </TableCell>

@@ -449,7 +449,7 @@ async def get_test_attempts(
 
         # Fetch all attempts for specific test
         response = supabase.table("user_tests")\
-            .select("id, test_id, user_id, score, created_at, metadata")\
+            .select("id, test_id, user_id, score, created_at, metadata, answers")\
             .eq("test_id", test_id)\
             .order("score", desc=True)\
             .execute()
