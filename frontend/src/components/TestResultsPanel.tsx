@@ -232,23 +232,47 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         let flatHeaders: string[] = [];
 
         // Helper to evaluate marks per question for correct / negative
-        const testMarksPerQ = currentTest?.marks_per_question !== undefined ? parseFloat(currentTest.marks_per_question) : 4;
-        const testNegativeMarks = currentTest?.negative_marks !== undefined ? parseFloat(currentTest.negative_marks) : 1;
+        const testMarksPerQ = (currentTest?.marks_per_question !== undefined && currentTest?.marks_per_question !== null && currentTest?.marks_per_question !== '')
+            ? parseFloat(String(currentTest.marks_per_question))
+            : 4;
+        const testNegativeMarks = (currentTest?.negative_marks !== undefined && currentTest?.negative_marks !== null && currentTest?.negative_marks !== '')
+            ? parseFloat(String(currentTest.negative_marks))
+            : 1;
+
+        const getCorrectAnswerDisplay = (q: any) => {
+            if (q.correctAnswer === undefined || q.correctAnswer === null) return '';
+            if (q.type === 'numerical' && typeof q.correctAnswer === 'object' && 'min' in q.correctAnswer && 'max' in q.correctAnswer) {
+                return `[${q.correctAnswer.min}, ${q.correctAnswer.max}]`;
+            }
+            if (Array.isArray(q.correctAnswer)) {
+                return q.correctAnswer.map(String).sort().join(",");
+            }
+            return String(q.correctAnswer);
+        };
 
         const getQuestionResult = (q: any, userAns: any, defaultMarks: number, defaultNeg: number) => {
-            const maxScore = q.marks !== undefined ? parseFloat(q.marks) : defaultMarks;
-            const negScore = q.negative_marks !== undefined ? parseFloat(q.negative_marks) : defaultNeg;
+            const maxScore = (q.marks !== undefined && q.marks !== null && q.marks !== '')
+                ? parseFloat(String(q.marks))
+                : defaultMarks;
+            const negScore = (q.negativeMarks !== undefined && q.negativeMarks !== null && q.negativeMarks !== '')
+                ? parseFloat(String(q.negativeMarks))
+                : defaultNeg;
 
-            if (userAns === undefined || userAns === null) {
-                return { status: "Unattempted", score: 0, userAnswer: "N/A", correctAnswer: String(q.correct_answer || '') };
+            if (
+                userAns === undefined ||
+                userAns === null ||
+                userAns === '' ||
+                (Array.isArray(userAns) && userAns.length === 0)
+            ) {
+                return { status: "Unattempted", score: 0, userAnswer: "N/A", correctAnswer: getCorrectAnswerDisplay(q) };
             }
 
-            const isMulti = Array.isArray(q.correct_answer);
+            const isMulti = q.type === 'multiple' || Array.isArray(q.correctAnswer);
             const userAnsStr = Array.isArray(userAns) ? userAns.map(String).sort().join(",") : String(userAns);
-            const correctAnsStr = isMulti ? q.correct_answer.map(String).sort().join(",") : String(q.correct_answer || '');
+            const correctAnsStr = getCorrectAnswerDisplay(q);
 
             if (isMulti) {
-                const correctSet = new Set(q.correct_answer.map(String));
+                const correctSet = new Set((Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer]).map(String));
                 const userList = Array.isArray(userAns) ? userAns.map(String) : [String(userAns)];
                 const isCorrect = userList.length === correctSet.size && userList.every(v => correctSet.has(v));
                 if (isCorrect) {
@@ -259,14 +283,35 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     const incorrectCount = userList.filter(v => !correctSet.has(v)).length;
                     if (incorrectCount === 0 && userList.length > 0) {
                         const correctCount = userList.length;
-                        const partialMark = q.partial_marks_per_option !== undefined ? parseFloat(q.partial_marks_per_option) : 1;
+                        const partialMark = q.partial_marks_per_option !== undefined ? parseFloat(String(q.partial_marks_per_option)) : 1;
                         const earned = correctCount * partialMark;
                         return { status: "Partial", score: earned, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
                     }
                 }
                 return { status: "Wrong", score: -negScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
+            } else if (q.type === 'numerical') {
+                let isCorrect = false;
+                const userNum = parseFloat(String(userAns));
+                if (q.correctAnswer && typeof q.correctAnswer === 'object' && 'min' in q.correctAnswer && 'max' in q.correctAnswer) {
+                    const minVal = parseFloat(String(q.correctAnswer.min));
+                    const maxVal = parseFloat(String(q.correctAnswer.max));
+                    if (!isNaN(userNum) && !isNaN(minVal) && !isNaN(maxVal)) {
+                        isCorrect = userNum >= minVal && userNum <= maxVal;
+                    }
+                } else {
+                    const corrNum = parseFloat(String(q.correctAnswer));
+                    if (!isNaN(userNum) && !isNaN(corrNum)) {
+                        isCorrect = userNum === corrNum;
+                    } else {
+                        isCorrect = String(userAns).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase();
+                    }
+                }
+                if (isCorrect) {
+                    return { status: "Correct", score: maxScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
+                }
+                return { status: "Wrong", score: -negScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
             } else {
-                const isCorrect = String(userAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase();
+                const isCorrect = String(userAns).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase();
                 if (isCorrect) {
                     return { status: "Correct", score: maxScore, userAnswer: userAnsStr, correctAnswer: correctAnsStr };
                 }
