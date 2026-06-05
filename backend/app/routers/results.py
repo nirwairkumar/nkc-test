@@ -150,9 +150,15 @@ async def analyze_test_results(payload: AnalyzeRequest):
     for index, q in enumerate(questions):
         current_section_id = q.get("_section_id", "default")
         q_id = str(q.get("id"))
-        
-        marks = parse_mark(q.get("_section_marks") or test.get("marks_per_question"), 4.0)
-        neg = parse_mark(q.get("_section_neg") or test.get("negative_marks"), 1.0)
+        sec_marks = q.get("_section_marks")
+        if sec_marks is None or sec_marks == "":
+            sec_marks = test.get("marks_per_question")
+        marks = parse_mark(sec_marks, 4.0)
+
+        sec_neg = q.get("_section_neg")
+        if sec_neg is None or sec_neg == "":
+            sec_neg = test.get("negative_marks")
+        neg = parse_mark(sec_neg, 1.0)
                 
         if q.get("marks") is not None:
             marks = parse_mark(q.get("marks"), marks)

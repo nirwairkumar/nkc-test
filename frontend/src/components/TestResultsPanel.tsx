@@ -231,13 +231,31 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         let headerRow2: string[] = [];
         let flatHeaders: string[] = [];
 
+        const parseFractionOrFloat = (value: string | number | undefined | null, defaultVal: number = 0): number => {
+            if (value === undefined || value === null || value === '') return defaultVal;
+            if (typeof value === 'number') return value;
+            try {
+                const valStr = String(value).trim();
+                if (valStr.includes('/')) {
+                    const parts = valStr.split('/');
+                    if (parts.length === 2) {
+                        const numerator = parseFloat(parts[0]);
+                        const denominator = parseFloat(parts[1]);
+                        if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+                            return numerator / denominator;
+                        }
+                    }
+                }
+                const parsed = parseFloat(valStr);
+                return isNaN(parsed) ? defaultVal : parsed;
+            } catch (e) {
+                return defaultVal;
+            }
+        };
+
         // Helper to evaluate marks per question for correct / negative
-        const testMarksPerQ = (currentTest?.marks_per_question !== undefined && currentTest?.marks_per_question !== null && currentTest?.marks_per_question !== '')
-            ? parseFloat(String(currentTest.marks_per_question))
-            : 4;
-        const testNegativeMarks = (currentTest?.negative_marks !== undefined && currentTest?.negative_marks !== null && currentTest?.negative_marks !== '')
-            ? parseFloat(String(currentTest.negative_marks))
-            : 1;
+        const testMarksPerQ = parseFractionOrFloat(currentTest?.marks_per_question, 4);
+        const testNegativeMarks = parseFractionOrFloat(currentTest?.negative_marks, 1);
 
         const getCorrectAnswerDisplay = (q: any) => {
             if (q.correctAnswer === undefined || q.correctAnswer === null) return '';
@@ -251,12 +269,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         };
 
         const getQuestionResult = (q: any, userAns: any, defaultMarks: number, defaultNeg: number) => {
-            const maxScore = (q.marks !== undefined && q.marks !== null && q.marks !== '')
-                ? parseFloat(String(q.marks))
-                : defaultMarks;
-            const negScore = (q.negativeMarks !== undefined && q.negativeMarks !== null && q.negativeMarks !== '')
-                ? parseFloat(String(q.negativeMarks))
-                : defaultNeg;
+            const maxScore = parseFractionOrFloat(q.marks, defaultMarks);
+            const negScore = parseFractionOrFloat(q.negativeMarks, defaultNeg);
 
             if (
                 userAns === undefined ||
@@ -399,12 +413,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     let secWrong = 0;
                     let secNegativeScore = 0;
                     let secPositiveScore = 0;
-                    const secMarksPerQ = (sec.marks_per_question !== undefined && sec.marks_per_question !== null && sec.marks_per_question !== '')
-                        ? parseFloat(String(sec.marks_per_question))
-                        : testMarksPerQ;
-                    const secNegativeMarks = (sec.negative_marks !== undefined && sec.negative_marks !== null && sec.negative_marks !== '')
-                        ? parseFloat(String(sec.negative_marks))
-                        : testNegativeMarks;
+                    const secMarksPerQ = parseFractionOrFloat(sec.marks_per_question, testMarksPerQ);
+                    const secNegativeMarks = parseFractionOrFloat(sec.negative_marks, testNegativeMarks);
 
                     const secQuestions = sec.questions || [];
                     secQuestions.forEach((q: any) => {
