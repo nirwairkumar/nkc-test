@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchAttemptsForTest, deleteAttempt, deleteRegistration } from '@/lib/attemptsApi';
 import { fetchUsersByIds } from '@/lib/usersApi';
+import { fetchTestById } from '@/lib/testsApi';
 import {
     Sheet,
     SheetContent,
@@ -42,15 +43,58 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const [loading, setLoading] = useState(true);
     const [showRank, setShowRank] = useState(false);
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
+    const [fullTest, setFullTest] = useState<any>(null);
+
+    // Fetch results and full test details on load
+    useEffect(() => {
+        if (test?.id) {
+            setFullTest(null);
+            fetchResultsAndTestDetails();
+        }
+    }, [test]);
+
+    const fetchResultsAndTestDetails = async () => {
+        setLoading(true);
+        try {
+            // Fetch attempts
+            const { data: attemptsData, error: attemptsError } = await fetchAttemptsForTest(test.id);
+            if (attemptsError) throw attemptsError;
+
+            // Fetch full test details including questions and sections
+            const { data: testData, error: testError } = await fetchTestById(test.id);
+            if (testError) throw testError;
+            if (testData) {
+                setFullTest(testData);
+            }
+
+            const attempts = attemptsData || [];
+            const userIds = Array.from(new Set(attempts.map((d: any) => d.user_id))) as string[];
+            if (userIds.length > 0) {
+                const { data: users } = await fetchUsersByIds(userIds);
+                if (users) {
+                    const userMap = new Map(users.map((u: any) => [u.id, u]));
+                    attempts.forEach((d: any) => { d.user = userMap.get(d.user_id); });
+                }
+            }
+            setResults(attempts);
+        } catch (error) {
+            console.error("Error fetching results or test details", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Use fullTest if loaded, otherwise fall back to test prop
+    const currentTest = fullTest || test;
 
     // Only show conduct-exam results if this test has conduct settings
-    const isConductTest = !!(test?.settings?.conduct_exam);
+    const isConductTest = !!(currentTest?.settings?.conduct_exam);
 
     // Calculate Total Marks
-    let totalMaxMarks = test.total_max_marks || 0;
-    if (!totalMaxMarks) {
-        if (test.enable_section_mode && test.sections) {
-            test.sections.forEach((sec: any) => {
+    let totalMaxMarks = currentTest?.total_max_marks || 0;
+    if (currentTest && !totalMaxMarks) {
+        if (currentTest.enable_section_mode && currentTest.sections) {
+            currentTest.sections.forEach((sec: any) => {
                 if (sec.questions) {
                     sec.questions.forEach((q: any) => {
                         const m = q.marks !== undefined ? parseFloat(q.marks) : (sec.marks_per_question ? parseFloat(sec.marks_per_question) : 4);
@@ -58,40 +102,13 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     });
                 }
             });
-        } else if (test.questions) {
-            test.questions.forEach((q: any) => {
-                const m = q.marks !== undefined ? parseFloat(q.marks) : (test.marks_per_question ? parseFloat(test.marks_per_question) : 4);
+        } else if (currentTest.questions) {
+            currentTest.questions.forEach((q: any) => {
+                const m = q.marks !== undefined ? parseFloat(q.marks) : (currentTest.marks_per_question ? parseFloat(currentTest.marks_per_question) : 4);
                 totalMaxMarks += isNaN(m) ? 0 : m;
             });
         }
     }
-
-    useEffect(() => {
-        if (test?.id) fetchResults();
-    }, [test]);
-
-    const fetchResults = async () => {
-        setLoading(true);
-        try {
-            const { data, error } = await fetchAttemptsForTest(test.id);
-            if (error) throw error;
-            if (!data) return;
-
-            const userIds = Array.from(new Set(data.map((d: any) => d.user_id))) as string[];
-            if (userIds.length > 0) {
-                const { data: users } = await fetchUsersByIds(userIds);
-                if (users) {
-                    const userMap = new Map(users.map((u: any) => [u.id, u]));
-                    data.forEach((d: any) => { d.user = userMap.get(d.user_id); });
-                }
-            }
-            setResults(data);
-        } catch (error) {
-            console.error("Error fetching results", error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // For conduct-exam tests: only show attempts tagged with conduct_exam=true
     const filteredResults = isConductTest
@@ -103,7 +120,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         try {
             const { error: attemptError } = await deleteAttempt(attemptId);
             if (attemptError) throw attemptError;
-            await deleteRegistration(test.id, userId).catch(() => { });
+            await deleteRegistration(currentTest.id, userId).catch(() => { });
             setResults(prev => prev.filter(r => r.id !== attemptId));
             toast.success('Result deleted. Student can re-attempt.');
         } catch (error) {
@@ -134,8 +151,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const topScore = displayedResults.length > 0
         ? Math.max(...displayedResults.map(r => r.score || 0))
         : 0;
-    const isStartFormEnabled = !!test?.settings?.start_form?.enabled;
-    const configuredFormLabels = (test?.settings?.start_form?.fields || []).map((f: any) => f?.label).filter(Boolean);
+    const isStartFormEnabled = !!currentTest?.settings?.start_form?.enabled;
+    const configuredFormLabels = (currentTest?.settings?.start_form?.fields || []).map((f: any) => f?.label).filter(Boolean);
 
     const getDisplayName = (attempt: any) => {
         if (isStartFormEnabled && configuredFormLabels.length > 0) {
@@ -176,7 +193,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             return `"${str}"`;
         };
 
-        const hasSections = !!(test?.enable_section_mode && test?.sections && test?.sections.length > 0);
+        const hasSections = !!(currentTest?.enable_section_mode && currentTest?.sections && currentTest?.sections.length > 0);
 
         // Define start form labels / dynamic headers
         const startFormKeys = new Set<string>();
@@ -220,8 +237,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         let flatHeaders: string[] = [];
 
         // Helper to evaluate marks per question for correct / negative
-        const testMarksPerQ = test?.marks_per_question !== undefined ? parseFloat(test.marks_per_question) : 4;
-        const testNegativeMarks = test?.negative_marks !== undefined ? parseFloat(test.negative_marks) : 1;
+        const testMarksPerQ = currentTest?.marks_per_question !== undefined ? parseFloat(currentTest.marks_per_question) : 4;
+        const testNegativeMarks = currentTest?.negative_marks !== undefined ? parseFloat(currentTest.negative_marks) : 1;
 
         const getQuestionResult = (q: any, userAns: any, defaultMarks: number, defaultNeg: number) => {
             const maxScore = q.marks !== undefined ? parseFloat(q.marks) : defaultMarks;
@@ -269,7 +286,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             headerRow2 = baseHeaders.map(() => "");
 
             // Sections loop
-            (test?.sections || []).forEach((sec: any) => {
+            (currentTest?.sections || []).forEach((sec: any) => {
                 headerRow1.push(sec.name, "", "", "");
                 headerRow2.push("Correct", "Wrong", "-ve Marks", "+ve Marks");
             });
@@ -300,7 +317,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             );
 
             // Append per-question detail columns for flat tests
-            const questions = test?.questions || [];
+            const questions = currentTest?.questions || [];
             questions.forEach((q: any, qIdx: number) => {
                 const label = q.title ? `Q${qIdx + 1}: ${q.title}` : `Q${qIdx + 1}`;
                 flatHeaders.push(`${label} (Student Ans)`, `${label} (Correct Ans)`, `${label} (Status)`, `${label} (Score)`);
@@ -337,7 +354,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             let overallPartialMark = 0;
 
             if (hasSections) {
-                (test?.sections || []).forEach((sec: any) => {
+                (currentTest?.sections || []).forEach((sec: any) => {
                     let secCorrect = 0;
                     let secWrong = 0;
                     let secNegativeScore = 0;
@@ -393,7 +410,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                 );
 
             } else {
-                const questions = test?.questions || [];
+                const questions = currentTest?.questions || [];
                 const questionDetailsList: any[] = [];
 
                 questions.forEach((q: any) => {
@@ -454,7 +471,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `${test?.title || 'test'}_results${showRank ? '_ranked' : ''}.csv`);
+        link.setAttribute("download", `${currentTest?.title || 'test'}_results${showRank ? '_ranked' : ''}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -479,7 +496,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     <div className="pr-8">
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-0.5">Test Results</p>
                         <h3 className="text-base font-bold text-white leading-tight line-clamp-2">
-                            {test.title}
+                            {currentTest.title}
                         </h3>
                     </div>
 
@@ -558,7 +575,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
                 {/* ── Results List ── */}
                 <div className="flex-1 overflow-y-auto">
-                    {loading ? (
+                    {loading || !fullTest ? (
                         <div className="flex flex-col items-center justify-center py-16 gap-3">
                             <Loader2 className="animate-spin h-8 w-8 text-indigo-500" />
                             <p className="text-xs text-slate-400 font-medium">Fetching results...</p>
