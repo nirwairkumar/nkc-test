@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield } from 'lucide-react';
+import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
@@ -53,6 +53,19 @@ import { UserTestCard } from '@/components/UserTestCard';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
+const isProctoringEnabled = (test: any) => {
+    const s = test?.settings;
+    if (!s) return false;
+    return !!(
+        s.force_fullscreen ||
+        (s.tab_switch_mode && s.tab_switch_mode !== 'off') ||
+        s.disable_copy_paste ||
+        s.disable_actions ||
+        s.block_back_button ||
+        s.disable_exit_button
+    );
+};
+
 export default function UserTestManager() {
     const { user, isAdmin, loading: authLoading } = useAuth();
     const navigate = useNavigate();
@@ -99,6 +112,17 @@ export default function UserTestManager() {
     const [removeExamId, setRemoveExamId] = useState<string | null>(null);
     const [removeExamTitle, setRemoveExamTitle] = useState("");
     const [removeInfoOpen, setRemoveInfoOpen] = useState<'public' | 'private' | null>(null);
+
+    const [showEnvPopupTestId, setShowEnvPopupTestId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (showEnvPopupTestId) {
+            const timer = setTimeout(() => {
+                setShowEnvPopupTestId(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [showEnvPopupTestId]);
 
     // Creator Check State
     const [isCreator, setIsCreator] = useState<boolean | null>(null);
@@ -360,6 +384,7 @@ export default function UserTestManager() {
             if (error) throw error;
 
             toast.success("Exam is now live! Share the secure link with students.");
+            setShowEnvPopupTestId(conductExamTest.id);
             setConductExamTest(null);
         } catch (error: any) {
             console.error("Failed to start exam:", error);
@@ -606,15 +631,29 @@ export default function UserTestManager() {
 
                                                 {/* Quick Actions */}
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
-                                                        onClick={() => setConfiguringTest(test)}
-                                                    >
-                                                        <Settings className="w-3.5 h-3.5 sm:mr-1.5" />
-                                                        <span className="hidden sm:inline">Settings</span>
-                                                    </Button>
+                                                    <div className="relative">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
+                                                            onClick={() => setConfiguringTest(test)}
+                                                        >
+                                                            <Settings className="w-3.5 h-3.5 sm:mr-1.5" />
+                                                            <span className="hidden sm:inline">Settings</span>
+                                                        </Button>
+                                                        {!isProctoringEnabled(test) && (
+                                                            <div className="absolute -top-1 -right-1 z-10 text-yellow-500">
+                                                                <AlertTriangle className="h-3.5 w-3.5" />
+                                                            </div>
+                                                        )}
+                                                        {showEnvPopupTestId === test.id && (
+                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-yellow-500 text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-md whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-200 flex items-center gap-1.5 border border-yellow-400">
+                                                                <AlertTriangle className="w-3.5 h-3.5 text-slate-900" />
+                                                                <span>Set exam environment</span>
+                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-yellow-500" />
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
@@ -901,6 +940,7 @@ export default function UserTestManager() {
                                                     }
                                                 }}
                                                 onConductExam={handleConductExam}
+                                                showEnvPopup={showEnvPopupTestId === test.id}
                                             />
                                         );
                                     } else {

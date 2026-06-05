@@ -25,8 +25,22 @@ import {
     Radio,
     BarChart2,
     GitFork,
+    AlertTriangle,
 } from 'lucide-react';
 import TestVoteButtons from '@/components/TestVoteButtons';
+
+const isProctoringEnabled = (test: any) => {
+    const s = test?.settings;
+    if (!s) return false;
+    return !!(
+        s.force_fullscreen ||
+        (s.tab_switch_mode && s.tab_switch_mode !== 'off') ||
+        s.disable_copy_paste ||
+        s.disable_actions ||
+        s.block_back_button ||
+        s.disable_exit_button
+    );
+};
 
 interface UserTestCardProps {
     test: any;
@@ -43,6 +57,7 @@ interface UserTestCardProps {
     onViewResults: (test: any) => void;
     onView: (test: any) => void;
     onConductExam: (test: any) => void;
+    showEnvPopup?: boolean;
 }
 
 export function UserTestCard({
@@ -60,9 +75,11 @@ export function UserTestCard({
     onViewResults,
     onView,
     onConductExam,
+    showEnvPopup,
 }: UserTestCardProps) {
     const visibility = test.visibility || (test.is_public ? 'public' : 'private');
     const isConducted = test.settings?.conduct_exam?.enabled;
+    const proctoringActive = isProctoringEnabled(test);
 
     return (
         <div
@@ -229,15 +246,29 @@ export function UserTestCard({
 
             {/* --- Zone D: Actions --- */}
             <div className="flex items-center justify-end gap-1.5 sm:gap-2 mt-auto pt-2.5 border-t border-slate-100 dark:border-slate-800/50 pl-2 flex-wrap">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
-                    onClick={() => onConfigure(test)}
-                >
-                    <Settings className="w-3.5 h-3.5" />
-                    <span>Settings</span>
-                </Button>
+                <div className="relative">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
+                        onClick={() => onConfigure(test)}
+                    >
+                        <Settings className="w-3.5 h-3.5" />
+                        <span>Settings</span>
+                    </Button>
+                    {isConducted && !proctoringActive && (
+                        <div className="absolute -top-1 -right-1 z-10 text-yellow-500">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                        </div>
+                    )}
+                    {showEnvPopup && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-yellow-500 text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-md whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-200 flex items-center gap-1.5 border border-yellow-400">
+                            <AlertTriangle className="w-3.5 h-3.5 text-slate-900" />
+                            <span>Set exam environment</span>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-yellow-500" />
+                        </div>
+                    )}
+                </div>
                 {!isConducted && (
                     <Button
                         size="sm"
