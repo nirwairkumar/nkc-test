@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchAttemptsForTest, deleteAttempt, deleteRegistration } from '@/lib/attemptsApi';
 import { fetchUsersByIds } from '@/lib/usersApi';
 import { fetchTestById } from '@/lib/testsApi';
+import * as XLSX from 'xlsx';
 import {
     Sheet,
     SheetContent,
@@ -181,17 +182,11 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         return Object.entries(formData).filter(([k]) => k !== pk);
     };
 
-    const downloadCSV = () => {
+    const downloadExcel = () => {
         if (!isAdmin && !isPremium) {
-            toast.error("Exporting results to CSV is a premium feature.");
+            toast.error("Exporting results to Excel is a premium feature.");
             return;
         }
-
-        const formatCSVCell = (val: any) => {
-            if (val === null || val === undefined) return '""';
-            const str = String(val).replace(/"/g, '""');
-            return `"${str}"`;
-        };
 
         const hasSections = !!(currentTest?.enable_section_mode && currentTest?.sections && currentTest?.sections.length > 0);
 
@@ -288,7 +283,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             // Sections loop
             (currentTest?.sections || []).forEach((sec: any) => {
                 headerRow1.push(sec.name, "", "", "");
-                headerRow2.push("Correct", "Wrong", "-ve Marks", "+ve Marks");
+                headerRow2.push("Correct", "Wrong", "Marks (-ve)", "Marks (+ve)");
             });
 
             // Overall Summary merge headers
@@ -457,25 +452,51 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             return rowData;
         });
 
-        let csvContent = "";
+        // Create Excel Workbook
+        const sheetData = [];
         if (hasSections) {
-            csvContent = headerRow1.map(formatCSVCell).join(",") + "\n" +
-                         headerRow2.map(formatCSVCell).join(",") + "\n" +
-                         rows.map(row => row.map(formatCSVCell).join(",")).join("\n");
+            sheetData.push(headerRow1);
+            sheetData.push(headerRow2);
         } else {
-            csvContent = flatHeaders.map(formatCSVCell).join(",") + "\n" +
-                         rows.map(row => row.map(formatCSVCell).join(",")).join("\n");
+            sheetData.push(flatHeaders);
+        }
+        rows.forEach(row => sheetData.push(row));
+
+        const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+        if (hasSections) {
+            const merges: any[] = [];
+
+            // Merge base columns vertically (from row 0 to row 1)
+            for (let i = 0; i < baseHeaders.length; i++) {
+                merges.push({
+                    s: { r: 0, c: i },
+                    e: { r: 1, c: i }
+                });
+            }
+
+            // Merge section headers horizontally (across 4 columns)
+            let currentCol = baseHeaders.length;
+            (currentTest?.sections || []).forEach((sec: any) => {
+                merges.push({
+                    s: { r: 0, c: currentCol },
+                    e: { r: 0, c: currentCol + 3 }
+                });
+                currentCol += 4;
+            });
+
+            // Merge Overall Summary header horizontally (across 8 columns)
+            merges.push({
+                s: { r: 0, c: currentCol },
+                e: { r: 0, c: currentCol + 7 }
+            });
+
+            ws['!merges'] = merges;
         }
 
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${currentTest?.title || 'test'}_results${showRank ? '_ranked' : ''}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Test Results");
+        XLSX.writeFile(wb, `${currentTest?.title || 'test'}_results${showRank ? '_ranked' : ''}.xlsx`);
     };
 
     return (
@@ -564,12 +585,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     <Button
                         size="sm"
                         variant="outline"
-                        onClick={downloadCSV}
+                        onClick={downloadExcel}
                         disabled={displayedResults.length === 0}
                         className="h-7 text-[11px] px-2.5 gap-1.5 font-semibold"
                     >
                         <Download className="w-3 h-3" />
-                        CSV
+                        Excel
                     </Button>
                 </div>
 
