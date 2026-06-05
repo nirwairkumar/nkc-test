@@ -399,8 +399,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     let secWrong = 0;
                     let secNegativeScore = 0;
                     let secPositiveScore = 0;
-                    const secMarksPerQ = sec.marks_per_question !== undefined ? parseFloat(sec.marks_per_question) : testMarksPerQ;
-                    const secNegativeMarks = sec.negative_marks !== undefined ? parseFloat(sec.negative_marks) : testNegativeMarks;
+                    const secMarksPerQ = (sec.marks_per_question !== undefined && sec.marks_per_question !== null && sec.marks_per_question !== '')
+                        ? parseFloat(String(sec.marks_per_question))
+                        : testMarksPerQ;
+                    const secNegativeMarks = (sec.negative_marks !== undefined && sec.negative_marks !== null && sec.negative_marks !== '')
+                        ? parseFloat(String(sec.negative_marks))
+                        : testNegativeMarks;
 
                     const secQuestions = sec.questions || [];
                     secQuestions.forEach((q: any) => {
@@ -430,21 +434,21 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     rowData.push(
                         secCorrect,
                         secWrong,
-                        parseFloat(secNegativeScore.toFixed(2)),
-                        parseFloat(secPositiveScore.toFixed(2))
+                        parseFloat(secNegativeScore.toFixed(3)),
+                        parseFloat(secPositiveScore.toFixed(3))
                     );
                 });
 
-                const finalScore = parseFloat((overallPositive - overallNegative).toFixed(2));
-                const percentage = totalMaxMarks > 0 ? parseFloat(((finalScore / totalMaxMarks) * 100).toFixed(2)) : 0;
+                const finalScore = parseFloat((overallPositive - overallNegative).toFixed(3));
+                const percentage = totalMaxMarks > 0 ? parseFloat(((finalScore / totalMaxMarks) * 100).toFixed(3)) : 0;
 
                 rowData.push(
                     overallQuestions,
                     overallCorrect,
                     overallIncorrect,
-                    parseFloat(overallPositive.toFixed(2)),
-                    parseFloat(overallNegative.toFixed(2)),
-                    parseFloat(overallPartialMark.toFixed(2)),
+                    parseFloat(overallPositive.toFixed(3)),
+                    parseFloat(overallNegative.toFixed(3)),
+                    parseFloat(overallPartialMark.toFixed(3)),
                     finalScore,
                     percentage
                 );
@@ -474,20 +478,20 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                         res.userAnswer,
                         res.correctAnswer,
                         res.status,
-                        parseFloat(res.score.toFixed(2))
+                        parseFloat(res.score.toFixed(3))
                     );
                 });
 
-                const finalScore = parseFloat((overallPositive - overallNegative).toFixed(2));
-                const percentage = totalMaxMarks > 0 ? parseFloat(((finalScore / totalMaxMarks) * 100).toFixed(2)) : 0;
+                const finalScore = parseFloat((overallPositive - overallNegative).toFixed(3));
+                const percentage = totalMaxMarks > 0 ? parseFloat(((finalScore / totalMaxMarks) * 100).toFixed(3)) : 0;
 
                 rowData.push(
                     overallQuestions,
                     overallCorrect,
                     overallIncorrect,
-                    parseFloat(overallPositive.toFixed(2)),
-                    parseFloat(overallNegative.toFixed(2)),
-                    parseFloat(overallPartialMark.toFixed(2)),
+                    parseFloat(overallPositive.toFixed(3)),
+                    parseFloat(overallNegative.toFixed(3)),
+                    parseFloat(overallPartialMark.toFixed(3)),
                     finalScore,
                     percentage,
                     ...questionDetailsList
