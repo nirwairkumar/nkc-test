@@ -405,20 +405,22 @@ async def get_test_attempts(
 
         # Determine Premium Access
         is_premium = False
+        is_conduct_exam = False
+
+        # Retrieve test details to verify existence and check conduct mode settings
+        test_ownership_res = supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).single().execute()
+        if not test_ownership_res.data:
+            raise HTTPException(status_code=404, detail="Test not found")
+
+        test_data = test_ownership_res.data
+        test_created_by = test_data.get("created_by")
+        test_visibility = test_data.get("visibility", "public")
+        is_conduct_exam = bool(test_data.get("settings", {}) and test_data["settings"].get("conduct_exam"))
+
         if is_admin:
             is_premium = True
         else:
-            # ─ Verify creator ownership — only the test creator or admin can view results
-            test_ownership_res = supabase.table("tests").select("created_by, visibility, settings").eq("id", test_id).single().execute()
-            if not test_ownership_res.data:
-                raise HTTPException(status_code=404, detail="Test not found")
-
-            test_data = test_ownership_res.data
-            test_created_by = test_data.get("created_by")
-            test_visibility = test_data.get("visibility", "public")
-            is_conduct_exam = bool(test_data.get("settings", {}) and test_data["settings"].get("conduct_exam"))
-
-            # Only the creator can view results
+            # Only the creator or admin can view results
             if user_id != test_created_by:
                 raise HTTPException(status_code=403, detail="Not authorized to view these results")
 
@@ -457,14 +459,16 @@ async def get_test_attempts(
         data = response.data or []
 
         # Filter for only conducted attempts (or all if the test is currently in conduct mode and legacy)
-        filtered_data = []
-        for a in data:
-            meta = a.get("metadata") or {}
-            # Allow if it's explicitly marked as conducted, OR if the test is currently a conduct exam 
-            # (which covers legacy attempts created before we added this flag, if any)
-            if meta.get("is_conducted_attempt") or is_conduct_exam:
-                filtered_data.append(a)
-        data = filtered_data
+        # Admin bypasses the filtering and sees ALL attempts.
+        if not is_admin:
+            filtered_data = []
+            for a in data:
+                meta = a.get("metadata") or {}
+                # Allow if it's explicitly marked as conducted, OR if the test is currently a conduct exam 
+                # (which covers legacy attempts created before we added this flag, if any)
+                if meta.get("is_conducted_attempt") or is_conduct_exam:
+                    filtered_data.append(a)
+            data = filtered_data
         
         # Anonymize data for non-premium
         if not is_premium:
