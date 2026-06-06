@@ -1,11 +1,21 @@
-
+import { useState, useEffect } from 'react';
 import { PenTool, CheckCircle2, ListChecks, Settings2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import ManualEditorShowcase from './ManualEditorShowcase';
+import SectionWiseBuilderShowcase from './SectionWiseBuilderShowcase';
 
 export default function ManualCreateSection() {
     const navigate = useNavigate();
+    const [activeShowcase, setActiveShowcase] = useState<'editor' | 'section'>('editor');
+
+    // Automatically rotate between showcases every 22 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setActiveShowcase(prev => prev === 'editor' ? 'section' : 'editor');
+        }, 22000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <section className="py-24 bg-white dark:bg-slate-950 relative overflow-hidden">
@@ -82,8 +92,52 @@ export default function ManualCreateSection() {
                     </div>
 
                     {/* Visual Side */}
-                    <div className="lg:w-1/2">
-                        <ManualEditorShowcase />
+                    <div className="lg:w-1/2 flex flex-col items-center w-full">
+                        {/* Selector Tabs */}
+                        <div className="flex gap-2 p-1.5 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl mb-6 border border-slate-200/50 dark:border-slate-800/50 z-20">
+                            <button
+                                onClick={() => setActiveShowcase('editor')}
+                                className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
+                                    activeShowcase === 'editor'
+                                        ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                Single Section
+                            </button>
+                            <button
+                                onClick={() => setActiveShowcase('section')}
+                                className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
+                                    activeShowcase === 'section'
+                                        ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                Section-Wise (JEE/NEET)
+                            </button>
+                        </div>
+
+                        {/* Showcase Area */}
+                        <div className="w-full relative min-h-[600px] xl:min-h-[700px] flex items-center justify-center overflow-hidden">
+                            <div
+                                className={`w-full transition-all duration-500 absolute top-0 left-0 ${
+                                    activeShowcase === 'editor'
+                                        ? 'opacity-100 translate-y-0 scale-100 z-10'
+                                        : 'opacity-0 translate-y-4 scale-95 pointer-events-none z-0'
+                                }`}
+                            >
+                                <ManualEditorShowcase />
+                            </div>
+                            <div
+                                className={`w-full transition-all duration-500 absolute top-0 left-0 ${
+                                    activeShowcase === 'section'
+                                        ? 'opacity-100 translate-y-0 scale-100 z-10'
+                                        : 'opacity-0 translate-y-4 scale-95 pointer-events-none z-0'
+                                }`}
+                            >
+                                <SectionWiseBuilderShowcase />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
