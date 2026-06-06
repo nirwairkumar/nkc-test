@@ -150,11 +150,11 @@ export default function LandingPage() {
                 </div> */}
 
                 {/* Platform Statistics - Promotional */}
-                <div className="landing-section">
+                {/* <div className="landing-section">
                     <Suspense fallback={<SectionLoader />}>
                         <PlatformStatsSection />
                     </Suspense>
-                </div>
+                </div> */}
 
                 {/* Community Campaign Section */}
                 <div className="landing-section">

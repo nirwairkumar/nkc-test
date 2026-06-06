@@ -7,11 +7,11 @@ export default function CommunityJoinSection() {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                     {/* Left content: Title & CTA button */}
                     <div className="flex flex-col items-start space-y-6 md:w-1/2">
-                        <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        <h2 className="text-4xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                             Join Us to Improve
                         </h2>
                         <a
-                            href="https://forms.gle/sample-form-link"
+                            href="https://forms.gle/o5WxY3XGTossyktu8"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold text-base px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group"
