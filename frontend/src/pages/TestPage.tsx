@@ -732,6 +732,12 @@ export default function TestPage() {
       // Initialize timer: Use test duration if available, else calc from question count
       const durationMins = data.duration || (data.questions?.length || 0);
       setTimeRemaining(durationMins * 60);
+
+      // Save start time if not already stored
+      const startKey = `test_start_time_${user?.id || 'anon'}_${data.id}`;
+      if (!localStorage.getItem(startKey)) {
+        localStorage.setItem(startKey, new Date().toISOString());
+      }
     };
 
     setLoading(true);
@@ -1091,6 +1097,13 @@ export default function TestPage() {
       console.error("Failed to parse start form data", e);
     }
 
+    const startKey = `test_start_time_${user?.id || 'anon'}_${test.id}`;
+    let startTimeStr = localStorage.getItem(startKey);
+    if (!startTimeStr) {
+      const elapsed = (test.duration || 0) * 60 - timeRemaining;
+      startTimeStr = new Date(Date.now() - elapsed * 1000).toISOString();
+    }
+
     const metadata: Record<string, any> = {
       startFormData,
       stats: {
@@ -1102,7 +1115,8 @@ export default function TestPage() {
         unattemptedCount,
         totalQuestions: test.questions.length
       },
-      submittedAt: new Date().toISOString()
+      submittedAt: new Date().toISOString(),
+      startedAt: startTimeStr
     };
 
     // Tag as conduct exam attempt so creator dashboard can filter correctly
@@ -1178,6 +1192,7 @@ export default function TestPage() {
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
       localStorage.removeItem(`test_session_${user.id}_${test.id}`);
+      localStorage.removeItem(`test_start_time_${user.id}_${test.id}`);
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
       sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
       AnswerVault.clear(user.id, test.id); // clean IndexedDB vault

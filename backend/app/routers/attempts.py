@@ -480,11 +480,28 @@ async def get_test_attempts(
             print(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
 
         # Enrich metadata with startedAt if missing
+        from datetime import datetime
+        def parse_iso(iso_str):
+            if not iso_str: return None
+            try:
+                return datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            except Exception:
+                return None
+
         for attempt in data:
             meta = attempt.get("metadata") or {}
             if "startedAt" not in meta:
                 uid = attempt.get("user_id")
-                meta["startedAt"] = reg_start_map.get(uid) or attempt.get("created_at")
+                fallback_start = reg_start_map.get(uid)
+                created_at_str = attempt.get("created_at")
+                
+                if fallback_start and created_at_str:
+                    reg_dt = parse_iso(fallback_start)
+                    created_dt = parse_iso(created_at_str)
+                    if reg_dt and created_dt and reg_dt > created_dt:
+                        fallback_start = None
+                        
+                meta["startedAt"] = fallback_start or attempt.get("created_at")
                 attempt["metadata"] = meta
 
         # Filter for only conducted attempts (or all if the test is currently in conduct mode and legacy)
