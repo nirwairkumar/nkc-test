@@ -9,6 +9,7 @@ const CategoryFolderCards = lazy(() => import('@/components/home/CategoryFolderC
 const FeaturedTests = lazy(() => import('@/components/home/FeaturedTests'));
 const YouTubeGeneratorSection = lazy(() => import('@/components/landing/YouTubeGeneratorSection'));
 const PlatformStatsSection = lazy(() => import('@/components/landing/PlatformStatsSection'));
+const CommunityJoinSection = lazy(() => import('@/components/landing/CommunityJoinSection'));
 const ManualCreateSection = lazy(() => import('@/components/landing/ManualCreateSection'));
 const SettingsShowcaseSection = lazy(() => import('@/components/landing/SettingsShowcaseSection'));
 
@@ -152,6 +153,13 @@ export default function LandingPage() {
                 <div className="landing-section">
                     <Suspense fallback={<SectionLoader />}>
                         <PlatformStatsSection />
+                    </Suspense>
+                </div>
+
+                {/* Community Campaign Section */}
+                <div className="landing-section">
+                    <Suspense fallback={<SectionLoader />}>
+                        <CommunityJoinSection />
                     </Suspense>
                 </div>
 
