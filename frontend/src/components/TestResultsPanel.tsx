@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchAttemptsForTest, deleteAttempt, deleteRegistration } from '@/lib/attemptsApi';
 import { fetchUsersByIds } from '@/lib/usersApi';
 import { fetchTestById } from '@/lib/testsApi';
+import StudentDetailedResultModal from './StudentDetailedResultModal';
 import * as XLSX from 'xlsx';
 import {
     Sheet,
@@ -41,10 +42,28 @@ interface TestResultsPanelProps {
 export default function TestResultsPanel({ test, onClose }: TestResultsPanelProps) {
     const { isAdmin, isPremium } = useAuth();
     const [results, setResults] = useState<any[]>([]);
+
+    const calculateDuration = (startedAt?: string, createdAt?: string) => {
+        if (!startedAt || !createdAt) return '—';
+        const start = new Date(startedAt).getTime();
+        const end = new Date(createdAt).getTime();
+        const diffMs = end - start;
+        if (isNaN(diffMs) || diffMs < 0) return '—';
+        
+        const diffSecs = Math.floor(diffMs / 1000);
+        const mins = Math.floor(diffSecs / 60);
+        const secs = diffSecs % 60;
+        
+        if (mins > 0) {
+            return `${mins}m ${secs}s`;
+        }
+        return `${secs}s`;
+    };
     const [loading, setLoading] = useState(true);
     const [showRank, setShowRank] = useState(false);
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
     const [fullTest, setFullTest] = useState<any>(null);
+    const [selectedAttemptForAnalysis, setSelectedAttemptForAnalysis] = useState<any | null>(null);
 
     // Fetch results and full test details on load
     useEffect(() => {
@@ -225,7 +244,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             if (isAdmin) baseHeaders.push("Profile Name", "Email");
             baseHeaders.push(...dynamicHeaders);
         }
-        baseHeaders.push("Date", "Time");
+        baseHeaders.push("Date", "Time", "Time Taken");
 
         let headerRow1: string[] = [];
         let headerRow2: string[] = [];
@@ -398,7 +417,11 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                 });
             }
 
-            rowData.push(format(dateObj, 'yyyy-MM-dd'), format(dateObj, 'hh:mm:ss a'));
+            rowData.push(
+                format(dateObj, 'yyyy-MM-dd'),
+                format(dateObj, 'hh:mm:ss a'),
+                calculateDuration(attempt.metadata?.startedAt, attempt.created_at)
+            );
 
             let overallQuestions = 0;
             let overallCorrect = 0;
@@ -746,7 +769,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     <span className="flex items-center gap-0.5 text-[10px] font-semibold text-slate-400">
                                                         <Clock className="h-2.5 w-2.5" />{stats.unattemptedCount ?? '-'}
                                                     </span>
-                                                    <span className="ml-auto text-[10px] text-slate-400">
+                                                    <span className="ml-auto text-[10px] text-slate-400 flex items-center gap-1.5">
+                                                        <span className="inline-flex items-center gap-0.5 font-medium text-slate-500">
+                                                            <Clock className="h-2.5 w-2.5 text-indigo-500" />
+                                                            {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
+                                                        </span>
+                                                        <span>·</span>
                                                         {format(new Date(attempt.created_at), 'MMM d, p')}
                                                     </span>
                                                 </div>
@@ -761,14 +789,25 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                                                     {isExpanded ? 'Less' : 'Details'}
                                                 </button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6 text-slate-400 hover:text-red-500"
-                                                    onClick={() => handleDelete(attempt.id, attempt.user_id)}
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </Button>
+                                                <div className="flex items-center gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-2 text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
+                                                        onClick={() => setSelectedAttemptForAnalysis(attempt)}
+                                                    >
+                                                        <BarChart3 className="w-3 h-3 mr-1" />
+                                                        Detailed Result
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-slate-400 hover:text-red-500"
+                                                        onClick={() => handleDelete(attempt.id, attempt.user_id)}
+                                                    >
+                                                        <Trash2 className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
                                             </div>
 
                                             {/* Expanded details */}
@@ -798,6 +837,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                             <TableHead className="font-bold text-xs">Student</TableHead>
                                             <TableHead className="font-bold text-xs">Score</TableHead>
                                             <TableHead className="font-bold text-xs">Stats</TableHead>
+                                            <TableHead className="font-bold text-xs">Time Taken</TableHead>
                                             <TableHead className="font-bold text-xs">Date</TableHead>
                                             <TableHead className="w-[44px]" />
                                         </TableRow>
@@ -864,18 +904,41 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                             </div>
                                                         ) : '—'}
                                                     </TableCell>
+                                                    <TableCell className="text-xs text-slate-600 dark:text-slate-300 font-semibold">
+                                                        {calculateDuration(attempt.metadata?.startedAt, attempt.created_at)}
+                                                    </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                                                         {format(new Date(attempt.created_at), 'MMM d, p')}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                            onClick={() => handleDelete(attempt.id, attempt.user_id)}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
+                                                        <div className="flex items-center gap-1">
+                                                            <TooltipProvider>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
+                                                                            onClick={() => setSelectedAttemptForAnalysis(attempt)}
+                                                                        >
+                                                                            <BarChart3 className="w-4 h-4" />
+                                                                        </Button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p className="text-xs font-semibold">Detailed Result Analysis</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                                onClick={() => handleDelete(attempt.id, attempt.user_id)}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -887,6 +950,15 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                     )}
                 </div>
             </SheetContent>
+            {selectedAttemptForAnalysis && (
+                <StudentDetailedResultModal
+                    isOpen={!!selectedAttemptForAnalysis}
+                    onClose={() => setSelectedAttemptForAnalysis(null)}
+                    attempt={selectedAttemptForAnalysis}
+                    test={currentTest}
+                    isAdmin={isAdmin}
+                />
+            )}
         </Sheet>
     );
 }

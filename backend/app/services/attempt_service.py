@@ -11,7 +11,7 @@ from typing import Dict, Any
 def process_progress(payload: ProgressUpdateRequest):
     try:
         try:
-            status = "submitted" if payload.completion_percentage >= 100 else "in_progress"
+            status = "in_progress"
             update_data: Dict[str, Any] = {
                 "completion_percentage": min(payload.completion_percentage, 100),
                 "status": status,

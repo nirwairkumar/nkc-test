@@ -591,21 +591,55 @@ async def get_attempt_logs(
         test_ids = set()
         session_tokens = set()
 
-        # Process registered
         for r in (regs.data or []):
             uid = r.get("user_id")
             if uid: user_ids.add(uid)
             tid = r.get("test_id")
             if tid: test_ids.add(tid)
+
+        # Fetch user_tests to find actual submissions and their correct end times
+        user_submissions = {}
+        if user_ids and test_ids:
+            try:
+                sub_res = supabase.table("user_tests")\
+                    .select("user_id, test_id, created_at")\
+                    .in_("user_id", list(user_ids))\
+                    .in_("test_id", list(test_ids))\
+                    .execute()
+                for sub in (sub_res.data or []):
+                    uid = sub.get("user_id")
+                    tid = sub.get("test_id")
+                    created_at = sub.get("created_at")
+                    if uid and tid and created_at:
+                        user_submissions[(uid, tid)] = created_at
+            except Exception as sub_err:
+                print(f"Warning: could not fetch user submissions for live logs: {sub_err}")
+
+        # Process registered
+        for r in (regs.data or []):
+            uid = r.get("user_id")
+            tid = r.get("test_id")
+            
+            # Check if there is an actual submission in user_tests
+            submission_time = user_submissions.get((uid, tid)) if uid and tid else None
+            status = r.get("status", "in_progress")
+            last_active = r.get("last_active_at") or r.get("started_at")
+            completion_pct = r.get("completion_percentage", 0)
+            
+            if submission_time:
+                status = "submitted"
+                last_active = submission_time
+                completion_pct = 100
+
             logs.append({
                 "id": r.get("id"),
                 "type": "registered",
                 "test_id": tid,
                 "user_id": uid,
-                "status": r.get("status", "in_progress"),
-                "completion_pct": r.get("completion_percentage", 0),
+                "status": status,
+                "completion_pct": completion_pct,
                 "started_at": r.get("started_at"),
-                "last_active": r.get("last_active_at") or r.get("started_at"),
+                "last_active": last_active,
                 "reason": r.get("abandoned_reason")
             })
 

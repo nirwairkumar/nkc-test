@@ -61,9 +61,15 @@ async def save_attempt(
         
         # Mark the corresponding test_registration as submitted
         try:
+            from datetime import datetime, timezone
             pct = payload.completion_percentage if payload.completion_percentage is not None else 100
+            now = datetime.now(timezone.utc).isoformat()
             supabase.table("test_registrations")\
-                .update({"status": "submitted", "completion_percentage": pct})\
+                .update({
+                    "status": "submitted",
+                    "completion_percentage": pct,
+                    "last_active_at": now
+                })\
                 .eq("user_id", payload.user_id)\
                 .eq("test_id", payload.test_id)\
                 .neq("status", "submitted")\
@@ -457,6 +463,29 @@ async def get_test_attempts(
             .execute()
             
         data = response.data or []
+
+        # Fetch registrations for this test to map user_id -> started_at fallback
+        reg_start_map = {}
+        try:
+            regs_res = supabase.table("test_registrations")\
+                .select("user_id, started_at")\
+                .eq("test_id", test_id)\
+                .execute()
+            for r in (regs_res.data or []):
+                uid = r.get("user_id")
+                sat = r.get("started_at")
+                if uid and sat:
+                    reg_start_map[uid] = sat
+        except Exception as reg_err:
+            print(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
+
+        # Enrich metadata with startedAt if missing
+        for attempt in data:
+            meta = attempt.get("metadata") or {}
+            if "startedAt" not in meta:
+                uid = attempt.get("user_id")
+                meta["startedAt"] = reg_start_map.get(uid) or attempt.get("created_at")
+                attempt["metadata"] = meta
 
         # Filter for only conducted attempts (or all if the test is currently in conduct mode and legacy)
         # Admin bypasses the filtering and sees ALL attempts.

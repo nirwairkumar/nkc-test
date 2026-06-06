@@ -640,7 +640,12 @@ export default function AdminAnalytics() {
                                                     <div className="flex flex-col text-xs space-y-1">
                                                         <span className="text-foreground"><span className="text-muted-foreground">Date:</span> {startTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                                         <span className="text-foreground"><span className="text-muted-foreground">Start:</span> {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                        <span className="text-foreground"><span className="text-muted-foreground">Left:</span> {leaveTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({duration}m)</span>
+                                                        <span className="text-foreground">
+                                                            <span className="text-muted-foreground">
+                                                                {log.status === 'submitted' ? 'End:' : log.status === 'abandoned' ? 'Left:' : 'Active:'}
+                                                            </span>{' '}
+                                                            {leaveTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({duration}m)
+                                                        </span>
                                                     </div>
                                                 </td>
                                             </tr>
