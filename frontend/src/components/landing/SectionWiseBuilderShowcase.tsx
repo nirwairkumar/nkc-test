@@ -275,7 +275,7 @@ function escAttr(s: string): string {
 /* ════════════════════════════════════════════════════════════════
    COMPONENT
 ════════════════════════════════════════════════════════════════ */
-export default function SectionWiseBuilderShowcase() {
+export default function SectionWiseBuilderShowcase({ onComplete }: { onComplete?: () => void }) {
     const deviceRef   = useRef<HTMLDivElement>(null);
     const bodyRef     = useRef<HTMLDivElement>(null);
     const cursorRef   = useRef<HTMLDivElement>(null);
@@ -640,7 +640,15 @@ export default function SectionWiseBuilderShowcase() {
                         typeSection(s3NameRef.current, s3NameTxtRef.current, s3NameCurRef.current, 'Mathematics', () => {
                             runQuestion(SIM_DATA[4], s3QCont.current, s3AddQRef.current, () => {
                                 T(() => runQuestion(SIM_DATA[5], s3QCont.current, s3AddQRef.current, () => {
-                                    T(() => { if (!aborted) startSequence(); }, 5000);
+                                    T(() => {
+                                        if (!aborted) {
+                                            if (onComplete) {
+                                                onComplete();
+                                            } else {
+                                                startSequence();
+                                            }
+                                        }
+                                    }, 5000);
                                 }), 450);
                             });
                         });

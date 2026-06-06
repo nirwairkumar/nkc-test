@@ -162,7 +162,7 @@ function buildCardHTML(idx: number, d: SimQuestion): string {
 /* ════════════════════════════════════════════════════════════════
    COMPONENT
 ════════════════════════════════════════════════════════════════ */
-export default function ManualEditorShowcase() {
+export default function ManualEditorShowcase({ onComplete }: { onComplete?: () => void }) {
     const deviceRef = useRef<HTMLDivElement>(null);
     const simBodyRef = useRef<HTMLDivElement>(null);
     const simScrollRef = useRef<HTMLDivElement>(null);
@@ -531,7 +531,13 @@ export default function ManualEditorShowcase() {
                             showZoomOut(() => {
                                 triggerSaveTest(() => {
                                     el.popupOverlay.classList.add('visible');
-                                    T(restart, 3400);
+                                    T(() => {
+                                        if (onComplete) {
+                                            onComplete();
+                                        } else {
+                                            restart();
+                                        }
+                                    }, 3400);
                                 });
                             });
                         }, 700);

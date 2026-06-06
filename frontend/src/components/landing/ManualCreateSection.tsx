@@ -9,14 +9,6 @@ export default function ManualCreateSection() {
     const navigate = useNavigate();
     const [activeShowcase, setActiveShowcase] = useState<'editor' | 'section'>('editor');
 
-    // Automatically rotate between showcases every 22 seconds
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setActiveShowcase(prev => prev === 'editor' ? 'section' : 'editor');
-        }, 22000);
-        return () => clearInterval(interval);
-    }, []);
-
     return (
         <section className="py-24 bg-white dark:bg-slate-950 relative overflow-hidden">
             {/* Background Decorations */}
@@ -119,24 +111,16 @@ export default function ManualCreateSection() {
 
                         {/* Showcase Area */}
                         <div className="w-full relative min-h-[600px] xl:min-h-[700px] flex items-center justify-center overflow-hidden">
-                            <div
-                                className={`w-full transition-all duration-500 absolute top-0 left-0 ${
-                                    activeShowcase === 'editor'
-                                        ? 'opacity-100 translate-y-0 scale-100 z-10'
-                                        : 'opacity-0 translate-y-4 scale-95 pointer-events-none z-0'
-                                }`}
-                            >
-                                <ManualEditorShowcase />
-                            </div>
-                            <div
-                                className={`w-full transition-all duration-500 absolute top-0 left-0 ${
-                                    activeShowcase === 'section'
-                                        ? 'opacity-100 translate-y-0 scale-100 z-10'
-                                        : 'opacity-0 translate-y-4 scale-95 pointer-events-none z-0'
-                                }`}
-                            >
-                                <SectionWiseBuilderShowcase />
-                            </div>
+                            {activeShowcase === 'editor' && (
+                                <div className="w-full animate-in fade-in zoom-in-95 duration-500">
+                                    <ManualEditorShowcase onComplete={() => setActiveShowcase('section')} />
+                                </div>
+                            )}
+                            {activeShowcase === 'section' && (
+                                <div className="w-full animate-in fade-in zoom-in-95 duration-500">
+                                    <SectionWiseBuilderShowcase onComplete={() => setActiveShowcase('editor')} />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
