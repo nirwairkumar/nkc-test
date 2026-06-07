@@ -544,12 +544,21 @@ export default function UserTestManager() {
                 </div>
             )}
             <Tabs defaultValue="tests" onValueChange={(v) => v === 'reports' && loadReports()}>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 gap-4">
                     <div>
                         <p className="text-[12px] font-medium text-slate-400 uppercase tracking-widest leading-none mb-1">Creator</p>
                         <p className="text-[27px] font-semibold text-slate-800 tracking-tight leading-tight">Dashboard</p>
                     </div>
-                    <TabsList className="h-8">
+
+                    {/* Note explaining "Conduct" mode for creators, visible on medium and larger screens only */}
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-violet-100 bg-violet-50/50 text-[11px] text-violet-700 max-w-md mx-4">
+                        <Info className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                        <span>
+                            Use <strong>"Conduct"</strong> mode on any test card to organize live exams, enable proctoring, and view submitted results.
+                        </span>
+                    </div>
+
+                    <TabsList className="h-8 shrink-0">
                         <TabsTrigger value="tests" className="text-xs px-3 h-7">My Tests</TabsTrigger>
                         <TabsTrigger value="reports" className="relative text-xs px-3 h-7">
                             Reports
@@ -890,15 +899,6 @@ export default function UserTestManager() {
                                 }
                             }}>
                                 <Plus className="w-4 h-4 mr-1.5" /> Create Test
-                            </Button>
-                        </div>
-
-                        {/* Note explaining "Conduct" mode for creators, visible on medium and larger screens only */}
-                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-violet-100 bg-violet-50/50 text-[11px] text-violet-700 max-w-md">
-                            <Info className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                            <span>
-                                Use <strong>"Conduct"</strong> mode on any test card to organize live exams, enable proctoring, and view submitted results.
-                            </span>
                         </div>
                     </div>
 
