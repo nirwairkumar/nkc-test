@@ -125,10 +125,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
             if (error) throw error;
             toast.success("Test settings updated successfully");
-            onUpdate(data?.[0]); // Pass updated test back to parent
+            onUpdate(data); // Pass updated test back to parent
 
             if (forceSave && onRequestConductExam) {
-                onRequestConductExam(data?.[0] || test);
+                onRequestConductExam(data || test);
             } else {
                 onClose();
             }

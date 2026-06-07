@@ -35,6 +35,17 @@ async def debug_schema(db: Client = Depends(get_db)):
         return {"status": "error", "detail": str(e)}
 
 
+VALID_TEST_COLUMNS = {
+    "title", "description", "questions", "created_by", "created_at", 
+    "custom_id", "duration", "is_public", "visibility", "revision_notes", 
+    "institution_name", "institution_logo", "settings", "slug", "tags", 
+    "custom_category", "enable_section_mode", "has_scientific_calculator", 
+    "sections", "section_marking_model", "class_id", "total_questions", 
+    "solutions", "merged_sections", "institution_color", "institution_font", 
+    "total_max_marks", "is_cloned", "cloned_from_id", "creator_name", "creator_avatar"
+}
+
+
 @router.post("/")
 async def create_test(
     payload: CreateTestRequest,
@@ -43,35 +54,27 @@ async def create_test(
 ):
     try:
         data = payload.dict(exclude_unset=True)
+        # Filter to valid DB columns to prevent column not found errors
+        data = {k: v for k, v in data.items() if k in VALID_TEST_COLUMNS}
         try:
-            # Try inserting with all fields (including new ones like sections)
+            # Try inserting with all fields
             response = db.table("tests").insert(data).execute()
-            # PostgREST returns list of inserted rows
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
             return result
         except Exception as e:
-            # If schema mismatch (missing columns for new features), retry with safe legacy fields
-            print(f"Full insert failed (likely schema mismatch or syntax): {e}. Retrying with legacy fields only.")
-            
-            # Define fields that differ between old and new schema
+            print(f"Full insert failed: {e}. Retrying with legacy fields only.")
             legacy_keys = {
                 "title", "description", "questions", "created_by", "created_at", 
-                "custom_id", "duration", "marks_per_question", "negative_marks", 
-                "is_public", "visibility", "revision_notes", "institution_name",
-                "institution_logo", "institution_color", "institution_font",
-                "slug", "tags", "class_id", "sections", "test_id",
-                "enable_section_mode", "section_marking_model", "has_scientific_calculator",
-                "merged_sections"
+                "custom_id", "duration", "is_public", "visibility", "revision_notes", 
+                "institution_name", "institution_logo", "institution_color", "institution_font",
+                "slug", "tags", "class_id", "sections", "enable_section_mode", 
+                "section_marking_model", "has_scientific_calculator", "merged_sections",
+                "settings", "solutions", "total_questions", "total_max_marks", 
+                "is_cloned", "cloned_from_id"
             }
-            # Also creator_name/avatar might be missing if that migration wasn't run
-            # But let's try to keep them if possible, or fall back further? 
-            # For strict safety, let's include them in the 'legacy' set only if user confirmed.
-            
             safe_data = {k: v for k, v in data.items() if k in legacy_keys}
-            
-            # Try insert again
             response = db.table("tests").insert(safe_data).execute()
             print("Legacy insert successful.")
             result = response.data[0] if response.data else None
@@ -87,17 +90,20 @@ async def create_test(
 @router.put("/{test_id}")
 async def update_test(
     test_id: str,
-    payload: Dict[str, Any], # Allow partial updates without strict validation or use UpdateTestRequest
+    payload: Dict[str, Any],
     background_tasks: BackgroundTasks,
-    # Using Dict because frontend might send fields not in UpdateTestRequest if we lag behind
     db: Client = Depends(get_db)
 ):
     try:
+        # Filter payload to only valid columns to avoid PostgREST column errors
+        payload = {k: v for k, v in payload.items() if k in VALID_TEST_COLUMNS}
+
         # Check if we need to update total_max_marks
-        needs_marks_calc = any(k in payload for k in ["questions", "sections", "marks_per_question", "enable_section_mode"])
+        needs_marks_calc = any(k in payload for k in ["questions", "sections", "enable_section_mode"])
         if needs_marks_calc:
             try:
-                existing = db.table("tests").select("questions, sections, enable_section_mode, marks_per_question, settings").eq("id", test_id).single().execute()
+                # Do not select marks_per_question as it is not a database column
+                existing = db.table("tests").select("questions, sections, enable_section_mode, settings").eq("id", test_id).single().execute()
                 if existing.data:
                     merged = {**existing.data, **payload}
                     from app.utils.attempt_control import calculate_test_max_marks
@@ -108,22 +114,22 @@ async def update_test(
         
         # 1. Update Test
         try:
-             response = db.table("tests").update(payload).eq("id", test_id).execute()
-             if response.data:
+            response = db.table("tests").update(payload).eq("id", test_id).execute()
+            if response.data:
                 bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
                 return response.data[0]
-             return None
+            return None
         except Exception as e:
             print(f"Full update failed: {e}. Retrying with legacy fields.")
             legacy_keys = {
                 "title", "description", "questions", "created_by", "created_at", 
-                "custom_id", "duration", "marks_per_question", "negative_marks", 
-                "is_public", "visibility", "revision_notes", "institution_name",
-                "institution_logo", "institution_color", "institution_font",
-                "slug", "tags", "class_id", "sections",
-                "enable_section_mode", "section_marking_model", "has_scientific_calculator",
-                "merged_sections"
+                "custom_id", "duration", "is_public", "visibility", "revision_notes", 
+                "institution_name", "institution_logo", "institution_color", "institution_font",
+                "slug", "tags", "class_id", "sections", "enable_section_mode", 
+                "section_marking_model", "has_scientific_calculator", "merged_sections",
+                "settings", "solutions", "total_questions", "total_max_marks", 
+                "is_cloned", "cloned_from_id"
             }
             safe_payload = {k: v for k, v in payload.items() if k in legacy_keys}
             response = db.table("tests").update(safe_payload).eq("id", test_id).execute()

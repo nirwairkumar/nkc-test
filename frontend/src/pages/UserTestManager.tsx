@@ -1147,7 +1147,13 @@ export default function UserTestManager() {
                 <TestSettingsPanel
                     test={configuringTest}
                     onClose={() => setConfiguringTest(null)}
-                    onUpdate={loadUserTests}
+                    onUpdate={(updatedTest) => {
+                        if (updatedTest) {
+                            setTests(prev => prev.map(t => t.id === updatedTest.id ? updatedTest : t));
+                        } else {
+                            loadUserTests();
+                        }
+                    }}
                     onViewResults={() => {
                         setViewingResultsTest(configuringTest);
                     }}
