@@ -103,9 +103,9 @@ export default function UserRecentTests({ user, onManageTest }: { user: any, onM
                     </div>
                 </div>
                 
-                <Button variant="ghost" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-full sm:px-4" onClick={() => navigate('/history')}>
-                    <span className="hidden sm:inline">View History</span>
-                    <span className="sm:hidden">History</span>
+                <Button variant="ghost" className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 rounded-full sm:px-4" onClick={() => navigate('/my-tests')}>
+                    <span className="hidden sm:inline">Creator Dashboard</span>
+                    <span className="sm:hidden">Dashboard</span>
                     <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
             </div>
