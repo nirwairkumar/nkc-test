@@ -892,6 +892,14 @@ export default function UserTestManager() {
                                 <Plus className="w-4 h-4 mr-1.5" /> Create Test
                             </Button>
                         </div>
+
+                        {/* Note explaining "Conduct" mode for creators, visible on medium and larger screens only */}
+                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-violet-100 bg-violet-50/50 text-[11px] text-violet-700 max-w-md">
+                            <Info className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                            <span>
+                                Use <strong>"Conduct"</strong> mode on any test card to organize live exams, enable proctoring, and view submitted results.
+                            </span>
+                        </div>
                     </div>
 
                     {/* ═══════════════════════════════════════════════
