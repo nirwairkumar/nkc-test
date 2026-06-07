@@ -27,7 +27,7 @@ class AnalyticsTracker {
         }
     }
 
-    async trackPageView(path: string, title: string) {
+    async trackPageView(path: string, title: string, userId?: string) {
         await this.ensureInitialized();
         this.sessionToken = this.getOrCreateSession(); // Refresh session
 
@@ -39,6 +39,7 @@ class AnalyticsTracker {
             session_token: this.sessionToken,
             page_path: path,
             page_title: title,
+            user_id: userId || undefined,
             referrer: document.referrer || undefined,
             utm_source: urlParams.get('utm_source') || undefined,
             utm_medium: urlParams.get('utm_medium') || undefined,

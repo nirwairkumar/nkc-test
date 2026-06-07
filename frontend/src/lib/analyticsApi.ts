@@ -7,6 +7,7 @@ export interface PageViewEvent {
     session_token: string;
     page_path: string;
     page_title?: string;
+    user_id?: string;
     referrer?: string;
     utm_source?: string;
     utm_medium?: string;
@@ -88,6 +89,11 @@ export const analyticsApi = {
 
     getUploadLogs: async (days: number = 30, limit: number = 100) => {
         const response = await apiClient.get('analytics/stats/uploads/logs', { params: { days, limit } });
+        return response.data;
+    },
+
+    getDetailedVisitors: async (days: number = 30, limit: number = 100) => {
+        const response = await apiClient.get('analytics/stats/visitors/detailed', { params: { days, limit } });
         return response.data;
     },
 

@@ -51,27 +51,34 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
         
         if not visitor_resp.data:
             # Create new visitor
-            new_visitor = db.table("visitors").insert({
+            insert_data = {
                 "fingerprint": event.fingerprint,
                 "device_type": device_type,
                 "browser": browser,
                 "os": os,
                 "country": country,
                 "city": city,
-            }).execute()
+            }
+            if event.user_id:
+                insert_data["user_id"] = event.user_id
+            new_visitor = db.table("visitors").insert(insert_data).execute()
             visitor_id = new_visitor.data[0]["id"]
         else:
             visitor_id = visitor_resp.data[0]["id"]
-            # Increment total_visits directly (replaces broken RPC)
+            # Increment total_visits directly
             try:
-                v_data = db.table("visitors").select("total_visits").eq("id", visitor_id).execute()
-                current_visits = v_data.data[0].get("total_visits", 0) if v_data.data else 0
-                db.table("visitors").update({
+                v_data_resp = db.table("visitors").select("total_visits, user_id").eq("id", visitor_id).execute()
+                v_data = v_data_resp.data[0] if v_data_resp.data else {}
+                current_visits = v_data.get("total_visits", 0) or 0
+                update_payload = {
                     "total_visits": current_visits + 1,
                     "last_seen_at": "now()"
-                }).eq("id", visitor_id).execute()
+                }
+                if event.user_id:
+                    update_payload["user_id"] = event.user_id
+                db.table("visitors").update(update_payload).eq("id", visitor_id).execute()
             except Exception as inc_err:
-                logger.warning(f"Visitor count update failed: {inc_err}")
+                logger.warning(f"Visitor count/user_id update failed: {inc_err}")
             
         # 4. UPSERT Session
         session_resp = db.table("sessions").select("id").eq("session_token", event.session_token).execute()

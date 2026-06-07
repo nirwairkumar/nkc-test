@@ -52,19 +52,35 @@ async def get_test_funnel(
         anon_abandoned = sum(1 for r in anon_data if r.get("status") == "abandoned")
         anon_in_progress = sum(1 for r in anon_data if r.get("status") == "in_progress")
 
+        # Merged/Combined stats to populate main analytics dashboard cards and graphs correctly
+        combined_started = total_started + anon_started
+        combined_submitted = total_submitted + anon_submitted
+        combined_abandoned = total_abandoned + anon_abandoned
+        combined_in_progress = total_in_progress + anon_in_progress
+
+        combined_completion_rate = round((combined_submitted / combined_started * 100), 1) if combined_started > 0 else 0
+        
+        total_pct_sum = sum(float(r.get("completion_percentage") or 0) for r in data) + sum(float(r.get("completion_pct") or 0) for r in anon_data)
+        combined_avg_completion = round(total_pct_sum / combined_started, 1) if combined_started > 0 else 0
+
         return {
-            # Registered user stats
-            "total_started": total_started,
-            "total_submitted": total_submitted,
-            "total_abandoned": total_abandoned,
-            "total_in_progress": total_in_progress,
-            "avg_completion_percentage": avg_completion,
-            "completion_rate": completion_rate,
-            # Anonymous user stats (separate)
+            # Combined stats (main counters)
+            "total_started": combined_started,
+            "total_submitted": combined_submitted,
+            "total_abandoned": combined_abandoned,
+            "total_in_progress": combined_in_progress,
+            "avg_completion_percentage": combined_avg_completion,
+            "completion_rate": combined_completion_rate,
+            # Anonymous user stats
             "anon_started": anon_started,
             "anon_submitted": anon_submitted,
             "anon_abandoned": anon_abandoned,
             "anon_in_progress": anon_in_progress,
+            # Registered stats (separate)
+            "reg_started": total_started,
+            "reg_submitted": total_submitted,
+            "reg_abandoned": total_abandoned,
+            "reg_in_progress": total_in_progress,
         }
     except Exception as e:
         print(f"Error in test funnel: {e}")
@@ -240,15 +256,33 @@ async def get_user_matrix(
     try:
         start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
 
+        # 1. Fetch Registered Users
         regs = supabase.table("test_registrations")\
-            .select("user_id, test_id, status, completion_percentage, started_at")\
+            .select("user_id, test_id, status, completion_percentage, started_at, last_active_at")\
             .gte("started_at", start_date)\
             .execute()
         reg_data = regs.data or []
 
+        # 2. Fetch Anonymous Users
+        anon_regs = supabase.table("anon_test_attempts")\
+            .select("test_id, status, completion_pct, started_at, last_active_at")\
+            .gte("started_at", start_date)\
+            .execute()
+        
+        for a in (anon_regs.data or []):
+            reg_data.append({
+                "user_id": "anonymous",
+                "test_id": a.get("test_id"),
+                "status": a.get("status"),
+                "completion_percentage": a.get("completion_pct"),
+                "started_at": a.get("started_at"),
+                "last_active_at": a.get("last_active_at") or a.get("started_at")
+            })
+
         user_map = {}
         for r in reg_data:
             uid = r.get("user_id") or "anonymous"
+            act_time = r.get("last_active_at") or r.get("started_at")
             if uid not in user_map:
                 user_map[uid] = {
                     "tests_started": 0,
@@ -256,7 +290,7 @@ async def get_user_matrix(
                     "abandoned": 0,
                     "in_progress": 0,
                     "total_pct": 0,
-                    "last_active": r.get("started_at"),
+                    "last_active": act_time,
                     "tests": [],
                 }
             user_map[uid]["tests_started"] += 1
@@ -270,8 +304,8 @@ async def get_user_matrix(
             elif status == "in_progress":
                 user_map[uid]["in_progress"] += 1
             # Track last activity
-            if r.get("started_at") and r["started_at"] > (user_map[uid]["last_active"] or ""):
-                user_map[uid]["last_active"] = r["started_at"]
+            if act_time and act_time > (user_map[uid]["last_active"] or ""):
+                user_map[uid]["last_active"] = act_time
 
         # Fetch user profiles for non-anonymous
         real_user_ids = [uid for uid in user_map if uid != "anonymous"]
@@ -712,4 +746,96 @@ async def get_attempt_logs(
 
     except Exception as e:
         print(f"Error in attempt logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─── Detailed Visitor Stats ────────────────────────────────────
+@router.get("/visitors/detailed")
+async def get_detailed_visitors(
+    days: int = 30,
+    limit: int = 100,
+    db: Client = Depends(get_db)
+):
+    """
+    Returns detailed visitor tracking details, including user profile links,
+    regions, technical user agent details, and a timeline of pages they visited.
+    """
+    try:
+        from collections import defaultdict
+        start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        
+        # Fetch visitors active in the last 'days'
+        visitors_res = supabase.table("visitors")\
+            .select("id, fingerprint, device_type, browser, os, country, city, total_visits, user_id, last_seen_at, created_at")\
+            .gte("last_seen_at", start_date)\
+            .order("last_seen_at", desc=True)\
+            .limit(limit)\
+            .execute()
+            
+        visitors = visitors_res.data or []
+        if not visitors:
+            return []
+            
+        # Get profiles for registered visitors
+        user_ids = [v["user_id"] for v in visitors if v.get("user_id")]
+        profiles_map = {}
+        if user_ids:
+            p_res = supabase.table("profiles")\
+                .select("id, full_name, email")\
+                .in_("id", user_ids)\
+                .execute()
+            for p in (p_res.data or []):
+                profiles_map[p["id"]] = p
+                
+        # Get page views for these visitors
+        visitor_ids = [v["id"] for v in visitors]
+        page_views_map = defaultdict(list)
+        if visitor_ids:
+            pv_res = supabase.table("page_views")\
+                .select("visitor_id, page_path, page_title, created_at")\
+                .in_("visitor_id", visitor_ids)\
+                .order("created_at", desc=True)\
+                .limit(1000)\
+                .execute()
+            for pv in (pv_res.data or []):
+                page_views_map[pv["visitor_id"]].append({
+                    "path": pv.get("page_path"),
+                    "title": pv.get("page_title"),
+                    "time": pv.get("created_at")
+                })
+                
+        result = []
+        for v in visitors:
+            vid = v["id"]
+            uid = v.get("user_id")
+            profile = profiles_map.get(uid, {}) if uid else {}
+            
+            v_type = "guest"
+            if uid:
+                v_type = "registered"
+            elif v.get("total_visits", 1) > 1:
+                v_type = "repeat_guest"
+                
+            pvs = page_views_map.get(vid, [])
+            
+            result.append({
+                "id": vid,
+                "fingerprint": v.get("fingerprint"),
+                "device_type": v.get("device_type"),
+                "browser": v.get("browser"),
+                "os": v.get("os"),
+                "country": v.get("country"),
+                "city": v.get("city"),
+                "total_visits": v.get("total_visits", 1),
+                "last_seen_at": v.get("last_seen_at") or v.get("created_at"),
+                "user_id": uid,
+                "full_name": profile.get("full_name"),
+                "email": profile.get("email"),
+                "visitor_type": v_type,
+                "page_views": pvs
+            })
+            
+        return result
+    except Exception as e:
+        print(f"Error in detailed visitors: {e}")
         raise HTTPException(status_code=500, detail=str(e))

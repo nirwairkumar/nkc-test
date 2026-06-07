@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { analyticsApi } from '@/lib/analyticsApi';
-import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, ArrowUp, ArrowDown, Search, Upload } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, ArrowUp, ArrowDown, Search, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -29,7 +29,7 @@ const PIE_COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e', '#8b5cf6'];
 
 export default function AdminAnalytics() {
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'tests' | 'users' | 'creation' | 'logs'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'tests' | 'users' | 'visitors' | 'creation' | 'logs'>('overview');
     const [days, setDays] = useState(30);
 
     // Data states
@@ -43,6 +43,7 @@ export default function AdminAnalytics() {
     const [anonStats, setAnonStats] = useState<any>(null);
     const [attemptLogs, setAttemptLogs] = useState<any[]>([]);
     const [uploadLogs, setUploadLogs] = useState<any[]>([]);
+    const [detailedVisitors, setDetailedVisitors] = useState<any[]>([]);
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -51,11 +52,16 @@ export default function AdminAnalytics() {
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
     const [filterText, setFilterText] = useState('');
 
+    // Visitor filters & search
+    const [expandedVisitorId, setExpandedVisitorId] = useState<string | null>(null);
+    const [visitorSearch, setVisitorSearch] = useState('');
+    const [visitorTypeFilter, setVisitorTypeFilter] = useState<'all' | 'registered' | 'repeat_guest' | 'guest'>('all');
+
     const fetchAllData = useCallback(async () => {
         try {
             setIsRefreshing(true);
             setLoading(true);
-            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData, anonData, logsData, uploadData] =
+            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData, anonData, logsData, uploadData, visitorsData] =
                 await Promise.all([
                     analyticsApi.getTestFunnel(days),
                     analyticsApi.getVisitorLocations(days),
@@ -67,6 +73,7 @@ export default function AdminAnalytics() {
                     analyticsApi.getAnonSummary(days).catch(() => null),
                     analyticsApi.getAttemptLogs(days, 200).catch(() => []),
                     analyticsApi.getUploadLogs(days).catch(() => ({ uploads: [] })),
+                    analyticsApi.getDetailedVisitors(days).catch(() => []),
                 ]);
 
             setFunnel(funnelData);
@@ -79,6 +86,7 @@ export default function AdminAnalytics() {
             setAnonStats(anonData);
             setAttemptLogs(logsData || []);
             setUploadLogs(uploadData?.uploads || []);
+            setDetailedVisitors(visitorsData || []);
             setLastRefreshed(new Date());
         } catch (error) {
             console.error("Failed to fetch analytics:", error);
@@ -105,6 +113,7 @@ export default function AdminAnalytics() {
         { id: 'overview', label: 'Overview', icon: BarChart3 },
         { id: 'tests', label: 'Test Matrix', icon: FileText },
         { id: 'users', label: 'User Matrix', icon: Users },
+        { id: 'visitors', label: 'Visitor Analytics', icon: Users },
         { id: 'logs', label: 'Detailed Sessions', icon: List },
         { id: 'creation', label: 'Creation / Upload', icon: Upload },
     ];
@@ -600,7 +609,43 @@ export default function AdminAnalytics() {
                                     attemptLogs.map((log: any, i: number) => {
                                         const startTime = new Date(log.started_at);
                                         const leaveTime = new Date(log.last_active);
-                                        const duration = Math.max(0, Math.round((leaveTime.getTime() - startTime.getTime()) / 60000));
+                                        
+                                        // Calculate duration in m and s
+                                        const diffMs = Math.max(0, leaveTime.getTime() - startTime.getTime());
+                                        const diffSec = Math.floor(diffMs / 1000);
+                                        const mins = Math.floor(diffSec / 60);
+                                        const secs = diffSec % 60;
+                                        const hours = Math.floor(mins / 60);
+                                        const remainingMins = mins % 60;
+                                        let durationStr = "";
+                                        if (hours > 0) {
+                                            durationStr = `${hours}h ${remainingMins}m`;
+                                        } else if (mins > 0) {
+                                            durationStr = `${mins}m ${secs}s`;
+                                        } else {
+                                            durationStr = `${secs}s`;
+                                        }
+
+                                        const dateStr = startTime.toLocaleDateString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            timeZone: 'Asia/Kolkata'
+                                        });
+                                        const startStr = startTime.toLocaleTimeString('en-IN', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            hour12: true,
+                                            timeZone: 'Asia/Kolkata'
+                                        });
+                                        const leaveStr = leaveTime.toLocaleTimeString('en-IN', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                            second: '2-digit',
+                                            hour12: true,
+                                            timeZone: 'Asia/Kolkata'
+                                        });
 
                                         return (
                                             <tr key={i} className="hover:bg-muted/20 transition-colors group">
@@ -638,13 +683,13 @@ export default function AdminAnalytics() {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-col text-xs space-y-1">
-                                                        <span className="text-foreground"><span className="text-muted-foreground">Date:</span> {startTime.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                                                        <span className="text-foreground"><span className="text-muted-foreground">Start:</span> {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        <span className="text-foreground"><span className="text-muted-foreground">Date:</span> {dateStr}</span>
+                                                        <span className="text-foreground"><span className="text-muted-foreground">Start:</span> {startStr}</span>
                                                         <span className="text-foreground">
                                                             <span className="text-muted-foreground">
                                                                 {log.status === 'submitted' ? 'End:' : log.status === 'abandoned' ? 'Left:' : 'Active:'}
                                                             </span>{' '}
-                                                            {leaveTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({duration}m)
+                                                            {leaveStr} ({durationStr})
                                                         </span>
                                                     </div>
                                                 </td>
@@ -654,6 +699,251 @@ export default function AdminAnalytics() {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* ════════ VISITORS TAB ════════ */}
+            {activeTab === 'visitors' && (
+                <div className="space-y-6">
+                    {/* Visitor stats overview */}
+                    <div className="grid gap-4 md:grid-cols-4">
+                        <StatCard 
+                            title="Total Visitors" 
+                            value={detailedVisitors.length} 
+                            subtitle="Distinct visitor fingerprints"
+                            icon={Users} 
+                            color="text-indigo-500" 
+                            bgColor="bg-indigo-500/10" 
+                        />
+                        <StatCard 
+                            title="Registered Users" 
+                            value={detailedVisitors.filter((v: any) => v.visitor_type === 'registered').length} 
+                            subtitle="Logged in accounts tracked"
+                            icon={CheckCircle2} 
+                            color="text-emerald-500" 
+                            bgColor="bg-emerald-500/10" 
+                        />
+                        <StatCard 
+                            title="Repeat Guests" 
+                            value={detailedVisitors.filter((v: any) => v.visitor_type === 'repeat_guest').length} 
+                            subtitle="Anonymous but returned > 1 time"
+                            icon={RefreshCw} 
+                            color="text-blue-500" 
+                            bgColor="bg-blue-500/10" 
+                        />
+                        <StatCard 
+                            title="One-Time Guests" 
+                            value={detailedVisitors.filter((v: any) => v.visitor_type === 'guest').length} 
+                            subtitle="Single session guest visits"
+                            icon={UserX} 
+                            color="text-amber-500" 
+                            bgColor="bg-amber-500/10" 
+                        />
+                    </div>
+
+                    {/* Filter and Search Bar */}
+                    <div className="rounded-xl border bg-card p-5 shadow-sm">
+                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                            <div className="relative w-full sm:max-w-xs">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="Search fingerprint, name, email, region..."
+                                    value={visitorSearch}
+                                    onChange={(e) => setVisitorSearch(e.target.value)}
+                                    className="w-full rounded-lg border bg-background pl-9 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Filter by type:</span>
+                                <select
+                                    value={visitorTypeFilter}
+                                    onChange={(e: any) => setVisitorTypeFilter(e.target.value)}
+                                    className="w-full sm:w-auto rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                >
+                                    <option value="all">All Visitors</option>
+                                    <option value="registered">Registered Users</option>
+                                    <option value="repeat_guest">Repeat Guests</option>
+                                    <option value="guest">One-Time Guests</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Visitors Table */}
+                    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b bg-muted/30">
+                                        <th className="px-6 py-3.5 text-left font-semibold">Visitor Identity / Fingerprint</th>
+                                        <th className="px-6 py-3.5 text-left font-semibold">Type</th>
+                                        <th className="px-6 py-3.5 text-left font-semibold">Location / Region</th>
+                                        <th className="px-6 py-3.5 text-left font-semibold">Tech Stack</th>
+                                        <th className="px-6 py-3.5 text-center font-semibold">Total Visits</th>
+                                        <th className="px-6 py-3.5 text-left font-semibold">Last Active (IST)</th>
+                                        <th className="px-6 py-3.5 text-center font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {detailedVisitors
+                                        .filter((v: any) => {
+                                            const matchesSearch = 
+                                                v.fingerprint?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                v.full_name?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                v.email?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                v.country?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                v.city?.toLowerCase().includes(visitorSearch.toLowerCase());
+                                                
+                                            if (!matchesSearch) return false;
+                                            
+                                            if (visitorTypeFilter === 'all') return true;
+                                            return v.visitor_type === visitorTypeFilter;
+                                        })
+                                        .length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                                                    No matching visitors found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            detailedVisitors
+                                                .filter((v: any) => {
+                                                    const matchesSearch = 
+                                                        v.fingerprint?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                        v.full_name?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                        v.email?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                        v.country?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                        v.city?.toLowerCase().includes(visitorSearch.toLowerCase());
+                                                        
+                                                    if (!matchesSearch) return false;
+                                                    
+                                                    if (visitorTypeFilter === 'all') return true;
+                                                    return v.visitor_type === visitorTypeFilter;
+                                                })
+                                                .map((v: any) => {
+                                                    const isExpanded = expandedVisitorId === v.id;
+                                                    const lastSeen = new Date(v.last_seen_at);
+                                                    const lastSeenStr = lastSeen.toLocaleString('en-IN', {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        year: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        second: '2-digit',
+                                                        hour12: true,
+                                                        timeZone: 'Asia/Kolkata'
+                                                    });
+
+                                                    return (
+                                                        <React.Fragment key={v.id}>
+                                                            <tr className="hover:bg-muted/10 transition-colors">
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex flex-col">
+                                                                        {v.visitor_type === 'registered' ? (
+                                                                            <div className="font-semibold text-foreground">
+                                                                                {v.full_name}
+                                                                                <span className="text-xs text-muted-foreground block font-normal">{v.email}</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <span className="font-mono text-xs text-muted-foreground" title={v.fingerprint}>
+                                                                                FP: {v.fingerprint?.substring(0, 16)}...{v.fingerprint?.substring(v.fingerprint.length - 8)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {v.visitor_type === 'registered' ? (
+                                                                        <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 border border-emerald-200">Registered</span>
+                                                                    ) : v.visitor_type === 'repeat_guest' ? (
+                                                                        <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-600 border border-blue-200">Repeat Guest</span>
+                                                                    ) : (
+                                                                        <span className="inline-flex items-center rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">One-Time Guest</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-foreground">
+                                                                    <div className="flex flex-col">
+                                                                        <span>{v.city || 'Unknown'}, {v.country || 'Unknown'}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-xs text-muted-foreground">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="capitalize">{v.device_type}</span>
+                                                                        <span>{v.browser} ({v.os})</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-center">
+                                                                    <span className="inline-flex items-center justify-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground border">{v.total_visits}</span>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-xs font-mono text-muted-foreground">
+                                                                    {lastSeenStr}
+                                                                </td>
+                                                                <td className="px-6 py-4 text-center">
+                                                                    <button
+                                                                        onClick={() => setExpandedVisitorId(isExpanded ? null : v.id)}
+                                                                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors p-1.5 hover:bg-indigo-50 rounded-lg"
+                                                                    >
+                                                                        {isExpanded ? (
+                                                                            <>
+                                                                                <ChevronUp className="h-4 w-4" />
+                                                                                Hide Pages
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <ChevronDown className="h-4 w-4" />
+                                                                                View Pages ({v.page_views?.length || 0})
+                                                                            </>
+                                                                        )}
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                            {isExpanded && (
+                                                                <tr className="bg-muted/10">
+                                                                    <td colSpan={7} className="px-8 py-4 border-l-4 border-l-indigo-500 bg-indigo-50/5">
+                                                                        <div className="space-y-3">
+                                                                            <h4 className="font-semibold text-xs text-muted-foreground tracking-wider uppercase">Page Views Timeline (Recent first)</h4>
+                                                                            {v.page_views?.length === 0 ? (
+                                                                                <p className="text-xs text-muted-foreground italic">No page view events recorded for this session range.</p>
+                                                                            ) : (
+                                                                                <div className="relative pl-6 border-l border-indigo-200/50 space-y-4">
+                                                                                    {v.page_views.map((pv: any, idx: number) => {
+                                                                                        const pvTime = new Date(pv.time);
+                                                                                        const pvTimeStr = pvTime.toLocaleTimeString('en-IN', {
+                                                                                            hour: '2-digit',
+                                                                                            minute: '2-digit',
+                                                                                            second: '2-digit',
+                                                                                            hour12: true,
+                                                                                            timeZone: 'Asia/Kolkata'
+                                                                                        });
+                                                                                        return (
+                                                                                            <div key={idx} className="relative flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
+                                                                                                {/* Timeline node dot */}
+                                                                                                <div className="absolute -left-[30px] top-1.5 h-2 w-2 rounded-full bg-indigo-500 ring-4 ring-white" />
+                                                                                                
+                                                                                                <div className="flex flex-col">
+                                                                                                    <span className="font-medium text-foreground">{pv.title || 'Untitled Page'}</span>
+                                                                                                    <span className="font-mono text-muted-foreground text-[11px]">{pv.path}</span>
+                                                                                                </div>
+                                                                                                <div className="text-[11px] font-mono text-muted-foreground sm:text-right">
+                                                                                                    {pvTimeStr}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </React.Fragment>
+                                                    );
+                                                })
+                                        )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

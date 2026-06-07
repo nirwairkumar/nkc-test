@@ -12,8 +12,8 @@ export default function Layout() {
 
     // Track page views on route change
     React.useEffect(() => {
-        analyticsTracker.trackPageView(location.pathname, document.title);
-    }, [location.pathname]);
+        analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
+    }, [location.pathname, user?.id]);
 
     // Check for redirect intent after login is handled specifically 
     // in AuthForm.tsx (for email) and AuthCallback.tsx (for Google OAuth)
