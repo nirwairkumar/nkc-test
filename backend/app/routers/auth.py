@@ -57,13 +57,15 @@ async def login(payload: LoginRequest):
 
 @router.post("/register")
 async def register(payload: RegisterRequest):
+    print("DEBUG: REGISTER ROUTE HIT! payload:", payload)
     try:
-        options = {"data": payload.metadata} if payload.metadata else None
-        response = supabase.auth.sign_up({
+        signup_data = {
             "email": payload.email,
-            "password": payload.password,
-            "options": options
-        })
+            "password": payload.password
+        }
+        if payload.metadata:
+            signup_data["options"] = {"data": payload.metadata}
+        response = supabase.auth.sign_up(signup_data)
         # Wrap and handle potential AuthResponse object
         if hasattr(response, "user"):
             user_data = jsonable_encoder(response.user)
