@@ -27,7 +27,21 @@ export function tableToLatex(cells: string[][], tableType: string = 'header'): s
     return `\\begin{vmatrix} ${rowsStr} \\end{vmatrix}`;
   }
 
-  if (tableType === 'match' || tableType === 'list') {
+  if (tableType === 'match') {
+    // Treat first row as header. Bold non-empty cells in the header row.
+    const colSpec = Array(cols).fill('l').join('');
+    const [header, ...dataRows] = cleanCells;
+    const headerStr = header.map(c => {
+      const val = c || '?';
+      if (val === '?') return '?';
+      if (val.startsWith('\\textbf{')) return val;
+      return `\\textbf{${val}}`;
+    }).join(' & ');
+    const dataStr = dataRows.map(row => row.map(c => c || '?').join(' & ')).join(' \\\\ ');
+    return `\\begin{array}{${colSpec}} ${headerStr} \\\\ ${dataStr} \\end{array}`;
+  }
+
+  if (tableType === 'list') {
     // Left-aligned columns, no borders or horizontal lines
     const colSpec = Array(cols).fill('l').join('');
     const rowsStr = cleanCells.map(row => row.map(c => c || '?').join(' & ')).join(' \\\\ ');
@@ -57,7 +71,7 @@ export default function TableEditor({ initialType = 'header', onInsert, onClose 
     switch (type) {
       case 'match':
         return [
-          ['', '\\textbf{List-I}', '', '\\textbf{List-II}'],
+          ['', 'List-I', '', 'List-II'],
           ['(P)', '', '(1)', ''],
           ['(Q)', '', '(2)', ''],
           ['(R)', '', '(3)', ''],
@@ -200,31 +214,45 @@ export default function TableEditor({ initialType = 'header', onInsert, onClose 
       {/* Grid Inputs + Add Column Control */}
       <div className="flex gap-1 items-start overflow-x-auto py-1">
         <div className="inline-flex flex-col gap-1">
-          {cells.map((row, ri) => (
-            <div key={ri} className="flex gap-1">
-              {row.map((cell, ci) => (
-                <input
-                  key={ci}
-                  type="text"
-                  value={cell}
-                  onChange={e => updateCell(ri, ci, e.target.value)}
-                  placeholder={
-                    tableType === 'matrix' || tableType === 'determinant'
-                      ? '?'
-                      : ri === 0 && tableType === 'header'
-                      ? `H${ci + 1}`
-                      : '?'
-                  }
-                  onMouseDown={e => e.stopPropagation()}
-                  className={`w-16 h-8 px-1.5 text-xs text-center rounded border font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 select-text ${
-                    ri === 0 && tableType === 'header'
-                      ? 'bg-blue-100 dark:bg-blue-900 border-blue-400 dark:border-blue-700 font-semibold text-blue-900 dark:text-blue-100'
-                      : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200'
-                  }`}
-                />
-              ))}
-            </div>
-          ))}
+          <div className="flex flex-col gap-1">
+            {cells.map((row, ri) => (
+              <div key={ri} className="flex gap-1">
+                {row.map((cell, ci) => (
+                  <input
+                    key={ci}
+                    type="text"
+                    value={cell}
+                    onChange={e => updateCell(ri, ci, e.target.value)}
+                    placeholder={
+                      tableType === 'matrix' || tableType === 'determinant'
+                        ? '?'
+                        : ri === 0 && (tableType === 'header' || tableType === 'match')
+                        ? (tableType === 'match' ? 'Header' : `H${ci + 1}`)
+                        : '?'
+                    }
+                    onMouseDown={e => e.stopPropagation()}
+                    className={`w-16 h-8 px-1.5 text-xs text-center rounded border font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 select-text ${
+                      ri === 0 && (tableType === 'header' || tableType === 'match')
+                        ? 'bg-blue-100 dark:bg-blue-900 border-blue-400 dark:border-blue-700 font-semibold text-blue-900 dark:text-blue-100'
+                        : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Add Row Button (Centered at bottom middle) */}
+          <div className="flex justify-center mt-1.5">
+            <button
+              type="button"
+              onClick={addRow}
+              className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-bold text-lg hover:bg-emerald-200 dark:hover:bg-emerald-950/50 transition-colors flex items-center justify-center"
+              title="Add row"
+            >
+              +
+            </button>
+          </div>
         </div>
 
         {/* Add Column Button */}
@@ -237,16 +265,6 @@ export default function TableEditor({ initialType = 'header', onInsert, onClose 
           +
         </button>
       </div>
-
-      {/* Add Row Control */}
-      <button
-        type="button"
-        onClick={addRow}
-        className="w-full h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/10 border border-dashed border-emerald-300 dark:border-emerald-900/45 text-emerald-700 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-950/20 transition-colors"
-        title="Add row"
-      >
-        + Add Row
-      </button>
 
       {/* Latex Syntax Preview */}
       <div className="p-2 rounded bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 select-all">
