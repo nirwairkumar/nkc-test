@@ -57,11 +57,11 @@ export default function TableEditor({ initialType = 'header', onInsert, onClose 
     switch (type) {
       case 'match':
         return [
-          ['\\textbf{List-I}', '\\textbf{List-II}'],
-          ['(P) ', '(1) '],
-          ['(Q) ', '(2) '],
-          ['(R) ', '(3) '],
-          ['(S) ', '(4) ']
+          ['', '\\textbf{List-I}', '', '\\textbf{List-II}'],
+          ['(P)', '', '(1)', ''],
+          ['(Q)', '', '(2)', ''],
+          ['(R)', '', '(3)', ''],
+          ['(S)', '', '(4)', '']
         ];
       case 'list':
         return [
