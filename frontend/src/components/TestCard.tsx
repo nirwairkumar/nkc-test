@@ -68,7 +68,7 @@ export default function TestCard({
                     // If submitted, fetch full test details to get computed_max_marks as fallback/verification
                     if (prog.status === 'submitted' && !prog.total_marks) {
                         import('@/lib/testsApi').then(({ fetchTestById }) => {
-                            fetchTestById(test.id).then(({ data }) => {
+                            fetchTestById(test.id, undefined, true).then(({ data }) => {
                                 if (data?.total_max_marks !== undefined) {
                                     setProgress(prev => prev ? ({
                                         ...prev,

@@ -80,9 +80,11 @@ export async function registerTestStart(user_id: string | null, test_id: string)
     }
 }
 
-export async function fetchAttemptsForTest(testId: string) {
+export async function fetchAttemptsForTest(testId: string, excludeAnswers: boolean = false) {
     try {
-        const response = await apiClient.get(`attempts/test/${testId}`);
+        const response = await apiClient.get(`attempts/test/${testId}`, {
+            params: { exclude_answers: excludeAnswers }
+        });
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };

@@ -57,7 +57,7 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                             // This follows the results.py logic of requiring full test metadata for accuracy
                             if (prog.status === 'submitted' && !prog.total_marks) {
                                 import('@/lib/testsApi').then(({ fetchTestById }) => {
-                                    fetchTestById(testId).then(({ data }) => {
+                                    fetchTestById(testId, undefined, true).then(({ data }) => {
                                         if (data?.total_max_marks !== undefined) {
                                             setProgress(prev => prev ? ({
                                                 ...prev,

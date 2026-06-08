@@ -76,12 +76,12 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const fetchResultsAndTestDetails = async () => {
         setLoading(true);
         try {
-            // Fetch attempts
-            const { data: attemptsData, error: attemptsError } = await fetchAttemptsForTest(test.id);
+            // Fetch attempts excluding answers to save egress
+            const { data: attemptsData, error: attemptsError } = await fetchAttemptsForTest(test.id, true);
             if (attemptsError) throw attemptsError;
 
-            // Fetch full test details including questions and sections
-            const { data: testData, error: testError } = await fetchTestById(test.id);
+            // Fetch test details excluding questions first to save egress
+            const { data: testData, error: testError } = await fetchTestById(test.id, undefined, true);
             if (testError) throw testError;
             if (testData) {
                 setFullTest(testData);
@@ -102,6 +102,24 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleOpenAnalysis = async (attempt: any) => {
+        if (!fullTest || (!fullTest.questions && (!fullTest.sections || fullTest.sections.length === 0 || !fullTest.sections[0].questions))) {
+            setLoading(true);
+            try {
+                // Fetch the test details WITH questions now that they want to view detailed result
+                const { data: testData } = await fetchTestById(test.id, undefined, false);
+                if (testData) {
+                    setFullTest(testData);
+                }
+            } catch (err) {
+                console.error("Error fetching full test details", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        setSelectedAttemptForAnalysis(attempt);
     };
 
     // Use fullTest if loaded, otherwise fall back to test prop
@@ -201,17 +219,64 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         return Object.entries(formData).filter(([k]) => k !== pk);
     };
 
-    const downloadExcel = () => {
+    const downloadExcel = async () => {
         if (!isAdmin && !isPremium) {
             toast.error("Exporting results to Excel is a premium feature.");
             return;
         }
 
-        const hasSections = !!(currentTest?.enable_section_mode && currentTest?.sections && currentTest?.sections.length > 0);
+        let currentResults = displayedResults;
+        let activeTest = currentTest;
+
+        const needsAnswers = displayedResults.some(r => !r.answers);
+        const needsQuestions = !currentTest || (!currentTest.questions && (!currentTest.sections || currentTest.sections.length === 0 || !currentTest.sections[0].questions));
+
+        if (needsAnswers || needsQuestions) {
+            setLoading(true);
+            try {
+                if (needsQuestions) {
+                    const { data: testData } = await fetchTestById(test.id, undefined, false);
+                    if (testData) {
+                        setFullTest(testData);
+                        activeTest = testData;
+                    }
+                }
+                if (needsAnswers) {
+                    toast.info("Downloading detailed candidate responses for export...");
+                    const { data: attemptsData } = await fetchAttemptsForTest(test.id, false);
+                    if (attemptsData) {
+                        // Re-enrich with user data
+                        const userIds = Array.from(new Set(attemptsData.map((d: any) => d.user_id))) as string[];
+                        if (userIds.length > 0) {
+                            const { data: users } = await fetchUsersByIds(userIds);
+                            if (users) {
+                                const userMap = new Map(users.map((u: any) => [u.id, u]));
+                                attemptsData.forEach((d: any) => { d.user = userMap.get(d.user_id); });
+                            }
+                        }
+                        setResults(attemptsData);
+                        currentResults = getSortedResults(
+                            isConductTest
+                                ? attemptsData.filter((r: any) => r.metadata?.conduct_exam === true)
+                                : attemptsData
+                        );
+                    }
+                }
+            } catch (err) {
+                console.error("Error preparing data for export", err);
+                toast.error("Failed to prepare detailed data for export.");
+                setLoading(false);
+                return;
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        const hasSections = !!(activeTest?.enable_section_mode && activeTest?.sections && activeTest?.sections.length > 0);
 
         // Define start form labels / dynamic headers
         const startFormKeys = new Set<string>();
-        displayedResults.forEach(r => {
+        currentResults.forEach(r => {
             if (r.metadata?.startFormData) {
                 Object.keys(r.metadata.startFormData).forEach(k => startFormKeys.add(k));
             }
@@ -273,8 +338,8 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         };
 
         // Helper to evaluate marks per question for correct / negative
-        const testMarksPerQ = parseFractionOrFloat(currentTest?.marks_per_question, 4);
-        const testNegativeMarks = parseFractionOrFloat(currentTest?.negative_marks, 1);
+        const testMarksPerQ = parseFractionOrFloat(activeTest?.marks_per_question, 4);
+        const testNegativeMarks = parseFractionOrFloat(activeTest?.negative_marks, 1);
 
         const getCorrectAnswerDisplay = (q: any) => {
             if (q.correctAnswer === undefined || q.correctAnswer === null) return '';
@@ -359,7 +424,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             headerRow2 = baseHeaders.map(() => "");
 
             // Sections loop
-            (currentTest?.sections || []).forEach((sec: any) => {
+            (activeTest?.sections || []).forEach((sec: any) => {
                 headerRow1.push(sec.name, "", "", "");
                 headerRow2.push("Correct", "Wrong", "Marks (-ve)", "Marks (+ve)");
             });
@@ -390,14 +455,14 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             );
 
             // Append per-question detail columns for flat tests
-            const questions = currentTest?.questions || [];
+            const questions = activeTest?.questions || [];
             questions.forEach((q: any, qIdx: number) => {
                 const label = q.title ? `Q${qIdx + 1}: ${q.title}` : `Q${qIdx + 1}`;
                 flatHeaders.push(`${label} (Student Ans)`, `${label} (Correct Ans)`, `${label} (Status)`, `${label} (Score)`);
             });
         }
 
-        const rows = displayedResults.map((attempt, index) => {
+        const rows = currentResults.map((attempt, index) => {
             const formData = attempt.metadata?.startFormData || {};
             const dateObj = new Date(attempt.created_at);
             const userAnswers = attempt.answers || {};
@@ -431,7 +496,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             let overallPartialMark = 0;
 
             if (hasSections) {
-                (currentTest?.sections || []).forEach((sec: any) => {
+                (activeTest?.sections || []).forEach((sec: any) => {
                     let secCorrect = 0;
                     let secWrong = 0;
                     let secNegativeScore = 0;
@@ -487,7 +552,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                 );
 
             } else {
-                const questions = currentTest?.questions || [];
+                const questions = activeTest?.questions || [];
                 const questionDetailsList: any[] = [];
 
                 questions.forEach((q: any) => {
@@ -794,7 +859,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                         variant="ghost"
                                                         size="sm"
                                                         className="h-6 px-2 text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
-                                                        onClick={() => setSelectedAttemptForAnalysis(attempt)}
+                                                        onClick={() => handleOpenAnalysis(attempt)}
                                                     >
                                                         <BarChart3 className="w-3 h-3 mr-1" />
                                                         Detailed Result
@@ -919,7 +984,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                                             variant="ghost"
                                                                             size="icon"
                                                                             className="h-8 w-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
-                                                                            onClick={() => setSelectedAttemptForAnalysis(attempt)}
+                                                                            onClick={() => handleOpenAnalysis(attempt)}
                                                                         >
                                                                             <BarChart3 className="w-4 h-4" />
                                                                         </Button>

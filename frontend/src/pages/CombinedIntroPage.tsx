@@ -41,11 +41,11 @@ export default function CombinedIntroPage() {
                 
                 // Self-healing: if test1/test2 details are missing, fetch them
                 if (!sessionData.test1 && sessionData.test1_id) {
-                    const res = await fetchTestById(sessionData.test1_id).catch(() => ({ data: null }));
+                    const res = await fetchTestById(sessionData.test1_id, undefined, true).catch(() => ({ data: null }));
                     if (res.data) sessionData.test1 = res.data;
                 }
                 if (!sessionData.test2 && sessionData.test2_id) {
-                    const res = await fetchTestById(sessionData.test2_id).catch(() => ({ data: null }));
+                    const res = await fetchTestById(sessionData.test2_id, undefined, true).catch(() => ({ data: null }));
                     if (res.data) sessionData.test2 = res.data;
                 }
 

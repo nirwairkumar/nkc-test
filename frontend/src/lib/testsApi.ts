@@ -431,28 +431,28 @@ export async function fetchConductModeTests() {
 // ─── Test Data Cache (stale-while-revalidate) ─────────────────
 const TEST_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
-function _getCachedTest(id: string): any | null {
+function _getCachedTest(id: string, excludeQuestions: boolean = false): any | null {
     try {
-        const raw = localStorage.getItem(`test_cache_${id}`);
+        const raw = localStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`);
         if (!raw) return null;
         const { data, ts } = JSON.parse(raw);
         if (Date.now() - ts > TEST_CACHE_TTL) {
-            localStorage.removeItem(`test_cache_${id}`);
+            localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
             return null;
         }
         return data;
     } catch { return null; }
 }
 
-function _setCachedTest(id: string, data: any) {
+function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false) {
     try {
-        localStorage.setItem(`test_cache_${id}`, JSON.stringify({ data, ts: Date.now() }));
+        localStorage.setItem(`test_cache_${id}_eq_${excludeQuestions}`, JSON.stringify({ data, ts: Date.now() }));
     } catch { /* storage full — ignore */ }
 }
 
-export async function fetchTestById(id: string, onCacheHit?: (data: any) => void) {
+export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
     // Serve stale cache immediately, revalidate in background
-    const cached = _getCachedTest(id);
+    const cached = _getCachedTest(id, excludeQuestions);
     if (cached && onCacheHit) {
         onCacheHit(cached);
     }
@@ -461,14 +461,16 @@ export async function fetchTestById(id: string, onCacheHit?: (data: any) => void
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const response = await apiClient.get(`tests/${id}`);
+            const response = await apiClient.get(`tests/${id}`, {
+                params: { exclude_questions: excludeQuestions }
+            });
             const data = response.data;
-            _setCachedTest(id, data);
+            _setCachedTest(id, data, excludeQuestions);
             return { data, error: null };
         } catch (error: any) {
             // Don't retry on 404 (test genuinely doesn't exist or access revoked)
             if (error.response?.status === 404) {
-                try { localStorage.removeItem(`test_cache_${id}`); } catch {}
+                try { localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`); } catch {}
                 return { data: null, error: error };
             }
 

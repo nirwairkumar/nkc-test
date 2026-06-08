@@ -354,6 +354,7 @@ async def get_user_tests(
 async def get_test_by_id(
     test_id: str,
     request: Request,
+    exclude_questions: bool = Query(False),
     response: Response = None,
     db: Client = Depends(get_db),
 ):
@@ -370,8 +371,8 @@ async def get_test_by_id(
             except Exception:
                 pass  # Invalid token — treat as anonymous
 
-        # ─ Cache check (5 min TTL for individual tests)
-        cache_key = f"test:{test_id}"
+        # ─ Cache check (5 min TTL for individual tests, separated by exclude_questions flag)
+        cache_key = f"test:{test_id}:eq{exclude_questions}"
         cached = cache_get(test_cache, cache_key)
         if cached is not None:
             # Re-validate visibility on cached result
@@ -410,24 +411,43 @@ async def get_test_by_id(
 
         is_slug_match = False
 
+        # Define fields to select when excluding heavy questions/solutions JSON
+        select_cols = (
+            "id, title, description, created_at, updated_at, custom_id, marks_per_question, negative_marks, "
+            "duration, revision_notes, is_public, visibility, created_by, institution_name, institution_logo, "
+            "institution_color, institution_font, slug, og_image, tags, custom_category, class_id, settings, "
+            "has_scientific_calculator, enable_section_mode, sections, section_marking_model, merged_sections, "
+            "total_max_marks, max_attempts_per_question, classes(name)"
+            if exclude_questions else "*, classes(name)"
+        )
+
         # Fetch test based on ID type
         if is_uuid:
-            test_res = db.table("tests").select("*, classes(name)").eq("id", test_id).execute()
+            test_res = db.table("tests").select(select_cols).eq("id", test_id).execute()
         else:
             # Try slug first (unlisted tests should ONLY be found via slug)
-            slug_res = db.table("tests").select("*, classes(name)").eq("slug", test_id).execute()
+            slug_res = db.table("tests").select(select_cols).eq("slug", test_id).execute()
             if slug_res.data:
                 test_res = slug_res
                 is_slug_match = True
             else:
                 # Try custom_id (only for public tests)
-                test_res = db.table("tests").select("*, classes(name)").eq("custom_id", test_id).execute()
+                test_res = db.table("tests").select(select_cols).eq("custom_id", test_id).execute()
 
         # Handle response
         if not test_res.data or len(test_res.data) == 0:
             raise HTTPException(status_code=404, detail="Test not found")
 
         test = test_res.data[0]
+
+        # Strip questions from sections JSON if exclude_questions is True
+        if exclude_questions and "sections" in test and isinstance(test["sections"], list):
+            cleaned_sections = []
+            for sec in test["sections"]:
+                sec_copy = dict(sec)
+                sec_copy.pop("questions", None)
+                cleaned_sections.append(sec_copy)
+            test["sections"] = cleaned_sections
 
         # ─ Visibility Enforcement
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")
@@ -505,6 +525,7 @@ async def get_test_by_id(
 async def get_test_by_slug(
     slug: str,
     request: Request,
+    exclude_questions: bool = Query(False),
     response: Response = None,
     db: Client = Depends(get_db)
 ):
@@ -521,7 +542,7 @@ async def get_test_by_slug(
             except Exception:
                 pass  # Invalid token — treat as anonymous
         # ─ Cache check
-        slug_cache_key = f"test:slug:{slug}"
+        slug_cache_key = f"test:slug:{slug}:eq{exclude_questions}"
         cached = cache_get(test_cache, slug_cache_key)
         if cached is not None:
             # ─ Enforce visibility on cached result too
@@ -537,13 +558,32 @@ async def get_test_by_slug(
                     set_no_cache(response)
             return cached
 
+        # Define fields to select when excluding heavy questions/solutions JSON
+        select_cols = (
+            "id, title, description, created_at, updated_at, custom_id, marks_per_question, negative_marks, "
+            "duration, revision_notes, is_public, visibility, created_by, institution_name, institution_logo, "
+            "institution_color, institution_font, slug, og_image, tags, custom_category, class_id, settings, "
+            "has_scientific_calculator, enable_section_mode, sections, section_marking_model, merged_sections, "
+            "total_max_marks, max_attempts_per_question, classes(name)"
+            if exclude_questions else "*, classes(name)"
+        )
+
         # Fetch Test by Slug
-        query = db.table("tests").select("*, classes(name)").eq("slug", slug).single()
+        query = db.table("tests").select(select_cols).eq("slug", slug).single()
         test_res = query.execute()
         test = test_res.data
         
         if not test:
             raise HTTPException(status_code=404, detail="Test not found")
+
+        # Strip questions from sections JSON if exclude_questions is True
+        if exclude_questions and "sections" in test and isinstance(test["sections"], list):
+            cleaned_sections = []
+            for sec in test["sections"]:
+                sec_copy = dict(sec)
+                sec_copy.pop("questions", None)
+                cleaned_sections.append(sec_copy)
+            test["sections"] = cleaned_sections
 
         # ─ Visibility Enforcement on slug lookup
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")

@@ -167,7 +167,7 @@ export default function TestIntroPage() {
                 setTest(cachedData);
                 setLoadingProgress(100);
                 setTimeout(() => setLoading(false), 300);
-            });
+            }, true);
             if (error) throw error;
             if (data) {
                 setTest(data);
@@ -200,7 +200,7 @@ export default function TestIntroPage() {
                     setTest(cachedData);
                     setLoadingProgress(100);
                     setTimeout(() => setLoading(false), 300);
-                });
+                }, true);
                 data = res.data;
                 error = res.error;
             } else {
@@ -209,7 +209,7 @@ export default function TestIntroPage() {
                     setTest(cachedData);
                     setLoadingProgress(100);
                     setTimeout(() => setLoading(false), 300);
-                });
+                }, true);
                 data = res.data;
                 error = res.error;
             }

@@ -384,6 +384,7 @@ async def get_attempt_detail(
 async def get_test_attempts(
     test_id: str,
     request: Request,
+    exclude_answers: bool = False,
     db: Client = Depends(get_db)
 ):
     try:
@@ -456,8 +457,12 @@ async def get_test_attempts(
                             print(f"Error parsing expiry date: {parse_error}")
 
         # Fetch all attempts for specific test
+        select_cols = "id, test_id, user_id, score, created_at, metadata"
+        if not exclude_answers:
+            select_cols += ", answers"
+
         response = supabase.table("user_tests")\
-            .select("id, test_id, user_id, score, created_at, metadata, answers")\
+            .select(select_cols)\
             .eq("test_id", test_id)\
             .order("score", desc=True)\
             .execute()
