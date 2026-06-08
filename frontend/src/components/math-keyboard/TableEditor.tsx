@@ -19,7 +19,7 @@ export function tableToLatex(cells: string[][], tableType: string = 'header'): s
 
   if (tableType === 'matrix') {
     const rowsStr = cleanCells.map(row => row.map(c => c || '?').join(' & ')).join(' \\\\ ');
-    return `\\begin{pmatrix} ${rowsStr} \\end{pmatrix}`;
+    return `\\begin{bmatrix} ${rowsStr} \\end{bmatrix}`;
   }
 
   if (tableType === 'determinant') {

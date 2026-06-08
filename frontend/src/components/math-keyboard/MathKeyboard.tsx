@@ -294,6 +294,19 @@ function renderKatex(expr: string, caretIndex: number | null): string {
   }
 }
 
+function renderKeyLabel(label: string, display?: string): React.ReactNode {
+  const text = display ?? label;
+  if (text.includes('\\') || text.includes('^') || text.includes('_')) {
+    try {
+      const html = katex.renderToString(text, { throwOnError: false });
+      return <span dangerouslySetInnerHTML={{ __html: html }} />;
+    } catch {
+      return text;
+    }
+  }
+  return text;
+}
+
 /* ── component ───────────────────────────────────────── */
 
 export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
@@ -823,7 +836,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                           <div className="w-2 h-1.5 bg-current rounded-[1px]" />
                         </div>
                       ) : (
-                        k.display ?? k.label
+                        renderKeyLabel(k.label, k.display)
                       )}
                     </button>
                   ))}
@@ -845,7 +858,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                       }`}
                       title={k.latex}
                     >
-                      {k.display ?? k.label}
+                      {renderKeyLabel(k.label, k.display)}
                     </button>
                   ))}
                 </div>

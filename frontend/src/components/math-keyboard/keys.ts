@@ -53,7 +53,7 @@ export const TOPICS: TopicDef[] = [
     id: 'algebra', label: 'Algebra',
     keys: [
       [
-        { label: '\\begin{pmatrix}\\end{pmatrix}', latex: '\\begin{pmatrix} ? & ? \\\\ ? & ? \\end{pmatrix}', display: '⊞' },
+        { label: '|x|', latex: '|?|', display: '|x|' },
         { label: 'f(x)', latex: 'f(x)', display: 'f(x)' },
         { label: 'e', latex: 'e', className: 'italic' },
         { label: '∞', latex: '\\infty ' },
@@ -88,8 +88,8 @@ export const TOPICS: TopicDef[] = [
         { label: 'π', latex: '\\pi ' },
       ],
       [
-        { label: '▱', latex: '\\parallelogram ', display: '▱' },
-        { label: '⏢', latex: '\\trapezoid ', display: '⏢' },
+        { label: '▱', latex: '\\text{▱}' },
+        { label: '⏢', latex: '\\text{⏢}' },
         { label: '∠', latex: '\\angle ' },
         { label: 'e', latex: 'e', className: 'italic' },
       ],
@@ -169,16 +169,16 @@ export const TOPICS: TopicDef[] = [
     id: 'statistics', label: 'Statistics',
     keys: [
       [
-        { label: 'nPr', latex: '_{?}P_{?}', display: 'ₙPᵣ' },
-        { label: 'nCr', latex: '\\binom{?}{?}', display: 'ₙCᵣ' },
+        { label: 'nPr', latex: '^{?}P_{?}', display: '^{n}P_{r}' },
+        { label: 'nCr', latex: '^{?}C_{?}', display: '^{n}C_{r}' },
+        { label: 'binom', latex: '\\binom{?}{?}', display: '\\binom{n}{r}' },
         { label: 'π', latex: '\\pi ' },
-        { label: 'i', latex: 'i', className: 'italic' },
       ],
       [
         { label: 'P(X)', latex: 'P(X)', display: 'P(X)' },
         { label: 'x̄', latex: '\\bar{x}' },
         { label: 'e', latex: 'e', className: 'italic' },
-        { label: '(,)', latex: '(?,?)', display: '(a,b)' },
+        { label: 'i', latex: 'i', className: 'italic' },
       ],
       [
         { label: 'α', latex: '\\alpha ' },
@@ -198,7 +198,7 @@ export const TOPICS: TopicDef[] = [
     id: 'physics', label: 'Physics',
     keys: [
       [
-        { label: 'F⃗', latex: '\\vec{F}' },
+        { label: '\\vec{F}', latex: '\\vec{F}' },
         { label: 'Δ', latex: '\\Delta ' },
         { label: 'ω', latex: '\\omega ' },
         { label: 'α', latex: '\\alpha ' },
