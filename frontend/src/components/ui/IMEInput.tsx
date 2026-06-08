@@ -69,6 +69,16 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
         }
     }, [isEditing]);
 
+    // Auto-resize textarea to fit content height dynamically
+    useEffect(() => {
+        if (as === 'textarea' && inputRef.current) {
+            const el = inputRef.current;
+            el.style.height = 'auto';
+            el.style.overflowY = 'hidden';
+            el.style.height = `${el.scrollHeight}px`;
+        }
+    }, [value, as, isEditing]);
+
     // Check if we contain math or markup to decide if preview is needed
     // Simple check for LaTeX/Markdown delimiters to avoid unnecessary preview switch on plain text,
     // though rendering all text as Markdown/LaTeX is perfectly valid when enablePreview is true.

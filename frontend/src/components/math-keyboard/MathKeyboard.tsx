@@ -254,7 +254,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
           } else {
             let hasBraces = false;
             let temp = i;
-            while (temp < expr.length && (temp === ' ' || temp === '\n')) {
+            while (temp < expr.length && (expr[temp] === ' ' || expr[temp] === '\n')) {
               temp++;
             }
             if (temp < expr.length && (expr[temp] === '{' || expr[temp] === '[')) {
