@@ -1456,16 +1456,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     <button
                                         type="button"
                                         onClick={() => { setPreviewImageIndex(0); setShowInstitutePreview(true); }}
-                                        className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-indigo-100 border border-slate-200 hover:border-indigo-300 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
+                                        className="shrink-0 p-1 flex items-center justify-center transition-all duration-200 group text-amber-500 hover:text-amber-600 active:scale-95"
                                         title="Preview: how institution name appears on live test"
                                     >
-                                        <Info className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                        <Info className="w-5 h-5 text-amber-500 group-hover:text-amber-600 transition-colors" />
                                     </button>
                                     {/* Clear All Data Button */}
                                     <button
                                         type="button"
                                         onClick={handleClear}
-                                        className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md"
+                                        className="shrink-0 w-6 h-6 rounded-full bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md ml-3"
                                         title="Clear All Data"
                                     >
                                         <Eraser className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-500 transition-colors" />
