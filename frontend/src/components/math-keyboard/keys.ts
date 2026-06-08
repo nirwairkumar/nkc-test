@@ -21,7 +21,7 @@ export const FIXED_ROWS: MathKey[][] = [
   [
     { label: 'y', latex: 'y', className: 'italic' }, { label: '4', latex: '4' },
     { label: '5', latex: '5' }, { label: '6', latex: '6' },
-    { label: '/', latex: '/' }, { label: '^', latex: '^' },
+    { label: '/', latex: '/' }, { label: '^', latex: '^{?}' },
     { label: '×', latex: '\\times ' }, { label: '>', latex: '>' },
   ],
   [
@@ -233,7 +233,7 @@ export const TOPICS: TopicDef[] = [
         { label: '↓', latex: '\\ce{v}', display: '↓(s)' },
       ],
       [
-        { label: 'ce{}', latex: '\\ce{?}', display: '\\ce{ }' },
+        { label: 'ce{}', latex: '\\ce{?}', display: '\\text{ce}\\{\\square\\}' },
         { label: 'Δ', latex: '\\Delta ' },
         { label: '°C', latex: '^{\\circ}\\text{C}' },
         { label: 'K', latex: '\\text{K}' },
