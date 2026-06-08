@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { X, Copy, Check, Trash2 } from 'lucide-react';
+import { X, Copy, Check, Trash2, Plus } from 'lucide-react';
 import katex from 'katex';
 import { FIXED_ROWS, TOPICS, type TopicId, type MathKey } from './keys';
 import TableEditor from './TableEditor';
@@ -500,24 +500,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         setExpression(newExpr);
         setCaretIndex(newExpr.length);
       }
-      
-      // Delete last character from active textarea at cursor
-      const ta = lastTextareaRef.current;
-      if (ta && document.body.contains(ta)) {
-        const start = ta.selectionStart ?? ta.value.length;
-        if (start > 0) {
-          const before = ta.value.slice(0, start - 1);
-          const after = ta.value.slice(ta.selectionEnd ?? start);
-          const setter = Object.getOwnPropertyDescriptor(
-            ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
-            'value'
-          )?.set;
-          setter?.call(ta, before + after);
-          ta.dispatchEvent(new Event('input', { bubbles: true }));
-          ta.focus();
-          ta.setSelectionRange(start - 1, start - 1);
-        }
-      }
       return;
     }
     
@@ -559,31 +541,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       newExpr = expression + latex;
       setExpression(newExpr);
       setCaretIndex(newExpr.length);
-    }
-
-    // Insert key LaTeX into tracked active textarea
-    const ta = lastTextareaRef.current;
-    if (ta && document.body.contains(ta)) {
-      const start = ta.selectionStart ?? ta.value.length;
-      const end = ta.selectionEnd ?? start;
-      const before = ta.value.slice(0, start);
-      const after = ta.value.slice(end);
-      
-      const setter = Object.getOwnPropertyDescriptor(
-        ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
-        'value'
-      )?.set;
-      setter?.call(ta, before + latex + after);
-      ta.dispatchEvent(new Event('input', { bubbles: true }));
-      
-      const firstPlaceholderOffset = latex.indexOf('?');
-      if (firstPlaceholderOffset !== -1) {
-        const targetPos = start + firstPlaceholderOffset;
-        ta.setSelectionRange(targetPos, targetPos + 1);
-      } else {
-        const pos = start + latex.length;
-        ta.setSelectionRange(pos, pos);
-      }
     }
   }, [expression]);
 
@@ -669,6 +626,33 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     await navigator.clipboard.writeText(raw);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }, [expression]);
+
+  const handleInsertText = useCallback(() => {
+    if (!expression) return;
+    const ta = lastTextareaRef.current;
+    const textToInsert = `$${expression}$`;
+    if (ta && document.body.contains(ta)) {
+      const start = ta.selectionStart ?? ta.value.length;
+      const end = ta.selectionEnd ?? start;
+      const before = ta.value.slice(0, start);
+      const after = ta.value.slice(end);
+      
+      const setter = Object.getOwnPropertyDescriptor(
+        ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+        'value'
+      )?.set;
+      setter?.call(ta, before + textToInsert + after);
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      const pos = start + textToInsert.length;
+      setTimeout(() => {
+        ta.focus();
+        ta.setSelectionRange(pos, pos);
+      }, 0);
+    }
+    setExpression('');
+    setCaretIndex(0);
   }, [expression]);
 
   const topicData = TOPICS.find(t => t.id === topic) ?? TOPICS[0];
@@ -765,6 +749,15 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
           >
             {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? 'Copied!' : 'Copy'}
+          </button>
+          <button
+            onClick={handleInsertText}
+            disabled={!expression}
+            className="shrink-0 flex items-center gap-1 h-9 px-3 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors shadow-sm"
+            title="Insert expression into active text box (wrapped in $...$)"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Insert
           </button>
           <button
             onClick={() => {
