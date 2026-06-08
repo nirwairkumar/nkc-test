@@ -24,13 +24,6 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 def read_root():
     return {"message": "TestoZa Backend is running on Google Cloud Run!"}
 
-@app.get("/loaderio-{token}.txt")
-@app.get("/loaderio-{token}/")
-@app.get("/loaderio-{token}")
-def loaderio_verification(token: str):
-    from fastapi.responses import PlainTextResponse
-    return PlainTextResponse(f"loaderio-{token}")
-
 # CORS Middleware
 origins = [
     "https://testoza.com",
