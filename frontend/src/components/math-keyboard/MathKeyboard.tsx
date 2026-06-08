@@ -980,8 +980,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                       key={ki}
                       type="button"
                       onClick={() => handleInsert(k.latex)}
-                      className={`flex-1 h-10 rounded-lg text-xs transition-all bg-blue-50 border border-blue-200 text-blue-800 font-semibold hover:bg-blue-100 active:bg-blue-200 ${
-                        k.className === 'italic' ? 'italic font-serif text-sm' : ''
+                      className={`flex-1 h-10 rounded-lg text-xs transition-all font-semibold ${
+                        k.className === 'highlight'
+                          ? 'bg-emerald-600 border border-emerald-700 text-white hover:bg-emerald-700 active:bg-emerald-800 shadow-sm'
+                          : k.className === 'italic'
+                          ? 'bg-blue-50 border border-blue-200 text-blue-800 italic font-serif text-sm hover:bg-blue-100 active:bg-blue-200'
+                          : 'bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100 active:bg-blue-200'
                       }`}
                       title={k.latex}
                     >
