@@ -544,6 +544,34 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     }
   }, [expression]);
 
+  const handleTextOperatorMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    const activeEl = document.activeElement;
+    if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
+      const start = activeEl.selectionStart ?? activeEl.value.length;
+      const end = activeEl.selectionEnd ?? start;
+      const val = activeEl.value;
+      const text = '\\text{?}';
+      const newVal = val.slice(0, start) + text + val.slice(end);
+      
+      const setter = Object.getOwnPropertyDescriptor(
+        activeEl instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+        'value'
+      )?.set;
+      setter?.call(activeEl, newVal);
+      activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      const nextCursor = start + 6;
+      setTimeout(() => {
+        activeEl.focus();
+        activeEl.setSelectionRange(nextCursor, nextCursor + 1);
+      }, 0);
+    } else {
+      handleInsert('\\text{?}');
+    }
+  }, [expression, handleInsert]);
+
+
   const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
     const rect = container.getBoundingClientRect();
@@ -782,20 +810,32 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       )}
 
       {/* ── Topic tabs ──────── */}
-      <div className="flex gap-1 px-3 py-2 overflow-x-auto border-b border-blue-100 bg-blue-50/50">
-        {TOPICS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => { setTopic(t.id); setAbcMode(false); }}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all ${
-              topic === t.id
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-blue-700 hover:bg-blue-100'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between border-b border-blue-100 bg-blue-50/50 pr-3">
+        <div className="flex gap-1 px-3 py-2 overflow-x-auto scrollbar-none">
+          {TOPICS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => { setTopic(t.id); setAbcMode(false); }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all ${
+                topic === t.id
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-blue-700 hover:bg-blue-100'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Text Mode formatting button */}
+        <button
+          type="button"
+          onMouseDown={handleTextOperatorMouseDown}
+          className="shrink-0 px-2 py-1.5 rounded-lg text-[11px] font-bold bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-900/50 text-purple-700 shadow-sm transition-all"
+          title="Insert text block \text{?} (for entering normal text inside tables, math formulas, or between $)"
+        >
+          \text{"{?}"}
+        </button>
       </div>
 
       {/* ── Keyboard Grid ──── */}
