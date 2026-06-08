@@ -294,7 +294,108 @@ function renderKatex(expr: string, caretIndex: number | null): string {
   }
 }
 
-function renderKeyLabel(label: string, display?: string): React.ReactNode {
+function renderKeyLabel(label: string, display?: string, latex?: string): React.ReactNode {
+  if (latex === '__TABLE_HEADER') {
+    return (
+      <span className="flex items-center justify-center gap-1 w-full font-semibold">
+        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="3" y1="9" x2="21" y2="9" />
+          <line x1="12" y1="3" x2="12" y2="21" />
+        </svg>
+        <span className="text-[10px] truncate">Headered</span>
+      </span>
+    );
+  }
+  if (latex === '__TABLE_GRID') {
+    return (
+      <span className="flex items-center justify-center gap-1 w-full font-semibold">
+        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="3" y1="9" x2="21" y2="9" />
+          <line x1="3" y1="15" x2="21" y2="15" />
+          <line x1="9" y1="3" x2="9" y2="21" />
+          <line x1="15" y1="3" x2="15" y2="21" />
+        </svg>
+        <span className="text-[10px] truncate">Grid</span>
+      </span>
+    );
+  }
+  if (latex === '__TABLE_MATCH') {
+    return (
+      <span className="flex items-center justify-center gap-1 w-full font-semibold">
+        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="4" y1="4" x2="4" y2="20" />
+          <line x1="20" y1="4" x2="20" y2="20" />
+          <line x1="7" y1="7" x2="17" y2="17" strokeDasharray="1 2" />
+          <line x1="7" y1="17" x2="17" y2="7" strokeDasharray="1 2" />
+        </svg>
+        <span className="text-[10px] truncate">Match List</span>
+      </span>
+    );
+  }
+  if (latex === '__TABLE_LIST') {
+    return (
+      <span className="flex items-center justify-center gap-1 w-full font-semibold">
+        <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          {/* Left Header Box */}
+          <rect x="2" y="3" width="8" height="5" rx="1.2" />
+          {/* Right Header Box */}
+          <rect x="14" y="3" width="8" height="5" rx="1.2" />
+          {/* Left List Lines */}
+          <line x1="3" y1="12" x2="9" y2="12" />
+          <line x1="3" y1="16" x2="9" y2="16" />
+          <line x1="3" y1="20" x2="9" y2="20" />
+          {/* Right List Lines */}
+          <line x1="15" y1="12" x2="21" y2="12" />
+          <line x1="15" y1="16" x2="21" y2="16" />
+          <line x1="15" y1="20" x2="21" y2="20" />
+        </svg>
+        <span className="text-[10px] truncate">Simple List</span>
+      </span>
+    );
+  }
+  if (latex === '__TABLE_MATRIX') {
+    return (
+      <span className="flex items-center justify-center gap-1 w-full font-semibold">
+        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M7,3 L3,3 L3,21 L7,21" />
+          <path d="M17,3 L21,3 L21,21 L17,21" />
+          <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+          <circle cx="16" cy="8" r="1.2" fill="currentColor" />
+          <circle cx="8" cy="16" r="1.2" fill="currentColor" />
+          <circle cx="16" cy="16" r="1.2" fill="currentColor" />
+        </svg>
+        <span className="text-[10px] truncate">Matrix</span>
+      </span>
+    );
+  }
+  if (latex === '__TABLE_DETERMINANT') {
+    return (
+      <span className="flex items-center justify-center gap-1 w-full font-semibold">
+        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <line x1="6" y1="3" x2="6" y2="21" />
+          <line x1="18" y1="3" x2="18" y2="21" />
+          <circle cx="10" cy="8" r="1.2" fill="currentColor" />
+          <circle cx="14" cy="8" r="1.2" fill="currentColor" />
+          <circle cx="10" cy="16" r="1.2" fill="currentColor" />
+          <circle cx="14" cy="16" r="1.2" fill="currentColor" />
+        </svg>
+        <span className="text-[10px] truncate">Det</span>
+      </span>
+    );
+  }
+  if (latex === '__TABLE_EMPTY') {
+    return (
+      <span className="flex items-center justify-center gap-1 w-full font-semibold">
+        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+        </svg>
+        <span className="text-[10px] truncate">Empty Grid</span>
+      </span>
+    );
+  }
+
   const text = display ?? label;
   if (text.includes('\\') || text.includes('^') || text.includes('_')) {
     try {
@@ -776,7 +877,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
               <button
                 type="button"
-                onClick={() => handleInsert(' ')}
+                onClick={() => handleInsert('\\,')}
                 className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-400 flex items-center justify-center hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
               >
                 ␣
@@ -836,7 +937,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                           <div className="w-2 h-1.5 bg-current rounded-[1px]" />
                         </div>
                       ) : (
-                        renderKeyLabel(k.label, k.display)
+                        renderKeyLabel(k.label, k.display, k.latex)
                       )}
                     </button>
                   ))}
@@ -858,7 +959,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                       }`}
                       title={k.latex}
                     >
-                      {renderKeyLabel(k.label, k.display)}
+                      {renderKeyLabel(k.label, k.display, k.latex)}
                     </button>
                   ))}
                 </div>
