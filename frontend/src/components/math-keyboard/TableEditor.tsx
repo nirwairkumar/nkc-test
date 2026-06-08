@@ -27,7 +27,7 @@ export function tableToLatex(cells: string[][], tableType: string = 'header'): s
     return `\\begin{vmatrix} ${rowsStr} \\end{vmatrix}`;
   }
 
-  if (tableType === 'match') {
+  if (tableType === 'match' || tableType === 'list') {
     // Left-aligned columns, no borders or horizontal lines
     const colSpec = Array(cols).fill('l').join('');
     const rowsStr = cleanCells.map(row => row.map(c => c || '?').join(' & ')).join(' \\\\ ');
@@ -62,6 +62,12 @@ export default function TableEditor({ initialType = 'header', onInsert, onClose 
           ['(Q) ', '(2) '],
           ['(R) ', '(3) '],
           ['(S) ', '(4) ']
+        ];
+      case 'list':
+        return [
+          ['Item A', 'Item B'],
+          ['', ''],
+          ['', '']
         ];
       case 'matrix':
       case 'determinant':
@@ -126,6 +132,7 @@ export default function TableEditor({ initialType = 'header', onInsert, onClose 
           { id: 'header', label: 'Header Table' },
           { id: 'grid', label: 'Bordered Grid' },
           { id: 'match', label: 'Match Columns' },
+          { id: 'list', label: 'Simple List' },
           { id: 'matrix', label: 'Matrix' },
           { id: 'determinant', label: 'Determinant' }
         ].map(t => (

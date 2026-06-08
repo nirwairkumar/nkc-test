@@ -256,19 +256,19 @@ export const TOPICS: TopicDef[] = [
     id: 'tables', label: 'Tables',
     keys: [
       [
-        { label: 'Header Table', latex: '__TABLE_HEADER__', display: '田 Headered' },
-        { label: 'Bordered Grid', latex: '__TABLE_GRID__', display: '▦ Grid' },
+        { label: 'Header Table', latex: '__TABLE_HEADER', display: '田 Headered' },
+        { label: 'Bordered Grid', latex: '__TABLE_GRID', display: '▦ Grid' },
       ],
       [
-        { label: 'Match List', latex: '__TABLE_MATCH__', display: '⇄ Match List' },
-        { label: 'Simple List', latex: '__TABLE_LIST__', display: '▤ Simple List' },
+        { label: 'Match List', latex: '__TABLE_MATCH', display: '⇄ Match List' },
+        { label: 'Simple List', latex: '__TABLE_LIST', display: '▤ Simple List' },
       ],
       [
-        { label: 'Matrix', latex: '__TABLE_MATRIX__', display: '⊞ Matrix' },
-        { label: 'Determinant', latex: '__TABLE_DETERMINANT__', display: '|x| Det' },
+        { label: 'Matrix', latex: '__TABLE_MATRIX', display: '⊞ Matrix' },
+        { label: 'Determinant', latex: '__TABLE_DETERMINANT', display: '|x| Det' },
       ],
       [
-        { label: 'Empty Grid', latex: '__TABLE_EMPTY__', display: '□ Empty Grid' }
+        { label: 'Empty Grid', latex: '__TABLE_EMPTY', display: '□ Empty Grid' }
       ]
     ]
   }

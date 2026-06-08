@@ -334,7 +334,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
   const handleInsert = useCallback((latex: string) => {
     if (latex.startsWith('__TABLE_')) {
-      const type = latex.replace('__TABLE_', '').toLowerCase();
+      const type = latex.replace('__TABLE_', '').replace(/_+$/, '').toLowerCase();
       setTableType(type);
       setTableMode(true);
       return;
