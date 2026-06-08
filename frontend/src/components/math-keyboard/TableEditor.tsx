@@ -226,13 +226,17 @@ export default function TableEditor({ initialType = 'header', onInsert, onClose 
                     placeholder={
                       tableType === 'matrix' || tableType === 'determinant'
                         ? '?'
-                        : ri === 0 && (tableType === 'header' || tableType === 'match')
-                        ? (tableType === 'match' ? 'Header' : `H${ci + 1}`)
+                        : tableType === 'match' && ri === 0
+                        ? (ci === 0 || ci === 2 ? '' : `List-${ci === 1 ? 'I' : 'II'}`)
+                        : ri === 0 && tableType === 'header'
+                        ? `H${ci + 1}`
                         : '?'
                     }
                     onMouseDown={e => e.stopPropagation()}
                     className={`w-16 h-8 px-1.5 text-xs text-center rounded border font-mono focus:outline-none focus:ring-2 focus:ring-blue-400 select-text ${
-                      ri === 0 && (tableType === 'header' || tableType === 'match')
+                      tableType === 'match' && ri === 0 && (ci === 0 || ci === 2)
+                        ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 text-slate-400 dark:text-slate-500 font-normal opacity-60'
+                        : ri === 0 && (tableType === 'header' || tableType === 'match')
                         ? 'bg-blue-100 dark:bg-blue-900 border-blue-400 dark:border-blue-700 font-semibold text-blue-900 dark:text-blue-100'
                         : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200'
                     }`}
