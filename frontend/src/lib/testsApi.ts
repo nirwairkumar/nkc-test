@@ -58,6 +58,7 @@ export interface Test {
         name: string;
     }[];
     total_max_marks?: number;
+    total_questions?: number;
     max_attempts_per_question?: number;
     computed_max_marks?: {
         total_max_marks: number;
