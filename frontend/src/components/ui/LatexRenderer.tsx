@@ -197,7 +197,9 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                         return `\\text{${key}}`;
                     });
 
-                    const html = katex.renderToString(texWithoutArrays.trim(), {
+                    const isInline = !displayMode;
+                    const finalTex = isInline ? `\\displaystyle ${texWithoutArrays.trim()}` : texWithoutArrays.trim();
+                    const html = katex.renderToString(finalTex, {
                         displayMode,
                         throwOnError: false,
                         trust: true,

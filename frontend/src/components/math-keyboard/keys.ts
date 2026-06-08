@@ -158,7 +158,7 @@ export const TOPICS: TopicDef[] = [
         { label: 'logₙ', latex: '\\log_{?}{?}', display: 'logₙ' },
       ],
       [
-        { label: 'lim', latex: '\\lim_{? \\to ?}{?}' },
+        { label: 'lim', latex: '\\lim\\limits_{? \\to ?}{?}', display: '\\lim\\limits_{x \\to 0}' },
         { label: '∞', latex: '\\infty ' },
         { label: 'ln', latex: '\\ln ' },
         { label: "d/dx", latex: '\\frac{d}{dx}' },
