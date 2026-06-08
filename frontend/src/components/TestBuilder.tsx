@@ -3150,7 +3150,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     title="Open Virtual Sy Pad"
                 >
                     <Calculator className="w-5 h-5 transition-transform group-hover:scale-110" />
-                    <span className="text-[9px] font-bold tracking-wider uppercase [writing-mode:vertical-lr] select-none">Sy Pad</span>
+                    <span className="text-[9px] font-bold tracking-wider [writing-mode:vertical-lr] select-none">Sy Pad</span>
                 </button>
             </div>
 

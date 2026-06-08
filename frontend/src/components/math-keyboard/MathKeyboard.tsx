@@ -710,7 +710,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
       {/* ── Header ─────────── */}
       <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200">
-        <span className="text-xs font-bold text-blue-800 tracking-wide uppercase">Sy Pad</span>
+        <span className="text-xs font-bold text-blue-800 tracking-wide">Sy Pad</span>
         <button onClick={onClose} className="p-1 rounded-lg hover:bg-blue-200/60 text-blue-600 transition-colors">
           <X className="w-4 h-4" />
         </button>
