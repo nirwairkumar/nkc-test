@@ -140,9 +140,9 @@ export const TOPICS: TopicDef[] = [
     id: 'calculus', label: 'Calculus',
     keys: [
       [
-        { label: 'Σ', latex: '\\sum_{?}^{?}{?}' },
+        { label: 'Σ', latex: '\\sum\\limits_{?}^{?}{?}', display: '\\sum\\limits_{i=1}^{n}' },
         { label: '∫', latex: '\\int ' },
-        { label: '∫ₐᵇ', latex: '\\int_{?}^{?}{?}', display: '∫ₐᵇ' },
+        { label: '∫ₐᵇ', latex: '\\int\\limits_{?}^{?}{?}', display: '\\int\\limits_{a}^{b}' },
         { label: 'f(x)', latex: 'f(x)' },
       ],
       [
@@ -190,7 +190,7 @@ export const TOPICS: TopicDef[] = [
         { label: 'σ', latex: '\\sigma ' },
         { label: 'σ²', latex: '\\sigma^2 ' },
         { label: 'σ_x̄', latex: '\\sigma_{\\bar{x}}' },
-        { label: 'Σ', latex: '\\sum ' },
+        { label: 'Σ', latex: '\\sum\\limits_{?}^{?}{?}', display: '\\sum\\limits_{i=1}^{n}' },
       ],
     ],
   },
