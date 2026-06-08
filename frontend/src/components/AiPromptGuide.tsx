@@ -170,7 +170,7 @@ Now process the uploaded source. Output ALL questions, each in its own code bloc
 
         {/* Showcase Carousel */}
         <div className="space-y-1.5">
-          <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-wide block">Convert complex questions like these</span>
+          <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-wide block">Convert Question Images Into Required Format</span>
           <div className="relative h-28 w-full overflow-hidden rounded-xl border border-slate-200/60 bg-slate-50 flex items-center justify-center">
             <div
               className="flex transition-transform duration-500 ease-in-out h-full w-full"
@@ -269,7 +269,7 @@ Now process the uploaded source. Output ALL questions, each in its own code bloc
             <div className="space-y-1">
               <h4 className="text-xs font-bold text-slate-800">Upload Questions</h4>
               <p className="text-[11px] text-slate-400 leading-normal">
-                Attach your PDF, textbook crop, handwritten question paper, or screenshot to the chat.
+                Attach your question image, textbook crop, handwritten question paper, or screenshot.
               </p>
             </div>
           </div>
@@ -282,7 +282,7 @@ Now process the uploaded source. Output ALL questions, each in its own code bloc
             <div className="space-y-1">
               <h4 className="text-xs font-bold text-slate-800">Paste in Editor</h4>
               <p className="text-[11px] text-slate-400 leading-normal">
-                Copy individual questions and option texts from the AI response, then paste them directly into their fields.
+                Copy individual questions and option texts from the AI response, then paste them directly into question & option fields.
               </p>
             </div>
           </div>

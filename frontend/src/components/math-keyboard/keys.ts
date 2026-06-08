@@ -34,8 +34,7 @@ export const FIXED_ROWS: MathKey[][] = [
     { label: 'abc', latex: '__ABC__', className: 'action' },
     { label: ',', latex: ',' }, { label: '0', latex: '0' },
     { label: '.', latex: '.' }, { label: '%', latex: '\\%' },
-    { label: '␣', latex: '\\,' }, { label: '=', latex: '=' },
-    { label: 'Table', latex: '\\begin{array}{c|c} x & y \\\\ \\hline ? & ? \\\\ ? & ? \\\\ ? & ? \\end{array}', display: '田' },
+    { label: '␣', latex: '\\,', className: 'space-key' }, { label: '=', latex: '=' },
   ],
 ];
 
@@ -45,7 +44,7 @@ export const ABC_ROWS: string[][] = [
   ['z','x','c','v','b','n','m'],
 ];
 
-export type TopicId = 'algebra' | 'prealgebra' | 'trigonometry' | 'calculus' | 'statistics' | 'physics' | 'chemistry';
+export type TopicId = 'algebra' | 'prealgebra' | 'trigonometry' | 'calculus' | 'statistics' | 'physics' | 'chemistry' | 'tables';
 
 export interface TopicDef { id: TopicId; label: string; keys: MathKey[][]; }
 
@@ -253,4 +252,24 @@ export const TOPICS: TopicDef[] = [
       ],
     ],
   },
+  {
+    id: 'tables', label: 'Tables',
+    keys: [
+      [
+        { label: 'Header Table', latex: '__TABLE_HEADER__', display: '田 Headered' },
+        { label: 'Bordered Grid', latex: '__TABLE_GRID__', display: '▦ Grid' },
+      ],
+      [
+        { label: 'Match List', latex: '__TABLE_MATCH__', display: '⇄ Match List' },
+        { label: 'Simple List', latex: '__TABLE_LIST__', display: '▤ Simple List' },
+      ],
+      [
+        { label: 'Matrix', latex: '__TABLE_MATRIX__', display: '⊞ Matrix' },
+        { label: 'Determinant', latex: '__TABLE_DETERMINANT__', display: '|x| Det' },
+      ],
+      [
+        { label: 'Empty Grid', latex: '__TABLE_EMPTY__', display: '□ Empty Grid' }
+      ]
+    ]
+  }
 ];

@@ -140,7 +140,122 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
     }
     
     // 2. Handle syntax chars (curly braces, caret, subscript, ampersand, brackets, spaces)
-    if (['{', '}', '^', '_', '&', '[', ']', ' ', '\n', '\t'].includes(char)) {
+    if (char === '^' || char === '_') {
+      result += char;
+      i++;
+      
+      const nextChar = expr[i];
+      if (nextChar && nextChar !== '{') {
+        result += '{';
+        insertCursorIfNeeded(i);
+        
+        // Inline parse the next token inside the braces
+        if (nextChar === '\\') {
+          const commandStartIdx = i;
+          i++;
+          let cmdName = '';
+          while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
+            cmdName += expr[i];
+            i++;
+          }
+          if (cmdName === '') {
+            const nextSymbol = expr[i] || '';
+            result += '\\' + nextSymbol;
+            i++;
+          } else if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce' || cmdName === 'hline' || cmdName === 'cline') {
+            result += '\\' + cmdName;
+            if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
+              let envName = '';
+              while (i < expr.length && expr[i] !== '{') {
+                insertCursorIfNeeded(i);
+                result += expr[i];
+                i++;
+              }
+              if (i < expr.length && expr[i] === '{') {
+                insertCursorIfNeeded(i);
+                result += '{';
+                i++;
+                let braceCount = 1;
+                while (i < expr.length && braceCount > 0) {
+                  insertCursorIfNeeded(i);
+                  if (expr[i] === '{') braceCount++;
+                  if (expr[i] === '}') braceCount--;
+                  envName += expr[i];
+                  result += expr[i];
+                  i++;
+                }
+              }
+              if (envName.includes('array')) {
+                while (i < expr.length && expr[i] !== '{') {
+                  insertCursorIfNeeded(i);
+                  result += expr[i];
+                  i++;
+                }
+                if (i < expr.length && expr[i] === '{') {
+                  insertCursorIfNeeded(i);
+                  result += '{';
+                  i++;
+                  let braceCount = 1;
+                  while (i < expr.length && braceCount > 0) {
+                    insertCursorIfNeeded(i);
+                    if (expr[i] === '{') braceCount++;
+                    if (expr[i] === '}') braceCount--;
+                    result += expr[i];
+                    i++;
+                  }
+                }
+              }
+            } else if (cmdName === 'cline') {
+              while (i < expr.length && expr[i] !== '{') {
+                insertCursorIfNeeded(i);
+                result += expr[i];
+                i++;
+              }
+              if (i < expr.length && expr[i] === '{') {
+                insertCursorIfNeeded(i);
+                result += '{';
+                i++;
+                let braceCount = 1;
+                while (i < expr.length && braceCount > 0) {
+                  insertCursorIfNeeded(i);
+                  if (expr[i] === '{') braceCount++;
+                  if (expr[i] === '}') braceCount--;
+                  result += expr[i];
+                  i++;
+                }
+              }
+            }
+          } else {
+            let hasBraces = false;
+            let temp = i;
+            while (temp < expr.length && (temp === ' ' || temp === '\n')) {
+              temp++;
+            }
+            if (temp < expr.length && (expr[temp] === '{' || expr[temp] === '[')) {
+              hasBraces = true;
+            }
+            if (hasBraces) {
+              result += '\\' + cmdName;
+            } else {
+              result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{\\${cmdName}}`;
+            }
+          }
+        } else if (nextChar === '?') {
+          result += `\\htmlClass{math-placeholder token-idx-${i}}{\\color{#1e40af}{?}}`;
+          i++;
+        } else if (/[0-9a-zA-Z+\-*/=<>!.,()]/.test(nextChar)) {
+          result += `\\htmlClass{math-token token-idx-${i}}{${nextChar}}`;
+          i++;
+        } else {
+          result += nextChar;
+          i++;
+        }
+        result += '}';
+      }
+      continue;
+    }
+    
+    if (['{', '}', '&', '[', ']', ' ', '\n', '\t'].includes(char)) {
       result += char;
       i++;
       continue;
@@ -187,6 +302,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const [topic, setTopic] = useState<TopicId>('algebra');
   const [abcMode, setAbcMode] = useState(false);
   const [tableMode, setTableMode] = useState(false);
+  const [tableType, setTableType] = useState('header');
   const [copied, setCopied] = useState(false);
   const [shiftOn, setShiftOn] = useState(false);
   
@@ -217,6 +333,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   }, [isOpen]);
 
   const handleInsert = useCallback((latex: string) => {
+    if (latex.startsWith('__TABLE_')) {
+      const type = latex.replace('__TABLE_', '').toLowerCase();
+      setTableType(type);
+      setTableMode(true);
+      return;
+    }
     if (latex === '__ABC__') { setAbcMode(v => !v); return; }
     if (latex === '__BACK__') {
       const inputEl = expressionInputRef.current;
@@ -547,6 +669,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       <div className="p-2">
         {tableMode ? (
           <TableEditor
+            initialType={tableType}
             onInsert={latex => { handleInsert(latex); setTableMode(false); }}
             onClose={() => setTableMode(false)}
           />
@@ -681,14 +804,16 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                         else if (k.className !== 'empty') handleInsert(k.latex);
                       }}
                       disabled={k.className === 'empty'}
-                      className={`flex-1 h-10 rounded-lg text-sm transition-all ${
-                        k.className === 'action'
-                          ? 'bg-blue-200 text-blue-800 font-bold text-xs hover:bg-blue-300'
+                      className={`h-10 rounded-lg text-sm transition-all ${
+                        k.className === 'space-key'
+                          ? 'flex-[2] bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
+                          : k.className === 'action'
+                          ? 'flex-grow flex-1 bg-blue-200 text-blue-800 font-bold text-xs hover:bg-blue-300'
                           : k.className === 'empty'
-                          ? 'bg-transparent cursor-default'
+                          ? 'bg-transparent cursor-default flex-1'
                           : k.className === 'italic'
-                          ? 'bg-white border border-blue-200 text-blue-900 italic font-serif hover:bg-blue-50 active:bg-blue-100'
-                          : 'bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
+                          ? 'flex-1 bg-white border border-blue-200 text-blue-900 italic font-serif hover:bg-blue-50 active:bg-blue-100'
+                          : 'flex-1 bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
                       }`}
                     >
                       {k.latex === '\\frac{?}{?}' ? (
