@@ -552,10 +552,10 @@ export default function TestIntroPage() {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
-    const questionCount = test.questions?.length || 0;
+    const questionCount = test.total_questions !== undefined ? test.total_questions : (test.questions?.length || 0);
 
     const getSectionDetails = (sec: any) => {
-        const totalQs = sec.questions?.length || 0;
+        const totalQs = sec.questions?.length !== undefined ? sec.questions.length : (sec.total_questions || 0);
         const attemptControl = sec.attempt_control;
         const isEnabled = attemptControl && (attemptControl.enabled !== false);
         const maxAllowed = isEnabled && attemptControl.max_attempts ? Math.min(attemptControl.max_attempts, totalQs) : totalQs;

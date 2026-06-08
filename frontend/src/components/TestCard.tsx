@@ -292,7 +292,7 @@ export default function TestCard({
                 <div className="flex flex-col justify-end mt-auto gap-1">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center text-[13px] text-slate-500 dark:text-slate-400 font-medium bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-md">
-                            <Clock className="mr-1.5 h-3.5 w-3.5 text-indigo-500" />{test.questions?.length || 0} Qs • {test.duration || 30}m
+                            <Clock className="mr-1.5 h-3.5 w-3.5 text-indigo-500" />{test.total_questions !== undefined ? test.total_questions : (test.questions?.length || 0)} Qs • {test.duration || 30}m
                         </div>
                         {test.custom_id && (
                             <span className="text-xs text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md shadow-sm">{test.custom_id}</span>

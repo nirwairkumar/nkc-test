@@ -134,17 +134,19 @@ export default function CombinedIntroPage() {
     const getQCount = (test: any) => {
         if (!test) return 0;
         if (typeof test.total_questions === 'number') return test.total_questions;
-        if (test.enable_section_mode && test.sections) return test.sections.reduce((a: number, s: any) => a + (s.questions?.length || 0), 0);
+        if (test.enable_section_mode && test.sections) {
+            return test.sections.reduce((a: number, s: any) => {
+                const sectionQs = s.questions?.length !== undefined ? s.questions.length : (s.total_questions || 0);
+                return a + sectionQs;
+            }, 0);
+        }
         return test.questions?.length || 0;
     };
 
-    const p1Qs = getQCount(t1);
-    const p2Qs = getQCount(t2);
-    const totalDuration = (t1?.duration || 0) + (t2?.duration || 0) + session.break_duration_minutes;
-
     const getMaxMarks = (test: any) => {
         if (!test) return 0;
-        if (test.total_max_marks !== undefined) return test.total_max_marks;
+        if (test.total_max_marks !== undefined && test.total_max_marks !== 0) return test.total_max_marks;
+        if (test.computed_max_marks?.total_max_marks !== undefined) return test.computed_max_marks.total_max_marks;
         
         const marksPerQ = parseFloat(String(test.marks_per_question || 4)) || 4;
         const totalQs = getQCount(test);
@@ -153,12 +155,17 @@ export default function CombinedIntroPage() {
         if (test.enable_section_mode && test.sections) {
             return test.sections.reduce((acc: number, s: any) => {
                 const sectionMarks = parseFloat(String(s.marks_per_question || marksPerQ));
-                return acc + (s.questions?.length || 0) * sectionMarks;
+                const sectionQs = s.questions?.length !== undefined ? s.questions.length : (s.total_questions || 0);
+                return acc + sectionQs * sectionMarks;
             }, 0);
         }
         
         return totalQs * marksPerQ;
     };
+
+    const p1Qs = getQCount(t1);
+    const p2Qs = getQCount(t2);
+    const totalDuration = (t1?.duration || 0) + (t2?.duration || 0) + session.break_duration_minutes;
 
     const p1Marks = getMaxMarks(t1);
     const p2Marks = getMaxMarks(t2);

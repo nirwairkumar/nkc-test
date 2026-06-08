@@ -413,11 +413,10 @@ async def get_test_by_id(
 
         # Define fields to select when excluding heavy questions/solutions JSON
         select_cols = (
-            "id, title, description, created_at, updated_at, custom_id, marks_per_question, negative_marks, "
-            "duration, revision_notes, is_public, visibility, created_by, institution_name, institution_logo, "
-            "institution_color, institution_font, slug, og_image, tags, custom_category, class_id, settings, "
-            "has_scientific_calculator, enable_section_mode, sections, section_marking_model, merged_sections, "
-            "total_max_marks, max_attempts_per_question, classes(name)"
+            "id, title, description, created_at, custom_id, duration, revision_notes, is_public, visibility, "
+            "created_by, institution_name, institution_logo, institution_color, institution_font, slug, tags, "
+            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections, "
+            "section_marking_model, merged_sections, total_max_marks, total_questions, is_cloned, cloned_from_id, classes(name)"
             if exclude_questions else "*, classes(name)"
         )
 
@@ -445,6 +444,8 @@ async def get_test_by_id(
             cleaned_sections = []
             for sec in test["sections"]:
                 sec_copy = dict(sec)
+                if "questions" in sec_copy and isinstance(sec_copy["questions"], list):
+                    sec_copy["total_questions"] = len(sec_copy["questions"])
                 sec_copy.pop("questions", None)
                 cleaned_sections.append(sec_copy)
             test["sections"] = cleaned_sections
@@ -560,11 +561,10 @@ async def get_test_by_slug(
 
         # Define fields to select when excluding heavy questions/solutions JSON
         select_cols = (
-            "id, title, description, created_at, updated_at, custom_id, marks_per_question, negative_marks, "
-            "duration, revision_notes, is_public, visibility, created_by, institution_name, institution_logo, "
-            "institution_color, institution_font, slug, og_image, tags, custom_category, class_id, settings, "
-            "has_scientific_calculator, enable_section_mode, sections, section_marking_model, merged_sections, "
-            "total_max_marks, max_attempts_per_question, classes(name)"
+            "id, title, description, created_at, custom_id, duration, revision_notes, is_public, visibility, "
+            "created_by, institution_name, institution_logo, institution_color, institution_font, slug, tags, "
+            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections, "
+            "section_marking_model, merged_sections, total_max_marks, total_questions, is_cloned, cloned_from_id, classes(name)"
             if exclude_questions else "*, classes(name)"
         )
 
@@ -581,6 +581,8 @@ async def get_test_by_slug(
             cleaned_sections = []
             for sec in test["sections"]:
                 sec_copy = dict(sec)
+                if "questions" in sec_copy and isinstance(sec_copy["questions"], list):
+                    sec_copy["total_questions"] = len(sec_copy["questions"])
                 sec_copy.pop("questions", None)
                 cleaned_sections.append(sec_copy)
             test["sections"] = cleaned_sections
