@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers, Copy, Edit, Radio, BarChart2, Loader2, X } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers, Copy, Edit, Radio, BarChart2, Loader2, X, Menu } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -61,6 +61,9 @@ export default function ManageTests() {
 
     // --- State ---
     const [activeTab, setActiveTab] = useState("tests");
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [tabLoading, setTabLoading] = useState(true);
+    const loadedTabsRef = React.useRef<Record<string, boolean>>({});
 
     // Tests State
     const [tests, setTests] = useState<any[]>([]);
@@ -202,8 +205,18 @@ export default function ManageTests() {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
+    const isFirstSearchRef = React.useRef(true);
     useEffect(() => {
-        loadTests(true);
+        if (isFirstSearchRef.current) {
+            isFirstSearchRef.current = false;
+            return;
+        }
+        if (activeTab === 'tests') {
+            loadTests(true);
+            loadedTabsRef.current['tests'] = true;
+        } else {
+            delete loadedTabsRef.current['tests'];
+        }
     }, [debouncedSearchQuery]);
 
     useEffect(() => {
@@ -227,13 +240,65 @@ export default function ManageTests() {
         };
     }, [hasMore, testsLoading, loadTests]);
 
+    const fetchActiveTabData = React.useCallback(async (tabId: string, force = false) => {
+        if (!force && loadedTabsRef.current[tabId]) {
+            setTabLoading(false);
+            return;
+        }
+
+        try {
+            setTabLoading(true);
+            
+            if (tabId === 'tests') {
+                await Promise.all([
+                    loadTests(true),
+                    loadCategories().catch(() => null),
+                    loadAllClasses().catch(() => null),
+                    loadAllSubCategoriesData().catch(() => null)
+                ]);
+            } else if (tabId === 'categories') {
+                await Promise.all([
+                    loadCategories(),
+                    loadAllSubCategoriesData()
+                ]);
+            } else if (tabId === 'users' || tabId === 'verified_creators') {
+                await loadUsers();
+            } else if (tabId === 'combined') {
+                await Promise.all([
+                    loadCombinedSessions(),
+                    (tests.length === 0 ? loadTests(true) : Promise.resolve())
+                ]);
+            } else if (tabId === 'activity') {
+                await loadConductModeTests();
+            }
+
+            loadedTabsRef.current[tabId] = true;
+        } catch (error) {
+            console.error(`Failed to load ${tabId} tab data:`, error);
+        } finally {
+            setTabLoading(false);
+        }
+    }, [tests.length]);
+
     useEffect(() => {
-        loadCategories();
-        loadUsers();
-        loadAllClasses();
-        loadAllSubCategoriesData();
-        loadCombinedSessions();
-        loadConductModeTests();
+        fetchActiveTabData(activeTab);
+    }, [activeTab, fetchActiveTabData]);
+
+    // Fetch conduct mode tests on mount to get the active count for the sidebar badge
+    useEffect(() => {
+        const fetchInitialConductCount = async () => {
+            try {
+                const { data, error } = await fetchConductModeTests();
+                if (!error && data) {
+                    setConductModeTests(data || []);
+                    // Mark as loaded so navigating to the activity tab doesn't fetch again
+                    loadedTabsRef.current['activity'] = true;
+                }
+            } catch (err) {
+                console.error("Failed to load initial conduct mode tests count:", err);
+            }
+        };
+        fetchInitialConductCount();
     }, []);
 
     useEffect(() => {
@@ -794,9 +859,9 @@ export default function ManageTests() {
     if (!isAdmin) return null;
 
     return (
-        <div className="container mx-auto max-w-5xl py-10 space-y-6">
+        <div className="container mx-auto max-w-7xl px-4 py-10">
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-3xl font-bold">Admin Dashboard</h1>
                     <p className="text-muted-foreground">Manage tests and master data.</p>
@@ -804,22 +869,189 @@ export default function ManageTests() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
-                <TabsList className="grid w-full md:w-[1080px] grid-cols-6 mb-4 animate-in fade-in duration-300">
-                    <TabsTrigger value="tests">Manage Tests</TabsTrigger>
-                    <TabsTrigger value="categories">Categories</TabsTrigger>
-                    <TabsTrigger value="users">Users</TabsTrigger>
-                    <TabsTrigger value="verified_creators">Verified</TabsTrigger>
-                    <TabsTrigger value="combined" className="flex items-center gap-1.5">
-                        <Layers className="w-3.5 h-3.5" />Combined
-                    </TabsTrigger>
-                    <TabsTrigger value="activity" className="flex items-center gap-1.5">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <div className="flex flex-col lg:flex-row gap-8 items-start relative w-full">
+                    {/* Mobile hamburger menu top bar */}
+                    <div className="lg:hidden w-full flex items-center justify-between bg-card p-3 border rounded-xl shadow-sm mb-2 sticky top-16 z-30">
+                        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                            Dashboard Sections
                         </span>
-                        Activity
-                    </TabsTrigger>
-                </TabsList>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="flex items-center gap-2"
+                        >
+                            {isMobileMenuOpen ? (
+                                <>
+                                    <X className="h-4 w-4" /> Close
+                                </>
+                            ) : (
+                                <>
+                                    <Menu className="h-4 w-4" /> Menu
+                                </>
+                            )}
+                        </Button>
+                    </div>
+
+                    {/* Mobile overlay menu drawer */}
+                    {isMobileMenuOpen && (
+                        <div className="lg:hidden fixed inset-0 z-40 flex">
+                            {/* Backdrop */}
+                            <div 
+                                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            />
+                            
+                            {/* Drawer Content */}
+                            <aside className="relative flex flex-col w-72 max-w-[80vw] h-full bg-card p-6 border-r shadow-2xl animate-in slide-in-from-left duration-300">
+                                <div className="flex items-center justify-between mb-6">
+                                    <span className="font-bold text-lg text-indigo-600">Navigation</span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="h-8 w-8 rounded-full"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                
+                                <nav className="flex flex-col gap-1.5">
+                                    {[
+                                        { id: 'tests', label: 'Manage Tests', icon: FileText },
+                                        { id: 'categories', label: 'Categories', icon: BookOpen },
+                                        { id: 'users', label: 'Users', icon: Users },
+                                        { id: 'verified_creators', label: 'Verified Creators', icon: GraduationCap },
+                                        { id: 'combined', label: 'Combined Sessions', icon: Layers },
+                                        { id: 'activity', label: 'Live Activity', icon: Radio },
+                                    ].map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => {
+                                                setActiveTab(tab.id);
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full group
+                                  ${activeTab === tab.id
+                                                    ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                                }`}
+                                        >
+                                            {tab.id === 'activity' && conductModeTests.length > 0 ? (
+                                                <span className="relative flex h-2 w-2 mr-1">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                </span>
+                                            ) : (
+                                                <tab.icon className={`h-4.5 w-4.5 transition-colors ${
+                                                    activeTab === tab.id 
+                                                        ? 'text-white' 
+                                                        : 'text-muted-foreground group-hover:text-foreground'
+                                                }`} />
+                                            )}
+                                            <span>{tab.label}</span>
+                                            {tab.id === 'activity' && (
+                                                <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
+                                                    activeTab === tab.id
+                                                        ? 'bg-white/20 text-white border-white/30'
+                                                        : conductModeTests.length > 0
+                                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                                            : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800'
+                                                }`}>
+                                                    {conductModeTests.length}
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </nav>
+                            </aside>
+                        </div>
+                    )}
+
+                    {/* Desktop sidebar navigation - sticky top-20 to keep menu on screen when scrolling */}
+                    <aside className="hidden lg:block w-64 shrink-0 sticky top-20 self-start">
+                        <TabsList className="flex flex-col gap-1.5 rounded-xl bg-card p-2 border shadow-sm w-full h-auto items-stretch bg-transparent border-slate-200 dark:border-slate-800">
+                            <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Dashboard Sections
+                            </div>
+                            
+                            <TabsTrigger 
+                                value="tests"
+                                className="flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 bg-transparent border-none outline-none shadow-none cursor-pointer"
+                            >
+                                <FileText className="h-4.5 w-4.5" />
+                                <span>Manage Tests</span>
+                            </TabsTrigger>
+
+                            <TabsTrigger 
+                                value="categories"
+                                className="flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 bg-transparent border-none outline-none shadow-none cursor-pointer"
+                            >
+                                <BookOpen className="h-4.5 w-4.5" />
+                                <span>Categories</span>
+                            </TabsTrigger>
+
+                            <TabsTrigger 
+                                value="users"
+                                className="flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 bg-transparent border-none outline-none shadow-none cursor-pointer"
+                            >
+                                <Users className="h-4.5 w-4.5" />
+                                <span>Users</span>
+                            </TabsTrigger>
+
+                            <TabsTrigger 
+                                value="verified_creators"
+                                className="flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 bg-transparent border-none outline-none shadow-none cursor-pointer"
+                            >
+                                <GraduationCap className="h-4.5 w-4.5" />
+                                <span>Verified Creators</span>
+                            </TabsTrigger>
+
+                            <TabsTrigger 
+                                value="combined"
+                                className="flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 bg-transparent border-none outline-none shadow-none cursor-pointer"
+                            >
+                                <Layers className="h-4.5 w-4.5" />
+                                <span>Combined Sessions</span>
+                            </TabsTrigger>
+
+                             <TabsTrigger 
+                                value="activity"
+                                className="flex items-center justify-start gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/50 bg-transparent border-none outline-none shadow-none cursor-pointer group/trigger"
+                            >
+                                {conductModeTests.length > 0 ? (
+                                    <span className="relative flex h-2 w-2 mr-1">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                ) : (
+                                    <Radio className="h-4.5 w-4.5 text-muted-foreground group-hover/trigger:text-foreground group-data-[state=active]/trigger:text-white transition-colors" />
+                                )}
+                                <span>Live Activity</span>
+                                <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
+                                    activeTab === 'activity'
+                                        ? 'bg-white/20 text-white border-white/30'
+                                        : conductModeTests.length > 0
+                                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                            : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800'
+                                }`}>
+                                    {conductModeTests.length}
+                                </span>
+                            </TabsTrigger>
+                        </TabsList>
+                    </aside>
+
+                    {/* Right side content pane */}
+                    <main className="flex-grow w-full min-w-0">
+                        {tabLoading ? (
+                            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border bg-card p-8 shadow-sm">
+                                <div className="flex flex-col items-center gap-3">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                    <p className="text-sm text-muted-foreground animate-pulse font-medium">Loading dashboard section...</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
 
                 {/* --- TESTS TAB --- */}
                 <TabsContent value="tests" className="space-y-4">
@@ -1658,7 +1890,10 @@ export default function ManageTests() {
                         </div>
                     )}
                 </TabsContent>
-
+                            </>
+                        )}
+                    </main>
+                </div>
             </Tabs>
 
 

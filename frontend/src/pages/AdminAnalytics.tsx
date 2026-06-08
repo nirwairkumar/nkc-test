@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { analyticsApi } from '@/lib/analyticsApi';
-import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, ArrowUp, ArrowDown, Search, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, ArrowUp, ArrowDown, Search, Upload, ChevronDown, ChevronUp, Menu, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -46,6 +46,11 @@ export default function AdminAnalytics() {
     const [detailedVisitors, setDetailedVisitors] = useState<any[]>([]);
     const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [tabLoading, setTabLoading] = useState(true);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Cache to prevent duplicate database calls for tabs that have already loaded
+    const loadedTabsRef = React.useRef<Record<string, number>>({});
 
     // Test Matrix sort & filter
     const [sortField, setSortField] = useState<string>('starts');
@@ -57,49 +62,68 @@ export default function AdminAnalytics() {
     const [visitorSearch, setVisitorSearch] = useState('');
     const [visitorTypeFilter, setVisitorTypeFilter] = useState<'all' | 'registered' | 'repeat_guest' | 'guest'>('all');
 
-    const fetchAllData = useCallback(async () => {
+    const fetchActiveTabData = useCallback(async (tabId: string, daysValue: number, force = false) => {
+        if (!force && loadedTabsRef.current[tabId] === daysValue) {
+            setTabLoading(false);
+            return;
+        }
+
         try {
             setIsRefreshing(true);
-            setLoading(true);
-            const [funnelData, locationsData, testData, userData, createData, overviewData, trendsData, anonData, logsData, uploadData, visitorsData] =
-                await Promise.all([
-                    analyticsApi.getTestFunnel(days),
-                    analyticsApi.getVisitorLocations(days),
-                    analyticsApi.getTestMatrix(days),
-                    analyticsApi.getUserMatrix(days),
-                    analyticsApi.getTestCreationStats(days),
-                    analyticsApi.getOverviewStats(days).catch(() => null),
-                    analyticsApi.getDailyTrends(days).catch(() => []),
-                    analyticsApi.getAnonSummary(days).catch(() => null),
-                    analyticsApi.getAttemptLogs(days, 200).catch(() => []),
-                    analyticsApi.getUploadLogs(days).catch(() => ({ uploads: [] })),
-                    analyticsApi.getDetailedVisitors(days).catch(() => []),
+            setTabLoading(true);
+            
+            if (tabId === 'overview') {
+                const [funnelData, locationsData, overviewData, trendsData, anonData] = await Promise.all([
+                    analyticsApi.getTestFunnel(daysValue),
+                    analyticsApi.getVisitorLocations(daysValue),
+                    analyticsApi.getOverviewStats(daysValue).catch(() => null),
+                    analyticsApi.getDailyTrends(daysValue).catch(() => []),
+                    analyticsApi.getAnonSummary(daysValue).catch(() => null),
                 ]);
+                setFunnel(funnelData);
+                setLocations(locationsData);
+                setVisitorStats(overviewData);
+                setTrends(trendsData || []);
+                setAnonStats(anonData);
+            } else if (tabId === 'tests') {
+                const testData = await analyticsApi.getTestMatrix(daysValue);
+                setTestMatrix(testData || []);
+            } else if (tabId === 'users') {
+                const userData = await analyticsApi.getUserMatrix(daysValue);
+                setUserMatrix(userData || []);
+            } else if (tabId === 'visitors') {
+                const visitorsData = await analyticsApi.getDetailedVisitors(daysValue);
+                setDetailedVisitors(visitorsData || []);
+            } else if (tabId === 'logs') {
+                const logsData = await analyticsApi.getAttemptLogs(daysValue, 200);
+                setAttemptLogs(logsData || []);
+            } else if (tabId === 'creation') {
+                const [createData, uploadData] = await Promise.all([
+                    analyticsApi.getTestCreationStats(daysValue),
+                    analyticsApi.getUploadLogs(daysValue).catch(() => ({ uploads: [] })),
+                ]);
+                setCreationStats(createData);
+                setUploadLogs(uploadData?.uploads || []);
+            }
 
-            setFunnel(funnelData);
-            setLocations(locationsData);
-            setTestMatrix(testData || []);
-            setUserMatrix(userData || []);
-            setCreationStats(createData);
-            setVisitorStats(overviewData);
-            setTrends(trendsData || []);
-            setAnonStats(anonData);
-            setAttemptLogs(logsData || []);
-            setUploadLogs(uploadData?.uploads || []);
-            setDetailedVisitors(visitorsData || []);
+            loadedTabsRef.current[tabId] = daysValue;
             setLastRefreshed(new Date());
         } catch (error) {
-            console.error("Failed to fetch analytics:", error);
-            toast.error("Failed to load analytics.");
+            console.error(`Failed to fetch ${tabId} analytics:`, error);
+            toast.error(`Failed to load ${tabId} analytics.`);
         } finally {
+            setTabLoading(false);
             setLoading(false);
             setIsRefreshing(false);
         }
-    }, [days]);
+    }, []);
 
     useEffect(() => {
-        fetchAllData();
-    }, [fetchAllData]);
+        if (loadedTabsRef.current[activeTab] !== days) {
+            setTabLoading(true);
+        }
+        fetchActiveTabData(activeTab, days);
+    }, [activeTab, days, fetchActiveTabData]);
 
     if (loading) {
         return (
@@ -144,7 +168,7 @@ export default function AdminAnalytics() {
                         {isRefreshing ? 'Refreshing...' : `Updated ${lastRefreshed.toLocaleTimeString()}`}
                     </span>
                     <button
-                        onClick={fetchAllData}
+                        onClick={() => fetchActiveTabData(activeTab, days, true)}
                         disabled={isRefreshing}
                         title="Refresh analytics"
                         className="p-2 rounded-lg border bg-card hover:bg-muted transition-colors disabled:opacity-50"
@@ -165,26 +189,116 @@ export default function AdminAnalytics() {
                 </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="mb-6 flex gap-1 rounded-xl bg-muted/50 p-1 border overflow-x-auto">
-                {tabs.map((tab) => (
+            <div className="flex flex-col lg:flex-row gap-8 items-start relative">
+                {/* Mobile hamburger menu top bar */}
+                <div className="lg:hidden w-full flex items-center justify-between bg-card p-3 border rounded-xl shadow-sm mb-2 sticky top-16 z-30">
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Analytics Sections
+                    </span>
                     <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all whitespace-nowrap
-              ${activeTab === tab.id
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                            }`}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card hover:bg-muted text-sm font-medium transition-colors"
                     >
-                        <tab.icon className="h-4 w-4" />
-                        {tab.label}
+                        {isMobileMenuOpen ? (
+                            <>
+                                <X className="h-4 w-4" /> Close
+                            </>
+                        ) : (
+                            <>
+                                <Menu className="h-4 w-4" /> Menu
+                            </>
+                        )}
                     </button>
-                ))}
-            </div>
+                </div>
 
-            {/* ════════ OVERVIEW TAB ════════ */}
-            {activeTab === 'overview' && (
+                {/* Mobile overlay menu drawer */}
+                {isMobileMenuOpen && (
+                    <div className="lg:hidden fixed inset-0 z-40 flex">
+                        {/* Backdrop */}
+                        <div 
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        
+                        {/* Drawer Content */}
+                        <aside className="relative flex flex-col w-72 max-w-[80vw] h-full bg-card p-6 border-r shadow-2xl animate-in slide-in-from-left duration-300">
+                            <div className="flex items-center justify-between mb-6">
+                                <span className="font-bold text-lg text-indigo-600">Navigation</span>
+                                <button
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                            
+                            <nav className="flex flex-col gap-1.5">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            setActiveTab(tab.id as any);
+                                            setIsMobileMenuOpen(false);
+                                        }}
+                                        className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full group
+                              ${activeTab === tab.id
+                                                ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                            }`}
+                                    >
+                                        <tab.icon className={`h-4.5 w-4.5 transition-colors ${
+                                            activeTab === tab.id 
+                                                ? 'text-white' 
+                                                : 'text-muted-foreground group-hover:text-foreground'
+                                        }`} />
+                                        <span>{tab.label}</span>
+                                    </button>
+                                ))}
+                            </nav>
+                        </aside>
+                    </div>
+                )}
+
+                {/* Desktop sidebar navigation - sticky top-20 to keep menu on screen when scrolling */}
+                <aside className="hidden lg:block w-64 shrink-0 sticky top-20 self-start">
+                    <nav className="flex flex-col gap-1.5 rounded-xl bg-card p-2 border shadow-sm w-full border-slate-200 dark:border-slate-800">
+                        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Analytics Sections
+                        </div>
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as any)}
+                                className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all text-left w-full group
+                      ${activeTab === tab.id
+                                        ? 'bg-indigo-600 text-white shadow-sm font-semibold'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                    }`}
+                            >
+                                <tab.icon className={`h-4.5 w-4.5 transition-colors ${
+                                    activeTab === tab.id 
+                                        ? 'text-white' 
+                                        : 'text-muted-foreground group-hover:text-foreground'
+                                }`} />
+                                <span>{tab.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+                </aside>
+
+                {/* Right side content pane */}
+                <main className="flex-grow w-full min-w-0">
+                    {tabLoading ? (
+                        <div className="flex h-[400px] w-full items-center justify-center rounded-xl border bg-card p-8 shadow-sm">
+                            <div className="flex flex-col items-center gap-3">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="text-sm text-muted-foreground animate-pulse">Fetching latest data...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            {/* ════════ OVERVIEW TAB ════════ */}
+                            {activeTab === 'overview' && (
                 <div className="space-y-6">
                     {/* Top-level funnel cards - Registered Users */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -947,6 +1061,10 @@ export default function AdminAnalytics() {
                     </div>
                 </div>
             )}
+                        </>
+                    )}
+                </main>
+            </div>
         </div>
     );
 }
