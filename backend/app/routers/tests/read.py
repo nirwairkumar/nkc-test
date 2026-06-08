@@ -439,6 +439,9 @@ async def get_test_by_id(
 
         test = test_res.data[0]
 
+        # Calculate computed max marks while questions are still present in sections
+        test["computed_max_marks"] = calculate_test_max_marks(test)
+
         # Strip questions from sections JSON if exclude_questions is True
         if exclude_questions and "sections" in test and isinstance(test["sections"], list):
             cleaned_sections = []
@@ -494,16 +497,6 @@ async def get_test_by_id(
         else:
             test["categories"] = []
 
-        # Add computed max marks info
-        # Optimization: Only calculate marks if the pre-calculated DB column is empty or zero
-        if not test.get("total_max_marks"):
-            test["computed_max_marks"] = calculate_test_max_marks(test)
-        else:
-            # Still provide the object structure for frontend consistency, using the DB value
-            test["computed_max_marks"] = {
-                "total_max_marks": test["total_max_marks"],
-                "section_max_marks": {} # Sections will fallback to calculation if needed
-            }
 
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")
@@ -576,6 +569,9 @@ async def get_test_by_slug(
         if not test:
             raise HTTPException(status_code=404, detail="Test not found")
 
+        # Calculate computed max marks while questions are still present in sections
+        test["computed_max_marks"] = calculate_test_max_marks(test)
+
         # Strip questions from sections JSON if exclude_questions is True
         if exclude_questions and "sections" in test and isinstance(test["sections"], list):
             cleaned_sections = []
@@ -627,8 +623,6 @@ async def get_test_by_slug(
             test["categories"] = cats_res.data or []
         else:
             test["categories"] = []
-
-        test["computed_max_marks"] = calculate_test_max_marks(test)
 
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")

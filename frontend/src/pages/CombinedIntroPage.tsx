@@ -146,7 +146,7 @@ export default function CombinedIntroPage() {
     const getMaxMarks = (test: any) => {
         if (!test) return 0;
         if (test.total_max_marks !== undefined && test.total_max_marks !== 0) return test.total_max_marks;
-        if (test.computed_max_marks?.total_max_marks !== undefined) return test.computed_max_marks.total_max_marks;
+        if (test.computed_max_marks?.total_max_marks !== undefined && test.computed_max_marks.total_max_marks !== 0) return test.computed_max_marks.total_max_marks;
         
         const marksPerQ = parseFloat(String(test.marks_per_question || 4)) || 4;
         const totalQs = getQCount(test);

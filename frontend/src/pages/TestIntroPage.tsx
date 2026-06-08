@@ -565,7 +565,7 @@ export default function TestIntroPage() {
         // Use backend computed marks if available
         if (test.computed_max_marks?.section_max_marks && test.computed_max_marks.section_max_marks[sec.id] !== undefined) {
             sectionMaxMarks = test.computed_max_marks.section_max_marks[sec.id];
-        } else if (sec.questions) {
+        } else if (sec.questions && sec.questions.length > 0) {
             const marksList = sec.questions.map((q: any) => {
                 const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (sec.marks_per_question ? parseFloat(String(sec.marks_per_question)) : 4);
                 return isNaN(m) ? 0 : m;
@@ -578,6 +578,10 @@ export default function TestIntroPage() {
             } else {
                 sectionMaxMarks = marksList.reduce((a, b) => a + b, 0);
             }
+        } else {
+            // Fallback estimation when questions are excluded
+            const marksPerQ = parseFloat(String(sec.marks_per_question || test.marks_per_question || 4)) || 4;
+            sectionMaxMarks = maxAllowed * marksPerQ;
         }
 
         return { totalQs, maxAllowed, sectionMaxMarks, isEnabled };
@@ -591,17 +595,21 @@ export default function TestIntroPage() {
         totalMaxMarks = test.total_max_marks;
     } 
     // 2. Fallback to backend enrichment only if DB column is missing/zero
-    else if (test.computed_max_marks?.total_max_marks !== undefined) {
+    else if (test.computed_max_marks?.total_max_marks !== undefined && test.computed_max_marks.total_max_marks !== 0) {
         totalMaxMarks = test.computed_max_marks.total_max_marks;
     } 
     // 3. Last resort fallback to local calculation
     else if (test.enable_section_mode && test.sections) {
         totalMaxMarks = test.sections.reduce((acc, sec) => acc + getSectionDetails(sec).sectionMaxMarks, 0);
-    } else if (test.questions) {
+    } else if (test.questions && test.questions.length > 0) {
         test.questions.forEach((q: any) => {
             const m = q.marks !== undefined ? parseFloat(String(q.marks)) : (test.marks_per_question ? parseFloat(String(test.marks_per_question)) : 4);
             totalMaxMarks += isNaN(m) ? 0 : m;
         });
+    } else {
+        // Flat mode fallback when questions are excluded
+        const marksPerQ = parseFloat(String(test.marks_per_question || 4)) || 4;
+        totalMaxMarks = questionCount * marksPerQ;
     }
 
     const totalAllowedQuestions = test.enable_section_mode && test.sections
