@@ -91,9 +91,11 @@ export default function AdminAnalytics() {
             } else if (tabId === 'users') {
                 const userData = await analyticsApi.getUserMatrix(daysValue);
                 setUserMatrix(userData || []);
+            /*
             } else if (tabId === 'visitors') {
                 const visitorsData = await analyticsApi.getDetailedVisitors(daysValue);
                 setDetailedVisitors(visitorsData || []);
+            */
             } else if (tabId === 'logs') {
                 const logsData = await analyticsApi.getAttemptLogs(daysValue, 200);
                 setAttemptLogs(logsData || []);
@@ -137,7 +139,7 @@ export default function AdminAnalytics() {
         { id: 'overview', label: 'Overview', icon: BarChart3 },
         { id: 'tests', label: 'Test Matrix', icon: FileText },
         { id: 'users', label: 'User Matrix', icon: Users },
-        { id: 'visitors', label: 'Visitor Analytics', icon: Users },
+        // { id: 'visitors', label: 'Visitor Analytics', icon: Users },
         { id: 'logs', label: 'Detailed Sessions', icon: List },
         { id: 'creation', label: 'Creation / Upload', icon: Upload },
     ];
@@ -818,7 +820,7 @@ export default function AdminAnalytics() {
             )}
 
             {/* ════════ VISITORS TAB ════════ */}
-            {activeTab === 'visitors' && (
+            {false && activeTab === 'visitors' && (
                 <div className="space-y-6">
                     {/* Visitor stats overview */}
                     <div className="grid gap-4 md:grid-cols-4">

@@ -28,49 +28,13 @@ class AnalyticsTracker {
     }
 
     async trackPageView(path: string, title: string, userId?: string) {
-        await this.ensureInitialized();
-        this.sessionToken = this.getOrCreateSession(); // Refresh session
-
-        const urlParams = new URLSearchParams(window.location.search);
-
-        const payload = {
-            event_type: "page_view",
-            fingerprint: this.fingerprint!,
-            session_token: this.sessionToken,
-            page_path: path,
-            page_title: title,
-            user_id: userId || undefined,
-            referrer: document.referrer || undefined,
-            utm_source: urlParams.get('utm_source') || undefined,
-            utm_medium: urlParams.get('utm_medium') || undefined,
-            utm_campaign: urlParams.get('utm_campaign') || undefined,
-            screen_width: window.screen.width,
-            screen_height: window.screen.height,
-            user_agent: navigator.userAgent,
-            timestamp: new Date().toISOString()
-        };
-
-        this.send(payload);
+        // Disabled to prevent database egress and requests
+        return;
     }
 
     private send(data: object) {
-        // API_BASE likely already includes /api, e.g., http://localhost:8000/api
-        // We just need to route to /analytics/track
-        const baseUrl = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
-        const url = `${baseUrl}/analytics/track`;
-
-        // Use sendBeacon if available, otherwise fallback to fetch
-        if (navigator.sendBeacon) {
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            navigator.sendBeacon(url, blob);
-        } else {
-            fetch(url, {
-                method: 'POST',
-                body: JSON.stringify(data),
-                headers: { 'Content-Type': 'application/json' },
-                keepalive: true
-            }).catch(() => { });
-        }
+        // Disabled to prevent database egress and requests
+        return;
     }
 
     private getOrCreateSession(): string {
