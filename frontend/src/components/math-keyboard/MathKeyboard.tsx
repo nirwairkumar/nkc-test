@@ -38,6 +38,28 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
         cmdName += expr[i];
         i++;
       }
+
+      let nextIsLimits = false;
+      let limitCmd = '';
+      if (cmdName === 'sum' || cmdName === 'int') {
+        let tempIdx = i;
+        while (tempIdx < expr.length && (expr[tempIdx] === ' ' || expr[tempIdx] === '\n')) {
+          tempIdx++;
+        }
+        if (tempIdx < expr.length && expr[tempIdx] === '\\') {
+          let nextCmd = '';
+          let t = tempIdx + 1;
+          while (t < expr.length && /[a-zA-Z]/.test(expr[t])) {
+            nextCmd += expr[t];
+            t++;
+          }
+          if (nextCmd === 'limits' || nextCmd === 'nolimits' || nextCmd === 'displaylimits') {
+            nextIsLimits = true;
+            limitCmd = nextCmd;
+            i = t;
+          }
+        }
+      }
       
       if (cmdName === '') {
         // Escaped symbol like \\, \&, \{, \}, \_, \%, \#, \$
@@ -131,9 +153,13 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
         if (hasBraces) {
           // Output structural command normally
           result += '\\' + cmdName;
+          if (nextIsLimits) {
+            result += '\\' + limitCmd;
+          }
         } else {
           // Wrap symbol command (like \alpha, \pi, \sum) in htmlClass to make it clickable
-          result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{\\${cmdName}}`;
+          const fullCmd = nextIsLimits ? `${cmdName}\\${limitCmd}` : cmdName;
+          result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{\\${fullCmd}}`;
         }
       }
       continue;
