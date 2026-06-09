@@ -46,7 +46,6 @@ Disallow: /admin-pricing
 Disallow: /admin-promo-codes
 
 # User Dashboard Routes (Private)
-Disallow: /dashboard
 Disallow: /my-tests
 Disallow: /history
 Disallow: /results
@@ -55,9 +54,7 @@ Disallow: /settings
 Disallow: /notifications
 
 # Content Creation Routes (Private)
-Disallow: /create-test
 Disallow: /edit-test/
-Disallow: /generate-with-ai
 Disallow: /materials
 Disallow: /upload-materials
 
