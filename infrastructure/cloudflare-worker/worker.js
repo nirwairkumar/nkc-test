@@ -6,8 +6,8 @@
 
 // Configuration
 const CONFIG = {
-  // Backend API URL (Railway)
-  API_BASE_URL: 'https://your-railway-app.up.railway.app',
+  // Backend API URL (GCP Cloud Run)
+  API_BASE_URL: 'https://apigcp.testoza.com',
   
   // Frontend origin (Cloudflare Pages)
   FRONTEND_URL: 'https://testoza.com',

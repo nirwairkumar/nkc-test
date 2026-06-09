@@ -12,7 +12,7 @@ export async function onRequest(context) {
     const response = await env.ASSETS.fetch(assetRequest);
 
     // Backend API Config
-    const apiUrl = env.VITE_API_URL || 'https://api.testoza.com/api';
+    const apiUrl = env.VITE_API_URL || 'https://apigcp.testoza.com/api';
 
     try {
         // Fetch test data from backend API

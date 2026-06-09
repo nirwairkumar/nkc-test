@@ -18,7 +18,7 @@ CACHE_TTL_HTML = "300"
 route = { pattern = "testoza.com/*", zone_name = "testoza.com" }
 
 [env.production.vars]
-API_BASE_URL = "https://your-railway-app.up.railway.app"  # Update with your Railway URL
+API_BASE_URL = "https://apigcp.testoza.com"  # Update with your Cloud Run URL
 FRONTEND_URL = "https://testoza.com"
 
 # Secrets (set via wrangler secret put)

@@ -10,7 +10,7 @@ export async function onRequest(context) {
     }
 
     // Backend API Config
-    const apiUrl = env.VITE_API_URL || 'https://api.testoza.com/api';
+    const apiUrl = env.VITE_API_URL || 'https://apigcp.testoza.com/api';
 
     // Defaults
     let test = null;
