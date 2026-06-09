@@ -287,7 +287,11 @@ export default function TestPage() {
       timestamp: Date.now()
     };
 
-    localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
+    try {
+      localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
+    } catch (e) {
+      console.warn("Storage quota exceeded, could not save session draft", e);
+    }
   }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
@@ -445,7 +449,11 @@ export default function TestPage() {
         }
 
         // Mark tab as active
-        sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
+        try {
+          sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
+        } catch (e) {
+          console.warn("Storage quota exceeded, could not mark session active", e);
+        }
         setShowResumeDialog(true);
       } catch (e) {
         console.error("Failed to parse saved session", e);
@@ -488,7 +496,11 @@ export default function TestPage() {
   // Persist warnings whenever they change
   useEffect(() => {
     if (test?.id && user?.id) {
-      localStorage.setItem(`test_warnings_${user.id}_${test.id}`, warnings.toString());
+      try {
+        localStorage.setItem(`test_warnings_${user.id}_${test.id}`, warnings.toString());
+      } catch (e) {
+        console.warn("Storage quota exceeded, could not save warnings count", e);
+      }
     }
   }, [warnings, test?.id, user?.id]);
   const MAX_WARNINGS = test?.settings?.violation_limit || null; // null = no auto-submit (warn only)
@@ -736,7 +748,11 @@ export default function TestPage() {
       // Save start time if not already stored
       const startKey = `test_start_time_${user?.id || 'anon'}_${data.id}`;
       if (!localStorage.getItem(startKey)) {
-        localStorage.setItem(startKey, new Date().toISOString());
+        try {
+          localStorage.setItem(startKey, new Date().toISOString());
+        } catch (e) {
+          console.warn("Storage quota exceeded, could not save start time", e);
+        }
       }
     };
 
@@ -1197,7 +1213,11 @@ export default function TestPage() {
       sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
       AnswerVault.clear(user.id, test.id); // clean IndexedDB vault
       // Mark this test as submitted — prevents student going back to live test page
-      localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
+      try {
+        localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
+      } catch (e) {
+        console.warn("Storage quota exceeded, could not save submission marker", e);
+      }
 
       // Exit Full Screen if active
       if (document.fullscreenElement) {
