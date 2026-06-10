@@ -64,11 +64,13 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
     const [fullTest, setFullTest] = useState<any>(null);
     const [selectedAttemptForAnalysis, setSelectedAttemptForAnalysis] = useState<any | null>(null);
+    const [showConductWarning, setShowConductWarning] = useState(true);
 
     // Fetch results and full test details on load
     useEffect(() => {
         if (test?.id) {
             setFullTest(null);
+            setShowConductWarning(true);
             fetchResultsAndTestDetails();
         }
     }, [test]);
@@ -703,6 +705,26 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                         </div>
                     )}
                 </div>
+
+                {/* ── Conduct Warning Banner ── */}
+                {isConductTest && showConductWarning && (
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-900/30 px-4 py-2 flex items-center justify-between gap-3 text-amber-800 dark:text-amber-300 flex-shrink-0 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="flex items-center gap-2">
+                            <Info className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                            <p className="text-[11px] font-medium leading-normal">
+                                Only results submitted in Conduct Mode are visible here.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowConductWarning(false)}
+                            className="p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
+                            title="Dismiss notification"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                )}
 
                 {/* ── Controls Bar ── */}
                 <div className="flex items-center justify-between px-4 py-2.5 border-b bg-slate-50/50 dark:bg-slate-900/30 flex-shrink-0">
