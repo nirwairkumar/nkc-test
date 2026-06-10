@@ -74,7 +74,7 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
                 }
                 if event.user_id:
                     update_payload["user_id"] = event.user_id
-                db.table("visitors").update(update_payload).eq("id", visitor_id).execute()
+                db.table("visitors").update(update_payload, returning='minimal').eq("id", visitor_id).execute()
             except Exception as inc_err:
                 logger.warning(f"Visitor update failed: {inc_err}")
             
@@ -99,7 +99,7 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
                 try:
                     v_data_resp = db.table("visitors").select("total_visits").eq("id", visitor_id).execute()
                     current_visits = v_data_resp.data[0].get("total_visits", 1) if v_data_resp.data else 1
-                    db.table("visitors").update({"total_visits": current_visits + 1}).eq("id", visitor_id).execute()
+                    db.table("visitors").update({"total_visits": current_visits + 1}, returning='minimal').eq("id", visitor_id).execute()
                 except Exception as inc_err:
                     logger.warning(f"Failed to increment visitor total_visits: {inc_err}")
         else:
@@ -112,10 +112,10 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
                     "ended_at": "now()",
                     "is_bounce": False,
                     "page_count": current_pages + 1
-                }).eq("id", session_id).execute()
+                }, returning='minimal').eq("id", session_id).execute()
             except Exception as inc_err:
                 logger.warning(f"Session page count update failed: {inc_err}")
-
+ 
         # 5. INSERT Page View
         db.table("page_views").insert({
             "session_id": session_id,
@@ -123,7 +123,7 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
             "page_path": event.page_path,
             "page_title": event.page_title,
             "referrer_page": event.referrer
-        }).execute()
+        }, returning='minimal').execute()
         
     except Exception as e:
         logger.error(f"Error processing analytics event: {str(e)}")
