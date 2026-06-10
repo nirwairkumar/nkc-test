@@ -203,15 +203,18 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                 end: inputRef.current.selectionEnd || 0
             };
         }
-        // Delay blur processing slightly to allow clicks on suggestion buttons to fire first
-        // But for switching to preview, we just do it.
-        // If clicking a suggestion, that's inside the component? 
-        // No, suggestions map is right above.
+        
+        // Prevent unmounting if focus moves to Sy Pad or its trigger
+        const relatedTarget = e.relatedTarget as HTMLElement;
+        if (relatedTarget && (
+            relatedTarget.closest('.sy-pad-container') || 
+            relatedTarget.classList.contains('sy-pad-container') ||
+            relatedTarget.closest('.sy-pad-trigger') ||
+            relatedTarget.classList.contains('sy-pad-trigger')
+        )) {
+            return;
+        }
 
-        // IMPORTANT: If we are clicking a suggestion, we shouldn't close verify.
-        // We can check relatedTarget.
-
-        // Actually, let's just use simple toggle.
         if (value && enablePreview) {
             setIsEditing(false);
         }

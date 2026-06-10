@@ -3,6 +3,8 @@ import { X, Copy, Check, Trash2, Plus } from 'lucide-react';
 import katex from 'katex';
 import { FIXED_ROWS, TOPICS, type TopicId, type MathKey } from './keys';
 import TableEditor from './TableEditor';
+import { toast } from 'sonner';
+
 
 interface MathKeyboardProps {
   isOpen: boolean;
@@ -459,7 +461,6 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
   // Track last focused textarea (before keyboard gets focus)
   useEffect(() => {
-    if (!isOpen) return;
     const handler = (e: FocusEvent) => {
       const t = e.target;
       if (t instanceof HTMLTextAreaElement || (t instanceof HTMLInputElement && t.type === 'text')) {
@@ -470,7 +471,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     };
     document.addEventListener('focusin', handler);
     return () => document.removeEventListener('focusin', handler);
-  }, [isOpen]);
+  }, []);
 
   const handleInsert = useCallback((latex: string) => {
     if (latex.startsWith('__TABLE_')) {
@@ -659,26 +660,28 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const handleInsertText = useCallback(() => {
     if (!expression) return;
     const ta = lastTextareaRef.current;
-    const textToInsert = `$${expression}$`;
-    if (ta && document.body.contains(ta)) {
-      const start = ta.selectionStart ?? ta.value.length;
-      const end = ta.selectionEnd ?? start;
-      const before = ta.value.slice(0, start);
-      const after = ta.value.slice(end);
-      
-      const setter = Object.getOwnPropertyDescriptor(
-        ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
-        'value'
-      )?.set;
-      setter?.call(ta, before + textToInsert + after);
-      ta.dispatchEvent(new Event('input', { bubbles: true }));
-      
-      const pos = start + textToInsert.length;
-      setTimeout(() => {
-        ta.focus();
-        ta.setSelectionRange(pos, pos);
-      }, 0);
+    if (!ta || !document.body.contains(ta)) {
+      toast.error("Please click/focus inside a question or option text box first to set your cursor position.");
+      return;
     }
+    const textToInsert = `$${expression}$`;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? start;
+    const before = ta.value.slice(0, start);
+    const after = ta.value.slice(end);
+    
+    const setter = Object.getOwnPropertyDescriptor(
+      ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+      'value'
+    )?.set;
+    setter?.call(ta, before + textToInsert + after);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    const pos = start + textToInsert.length;
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(pos, pos);
+    }, 0);
     setExpression('');
     setCaretIndex(0);
   }, [expression]);
@@ -690,7 +693,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   return (
     <div
       ref={panelRef}
-      className="fixed bottom-4 left-14 z-[9999] w-[740px] max-w-[95vw] rounded-2xl shadow-2xl border border-blue-200 bg-gradient-to-b from-blue-50 to-slate-100 overflow-hidden select-none"
+      className="sy-pad-container fixed bottom-4 left-14 z-[9999] w-[740px] max-w-[95vw] rounded-2xl shadow-2xl border border-blue-200 bg-gradient-to-b from-blue-50 to-slate-100 overflow-hidden select-none"
       style={{ fontFamily: "'Inter', sans-serif" }}
       onMouseDown={e => e.preventDefault()}
     >
