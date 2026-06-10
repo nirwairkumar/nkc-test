@@ -48,8 +48,10 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
         # 3. UPSERT Visitor
         visitor_resp = db.table("visitors").select("id").eq("fingerprint", event.fingerprint).execute()
         visitor_id = None
+        is_new_visitor = False
         
         if not visitor_resp.data:
+            is_new_visitor = True
             # Create new visitor
             insert_data = {
                 "fingerprint": event.fingerprint,
@@ -65,20 +67,16 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
             visitor_id = new_visitor.data[0]["id"]
         else:
             visitor_id = visitor_resp.data[0]["id"]
-            # Increment total_visits directly
+            # Just update last_seen_at and user_id (do not increment total_visits on page view)
             try:
-                v_data_resp = db.table("visitors").select("total_visits, user_id").eq("id", visitor_id).execute()
-                v_data = v_data_resp.data[0] if v_data_resp.data else {}
-                current_visits = v_data.get("total_visits", 0) or 0
                 update_payload = {
-                    "total_visits": current_visits + 1,
                     "last_seen_at": "now()"
                 }
                 if event.user_id:
                     update_payload["user_id"] = event.user_id
                 db.table("visitors").update(update_payload).eq("id", visitor_id).execute()
             except Exception as inc_err:
-                logger.warning(f"Visitor count/user_id update failed: {inc_err}")
+                logger.warning(f"Visitor update failed: {inc_err}")
             
         # 4. UPSERT Session
         session_resp = db.table("sessions").select("id").eq("session_token", event.session_token).execute()
@@ -95,6 +93,15 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
                 "utm_campaign": event.utm_campaign
             }).execute()
             session_id = new_session.data[0]["id"]
+            
+            # Since this is a NEW session (visit) for an EXISTING visitor, increment total_visits
+            if not is_new_visitor:
+                try:
+                    v_data_resp = db.table("visitors").select("total_visits").eq("id", visitor_id).execute()
+                    current_visits = v_data_resp.data[0].get("total_visits", 1) if v_data_resp.data else 1
+                    db.table("visitors").update({"total_visits": current_visits + 1}).eq("id", visitor_id).execute()
+                except Exception as inc_err:
+                    logger.warning(f"Failed to increment visitor total_visits: {inc_err}")
         else:
             session_id = session_resp.data[0]["id"]
             # Update session end time on every hit
