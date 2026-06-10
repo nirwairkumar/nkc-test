@@ -415,9 +415,13 @@ async def get_test_by_id(
         select_cols = (
             "id, title, description, created_at, custom_id, duration, revision_notes, is_public, visibility, "
             "created_by, institution_name, institution_logo, institution_color, institution_font, slug, tags, "
-            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections, "
+            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections_metadata, "
             "section_marking_model, merged_sections, total_max_marks, total_questions, is_cloned, cloned_from_id, classes(name)"
-            if exclude_questions else "*, classes(name)"
+            if exclude_questions else 
+            "id, title, description, created_at, custom_id, duration, revision_notes, is_public, visibility, "
+            "created_by, institution_name, institution_logo, institution_color, institution_font, slug, tags, "
+            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections, questions, "
+            "section_marking_model, merged_sections, total_max_marks, total_questions, is_cloned, cloned_from_id, classes(name)"
         )
 
         # Fetch test based on ID type
@@ -439,19 +443,25 @@ async def get_test_by_id(
 
         test = test_res.data[0]
 
-        # Calculate computed max marks while questions are still present in sections
-        test["computed_max_marks"] = calculate_test_max_marks(test)
-
-        # Strip questions from sections JSON if exclude_questions is True
-        if exclude_questions and "sections" in test and isinstance(test["sections"], list):
-            cleaned_sections = []
-            for sec in test["sections"]:
-                sec_copy = dict(sec)
-                if "questions" in sec_copy and isinstance(sec_copy["questions"], list):
-                    sec_copy["total_questions"] = len(sec_copy["questions"])
-                sec_copy.pop("questions", None)
-                cleaned_sections.append(sec_copy)
-            test["sections"] = cleaned_sections
+        # Handle sections mapping and computed_max_marks reconstruction
+        if exclude_questions:
+            if "sections_metadata" in test:
+                test["sections"] = test.pop("sections_metadata")
+            
+            section_max = {}
+            if "sections" in test and isinstance(test["sections"], list):
+                for sec in test["sections"]:
+                    sec_id = sec.get("id")
+                    if sec_id:
+                        section_max[sec_id] = sec.get("max_marks", 0.0)
+            
+            test["computed_max_marks"] = {
+                "total_max_marks": test.get("total_max_marks") or 0.0,
+                "section_max_marks": section_max
+            }
+        else:
+            # Calculate computed max marks while questions are still present in sections
+            test["computed_max_marks"] = calculate_test_max_marks(test)
 
         # ─ Visibility Enforcement
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")
@@ -556,9 +566,13 @@ async def get_test_by_slug(
         select_cols = (
             "id, title, description, created_at, custom_id, duration, revision_notes, is_public, visibility, "
             "created_by, institution_name, institution_logo, institution_color, institution_font, slug, tags, "
-            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections, "
+            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections_metadata, "
             "section_marking_model, merged_sections, total_max_marks, total_questions, is_cloned, cloned_from_id, classes(name)"
-            if exclude_questions else "*, classes(name)"
+            if exclude_questions else 
+            "id, title, description, created_at, custom_id, duration, revision_notes, is_public, visibility, "
+            "created_by, institution_name, institution_logo, institution_color, institution_font, slug, tags, "
+            "custom_category, class_id, settings, has_scientific_calculator, enable_section_mode, sections, questions, "
+            "section_marking_model, merged_sections, total_max_marks, total_questions, is_cloned, cloned_from_id, classes(name)"
         )
 
         # Fetch Test by Slug
@@ -569,19 +583,25 @@ async def get_test_by_slug(
         if not test:
             raise HTTPException(status_code=404, detail="Test not found")
 
-        # Calculate computed max marks while questions are still present in sections
-        test["computed_max_marks"] = calculate_test_max_marks(test)
-
-        # Strip questions from sections JSON if exclude_questions is True
-        if exclude_questions and "sections" in test and isinstance(test["sections"], list):
-            cleaned_sections = []
-            for sec in test["sections"]:
-                sec_copy = dict(sec)
-                if "questions" in sec_copy and isinstance(sec_copy["questions"], list):
-                    sec_copy["total_questions"] = len(sec_copy["questions"])
-                sec_copy.pop("questions", None)
-                cleaned_sections.append(sec_copy)
-            test["sections"] = cleaned_sections
+        # Handle sections mapping and computed_max_marks reconstruction
+        if exclude_questions:
+            if "sections_metadata" in test:
+                test["sections"] = test.pop("sections_metadata")
+            
+            section_max = {}
+            if "sections" in test and isinstance(test["sections"], list):
+                for sec in test["sections"]:
+                    sec_id = sec.get("id")
+                    if sec_id:
+                        section_max[sec_id] = sec.get("max_marks", 0.0)
+            
+            test["computed_max_marks"] = {
+                "total_max_marks": test.get("total_max_marks") or 0.0,
+                "section_max_marks": section_max
+            }
+        else:
+            # Calculate computed max marks while questions are still present in sections
+            test["computed_max_marks"] = calculate_test_max_marks(test)
 
         # ─ Visibility Enforcement on slug lookup
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")

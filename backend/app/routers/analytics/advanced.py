@@ -758,15 +758,14 @@ async def get_detailed_visitors(
 ):
     """
     Returns detailed visitor tracking details, including user profile links,
-    regions, technical user agent details, and a timeline of pages they visited.
+    regions, and technical details. Timelines are lazy-loaded.
     """
     try:
-        from collections import defaultdict
         start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
         
-        # Fetch visitors active in the last 'days'
+        # Fetch visitors active in the last 'days' (with total_page_views count)
         visitors_res = supabase.table("visitors")\
-            .select("id, fingerprint, device_type, browser, os, country, city, total_visits, user_id, last_seen_at, created_at")\
+            .select("id, fingerprint, device_type, browser, os, country, city, total_visits, total_page_views, user_id, last_seen_at, created_at")\
             .gte("last_seen_at", start_date)\
             .order("last_seen_at", desc=True)\
             .limit(limit)\
@@ -787,23 +786,6 @@ async def get_detailed_visitors(
             for p in (p_res.data or []):
                 profiles_map[p["id"]] = p
                 
-        # Get page views for these visitors
-        visitor_ids = [v["id"] for v in visitors]
-        page_views_map = defaultdict(list)
-        if visitor_ids:
-            pv_res = supabase.table("page_views")\
-                .select("visitor_id, page_path, page_title, created_at")\
-                .in_("visitor_id", visitor_ids)\
-                .order("created_at", desc=True)\
-                .limit(1000)\
-                .execute()
-            for pv in (pv_res.data or []):
-                page_views_map[pv["visitor_id"]].append({
-                    "path": pv.get("page_path"),
-                    "title": pv.get("page_title"),
-                    "time": pv.get("created_at")
-                })
-                
         result = []
         for v in visitors:
             vid = v["id"]
@@ -816,8 +798,6 @@ async def get_detailed_visitors(
             elif v.get("total_visits", 1) > 1:
                 v_type = "repeat_guest"
                 
-            pvs = page_views_map.get(vid, [])
-            
             result.append({
                 "id": vid,
                 "fingerprint": v.get("fingerprint"),
@@ -827,15 +807,46 @@ async def get_detailed_visitors(
                 "country": v.get("country"),
                 "city": v.get("city"),
                 "total_visits": v.get("total_visits", 1),
+                "total_page_views": v.get("total_page_views", 0),
                 "last_seen_at": v.get("last_seen_at") or v.get("created_at"),
                 "user_id": uid,
                 "full_name": profile.get("full_name"),
                 "email": profile.get("email"),
                 "visitor_type": v_type,
-                "page_views": pvs
+                "page_views": []  # Lazy loaded on demand
             })
             
         return result
     except Exception as e:
         print(f"Error in detailed visitors: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/visitors/{visitor_id}/pages")
+async def get_visitor_pages(
+    visitor_id: str,
+    db: Client = Depends(get_db)
+):
+    """
+    Returns timeline of page views for a specific visitor.
+    """
+    try:
+        pv_res = supabase.table("page_views")\
+            .select("page_path, page_title, created_at")\
+            .eq("visitor_id", visitor_id)\
+            .order("created_at", desc=True)\
+            .limit(200)\
+            .execute()
+        
+        result = [
+            {
+                "path": pv.get("page_path"),
+                "title": pv.get("page_title"),
+                "time": pv.get("created_at")
+            }
+            for pv in (pv_res.data or [])
+        ]
+        return result
+    except Exception as e:
+        print(f"Error in visitor pages timeline: {e}")
         raise HTTPException(status_code=500, detail=str(e))

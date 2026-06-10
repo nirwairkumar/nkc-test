@@ -30,7 +30,7 @@ const PIE_COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e', '#8b5cf6'];
 export default function AdminAnalytics() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'tests' | 'users' | 'visitors' | 'creation' | 'logs'>('overview');
-    const [days, setDays] = useState(30);
+    const [days, setDays] = useState(1);
 
     // Data states
     const [funnel, setFunnel] = useState<any>(null);
@@ -49,6 +49,10 @@ export default function AdminAnalytics() {
     const [tabLoading, setTabLoading] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // Lazy load visitor page views
+    const [visitorPages, setVisitorPages] = useState<Record<string, any[]>>({});
+    const [fetchingPagesId, setFetchingPagesId] = useState<string | null>(null);
+
     // Cache to prevent duplicate database calls for tabs that have already loaded
     const loadedTabsRef = React.useRef<Record<string, number>>({});
 
@@ -61,6 +65,24 @@ export default function AdminAnalytics() {
     const [expandedVisitorId, setExpandedVisitorId] = useState<string | null>(null);
     const [visitorSearch, setVisitorSearch] = useState('');
     const [visitorTypeFilter, setVisitorTypeFilter] = useState<'all' | 'registered' | 'repeat_guest' | 'guest'>('all');
+
+    const handleFetchVisitorPages = async (visitorId: string) => {
+        if (visitorPages[visitorId]) {
+            setExpandedVisitorId(expandedVisitorId === visitorId ? null : visitorId);
+            return;
+        }
+        try {
+            setFetchingPagesId(visitorId);
+            const pages = await analyticsApi.getVisitorPages(visitorId);
+            setVisitorPages(prev => ({ ...prev, [visitorId]: pages || [] }));
+            setExpandedVisitorId(visitorId);
+        } catch (error) {
+            console.error("Failed to fetch page views:", error);
+            toast.error("Failed to load page views.");
+        } finally {
+            setFetchingPagesId(null);
+        }
+    };
 
     const fetchActiveTabData = useCallback(async (tabId: string, daysValue: number, force = false) => {
         if (!force && loadedTabsRef.current[tabId] === daysValue) {
@@ -91,11 +113,9 @@ export default function AdminAnalytics() {
             } else if (tabId === 'users') {
                 const userData = await analyticsApi.getUserMatrix(daysValue);
                 setUserMatrix(userData || []);
-            /*
             } else if (tabId === 'visitors') {
                 const visitorsData = await analyticsApi.getDetailedVisitors(daysValue);
                 setDetailedVisitors(visitorsData || []);
-            */
             } else if (tabId === 'logs') {
                 const logsData = await analyticsApi.getAttemptLogs(daysValue, 200);
                 setAttemptLogs(logsData || []);
@@ -139,7 +159,7 @@ export default function AdminAnalytics() {
         { id: 'overview', label: 'Overview', icon: BarChart3 },
         { id: 'tests', label: 'Test Matrix', icon: FileText },
         { id: 'users', label: 'User Matrix', icon: Users },
-        // { id: 'visitors', label: 'Visitor Analytics', icon: Users },
+        { id: 'visitors', label: 'Visitor Analytics', icon: Users },
         { id: 'logs', label: 'Detailed Sessions', icon: List },
         { id: 'creation', label: 'Creation / Upload', icon: Upload },
     ];
@@ -182,6 +202,7 @@ export default function AdminAnalytics() {
                         onChange={(e) => setDays(Number(e.target.value))}
                         className="rounded-lg border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     >
+                        <option value={1}>Today (1 day)</option>
                         <option value={7}>Last 7 days</option>
                         <option value={14}>Last 14 days</option>
                         <option value={30}>Last 30 days</option>
@@ -820,7 +841,7 @@ export default function AdminAnalytics() {
             )}
 
             {/* ════════ VISITORS TAB ════════ */}
-            {false && activeTab === 'visitors' && (
+            {activeTab === 'visitors' && (
                 <div className="space-y-6">
                     {/* Visitor stats overview */}
                     <div className="grid gap-4 md:grid-cols-4">
@@ -997,10 +1018,16 @@ export default function AdminAnalytics() {
                                                                 </td>
                                                                 <td className="px-6 py-4 text-center">
                                                                     <button
-                                                                        onClick={() => setExpandedVisitorId(isExpanded ? null : v.id)}
-                                                                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors p-1.5 hover:bg-indigo-50 rounded-lg"
+                                                                        onClick={() => isExpanded ? setExpandedVisitorId(null) : handleFetchVisitorPages(v.id)}
+                                                                        disabled={fetchingPagesId === v.id}
+                                                                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors p-1.5 hover:bg-indigo-50 rounded-lg disabled:opacity-50"
                                                                     >
-                                                                        {isExpanded ? (
+                                                                        {fetchingPagesId === v.id ? (
+                                                                            <>
+                                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                                                Loading...
+                                                                            </>
+                                                                        ) : isExpanded ? (
                                                                             <>
                                                                                 <ChevronUp className="h-4 w-4" />
                                                                                 Hide Pages
@@ -1008,7 +1035,7 @@ export default function AdminAnalytics() {
                                                                         ) : (
                                                                             <>
                                                                                 <ChevronDown className="h-4 w-4" />
-                                                                                View Pages ({v.page_views?.length || 0})
+                                                                                View Pages ({v.total_page_views || 0})
                                                                             </>
                                                                         )}
                                                                     </button>
@@ -1019,11 +1046,11 @@ export default function AdminAnalytics() {
                                                                     <td colSpan={7} className="px-8 py-4 border-l-4 border-l-indigo-500 bg-indigo-50/5">
                                                                         <div className="space-y-3">
                                                                             <h4 className="font-semibold text-xs text-muted-foreground tracking-wider uppercase">Page Views Timeline (Recent first)</h4>
-                                                                            {v.page_views?.length === 0 ? (
+                                                                            {visitorPages[v.id]?.length === 0 ? (
                                                                                 <p className="text-xs text-muted-foreground italic">No page view events recorded for this session range.</p>
                                                                             ) : (
                                                                                 <div className="relative pl-6 border-l border-indigo-200/50 space-y-4">
-                                                                                    {v.page_views.map((pv: any, idx: number) => {
+                                                                                    {(visitorPages[v.id] || []).map((pv: any, idx: number) => {
                                                                                         const pvTime = new Date(pv.time);
                                                                                         const pvTimeStr = pvTime.toLocaleTimeString('en-IN', {
                                                                                             hour: '2-digit',

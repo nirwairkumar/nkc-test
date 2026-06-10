@@ -120,7 +120,7 @@ async def get_user_attempts(
 
         # Step A: Fetch attempts using global supabase client (Service Role) to bypass RLS
         attempts_res = supabase.table("user_tests")\
-            .select("id, test_id, score, created_at")\
+            .select("id, test_id, score, created_at, violation_count, questions_attempted")\
             .eq("user_id", user_id)\
             .order("created_at", desc=True)\
             .execute()
@@ -160,7 +160,9 @@ async def get_user_attempts(
                     "score": item["score"],
                     "created_at": item["created_at"],
                     "test_title": "Deleted Test",
-                    "test_settings": {} 
+                    "test_settings": {},
+                    "violation_count": item.get("violation_count") or 0,
+                    "questions_attempted": item.get("questions_attempted") or 0
                 }
             else:
                 flat = {
@@ -170,7 +172,9 @@ async def get_user_attempts(
                     "created_at": item["created_at"],
                     "test_title": test.get("title") or "Unknown Test",
                     "test_settings": test.get("settings") or {},
-                    "total_max_marks": test.get("total_max_marks") or 0
+                    "total_max_marks": test.get("total_max_marks") or 0,
+                    "violation_count": item.get("violation_count") or 0,
+                    "questions_attempted": item.get("questions_attempted") or 0
                 }
             enriched.append(flat)
             
@@ -457,9 +461,9 @@ async def get_test_attempts(
                             print(f"Error parsing expiry date: {parse_error}")
 
         # Fetch all attempts for specific test
-        select_cols = "id, test_id, user_id, score, created_at, metadata"
+        select_cols = "id, test_id, user_id, score, created_at, metadata, violation_count, questions_attempted"
         if not exclude_answers:
-            select_cols += ", answers"
+            select_cols += ", answers, violation_log"
 
         response = supabase.table("user_tests")\
             .select(select_cols)\

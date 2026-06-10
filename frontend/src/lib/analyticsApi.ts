@@ -97,6 +97,11 @@ export const analyticsApi = {
         return response.data;
     },
 
+    getVisitorPages: async (visitor_id: string) => {
+        const response = await apiClient.get(`analytics/stats/visitors/${visitor_id}/pages`);
+        return response.data;
+    },
+
     // ─── Progress & Abandonment Tracking ──────────────────────
     updateProgress: async (user_id: string | null, test_id: string, completion_percentage: number, answers?: any) => {
         try {
