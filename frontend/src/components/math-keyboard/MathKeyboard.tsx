@@ -766,6 +766,31 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             onChange={e => {
               setExpression(e.target.value);
             }}
+            onKeyDown={e => {
+              if (e.key === ' ') {
+                e.preventDefault();
+                const inputEl = expressionInputRef.current;
+                if (inputEl) {
+                  const start = inputEl.selectionStart ?? inputEl.value.length;
+                  const end = inputEl.selectionEnd ?? start;
+                  const before = expression.slice(0, start);
+                  const after = expression.slice(end);
+                  const newExpr = before + '\\,' + after;
+                  setExpression(newExpr);
+                  
+                  const nextPos = start + 2;
+                  setCaretIndex(nextPos);
+                  setTimeout(() => {
+                    inputEl.focus();
+                    inputEl.setSelectionRange(nextPos, nextPos);
+                  }, 0);
+                } else {
+                  const newExpr = expression + '\\,';
+                  setExpression(newExpr);
+                  setCaretIndex(newExpr.length);
+                }
+              }
+            }}
             onSelect={e => {
               setCaretIndex(e.currentTarget.selectionStart);
             }}
