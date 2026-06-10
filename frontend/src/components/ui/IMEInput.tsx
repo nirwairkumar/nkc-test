@@ -61,12 +61,16 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     // Default to false (Preview) if there is a value, ensuring "View first" experience.
     // But if value is empty, we must be in Edit mode so user can type.
     const [isEditing, setIsEditing] = useState(!value);
+    const isMounted = useRef(false);
 
-    // Auto-focus when switching to edit mode
+    // Auto-focus when switching to edit mode (skip on initial mount)
     useEffect(() => {
         if (isEditing && inputRef.current) {
-            inputRef.current.focus();
+            if (isMounted.current) {
+                inputRef.current.focus();
+            }
         }
+        isMounted.current = true;
     }, [isEditing]);
 
     // Auto-resize textarea to fit content height dynamically
