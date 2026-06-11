@@ -114,7 +114,10 @@ export default function StudentDetailedResultModal({
     if (!isOpen || !attempt) return null;
 
     const isStartFormEnabled = !!test?.settings?.start_form?.enabled;
-    const configuredFormLabels = (test?.settings?.start_form?.fields || []).map((f: any) => f?.label).filter(Boolean);
+    const fields = test?.settings?.start_form?.fields && test.settings.start_form.fields.length > 0
+        ? test.settings.start_form.fields
+        : (isStartFormEnabled ? [{ label: 'Name', required: true }] : []);
+    const configuredFormLabels = fields.map((f: any) => f?.label).filter(Boolean);
 
     const getDisplayName = () => {
         if (isStartFormEnabled && configuredFormLabels.length > 0) {

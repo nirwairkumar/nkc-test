@@ -346,7 +346,10 @@ export default function TestIntroPage() {
 
         // Validate Start Form
         if (test.settings?.start_form?.enabled) {
-            const missing = test.settings.start_form.fields.filter((f: any) => f.required && !startFormValues[f.label]);
+            const fields = test.settings.start_form.fields && test.settings.start_form.fields.length > 0
+                ? test.settings.start_form.fields
+                : [{ label: 'Name', required: true }];
+            const missing = fields.filter((f: any) => f.required && !startFormValues[f.label]);
             if (missing.length > 0) {
                 alert(`Please fill all required fields: ${missing.map((f: any) => f.label).join(', ')}`);
                 return;
@@ -801,7 +804,12 @@ export default function TestIntroPage() {
 
                                         {test.settings.start_form?.enabled && (
                                             <li>
-                                                <strong>Candidate Details:</strong> You must fill {test.settings.start_form.fields.map(f => `<${f.label}>`).join(' and ')} before starting.
+                                                <strong>Candidate Details:</strong> You must fill {(() => {
+                                                    const fields = test.settings.start_form.fields && test.settings.start_form.fields.length > 0
+                                                        ? test.settings.start_form.fields
+                                                        : [{ label: 'Name', required: true }];
+                                                    return fields.map((f: any) => `<${f.label}>`).join(' and ');
+                                                })()} before starting.
                                             </li>
                                         )}
 
@@ -918,20 +926,25 @@ export default function TestIntroPage() {
                             {test.settings?.start_form?.enabled && (
                                 <div className="space-y-3 pt-2 border-t">
                                     <p className="text-sm font-bold text-slate-900">Candidate Details</p>
-                                    {test.settings.start_form.fields.map((field: any, idx: number) => (
-                                        <div key={idx} className="space-y-1">
-                                            <div className="flex justify-between">
-                                                <label className="text-xs font-medium">{field.label}</label>
-                                                {field.required && <span className="text-xs text-red-500">*</span>}
+                                    {(() => {
+                                        const fields = test.settings.start_form.fields && test.settings.start_form.fields.length > 0
+                                            ? test.settings.start_form.fields
+                                            : [{ label: 'Name', required: true }];
+                                        return fields.map((field: any, idx: number) => (
+                                            <div key={idx} className="space-y-1">
+                                                <div className="flex justify-between">
+                                                    <label className="text-xs font-medium">{field.label}</label>
+                                                    {field.required && <span className="text-xs text-red-500">*</span>}
+                                                </div>
+                                                <input
+                                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                    placeholder={`Enter ${field.label}`}
+                                                    value={startFormValues[field.label] || ''}
+                                                    onChange={(e) => setStartFormValues(prev => ({ ...prev, [field.label]: e.target.value }))}
+                                                />
                                             </div>
-                                            <input
-                                                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                                placeholder={`Enter ${field.label}`}
-                                                value={startFormValues[field.label] || ''}
-                                                onChange={(e) => setStartFormValues(prev => ({ ...prev, [field.label]: e.target.value }))}
-                                            />
-                                        </div>
-                                    ))}
+                                        ));
+                                    })()}
                                 </div>
                             )}
 

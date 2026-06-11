@@ -192,7 +192,10 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         ? Math.max(...displayedResults.map(r => r.score || 0))
         : 0;
     const isStartFormEnabled = !!currentTest?.settings?.start_form?.enabled;
-    const configuredFormLabels = (currentTest?.settings?.start_form?.fields || []).map((f: any) => f?.label).filter(Boolean);
+    const fields = currentTest?.settings?.start_form?.fields && currentTest.settings.start_form.fields.length > 0
+        ? currentTest.settings.start_form.fields
+        : (isStartFormEnabled ? [{ label: 'Name', required: true }] : []);
+    const configuredFormLabels = fields.map((f: any) => f?.label).filter(Boolean);
 
     const getDisplayName = (attempt: any) => {
         if (isStartFormEnabled && configuredFormLabels.length > 0) {

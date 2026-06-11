@@ -448,7 +448,11 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         <Switch
                             checked={settings.start_form?.enabled}
                             onCheckedChange={(c) => {
-                                const newState = { ...settings.start_form, enabled: c, fields: settings.start_form?.fields || [] };
+                                const currentFields = settings.start_form?.fields || [];
+                                const newFields = currentFields.length > 0
+                                    ? currentFields
+                                    : [{ label: 'Name', required: true }];
+                                const newState = { ...settings.start_form, enabled: c, fields: newFields };
                                 updateSetting('start_form', newState);
                                 if (!c && !settings.show_results_immediate) {
                                     updateSetting('show_results_immediate', true);
