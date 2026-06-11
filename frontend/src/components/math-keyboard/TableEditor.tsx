@@ -68,11 +68,11 @@ export function tableToLatex(cells: string[][], tableType: string = 'header'): s
     };
 
     const aboveStr = aboveRows.length > 0
-      ? (aboveRows.length === 1 ? formatRow(aboveRows[0]) : `\\substack{${aboveRows.map(formatRow).join(' \\\\ ')}}`)
+      ? (aboveRows.length === 1 ? formatRow(aboveRows[0]) : `\\substack{${aboveRows.map(formatRow).join(' \\\\[0.3em] ')}}`)
       : '?';
 
     const belowStr = belowRows.length > 0
-      ? (belowRows.length === 1 ? formatRow(belowRows[0]) : `\\substack{${belowRows.map(formatRow).join(' \\\\ ')}}`)
+      ? (belowRows.length === 1 ? formatRow(belowRows[0]) : `\\substack{${belowRows.map(formatRow).join(' \\\\[0.3em] ')}}`)
       : '';
 
     return belowStr
@@ -96,7 +96,7 @@ function arrowReagentsToLatex(aboveCount: number, belowCount: number): string {
   const makeStack = (count: number) => {
     if (count <= 0) return '';
     if (count === 1) return '?';
-    return `\\substack{${Array(count).fill('?').join(' \\\\ ')}}`;
+    return `\\substack{${Array(count).fill('?').join(' \\\\[0.3em] ')}}`;
   };
 
   const aboveStr = makeStack(aboveCount) || '?';
