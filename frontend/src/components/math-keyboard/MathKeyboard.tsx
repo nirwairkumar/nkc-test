@@ -162,6 +162,18 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
         const nextChar = expr[i] || '';
         result += '\\' + nextChar;
         i++;
+        
+        // If it is \\ followed by [, consume the entire [...] bracket to prevent wrapping its contents
+        if (nextChar === '\\' && i < expr.length && expr[i] === '[') {
+          while (i < expr.length && expr[i] !== ']') {
+            result += expr[i];
+            i++;
+          }
+          if (i < expr.length && expr[i] === ']') {
+            result += ']';
+            i++;
+          }
+        }
         continue;
       }
       
