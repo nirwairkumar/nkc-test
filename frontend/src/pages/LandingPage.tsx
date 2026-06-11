@@ -57,8 +57,27 @@ export default function LandingPage() {
     return (
         <>
             <SEO
-                title="TestoZa - Create Tests in Minute with AI"
-                description="Transform your content into engaging tests with AI-powered tools. Upload PDFs, images, or YouTube videos and generate tests instantly. Access thousands of tests across multiple subjects."
+                title="Free Online Test Maker for Teachers – Create Exam Online with AI"
+                description="Create online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Free quiz creator, mock tests, CBT platform & secure proctoring tools."
+                canonicalUrl="https://testoza.com/"
+                keywords={[
+                    "online test maker for teachers",
+                    "free online test maker for teachers",
+                    "create online test",
+                    "online quiz maker for teachers",
+                    "create exam online",
+                    "make test online",
+                    "online exam software",
+                    "best online exam platform",
+                    "free quiz maker for teachers",
+                    "test creator for teachers",
+                    "computer-based test platform",
+                    "online examination platform",
+                    "ai quiz generator",
+                    "secure online proctoring software",
+                    "how to create a test online",
+                    "learning management system"
+                ]}
             />
 
             <div className="min-h-screen">

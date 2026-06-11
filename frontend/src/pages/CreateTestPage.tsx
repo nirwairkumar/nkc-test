@@ -51,9 +51,25 @@ export default function CreateTestPage() {
     return (
         <div className="relative">
             <SEO
-                title="Create Test Online Free - TestoZa AI Test Maker"
-                description="Create custom online tests and quizzes for free. Use AI to generate questions from text or PDF. Best for teachers and students."
-                keywords={["create test online", "free quiz maker", "exam builder", "test generator"]}
+                title="Create Online Test Free \u2013 AI Exam Maker for Teachers | TestoZa"
+                description="Create your online test in minutes. Free test maker for teachers with AI \u2014 generate MCQ quizzes, mock exams, and CBT practice tests from PDFs, YouTube videos, or text. No technical skills needed."
+                canonicalUrl="https://testoza.com/create-test"
+                keywords={[
+                    "create online test",
+                    "create exam online",
+                    "make test online",
+                    "make exam online",
+                    "free test maker for teachers",
+                    "online test maker for teachers",
+                    "online quiz maker for teachers",
+                    "test creator for teachers",
+                    "free quiz creator for teachers",
+                    "how to create a test",
+                    "online exam software",
+                    "best online testing software",
+                    "computer-based test platform",
+                    "ai quiz generator"
+                ]}
             />
             <TestBuilder
                 key={importedData ? 'imported-test' : 'new-test'}

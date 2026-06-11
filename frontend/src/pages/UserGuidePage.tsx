@@ -732,9 +732,25 @@ export default function UserGuidePage() {
     return (
         <div className="min-h-screen bg-white dark:bg-[#0c0d0e] transition-colors duration-300" style={{ fontFamily: "'Inter', sans-serif" }}>
             <SEO
-                title={`${activeInfo.item.title} - Docs - TestoZa`}
-                description={activeInfo.item.description}
-                keywords={["testoza guide", "user guide", "test upload guide", "solution upload guide", "help", "documentation"]}
+                title={activeSlug === 'intro'
+                    ? "How to Create a Test Online \u2013 TestoZa User Guide for Teachers"
+                    : `${activeInfo.item.title} \u2013 TestoZa Docs`}
+                description={activeSlug === 'intro'
+                    ? "Step-by-step guide on how to create a test online using TestoZa. Learn to make exams, quizzes, and mock tests with our free online test creator for teachers. Covers AI generation, bulk upload, and LaTeX formatting."
+                    : activeInfo.item.description}
+                canonicalUrl={`https://testoza.com/user-guide/${activeSlug}`}
+                keywords={[
+                    "how to create a test online",
+                    "how to create a test",
+                    "free test maker for teachers",
+                    "test making software for teachers free",
+                    "online test creator for teachers",
+                    "online quiz generator for teachers",
+                    "testoza guide",
+                    "user guide",
+                    "test upload guide",
+                    "help documentation"
+                ]}
             />
 
             {/* --- TOP HEADER BAR --- */}
