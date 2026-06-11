@@ -462,49 +462,63 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         />
                     </div>
                     {settings.start_form?.enabled && (
-                        <div className="pl-0 md:pl-6 border-l-0 md:border-l-2 ml-0 md:ml-2 space-y-2">
-                            <p className="text-xs text-muted-foreground">Custom fields (label, required):</p>
-                            {settings.start_form?.fields.map((field, idx) => (
-                                <div key={idx} className="flex gap-2 items-center">
-                                    <Input
-                                        value={field.label}
-                                        onChange={(e) => {
-                                            const newFields = [...(settings.start_form?.fields || [])];
-                                            newFields[idx].label = e.target.value;
-                                            updateSetting('start_form', { ...settings.start_form!, fields: newFields });
-                                        }}
-                                        placeholder="Field Label (e.g. Roll No)"
-                                    />
-                                    <div className="flex items-center gap-2 bg-slate-100 p-2 rounded">
-                                        <input
-                                            type="checkbox"
-                                            checked={field.required}
+                        <div className="space-y-3 pt-1">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Form Fields</p>
+                            <div className="space-y-2">
+                                {(settings.start_form?.fields || []).map((field, idx) => (
+                                    <div key={idx} className={`flex gap-2 items-center p-2 rounded-lg border ${idx === 0 ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700'}`}>
+                                        {/* Default badge for first field */}
+                                        {idx === 0 && (
+                                            <span className="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/50 px-1.5 py-0.5 rounded shrink-0">
+                                                Default
+                                            </span>
+                                        )}
+                                        <Input
+                                            value={field.label}
                                             onChange={(e) => {
                                                 const newFields = [...(settings.start_form?.fields || [])];
-                                                newFields[idx].required = e.target.checked;
+                                                newFields[idx] = { ...newFields[idx], label: e.target.value };
                                                 updateSetting('start_form', { ...settings.start_form!, fields: newFields });
                                             }}
+                                            placeholder={idx === 0 ? "e.g. Name" : "Field label (e.g. Roll No)"}
+                                            className={`h-8 text-sm flex-1 ${idx === 0 ? 'border-indigo-300 dark:border-indigo-700 focus-visible:ring-indigo-400' : ''}`}
                                         />
-                                        <span className="text-xs">Req</span>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                id={`req_${idx}`}
+                                                checked={field.required}
+                                                onChange={(e) => {
+                                                    const newFields = [...(settings.start_form?.fields || [])];
+                                                    newFields[idx] = { ...newFields[idx], required: e.target.checked };
+                                                    updateSetting('start_form', { ...settings.start_form!, fields: newFields });
+                                                }}
+                                                className="accent-indigo-600 cursor-pointer"
+                                            />
+                                            <label htmlFor={`req_${idx}`} className="text-xs text-muted-foreground cursor-pointer select-none">Required</label>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 w-7 p-0 shrink-0 text-slate-400 hover:text-red-500"
+                                            onClick={() => {
+                                                const newFields = (settings.start_form?.fields || []).filter((_, i) => i !== idx);
+                                                updateSetting('start_form', { ...settings.start_form!, fields: newFields });
+                                            }}
+                                            title="Remove field"
+                                        >×</Button>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            const newFields = settings.start_form?.fields.filter((_, i) => i !== idx);
-                                            updateSetting('start_form', { ...settings.start_form!, fields: newFields });
-                                        }}
-                                    ><span className="text-red-500">×</span></Button>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                             <Button
                                 size="sm"
                                 variant="outline"
+                                className="w-full text-xs h-8 border-dashed"
                                 onClick={() => {
                                     const newFields = [...(settings.start_form?.fields || []), { label: '', required: true }];
                                     updateSetting('start_form', { ...settings.start_form!, fields: newFields });
                                 }}
-                            >+ Add Field</Button>
+                            >+ Add Another Field</Button>
                         </div>
                     )}
                 </div>
