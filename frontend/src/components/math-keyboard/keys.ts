@@ -236,7 +236,7 @@ export const TOPICS: TopicDef[] = [
         { label: 'ce{}', latex: '\\ce{?}', display: '\\text{ce}\\{\\square\\}', className: 'highlight' },
         { label: 'Δ', latex: '\\Delta ' },
         { label: '°C', latex: '^{\\circ}\\text{C}' },
-        { label: 'K', latex: '\\text{K}' },
+        { label: '→(▫/▫)', latex: '__TABLE_ARROW', display: '\\xrightarrow[\\square]{\\square}', className: 'highlight' },
       ],
       [
         { label: '(aq)', latex: '\\ce{(aq)}' },

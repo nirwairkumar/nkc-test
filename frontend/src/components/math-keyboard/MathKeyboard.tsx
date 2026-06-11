@@ -13,6 +13,100 @@ interface MathKeyboardProps {
 
 /* ── helpers ─────────────────────────────────────────── */
 
+function isIndexInsideTextCommand(expr: string, targetIdx: number): boolean {
+  let i = 0;
+  while (i < expr.length) {
+    if (expr[i] === '\\') {
+      i++;
+      let cmdName = '';
+      while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
+        cmdName += expr[i];
+        i++;
+      }
+      
+      if (cmdName === 'text') {
+        // Find opening '{'
+        while (i < expr.length && expr[i] !== '{') {
+          i++;
+        }
+        if (i < expr.length && expr[i] === '{') {
+          const contentStart = i + 1;
+          i++;
+          let braceCount = 1;
+          while (i < expr.length && braceCount > 0) {
+            if (expr[i] === '{') braceCount++;
+            if (expr[i] === '}') braceCount--;
+            if (braceCount === 0) {
+              const contentEnd = i; // index of closing '}'
+              if (targetIdx >= contentStart && targetIdx <= contentEnd) {
+                return true;
+              }
+            }
+            i++;
+          }
+        }
+      }
+    } else {
+      i++;
+    }
+  }
+  return false;
+}
+
+function parseTextCommand(
+  expr: string,
+  startIndex: number,
+  caretIndex: number | null
+): { result: string; newIndex: number } {
+  let result = '';
+  let i = startIndex;
+  
+  const insertCursorIfNeeded = (idx: number) => {
+    if (caretIndex !== null && idx === caretIndex) {
+      result += '\\htmlClass{math-cursor}{}';
+    }
+  };
+
+  // Find the opening '{'
+  while (i < expr.length && expr[i] !== '{') {
+    insertCursorIfNeeded(i);
+    result += expr[i];
+    i++;
+  }
+  
+  if (i < expr.length && expr[i] === '{') {
+    i++;
+    let braceCount = 1;
+    while (i < expr.length && braceCount > 0) {
+      insertCursorIfNeeded(i);
+      const charAt = expr[i];
+      if (charAt === '{') braceCount++;
+      if (charAt === '}') braceCount--;
+      
+      if (braceCount > 0) {
+        if (charAt === ' ') {
+          result += `\\htmlClass{math-token token-idx-${i}}{\\text{\\ }}`;
+        } else if (charAt === '\\') {
+          let subCmd = '';
+          const subStart = i;
+          i++;
+          while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
+            subCmd += expr[i];
+            i++;
+          }
+          result += `\\htmlClass{math-token token-idx-${subStart}}{\\${subCmd}}`;
+          continue; // skip i++ at the bottom of the loop
+        } else {
+          result += `\\htmlClass{math-token token-idx-${i}}{\\text{${charAt}}}`;
+        }
+      }
+      i++;
+    }
+  }
+  
+  return { result, newIndex: i };
+}
+
 function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): string {
   let result = '';
   let i = 0;
@@ -71,11 +165,52 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
         continue;
       }
       
-      // If it's a begin/end/ce/hline/cline command, skip wrapping
-      if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce' || cmdName === 'hline' || cmdName === 'cline') {
+      if (cmdName === 'text') {
+        const parsed = parseTextCommand(expr, i, caretIndex);
+        result += parsed.result;
+        i = parsed.newIndex;
+        continue;
+      }
+
+      if (cmdName === 'ce') {
+        let ceContent = '\\ce';
+        
+        // Consume environment/ce braces
+        while (i < expr.length && expr[i] !== '{') {
+          if (caretIndex !== null && i === caretIndex) {
+            ceContent += '$\\htmlClass{math-cursor}{}$';
+          }
+          ceContent += expr[i];
+          i++;
+        }
+        if (i < expr.length && expr[i] === '{') {
+          if (caretIndex !== null && i === caretIndex) {
+            ceContent += '$\\htmlClass{math-cursor}{}$';
+          }
+          ceContent += '{';
+          i++;
+          let braceCount = 1;
+          while (i < expr.length && braceCount > 0) {
+            if (caretIndex !== null && i === caretIndex) {
+              ceContent += '$\\htmlClass{math-cursor}{}$';
+            }
+            const charAt = expr[i];
+            if (charAt === '{') braceCount++;
+            if (charAt === '}') braceCount--;
+            ceContent += charAt;
+            i++;
+          }
+        }
+        
+        result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{${ceContent}}`;
+        continue;
+      }
+
+      // If it's a begin/end/hline/cline command, skip wrapping
+      if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'hline' || cmdName === 'cline') {
         result += '\\' + cmdName;
         
-        if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
+        if (cmdName === 'begin' || cmdName === 'end') {
           let envName = '';
           // Consume environment/ce braces
           while (i < expr.length && expr[i] !== '{') {
@@ -322,6 +457,14 @@ function renderKatex(expr: string, caretIndex: number | null): string {
   }
 }
 
+function renderMhchemToHtml(expr: string): string {
+  try {
+    return katex.renderToString(`\\ce{${expr}}`, { throwOnError: false, displayMode: false, trust: true });
+  } catch {
+    return expr;
+  }
+}
+
 function renderKeyLabel(label: string, display?: string, latex?: string): React.ReactNode {
   if (latex === '__TABLE_HEADER') {
     return (
@@ -447,6 +590,10 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const [tableType, setTableType] = useState('header');
   const [copied, setCopied] = useState(false);
   const [shiftOn, setShiftOn] = useState(false);
+  const [ceAnim, setCeAnim] = useState<{
+    status: 'idle' | 'typing' | 'converted';
+    text: string;
+  }>({ status: 'idle', text: '' });
   
   const lastTextareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -456,8 +603,49 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   useEffect(() => {
     if (isOpen) {
       setCaretIndex(expression.length);
+      setCeAnim({ status: 'idle', text: '' });
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (ceAnim.status === 'idle') return;
+
+    if (ceAnim.status === 'typing') {
+      const fullText = "2H2 + O2 -> 2H2O";
+      let index = 0;
+      
+      const interval = setInterval(() => {
+        index++;
+        setCeAnim(prev => {
+          if (index > fullText.length) {
+            clearInterval(interval);
+            setTimeout(() => {
+              setCeAnim(p => p.status === 'typing' ? { ...p, status: 'converted' } : p);
+            }, 600);
+            return prev;
+          }
+          return {
+            ...prev,
+            text: fullText.slice(0, index)
+          };
+        });
+      }, 200);
+
+      return () => {
+        clearInterval(interval);
+      };
+    }
+
+    if (ceAnim.status === 'converted') {
+      const timeout = setTimeout(() => {
+        setCeAnim({ status: 'typing', text: '' });
+      }, 1800);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [ceAnim.status]);
 
   // Track last focused textarea (before keyboard gets focus)
   useEffect(() => {
@@ -474,6 +662,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   }, []);
 
   const handleInsert = useCallback((latex: string) => {
+    if (latex === '\\ce{?}') {
+      setCeAnim({ status: 'typing', text: '' });
+    } else {
+      setCeAnim({ status: 'idle', text: '' });
+    }
+
     if (latex.startsWith('__TABLE_')) {
       const type = latex.replace('__TABLE_', '').replace(/_+$/, '').toLowerCase();
       setTableType(type);
@@ -547,6 +741,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
   const handleTextOperatorMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    setCeAnim({ status: 'idle', text: '' });
     const activeEl = document.activeElement;
     if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
       const start = activeEl.selectionStart ?? activeEl.value.length;
@@ -749,13 +944,32 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
 
       {/* ── Preview & Input Area ── */}
       <div className="px-3 py-2 border-b border-blue-100 space-y-2 bg-white/60">
-        {/* Rendered KaTeX Output */}
-        <div
-          className="min-h-[50px] flex items-center px-3 py-1.5 rounded-lg bg-white border border-blue-100 overflow-x-auto text-lg cursor-pointer"
-          onClick={handlePreviewClick}
-          dangerouslySetInnerHTML={{ __html: renderKatex(expression, caretIndex) }}
-          title="Click on any blue box or math symbol to edit that slot"
-        />
+        {/* Rendered KaTeX Output Wrapper */}
+        <div className="relative min-h-[50px] flex items-center justify-between rounded-lg bg-white border border-blue-100 overflow-hidden">
+          <div
+            className="flex-1 min-h-[50px] flex items-center px-3 py-1.5 overflow-x-auto text-lg cursor-pointer"
+            onClick={handlePreviewClick}
+            dangerouslySetInnerHTML={{ __html: renderKatex(expression, caretIndex) }}
+            title="Click on any blue box or math symbol to edit that slot"
+          />
+          {ceAnim.status !== 'idle' && (
+            <div className="shrink-0 flex items-center border-l border-blue-100 bg-blue-50/80 px-3 py-1.5 self-stretch text-sm max-w-[320px]">
+              <div className="font-mono text-xs bg-white px-2.5 py-1 rounded border border-blue-100 shadow-sm flex items-center min-w-[130px] h-[28px] overflow-hidden">
+                {ceAnim.status === 'typing' ? (
+                  <span className="text-slate-400 font-bold whitespace-nowrap flex items-center">
+                    {ceAnim.text}
+                    <span className="inline-block w-[2px] h-3 bg-slate-400 ml-0.5 animate-pulse" />
+                  </span>
+                ) : (
+                  <span
+                    className="text-slate-400 font-bold scale-90 origin-left whitespace-nowrap flex items-center [&_.katex]:text-slate-400 [&_.katex]:font-bold"
+                    dangerouslySetInnerHTML={{ __html: renderMhchemToHtml('2H2 + O2 -> 2H2O') }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         
         {/* Raw LaTeX Input */}
         <div className="flex items-center gap-2">
@@ -765,6 +979,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             value={expression}
             onChange={e => {
               setExpression(e.target.value);
+              setCeAnim({ status: 'idle', text: '' });
             }}
             onKeyDown={e => {
               if (e.key === ' ') {
@@ -775,17 +990,22 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                   const end = inputEl.selectionEnd ?? start;
                   const before = expression.slice(0, start);
                   const after = expression.slice(end);
-                  const newExpr = before + '\\,' + after;
+                  
+                  const isInsideText = isIndexInsideTextCommand(expression, start);
+                  const spaceStr = isInsideText ? ' ' : '\\,';
+                  const newExpr = before + spaceStr + after;
                   setExpression(newExpr);
                   
-                  const nextPos = start + 2;
+                  const nextPos = start + spaceStr.length;
                   setCaretIndex(nextPos);
                   setTimeout(() => {
                     inputEl.focus();
                     inputEl.setSelectionRange(nextPos, nextPos);
                   }, 0);
                 } else {
-                  const newExpr = expression + '\\,';
+                  const isInsideText = isIndexInsideTextCommand(expression, expression.length);
+                  const spaceStr = isInsideText ? ' ' : '\\,';
+                  const newExpr = expression + spaceStr;
                   setExpression(newExpr);
                   setCaretIndex(newExpr.length);
                 }
