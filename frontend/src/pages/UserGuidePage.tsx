@@ -4,11 +4,11 @@ import { SEO } from '@/components/SEO';
 import {
     BookOpen, FileText, FlaskConical, Sparkles, ChevronRight, ArrowLeft,
     ArrowRight, Menu, X, Clock, Search, Copy, Check, Sun, Moon,
-    Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle
+    Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2
 } from 'lucide-react';
-import { SolutionUploadGuide } from '@/components/SolutionUploadGuide';
-import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
-import { ScientificNotationGuide } from '@/components/ScientificNotationGuide';
+const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide').then(module => ({ default: module.SolutionUploadGuide })));
+const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide').then(module => ({ default: module.TestUploadFormatGuide })));
+const ScientificNotationGuide = React.lazy(() => import('@/components/ScientificNotationGuide').then(module => ({ default: module.ScientificNotationGuide })));
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -431,14 +431,18 @@ export default function UserGuidePage() {
             case 'bulk-test-upload':
                 return (
                     <div className="space-y-4">
-                        <TestUploadFormatGuide isInline />
+                        <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
+                            <TestUploadFormatGuide isInline />
+                        </React.Suspense>
                     </div>
                 );
 
             case 'solution-upload-guide':
                 return (
                     <div className="space-y-4">
-                        <SolutionUploadGuide isInline />
+                        <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
+                            <SolutionUploadGuide isInline />
+                        </React.Suspense>
                     </div>
                 );
 
@@ -638,7 +642,9 @@ export default function UserGuidePage() {
             case 'notation-matching':
                 return (
                     <div className="space-y-4">
-                        <ScientificNotationGuide isInline />
+                        <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
+                            <ScientificNotationGuide isInline />
+                        </React.Suspense>
                     </div>
                 );
 
