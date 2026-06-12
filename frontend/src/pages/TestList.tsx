@@ -1,11 +1,10 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import HomeHero from '@/components/home/HomeHero';
 import ExploreFilters from '@/components/home/ExploreFilters';
-import TestCard from '@/components/TestCard';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 
 // Lazy Load Components
@@ -13,13 +12,15 @@ const FeaturedTests = React.lazy(() => import('@/components/home/FeaturedTests')
 const UserRecentTests = React.lazy(() => import('@/components/home/UserRecentTests'));
 const SearchResults = React.lazy(() => import('@/components/home/SearchResults'));
 
-// Heavy Widgets
+// Heavy Widgets — all deferred until after first paint
+const TestLinkPaster = React.lazy(() => import('@/components/TestLinkPaster'));
 const YouTubeGenerator = React.lazy(() => import('@/components/YouTubeGenerator'));
 const TestSettingsPanel = React.lazy(() => import('@/components/TestSettingsPanel'));
 const CategoryFolderCards = React.lazy(() => import('@/components/home/CategoryFolderCards'));
-const TestLinkPaster = React.lazy(() => import('@/components/TestLinkPaster'));
 const CombinedSessionsSection = React.lazy(() => import('@/components/home/CombinedSessionsSection'));
 const SectionWiseBuilderShowcase = React.lazy(() => import('@/components/landing/SectionWiseBuilderShowcase'));
+// Only loaded when a test is generated via YouTube tool (ephemeral 30s display)
+const TestCard = React.lazy(() => import('@/components/TestCard'));
 
 // Skeletons
 function SectionSkeleton() {
@@ -34,21 +35,11 @@ function SectionSkeleton() {
 
 export default function TestList() {
     const [searchQuery, setSearchQuery] = useState("");
-    const [placeholderIndex, setPlaceholderIndex] = useState(0);
-    const placeholders = ["Search by Title...", "Search by Tag...", "Search by Category..."];
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [loading, setLoading] = useState(false); // Global loading for refresh
     const [generatedTest, setGeneratedTest] = useState<any>(null);
     const { user } = useAuth();
     const navigate = useNavigate();
-
-    // Placeholder Rotation
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
-        }, 3000);
-        return () => clearInterval(interval);
-    }, []);
 
     // Clear generated test after 30 seconds
     useEffect(() => {
@@ -112,8 +103,6 @@ export default function TestList() {
             <ExploreFilters
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
-                placeholders={placeholders}
-                placeholderIndex={placeholderIndex}
             />
 
             {/* SEARCH RESULTS MODE */}
@@ -187,11 +176,13 @@ export default function TestList() {
                                     </h3>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    <TestCard
-                                        test={generatedTest}
-                                        onManage={onManageTest}
-                                        user={user}
-                                    />
+                                    <Suspense fallback={<TestCardSkeleton />}>
+                                        <TestCard
+                                            test={generatedTest}
+                                            onManage={onManageTest}
+                                            user={user}
+                                        />
+                                    </Suspense>
                                 </div>
                             </div>
                         )}

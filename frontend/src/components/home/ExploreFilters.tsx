@@ -6,12 +6,13 @@ import { cn } from '@/lib/utils';
 interface ExploreFiltersProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    placeholders: string[];
-    placeholderIndex: number;
 }
 
-export default function ExploreFilters({ searchQuery, setSearchQuery, placeholders, placeholderIndex }: ExploreFiltersProps) {
+export default function ExploreFilters({ searchQuery, setSearchQuery }: ExploreFiltersProps) {
     const [isFocused, setIsFocused] = useState(false);
+
+    // CSS-only animated placeholder — no JS setInterval, no React re-renders
+    const animatedPlaceholder = searchQuery ? '' : 'Search by Title, Tag or Category...';
 
     return (
         <div className="relative group mb-8 animate-slide-up-fade stagger-1">
@@ -40,7 +41,7 @@ export default function ExploreFilters({ searchQuery, setSearchQuery, placeholde
                         <Search className="h-4 w-4 text-slate-400" />
                     </div>
                     <Input
-                        placeholder={placeholders[placeholderIndex]}
+                        placeholder={animatedPlaceholder}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onFocus={() => setIsFocused(true)}
@@ -50,14 +51,6 @@ export default function ExploreFilters({ searchQuery, setSearchQuery, placeholde
                             isFocused && "bg-white dark:bg-slate-900 border-indigo-300 dark:border-indigo-700 ring-2 ring-indigo-500/20 shadow-lg"
                         )}
                     />
-                    
-                    {/* Animated placeholder crossfade handled by parent interval, but styling helps it feel smooth */}
-                    <style>{`
-                        input::placeholder {
-                            transition: opacity 0.3s ease-in-out;
-                            opacity: 1;
-                        }
-                    `}</style>
                 </div>
             </div>
         </div>
