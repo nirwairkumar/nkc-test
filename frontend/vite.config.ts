@@ -31,17 +31,11 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    // Brotli compression — primary (smaller than gzip, supported by all modern browsers)
+    // Brotli & Gzip compression — primary & fallback compression formats
     compression({
-      algorithm: 'brotliCompress',
+      algorithms: ['brotliCompress', 'gzip'],
       exclude: [/\.(br)$/, /\.(gz)$/, /\.(png|jpe?g|gif|ico|webp|svg)$/i],
       threshold: 1024, // Only compress files > 1KB
-    }),
-    // Gzip compression — fallback for older browsers/CDNs
-    compression({
-      algorithm: 'gzip',
-      exclude: [/\.(br)$/, /\.(gz)$/, /\.(png|jpe?g|gif|ico|webp|svg)$/i],
-      threshold: 1024,
     }),
   ].filter(Boolean),
   resolve: {
