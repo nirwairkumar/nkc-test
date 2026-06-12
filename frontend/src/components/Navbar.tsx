@@ -16,9 +16,15 @@ import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crow
 import NotificationBox from './NotificationBox';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
-import { TestUploadFormatGuide } from './TestUploadFormatGuide';
-import { SolutionUploadGuide } from './SolutionUploadGuide';
 import TestoZaLogo from './TestoZaLogo';
+
+// Lazy Load Guides to keep them out of the main index bundle
+const TestUploadFormatGuide = React.lazy(() => 
+    import('./TestUploadFormatGuide').then(module => ({ default: module.TestUploadFormatGuide }))
+);
+const SolutionUploadGuide = React.lazy(() => 
+    import('./SolutionUploadGuide').then(module => ({ default: module.SolutionUploadGuide }))
+);
 
 
 export default function Navbar() {
@@ -409,15 +415,23 @@ export default function Navbar() {
                 </div>
             </div>
 
-            {/* User Guides (Controlled) */}
-            <SolutionUploadGuide
-                open={isSolutionGuideOpen}
-                onOpenChange={setIsSolutionGuideOpen}
-            />
-            <TestUploadFormatGuide
-                open={isUploadGuideOpen}
-                onOpenChange={setIsUploadGuideOpen}
-            />
+            {/* User Guides (Controlled) - Render dynamically to prevent parsing overhead on guest/login pages */}
+            {isSolutionGuideOpen && (
+                <React.Suspense fallback={null}>
+                    <SolutionUploadGuide
+                        open={isSolutionGuideOpen}
+                        onOpenChange={setIsSolutionGuideOpen}
+                    />
+                </React.Suspense>
+            )}
+            {isUploadGuideOpen && (
+                <React.Suspense fallback={null}>
+                    <TestUploadFormatGuide
+                        open={isUploadGuideOpen}
+                        onOpenChange={setIsUploadGuideOpen}
+                    />
+                </React.Suspense>
+            )}
         </header>
     );
 }
