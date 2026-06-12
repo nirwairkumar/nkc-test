@@ -15,8 +15,8 @@ interface SEOProps {
     noindex?: boolean;   // For admin/private pages
 }
 
-const DEFAULT_IMAGE = "https://www.testoza.com/default-og.png";
-const SITE_URL = "https://www.testoza.com";
+const DEFAULT_IMAGE = "https://testoza.com/default-og.png";
+const SITE_URL = "https://testoza.com";
 const DEFAULT_SITE_NAME = "TestoZa";
 
 export const SEO: React.FC<SEOProps> = ({

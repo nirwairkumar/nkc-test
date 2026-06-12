@@ -14,7 +14,7 @@ ${idUrl}`;
     }
 
     message += `\n\nPowered by Testoza
-https://www.testoza.com`;
+https://testoza.com`;
 
     try {
         if (navigator.share) {
@@ -51,7 +51,7 @@ ${idUrl}`;
     }
 
     message += `\n\nPowered by Testoza
-https://www.testoza.com`;
+https://testoza.com`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
@@ -101,7 +101,7 @@ ${idUrl}`;
     }
 
     text += `\n\nPowered by Testoza
-https://www.testoza.com`;
+https://testoza.com`;
 
     try {
         if (navigator.share) {
@@ -144,7 +144,7 @@ ${idUrl}`;
     }
 
     message += `\n\nPowered by Testoza
-https://www.testoza.com`;
+https://testoza.com`;
 
     try {
         if (navigator.share) {

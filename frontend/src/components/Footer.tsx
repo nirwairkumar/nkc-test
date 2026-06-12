@@ -55,12 +55,12 @@ export default function Footer() {
                             <div className="flex items-center gap-1">
                                 <span>Web:</span>
                                 <a
-                                    href="https://www.testoza.com"
+                                    href="https://testoza.com"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="hover:text-primary transition-colors"
                                 >
-                                    https://www.testoza.com
+                                    https://testoza.com
                                 </a>
                             </div>
                         </div>
