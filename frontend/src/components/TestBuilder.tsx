@@ -45,10 +45,10 @@ import slugify from 'slugify';
 
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import PremiumGuard from '@/components/premium/PremiumGuard';
-import { JsonImporter } from '@/components/test-builder/JsonImporter';
-import { ScreenshotCaptureModal } from '@/components/test-builder/ScreenshotCaptureModal';
-import { MathKeyboard } from './math-keyboard';
-import { AiPromptGuide } from './AiPromptGuide';
+const JsonImporter = React.lazy(() => import('@/components/test-builder/JsonImporter').then(m => ({ default: m.JsonImporter })));
+const ScreenshotCaptureModal = React.lazy(() => import('@/components/test-builder/ScreenshotCaptureModal').then(m => ({ default: m.ScreenshotCaptureModal })));
+const MathKeyboard = React.lazy(() => import('./math-keyboard').then(m => ({ default: m.MathKeyboard })));
+const AiPromptGuide = React.lazy(() => import('./AiPromptGuide').then(m => ({ default: m.AiPromptGuide })));
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
@@ -305,14 +305,11 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     // Load Existing Test Data
     useEffect(() => {
-        console.log("[TestBuilder] useEffect triggered. initialData:", initialData, "lastInitialDataRef:", lastInitialDataRef.current);
 
         const targetId = initialData?.id || (isEditMode ? testId : null);
-        console.log("[TestBuilder] targetId:", targetId, "loadedTestId.current:", loadedTestId.current);
 
         // If we already loaded this test ID, don't reload/reset state
         if (targetId && loadedTestId.current === targetId) {
-            console.log("[TestBuilder] Skipping: already loaded this test ID");
             return;
         }
 
@@ -322,7 +319,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             JSON.stringify(initialData) !== JSON.stringify(lastInitialDataRef.current);
 
         if (initialData && isNewInitialData) {
-            console.log("[TestBuilder] Received new initialData, populating...", initialData);
             populateData(initialData);
             loadedTestId.current = initialData.id || 'imported-data';
             lastInitialDataRef.current = initialData;
@@ -331,15 +327,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 fetchAndSetCategories(initialData.id);
             }
             if (initialData.tags) setTags(initialData.tags);
-            console.log("[TestBuilder] Data populated successfully");
             return;
         } else if (initialData && !isNewInitialData) {
-            console.log("[TestBuilder] initialData unchanged, skipping population");
         }
 
         // Otherwise fetch from ID
         if (isEditMode && testId && user) {
-            console.log("[TestBuilder] Fetching test data for edit mode, testId:", testId);
             setLoading(true);
             fetchTestById(testId).then(async ({ data, error }) => {
                 if (data) {
@@ -447,7 +440,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     };
 
     const populateData = (data: any) => {
-        console.log("[TestBuilder] populateData called with:", data);
 
         if (!data) {
             console.error("[TestBuilder] populateData received null/undefined data");
@@ -470,8 +462,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         if (!hasQuestions && !hasSections) {
             console.warn("[TestBuilder] populateData received data without valid questions or sections array or they are empty.");
         }
-
-        console.log("[TestBuilder] Setting title:", data.title);
         setTitle(data.title || '');
         setDescription(data.description || '');
         setRevisionNotes(data.revision_notes || '');
@@ -564,18 +554,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         // Defer actual population by 1 tick so React commits the empty arrays first
         setTimeout(() => {
             if (data.enable_section_mode && hasSections) {
-                console.log("[TestBuilder] Processing section mode with", parsedSections.length, "sections");
                 setEnableSectionMode(true);
                 setSections(parsedSections.map((s: any) => ({
                     ...s,
                     questions: (s.questions || []).map(mapQuestion)
                 })));
             } else if (hasQuestions) {
-                console.log("[TestBuilder] Processing", parsedQuestions.length, "questions");
                 const mappedQuestions = (parsedQuestions as any[]).map(mapQuestion);
-                console.log("[TestBuilder] Setting questions:", mappedQuestions);
                 setQuestions(mappedQuestions);
-                console.log("[TestBuilder] Questions set successfully");
             } else {
                 // Fallback to default if somehow completely empty
                 setQuestions([{ ...DEFAULT_QUESTION }]);
@@ -599,8 +585,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         if (count > 0) {
             toast.success(`Successfully loaded ${count} question${count > 1 ? 's' : ''}!`);
         }
-
-        console.log("[TestBuilder] populateData completed successfully");
     };
 
     const handleAddQuestion = () => {
@@ -906,7 +890,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 )
                             );
                             await Promise.all(notifications);
-                            console.log(`Sent notifications to ${followers.length} followers.`);
                         }
                     } catch (notifError) {
                         console.error("Failed to send notifications:", notifError);
@@ -1365,7 +1348,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     )}
                     <div className="flex items-center h-9 shadow-sm rounded-xl border border-slate-200 overflow-hidden bg-white hover:border-indigo-200 transition-colors">
                         <div className="h-full [&>label]:h-full [&>label]:flex [&>label]:items-center [&>label]:px-3 [&>label]:bg-transparent [&>label]:hover:bg-indigo-50 [&>label]:text-indigo-600 [&>label]:text-xs [&>label]:font-semibold [&>label]:cursor-pointer [&>label]:border-none">
-                            <JsonImporter onImportSuccess={populateData} />
+                            <React.Suspense fallback={null}>
+                                <JsonImporter onImportSuccess={populateData} />
+                            </React.Suspense>
                         </div>
                         <div className="w-px h-full bg-slate-200" />
                         <TestUploadFormatGuide trigger={
@@ -2999,11 +2984,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     </Button>
                 </div>
             </div>
-            <ScreenshotCaptureModal
-                isOpen={isCaptureModalOpen}
-                onClose={() => setIsCaptureModalOpen(false)}
-                onCapture={handleScreenshotCapture}
-            />
+            <React.Suspense fallback={null}>
+                <ScreenshotCaptureModal
+                    isOpen={isCaptureModalOpen}
+                    onClose={() => setIsCaptureModalOpen(false)}
+                    onCapture={handleScreenshotCapture}
+                />
+            </React.Suspense>
 
             {/* Cloudinary Upload Modal */}
             {isCloudUploadOpen && cloudUploadTarget && (
@@ -3155,16 +3142,20 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             </div>
 
             {/* Virtual Math Keyboard Overlay */}
-            <MathKeyboard
-                isOpen={showMathKeyboard}
-                onClose={() => setShowMathKeyboard(false)}
-            />
+            <React.Suspense fallback={null}>
+                <MathKeyboard
+                    isOpen={showMathKeyboard}
+                    onClose={() => setShowMathKeyboard(false)}
+                />
+            </React.Suspense>
 
             {/* AI Prompt Guide Overlay */}
-            <AiPromptGuide
-                isOpen={showGuide}
-                onClose={() => setShowGuide(false)}
-            />
+            <React.Suspense fallback={null}>
+                <AiPromptGuide
+                    isOpen={showGuide}
+                    onClose={() => setShowGuide(false)}
+                />
+            </React.Suspense>
         </div >
     );
 }

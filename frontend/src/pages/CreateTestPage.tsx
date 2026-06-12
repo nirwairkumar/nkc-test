@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 
 import { SEO } from '@/components/SEO';
 import TestBuilder from '@/components/TestBuilder';
-import AITestImporter from './AITestImporter';
+const AITestImporter = lazy(() => import('./AITestImporter'));
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 
 import { useLocation } from 'react-router-dom';
 
@@ -15,24 +15,19 @@ export default function CreateTestPage() {
 
     // Handle imported data from navigation state (e.g., from /generate-with-ai route)
     useEffect(() => {
-        console.log("[CreateTestPage] useEffect triggered. location.state:", location.state);
         if (location.state?.importedData) {
-            console.log("[CreateTestPage] Found importedData in location.state:", location.state.importedData);
             setImportedData(location.state.importedData);
             // Clear the state to prevent re-processing on refresh
             window.history.replaceState({}, document.title);
-            console.log("[CreateTestPage] Cleared location.state");
         }
     }, [location.state]);
 
     const handleImport = (data: any) => {
-        console.log("[CreateTestPage] handleImport called with data:", data);
         // data comes as { title, description, revision_notes, questions }
         // which matches what TestBuilder.populateData() expects directly.
         // It handles questionText -> question mapping, nested option formats, etc.
         setImportedData(data);
         setShowImporter(false);
-        console.log("[CreateTestPage] State updated: importedData set, showImporter set to false");
     };
 
     if (showImporter) {
@@ -41,12 +36,13 @@ export default function CreateTestPage() {
                 <Button variant="ghost" onClick={() => setShowImporter(false)} className="mb-4">
                     Back to Editor
                 </Button>
-                <AITestImporter onImport={handleImport} />
+                <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+                    <AITestImporter onImport={handleImport} />
+                </Suspense>
             </div>
         );
     }
 
-    console.log("[CreateTestPage] Rendering. importedData:", importedData, "showImporter:", showImporter);
 
     return (
         <div className="relative">
