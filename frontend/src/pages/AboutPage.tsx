@@ -49,10 +49,9 @@ const AboutPage = () => {
         ]}
       />
 
-      {/* Font Injection for precise matching of the requested user style */}
+      {/* Font Injection classes mapped to asynchronously preloaded fonts */}
       <style dangerouslySetInnerHTML={{
         __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
         .font-display { font-family: 'Instrument Serif', Georgia, serif; }
         .font-body { font-family: 'DM Sans', sans-serif; }
         .reveal-transition { transition: opacity 0.7s ease, transform 0.7s ease; }
@@ -62,8 +61,7 @@ const AboutPage = () => {
 
         {/* Hero */}
         <section
-          className="pt-24 pb-16 opacity-0 translate-y-4 reveal-transition"
-          ref={addToRefs}
+          className="pt-24 pb-16 font-body"
         >
           <div className="flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-indigo-600 dark:text-indigo-400 mb-5">
             <div className="w-6 h-px bg-indigo-600 dark:bg-indigo-400"></div>
