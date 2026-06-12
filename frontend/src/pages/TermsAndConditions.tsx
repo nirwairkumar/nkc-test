@@ -48,7 +48,6 @@ const TermsAndConditions = () => {
       {/* Font Injection for precise matching of the requested user style */}
       <style dangerouslySetInnerHTML={{
         __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
         .font-display { font-family: 'Instrument Serif', Georgia, serif; }
         .font-body { font-family: 'DM Sans', sans-serif; }
         .reveal-transition { transition: opacity 0.7s ease, transform 0.7s ease; }
@@ -57,10 +56,7 @@ const TermsAndConditions = () => {
       <div className="max-w-3xl mx-auto px-6 font-body pt-24">
 
         {/* Hero */}
-        <section 
-          className="pb-12 opacity-0 translate-y-4 reveal-transition"
-          ref={addToRefs}
-        >
+        <section className="pb-12">
           <div className="flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-indigo-600 dark:text-indigo-400 mb-5">
             <div className="w-6 h-px bg-indigo-600 dark:bg-indigo-400"></div>
             Legal
@@ -76,17 +72,14 @@ const TermsAndConditions = () => {
         </section>
 
         {/* Intro note (Highlight Box) */}
-        <div 
-          className="border-l-2 border-indigo-500 pl-6 py-5 mb-14 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-r-lg opacity-0 translate-y-4 reveal-transition" 
-          ref={addToRefs}
-        >
+        <div className="border-l-2 border-indigo-500 pl-6 py-5 mb-14 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-r-lg">
           <p className="text-[15px] text-slate-600 dark:text-slate-300 font-light leading-relaxed">
             <strong className="text-indigo-600 dark:text-indigo-400 font-medium">Plain-language summary:</strong> By using TestoZa, you agree to use the platform responsibly and honestly. You own the content you create, but give us permission to host it. <strong className="text-indigo-600 dark:text-indigo-400 font-medium">Note: Public tests may be used, modified, or monetized by TestoZa.</strong> We are not liable for exam outcomes or results. Violations of these terms — such as cheating or abuse — may result in account suspension. The full details are below.
           </p>
         </div>
 
         {/* Table of Contents */}
-        <nav className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 mb-16 opacity-0 translate-y-4 reveal-transition" ref={addToRefs}>
+        <nav className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 mb-16">
           <p className="text-[11px] font-medium tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-5">Contents</p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
             {[
