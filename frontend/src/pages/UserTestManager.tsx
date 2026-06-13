@@ -98,7 +98,7 @@ export default function UserTestManager() {
     // Tests State
     const [tests, setTests] = useState<any[]>([]);
     const [testsLoading, setTestsLoading] = useState(true);
-    const [page, setPage] = useState(1);
+    const pageRef = React.useRef(1);
     const [hasMore, setHasMore] = useState(true);
     const observerTarget = React.useRef<HTMLDivElement | null>(null);
     const [isTestEditOpen, setIsTestEditOpen] = useState(false);
@@ -293,7 +293,10 @@ export default function UserTestManager() {
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
-        const pageToLoad = reset ? 1 : page;
+        if (reset) {
+            pageRef.current = 1;
+        }
+        const pageToLoad = pageRef.current;
 
         setTestsLoading(true);
         try {
@@ -308,11 +311,11 @@ export default function UserTestManager() {
             const fetchedTests = data || [];
             if (reset) {
                 setTests(fetchedTests);
-                setPage(2);
+                pageRef.current = 2;
                 setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
             } else {
                 setTests(prev => [...prev, ...fetchedTests]);
-                setPage(prev => prev + 1);
+                pageRef.current = pageRef.current + 1;
                 setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
             }
         } catch (error: any) {
@@ -324,7 +327,7 @@ export default function UserTestManager() {
                 setTestsLoading(false);
             }
         }
-    }, [targetUserId, debouncedSearchQuery, page]);
+    }, [targetUserId, debouncedSearchQuery]);
 
     const handleDeleteTest = (testId: string, testTitle: string) => {
         setDeleteId(testId);
