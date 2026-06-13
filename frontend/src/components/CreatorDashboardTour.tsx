@@ -209,7 +209,7 @@ export default function CreatorDashboardTour({
         // Calculate tooltip position relative to viewport (since container is fixed inset-0)
         const tooltipWidth = 320;
         const tooltipHeight = 180;
-        const gap = 24; // Increased gap to prevent overlap and make it look cleaner
+        const gap = 38; // Increased gap to prevent overlap and make it look cleaner
         
         let top = hRect.bottom + gap;
         let left = hRect.left + (hRect.width / 2) - (tooltipWidth / 2);
@@ -399,11 +399,11 @@ export default function CreatorDashboardTour({
           <mask id="tour-mask">
             <rect width="100%" height="100%" fill="white" />
             <rect
-              x={targetRect.left - 6}
-              y={targetRect.top - 6}
-              width={targetRect.width + 12}
-              height={targetRect.height + 12}
-              rx={8}
+              x={targetRect.left - 12}
+              y={targetRect.top - 12}
+              width={targetRect.width + 24}
+              height={targetRect.height + 24}
+              rx={12}
               fill="black"
             />
           </mask>
@@ -411,21 +411,20 @@ export default function CreatorDashboardTour({
         <rect
           width="100%"
           height="100%"
-          fill="rgba(15, 23, 42, 0.65)"
+          fill="rgba(15, 23, 42, 0.42)"
           mask="url(#tour-mask)"
-          className="backdrop-blur-[1px]"
         />
       </svg>
 
       {/* Interactive elements highlights */}
       <div
-        className="absolute border-2 border-indigo-400 rounded-lg animate-pulse pointer-events-none z-[10000]"
+        className="absolute border-2 border-indigo-400 rounded-xl animate-pulse pointer-events-none z-[10000]"
         style={{
-          top: targetRect.top - 8,
-          left: targetRect.left - 8,
-          width: targetRect.width + 16,
-          height: targetRect.height + 16,
-          boxShadow: '0 0 16px rgba(99, 102, 241, 0.6)'
+          top: targetRect.top - 14,
+          left: targetRect.left - 14,
+          width: targetRect.width + 28,
+          height: targetRect.height + 28,
+          boxShadow: '0 0 20px rgba(99, 102, 241, 0.7)'
         }}
       />
 
