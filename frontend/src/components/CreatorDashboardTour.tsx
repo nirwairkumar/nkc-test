@@ -25,6 +25,16 @@ export default function CreatorDashboardTour({
   const [pointerRect, setPointerRect] = useState<DOMRect | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; placement: 'top' | 'bottom' | 'left' | 'right' }>({ top: 0, left: 0, placement: 'bottom' });
   const requestRef = useRef<number>(0);
+  const [clickCount, setClickCount] = useState(0);
+
+  // Listen to global clicks to trigger step evaluation on tab switches
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setClickCount(prev => prev + 1);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   // Find the example test
   const exampleTest = tests.find(t => t.settings?.is_user_example === true);
@@ -104,7 +114,7 @@ export default function CreatorDashboardTour({
         }
       }
     }
-  }, [exampleTest, configuringTest, conductExamTest]);
+  }, [exampleTest, configuringTest, conductExamTest, clickCount]);
 
   // Track target element position and calculate tooltip placement
   useEffect(() => {
