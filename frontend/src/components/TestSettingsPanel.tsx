@@ -31,9 +31,10 @@ interface TestSettingsPanelProps {
     onViewResults: () => void;
     overridePremium?: boolean;
     onRequestConductExam?: (test: Test) => void;
+    onSettingsChange?: (settings: TestSettings) => void;
 }
 
-export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResults, overridePremium, onRequestConductExam }: TestSettingsPanelProps) {
+export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResults, overridePremium, onRequestConductExam, onSettingsChange }: TestSettingsPanelProps) {
     const [settings, setSettings] = useState<TestSettings>({
         attempt_limit: undefined,
         strict_timer: false,
@@ -153,7 +154,13 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     };
 
     const updateSetting = (key: string, value: any) => {
-        setSettings(prev => ({ ...prev, [key]: value }));
+        setSettings(prev => {
+            const updated = { ...prev, [key]: value };
+            if (onSettingsChange) {
+                onSettingsChange(updated);
+            }
+            return updated;
+        });
     };
 
     const handleAutoAssignTopics = async () => {
@@ -226,7 +233,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monitoring</p>
 
                     {/* Force Fullscreen Toggle */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" id={mode === 'desktop' ? "tour-force-fullscreen-container" : undefined}>
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><Maximize className="w-4 h-4 text-blue-500" /> Force Full Screen</Label>
                             <p className="text-sm text-muted-foreground">User must enter full screen to start. Exiting counts as a violation.</p>
@@ -241,7 +248,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <hr className="border-slate-200 dark:border-slate-700" />
 
                     {/* Tab Switch Detection Toggle */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" id={mode === 'desktop' ? "tour-tab-switch-container" : undefined}>
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Tab Switch Detection</Label>
                             <p className="text-sm text-muted-foreground">Detect if user switches tabs or minimizes browser.</p>
@@ -283,7 +290,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                         />
                                         <Label htmlFor={`vl_strict_${mode}`} className="font-normal cursor-pointer text-red-600">Strict (Instant Submit)</Label>
                                     </div>
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center space-x-2" id={mode === 'desktop' ? "tour-vl-count-radio-container" : undefined}>
                                         <input
                                             id={mode === 'desktop' ? "tour-vl-count-radio" : `vl_count_${mode}`}
                                             type="radio"
@@ -427,7 +434,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     </Select>
                 </div>
 
-                <div className="flex items-center justify-between border p-4 rounded-lg">
+                <div className="flex items-center justify-between border p-4 rounded-lg" id={mode === 'desktop' ? "tour-attempt-limit-container" : undefined}>
                     <div className="space-y-0.5">
                         <Label>Attempt Limit</Label>
                         <p className="text-sm text-muted-foreground">Restrict users to a single attempt.</p>
@@ -442,7 +449,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-4 border p-4 rounded-lg">
+                <div className="flex flex-col gap-4 border p-4 rounded-lg" id={mode === 'desktop' ? "tour-start-form-container" : undefined}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                             <Label className="text-base flex items-center gap-2"><FormInput className="w-4 h-4" /> Start Form</Label>
@@ -567,7 +574,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     />
                 </div>
 
-                <div className="flex items-start justify-between border p-4 rounded-lg bg-purple-50/20">
+                <div className="flex items-start justify-between border p-4 rounded-lg bg-purple-50/20" id={mode === 'desktop' ? "tour-flexible-timer-container" : undefined}>
                     <div className="space-y-1 pr-4">
                         <Label className="flex items-center gap-2 text-base"><Clock className="w-4 h-4 text-purple-600" /> Allow Flexible Timer</Label>
                         <p className="text-sm text-muted-foreground">Allows test takers to disable the test timer before starting.</p>

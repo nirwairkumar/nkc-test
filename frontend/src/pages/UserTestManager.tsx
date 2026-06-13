@@ -135,9 +135,14 @@ export default function UserTestManager() {
     const [reports, setReports] = useState<Report[]>([]);
     const [reportsLoading, setReportsLoading] = useState(false);
 
-    const [showTour, setShowTour] = useState(() => {
-        return localStorage.getItem('creator_dashboard_tour_completed') !== 'true';
-    });
+    const [showTour, setShowTour] = useState(false);
+
+    useEffect(() => {
+        if (user?.id) {
+            const completed = localStorage.getItem(`creator_dashboard_tour_completed_${user.id}`) === 'true';
+            setShowTour(!completed);
+        }
+    }, [user]);
 
     const loadReports = async () => {
         if (!targetUserId) return;
@@ -1161,6 +1166,9 @@ export default function UserTestManager() {
                             loadUserTests();
                         }
                     }}
+                    onSettingsChange={(newSettings) => {
+                        setConfiguringTest(prev => prev ? { ...prev, settings: newSettings } : null);
+                    }}
                     onViewResults={() => {
                         setViewingResultsTest(configuringTest);
                     }}
@@ -1184,8 +1192,11 @@ export default function UserTestManager() {
                     tests={tests}
                     configuringTest={configuringTest}
                     conductExamTest={conductExamTest}
+                    userId={user?.id}
                     onSkip={() => {
-                        localStorage.setItem('creator_dashboard_tour_completed', 'true');
+                        if (user?.id) {
+                            localStorage.setItem(`creator_dashboard_tour_completed_${user.id}`, 'true');
+                        }
                         setShowTour(false);
                     }}
                 />

@@ -9,16 +9,20 @@ interface TourProps {
   configuringTest: any;
   conductExamTest: any;
   onSkip: () => void;
+  userId?: string;
 }
 
 export default function CreatorDashboardTour({
   tests,
   configuringTest,
   conductExamTest,
-  onSkip
+  onSkip,
+  userId
 }: TourProps) {
+  const getUserKey = (key: string) => userId ? `${key}_${userId}` : key;
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [pointerRect, setPointerRect] = useState<DOMRect | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; placement: 'top' | 'bottom' | 'left' | 'right' }>({ top: 0, left: 0, placement: 'bottom' });
   const requestRef = useRef<number>(0);
 
@@ -54,12 +58,12 @@ export default function CreatorDashboardTour({
     } else {
       // Test is conducted
       if (!configuringTest) {
-        const tourCompleted = localStorage.getItem('creator_dashboard_tour_completed') === 'true';
-        const linkCopied = localStorage.getItem('tour_link_copied') === 'true';
+        const tourCompleted = localStorage.getItem(getUserKey('creator_dashboard_tour_completed')) === 'true';
+        const linkCopied = localStorage.getItem(getUserKey('tour_link_copied')) === 'true';
         
         if (linkCopied || tourCompleted) {
           setCurrentStep(0); // Finished
-        } else if (localStorage.getItem('tour_save_completed') === 'true') {
+        } else if (localStorage.getItem(getUserKey('tour_save_completed')) === 'true') {
           setCurrentStep(11); // Step 11: Highlight Copy Link button
         } else {
           setCurrentStep(3); // Step 3: Highlight Settings in active test
@@ -105,70 +109,93 @@ export default function CreatorDashboardTour({
   // Track target element position and calculate tooltip placement
   useEffect(() => {
     const updatePosition = () => {
-      let selector = '';
+      let highlightSelector = '';
+      let pointerSelector = '';
       switch (currentStep) {
         case 1:
-          selector = '#tour-conduct-btn';
+          highlightSelector = '#tour-conduct-btn';
+          pointerSelector = '#tour-conduct-btn';
           break;
         case 2:
-          selector = '#tour-start-conducting-btn';
+          highlightSelector = '#tour-start-conducting-btn';
+          pointerSelector = '#tour-start-conducting-btn';
           break;
         case 3:
-          selector = '#tour-settings-btn-active';
+          highlightSelector = '#tour-settings-btn-active';
+          pointerSelector = '#tour-settings-btn-active';
           break;
         case 4:
-          selector = '#tour-force-fullscreen';
+          highlightSelector = '#tour-force-fullscreen-container';
+          pointerSelector = '#tour-force-fullscreen';
           break;
         case 5:
-          selector = '#tour-tab-switch';
+          highlightSelector = '#tour-tab-switch-container';
+          pointerSelector = '#tour-tab-switch';
           break;
         case 6:
-          selector = '#tour-vl-count-radio';
+          highlightSelector = '#tour-vl-count-radio-container';
+          pointerSelector = '#tour-vl-count-radio';
           break;
         case 7:
-          selector = '#tour-tab-access';
+          highlightSelector = '#tour-tab-access';
+          pointerSelector = '#tour-tab-access';
           break;
         case 8:
-          selector = '#tour-attempt-limit';
+          highlightSelector = '#tour-attempt-limit-container';
+          pointerSelector = '#tour-attempt-limit';
           break;
         case 9:
-          selector = '#tour-start-form';
+          highlightSelector = '#tour-start-form-container';
+          pointerSelector = '#tour-start-form';
           break;
         case 10:
-          selector = '#tour-tab-results';
+          highlightSelector = '#tour-tab-results';
+          pointerSelector = '#tour-tab-results';
           break;
         case 110:
-          selector = '#tour-flexible-timer';
+          highlightSelector = '#tour-flexible-timer-container';
+          pointerSelector = '#tour-flexible-timer';
           break;
         case 12:
-          selector = '#tour-save-settings';
+          highlightSelector = '#tour-save-settings';
+          pointerSelector = '#tour-save-settings';
           break;
         case 11:
-          selector = '#tour-copy-link-btn';
+          highlightSelector = '#tour-copy-link-btn';
+          pointerSelector = '#tour-copy-link-btn';
           break;
         default:
-          selector = '';
+          highlightSelector = '';
+          pointerSelector = '';
       }
 
-      if (!selector) {
+      if (!highlightSelector) {
         setTargetRect(null);
+        setPointerRect(null);
         return;
       }
 
-      const element = document.querySelector(selector);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        
-        // Only update if dimensions/position changed significantly to avoid jitter
-        setTargetRect(rect);
+      const hElement = document.querySelector(highlightSelector);
+      const pElement = document.querySelector(pointerSelector);
+      
+      if (hElement) {
+        const hRect = hElement.getBoundingClientRect();
+        setTargetRect(hRect);
+
+        if (pElement) {
+          const pRect = pElement.getBoundingClientRect();
+          setPointerRect(pRect);
+        } else {
+          setPointerRect(hRect);
+        }
 
         // Calculate tooltip position relative to viewport (since container is fixed inset-0)
         const tooltipWidth = 320;
         const tooltipHeight = 180;
         const gap = 24; // Increased gap to prevent overlap and make it look cleaner
         
-        let top = rect.bottom + gap;
-        let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+        let top = hRect.bottom + gap;
+        let left = hRect.left + (hRect.width / 2) - (tooltipWidth / 2);
         let placement: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
 
         // Check screen boundaries
@@ -178,14 +205,15 @@ export default function CreatorDashboardTour({
         }
 
         // If elements are near bottom of viewport, show tooltip above
-        if (rect.bottom + tooltipHeight + gap > window.innerHeight) {
-          top = rect.top - tooltipHeight - gap;
+        if (hRect.bottom + tooltipHeight + gap > window.innerHeight) {
+          top = hRect.top - tooltipHeight - gap;
           placement = 'top';
         }
 
         setTooltipPos({ top, left, placement });
       } else {
         setTargetRect(null);
+        setPointerRect(null);
       }
     };
 
@@ -204,7 +232,7 @@ export default function CreatorDashboardTour({
   useEffect(() => {
     if (prevConfiguringTest.current && !configuringTest) {
       // It was saved and closed
-      localStorage.setItem('tour_save_completed', 'true');
+      localStorage.setItem(getUserKey('tour_save_completed'), 'true');
     }
     prevConfiguringTest.current = configuringTest;
   }, [configuringTest]);
@@ -213,8 +241,8 @@ export default function CreatorDashboardTour({
   useEffect(() => {
     if (currentStep === 11) {
       const handleCopyClick = () => {
-        localStorage.setItem('tour_link_copied', 'true');
-        localStorage.setItem('creator_dashboard_tour_completed', 'true');
+        localStorage.setItem(getUserKey('tour_link_copied'), 'true');
+        localStorage.setItem(getUserKey('creator_dashboard_tour_completed'), 'true');
         toast.success("Congratulations! You completed the creator guide! 🚀");
         setTimeout(() => {
           setCurrentStep(0);
@@ -420,18 +448,20 @@ export default function CreatorDashboardTour({
       </Card>
 
       {/* Bouncing Hand Cursor Indicator */}
-      <div
-        className="absolute pointer-events-none z-[10002] animate-bounce"
-        style={{
-          top: targetRect.top + (targetRect.height / 2),
-          left: targetRect.left + (targetRect.width / 2),
-          transform: 'translate(-50%, -50%)'
-        }}
-      >
-        <svg className="w-8 h-8 text-indigo-500 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M10 21.5c-1.4 0-2.5-.7-3.2-1.9L3.4 14c-.6-1-.4-2.2.5-3 .9-.8 2.2-.7 3 .2l1.6 1.8V4.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v7.2c1 .2 1.7.9 1.7 1.8v3.5c0 2.8-2.2 5-5 5zm-3.2-5.5l2.2 2.5c.3.4.8.6 1.2.6 1.7 0 3-1.3 3-3v-3.5c0-.4-.3-.7-.7-.7h-.7V4.5c0-.6-.4-1-1-1s-1 .4-1 1v9.5h-1L6.8 12.3c-.3-.3-.8-.3-1.1 0-.3.3-.3.8 0 1.1l2.1 2.6z"/>
-        </svg>
-      </div>
+      {pointerRect && (
+        <div
+          className="absolute pointer-events-none z-[10002] animate-bounce"
+          style={{
+            top: pointerRect.top + (pointerRect.height / 2),
+            left: pointerRect.left + (pointerRect.width / 2),
+            transform: 'translate(-50%, -50%)'
+          }}
+        >
+          <svg className="w-8 h-8 text-indigo-500 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M10 21.5c-1.4 0-2.5-.7-3.2-1.9L3.4 14c-.6-1-.4-2.2.5-3 .9-.8 2.2-.7 3 .2l1.6 1.8V4.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v7.2c1 .2 1.7.9 1.7 1.8v3.5c0 2.8-2.2 5-5 5zm-3.2-5.5l2.2 2.5c.3.4.8.6 1.2.6 1.7 0 3-1.3 3-3v-3.5c0-.4-.3-.7-.7-.7h-.7V4.5c0-.6-.4-1-1-1s-1 .4-1 1v9.5h-1L6.8 12.3c-.3-.3-.8-.3-1.1 0-.3.3-.3.8 0 1.1l2.1 2.6z"/>
+          </svg>
+        </div>
+      )}
     </div>
   );
 }
