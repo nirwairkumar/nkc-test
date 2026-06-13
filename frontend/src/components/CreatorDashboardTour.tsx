@@ -4,6 +4,10 @@ import { Card } from '@/components/ui/card';
 import { CheckCircle2, X, Sparkles, Navigation, ArrowRight, CornerRightDown } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Adjust this vertical offset to shift all tour boxes, highlights, and pointers up or down.
+// Negative values shift upwards, positive values shift downwards.
+const Y_OFFSET = -8;
+
 interface TourProps {
   tests: any[];
   configuringTest: any;
@@ -211,7 +215,7 @@ export default function CreatorDashboardTour({
         const tooltipHeight = 180;
         const gap = 38; // Increased gap to prevent overlap and make it look cleaner
         
-        let top = hRect.bottom + gap;
+        let top = hRect.bottom + gap + Y_OFFSET;
         let left = hRect.left + (hRect.width / 2) - (tooltipWidth / 2);
         let placement: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
 
@@ -223,7 +227,7 @@ export default function CreatorDashboardTour({
 
         // If elements are near bottom of viewport, show tooltip above
         if (hRect.bottom + tooltipHeight + gap > window.innerHeight) {
-          top = hRect.top - tooltipHeight - gap;
+          top = hRect.top - tooltipHeight - gap + Y_OFFSET;
           placement = 'top';
         }
 
@@ -400,7 +404,7 @@ export default function CreatorDashboardTour({
             <rect width="100%" height="100%" fill="white" />
             <rect
               x={targetRect.left - 12}
-              y={targetRect.top - 12}
+              y={targetRect.top - 12 + Y_OFFSET}
               width={targetRect.width + 24}
               height={targetRect.height + 24}
               rx={12}
@@ -420,7 +424,7 @@ export default function CreatorDashboardTour({
       <div
         className="absolute border-2 border-indigo-400 rounded-xl animate-pulse pointer-events-none z-[10000]"
         style={{
-          top: targetRect.top - 14,
+          top: targetRect.top - 14 + Y_OFFSET,
           left: targetRect.left - 14,
           width: targetRect.width + 28,
           height: targetRect.height + 28,
@@ -469,7 +473,7 @@ export default function CreatorDashboardTour({
         <div
           className="absolute pointer-events-none z-[10002] animate-bounce"
           style={{
-            top: pointerRect.top + (pointerRect.height / 2),
+            top: pointerRect.top + (pointerRect.height / 2) + Y_OFFSET,
             left: pointerRect.left + (pointerRect.width / 2),
             transform: 'translate(-50%, -50%)'
           }}
