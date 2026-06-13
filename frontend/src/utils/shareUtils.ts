@@ -1,5 +1,10 @@
 export const shareTest = async (test: any) => {
-    const slugUrl = test.slug ? `${window.location.origin}/test/${test.slug}` : null;
+    const isConducted = !!test.settings?.conduct_exam?.enabled;
+    const conductSlug = isConducted ? (test.settings?.conduct_exam?.conduct_slug || test.slug) : null;
+    const slugUrl = isConducted 
+        ? (conductSlug ? `${window.location.origin}/test/${conductSlug}` : null)
+        : (test.slug ? `${window.location.origin}/test/${test.slug}` : null);
+    
     const idUrl = `${window.location.origin}/test-intro/${test.id}`;
     const primaryUrl = slugUrl || idUrl;
 
@@ -8,7 +13,7 @@ export const shareTest = async (test: any) => {
 Practice now:
 ${primaryUrl}`;
 
-    if (slugUrl) {
+    if (slugUrl && !isConducted) {
         message += `\n\nIf above link doesn't work, use this:
 ${idUrl}`;
     }
