@@ -94,7 +94,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         }
 
         loadFullTest();
-    }, [test]);
+    }, [test.id]);
 
     const handleSave = async (forceSave: boolean = false) => {
         // If overridePremium (admin) is true, skip check
