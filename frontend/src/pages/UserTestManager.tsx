@@ -51,7 +51,6 @@ import { Trash2, MoreVertical, Check, FileText } from 'lucide-react';
 // YouTube-style lazy loading imports
 import { UserTestCard } from '@/components/UserTestCard';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
-import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import CreatorDashboardTour from '@/components/CreatorDashboardTour';
 
 const isProctoringEnabled = (test: any) => {
@@ -188,18 +187,7 @@ export default function UserTestManager() {
         }
     };
 
-    // YouTube-style lazy loading
-    const {
-        registerSkeleton,
-        isItemRendered,
-        getRenderedItem,
-        renderedCount,
-        totalCount,
-        isComplete
-    } = useYouTubeStyleRender(tests, testsLoading, {
-        rootMargin: '100px',
-        threshold: 0.1
-    });
+    // YouTube-style lazy loading is disabled here as backend pagination handles data loading efficiently
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -1000,61 +988,46 @@ export default function UserTestManager() {
                     ═══════════════════════════════════════════════ */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {testsLoading && tests.length === 0 ? (
-                            <div className="col-span-full text-center py-10">
-                                <Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" />
-                                <p className="text-muted-foreground mt-2 text-sm">Loading your tests...</p>
-                            </div>
+                            <>
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <TestCardSkeleton key={i} />
+                                ))}
+                            </>
                         ) : tests.length === 0 ? (
                             <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
                                 You haven't generated any tests yet.
                             </div>
                         ) : (
                             <>
-                                {tests.map((test) => {
-                                    const testId = test.id;
-                                    const isRendered = isItemRendered(testId);
-
-                                    if (isRendered) {
-                                        return (
-                                            <UserTestCard
-                                                key={testId}
-                                                test={test}
-                                                classes={classes}
-                                                onEdit={openTestEditor}
-                                                onConfigure={setConfiguringTest}
-                                                onDelete={handleDeleteTest}
-                                                onVisibilityChange={handleVisibilityChange}
-                                                onShare={handleShare}
-                                                onUploadSolutions={handleUploadSolutions}
-                                                onClassChange={handleClassChange}
-                                                getVisibilityColor={getVisibilityColor}
-                                                getVisibilityIcon={getVisibilityIcon}
-                                                onViewResults={(t) => setViewingResultsTest(t)}
-                                                onView={(t) => {
-                                                    if (t.settings?.conduct_exam?.enabled) {
-                                                        const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
-                                                        navigate(`/test/${conductSlug}`);
-                                                    } else if (t.visibility === 'private' || !t.is_public) {
-                                                        navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
-                                                    } else {
-                                                        navigate(`/test-intro/${t.id}`);
-                                                    }
-                                                }}
-                                                onConductExam={handleConductExam}
-                                                showEnvPopup={showEnvPopupTestId === test.id}
-                                            />
-                                        );
-                                    } else {
-                                        return (
-                                            <div
-                                                key={testId}
-                                                ref={(el) => registerSkeleton(testId, el)}
-                                            >
-                                                <TestCardSkeleton />
-                                            </div>
-                                        );
-                                    }
-                                })}
+                                {tests.map((test) => (
+                                    <UserTestCard
+                                        key={test.id}
+                                        test={test}
+                                        classes={classes}
+                                        onEdit={openTestEditor}
+                                        onConfigure={setConfiguringTest}
+                                        onDelete={handleDeleteTest}
+                                        onVisibilityChange={handleVisibilityChange}
+                                        onShare={handleShare}
+                                        onUploadSolutions={handleUploadSolutions}
+                                        onClassChange={handleClassChange}
+                                        getVisibilityColor={getVisibilityColor}
+                                        getVisibilityIcon={getVisibilityIcon}
+                                        onViewResults={(t) => setViewingResultsTest(t)}
+                                        onView={(t) => {
+                                            if (t.settings?.conduct_exam?.enabled) {
+                                                const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
+                                                navigate(`/test/${conductSlug}`);
+                                            } else if (t.visibility === 'private' || !t.is_public) {
+                                                navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
+                                            } else {
+                                                navigate(`/test-intro/${t.id}`);
+                                            }
+                                        }}
+                                        onConductExam={handleConductExam}
+                                        showEnvPopup={showEnvPopupTestId === test.id}
+                                    />
+                                ))}
                             </>
                         )}
                     </div>
