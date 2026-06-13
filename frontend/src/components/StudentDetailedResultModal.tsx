@@ -189,30 +189,30 @@ export default function StudentDetailedResultModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-slate-900 border-slate-800 text-white rounded-xl shadow-2xl">
+            <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl shadow-2xl">
                 {/* ── Header ── */}
-                <div className="relative bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 px-6 py-5 border-b border-slate-800 flex-shrink-0">
+                <div className="relative bg-gradient-to-r from-slate-50 via-white to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                        className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                         <X className="h-5 w-5" />
                     </button>
                     <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Detailed Student Result</span>
-                        <h2 className="text-xl font-bold text-white mt-1 leading-tight">{name}</h2>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400">Detailed Student Result</span>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1 leading-tight">{name}</h2>
                         {attempt.user?.email && (
-                            <p className="text-xs text-slate-400 mt-0.5">{attempt.user.email}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{attempt.user.email}</p>
                         )}
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
                             {attempt.metadata?.startedAt && (
-                                <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                                    <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                    <Clock className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
                                     <span>Started: {format(new Date(attempt.metadata.startedAt), 'MMM d, yyyy · hh:mm a')}</span>
                                 </p>
                             )}
-                            <p className="text-xs text-slate-400 flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
                                 <span>Submitted: {format(dateObj, 'MMM d, yyyy · hh:mm a')}</span>
                             </p>
                         </div>
@@ -220,9 +220,9 @@ export default function StudentDetailedResultModal({
 
                     {/* Metadata form details */}
                     {otherDetails.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-800/80">
+                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
                             {otherDetails.map(([k, v]) => (
-                                <Badge key={k} variant="outline" className="bg-slate-950/40 border-slate-800 text-[10px] text-slate-300 font-semibold px-2 py-0.5">
+                                <Badge key={k} variant="outline" className="bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-[10px] text-slate-600 dark:text-slate-300 font-semibold px-2 py-0.5">
                                     <span className="opacity-60 mr-1">{k}:</span> {String(v)}
                                 </Badge>
                             ))}
@@ -231,7 +231,7 @@ export default function StudentDetailedResultModal({
                 </div>
 
                 {/* ── Tab Selector ── */}
-                <div className="flex gap-1 bg-slate-950/60 p-1 border-b border-slate-800 flex-shrink-0">
+                <div className="flex gap-1 bg-slate-50 dark:bg-slate-950/60 p-1 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
                     {[
                         { key: 'overview', label: 'Overview' },
                         { key: 'topics', label: 'Topic Performance' },
@@ -241,8 +241,8 @@ export default function StudentDetailedResultModal({
                             key={key}
                             className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                                 activeTab === key
-                                    ? 'bg-slate-800 text-indigo-400 shadow-sm'
-                                    : 'text-slate-400 hover:text-slate-200'
+                                    ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                             }`}
                             onClick={() => setActiveTab(key as any)}
                         >
@@ -252,7 +252,7 @@ export default function StudentDetailedResultModal({
                 </div>
 
                 {/* ── Content ── */}
-                <div className="flex-1 overflow-y-auto p-6 bg-slate-900">
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-3">
                             <Loader2 className="animate-spin h-8 w-8 text-indigo-500" />
@@ -262,7 +262,7 @@ export default function StudentDetailedResultModal({
                         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
                             <XCircle className="h-10 w-10 text-red-500" />
                             <div>
-                                <p className="text-sm font-bold text-slate-300">Failed to analyze result</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-300">Failed to analyze result</p>
                                 <p className="text-xs text-slate-500 mt-1">{error}</p>
                             </div>
                         </div>
@@ -273,27 +273,27 @@ export default function StudentDetailedResultModal({
                                 <div className="space-y-6">
                                     {/* Score Summary Cards */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <Card className="bg-slate-950 border-slate-800 text-white md:col-span-2 shadow-lg">
+                                        <Card className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white md:col-span-2 shadow-lg">
                                             <CardContent className="p-5 flex flex-col justify-between h-full">
                                                 <div>
-                                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Total Marks Obtained</h3>
+                                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Marks Obtained</h3>
                                                     <div className="flex items-end gap-3 mt-3">
                                                         <div>
-                                                            <span className="text-4xl font-black text-indigo-400">{parseFloat((finalScore || 0).toFixed(2))}</span>
-                                                            <span className="text-lg text-slate-400 font-semibold">/{totalMaxMarks || 0}</span>
+                                                            <span className="text-4xl font-black text-indigo-500 dark:text-indigo-400">{parseFloat((finalScore || 0).toFixed(2))}</span>
+                                                            <span className="text-lg text-slate-500 dark:text-slate-400 font-semibold">/{totalMaxMarks || 0}</span>
                                                         </div>
-                                                        <Badge className="bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold px-2 py-1 mb-1">
+                                                        <Badge className="bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs font-bold px-2 py-1 mb-1">
                                                             {parseFloat(Number(percentage || 0).toFixed(2))}% Score
                                                         </Badge>
                                                     </div>
                                                 </div>
 
                                                 {mergedSectionData && mergedSectionData.length > 0 && (
-                                                    <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-800">
+                                                    <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                                                         {mergedSectionData.map((m: any) => (
-                                                            <div key={m.label} className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
-                                                                <span className="text-[10px] font-bold text-slate-400">{m.label}</span>
-                                                                <span className="text-xs font-black text-white">
+                                                            <div key={m.label} className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                                                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{m.label}</span>
+                                                                <span className="text-xs font-black text-slate-700 dark:text-white">
                                                                     {parseFloat((m.score || 0).toFixed(2))}/{m.maxScore}
                                                                 </span>
                                                             </div>
@@ -303,23 +303,23 @@ export default function StudentDetailedResultModal({
                                             </CardContent>
                                         </Card>
 
-                                        <Card className="bg-slate-950 border-slate-800 text-white shadow-lg">
+                                        <Card className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white shadow-lg">
                                             <CardContent className="p-4 grid grid-cols-2 gap-2.5 h-full">
-                                                <div className="flex flex-col items-center justify-center p-2.5 bg-emerald-950/20 border border-emerald-900/40 rounded-lg text-center">
-                                                    <span className="text-xl font-bold text-emerald-400">{correctCount}</span>
-                                                    <span className="text-[8px] font-black text-emerald-500 uppercase tracking-wide mt-0.5">Correct</span>
+                                                <div className="flex flex-col items-center justify-center p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 rounded-lg text-center">
+                                                    <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{correctCount}</span>
+                                                    <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-wide mt-0.5">Correct</span>
                                                 </div>
-                                                <div className="flex flex-col items-center justify-center p-2.5 bg-red-950/20 border border-red-900/40 rounded-lg text-center">
-                                                    <span className="text-xl font-bold text-red-400">{wrongCount}</span>
-                                                    <span className="text-[8px] font-black text-red-500 uppercase tracking-wide mt-0.5">Wrong</span>
+                                                <div className="flex flex-col items-center justify-center p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-lg text-center">
+                                                    <span className="text-xl font-bold text-red-600 dark:text-red-400">{wrongCount}</span>
+                                                    <span className="text-[8px] font-black text-red-600 dark:text-red-500 uppercase tracking-wide mt-0.5">Wrong</span>
                                                 </div>
-                                                <div className="flex flex-col items-center justify-center p-2.5 bg-blue-950/20 border border-blue-900/40 rounded-lg text-center">
-                                                    <span className="text-xl font-bold text-blue-400">{partialCount}</span>
-                                                    <span className="text-[8px] font-black text-blue-500 uppercase tracking-wide mt-0.5">Partial</span>
+                                                <div className="flex flex-col items-center justify-center p-2.5 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 rounded-lg text-center">
+                                                    <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{partialCount}</span>
+                                                    <span className="text-[8px] font-black text-blue-600 dark:text-blue-500 uppercase tracking-wide mt-0.5">Partial</span>
                                                 </div>
-                                                <div className="flex flex-col items-center justify-center p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-center">
-                                                    <span className="text-xl font-bold text-slate-400">{skippedCount}</span>
-                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-wide mt-0.5">Skipped</span>
+                                                <div className="flex flex-col items-center justify-center p-2.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-center">
+                                                    <span className="text-xl font-bold text-slate-600 dark:text-slate-400">{skippedCount}</span>
+                                                    <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-0.5">Skipped</span>
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -328,40 +328,40 @@ export default function StudentDetailedResultModal({
                                     {/* Subject Wise Analysis */}
                                     {test?.enable_section_mode && Object.keys(sectionData || {}).length > 0 && (
                                         <div className="space-y-3">
-                                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                                                <Target className="w-4 h-4 text-indigo-400" /> Subject Breakdown
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                                <Target className="w-4 h-4 text-indigo-500 dark:text-indigo-400" /> Subject Breakdown
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {Object.values(sectionData).map((sec: any) => (
-                                                    <Card key={sec.name} className="bg-slate-950 border-slate-800 text-white">
-                                                        <CardHeader className="py-3 px-4 border-b border-slate-800/60">
-                                                            <CardTitle className="text-xs font-bold flex justify-between items-center text-slate-200">
+                                                    <Card key={sec.name} className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
+                                                        <CardHeader className="py-3 px-4 border-b border-slate-100 dark:border-slate-800/60">
+                                                            <CardTitle className="text-xs font-bold flex justify-between items-center text-slate-700 dark:text-slate-200">
                                                                 {sec.name}
-                                                                <span className="text-[9px] font-bold px-2 py-0.5 bg-slate-900 border border-slate-800 rounded-full text-slate-400">
+                                                                <span className="text-[9px] font-bold px-2 py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-full text-slate-500 dark:text-slate-400">
                                                                     {sec.totalQ} Qs
                                                                 </span>
                                                             </CardTitle>
                                                         </CardHeader>
                                                         <CardContent className="p-4 space-y-3">
-                                                            <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-2.5 rounded-lg">
+                                                            <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-lg">
                                                                 <span className="text-[10px] font-bold text-slate-500 uppercase">Score</span>
-                                                                <span className="text-sm font-black text-indigo-400">
+                                                                <span className="text-sm font-black text-indigo-500 dark:text-indigo-400">
                                                                     {parseFloat((sec.score || 0).toFixed(2))}
-                                                                    <span className="text-xs text-slate-500 font-medium ml-1">/ {sec.maxScore || 0}</span>
+                                                                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium ml-1">/ {sec.maxScore || 0}</span>
                                                                 </span>
                                                             </div>
                                                             <div className="grid grid-cols-3 gap-2">
-                                                                <div className="flex flex-col items-center bg-emerald-950/10 border border-emerald-900/30 p-1.5 rounded">
-                                                                    <span className="text-xs font-bold text-emerald-400">{sec.correct}</span>
-                                                                    <span className="text-[7px] font-black text-emerald-500 uppercase mt-0.5">Correct</span>
+                                                                <div className="flex flex-col items-center bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 p-1.5 rounded">
+                                                                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{sec.correct}</span>
+                                                                    <span className="text-[7px] font-black text-emerald-600 dark:text-emerald-500 uppercase mt-0.5">Correct</span>
                                                                 </div>
-                                                                <div className="flex flex-col items-center bg-red-950/10 border border-red-900/30 p-1.5 rounded">
-                                                                    <span className="text-xs font-bold text-red-400">{sec.wrong}</span>
-                                                                    <span className="text-[7px] font-black text-red-500 uppercase mt-0.5">Wrong</span>
+                                                                <div className="flex flex-col items-center bg-red-50 dark:bg-red-950/10 border border-red-100 dark:border-red-900/30 p-1.5 rounded">
+                                                                    <span className="text-xs font-bold text-red-600 dark:text-red-400">{sec.wrong}</span>
+                                                                    <span className="text-[7px] font-black text-red-600 dark:text-red-500 uppercase mt-0.5">Wrong</span>
                                                                 </div>
-                                                                <div className="flex flex-col items-center bg-slate-900 border border-slate-800 p-1.5 rounded">
-                                                                    <span className="text-xs font-bold text-slate-400">{sec.skipped}</span>
-                                                                    <span className="text-[7px] font-black text-slate-400 uppercase mt-0.5">Skipped</span>
+                                                                <div className="flex flex-col items-center bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-1.5 rounded">
+                                                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{sec.skipped}</span>
+                                                                    <span className="text-[7px] font-black text-slate-500 dark:text-slate-400 uppercase mt-0.5">Skipped</span>
                                                                 </div>
                                                             </div>
                                                         </CardContent>
@@ -379,12 +379,12 @@ export default function StudentDetailedResultModal({
                                     {topicData && topicData.length > 0 ? (
                                         <div className="space-y-5">
                                             {/* Topic Chart */}
-                                            <Card className="bg-slate-950 border-slate-800 text-white p-4 shadow-lg">
-                                                <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-4 px-2">Topic Analysis (%)</h4>
+                                            <Card className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white p-4 shadow-lg">
+                                                <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4 px-2">Topic Analysis (%)</h4>
                                                 <div className="h-[260px] w-full">
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <BarChart data={topicData} layout="vertical" margin={{ left: 10, right: 10, top: 0, bottom: 0 }}>
-                                                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#1e293b" />
+                                                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="stroke-slate-200 dark:stroke-slate-800" stroke="currentColor" opacity={0.3} />
                                                             <XAxis type="number" domain={[0, 100]} hide />
                                                             <YAxis
                                                                 dataKey="name"
@@ -395,25 +395,25 @@ export default function StudentDetailedResultModal({
                                                                 tickLine={false}
                                                             />
                                                             <Tooltip
-                                                                cursor={{ fill: '#1e293b', radius: 4 }}
+                                                                cursor={{ fill: document.documentElement.classList.contains('dark') ? '#1e293b' : '#f1f5f9', radius: 4 }}
                                                                 content={({ active, payload }) => {
                                                                     if (active && payload && payload.length) {
                                                                         const data = payload[0].payload;
                                                                         return (
-                                                                            <div className="bg-slate-900 border border-slate-800 p-3 shadow-xl rounded-lg min-w-[150px]">
-                                                                                <p className="font-bold text-white mb-2 text-xs">{data.name}</p>
+                                                                            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 shadow-xl rounded-lg min-w-[150px] text-slate-900 dark:text-white">
+                                                                                <p className="font-bold text-slate-900 dark:text-white mb-2 text-xs">{data.name}</p>
                                                                                 <div className="space-y-1 text-[10px]">
                                                                                     <div className="flex justify-between">
-                                                                                        <span className="text-slate-400">Score:</span>
-                                                                                        <span className="font-bold text-indigo-400">{data.score} / {data.maxScore}</span>
+                                                                                        <span className="text-slate-500 dark:text-slate-400">Score:</span>
+                                                                                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{data.score} / {data.maxScore}</span>
                                                                                     </div>
                                                                                     <div className="flex justify-between">
-                                                                                        <span className="text-slate-400">Correct:</span>
-                                                                                        <span className="font-bold text-emerald-400">{data.correct}</span>
+                                                                                        <span className="text-slate-500 dark:text-slate-400">Correct:</span>
+                                                                                        <span className="font-bold text-emerald-600 dark:text-emerald-400">{data.correct}</span>
                                                                                     </div>
                                                                                     <div className="flex justify-between">
-                                                                                        <span className="text-slate-400">Wrong:</span>
-                                                                                        <span className="font-bold text-red-400">{data.wrong}</span>
+                                                                                        <span className="text-slate-500 dark:text-slate-400">Wrong:</span>
+                                                                                        <span className="font-bold text-red-600 dark:text-red-400">{data.wrong}</span>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -440,11 +440,11 @@ export default function StudentDetailedResultModal({
                                                 {topicData.map((topic: any) => {
                                                     const perfColor = topic.performance === 'Strong' ? 'emerald' : topic.performance === 'Moderate' ? 'amber' : 'red';
                                                     return (
-                                                        <Card key={topic.name} className="bg-slate-950 border-slate-800 text-white overflow-hidden shadow-md">
+                                                        <Card key={topic.name} className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white overflow-hidden shadow-md">
                                                             <div className={`h-1 w-full bg-${perfColor}-500`} />
                                                             <CardContent className="p-4 space-y-3">
                                                                 <div className="flex justify-between items-start gap-2">
-                                                                    <h5 className="font-bold text-sm text-slate-200 line-clamp-1">{topic.name}</h5>
+                                                                    <h5 className="font-bold text-sm text-slate-800 dark:text-slate-200 line-clamp-1">{topic.name}</h5>
                                                                     <Badge className={`text-[8px] uppercase tracking-wide font-black px-1.5 h-4 
                                                                         ${topic.performance === 'Strong' ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/50' : 
                                                                           topic.performance === 'Moderate' ? 'bg-amber-950/40 text-amber-400 border border-amber-900/50' : 
@@ -456,21 +456,21 @@ export default function StudentDetailedResultModal({
 
                                                                 <div className="flex justify-between items-end">
                                                                     <div>
-                                                                        <div className="text-lg font-black text-white leading-none">
+                                                                        <div className="text-lg font-black text-slate-800 dark:text-white leading-none">
                                                                             {parseFloat((topic.score || 0).toFixed(2))}
-                                                                            <span className="text-[10px] text-slate-400 font-medium ml-0.5">/{topic.maxScore}</span>
+                                                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium ml-0.5">/{topic.maxScore}</span>
                                                                         </div>
                                                                         <span className="text-[9px] text-slate-500 mt-1 block uppercase tracking-wider">{topic.count} Questions</span>
                                                                     </div>
 
                                                                     <div className="flex gap-1.5">
-                                                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded bg-emerald-950/20 border border-emerald-900/40">
-                                                                            <span className="text-xs font-bold text-emerald-400 leading-none">{topic.correct}</span>
-                                                                            <span className="text-[6px] text-emerald-500 uppercase mt-0.5">Hit</span>
+                                                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                                                                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 leading-none">{topic.correct}</span>
+                                                                            <span className="text-[6px] text-emerald-600 dark:text-emerald-500 uppercase mt-0.5">Hit</span>
                                                                         </div>
-                                                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded bg-red-950/20 border border-red-900/40">
-                                                                            <span className="text-xs font-bold text-red-400 leading-none">{topic.wrong}</span>
-                                                                            <span className="text-[6px] text-red-500 uppercase mt-0.5">Miss</span>
+                                                                        <div className="flex flex-col items-center justify-center w-8 h-8 rounded bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40">
+                                                                            <span className="text-xs font-bold text-red-600 dark:text-red-400 leading-none">{topic.wrong}</span>
+                                                                            <span className="text-[6px] text-red-600 dark:text-red-500 uppercase mt-0.5">Miss</span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -492,7 +492,7 @@ export default function StudentDetailedResultModal({
                             {/* Questions Tab */}
                             {activeTab === 'questions' && (
                                 <div className="space-y-4">
-                                    <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+                                    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg">
                                         <Accordion type="single" collapsible className="w-full">
                                             {allQuestions.map((q: any, index: number) => {
                                                 const ans = attempt.answers?.[q.id];
@@ -521,42 +521,42 @@ export default function StudentDetailedResultModal({
                                                     <AccordionItem
                                                         key={q.id}
                                                         value={`item-${q.id}`}
-                                                        className="border-b border-slate-800 px-4 py-1 data-[state=open]:bg-slate-900/50"
+                                                        className="border-b border-slate-200 dark:border-slate-800 px-4 py-1 data-[state=open]:bg-slate-50/50 dark:data-[state=open]:bg-slate-900/50"
                                                     >
                                                         <AccordionTrigger className="hover:no-underline py-3">
                                                             <div className="flex items-center gap-3.5 text-left w-full">
                                                                 <div className={`
                                                                     flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center border text-xs font-bold
-                                                                    ${isCorrect ? 'bg-emerald-950/45 text-emerald-400 border-emerald-900/40' : ''}
-                                                                    ${isWrong ? 'bg-red-950/45 text-red-400 border-red-900/40' : ''}
-                                                                    ${isSkipped ? 'bg-slate-800 text-slate-400 border-slate-700' : ''}
-                                                                    ${isPartial ? 'bg-blue-950/45 text-blue-400 border-blue-900/40' : ''}
+                                                                    ${isCorrect ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/40' : ''}
+                                                                    ${isWrong ? 'bg-red-50 dark:bg-red-950/45 text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/40' : ''}
+                                                                    ${isSkipped ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' : ''}
+                                                                    ${isPartial ? 'bg-blue-50 dark:bg-blue-950/45 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/40' : ''}
                                                                 `}>
                                                                     {index + 1}
                                                                 </div>
 
                                                                 <div className="flex-1 min-w-0 h-5 relative overflow-hidden flex items-center">
-                                                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap [&_*]:!inline [&_.math]:!inline-block [&_p]:!m-0 [&_span]:!whitespace-nowrap text-slate-300 pointer-events-none text-xs">
-                                                                        <LatexRenderer className="!text-slate-300">{q.question || ""}</LatexRenderer>
+                                                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap [&_*]:!inline [&_.math]:!inline-block [&_p]:!m-0 [&_span]:!whitespace-nowrap text-slate-600 dark:text-slate-300 pointer-events-none text-xs">
+                                                                        <LatexRenderer className="text-slate-600 dark:text-slate-300">{q.question || ""}</LatexRenderer>
                                                                     </div>
-                                                                    <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none z-10" />
+                                                                    <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white dark:from-slate-950 to-transparent pointer-events-none z-10" />
                                                                 </div>
 
                                                                 <div className="mr-2 flex items-center gap-3">
-                                                                    <span className={`text-xs font-bold ${qStats.score > 0 ? 'text-emerald-400' : qStats.score < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                                                                    <span className={`text-xs font-bold ${qStats.score > 0 ? 'text-emerald-600 dark:text-emerald-400' : qStats.score < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
                                                                         {parseFloat((qStats.score || 0).toFixed(2))} / {marks}
                                                                     </span>
-                                                                    {isCorrect && <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-black h-5">Correct</Badge>}
-                                                                    {isWrong && <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 text-[9px] font-black h-5">Wrong</Badge>}
-                                                                    {isPartial && <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[9px] font-black h-5">Partial</Badge>}
-                                                                    {isSkipped && <Badge className="bg-slate-800 text-slate-400 border border-slate-700 text-[9px] font-black h-5">Skipped</Badge>}
+                                                                    {isCorrect && <Badge className="bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 text-[9px] font-black h-5">Correct</Badge>}
+                                                                    {isWrong && <Badge className="bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 text-[9px] font-black h-5">Wrong</Badge>}
+                                                                    {isPartial && <Badge className="bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 text-[9px] font-black h-5">Partial</Badge>}
+                                                                    {isSkipped && <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-[9px] font-black h-5">Skipped</Badge>}
                                                                 </div>
                                                             </div>
                                                         </AccordionTrigger>
 
-                                                        <AccordionContent className="pb-4 space-y-4 pt-1 border-t border-slate-800/40">
-                                                            <div className="text-sm font-medium text-slate-200 border-l-2 border-indigo-500 pl-3 py-1 overflow-x-auto max-w-full custom-scrollbar">
-                                                                <LatexRenderer className="!text-slate-200">{q.question || ""}</LatexRenderer>
+                                                        <AccordionContent className="pb-4 space-y-4 pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                                                            <div className="text-sm font-medium text-slate-800 dark:text-slate-200 border-l-2 border-indigo-500 pl-3 py-1 overflow-x-auto max-w-full custom-scrollbar">
+                                                                <LatexRenderer className="text-slate-800 dark:text-slate-200">{q.question || ""}</LatexRenderer>
                                                             </div>
 
                                                             {q.image && (
@@ -565,19 +565,19 @@ export default function StudentDetailedResultModal({
                                                                         src={(q.image || "").trim()}
                                                                         alt={`Question ${index + 1}`}
                                                                         referrerPolicy="no-referrer"
-                                                                        className="max-w-full max-h-[200px] rounded border border-slate-800 object-contain bg-slate-950"
+                                                                        className="max-w-full max-h-[200px] rounded border border-slate-200 dark:border-slate-800 object-contain bg-slate-50 dark:bg-slate-950"
                                                                     />
                                                                 </div>
                                                             )}
 
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                 <div className={`p-3 rounded border overflow-x-auto max-w-full custom-scrollbar 
-                                                                    ${isCorrect ? 'bg-emerald-950/15 border-emerald-900/40' : 
-                                                                      isWrong ? 'bg-red-950/15 border-red-900/40' : 
-                                                                      'bg-slate-950 border-slate-800'}`}
+                                                                    ${isCorrect ? 'bg-emerald-50/30 dark:bg-emerald-950/15 border-emerald-200/50 dark:border-emerald-900/40' : 
+                                                                      isWrong ? 'bg-red-50/30 dark:bg-red-950/15 border-red-200/50 dark:border-red-900/40' : 
+                                                                      'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'}`}
                                                                 >
-                                                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Student Answer</span>
-                                                                    <div className={`font-semibold text-xs ${isCorrect ? 'text-emerald-400' : isWrong ? 'text-red-400' : 'text-slate-400'}`}>
+                                                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">Student Answer</span>
+                                                                    <div className={`font-semibold text-xs ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : isWrong ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
                                                                         {ans ? (
                                                                             <div className="flex flex-col gap-1">
                                                                                 <span>
@@ -587,14 +587,14 @@ export default function StudentDetailedResultModal({
                                                                                             ? (ans as string[]).join(', ')
                                                                                             : `${ans}) `
                                                                                     }
-                                                                                    {q.type !== 'numerical' && !Array.isArray(ans) && <LatexRenderer className={isCorrect ? "!text-emerald-400" : isWrong ? "!text-red-400" : "!text-slate-400"}>{q.options?.[ans] || ""}</LatexRenderer>}
+                                                                                    {q.type !== 'numerical' && !Array.isArray(ans) && <LatexRenderer className={isCorrect ? "text-emerald-600 dark:text-emerald-400" : isWrong ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400"}>{q.options?.[ans] || ""}</LatexRenderer>}
                                                                                 </span>
                                                                                 {q.type !== 'numerical' && !Array.isArray(ans) && q.optionImages?.[ans] && (
                                                                                     <img
                                                                                         src={q.optionImages[ans].trim()}
                                                                                         alt="Student Answer"
                                                                                         referrerPolicy="no-referrer"
-                                                                                        className="max-h-[80px] w-auto rounded border border-slate-800 bg-slate-950 mt-1"
+                                                                                        className="max-h-[80px] w-auto rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 mt-1"
                                                                                     />
                                                                                 )}
                                                                             </div>
@@ -602,9 +602,9 @@ export default function StudentDetailedResultModal({
                                                                     </div>
                                                                 </div>
 
-                                                                <div className="p-3 rounded border bg-blue-950/10 border-blue-900/30 overflow-x-auto max-w-full custom-scrollbar">
-                                                                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400 block mb-1">Correct Answer</span>
-                                                                    <div className="font-semibold text-indigo-300 text-xs flex flex-col gap-1">
+                                                                <div className="p-3 rounded border bg-blue-50/30 dark:bg-blue-950/10 border-blue-200/50 dark:border-blue-900/30 overflow-x-auto max-w-full custom-scrollbar">
+                                                                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500 dark:text-indigo-400 block mb-1">Correct Answer</span>
+                                                                    <div className="font-semibold text-indigo-600 dark:text-indigo-300 text-xs flex flex-col gap-1">
                                                                         <span>
                                                                             {q.type === 'numerical' ? (
                                                                                 `Between ${(q.correctAnswer as any).min} and ${(q.correctAnswer as any).max}`
@@ -613,14 +613,14 @@ export default function StudentDetailedResultModal({
                                                                             ) : (
                                                                                 `${q.correctAnswer}) `
                                                                             )}
-                                                                            {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer className="!text-indigo-300">{q.options?.[q.correctAnswer as string] || ""}</LatexRenderer>}
+                                                                            {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer className="text-indigo-600 dark:text-indigo-300">{q.options?.[q.correctAnswer as string] || ""}</LatexRenderer>}
                                                                         </span>
                                                                         {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                                                             <img
                                                                                 src={q.optionImages[q.correctAnswer as string].trim()}
                                                                                 alt="Correct Answer"
                                                                                 referrerPolicy="no-referrer"
-                                                                                className="max-h-[80px] w-auto rounded border border-slate-800 bg-slate-950 mt-1"
+                                                                                className="max-h-[80px] w-auto rounded border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 mt-1"
                                                                             />
                                                                         )}
                                                                     </div>
@@ -639,8 +639,8 @@ export default function StudentDetailedResultModal({
                 </div>
 
                 {/* ── Footer ── */}
-                <div className="px-6 py-4 bg-slate-950/80 border-t border-slate-800 flex justify-end gap-2 flex-shrink-0">
-                    <Button variant="outline" onClick={onClose} className="border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white text-xs h-9">
+                <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2 flex-shrink-0">
+                    <Button variant="outline" onClick={onClose} className="border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs h-9">
                         Close
                     </Button>
                 </div>
