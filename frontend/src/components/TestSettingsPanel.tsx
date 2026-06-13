@@ -730,7 +730,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     <TabsTrigger id="tour-tab-proctoring" value="proctoring" className="flex gap-2"><Shield className="w-4 h-4" /> Proctoring & Security</TabsTrigger>
                                     <TabsTrigger id="tour-tab-access" value="access" className="flex gap-2"><Lock className="w-4 h-4" /> Access & Control</TabsTrigger>
                                     <TabsTrigger id="tour-tab-results" value="results" className="flex gap-2"><Eye className="w-4 h-4" /> Results & Timing</TabsTrigger>
-                                    <TabsTrigger value="ai" className="flex gap-2"><Sparkles className="w-4 h-4" /> AI Utilities</TabsTrigger>
+                                    <TabsTrigger value="ai" className="flex gap-2 opacity-40 cursor-not-allowed pointer-events-none" disabled><Sparkles className="w-4 h-4" /> AI Utilities</TabsTrigger>
                                 </TabsList>
                             </div>
 
