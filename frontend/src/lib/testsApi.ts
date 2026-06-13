@@ -309,17 +309,21 @@ export async function fetchTests(options?: {
 
 export async function fetchTestsByCreator(
     userId: string,
-    options?: { searchQuery?: string; signal?: AbortSignal; idsOnly?: boolean; profileView?: boolean }
+    options?: { page?: number; limit?: number; searchQuery?: string; signal?: AbortSignal; idsOnly?: boolean; profileView?: boolean }
 ) {
-    const { searchQuery = '', signal, idsOnly = false, profileView = false } = options || {};
+    const { page, limit, searchQuery = '', signal, idsOnly = false, profileView = false } = options || {};
     const maxRetries = 1;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const response = await apiClient.get(`tests/user/${userId}`, {
-                params: { search_query: searchQuery, ids_only: idsOnly, profile_view: profileView },
+                params: { page, limit, search_query: searchQuery, ids_only: idsOnly, profile_view: profileView },
                 signal
             });
+            
+            if (response.data && typeof response.data === 'object' && 'tests' in response.data && 'meta' in response.data) {
+                return { data: response.data.tests, meta: response.data.meta, error: null };
+            }
             return { data: response.data, error: null };
         } catch (error: any) {
             if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') {

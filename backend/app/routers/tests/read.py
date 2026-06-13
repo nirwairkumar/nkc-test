@@ -245,6 +245,8 @@ async def get_user_tests(
     search_query: str = None,
     ids_only: bool = Query(False, description="Faster fetch returning just IDs for progressive loading"),
     profile_view: bool = Query(False, description="When True (public profile page), excludes cloned tests from results"),
+    page: Optional[int] = Query(None, description="Page number for pagination"),
+    limit: Optional[int] = Query(None, description="Limit for pagination"),
     response: Response = None,
     db: Client = Depends(get_db)
 ):
@@ -342,7 +344,19 @@ async def get_user_tests(
             tests_res = query_default.execute()
             tests = tests_res.data
         
+        is_paginated = (page is not None and limit is not None)
+        
         if not tests:
+            if is_paginated:
+                return {
+                    "tests": [],
+                    "meta": {
+                        "page": page,
+                        "limit": limit,
+                        "has_more": False,
+                        "total": 0
+                    }
+                }
             return []
 
         # Filter out templates and user example tests from public creator profiles
@@ -350,13 +364,44 @@ async def get_user_tests(
             tests = [t for t in tests if (t.get("settings") or {}).get("is_example_template") != True and (t.get("settings") or {}).get("is_user_example") != True]
 
         if not tests:
+            if is_paginated:
+                return {
+                    "tests": [],
+                    "meta": {
+                        "page": page,
+                        "limit": limit,
+                        "has_more": False,
+                        "total": 0
+                    }
+                }
             return []
 
-        if ids_only:
-            return [{"id": t["id"], "title": t.get("title"), "created_at": t.get("created_at")} for t in tests]
+        total_tests_count = len(tests)
+        if is_paginated:
+            start = (page - 1) * limit
+            end = start + limit
+            paginated_subset = tests[start:end]
+            has_more = total_tests_count > end
+        else:
+            paginated_subset = tests
+            has_more = False
 
-        # Enrich with categories (Similar logic to feed)
-        test_ids = [t["id"] for t in tests]
+        if ids_only:
+            tiny_tests = [{"id": t["id"], "title": t.get("title"), "created_at": t.get("created_at")} for t in paginated_subset]
+            if is_paginated:
+                return {
+                    "tests": tiny_tests,
+                    "meta": {
+                        "page": page,
+                        "limit": limit,
+                        "has_more": has_more,
+                        "total": total_tests_count
+                    }
+                }
+            return tiny_tests
+
+        # Enrich with categories (Similar logic to feed) — ONLY for the paginated subset!
+        test_ids = [t["id"] for t in paginated_subset]
         
         if test_ids:
             test_cats_res = db.table("test_categories").select("*").in_("test_id", test_ids).execute()
@@ -376,7 +421,7 @@ async def get_user_tests(
                     if cid in all_cats:
                         tests_categories_map[tid].append(all_cats[cid])
                         
-                for t in tests:
+                for t in paginated_subset:
                     t["categories"] = tests_categories_map.get(t["id"], [])
 
         # Fetch Creator Info (User themselves)
@@ -385,7 +430,7 @@ async def get_user_tests(
         creator_info = profile_res.data if profile_res.data else {}
         
         enriched_tests = []
-        for t in tests:
+        for t in paginated_subset:
             # Inject Creator Info
             if creator_info:
                 t["creator_name"] = creator_info.get("full_name")
@@ -394,15 +439,20 @@ async def get_user_tests(
             
             # Ensure likes count is present if not in RPC result
             if 'test_votes' not in t and 'id' in t:
-                 # If RPC was used, we might lack relation data depending on RPC return
-                 # But our RPC returns basic fields. We might need to fetch likes separately or include in RPC.
-                 # For now, let's just do a quick fix if missing, but RPC doesn't return joined data easily.
-                 # Actually, RPC returns columns. We might miss `test_votes` count.
-                 # Optimization: Fetch likes for all these tests
                  pass
 
             enriched_tests.append(t)
             
+        if is_paginated:
+            return {
+                "tests": enriched_tests,
+                "meta": {
+                    "page": page,
+                    "limit": limit,
+                    "has_more": has_more,
+                    "total": total_tests_count
+                }
+            }
         return enriched_tests
 
     except Exception as e:

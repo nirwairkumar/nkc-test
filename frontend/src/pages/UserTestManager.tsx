@@ -98,6 +98,9 @@ export default function UserTestManager() {
     // Tests State
     const [tests, setTests] = useState<any[]>([]);
     const [testsLoading, setTestsLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const observerTarget = React.useRef<HTMLDivElement | null>(null);
     const [isTestEditOpen, setIsTestEditOpen] = useState(false);
     const [editingTest, setEditingTest] = useState<any>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -214,9 +217,41 @@ export default function UserTestManager() {
 
     useEffect(() => {
         if (targetUserId) {
-            loadUserTests();
+            loadUserTests(true);
         }
-    }, [targetUserId, debouncedSearchQuery]);
+    }, [targetUserId]);
+
+    const isFirstSearchRef = React.useRef(true);
+    useEffect(() => {
+        if (isFirstSearchRef.current) {
+            isFirstSearchRef.current = false;
+            return;
+        }
+        if (targetUserId) {
+            loadUserTests(true);
+        }
+    }, [debouncedSearchQuery]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !testsLoading) {
+                    loadUserTests(false);
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [hasMore, testsLoading, loadUserTests]);
 
     const checkCreatorStatus = async () => {
         if (!targetUserId) return;
@@ -249,7 +284,7 @@ export default function UserTestManager() {
         if (data) setCategories(data);
     };
 
-    const loadUserTests = React.useCallback(async () => {
+    const loadUserTests = React.useCallback(async (reset = false) => {
         if (!targetUserId) return;
 
         if (abortControllerRef.current) {
@@ -258,14 +293,28 @@ export default function UserTestManager() {
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
+        const pageToLoad = reset ? 1 : page;
+
         setTestsLoading(true);
         try {
-            const { data, error } = await fetchTestsByUserId(targetUserId, {
+            const { data, meta, error } = await fetchTestsByUserId(targetUserId, {
+                page: pageToLoad,
+                limit: 12,
                 searchQuery: debouncedSearchQuery,
                 signal: controller.signal
             });
             if (error) throw error;
-            setTests(data || []);
+            
+            const fetchedTests = data || [];
+            if (reset) {
+                setTests(fetchedTests);
+                setPage(2);
+                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
+            } else {
+                setTests(prev => [...prev, ...fetchedTests]);
+                setPage(prev => prev + 1);
+                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
+            }
         } catch (error: any) {
             if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
             console.error('Error loading tests:', error);
@@ -275,7 +324,7 @@ export default function UserTestManager() {
                 setTestsLoading(false);
             }
         }
-    }, [targetUserId, debouncedSearchQuery]);
+    }, [targetUserId, debouncedSearchQuery, page]);
 
     const handleDeleteTest = (testId: string, testTitle: string) => {
         setDeleteId(testId);
@@ -947,9 +996,9 @@ export default function UserTestManager() {
                         ALL TESTS GRID
                     ═══════════════════════════════════════════════ */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {testsLoading ? (
+                        {testsLoading && tests.length === 0 ? (
                             <div className="col-span-full text-center py-10">
-                                <Loader2 className="animate-spin mx-auto h-8 w-8" />
+                                <Loader2 className="animate-spin mx-auto h-8 w-8 text-primary" />
                                 <p className="text-muted-foreground mt-2 text-sm">Loading your tests...</p>
                             </div>
                         ) : tests.length === 0 ? (
@@ -1005,16 +1054,19 @@ export default function UserTestManager() {
                                 })}
                             </>
                         )}
-
-                        {/* Progress indicator */}
-                        {!testsLoading && !isComplete && (
-                            <div className="col-span-full py-4 text-center">
-                                <span className="text-sm text-muted-foreground">
-                                    {renderedCount} of {totalCount} tests loaded
-                                </span>
-                            </div>
-                        )}
                     </div>
+
+                    {/* Observer Target for Paginated Infinite Scroll */}
+                    {tests.length > 0 && (
+                        <div ref={observerTarget} className="h-16 w-full flex items-center justify-center mt-6">
+                            {testsLoading && (
+                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                    <Loader2 className="animate-spin h-5 w-5 text-primary" />
+                                    <span>Loading more tests...</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="reports" className="space-y-4 m-0 border-0 p-0">
