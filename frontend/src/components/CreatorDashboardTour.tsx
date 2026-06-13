@@ -26,6 +26,13 @@ export default function CreatorDashboardTour({
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number; placement: 'top' | 'bottom' | 'left' | 'right' }>({ top: 0, left: 0, placement: 'bottom' });
   const requestRef = useRef<number>(0);
   const [clickCount, setClickCount] = useState(0);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      setSettingsSaved(localStorage.getItem(`tour_save_completed_${userId}`) === 'true');
+    }
+  }, [userId]);
 
   // Listen to global clicks to trigger step evaluation on tab switches
   useEffect(() => {
@@ -73,7 +80,7 @@ export default function CreatorDashboardTour({
         
         if (linkCopied || tourCompleted) {
           setCurrentStep(0); // Finished
-        } else if (localStorage.getItem(getUserKey('tour_save_completed')) === 'true') {
+        } else if (settingsSaved) {
           setCurrentStep(11); // Step 11: Highlight Copy Link button
         } else {
           setCurrentStep(3); // Step 3: Highlight Settings in active test
@@ -114,7 +121,7 @@ export default function CreatorDashboardTour({
         }
       }
     }
-  }, [exampleTest, configuringTest, conductExamTest, clickCount]);
+  }, [exampleTest, configuringTest, conductExamTest, clickCount, settingsSaved]);
 
   // Track target element position and calculate tooltip placement
   useEffect(() => {
@@ -243,6 +250,7 @@ export default function CreatorDashboardTour({
     if (prevConfiguringTest.current && !configuringTest) {
       // It was saved and closed
       localStorage.setItem(getUserKey('tour_save_completed'), 'true');
+      setSettingsSaved(true);
     }
     prevConfiguringTest.current = configuringTest;
   }, [configuringTest]);
@@ -255,7 +263,7 @@ export default function CreatorDashboardTour({
         localStorage.setItem(getUserKey('creator_dashboard_tour_completed'), 'true');
         toast.success("Congratulations! You completed the creator guide! 🚀");
         setTimeout(() => {
-          setCurrentStep(0);
+          onSkip(); // Cleanly unmount the tour in the parent dashboard!
         }, 1500);
       };
 
