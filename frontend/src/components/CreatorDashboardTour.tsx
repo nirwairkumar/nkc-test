@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { CheckCircle2, X, Sparkles, Navigation, ArrowRight, CornerRightDown } from 'lucide-react';
+import { CheckCircle2, X, Sparkles, Navigation, ArrowRight, CornerRightDown, Pointer } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Adjust this vertical offset to shift all tour boxes, highlights, and pointers up or down.
@@ -478,9 +478,7 @@ export default function CreatorDashboardTour({
             transform: 'translate(-50%, -50%)'
           }}
         >
-          <svg className="w-8 h-8 text-indigo-500 drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M10 21.5c-1.4 0-2.5-.7-3.2-1.9L3.4 14c-.6-1-.4-2.2.5-3 .9-.8 2.2-.7 3 .2l1.6 1.8V4.5c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5v7.2c1 .2 1.7.9 1.7 1.8v3.5c0 2.8-2.2 5-5 5zm-3.2-5.5l2.2 2.5c.3.4.8.6 1.2.6 1.7 0 3-1.3 3-3v-3.5c0-.4-.3-.7-.7-.7h-.7V4.5c0-.6-.4-1-1-1s-1 .4-1 1v9.5h-1L6.8 12.3c-.3-.3-.8-.3-1.1 0-.3.3-.3.8 0 1.1l2.1 2.6z"/>
-          </svg>
+          <Pointer className="w-8 h-8 text-indigo-600 drop-shadow-[0_2px_8px_rgba(99,102,241,0.5)] fill-white" />
         </div>
       )}
     </div>
