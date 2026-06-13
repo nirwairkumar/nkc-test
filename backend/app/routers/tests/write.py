@@ -56,6 +56,13 @@ async def create_test(
         data = payload.dict(exclude_unset=True)
         # Filter to valid DB columns to prevent column not found errors
         data = {k: v for k, v in data.items() if k in VALID_TEST_COLUMNS}
+        
+        # Enforce private visibility for example template, user example, or cloned tests
+        sett = data.get("settings") or {}
+        if sett.get("is_example_template") == True or sett.get("is_user_example") == True or data.get("is_cloned") == True:
+            data["is_public"] = False
+            data["visibility"] = "private"
+
         try:
             # Try inserting with all fields
             response = db.table("tests").insert(data).execute()
@@ -97,6 +104,18 @@ async def update_test(
     try:
         # Filter payload to only valid columns to avoid PostgREST column errors
         payload = {k: v for k, v in payload.items() if k in VALID_TEST_COLUMNS}
+
+        # Enforce private visibility for example template, user example, or cloned tests on update
+        try:
+            existing_meta = db.table("tests").select("settings, is_cloned").eq("id", test_id).single().execute()
+            if existing_meta.data:
+                meta = existing_meta.data[0]
+                sett = {**(meta.get("settings") or {}), **(payload.get("settings") or {})}
+                if sett.get("is_example_template") == True or sett.get("is_user_example") == True or meta.get("is_cloned") == True:
+                    payload["is_public"] = False
+                    payload["visibility"] = "private"
+        except Exception as e:
+            print(f"Warning: could not verify test example status on update: {e}")
 
         # Check if we need to update total_max_marks
         needs_marks_calc = any(k in payload for k in ["questions", "sections", "enable_section_mode"])

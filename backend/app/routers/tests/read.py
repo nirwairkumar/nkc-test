@@ -15,6 +15,53 @@ router = APIRouter()
 
 from app.routers.tests.cache_config import test_cache, feed_cache, cache_get, cache_set, cache_bust
 
+def ensure_user_has_example_test(user_id: str, db: Client):
+    try:
+        # Check if user already has tests
+        user_tests_res = db.table("tests").select("id").eq("created_by", user_id).limit(1).execute()
+        if user_tests_res.data:
+            return
+
+        # Check if a template test exists dynamically in the DB (admin can edit this like a normal test)
+        template_res = db.table("tests").select("*").eq("settings->>is_example_template", "true").limit(1).execute()
+        if not template_res.data:
+            print("No example template test (settings.is_example_template == True) found in database.")
+            return
+
+        template = template_res.data[0]
+        
+        # Clone the template for this user
+        clone_data = {
+            "title": template.get("title", "Example Mock Test"),
+            "description": template.get("description", "This is an example mock test. Feel free to customize its settings, questions, and try conducting it!"),
+            "created_by": user_id,
+            "duration": template.get("duration", 30),
+            "questions": template.get("questions") or [],
+            "total_questions": template.get("total_questions", 0),
+            "total_max_marks": template.get("total_max_marks", 0),
+            "is_public": False,
+            "visibility": "private",
+            "is_cloned": True,
+            "cloned_from_id": template["id"],
+            "settings": {
+                **(template.get("settings") or {}),
+                "is_example_template": False, # Cloned copy is not a template
+                "is_user_example": True,       # Mark it as the user's tour walkthrough exam
+                "allow_flexible_timer": True,
+                "attempt_limit": None,
+                "disable_actions": False,
+                "disable_copy_paste": False,
+                "force_fullscreen": False,
+                "shuffle_questions": False,
+                "strict_timer": False,
+                "tab_switch_mode": "off"
+            }
+        }
+        db.table("tests").insert(clone_data).execute()
+        print(f"Automatically cloned example test from template {template['id']} for user {user_id}")
+    except Exception as e:
+        print(f"Error ensuring user has example test: {e}")
+
 
 
 @router.get("/batch")
@@ -94,7 +141,7 @@ async def get_tests_feed(
                 giant_or.append(f"custom_id.ilike.%{tok}%")
 
             query = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, description, tags, total_max_marks, classes(name)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, description, tags, total_max_marks, settings, classes(name)")\
                 .eq("is_public", True)
 
             if category_test_ids is not None:
@@ -103,7 +150,7 @@ async def get_tests_feed(
             # DB Filter by ANY token existing in columns, pulling up to 800 candidates
             query = query.or_(",".join(giant_or)).limit(800)
             tests_candidates_res = query.execute()
-            candidates = tests_candidates_res.data
+            candidates = [c for c in tests_candidates_res.data if (c.get("settings") or {}).get("is_example_template") != True and (c.get("settings") or {}).get("is_user_example") != True]
             
             # --- Python Side YouTube-style Ranking ---
             scored_tests = []
@@ -137,7 +184,7 @@ async def get_tests_feed(
         else:
              # Standard Feed Query
             query = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, total_max_marks, classes(name)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, custom_category, total_max_marks, settings, classes(name)")\
                 .eq("is_public", True)\
                 .order("created_at", desc=True)
 
@@ -146,6 +193,9 @@ async def get_tests_feed(
 
             tests_res = query.range(start, end).execute()
             tests = tests_res.data
+            
+        if tests:
+            tests = [t for t in tests if (t.get("settings") or {}).get("is_example_template") != True and (t.get("settings") or {}).get("is_user_example") != True]
             
         if not tests:
              return {
@@ -231,6 +281,9 @@ async def get_user_tests(
             # but they are NOT the owner and NOT an admin, reject access completely!
             if not profile_view:
                 raise HTTPException(status_code=403, detail="Unauthorized dashboard access")
+
+        if is_owner and not search_query and not profile_view:
+            ensure_user_has_example_test(user_id, db)
                 
         tests = []
         
@@ -289,6 +342,13 @@ async def get_user_tests(
             tests_res = query_default.execute()
             tests = tests_res.data
         
+        if not tests:
+            return []
+
+        # Filter out templates and user example tests from public creator profiles
+        if profile_view:
+            tests = [t for t in tests if (t.get("settings") or {}).get("is_example_template") != True and (t.get("settings") or {}).get("is_user_example") != True]
+
         if not tests:
             return []
 

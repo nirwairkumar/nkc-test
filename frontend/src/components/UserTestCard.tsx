@@ -248,6 +248,7 @@ export function UserTestCard({
             <div className="flex items-center justify-end gap-1.5 sm:gap-2 mt-auto pt-2.5 border-t border-slate-100 dark:border-slate-800/50 pl-2 flex-wrap">
                 <div className="relative">
                     <Button
+                        id={test.settings?.is_user_example ? "tour-settings-btn" : undefined}
                         variant="outline"
                         size="sm"
                         className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
@@ -271,6 +272,7 @@ export function UserTestCard({
                 </div>
                 {!isConducted && (
                     <Button
+                        id={test.settings?.is_user_example ? "tour-conduct-btn" : undefined}
                         size="sm"
                         variant="secondary"
                         className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors duration-200 cursor-pointer"

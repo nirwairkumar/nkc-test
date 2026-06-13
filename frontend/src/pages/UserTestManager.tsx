@@ -52,6 +52,7 @@ import { Trash2, MoreVertical, Check, FileText } from 'lucide-react';
 import { UserTestCard } from '@/components/UserTestCard';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import CreatorDashboardTour from '@/components/CreatorDashboardTour';
 
 const isProctoringEnabled = (test: any) => {
     const s = test?.settings;
@@ -133,6 +134,10 @@ export default function UserTestManager() {
     // Reports State
     const [reports, setReports] = useState<Report[]>([]);
     const [reportsLoading, setReportsLoading] = useState(false);
+
+    const [showTour, setShowTour] = useState(() => {
+        return localStorage.getItem('creator_dashboard_tour_completed') !== 'true';
+    });
 
     const loadReports = async () => {
         if (!targetUserId) return;
@@ -642,6 +647,7 @@ export default function UserTestManager() {
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <div className="relative">
                                                         <Button
+                                                            id={test.settings?.is_user_example ? "tour-settings-btn-active" : undefined}
                                                             size="sm"
                                                             variant="outline"
                                                             className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
@@ -673,6 +679,7 @@ export default function UserTestManager() {
                                                         <span className="hidden sm:inline">Results</span>
                                                     </Button>
                                                     <Button
+                                                        id={test.settings?.is_user_example ? "tour-copy-link-btn" : undefined}
                                                         size="sm"
                                                         variant="outline"
                                                         className="h-8 px-2 sm:px-3 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-colors duration-200 cursor-pointer"
@@ -1169,6 +1176,18 @@ export default function UserTestManager() {
                 <TestResultsPanel
                     test={viewingResultsTest}
                     onClose={() => setViewingResultsTest(null)}
+                />
+            )}
+
+            {showTour && (
+                <CreatorDashboardTour
+                    tests={tests}
+                    configuringTest={configuringTest}
+                    conductExamTest={conductExamTest}
+                    onSkip={() => {
+                        localStorage.setItem('creator_dashboard_tour_completed', 'true');
+                        setShowTour(false);
+                    }}
                 />
             )}
         </div>
