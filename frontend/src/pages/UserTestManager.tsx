@@ -158,12 +158,36 @@ export default function UserTestManager() {
 
     const [showTour, setShowTour] = useState(false);
 
-    useEffect(() => {
-        if (user?.id) {
-            const completed = localStorage.getItem(`creator_dashboard_tour_completed_${user.id}`) === 'true';
-            setShowTour(!completed);
+    const checkCreatorStatus = async () => {
+        if (!targetUserId) return;
+        
+        // If not impersonating and we already have the profile data, load it immediately
+        if (targetUserId === user?.id && profile) {
+            setIsCreator(profile.is_creator);
+            setTargetUserProfile(profile);
+            setCheckingCreator(false);
+            return;
         }
-    }, [user]);
+
+        setCheckingCreator(true);
+        const { data } = await fetchUserDetails(targetUserId);
+        if (data) {
+            setIsCreator(data.is_creator);
+            setTargetUserProfile(data);
+        }
+        setCheckingCreator(false);
+    };
+
+    const loadClasses = async () => {
+        if (!targetUserId) return;
+        const { data } = await fetchClasses(targetUserId);
+        if (data) setClasses(data);
+    };
+
+    const loadCategories = async () => {
+        const { data } = await fetchCategories();
+        if (data) setCategories(data);
+    };
 
     const loadReports = async () => {
         if (!targetUserId) return;
@@ -187,7 +211,57 @@ export default function UserTestManager() {
         }
     };
 
-    // YouTube-style lazy loading is disabled here as backend pagination handles data loading efficiently
+    const loadUserTests = React.useCallback(async (reset = false) => {
+        if (!targetUserId) return;
+
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        if (reset) {
+            pageRef.current = 1;
+        }
+        const pageToLoad = pageRef.current;
+
+        setTestsLoading(true);
+        try {
+            const { data, meta, error } = await fetchTestsByUserId(targetUserId, {
+                page: pageToLoad,
+                limit: 12,
+                searchQuery: debouncedSearchQuery,
+                signal: controller.signal
+            });
+            if (error) throw error;
+            
+            const fetchedTests = data || [];
+            if (reset) {
+                setTests(fetchedTests);
+                pageRef.current = 2;
+                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
+            } else {
+                setTests(prev => [...prev, ...fetchedTests]);
+                pageRef.current = pageRef.current + 1;
+                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
+            }
+        } catch (error: any) {
+            if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
+            console.error('Error loading tests:', error);
+            toast.error("Failed to load tests");
+        } finally {
+            if (abortControllerRef.current === controller) {
+                setTestsLoading(false);
+            }
+        }
+    }, [targetUserId, debouncedSearchQuery]);
+
+    useEffect(() => {
+        if (user?.id) {
+            const completed = localStorage.getItem(`creator_dashboard_tour_completed_${user.id}`) === 'true';
+            setShowTour(!completed);
+        }
+    }, [user]);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -240,82 +314,6 @@ export default function UserTestManager() {
             }
         };
     }, [hasMore, testsLoading, loadUserTests]);
-
-    const checkCreatorStatus = async () => {
-        if (!targetUserId) return;
-        
-        // If not impersonating and we already have the profile data, load it immediately
-        if (targetUserId === user?.id && profile) {
-            setIsCreator(profile.is_creator);
-            setTargetUserProfile(profile);
-            setCheckingCreator(false);
-            return;
-        }
-
-        setCheckingCreator(true);
-        const { data } = await fetchUserDetails(targetUserId);
-        if (data) {
-            setIsCreator(data.is_creator);
-            setTargetUserProfile(data);
-        }
-        setCheckingCreator(false);
-    };
-
-    const loadClasses = async () => {
-        if (!targetUserId) return;
-        const { data } = await fetchClasses(targetUserId);
-        if (data) setClasses(data);
-    };
-
-    const loadCategories = async () => {
-        const { data } = await fetchCategories();
-        if (data) setCategories(data);
-    };
-
-    const loadUserTests = React.useCallback(async (reset = false) => {
-        if (!targetUserId) return;
-
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-
-        if (reset) {
-            pageRef.current = 1;
-        }
-        const pageToLoad = pageRef.current;
-
-        setTestsLoading(true);
-        try {
-            const { data, meta, error } = await fetchTestsByUserId(targetUserId, {
-                page: pageToLoad,
-                limit: 12,
-                searchQuery: debouncedSearchQuery,
-                signal: controller.signal
-            });
-            if (error) throw error;
-            
-            const fetchedTests = data || [];
-            if (reset) {
-                setTests(fetchedTests);
-                pageRef.current = 2;
-                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
-            } else {
-                setTests(prev => [...prev, ...fetchedTests]);
-                pageRef.current = pageRef.current + 1;
-                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
-            }
-        } catch (error: any) {
-            if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
-            console.error('Error loading tests:', error);
-            toast.error("Failed to load tests");
-        } finally {
-            if (abortControllerRef.current === controller) {
-                setTestsLoading(false);
-            }
-        }
-    }, [targetUserId, debouncedSearchQuery]);
 
     const handleDeleteTest = (testId: string, testTitle: string) => {
         setDeleteId(testId);
