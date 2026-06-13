@@ -162,13 +162,13 @@ export default function CreatorDashboardTour({
         // Only update if dimensions/position changed significantly to avoid jitter
         setTargetRect(rect);
 
-        // Calculate tooltip position
+        // Calculate tooltip position relative to viewport (since container is fixed inset-0)
         const tooltipWidth = 320;
         const tooltipHeight = 180;
-        const gap = 16;
+        const gap = 24; // Increased gap to prevent overlap and make it look cleaner
         
-        let top = rect.bottom + window.scrollY + gap;
-        let left = rect.left + window.scrollX + (rect.width / 2) - (tooltipWidth / 2);
+        let top = rect.bottom + gap;
+        let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
         let placement: 'top' | 'bottom' | 'left' | 'right' = 'bottom';
 
         // Check screen boundaries
@@ -179,7 +179,7 @@ export default function CreatorDashboardTour({
 
         // If elements are near bottom of viewport, show tooltip above
         if (rect.bottom + tooltipHeight + gap > window.innerHeight) {
-          top = rect.top + window.scrollY - tooltipHeight - gap;
+          top = rect.top - tooltipHeight - gap;
           placement = 'top';
         }
 
@@ -347,8 +347,8 @@ export default function CreatorDashboardTour({
 
   return (
     <div className="fixed inset-0 z-[9999] pointer-events-none">
-      {/* SVG Mask Overlay */}
-      <svg className="w-full h-full absolute inset-0 pointer-events-auto">
+      {/* SVG Mask Overlay with pointer-events-none to let clicks pass through to highlighted elements */}
+      <svg className="w-full h-full absolute inset-0 pointer-events-none">
         <defs>
           <mask id="tour-mask">
             <rect width="100%" height="100%" fill="white" />
@@ -375,8 +375,8 @@ export default function CreatorDashboardTour({
       <div
         className="absolute border-2 border-indigo-400 rounded-lg animate-pulse pointer-events-none z-[10000]"
         style={{
-          top: targetRect.top - 8 + window.scrollY,
-          left: targetRect.left - 8 + window.scrollX,
+          top: targetRect.top - 8,
+          left: targetRect.left - 8,
           width: targetRect.width + 16,
           height: targetRect.height + 16,
           boxShadow: '0 0 16px rgba(99, 102, 241, 0.6)'
@@ -423,8 +423,8 @@ export default function CreatorDashboardTour({
       <div
         className="absolute pointer-events-none z-[10002] animate-bounce"
         style={{
-          top: targetRect.top + (targetRect.height / 2) + window.scrollY,
-          left: targetRect.left + (targetRect.width / 2) + window.scrollX,
+          top: targetRect.top + (targetRect.height / 2),
+          left: targetRect.left + (targetRect.width / 2),
           transform: 'translate(-50%, -50%)'
         }}
       >
