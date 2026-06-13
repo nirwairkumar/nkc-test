@@ -162,6 +162,7 @@ export default function ConductExamDialog({
                         Cancel
                     </Button>
                     <Button
+                        id="tour-start-conducting-btn"
                         onClick={handleConfirm}
                         disabled={!slug || loading}
                         className="flex-1 h-9 text-sm bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white border-0 shadow-md shadow-indigo-200"

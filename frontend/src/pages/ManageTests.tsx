@@ -1111,6 +1111,11 @@ export default function ManageTests() {
                                                     >
                                                         {test.title}
                                                     </h3>
+                                                    {test.settings?.is_example_template && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider mb-2">
+                                                            Example Template
+                                                        </span>
+                                                    )}
                                                     {/* --- Zone B: Metadata (Clean Row) --- */}
                                                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 font-medium mt-1.5">
                                                         <span className="flex items-center gap-1.5">

@@ -232,6 +232,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             <p className="text-sm text-muted-foreground">User must enter full screen to start. Exiting counts as a violation.</p>
                         </div>
                         <Switch
+                            id={mode === 'desktop' ? "tour-force-fullscreen" : undefined}
                             checked={settings.force_fullscreen}
                             onCheckedChange={(c) => updateSetting('force_fullscreen', c)}
                         />
@@ -246,6 +247,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             <p className="text-sm text-muted-foreground">Detect if user switches tabs or minimizes browser.</p>
                         </div>
                         <Switch
+                            id={mode === 'desktop' ? "tour-tab-switch" : undefined}
                             checked={settings.tab_switch_mode !== 'off'}
                             onCheckedChange={(c) => updateSetting('tab_switch_mode', c ? 'on' : 'off')}
                         />
@@ -283,14 +285,14 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <input
+                                            id={mode === 'desktop' ? "tour-vl-count-radio" : `vl_count_${mode}`}
                                             type="radio"
-                                            id={`vl_count_${mode}`}
                                             name={`violation_limit_${mode}`}
                                             checked={typeof settings.violation_limit === 'number' && settings.violation_limit > 0}
                                             onChange={() => updateSetting('violation_limit', (settings.violation_limit && settings.violation_limit > 0) ? settings.violation_limit : 2)}
                                             className="accent-primary"
                                         />
-                                        <Label htmlFor={`vl_count_${mode}`} className="font-normal cursor-pointer flex items-center gap-2">
+                                        <Label htmlFor={mode === 'desktop' ? "tour-vl-count-radio" : `vl_count_${mode}`} className="font-normal cursor-pointer flex items-center gap-2">
                                             <Select
                                                 value={String(typeof settings.violation_limit === 'number' && settings.violation_limit > 0 ? settings.violation_limit : 2)}
                                                 onValueChange={(val) => updateSetting('violation_limit', Number(val))}
@@ -433,6 +435,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <div className="flex items-center gap-3">
                         <span className="text-sm font-medium">{settings.attempt_limit === 1 ? 'Single Attempt' : 'Unlimited'}</span>
                         <Switch
+                            id={mode === 'desktop' ? "tour-attempt-limit" : undefined}
                             checked={settings.attempt_limit === 1}
                             onCheckedChange={(c) => updateSetting('attempt_limit', c ? 1 : undefined)}
                         />
@@ -446,6 +449,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             <p className="text-sm text-muted-foreground">Collect details before start (Name is default).</p>
                         </div>
                         <Switch
+                            id={mode === 'desktop' ? "tour-start-form" : undefined}
                             checked={settings.start_form?.enabled}
                             onCheckedChange={(c) => {
                                 const newState = { ...settings.start_form, enabled: c, fields: settings.start_form?.fields || [] };
@@ -558,6 +562,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     </div>
                     <div className="pt-1">
                         <Switch
+                            id={mode === 'desktop' ? "tour-flexible-timer" : undefined}
                             checked={settings.allow_flexible_timer !== false}
                             onCheckedChange={(c) => updateSetting('allow_flexible_timer', c)}
                         />
@@ -697,9 +702,9 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         <Tabs defaultValue="proctoring" className="h-full flex flex-col">
                             <div className="px-6 pt-4">
                                 <TabsList className="grid w-full grid-cols-4">
-                                    <TabsTrigger value="proctoring" className="flex gap-2"><Shield className="w-4 h-4" /> Proctoring & Security</TabsTrigger>
-                                    <TabsTrigger value="access" className="flex gap-2"><Lock className="w-4 h-4" /> Access & Control</TabsTrigger>
-                                    <TabsTrigger value="results" className="flex gap-2"><Eye className="w-4 h-4" /> Results & Timing</TabsTrigger>
+                                    <TabsTrigger id="tour-tab-proctoring" value="proctoring" className="flex gap-2"><Shield className="w-4 h-4" /> Proctoring & Security</TabsTrigger>
+                                    <TabsTrigger id="tour-tab-access" value="access" className="flex gap-2"><Lock className="w-4 h-4" /> Access & Control</TabsTrigger>
+                                    <TabsTrigger id="tour-tab-results" value="results" className="flex gap-2"><Eye className="w-4 h-4" /> Results & Timing</TabsTrigger>
                                     <TabsTrigger value="ai" className="flex gap-2"><Sparkles className="w-4 h-4" /> AI Utilities</TabsTrigger>
                                 </TabsList>
                             </div>
@@ -726,7 +731,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
                     <div className="border-t p-4 flex justify-end gap-2 bg-slate-50 dark:bg-slate-900 rounded-b-lg">
                         <Button variant="outline" onClick={onClose}>Cancel</Button>
-                        <Button onClick={() => handleSave()} disabled={loading}>{loading ? 'Saving...' : 'Save Settings'}</Button>
+                        <Button id="tour-save-settings" onClick={() => handleSave()} disabled={loading}>{loading ? 'Saving...' : 'Save Settings'}</Button>
                     </div>
                 </div>
             </Card>
