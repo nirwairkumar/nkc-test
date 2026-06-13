@@ -48,9 +48,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Trash2, MoreVertical, Check, FileText } from 'lucide-react';
 
-// YouTube-style lazy loading imports
 import { UserTestCard } from '@/components/UserTestCard';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import CreatorDashboardTour from '@/components/CreatorDashboardTour';
 
 const isProctoringEnabled = (test: any) => {
@@ -99,6 +99,13 @@ export default function UserTestManager() {
     const [testsLoading, setTestsLoading] = useState(true);
     const pageRef = React.useRef(1);
     const [hasMore, setHasMore] = useState(true);
+    const {
+        registerSkeleton,
+        isItemRendered,
+    } = useYouTubeStyleRender(tests, testsLoading, {
+        rootMargin: '100px',
+        threshold: 0.1
+    });
     const observerTarget = React.useRef<HTMLDivElement | null>(null);
     const [isTestEditOpen, setIsTestEditOpen] = useState(false);
     const [editingTest, setEditingTest] = useState<any>(null);
@@ -229,7 +236,7 @@ export default function UserTestManager() {
         try {
             const { data, meta, error } = await fetchTestsByUserId(targetUserId, {
                 page: pageToLoad,
-                limit: 12,
+                limit: 9,
                 searchQuery: debouncedSearchQuery,
                 signal: controller.signal
             });
@@ -239,11 +246,11 @@ export default function UserTestManager() {
             if (reset) {
                 setTests(fetchedTests);
                 pageRef.current = 2;
-                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
+                setHasMore(meta?.has_more ?? (fetchedTests.length === 9));
             } else {
                 setTests(prev => [...prev, ...fetchedTests]);
                 pageRef.current = pageRef.current + 1;
-                setHasMore(meta?.has_more ?? (fetchedTests.length === 12));
+                setHasMore(meta?.has_more ?? (fetchedTests.length === 9));
             }
         } catch (error: any) {
             if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') return;
@@ -997,35 +1004,51 @@ export default function UserTestManager() {
                             </div>
                         ) : (
                             <>
-                                {tests.map((test) => (
-                                    <UserTestCard
-                                        key={test.id}
-                                        test={test}
-                                        classes={classes}
-                                        onEdit={openTestEditor}
-                                        onConfigure={setConfiguringTest}
-                                        onDelete={handleDeleteTest}
-                                        onVisibilityChange={handleVisibilityChange}
-                                        onShare={handleShare}
-                                        onUploadSolutions={handleUploadSolutions}
-                                        onClassChange={handleClassChange}
-                                        getVisibilityColor={getVisibilityColor}
-                                        getVisibilityIcon={getVisibilityIcon}
-                                        onViewResults={(t) => setViewingResultsTest(t)}
-                                        onView={(t) => {
-                                            if (t.settings?.conduct_exam?.enabled) {
-                                                const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
-                                                navigate(`/test/${conductSlug}`);
-                                            } else if (t.visibility === 'private' || !t.is_public) {
-                                                navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
-                                            } else {
-                                                navigate(`/test-intro/${t.id}`);
-                                            }
-                                        }}
-                                        onConductExam={handleConductExam}
-                                        showEnvPopup={showEnvPopupTestId === test.id}
-                                    />
-                                ))}
+                                {tests.map((test) => {
+                                    const testId = test.id;
+                                    const isRendered = isItemRendered(testId);
+
+                                    if (isRendered) {
+                                        return (
+                                            <UserTestCard
+                                                key={testId}
+                                                test={test}
+                                                classes={classes}
+                                                onEdit={openTestEditor}
+                                                onConfigure={setConfiguringTest}
+                                                onDelete={handleDeleteTest}
+                                                onVisibilityChange={handleVisibilityChange}
+                                                onShare={handleShare}
+                                                onUploadSolutions={handleUploadSolutions}
+                                                onClassChange={handleClassChange}
+                                                getVisibilityColor={getVisibilityColor}
+                                                getVisibilityIcon={getVisibilityIcon}
+                                                onViewResults={(t) => setViewingResultsTest(t)}
+                                                onView={(t) => {
+                                                    if (t.settings?.conduct_exam?.enabled) {
+                                                        const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
+                                                        navigate(`/test/${conductSlug}`);
+                                                    } else if (t.visibility === 'private' || !t.is_public) {
+                                                        navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
+                                                    } else {
+                                                        navigate(`/test-intro/${t.id}`);
+                                                    }
+                                                }}
+                                                onConductExam={handleConductExam}
+                                                showEnvPopup={showEnvPopupTestId === test.id}
+                                            />
+                                        );
+                                    } else {
+                                        return (
+                                            <div
+                                                key={testId}
+                                                ref={(el) => registerSkeleton(testId, el)}
+                                            >
+                                                <TestCardSkeleton />
+                                            </div>
+                                        );
+                                    }
+                                })}
                             </>
                         )}
                     </div>

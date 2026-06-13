@@ -165,7 +165,7 @@ export default function ManageTests() {
             // Using backend API for all tests (Admin view)
             const { data, meta, error } = await fetchAllTests({
                 page: pageToLoad,
-                limit: 12,
+                limit: 9,
                 searchQuery: debouncedSearchQuery,
                 signal: controller.signal
             });
@@ -175,11 +175,11 @@ export default function ManageTests() {
             if (reset) {
                 setTests(data || []);
                 setPage(2);
-                setHasMore(meta?.has_more ?? (data ? data.length === 12 : false));
+                setHasMore(meta?.has_more ?? (data ? data.length === 9 : false));
             } else {
                 setTests(prev => [...prev, ...(data || [])]);
                 setPage(prev => prev + 1);
-                setHasMore(meta?.has_more ?? (data ? data.length === 12 : false));
+                setHasMore(meta?.has_more ?? (data ? data.length === 9 : false));
             }
         } catch (error: any) {
             if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED' || error.message === 'canceled') {
