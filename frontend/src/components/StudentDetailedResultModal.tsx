@@ -537,7 +537,7 @@ export default function StudentDetailedResultModal({
 
                                                                 <div className="flex-1 min-w-0 h-5 relative overflow-hidden flex items-center">
                                                                     <div className="absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap [&_*]:!inline [&_.math]:!inline-block [&_p]:!m-0 [&_span]:!whitespace-nowrap text-slate-300 pointer-events-none text-xs">
-                                                                        <LatexRenderer>{q.question || ""}</LatexRenderer>
+                                                                        <LatexRenderer className="!text-slate-300">{q.question || ""}</LatexRenderer>
                                                                     </div>
                                                                     <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none z-10" />
                                                                 </div>
@@ -556,7 +556,7 @@ export default function StudentDetailedResultModal({
 
                                                         <AccordionContent className="pb-4 space-y-4 pt-1 border-t border-slate-800/40">
                                                             <div className="text-sm font-medium text-slate-200 border-l-2 border-indigo-500 pl-3 py-1 overflow-x-auto max-w-full custom-scrollbar">
-                                                                <LatexRenderer>{q.question || ""}</LatexRenderer>
+                                                                <LatexRenderer className="!text-slate-200">{q.question || ""}</LatexRenderer>
                                                             </div>
 
                                                             {q.image && (
@@ -587,7 +587,7 @@ export default function StudentDetailedResultModal({
                                                                                             ? (ans as string[]).join(', ')
                                                                                             : `${ans}) `
                                                                                     }
-                                                                                    {q.type !== 'numerical' && !Array.isArray(ans) && <LatexRenderer>{q.options?.[ans] || ""}</LatexRenderer>}
+                                                                                    {q.type !== 'numerical' && !Array.isArray(ans) && <LatexRenderer className={isCorrect ? "!text-emerald-400" : isWrong ? "!text-red-400" : "!text-slate-400"}>{q.options?.[ans] || ""}</LatexRenderer>}
                                                                                 </span>
                                                                                 {q.type !== 'numerical' && !Array.isArray(ans) && q.optionImages?.[ans] && (
                                                                                     <img
@@ -613,7 +613,7 @@ export default function StudentDetailedResultModal({
                                                                             ) : (
                                                                                 `${q.correctAnswer}) `
                                                                             )}
-                                                                            {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer>{q.options?.[q.correctAnswer as string] || ""}</LatexRenderer>}
+                                                                            {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && <LatexRenderer className="!text-indigo-300">{q.options?.[q.correctAnswer as string] || ""}</LatexRenderer>}
                                                                         </span>
                                                                         {q.type !== 'numerical' && !Array.isArray(q.correctAnswer) && q.optionImages?.[q.correctAnswer as string] && (
                                                                             <img
