@@ -42,15 +42,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchProfileData = async (userId: string | undefined) => {
         if (!userId) {
             setProfile(null);
-            return;
+            return null;
         }
         try {
             const { fetchUserDetails } = await import('@/lib/usersApi');
-            const { data, error } = await fetchUserDetails(userId);
+            const { data } = await fetchUserDetails(userId);
             if (data) setProfile(data);
+            return data;
         } catch (error) {
             console.error('Error fetching profile:', error);
             setProfile(null);
+            return null;
         }
     };
 
@@ -67,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const checkPremiumStatus = async (userId: string | undefined) => {
+    const checkPremiumStatus = async (userId: string | undefined, preloadedProfile?: any) => {
         setPremiumLoading(true);
         try {
             const { checkPremiumAccess } = await import('@/lib/pricingApi');
@@ -89,8 +91,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
 
-            const { fetchUserDetails } = await import('@/lib/usersApi');
-            const { data: userProfile } = await fetchUserDetails(userId);
+            let userProfile = preloadedProfile;
+            if (!userProfile) {
+                const { fetchUserDetails } = await import('@/lib/usersApi');
+                const { data } = await fetchUserDetails(userId);
+                userProfile = data;
+            }
 
             if (userProfile?.is_premium && userProfile?.premium_expiry) {
                 const expiry = new Date(userProfile.premium_expiry);
@@ -141,10 +147,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         // Build a minimal session object for compatibility
                         setSession({ user: userData, access_token: token });
 
+                        // Optimize: Fetch profile once and reuse it for checkPremiumStatus
+                        const profileData = await fetchProfileData(userData.id);
+
                         await Promise.all([
-                            fetchProfileData(userData.id),
                             checkAdminStatus(userData.id),
-                            checkPremiumStatus(userData.id)
+                            checkPremiumStatus(userData.id, profileData)
                         ]);
                     } else {
                         throw new Error("No user in response");

@@ -68,14 +68,19 @@ const isProctoringEnabled = (test: any) => {
 };
 
 export default function UserTestManager() {
-    const { user, isAdmin, loading: authLoading } = useAuth();
+    const { user, profile, isAdmin, loading: authLoading } = useAuth();
     const navigate = useNavigate();
 
     // Impersonation check
     const queryParams = new URLSearchParams(window.location.search);
     const impersonateUserId = queryParams.get("userId");
     const targetUserId = (isAdmin && impersonateUserId) ? impersonateUserId : user?.id;
-    const [targetUserProfile, setTargetUserProfile] = useState<any>(null);
+    const [targetUserProfile, setTargetUserProfile] = useState<any>(() => {
+        if (!(isAdmin && impersonateUserId) && profile) {
+            return profile;
+        }
+        return null;
+    });
 
     // Search State
     const [searchQuery, setSearchQuery] = useState("");
@@ -126,8 +131,22 @@ export default function UserTestManager() {
     }, [showEnvPopupTestId]);
 
     // Creator Check State
-    const [isCreator, setIsCreator] = useState<boolean | null>(null);
-    const [checkingCreator, setCheckingCreator] = useState(true);
+    const [isCreator, setIsCreator] = useState<boolean | null>(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const impersonateUserId = queryParams.get("userId");
+        if (!(isAdmin && impersonateUserId) && profile) {
+            return profile.is_creator;
+        }
+        return null;
+    });
+    const [checkingCreator, setCheckingCreator] = useState(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const impersonateUserId = queryParams.get("userId");
+        if (!(isAdmin && impersonateUserId) && profile) {
+            return false; // Already preloaded via AuthContext profile
+        }
+        return true;
+    });
 
     const [classes, setClasses] = useState<any[]>([]);
 
@@ -191,7 +210,7 @@ export default function UserTestManager() {
             loadClasses();
             loadReports();
         }
-    }, [targetUserId, impersonateUserId, isAdmin, authLoading, navigate]);
+    }, [targetUserId, impersonateUserId, isAdmin, authLoading, navigate, profile]);
 
     useEffect(() => {
         if (targetUserId) {
@@ -201,6 +220,15 @@ export default function UserTestManager() {
 
     const checkCreatorStatus = async () => {
         if (!targetUserId) return;
+        
+        // If not impersonating and we already have the profile data, load it immediately
+        if (targetUserId === user?.id && profile) {
+            setIsCreator(profile.is_creator);
+            setTargetUserProfile(profile);
+            setCheckingCreator(false);
+            return;
+        }
+
         setCheckingCreator(true);
         const { data } = await fetchUserDetails(targetUserId);
         if (data) {

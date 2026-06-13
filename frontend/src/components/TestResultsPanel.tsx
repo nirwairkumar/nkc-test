@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchAttemptsForTest, deleteAttempt, deleteRegistration } from '@/lib/attemptsApi';
+import { fetchAttemptsForTest, deleteAttempt, deleteRegistration, fetchAttemptById } from '@/lib/attemptsApi';
 import { fetchUsersByIds } from '@/lib/usersApi';
 import { fetchTestById } from '@/lib/testsApi';
 import StudentDetailedResultModal from './StudentDetailedResultModal';
@@ -107,21 +107,39 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     };
 
     const handleOpenAnalysis = async (attempt: any) => {
-        if (!fullTest || (!fullTest.questions && (!fullTest.sections || fullTest.sections.length === 0 || !fullTest.sections[0].questions))) {
-            setLoading(true);
-            try {
-                // Fetch the test details WITH questions now that they want to view detailed result
+        setLoading(true);
+        try {
+            // 1. Fetch full test details if they are missing
+            if (!fullTest || (!fullTest.questions && (!fullTest.sections || fullTest.sections.length === 0 || !fullTest.sections[0].questions))) {
                 const { data: testData } = await fetchTestById(test.id, undefined, false);
                 if (testData) {
                     setFullTest(testData);
                 }
-            } catch (err) {
-                console.error("Error fetching full test details", err);
-            } finally {
-                setLoading(false);
             }
+
+            // 2. Fetch full attempt with answers if they are missing
+            let fullAttempt = attempt;
+            if (!attempt.answers) {
+                const { data: attemptData, error } = await fetchAttemptById(attempt.id);
+                if (attemptData) {
+                    fullAttempt = {
+                        ...attempt,
+                        ...attemptData
+                    };
+                    
+                    // Update this specific attempt in results list state so we have it cached
+                    setResults(prev => prev.map(r => r.id === attempt.id ? fullAttempt : r));
+                } else if (error) {
+                    toast.error("Failed to load detailed candidate answers");
+                }
+            }
+            setSelectedAttemptForAnalysis(fullAttempt);
+        } catch (err) {
+            console.error("Error fetching detailed result data", err);
+            toast.error("Failed to load details");
+        } finally {
+            setLoading(false);
         }
-        setSelectedAttemptForAnalysis(attempt);
     };
 
     // Use fullTest if loaded, otherwise fall back to test prop

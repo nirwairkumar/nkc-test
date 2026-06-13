@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdvancedAnalysis } from '@/lib/testsApi';
+import { fetchAttemptById } from '@/lib/attemptsApi';
 import {
     Dialog,
     DialogContent,
@@ -87,6 +88,12 @@ export default function StudentDetailedResultModal({
     const [analysisData, setAnalysisData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'topics' | 'questions'>('overview');
+    const [loadedAttempt, setLoadedAttempt] = useState<any>(null);
+    const activeAttempt = loadedAttempt || attempt;
+
+    useEffect(() => {
+        setLoadedAttempt(null);
+    }, [attempt]);
 
     useEffect(() => {
         if (isOpen && attempt && test) {
@@ -94,7 +101,15 @@ export default function StudentDetailedResultModal({
                 setLoading(true);
                 setError(null);
                 try {
-                    const answers = attempt.answers || {};
+                    let activeAttemptData = attempt;
+                    if (!activeAttemptData.answers) {
+                        const { data: attemptData } = await fetchAttemptById(attempt.id);
+                        if (attemptData) {
+                            activeAttemptData = { ...attempt, ...attemptData };
+                            setLoadedAttempt(activeAttemptData);
+                        }
+                    }
+                    const answers = activeAttemptData.answers || {};
                     const { data, error } = await fetchAdvancedAnalysis(test, answers);
                     if (error) {
                         setError(error);
@@ -122,25 +137,25 @@ export default function StudentDetailedResultModal({
     const getDisplayName = () => {
         if (isStartFormEnabled && configuredFormLabels.length > 0) {
             const firstLabel = configuredFormLabels[0];
-            if (attempt.metadata?.startFormData?.[firstLabel] !== undefined && attempt.metadata?.startFormData?.[firstLabel] !== null) {
-                return String(attempt.metadata.startFormData[firstLabel]);
+            if (activeAttempt.metadata?.startFormData?.[firstLabel] !== undefined && activeAttempt.metadata?.startFormData?.[firstLabel] !== null) {
+                return String(activeAttempt.metadata.startFormData[firstLabel]);
             }
         }
-        const formData = attempt.metadata?.startFormData || {};
+        const formData = activeAttempt.metadata?.startFormData || {};
         const formKeys = Object.keys(formData);
         const pk = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
         if (pk && formData[pk]) return String(formData[pk]);
-        if (isAdmin && attempt.user?.full_name) return attempt.user.full_name;
-        if (isAdmin && attempt.user?.email) return attempt.user.email;
+        if (isAdmin && activeAttempt.user?.full_name) return activeAttempt.user.full_name;
+        if (isAdmin && activeAttempt.user?.email) return activeAttempt.user.email;
         return 'Anonymous Candidate';
     };
 
     const getOtherDetails = () => {
         if (isStartFormEnabled) {
-            const formData = attempt.metadata?.startFormData || {};
+            const formData = activeAttempt.metadata?.startFormData || {};
             return Object.entries(formData);
         }
-        const formData = attempt.metadata?.startFormData || {};
+        const formData = activeAttempt.metadata?.startFormData || {};
         const formKeys = Object.keys(formData);
         const pk = formKeys.find(k => k.toLowerCase().includes('name')) || (formKeys.length > 0 ? formKeys[0] : null);
         return Object.entries(formData).filter(([k]) => k !== pk);
@@ -148,7 +163,7 @@ export default function StudentDetailedResultModal({
 
     const name = getDisplayName();
     const otherDetails = getOtherDetails();
-    const dateObj = new Date(attempt.created_at);
+    const dateObj = new Date(activeAttempt.created_at);
 
     // Calculate Total Marks
     let totalMaxMarks = test?.total_max_marks || 0;
@@ -171,11 +186,11 @@ export default function StudentDetailedResultModal({
     }
 
     const {
-        finalScore = attempt.score ?? 0,
-        correctCount = attempt.metadata?.stats?.correctCount ?? 0,
-        partialCount = attempt.metadata?.stats?.partialCount ?? 0,
-        wrongCount = attempt.metadata?.stats?.wrongCount ?? 0,
-        skippedCount = attempt.metadata?.stats?.unattemptedCount ?? 0,
+        finalScore = activeAttempt.score ?? 0,
+        correctCount = activeAttempt.metadata?.stats?.correctCount ?? 0,
+        partialCount = activeAttempt.metadata?.stats?.partialCount ?? 0,
+        wrongCount = activeAttempt.metadata?.stats?.wrongCount ?? 0,
+        skippedCount = activeAttempt.metadata?.stats?.unattemptedCount ?? 0,
         percentage = totalMaxMarks > 0 ? (finalScore / totalMaxMarks) * 100 : 0,
         sectionData = {},
         questionStatus = {},
@@ -201,14 +216,14 @@ export default function StudentDetailedResultModal({
                     <div>
                         <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400">Detailed Student Result</span>
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1 leading-tight">{name}</h2>
-                        {attempt.user?.email && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{attempt.user.email}</p>
+                        {activeAttempt.user?.email && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{activeAttempt.user.email}</p>
                         )}
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                            {attempt.metadata?.startedAt && (
+                            {activeAttempt.metadata?.startedAt && (
                                 <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                                     <Clock className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
-                                    <span>Started: {format(new Date(attempt.metadata.startedAt), 'MMM d, yyyy · hh:mm a')}</span>
+                                    <span>Started: {format(new Date(activeAttempt.metadata.startedAt), 'MMM d, yyyy · hh:mm a')}</span>
                                 </p>
                             )}
                             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -495,7 +510,7 @@ export default function StudentDetailedResultModal({
                                     <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg">
                                         <Accordion type="single" collapsible className="w-full">
                                             {allQuestions.map((q: any, index: number) => {
-                                                const ans = attempt.answers?.[q.id];
+                                                const ans = activeAttempt.answers?.[q.id];
                                                 const qStats = questionStatus?.[q.id] || { status: 'skipped', score: 0 };
                                                 const isCorrect = qStats.status === 'correct';
                                                 const isWrong = qStats.status === 'wrong';
@@ -578,7 +593,7 @@ export default function StudentDetailedResultModal({
                                                                 >
                                                                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">Student Answer</span>
                                                                     <div className={`font-semibold text-xs ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : isWrong ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                                                                        {ans ? (
+                                                                        {(ans !== undefined && ans !== null && ans !== '' && (!Array.isArray(ans) || ans.length > 0)) ? (
                                                                             <div className="flex flex-col gap-1">
                                                                                 <span>
                                                                                     {q.type === 'numerical'
