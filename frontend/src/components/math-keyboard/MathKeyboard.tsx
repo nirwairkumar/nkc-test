@@ -673,6 +673,26 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     return () => document.removeEventListener('focusin', handler);
   }, []);
 
+  // Click outside detection to close the Sy Pad
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        const target = event.target as HTMLElement;
+        if (target.closest('.sy-pad-trigger') || target.classList.contains('sy-pad-trigger')) {
+          return;
+        }
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
   const handleInsert = useCallback((latex: string) => {
     if (latex === '\\ce{?}') {
       setCeAnim({ status: 'typing', text: '' });

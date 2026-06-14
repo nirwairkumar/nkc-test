@@ -3124,7 +3124,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 <button
                     type="button"
                     onClick={() => setShowGuide(v => !v)}
-                    className="flex flex-col items-center justify-center gap-1.5 w-10 py-3 rounded-r-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg border border-l-0 border-indigo-400/30 transition-all group hover:w-11 animate-pulse"
+                    className="ai-guide-trigger flex flex-col items-center justify-center gap-1.5 w-10 py-3 rounded-r-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg border border-l-0 border-indigo-400/30 transition-all group hover:w-11 animate-pulse"
                     title="How to write complex questions (AI Guide)"
                 >
                     <Sparkles className="w-5 h-5 transition-transform group-hover:scale-110" />

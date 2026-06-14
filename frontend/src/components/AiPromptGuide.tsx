@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Copy, Check, ExternalLink, Sparkles, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,6 +21,7 @@ export function AiPromptGuide({ isOpen, onClose }: AiPromptGuideProps) {
   const [copiedChem, setCopiedChem] = useState(false);
   const [copiedTable, setCopiedTable] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const guideRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -29,6 +30,25 @@ export function AiPromptGuide({ isOpen, onClose }: AiPromptGuideProps) {
     }, 1500);
     return () => clearInterval(interval);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (guideRef.current && !guideRef.current.contains(event.target as Node)) {
+        const target = event.target as HTMLElement;
+        if (target.closest('.ai-guide-trigger') || target.classList.contains('ai-guide-trigger')) {
+          return;
+        }
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   const promptText = `Convert the provided input (image/text of questions, paragraphs, solutions, or tables) into a KaTeX/mhchem-formatted block.
 
@@ -93,6 +113,7 @@ Follow these exact formatting rules to keep the structure compact, tightly packe
 
   return (
     <div
+      ref={guideRef}
       className="fixed left-14 top-24 bottom-24 w-80 z-[9997] bg-white border border-slate-200 shadow-2xl rounded-2xl flex flex-col overflow-hidden animate-in slide-in-from-left-5 duration-300"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
