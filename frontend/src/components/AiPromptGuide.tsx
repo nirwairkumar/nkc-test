@@ -18,6 +18,8 @@ const showcaseImages = [
 
 export function AiPromptGuide({ isOpen, onClose }: AiPromptGuideProps) {
   const [copied, setCopied] = useState(false);
+  const [copiedChem, setCopiedChem] = useState(false);
+  const [copiedTable, setCopiedTable] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
@@ -40,12 +42,48 @@ RULES:
 7. Mark complex diagrams/skeletal structures as [IMAGE].
 `;
 
+  const chemistryPrompt = `convert chemical structures:
+Convert the chemical structure in this image into a single-line KaTeX string wrapped inside $ ... $. Do not use the "array" environment, as it creates too much blank space between the bonds and the atoms.
+
+Follow these exact formatting rules to keep the structure compact, tightly packed, and perfectly aligned:
+
+1. Horizontal Chain & Bonds: Use standard text characters wrapped in "\\text{}" for chemical symbols (e.g., \\text{CH}_3). Use "\\text{-}" for the single bonds so math spacing does not push the atoms apart.
+2. Vertical Double Bonds: Use "\\overset{\\text{O}}{\\overset{\\parallel}{\\text{C}}}" for carbonyl groups (C=O).
+3. Vertical Branching Alignment (CRITICAL): When a branching chain goes downward (e.g., -CH₂-CH₃) from a main-chain atom (like CH), use "\\mathrlap" inside the bottom "\\underset" block. This forces the branch to align perfectly by its first atom (the CH₂) and prevents it from pushing the horizontal bonds away or creating gaps.
+   Example structure: \\underset{\\mathrlap{\\text{CH}_2\\text{-}\\text{CH}_3}}{\\underset{\\vert}{\\text{CH}}}
+4. Output only the clean, final KaTeX string inside a code block.
+
+`;
+  const tablePrompt = `table prompt`;
+
   const handleCopyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(promptText);
       setCopied(true);
       toast.success('AI Formatter Prompt copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy prompt.');
+    }
+  };
+
+  const handleCopyChemistryPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(chemistryPrompt);
+      setCopiedChem(true);
+      toast.success('Chemistry Prompt copied to clipboard!');
+      setTimeout(() => setCopiedChem(false), 2000);
+    } catch (err) {
+      toast.error('Failed to copy prompt.');
+    }
+  };
+
+  const handleCopyTablePrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(tablePrompt);
+      setCopiedTable(true);
+      toast.success('Table Prompt copied to clipboard!');
+      setTimeout(() => setCopiedTable(false), 2000);
     } catch (err) {
       toast.error('Failed to copy prompt.');
     }
@@ -129,6 +167,31 @@ RULES:
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 {copied ? 'Copied Prompt!' : 'Copy Formatting Prompt'}
               </button>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyChemistryPrompt}
+                  className={`flex items-center justify-center gap-1 flex-1 py-1 px-2 rounded-md border text-[10px] font-semibold transition-all duration-200 ${copiedChem
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-800'
+                    }`}
+                >
+                  {copiedChem ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copiedChem ? 'Copied Chem!' : 'Chemistry'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyTablePrompt}
+                  className={`flex items-center justify-center gap-1 flex-1 py-1 px-2 rounded-md border text-[10px] font-semibold transition-all duration-200 ${copiedTable
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-800'
+                    }`}
+                >
+                  {copiedTable ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copiedTable ? 'Copied Table!' : 'Table'}
+                </button>
+              </div>
             </div>
           </div>
 
