@@ -4,7 +4,8 @@ import { SEO } from '@/components/SEO';
 import {
     BookOpen, FileText, FlaskConical, Sparkles, ChevronRight, ArrowLeft,
     ArrowRight, Menu, X, Clock, Search, Copy, Check, Sun, Moon,
-    Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2
+    Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2,
+    Radio, BarChart2
 } from 'lucide-react';
 const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide').then(module => ({ default: module.SolutionUploadGuide })));
 const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide').then(module => ({ default: module.TestUploadFormatGuide })));
@@ -54,6 +55,23 @@ const DOC_SECTIONS: DocSection[] = [
                 description: "Understand how to harness AI models to auto-generate complete tests from text, PDFs or images.",
                 icon: <Sparkles className="h-4 w-4" />
             },
+        ]
+    },
+    {
+        title: "Platform Overview",
+        items: [
+            {
+                slug: "conduct-exam",
+                title: "How to Conduct Exams",
+                description: "Step-by-step guide with screenshots on how to activate, configure, and conduct exams on TestoZa.",
+                icon: <Radio className="h-4 w-4" />
+            },
+            {
+                slug: "view-results-guide",
+                title: "Viewing Results (Upcoming)",
+                description: "Learn how to analyze student performance, download Excel sheets, and view proctoring logs (Coming Soon).",
+                icon: <BarChart2 className="h-4 w-4" />
+            }
         ]
     },
     {
@@ -727,6 +745,247 @@ export default function UserGuidePage() {
                         <pre className="bg-slate-950 text-slate-200 p-4 rounded-xl text-xs font-mono overflow-y-auto max-h-[300px] whitespace-pre-wrap border border-slate-800 leading-relaxed">
                             {AI_SOLUTIONS_PROMPT.trim()}
                         </pre>
+                    </div>
+                );
+
+            case 'conduct-exam':
+                return (
+                    <div className="space-y-8 divide-y divide-slate-100 dark:divide-slate-800">
+                        <div className="pb-4">
+                            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+                                Follow this step-by-step visual guide to learn how to activate, configure, and conduct exams on the TestoZa platform.
+                            </p>
+                        </div>
+
+                        {/* Step 1 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-1.png" alt="Step 1: Go to Your Tests" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 1
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Access Your Dashboard & Creator Area</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Go to the user dropdown menu in the top navigation bar and click on <strong>Your Tests</strong>.
+                                </p>
+                                <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
+                                    <li>You will land on the <strong>Creator Dashboard</strong>.</li>
+                                    <li>You will find all the tests you have created so far.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-2.png" alt="Step 2: Choose Test" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 2
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Choose the Test to Conduct</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Find the test-card of the exam that you are going to conduct among your candidates.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Click on the <strong>Conduct</strong> button of the test-card.
+                                </p>
+                                <AlertBlock type="tip" title="Verify Before Conducting">
+                                    You can click on &quot;View&quot; to see your final live test view to recheck questions, options, timing, and sections. If you want to make changes, select &quot;edit test&quot; from the three-dot menu of the test card.
+                                </AlertBlock>
+                            </div>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-3.png" alt="Step 3: Start Conducting" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 3
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Activate the Test & Get Unlisted Link</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    A popup window will open where you can view and copy the unlisted link of the test card.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Select <strong>Start Conducting</strong> to activate the test.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 4 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-4.png" alt="Step 4: Active Exam Controls" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 4
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Manage the Active Exam Mode</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Now your test is live and accessible via the unique link. The test card displays four primary management options:
+                                </p>
+                                <ul className="list-decimal pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
+                                    <li><strong>Settings</strong>: Apply proctoring, schedules, and custom settings.</li>
+                                    <li><strong>Results</strong>: View responses submitted under Active Exam mode.</li>
+                                    <li><strong>Copy Link</strong>: Copy the exam link to clipboard.</li>
+                                    <li><strong>Remove</strong>: Stop the exam.</li>
+                                </ul>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed pt-2">
+                                    Click on <strong>Settings</strong> to configure the exam environment.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 5 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-5.png" alt="Step 5: Test Environment Settings" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 5
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Configure Proctoring & Security</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    You will land on the <strong>Test Environment Settings</strong> panel.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Choose your desired proctoring preferences (e.g. Full Screen, Tab Switch Detection).
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Click on the <strong>Access & Control</strong> section header to view more configurations.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 6 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-6.png" alt="Step 6: Customize Access & Verification" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 6
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Customize Access & Student Verification</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Turn on the <strong>Attempt Limit</strong> toggles to restrict students to a single attempt.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Enable the <strong>Start Form</strong> to collect student credentials (e.g. Roll No, Name) before they are allowed to initiate the exam.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Now expand the <strong>Result & Timing</strong> section header.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 7 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-7.png" alt="Step 7: Enforce Timer & Save" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 7
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Enable Server-Side Timer & Save Settings</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Under the Results & Timing configurations, activate <strong>Server side timing</strong> and disable <strong>Flexible Timer</strong> to enforce a strict, synchronized countdown.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Click the <strong>Save Settings</strong> button at the bottom of the panel to apply your proctoring and timing rules.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 8 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-8.png" alt="Step 8: Distribute Link" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 8
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Distribute Exam Link</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Copy the active exam link and share it with your candidates via messaging apps or email.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    You can monitor student submissions in real-time by clicking the <strong>Results</strong> tab/button.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Step 9 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
+                                    <img src="/user-guide/conduct-exams/step-9.png" alt="Step 9: Conclude Exam" className="w-full object-contain max-h-[320px] mx-auto block" />
+                                </div>
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 9
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Deactivate or Conclude the Exam</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    To stop accepting candidate responses, click the <strong>Remove</strong> button on the test card. This takes the test out of Active Exam mode.
+                                </p>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    You will be prompted with two closure modes:
+                                </p>
+                                <ol className="list-decimal pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
+                                    <li><strong>Stop &amp; Make Public</strong>: Allows candidates to analyze the exam and results; anonymous practice will be enabled.</li>
+                                    <li><strong>Stop &amp; Make Private</strong>: Restricts all further student access. Results and analysis are hidden from candidates.</li>
+                                </ol>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed pt-2">
+                                    After selecting either option, your test will return to the inactive state.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'view-results-guide':
+                return (
+                    <div className="space-y-6 text-center py-12">
+                        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 w-fit rounded-full mx-auto mb-4">
+                            <BarChart2 className="h-10 w-10 animate-pulse text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Viewing & Analyzing Results</h3>
+                        <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed text-sm">
+                            This section is currently being updated. In the upcoming release, it will explain how to check student scores, export metrics to Excel, view detailed timelines of tab-switches, and analyze question-by-question metrics.
+                        </p>
+                        <div className="pt-4">
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                                Coming Soon
+                            </span>
+                        </div>
                     </div>
                 );
 
