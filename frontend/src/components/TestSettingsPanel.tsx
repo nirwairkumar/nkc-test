@@ -731,25 +731,15 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             )}
                         </section>
 
-                        <section className="border border-slate-100 dark:border-slate-800 rounded-lg overflow-hidden">
+                        <section className="border border-slate-100 dark:border-slate-800 rounded-lg overflow-hidden opacity-40 pointer-events-none cursor-not-allowed">
                             <h3 
-                                onClick={() => setOpenSection(openSection === 'ai' ? null : 'ai')}
-                                className="font-bold flex items-center justify-between gap-2 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20 p-3 cursor-pointer select-none hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30 transition-colors rounded-t"
+                                className="font-bold flex items-center justify-between gap-2 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20 p-3 select-none rounded-t"
                             >
                                 <span className="flex items-center gap-2">
                                     <Sparkles className="w-5 h-5" /> AI Utilities
                                 </span>
-                                {openSection === 'ai' ? (
-                                    <ChevronDown className="w-5 h-5 text-indigo-600 shrink-0" />
-                                ) : (
-                                    <ChevronRight className="w-5 h-5 text-indigo-600 shrink-0" />
-                                )}
+                                <ChevronRight className="w-5 h-5 text-indigo-600 shrink-0" />
                             </h3>
-                            {openSection === 'ai' && (
-                                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {renderAIUtilities()}
-                                </div>
-                            )}
                         </section>
                     </div>
 
