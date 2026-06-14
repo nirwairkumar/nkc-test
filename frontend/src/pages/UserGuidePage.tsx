@@ -751,18 +751,10 @@ export default function UserGuidePage() {
             case 'conduct-exam':
                 return (
                     <div className="space-y-8 divide-y divide-slate-100 dark:divide-slate-800">
-                        <div className="pb-4">
-                            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
-                                Follow this step-by-step visual guide to learn how to activate, configure, and conduct exams on the TestoZa platform.
-                            </p>
-                        </div>
-
                         {/* Step 1 */}
-                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8 first:pt-0">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-1.png" alt="Step 1: Go to Your Tests" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-1.png" alt="Step 1: Go to Your Tests" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -782,9 +774,7 @@ export default function UserGuidePage() {
                         {/* Step 2 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-2.png" alt="Step 2: Choose Test" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-2.png" alt="Step 2: Choose Test" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -806,9 +796,7 @@ export default function UserGuidePage() {
                         {/* Step 3 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-3.png" alt="Step 3: Start Conducting" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-3.png" alt="Step 3: Start Conducting" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -827,9 +815,7 @@ export default function UserGuidePage() {
                         {/* Step 4 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-4.png" alt="Step 4: Active Exam Controls" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-4.png" alt="Step 4: Active Exam Controls" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -854,9 +840,7 @@ export default function UserGuidePage() {
                         {/* Step 5 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-5.png" alt="Step 5: Test Environment Settings" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-5.png" alt="Step 5: Test Environment Settings" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -878,9 +862,7 @@ export default function UserGuidePage() {
                         {/* Step 6 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-6.png" alt="Step 6: Customize Access & Verification" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-6.png" alt="Step 6: Customize Access & Verification" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -902,9 +884,7 @@ export default function UserGuidePage() {
                         {/* Step 7 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-7.png" alt="Step 7: Enforce Timer & Save" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-7.png" alt="Step 7: Enforce Timer & Save" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -923,9 +903,7 @@ export default function UserGuidePage() {
                         {/* Step 8 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-8.png" alt="Step 8: Distribute Link" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-8.png" alt="Step 8: Distribute Link" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
@@ -944,9 +922,7 @@ export default function UserGuidePage() {
                         {/* Step 9 */}
                         <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
                             <div className="w-full lg:w-1/2 shrink-0">
-                                <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 shadow-md">
-                                    <img src="/user-guide/conduct-exams/step-9.png" alt="Step 9: Conclude Exam" className="w-full object-contain max-h-[320px] mx-auto block" />
-                                </div>
+                                <img src="/user-guide/conduct-exams/step-9.png" alt="Step 9: Conclude Exam" className="w-full h-auto object-contain mx-auto block" />
                             </div>
                             <div className="w-full lg:w-1/2 space-y-3">
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
