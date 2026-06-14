@@ -282,16 +282,7 @@ export function UserTestCard({
                         <span>Conduct</span>
                     </Button>
                 )}
-                {/* Results button */}
-                <Button
-                    size="sm"
-                    variant="secondary"
-                    className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors duration-200 cursor-pointer"
-                    onClick={() => onViewResults(test)}
-                >
-                    <BarChart2 className="w-3.5 h-3.5" />
-                    <span>Results</span>
-                </Button>
+
                 <Button
                     size="sm"
                     className="h-8 text-[11px] sm:text-xs font-medium px-3 sm:px-4 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-200 rounded-md cursor-pointer"
