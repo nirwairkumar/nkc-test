@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X } from 'lucide-react';
+import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { ClassItem, fetchClasses } from '@/lib/classesApi';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
@@ -58,6 +58,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
     const [topicGenerating, setTopicGenerating] = useState(false);
     const [availableClasses, setAvailableClasses] = useState<ClassItem[]>([]);
     const [showConductPrompt, setShowConductPrompt] = useState(false);
+    const [openSection, setOpenSection] = useState<'proctoring' | 'access' | 'results' | 'ai' | null>('proctoring');
 
     // Premium status check
     const { isPremium, loading: premiumLoading } = usePremiumStatus();
@@ -666,25 +667,89 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         </div>
                     </div>
 
-                    <div className="p-4 space-y-8 pb-32">
-                        <section>
-                            <h3 className="font-bold flex items-center gap-2 mb-4 text-primary bg-primary/5 p-2 rounded"><Shield className="w-5 h-5" /> Proctoring & Security</h3>
-                            {renderProctoring('mobile')}
+                    <div className="p-4 space-y-4 pb-32">
+                        <section className="border border-slate-100 dark:border-slate-800 rounded-lg overflow-hidden">
+                            <h3 
+                                onClick={() => setOpenSection(openSection === 'proctoring' ? null : 'proctoring')}
+                                className="font-bold flex items-center justify-between gap-2 text-primary bg-primary/5 p-3 cursor-pointer select-none hover:bg-primary/10 transition-colors rounded-t"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Shield className="w-5 h-5" /> Proctoring & Security
+                                </span>
+                                {openSection === 'proctoring' ? (
+                                    <ChevronDown className="w-5 h-5 text-primary shrink-0" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+                                )}
+                            </h3>
+                            {openSection === 'proctoring' && (
+                                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {renderProctoring('mobile')}
+                                </div>
+                            )}
                         </section>
 
-                        <section>
-                            <h3 className="font-bold flex items-center gap-2 mb-4 text-primary bg-primary/5 p-2 rounded"><Lock className="w-5 h-5" /> Access & Control</h3>
-                            {renderAccess('mobile')}
+                        <section className="border border-slate-100 dark:border-slate-800 rounded-lg overflow-hidden">
+                            <h3 
+                                onClick={() => setOpenSection(openSection === 'access' ? null : 'access')}
+                                className="font-bold flex items-center justify-between gap-2 text-primary bg-primary/5 p-3 cursor-pointer select-none hover:bg-primary/10 transition-colors rounded-t"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Lock className="w-5 h-5" /> Access & Control
+                                </span>
+                                {openSection === 'access' ? (
+                                    <ChevronDown className="w-5 h-5 text-primary shrink-0" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+                                )}
+                            </h3>
+                            {openSection === 'access' && (
+                                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {renderAccess('mobile')}
+                                </div>
+                            )}
                         </section>
 
-                        <section>
-                            <h3 className="font-bold flex items-center gap-2 mb-4 text-primary bg-primary/5 p-2 rounded"><Eye className="w-5 h-5" /> Results & Timing</h3>
-                            {renderResults('mobile')}
+                        <section className="border border-slate-100 dark:border-slate-800 rounded-lg overflow-hidden">
+                            <h3 
+                                onClick={() => setOpenSection(openSection === 'results' ? null : 'results')}
+                                className="font-bold flex items-center justify-between gap-2 text-primary bg-primary/5 p-3 cursor-pointer select-none hover:bg-primary/10 transition-colors rounded-t"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Eye className="w-5 h-5" /> Results & Timing
+                                </span>
+                                {openSection === 'results' ? (
+                                    <ChevronDown className="w-5 h-5 text-primary shrink-0" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+                                )}
+                            </h3>
+                            {openSection === 'results' && (
+                                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {renderResults('mobile')}
+                                </div>
+                            )}
                         </section>
 
-                        <section>
-                            <h3 className="font-bold flex items-center gap-2 mb-4 text-indigo-600 bg-indigo-50 p-2 rounded"><Sparkles className="w-5 h-5" /> AI Utilities</h3>
-                            {renderAIUtilities()}
+                        <section className="border border-slate-100 dark:border-slate-800 rounded-lg overflow-hidden">
+                            <h3 
+                                onClick={() => setOpenSection(openSection === 'ai' ? null : 'ai')}
+                                className="font-bold flex items-center justify-between gap-2 text-indigo-600 bg-indigo-50 dark:bg-indigo-950/20 p-3 cursor-pointer select-none hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30 transition-colors rounded-t"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5" /> AI Utilities
+                                </span>
+                                {openSection === 'ai' ? (
+                                    <ChevronDown className="w-5 h-5 text-indigo-600 shrink-0" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-indigo-600 shrink-0" />
+                                )}
+                            </h3>
+                            {openSection === 'ai' && (
+                                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {renderAIUtilities()}
+                                </div>
+                            )}
                         </section>
                     </div>
 
