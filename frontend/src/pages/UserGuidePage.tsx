@@ -62,7 +62,7 @@ const DOC_SECTIONS: DocSection[] = [
         items: [
             {
                 slug: "conduct-exam",
-                title: "How to Conduct Exams",
+                title: "Conduct Exams",
                 description: "Step-by-step guide with screenshots on how to activate, configure, and conduct exams on TestoZa.",
                 icon: <Radio className="h-4 w-4" />
             },
