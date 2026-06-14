@@ -738,8 +738,17 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                 <span className="flex items-center gap-2">
                                     <Sparkles className="w-5 h-5" /> AI Utilities
                                 </span>
-                                <ChevronRight className="w-5 h-5 text-indigo-600 shrink-0" />
+                                {openSection === 'ai' ? (
+                                    <ChevronDown className="w-5 h-5 text-indigo-600 shrink-0" />
+                                ) : (
+                                    <ChevronRight className="w-5 h-5 text-indigo-600 shrink-0" />
+                                )}
                             </h3>
+                            {openSection === 'ai' && (
+                                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {renderAIUtilities()}
+                                </div>
+                            )}
                         </section>
                     </div>
 
