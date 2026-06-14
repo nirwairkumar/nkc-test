@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Copy, Check, ExternalLink, Sparkles, HelpCircle } from 'lucide-react';
+import { X, Copy, Check, ExternalLink, Sparkles, HelpCircle, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AiPromptGuideProps {
@@ -128,9 +128,9 @@ Follow these exact formatting rules to keep the structure compact, tightly packe
         <button
           onClick={onClose}
           className="p-1 rounded-lg hover:bg-slate-200/60 text-slate-500 hover:text-slate-700 transition-colors"
-          title="Close guide"
+          title="Minimize guide"
         >
-          <X className="w-4 h-4" />
+          <Minus className="w-4 h-4" />
         </button>
       </div>
 
