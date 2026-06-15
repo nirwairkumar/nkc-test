@@ -62,7 +62,7 @@ export default function LiveExamTestimonials() {
                                 alt={testimonials[currentIndex].title}
                                 className="w-full h-full object-cover opacity-80"
                             />
-                            
+
                             {/* Dark Overlay for better text readability */}
                             <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-black/60" />
 
@@ -78,10 +78,11 @@ export default function LiveExamTestimonials() {
                                 </h3>
                             </motion.div>
 
-                            {/* Tiny AI Generated Text */}
+                            {/* Tiny AI Generated Text
                             <div className="absolute bottom-4 right-4 text-[10px] text-white/50 bg-black/30 px-2 py-1 rounded backdrop-blur-sm">
                                 AI Generated
                             </div>
+                            */}
                         </motion.div>
                     </AnimatePresence>
 
@@ -91,9 +92,8 @@ export default function LiveExamTestimonials() {
                             <button
                                 key={idx}
                                 onClick={() => setCurrentIndex(idx)}
-                                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                                    idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80'
-                                }`}
+                                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/80'
+                                    }`}
                                 aria-label={`Go to slide ${idx + 1}`}
                             />
                         ))}
