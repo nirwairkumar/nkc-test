@@ -12,6 +12,7 @@ const PlatformStatsSection = lazy(() => import('@/components/landing/PlatformSta
 const CommunityJoinSection = lazy(() => import('@/components/landing/CommunityJoinSection'));
 const ManualCreateSection = lazy(() => import('@/components/landing/ManualCreateSection'));
 const SettingsShowcaseSection = lazy(() => import('@/components/landing/SettingsShowcaseSection'));
+const LiveExamTestimonials = lazy(() => import('@/components/landing/LiveExamTestimonials'));
 
 // Loading component
 const SectionLoader = () => (
@@ -113,6 +114,12 @@ export default function LandingPage() {
                 <div className="landing-section">
                     <Suspense fallback={<SectionLoader />}>
                         <SettingsShowcaseSection />
+                    </Suspense>
+                </div>
+
+                <div className="landing-section">
+                    <Suspense fallback={<SectionLoader />}>
+                        <LiveExamTestimonials />
                     </Suspense>
                 </div>
 
