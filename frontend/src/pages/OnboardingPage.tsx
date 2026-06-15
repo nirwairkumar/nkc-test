@@ -89,7 +89,11 @@ export default function OnboardingPage() {
             }
 
             toast.success('Profile updated successfully!');
-            navigate('/', { replace: true });
+            const redirectIntent = localStorage.getItem('auth_redirect_intent');
+            if (redirectIntent) {
+                localStorage.removeItem('auth_redirect_intent');
+            }
+            navigate(redirectIntent || '/', { replace: true });
             // Reload to refresh the auth context with updated metadata
             window.location.reload();
         } catch (error: any) {

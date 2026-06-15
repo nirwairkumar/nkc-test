@@ -26,6 +26,7 @@ export default function Layout() {
             if (!hasDesignation) {
                 // Allow staying on /onboarding
                 if (location.pathname !== '/onboarding') {
+                    localStorage.setItem('auth_redirect_intent', location.pathname + location.search);
                     navigate('/onboarding', { replace: true });
                 }
             } else if (location.pathname === '/onboarding') {
