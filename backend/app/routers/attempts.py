@@ -370,13 +370,20 @@ async def get_attempt_detail(
             
         if not response.data:
             raise HTTPException(status_code=404, detail="Attempt not found")
-            
-        # Verify access: owner or admin
+        # Verify access: owner, admin, or test creator
         attempt = response.data
         if attempt.get("user_id") != user_id:
              admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
-             if not (admin_res.data and len(admin_res.data) > 0):
-                 raise HTTPException(status_code=403, detail="Not authorized")
+             is_admin = admin_res.data and len(admin_res.data) > 0
+             if not is_admin:
+                 test_id = attempt.get("test_id")
+                 is_creator = False
+                 if test_id:
+                     test_res = supabase.table("tests").select("created_by").eq("id", test_id).single().execute()
+                     if test_res.data and test_res.data.get("created_by") == user_id:
+                         is_creator = True
+                 if not is_creator:
+                     raise HTTPException(status_code=403, detail="Not authorized")
                  
         return attempt
     except Exception as e:

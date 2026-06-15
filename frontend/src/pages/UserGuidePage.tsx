@@ -68,8 +68,8 @@ const DOC_SECTIONS: DocSection[] = [
             },
             {
                 slug: "view-results-guide",
-                title: "Viewing Results (Upcoming)",
-                description: "Learn how to analyze student performance, download Excel sheets, and view proctoring logs (Coming Soon).",
+                title: "Viewing Results",
+                description: "Step-by-step guide with screenshots on how to view, sort, download, and analyze student results on TestoZa.",
                 icon: <BarChart2 className="h-4 w-4" />
             }
         ]
@@ -949,18 +949,187 @@ export default function UserGuidePage() {
 
             case 'view-results-guide':
                 return (
-                    <div className="space-y-6 text-center py-12">
-                        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 w-fit rounded-full mx-auto mb-4">
-                            <BarChart2 className="h-10 w-10 animate-pulse text-emerald-600 dark:text-emerald-400" />
+                    <div className="space-y-8 divide-y divide-slate-100 dark:divide-slate-800">
+                        {/* Step 1 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8 first:pt-0">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <img src="/user-guide/view-results/step-1.png" alt="Step 1: Access Your Dashboard" className="w-full h-auto object-contain mx-auto block" />
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 1
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Access Your Dashboard & Creator Area</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Go to the user dropdown menu in the top navigation bar and click on <strong>Your Tests</strong>.
+                                </p>
+                                <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
+                                    <li>You will land on the <strong>Creator Dashboard</strong>.</li>
+                                    <li>This lists all the draft, public, and active test papers you have configured.</li>
+                                </ul>
+                            </div>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Viewing & Analyzing Results</h3>
-                        <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed text-sm">
-                            This section is currently being updated. In the upcoming release, it will explain how to check student scores, export metrics to Excel, view detailed timelines of tab-switches, and analyze question-by-question metrics.
-                        </p>
-                        <div className="pt-4">
-                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
-                                Coming Soon
-                            </span>
+
+                        {/* Step 2 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <img src="/user-guide/view-results/step-2.png" alt="Step 2: Choose Test Results" className="w-full h-auto object-contain mx-auto block" />
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 2
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Choose the Test to View Results</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Locate the test-card for the exam you want to analyze and click the <strong>Results</strong> button.
+                                </p>
+                                <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1">
+                                    <li>Results can be viewed for both active (live) and inactive (concluded) exams.</li>
+                                    <li>If the exam is currently active, results will stream and update dynamically as students click submit.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <img src="/user-guide/view-results/step-3.png" alt="Step 3: Analyze and Sort Results" className="w-full h-auto object-contain mx-auto block" />
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 3
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">View, Sort, and Manage Submissions</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Once inside the Results Panel, you can monitor student scores, submission times, and manage test data:
+                                </p>
+                                <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-2">
+                                    <li><strong>Rank Mode (Merit Sorting):</strong> Turn on the Rank mode toggle to automatically sort student rows based on strict merit criteria:
+                                        <ul className="list-decimal pl-5 text-xs text-slate-500 dark:text-slate-500 mt-1 space-y-0.5">
+                                            <li>Highest Score</li>
+                                            <li>Fewest Incorrect Answers</li>
+                                            <li>Fewest Skipped Questions</li>
+                                            <li>Earliest Submission Time</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Delete Submissions:</strong> Click the trash icon to permanently remove specific candidate attempts (e.g., for testing purposes).</li>
+                                    <li><strong>Export Report:</strong> Click the <strong>Download Excel</strong> button to save the entire test summary as a structured spreadsheet.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Step 4 */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-center py-8">
+                            <div className="w-full lg:w-1/2 shrink-0">
+                                <img src="/user-guide/view-results/step-4.png" alt="Step 4: Detailed Candidate Breakdown" className="w-full h-auto object-contain mx-auto block" />
+                            </div>
+                            <div className="w-full lg:w-1/2 space-y-3">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    Step 4
+                                </span>
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Detailed Candidate Performance Analysis</h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                    Click the <strong>Detailed Result</strong> (eye icon) on any candidate row to open their complete analytics scorecard:
+                                </p>
+                                <ul className="list-disc pl-5 text-slate-600 dark:text-slate-400 text-sm space-y-1.5">
+                                    <li><strong>Overview Tab:</strong> Shows the candidate's total marks, accuracy percentage, time taken, and a visual split of correct, wrong, and skipped questions.</li>
+                                    <li><strong>Topic Performance Tab:</strong> Summarizes correct and wrong answer distributions across different subject topics.</li>
+                                    <li><strong>Questions Breakdown Tab:</strong> Provides a question-by-question breakdown showing candidate responses, correct keys, scores, and step-by-step solutions.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Excel Export Schema Reference */}
+                        <div className="pt-8 space-y-4">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">Excel Export Data Structure</h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                When you export test results using the <strong>Download Excel</strong> feature, TestoZa compiles a multi-column spreadsheet layout structured as follows:
+                            </p>
+                            
+                            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/10">
+                                <table className="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+                                            <th className="p-3">Column Category</th>
+                                            <th className="p-3">Field Name</th>
+                                            <th className="p-3">Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-400">
+                                        <tr>
+                                            <td className="p-3 font-semibold text-slate-900 dark:text-white" rowSpan={4}>Candidate Info</td>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Profile Name</td>
+                                            <td className="p-3">The user's account name registered on TestoZa.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Email</td>
+                                            <td className="p-3">Account email address.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Name</td>
+                                            <td className="p-3">Full name entered by the candidate in the Start Form.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Roll number</td>
+                                            <td className="p-3">Roll number or candidate ID entered in the Start Form.</td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td className="p-3 font-semibold text-slate-900 dark:text-white" rowSpan={3}>Session Info</td>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Date</td>
+                                            <td className="p-3">The calendar date of test submission.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Time</td>
+                                            <td className="p-3">The exact timestamp when the test was submitted.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Time Taken</td>
+                                            <td className="p-3">Total duration spent solving the exam (e.g., 45m 12s).</td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td className="p-3 font-semibold text-slate-900 dark:text-white" rowSpan={4}>Section Breakdown</td>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Correct / Wrong</td>
+                                            <td className="p-3">Counts of correct and incorrect responses within each specific section.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Marks (+ve)</td>
+                                            <td className="p-3">Positive score generated from correct answers in that section.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Marks (-ve)</td>
+                                            <td className="p-3">Negative marks deducted from wrong answers in that section.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Section Score</td>
+                                            <td className="p-3">Net score achieved in the specific section.</td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td className="p-3 font-semibold text-slate-900 dark:text-white" rowSpan={6}>Overall Summary</td>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Total Questions</td>
+                                            <td className="p-3">Total number of questions in the entire test.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Total Correct / Incorrect</td>
+                                            <td className="p-3">Cumulative counts of correct/wrong answers across all sections.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Total +ve / -ve Score</td>
+                                            <td className="p-3">Sum of positive scores and negative deductions.</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Final Score</td>
+                                            <td className="p-3">The final total marks achieved (including positive, negative, and partial marks).</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Percentage</td>
+                                            <td className="p-3">Candidate's score percentage (Final Score / Max Test Marks * 100).</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 );

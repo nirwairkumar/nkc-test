@@ -341,7 +341,26 @@ async def get_combined_attempt(
             raise HTTPException(status_code=404, detail="Attempt not found")
 
         if res.data["user_id"] != user_id:
-            raise HTTPException(status_code=403, detail="Not authorized")
+            # Check if creator of combined session
+            session_id = res.data.get("combined_session_id")
+            is_authorized = False
+            if session_id:
+                session_res = supabase.table("combined_sessions").select("created_by").eq("id", session_id).single().execute()
+                if session_res.data and session_res.data.get("created_by") == user_id:
+                    is_authorized = True
+            
+            # Or if global admin
+            if not is_authorized:
+                profile_res = supabase.table("profiles").select("email").eq("id", user_id).single().execute()
+                if profile_res.data:
+                    email = profile_res.data.get("email")
+                    if email:
+                        admin_res = supabase.table("admins").select("email").eq("email", email).execute()
+                        if admin_res.data and len(admin_res.data) > 0:
+                            is_authorized = True
+            
+            if not is_authorized:
+                raise HTTPException(status_code=403, detail="Not authorized")
 
         attempt = res.data
 

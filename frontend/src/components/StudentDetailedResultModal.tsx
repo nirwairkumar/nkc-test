@@ -103,10 +103,15 @@ export default function StudentDetailedResultModal({
                 try {
                     let activeAttemptData = attempt;
                     if (!activeAttemptData.answers) {
-                        const { data: attemptData } = await fetchAttemptById(attempt.id);
+                        const { data: attemptData, error: attemptError } = await fetchAttemptById(attempt.id);
+                        if (attemptError) {
+                            throw attemptError;
+                        }
                         if (attemptData) {
                             activeAttemptData = { ...attempt, ...attemptData };
                             setLoadedAttempt(activeAttemptData);
+                        } else {
+                            throw new Error('Attempt details not found');
                         }
                     }
                     const answers = activeAttemptData.answers || {};
@@ -550,7 +555,7 @@ export default function StudentDetailedResultModal({
                                                                     {index + 1}
                                                                 </div>
 
-                                                                <div className="flex-1 min-w-0 h-5 relative overflow-hidden flex items-center">
+                                                                <div className="flex-1 min-w-0 h-6 relative overflow-hidden flex items-center">
                                                                     <div className="absolute left-0 top-1/2 -translate-y-1/2 whitespace-nowrap [&_*]:!inline [&_.math]:!inline-block [&_p]:!m-0 [&_span]:!whitespace-nowrap text-slate-600 dark:text-slate-300 pointer-events-none text-xs">
                                                                         <LatexRenderer className="text-slate-600 dark:text-slate-300">{q.question || ""}</LatexRenderer>
                                                                     </div>
