@@ -47,7 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const { fetchUserDetails } = await import('@/lib/usersApi');
             const { data } = await fetchUserDetails(userId);
-            if (data) setProfile(data);
+            if (data) {
+                setProfile(data);
+                if (data.designation) {
+                    localStorage.setItem('user_designation', data.designation);
+                }
+            }
             return data;
         } catch (error) {
             console.error('Error fetching profile:', error);

@@ -88,6 +88,8 @@ export default function OnboardingPage() {
                 throw profileError;
             }
 
+            localStorage.setItem('user_designation', values.designation);
+
             toast.success('Profile updated successfully!');
             const redirectIntent = localStorage.getItem('auth_redirect_intent');
             if (redirectIntent) {

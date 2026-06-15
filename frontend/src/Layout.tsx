@@ -8,7 +8,7 @@ import { analyticsTracker } from '@/lib/analyticsTracker';
 export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user, profile } = useAuth();
+    const { user, profile, loading } = useAuth();
 
     // Track page views on route change
     React.useEffect(() => {
@@ -19,9 +19,12 @@ export default function Layout() {
     // in AuthForm.tsx (for email) and AuthCallback.tsx (for Google OAuth)
     // to avoid race conditions and double redirects.
     React.useEffect(() => {
+        if (loading) return;
+
         if (user) {
-            // Force onboarding if designation is missing in both user_metadata and profile
-            const hasDesignation = user.user_metadata?.designation || profile?.designation;
+            // Force onboarding if designation is missing in user_metadata, profile, and localStorage
+            const localDesignation = localStorage.getItem('user_designation');
+            const hasDesignation = user.user_metadata?.designation || profile?.designation || localDesignation;
 
             if (!hasDesignation) {
                 // Allow staying on /onboarding
@@ -34,7 +37,7 @@ export default function Layout() {
                 navigate('/', { replace: true });
             }
         }
-    }, [user, profile, navigate, location.pathname]);
+    }, [user, profile, loading, navigate, location.pathname]);
     // Hide navbar only on live test page (/test/:id)
     // Also hiding on /test-intro/:id as requested
     const isResultsPage = location.pathname.startsWith('/results');
