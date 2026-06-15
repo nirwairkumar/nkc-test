@@ -26,7 +26,7 @@ export default function UserRecentTests({ user, onManageTest }: { user: any, onM
         setLoading(true);
         setError(false);
         try {
-            const { data, error: fetchError } = await fetchTestsByUserId(user.id, { idsOnly: true });
+            const { data, error: fetchError } = await fetchTestsByUserId(user.id, { idsOnly: true, tourCompleted: true });
             if (data) {
                 const filtered = (data as Test[]).filter(t => !isExcluded(t.id));
                 setUserTests(filtered);

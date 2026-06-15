@@ -309,15 +309,15 @@ export async function fetchTests(options?: {
 
 export async function fetchTestsByCreator(
     userId: string,
-    options?: { page?: number; limit?: number; searchQuery?: string; signal?: AbortSignal; idsOnly?: boolean; profileView?: boolean }
+    options?: { page?: number; limit?: number; searchQuery?: string; signal?: AbortSignal; idsOnly?: boolean; profileView?: boolean; tourCompleted?: boolean }
 ) {
-    const { page, limit, searchQuery = '', signal, idsOnly = false, profileView = false } = options || {};
+    const { page, limit, searchQuery = '', signal, idsOnly = false, profileView = false, tourCompleted = false } = options || {};
     const maxRetries = 1;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const response = await apiClient.get(`tests/user/${userId}`, {
-                params: { page, limit, search_query: searchQuery, ids_only: idsOnly, profile_view: profileView },
+                params: { page, limit, search_query: searchQuery, ids_only: idsOnly, profile_view: profileView, tour_completed: tourCompleted },
                 signal
             });
             

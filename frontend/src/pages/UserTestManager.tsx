@@ -234,10 +234,12 @@ export default function UserTestManager() {
 
         setTestsLoading(true);
         try {
+            const completed = localStorage.getItem(`creator_dashboard_tour_completed_${targetUserId}`) === 'true';
             const { data, meta, error } = await fetchTestsByUserId(targetUserId, {
                 page: pageToLoad,
                 limit: 9,
                 searchQuery: debouncedSearchQuery,
+                tourCompleted: completed,
                 signal: controller.signal
             });
             if (error) throw error;

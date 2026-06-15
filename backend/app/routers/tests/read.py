@@ -17,8 +17,8 @@ from app.routers.tests.cache_config import test_cache, feed_cache, cache_get, ca
 
 def ensure_user_has_example_test(user_id: str, db: Client):
     try:
-        # Check if user already has tests
-        user_tests_res = db.table("tests").select("id").eq("created_by", user_id).limit(1).execute()
+        # Check if user already has an example test
+        user_tests_res = db.table("tests").select("id").eq("created_by", user_id).eq("settings->>is_user_example", "true").limit(1).execute()
         if user_tests_res.data:
             return
 
@@ -247,6 +247,7 @@ async def get_user_tests(
     profile_view: bool = Query(False, description="When True (public profile page), excludes cloned tests from results"),
     page: Optional[int] = Query(None, description="Page number for pagination"),
     limit: Optional[int] = Query(None, description="Limit for pagination"),
+    tour_completed: bool = Query(False, description="Whether the creator dashboard tour is completed"),
     response: Response = None,
     db: Client = Depends(get_db)
 ):
@@ -284,7 +285,7 @@ async def get_user_tests(
             if not profile_view:
                 raise HTTPException(status_code=403, detail="Unauthorized dashboard access")
 
-        if is_owner and not search_query and not profile_view:
+        if is_owner and not search_query and not profile_view and not tour_completed:
             ensure_user_has_example_test(user_id, db)
                 
         tests = []
