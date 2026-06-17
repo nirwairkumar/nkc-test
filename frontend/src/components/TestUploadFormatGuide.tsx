@@ -986,8 +986,7 @@ Always convert to LaTeX array environment.
 
 --------------------------------------------------
 Line break:
-if no LaTeX/KaTeX format used in any particular text area, then use visible line break.
-if LaTeX/KaTex format used in any particular text area, then use </br> for line break
+Use standard newline characters (\n) for all line breaks across all formats.
 
 --------------------------------------------------
 
