@@ -241,7 +241,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                 <div
                     onClick={handlePreviewClick}
                     className={cn(
-                        "w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm cursor-text min-h-[40px] hover:border-blue-400 transition-colors bg-slate-50/50 text-left [&_.katex-display]:!my-1 [&_.katex-display]:!mx-0 [&_.katex-display]:!text-left [&_.katex]:!text-left",
+                        "w-full max-w-full overflow-x-auto rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm cursor-text min-h-[40px] hover:border-blue-400 transition-colors bg-slate-50/50 text-left [&_.katex-display]:!my-1 [&_.katex-display]:!mx-0 [&_.katex-display]:!text-left [&_.katex]:!text-left",
                         className
                     )}
                 >
