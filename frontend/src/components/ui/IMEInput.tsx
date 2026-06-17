@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -74,12 +74,17 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     }, [isEditing]);
 
     // Auto-resize textarea to fit content height dynamically
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (as === 'textarea' && inputRef.current) {
             const el = inputRef.current;
+            const scrollPos = window.scrollY;
             el.style.height = 'auto';
             el.style.overflowY = 'hidden';
             el.style.height = `${el.scrollHeight}px`;
+            // Restore scroll position if browser clamped it during the height update
+            if (window.scrollY !== scrollPos) {
+                window.scrollTo(window.scrollX, scrollPos);
+            }
         }
     }, [value, as, isEditing]);
 

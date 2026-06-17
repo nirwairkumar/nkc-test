@@ -190,10 +190,7 @@
   animation: shimmer 2s infinite linear;
 }
 
-/* Smooth scroll for landing page */
-html {
-  scroll-behavior: smooth;
-}
+/* Smooth scroll managed dynamically by components that require it (e.g. LandingPage) */
 
 /* Landing section initial state */
 .landing-section {
