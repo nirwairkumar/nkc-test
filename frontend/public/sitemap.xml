@@ -3,112 +3,112 @@
 
     <url>
         <loc>https://testoza.com/</loc>
-        <lastmod>2026-06-17T16:13:28.888Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.711Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>1</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/login</loc>
-        <lastmod>2026-06-17T16:13:28.888Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/create-test</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/generate-with-ai</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/pricing</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/premium</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/about</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/support</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/convert</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/privacy-policy</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.4</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/terms-and-conditions</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.4</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/tests/jee-mains</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.95</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/tests/gate</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.95</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/tests/cat</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.95</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/tests/jee</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.95</priority>
     </url>
 
     <url>
         <loc>https://testoza.com/tests/iit-jam</loc>
-        <lastmod>2026-06-17T16:13:28.889Z</lastmod>
+        <lastmod>2026-06-17T16:51:17.712Z</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.95</priority>
     </url>

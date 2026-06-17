@@ -785,11 +785,11 @@ ABSOLUTE OUTPUT RULES
 
 FILE STRUCTURE
 {
-  "title": "write relevant title",     
-  "description": "write relevant description",     
-  "maxMarks": "", 
-  "duration": "analyse and find total duration of exam in minutes",
-  "sections": [...]
+  "title": "write relevant title",     
+  "description": "write relevant description",     
+  "maxMarks": "", 
+  "duration": "analyse and find total duration of exam in minutes",
+  "sections": [...]
 }
 
 
@@ -798,9 +798,9 @@ SECTION STRUCTURE
 Each section must follow:
 
 {
-  "id": "section-1",
-  "name": "Section Name",
-  "questions": [...],
+  "id": "section-1",
+  "name": "Section Name",
+  "questions": [...],
 }
 
 NOTE:
@@ -814,15 +814,15 @@ QUESTION OBJECT STRUCTURE
 Each question must follow:
 
 {
-  "id": 1,
-  "type": "single | multiple | numerical",
-  "question": "Exact extracted text (KaTeX preserved)",
-  "marks": "2",
-  "negativeMarks": "0",
-  "groupId": "",
-  "options": {...},
-  "correctAnswer": ...,
-  "passageContent": ""
+  "id": 1,
+  "type": "single | multiple | numerical",
+  "question": "Exact extracted text (KaTeX preserved)",
+  "marks": "2",
+  "negativeMarks": "0",
+  "groupId": "",
+  "options": {...},
+  "correctAnswer": ...,
+  "passageContent": ""
 }
 
 --------------------------------------------------
@@ -836,8 +836,8 @@ Detect automatically:
 
 "type": "multiple"
 → more than one correct option OR instruction like:
-   - Select all correct
-   - Choose correct statements
+   - Select all correct
+   - Choose correct statements
 
 "type": "numerical"
 → No options OR integer/decimal answer required
@@ -867,8 +867,8 @@ If multiple questions share a passage:
 - Assign SAME groupId (e.g., "grp1")
 - Include SAME passageContent inside each question
 - If not comprehension:
-    groupId = ""
-    passageContent = ""
+    groupId = ""
+    passageContent = ""
 
 These two keys must ALWAYS exist.
 
@@ -877,66 +877,66 @@ These two keys must ALWAYS exist.
 IMAGE RULES
 
 If question contains image:
-    include "image": "base64_or_image-true"
+    include "image": "base64_or_image-true"
 
 If no image:
-    DO NOT include "image" key
+    DO NOT include "image" key
 
 If any option contains image:
-    include "optionImages": { ... }
+    include "optionImages": { ... }
 
 If no option images:
-    DO NOT include "optionImages"
+    DO NOT include "optionImages"
 
 --------------------------------------------------
 
 OPTIONS RULE
 
 For single & multiple:
-    "options": {
-      "A": "Exact extracted text (KaTeX preserved)",
-      "B": "Exact extracted text (KaTeX preserved)",
-      "C": "Exact extracted text (KaTeX preserved)",
-      "D": "Exact extracted text (KaTeX preserved)"
-    }
+    "options": {
+      "A": "Exact extracted text (KaTeX preserved)",
+      "B": "Exact extracted text (KaTeX preserved)",
+      "C": "Exact extracted text (KaTeX preserved)",
+      "D": "Exact extracted text (KaTeX preserved)"
+    }
 
 For numerical:
-    Provide empty options structure:
-    "options": {
-      "A": "",
-      "B": "",
-      "C": "",
-      "D": ""
-    }
+    Provide empty options structure:
+    "options": {
+      "A": "",
+      "B": "",
+      "C": "",
+      "D": ""
+    }
 
 --------------------------------------------------
 
 CORRECT ANSWER FORMAT
 
 Single:
-    "correctAnswer": "C"
+    "correctAnswer": "C"
 
 Multiple:
-    "correctAnswer": ["A","B"]
+    "correctAnswer": ["A","B"]
 
 Numerical:
-    "correctAnswer": { "min": 3, "max": 3 }
+    "correctAnswer": { "min": 3, "max": 3 }
 
 --------------------------------------------------
 
 MATHEMATICAL EXPRESSION RULES
 
 1. Deeply scan for:
-   • Fractions
-   • Integrals
-   • Limits
-   • Summations
-   • Roots
-   • Powers
-   • Matrices
-   • Greek letters
-   • Subscripts
-   • Superscripts
+    • Fractions
+    • Integrals
+    • Limits
+    • Summations
+    • Roots
+    • Powers
+    • Matrices
+    • Greek letters
+    • Subscripts
+    • Superscripts
 
 2. Convert to KaTeX-compatible LaTeX.
 
@@ -991,33 +991,36 @@ if LaTeX/KaTex format used in any particular text area, then use </br> for line 
 
 --------------------------------------------------
 
-🔥 MATCH-THE-FOLLOWING RULE
+🔥 MATCH-THE-FOLLOWING RULE (4-COLUMN SPACING)
 
-If question is "Match the Following" OR has two columns:
+If a question is "Match the Following" or has a two-column list comparison:
 
-Convert into structured KaTeX format:
+You MUST convert it into a structured 4-column KaTeX array where label columns (\`A.\`, \`B.\`, \`I.\`, \`II.\`) are kept narrow and separate from the content text. 
 
-Example:
+**Rules:**
+1. Use column template \`\\begin{array}{|ll|ll|}\` to specify alignment and borders.
+2. The header row MUST start with an empty cell \`&\` and have an empty cell \`& &\` between lists. This aligns list titles correctly without stretching the label columns.
+3. Every row must use a 4-column layout (\`Cell1 & Cell2 & Cell3 & Cell4\`).
 
-Column I      Column II
-A. Apple      1. Fruit
-B. Car        2. Vehicle
+Example Conversion:
+
+Column I           Column II
+A. Apple           I. Fruit
+B. Car             II. Vehicle
 
 Convert to:
 $$
-\begin{array}{ll}
-\text{Column I} & \text{Column II} \\
-A.\ \text{Apple} & 1.\ \text{Fruit} \\
-B.\ \text{Car} & 2.\ \text{Vehicle}
+\begin{array}{|ll|ll|}
+\hline
+& \text{Column I} & & \text{Column II} \\
+\hline
+A. & \text{Apple} & I. & \text{Fruit} \\
+B. & \text{Car} & II. & \text{Vehicle} \\
+\hline
 \end{array}
 $$
 
-Embed this inside the question text.
-
-DO NOT output HTML.
-DO NOT output plain text table.
-
-Always use LaTeX array.
+Embed this structure inside the question text string. Do NOT output HTML or raw tables.
 
 --------------------------------------------------
 
@@ -1075,21 +1078,21 @@ Convert to:
 3. Structural formulas (organic chains) must use mhchem when possible.
 
 Example:
-CH3-CH=CH-CO-CH3  
+CH3-CH=CH-CO-CH3  
 → "$\\ce{CH3-CH=CH-CO-CH3}$"
 $\ce{CH3-CH=CH-\overset{O}{\overset{||}{C}}-CH3}$
 4. Units must use the "\pu{ }" syntax.
 
 Example:
-4.18 J g⁻¹ K⁻¹  
+4.18 J g⁻¹ K⁻¹  
 → "$\\pu{4.18 J g-1 K-1}$"
 
 5. If a question contains complex chemical diagrams such as:
-• benzene rings  
-• Haworth projections  
-• resonance structures  
-• skeletal organic structures  
-• reaction mechanisms  
+• benzene rings  
+• Haworth projections  
+• resonance structures  
+• skeletal organic structures  
+• reaction mechanisms  
 
 DO NOT convert them to LaTeX.
 
@@ -1108,7 +1111,8 @@ question id same as question number
 -> consider only english part. scan each question, and extract the same without any change.
 ->reverify each question/options until adjectly same as question paper.
 -> remove [cite:$$$] then add in json.
--> you must match the answer from solution pdf correctly.`;
+-> you must match the answer from solution pdf correctly.
+-> -> put adject question in json without any small change or modify.`;
 
   const jsonTemplateSectionAddon = `--------------------------------------------------
 
