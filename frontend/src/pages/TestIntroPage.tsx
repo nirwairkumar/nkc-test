@@ -30,8 +30,7 @@ import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/test
 import { SEO } from '@/components/SEO';
 import { fetchFeatureFlags } from '@/lib/featuresApi';
 import { SEOContent } from '@/components/SEOContent';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+
 import { toast } from 'sonner';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
@@ -863,11 +862,10 @@ export default function TestIntroPage() {
                                     <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform ml-2">▼</span>
                                 </summary>
                                 <div className="p-4 bg-slate-50 dark:bg-slate-950/30 border-t max-h-[500px] overflow-y-auto">
-                                    <article className="prose prose-sm dark:prose-invert max-w-none">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {test.revision_notes}
-                                        </ReactMarkdown>
-                                    </article>
+                                    <article
+                                        className="prose prose-sm dark:prose-invert max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: test.revision_notes }}
+                                    />
                                 </div>
                             </details>
                         </div>
