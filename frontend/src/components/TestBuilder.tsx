@@ -1304,7 +1304,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     }
 
     return (
-        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 w-full max-w-5xl overflow-x-hidden" style={{ overflowAnchor: 'none' }}>
+        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 w-full max-w-5xl" style={{ overflowAnchor: 'none' }}>
             <div className="mb-2 sm:mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-0 gap-2 sm:gap-4">
                 <div className="flex items-center gap-3">
                     {onCancel && (
