@@ -2218,9 +2218,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             </div>
                                                                         </div>
 
-                                                                        <div className="p-6 space-y-6 overflow-x-auto max-w-full custom-scrollbar">
-                                                                            <div className="space-y-3">
-                                                                                <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
+                                                                        <div className="p-6 space-y-6 min-w-0">
+                                                                            <div className="space-y-3 min-w-0">
+                                                                                <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
                                                                                     <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
                                                                                     <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
                                                                                         <div className="group/info relative cursor-help">
@@ -2640,10 +2640,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                 </div>
                                             </div>
 
-                                            <div className="p-6 space-y-6 overflow-x-auto max-w-full custom-scrollbar">
+                                            <div className="p-6 space-y-6 min-w-0">
                                                 {/* Question Input Area */}
-                                                <div className="space-y-3">
-                                                    <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
+                                                <div className="space-y-3 min-w-0">
+                                                    <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
                                                         <IMEInput
                                                             ref={(el) => imeRefs.current[`std-q-${index}`] = el}
                                                             as="textarea"
