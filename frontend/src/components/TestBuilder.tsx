@@ -2133,7 +2133,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     )}
 
                                                                     <Card className={`
-                                                                        group relative shadow-sm hover:shadow-md transition-all duration-300 bg-white
+                                                                        w-full min-w-0 overflow-hidden group relative shadow-sm hover:shadow-md transition-all duration-300 bg-white
                                                                         ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
                                                                         ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
                                                                     `}>
@@ -2545,7 +2545,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         <Card
                                             data-question-card={index === 0 ? "true" : undefined}
                                             className={`
-                                                group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
+                                                w-full min-w-0 group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
                                                 ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
                                                 ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
                                                 ${isDragging ? 'border-dashed border-primary/50 opacity-60' : ''}
