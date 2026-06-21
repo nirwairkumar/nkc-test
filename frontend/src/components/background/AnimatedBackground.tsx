@@ -408,11 +408,11 @@ export default function AnimatedBackground() {
             />
 
             {/* Canvas Layer */}
-            <canvas
+            {/* <canvas
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full"
                 style={{ mixBlendMode: 'screen' }}
-            />
+            /> */}
 
             {/* Vignette Overlay */}
             <div className="absolute inset-0 bg-radial-gradient(circle at center, transparent 0%, #020617 100%) pointer-events-none opacity-50" />
