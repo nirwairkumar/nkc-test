@@ -15,22 +15,38 @@ const SettingsShowcaseSection = lazy(() => import('@/components/landing/Settings
 const LiveExamTestimonials = lazy(() => import('@/components/landing/LiveExamTestimonials'));
 
 // Loading component
-const SectionLoader = ({ className = "h-96" }: { className?: string }) => (
-    <div className={`w-full ${className} flex items-center justify-center bg-slate-50 dark:bg-slate-900/50`}>
-        <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-    </div>
-);
+const SectionLoader = ({ mobileHeight = "400px", desktopHeight = "400px" }: { mobileHeight?: string; desktopHeight?: string }) => {
+    const customStyles = {
+        '--mobile-h': mobileHeight,
+        '--desktop-h': desktopHeight,
+    } as React.CSSProperties;
+
+    return (
+        <div 
+            className="w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 lazy-section-placeholder" 
+            style={customStyles}
+        >
+            <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+        </div>
+    );
+};
+
+interface LazySectionProps {
+    children: React.ReactNode;
+    height?: string;
+    mobileHeight?: string;
+    desktopHeight?: string;
+    className?: string;
+}
 
 // Viewport-based lazy loading wrapper to defer JS evaluation & execution for below-the-fold content
 function LazySection({ 
     children, 
     height, 
+    mobileHeight,
+    desktopHeight,
     className = "" 
-}: { 
-    children: React.ReactNode; 
-    height: string; 
-    className?: string; 
-}) {
+}: LazySectionProps) {
     const ref = useRef<HTMLDivElement>(null);
     const [isIntersected, setIsIntersected] = useState(() => {
         if (typeof window === 'undefined') return false;
@@ -66,10 +82,22 @@ function LazySection({
         };
     }, [isIntersected]);
 
+    const effMobileHeight = mobileHeight || height || '400px';
+    const effDesktopHeight = desktopHeight || height || '400px';
+
+    const customStyles = {
+        '--mobile-h': effMobileHeight,
+        '--desktop-h': effDesktopHeight,
+    } as React.CSSProperties;
+
     return (
-        <div ref={ref} className={className} style={{ minHeight: height }}>
+        <div 
+            ref={ref} 
+            className={`w-full lazy-section-placeholder ${className}`} 
+            style={customStyles}
+        >
             {isIntersected ? children : (
-                <div className="w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900/50" style={{ height }}>
+                <div className="w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 lazy-section-spinner">
                     <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
                 </div>
             )}
@@ -210,40 +238,40 @@ export default function LandingPage() {
 
                 {/* Feature Sections with scroll animations */}
                 <div className="landing-section">
-                    <LazySection height="800px">
-                        <Suspense fallback={<SectionLoader className="h-[800px]" />}>
+                    <LazySection desktopHeight="800px" mobileHeight="1100px">
+                        <Suspense fallback={<SectionLoader desktopHeight="800px" mobileHeight="1100px" />}>
                             <ManualCreateSection />
                         </Suspense>
                     </LazySection>
                 </div>
 
                 <div className="landing-section">
-                    <LazySection height="750px">
-                        <Suspense fallback={<SectionLoader className="h-[750px]" />}>
+                    <LazySection desktopHeight="750px" mobileHeight="1000px">
+                        <Suspense fallback={<SectionLoader desktopHeight="750px" mobileHeight="1000px" />}>
                             <SettingsShowcaseSection />
                         </Suspense>
                     </LazySection>
                 </div>
 
                 <div className="landing-section">
-                    <LazySection height="600px">
-                        <Suspense fallback={<SectionLoader className="h-[600px]" />}>
+                    <LazySection desktopHeight="600px" mobileHeight="800px">
+                        <Suspense fallback={<SectionLoader desktopHeight="600px" mobileHeight="800px" />}>
                             <LiveExamTestimonials />
                         </Suspense>
                     </LazySection>
                 </div>
 
                 <div id="features" className="landing-section">
-                    <LazySection height="750px">
-                        <Suspense fallback={<SectionLoader className="h-[750px]" />}>
+                    <LazySection desktopHeight="750px" mobileHeight="950px">
+                        <Suspense fallback={<SectionLoader desktopHeight="750px" mobileHeight="950px" />}>
                             <UploadMaterialsSection />
                         </Suspense>
                     </LazySection>
                 </div>
 
                 <div className="landing-section">
-                    <LazySection height="1100px">
-                        <Suspense fallback={<SectionLoader className="h-[1100px]" />}>
+                    <LazySection desktopHeight="1100px" mobileHeight="1400px">
+                        <Suspense fallback={<SectionLoader desktopHeight="1100px" mobileHeight="1400px" />}>
                             <FileToTestSection />
                         </Suspense>
                     </LazySection>
@@ -261,8 +289,8 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        <LazySection height="350px">
-                            <Suspense fallback={<SectionLoader className="h-[350px]" />}>
+                        <LazySection desktopHeight="350px" mobileHeight="600px">
+                            <Suspense fallback={<SectionLoader desktopHeight="350px" mobileHeight="600px" />}>
                                 <CategoryFolderCards />
                             </Suspense>
                         </LazySection>
@@ -271,8 +299,8 @@ export default function LandingPage() {
                             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
                                 <span className="bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">Featured</span> Tests
                             </h3>
-                            <LazySection height="500px">
-                                <Suspense fallback={<SectionLoader className="h-[500px]" />}>
+                            <LazySection desktopHeight="500px" mobileHeight="1250px">
+                                <Suspense fallback={<SectionLoader desktopHeight="500px" mobileHeight="1250px" />}>
                                     <FeaturedTests user={null} onManageTest={handleManageTest} />
                                 </Suspense>
                             </LazySection>
@@ -303,8 +331,8 @@ export default function LandingPage() {
 
                 {/* Community Campaign Section */}
                 <div className="landing-section">
-                    <LazySection height="400px">
-                        <Suspense fallback={<SectionLoader className="h-[400px]" />}>
+                    <LazySection desktopHeight="400px" mobileHeight="600px">
+                        <Suspense fallback={<SectionLoader desktopHeight="400px" mobileHeight="600px" />}>
                             <CommunityJoinSection />
                         </Suspense>
                     </LazySection>

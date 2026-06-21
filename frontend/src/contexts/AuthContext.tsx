@@ -152,13 +152,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         // Build a minimal session object for compatibility
                         setSession({ user: userData, access_token: token });
 
-                        // Optimize: Fetch profile once and reuse it for checkPremiumStatus
-                        const profileData = await fetchProfileData(userData.id);
+                        // Set loading false as soon as user state is verified
+                        setLoading(false);
 
-                        await Promise.all([
-                            checkAdminStatus(userData.id),
-                            checkPremiumStatus(userData.id, profileData)
-                        ]);
+                        // Fetch details and check premium status in the background
+                        fetchProfileData(userData.id).then((profileData) => {
+                            checkAdminStatus(userData.id);
+                            checkPremiumStatus(userData.id, profileData);
+                        });
                     } else {
                         throw new Error("No user in response");
                     }
@@ -168,16 +169,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     localStorage.removeItem('testoza_refresh_token');
                     setUser(null);
                     setSession(null);
-                    await checkPremiumStatus(undefined);
+                    setLoading(false);
+                    checkPremiumStatus(undefined);
                 }
             } else {
                 setUser(null);
                 setSession(null);
-                await checkPremiumStatus(undefined);
+                setLoading(false);
+                checkPremiumStatus(undefined);
             }
         } catch (error) {
             console.error('Auth initialization error:', error);
-        } finally {
             setLoading(false);
         }
     };
