@@ -77,7 +77,17 @@ export default function LandingPage() {
                     "ai quiz generator",
                     "secure online proctoring software",
                     "how to create a test online",
-                    "learning management system"
+                    "learning management system",
+                    "conduct online mock tests",
+                    "secure online exam environment",
+                    "high level online tests",
+                    "paper to digital assessment",
+                    "digital exam platform",
+                    "eco-friendly mock tests",
+                    "online mock test platform",
+                    "conduct exams online securely",
+                    "paperless examination system",
+                    "sustainable online testing"
                 ]}
             />
 
