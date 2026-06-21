@@ -33,9 +33,9 @@
 
 ## Quick Links
 
-- Website: https://testoza.com
-- Create Test: https://testoza.com/create-test
-- Test Library: https://testoza.com/tests
-
+- [Website](https://testoza.com)
+- [Create Test](https://testoza.com/create-test)
+- [Test Library](https://testoza.com/tests)
+- [Dashboard](https://testoza.com/dashboard)
 ---
 *Testoza: Secure. Intelligent. Professional.*

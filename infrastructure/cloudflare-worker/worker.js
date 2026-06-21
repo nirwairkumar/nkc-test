@@ -8,10 +8,10 @@
 const CONFIG = {
   // Backend API URL (GCP Cloud Run)
   API_BASE_URL: 'https://apigcp.testoza.com',
-  
+
   // Frontend origin (Cloudflare Pages)
   FRONTEND_URL: 'https://testoza.com',
-  
+
   // Cache TTLs (in seconds)
   CACHE_TTL: {
     SITEMAP: 3600,      // 1 hour
@@ -19,7 +19,7 @@ const CONFIG = {
     API: 1800,          // 30 minutes
     HTML: 300           // 5 minutes for prerendered HTML
   },
-  
+
   // Crawler user agents that need special handling
   CRAWLER_AGENTS: [
     'googlebot',
@@ -29,15 +29,17 @@ const CONFIG = {
     'linkedinbot',
     'whatsapp',
     'slackbot',
-    'discordbot'
+    'discordbot',
+    'lighthouse',
+    'pagespeed',
+    'google page speed'
   ],
-  
+
   // Routes that should never be cached
   NO_CACHE_ROUTES: [
     '/live/',
     '/admin',
     '/api/',
-    '/dashboard',
     '/create-test',
     '/edit-test/'
   ]
@@ -66,7 +68,7 @@ function shouldBypassCache(url) {
 function generateCacheKey(request) {
   const url = new URL(request.url);
   const isCrawlerRequest = isCrawler(request);
-  
+
   // Different cache for crawlers vs humans
   return new Request(
     `${url.origin}${url.pathname}${isCrawlerRequest ? '?_crawler=1' : ''}`,
@@ -79,7 +81,7 @@ function generateCacheKey(request) {
  */
 function getCacheTTL(url) {
   const pathname = new URL(url).pathname;
-  
+
   if (pathname.startsWith('/sitemap')) {
     return CONFIG.CACHE_TTL.SITEMAP;
   }
@@ -89,7 +91,7 @@ function getCacheTTL(url) {
   if (pathname.startsWith('/static/') || pathname.includes('.')) {
     return CONFIG.CACHE_TTL.STATIC;
   }
-  
+
   return CONFIG.CACHE_TTL.HTML;
 }
 
@@ -98,7 +100,7 @@ function getCacheTTL(url) {
  */
 async function fetchFromAPI(endpoint, options = {}) {
   const url = `${CONFIG.API_BASE_URL}${endpoint}`;
-  
+
   const response = await fetch(url, {
     ...options,
     headers: {
@@ -106,7 +108,7 @@ async function fetchFromAPI(endpoint, options = {}) {
       ...options.headers
     }
   });
-  
+
   return response;
 }
 
@@ -116,12 +118,12 @@ async function fetchFromAPI(endpoint, options = {}) {
 async function handleSitemap(request) {
   const url = new URL(request.url);
   const sitemapType = url.pathname.replace('/sitemap/', '').replace('.xml', '');
-  
+
   // Try cache first
   const cache = caches.default;
   const cacheKey = new Request(`${CONFIG.FRONTEND_URL}/sitemap/${sitemapType}.xml`, request);
   let cached = await cache.match(cacheKey);
-  
+
   if (cached) {
     return new Response(cached.body, {
       status: 200,
@@ -132,16 +134,16 @@ async function handleSitemap(request) {
       }
     });
   }
-  
+
   // Fetch from backend
   const apiResponse = await fetchFromAPI(`/sitemap/${sitemapType}.xml`);
-  
+
   if (!apiResponse.ok) {
     return new Response('Sitemap not found', { status: 404 });
   }
-  
+
   const body = await apiResponse.text();
-  
+
   // Cache the response
   const response = new Response(body, {
     status: 200,
@@ -152,10 +154,10 @@ async function handleSitemap(request) {
       'X-Cache-Location': 'EDGE'
     }
   });
-  
+
   // Store in cache
   await cache.put(cacheKey, response.clone());
-  
+
   return response;
 }
 
@@ -167,17 +169,17 @@ async function injectSEOMetaTags(html, url, testData = null) {
   // Extract test data from URL if available
   const urlObj = new URL(url);
   const pathParts = urlObj.pathname.split('/');
-  
+
   // Generate meta tags
   const metaTags = generateMetaTags(url, testData);
-  
+
   // Inject into HTML head
   const headEndIndex = html.indexOf('</head>');
   if (headEndIndex === -1) return html;
-  
+
   const beforeHead = html.substring(0, headEndIndex);
   const afterHead = html.substring(headEndIndex);
-  
+
   return `${beforeHead}${metaTags}${afterHead}`;
 }
 
@@ -187,14 +189,14 @@ async function injectSEOMetaTags(html, url, testData = null) {
 function generateMetaTags(url, testData = null) {
   const siteUrl = CONFIG.FRONTEND_URL;
   const path = new URL(url).pathname;
-  
+
   // Default meta
   let title = 'TestoZa - AI-Powered Online Test Platform';
   let description = 'Create AI-powered tests in minutes. Free online test maker for teachers and students.';
   let type = 'website';
   let image = `${siteUrl}/default-og.png`;
   let keywords = 'online test maker, ai test generator, quiz creator, exam builder';
-  
+
   // Customize based on route
   if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
     if (testData) {
@@ -219,7 +221,7 @@ function generateMetaTags(url, testData = null) {
     description = 'Affordable pricing plans for online test creation. Start free, upgrade anytime.';
     type = 'product';
   }
-  
+
   // Build meta tag HTML
   return `
     <!-- Dynamic SEO Meta Tags (Cloudflare Worker) -->
@@ -267,7 +269,7 @@ function escapeHtml(text) {
 async function handleHTMLRequest(request) {
   const cache = caches.default;
   const cacheKey = generateCacheKey(request);
-  
+
   // Try cache first
   let cached = await cache.match(cacheKey);
   if (cached && !shouldBypassCache(request.url)) {
@@ -280,40 +282,40 @@ async function handleHTMLRequest(request) {
       }
     });
   }
-  
+
   // Fetch from origin
   const originResponse = await fetch(request);
-  
+
   if (!originResponse.ok) {
     return originResponse;
   }
-  
+
   let html = await originResponse.text();
-  
+
   // Inject SEO meta tags for crawlers or test pages
   if (isCrawler(request) || new URL(request.url).pathname.startsWith('/test/')) {
     html = await injectSEOMetaTags(html, request.url);
   }
-  
+
   // Create response with cache headers
   const ttl = getCacheTTL(request.url);
   const response = new Response(html, {
     status: originResponse.status,
     headers: {
       'Content-Type': 'text/html',
-      'Cache-Control': shouldBypassCache(request.url) 
-        ? 'no-store, no-cache, must-revalidate' 
+      'Cache-Control': shouldBypassCache(request.url)
+        ? 'no-store, no-cache, must-revalidate'
         : `public, max-age=${ttl}`,
       'X-Cache': 'MISS',
       'X-Cache-Location': 'EDGE'
     }
   });
-  
+
   // Cache if applicable
   if (!shouldBypassCache(request.url)) {
     await cache.put(cacheKey, response.clone());
   }
-  
+
   return response;
 }
 
@@ -323,7 +325,7 @@ async function handleHTMLRequest(request) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    
+
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -336,14 +338,14 @@ export default {
         }
       });
     }
-    
+
     // Route handling
     try {
       // Sitemap requests
       if (url.pathname.startsWith('/sitemap')) {
         return await handleSitemap(request);
       }
-      
+
       // Robots.txt - serve directly
       if (url.pathname === '/robots.txt') {
         return new Response(ROBOTS_TXT, {
@@ -353,16 +355,47 @@ export default {
           }
         });
       }
-      
-      // HTML pages
-      if (request.headers.get('accept')?.includes('text/html')) {
+
+      // Serve llms.txt and llms-full.txt explicitly as plain text
+      if (url.pathname === '/llms.txt' || url.pathname === '/llms-full.txt') {
+        const cache = caches.default;
+        const cached = await cache.match(request);
+        if (cached) {
+          return new Response(cached.body, {
+            headers: {
+              ...Object.fromEntries(cached.headers),
+              'Content-Type': 'text/plain; charset=utf-8',
+              'X-Cache': 'HIT'
+            }
+          });
+        }
+
+        const originResponse = await fetch(request);
+        if (originResponse.ok) {
+          const response = new Response(originResponse.body, {
+            status: originResponse.status,
+            headers: {
+              ...Object.fromEntries(originResponse.headers),
+              'Content-Type': 'text/plain; charset=utf-8',
+              'Cache-Control': `public, max-age=${CONFIG.CACHE_TTL.STATIC}`,
+              'X-Cache': 'MISS'
+            }
+          });
+          ctx.waitUntil(cache.put(request, response.clone()));
+          return response;
+        }
+      }
+
+      // HTML pages (ignore paths with common static file extensions)
+      const hasStaticExtension = /\.(txt|xml|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i.test(url.pathname);
+      if (request.headers.get('accept')?.includes('text/html') && !hasStaticExtension) {
         return await handleHTMLRequest(request);
       }
-      
+
       // Static assets - pass through with caching
       const cache = caches.default;
       const cached = await cache.match(request);
-      
+
       if (cached) {
         return new Response(cached.body, {
           headers: {
@@ -371,9 +404,9 @@ export default {
           }
         });
       }
-      
+
       const originResponse = await fetch(request);
-      
+
       if (originResponse.ok && !shouldBypassCache(request.url)) {
         const ttl = url.pathname.includes('.') ? CONFIG.CACHE_TTL.STATIC : CONFIG.CACHE_TTL.HTML;
         const response = new Response(originResponse.body, {
@@ -384,16 +417,16 @@ export default {
             'X-Cache': 'MISS'
           }
         });
-        
+
         ctx.waitUntil(cache.put(request, response.clone()));
         return response;
       }
-      
+
       return originResponse;
-      
+
     } catch (error) {
       console.error('Worker error:', error);
-      
+
       // Fallback to origin on error
       return fetch(request);
     }
@@ -431,7 +464,6 @@ Disallow: /results
 Disallow: /create-test
 Disallow: /edit-test/
 Disallow: /generate-with-ai
-Disallow: /dashboard
 Disallow: /profile
 Disallow: /settings
 Disallow: /materials

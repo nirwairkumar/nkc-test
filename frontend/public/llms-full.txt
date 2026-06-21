@@ -629,9 +629,9 @@ Testoza offers multiple flexible sharing options:
 
 ## Contact & Support
 
-**Website:** https://testoza.com
+**Website:** [testoza.com](https://testoza.com)
 **Support Email:** support@testoza.com
-**Help Center:** https://testoza.com/help
+**Help Center:** [testoza.com/help](https://testoza.com/help)
 
 **Social Media:**
 - Twitter/X: @testoza
@@ -642,7 +642,7 @@ Testoza offers multiple flexible sharing options:
 
 ## Technical Documentation
 
-For API documentation, webhook integrations, and advanced technical specifications, visit: https://testoza.com/docs
+For API documentation, webhook integrations, and advanced technical specifications, visit: [testoza.com/docs](https://testoza.com/docs)
 
 ---
 

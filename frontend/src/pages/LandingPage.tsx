@@ -15,8 +15,8 @@ const SettingsShowcaseSection = lazy(() => import('@/components/landing/Settings
 const LiveExamTestimonials = lazy(() => import('@/components/landing/LiveExamTestimonials'));
 
 // Loading component
-const SectionLoader = () => (
-    <div className="w-full h-96 flex items-center justify-center bg-slate-50 dark:bg-slate-900/50">
+const SectionLoader = ({ className = "h-96" }: { className?: string }) => (
+    <div className={`w-full ${className} flex items-center justify-center bg-slate-50 dark:bg-slate-900/50`}>
         <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
     </div>
 );
@@ -116,31 +116,31 @@ export default function LandingPage() {
 
                 {/* Feature Sections with scroll animations */}
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
+                    <Suspense fallback={<SectionLoader className="h-[800px]" />}>
                         <ManualCreateSection />
                     </Suspense>
                 </div>
 
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
+                    <Suspense fallback={<SectionLoader className="h-[750px]" />}>
                         <SettingsShowcaseSection />
                     </Suspense>
                 </div>
 
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
+                    <Suspense fallback={<SectionLoader className="h-[600px]" />}>
                         <LiveExamTestimonials />
                     </Suspense>
                 </div>
 
                 <div id="features" className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
+                    <Suspense fallback={<SectionLoader className="h-[750px]" />}>
                         <UploadMaterialsSection />
                     </Suspense>
                 </div>
 
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
+                    <Suspense fallback={<SectionLoader className="h-[1100px]" />}>
                         <FileToTestSection />
                     </Suspense>
                 </div>
@@ -157,7 +157,7 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        <Suspense fallback={<SectionLoader />}>
+                        <Suspense fallback={<SectionLoader className="h-[350px]" />}>
                             <CategoryFolderCards />
                         </Suspense>
 
@@ -165,7 +165,7 @@ export default function LandingPage() {
                             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
                                 <span className="bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">Featured</span> Tests
                             </h3>
-                            <Suspense fallback={<SectionLoader />}>
+                            <Suspense fallback={<SectionLoader className="h-[500px]" />}>
                                 <FeaturedTests user={null} onManageTest={handleManageTest} />
                             </Suspense>
                         </div>
@@ -195,7 +195,7 @@ export default function LandingPage() {
 
                 {/* Community Campaign Section */}
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader />}>
+                    <Suspense fallback={<SectionLoader className="h-[400px]" />}>
                         <CommunityJoinSection />
                     </Suspense>
                 </div>
