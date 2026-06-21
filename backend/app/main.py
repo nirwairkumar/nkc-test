@@ -41,6 +41,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Request
+
+@app.middleware("http")
+async def add_security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    # Secure API endpoints by default against CDN/Edge caching
+    # If the response already has a Cache-Control header, respect it
+    if request.url.path.startswith("/api") and "Cache-Control" not in response.headers:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 security = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Client = Depends(get_db)):
