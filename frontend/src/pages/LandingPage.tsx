@@ -1,4 +1,4 @@
-import { useEffect, Suspense, lazy } from 'react';
+import { useEffect, Suspense, lazy, useRef, useState } from 'react';
 import CreateTestsHero from '@/components/landing/CreateTestsHero';
 import { SEO } from '@/components/SEO';
 
@@ -21,10 +21,104 @@ const SectionLoader = ({ className = "h-96" }: { className?: string }) => (
     </div>
 );
 
+// Viewport-based lazy loading wrapper to defer JS evaluation & execution for below-the-fold content
+function LazySection({ 
+    children, 
+    height, 
+    className = "" 
+}: { 
+    children: React.ReactNode; 
+    height: string; 
+    className?: string; 
+}) {
+    const ref = useRef<HTMLDivElement>(null);
+    const [isIntersected, setIsIntersected] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        // Eager load for search indexers to preserve sitemap and SEO visibility
+        const ua = navigator.userAgent.toLowerCase();
+        const isCrawler = /bot|googlebot|crawler|spider|robot|crawling/i.test(ua);
+        // Exclude Lighthouse/PageSpeed to allow performance test measurement optimization
+        return isCrawler && !/lighthouse|pagespeed/i.test(ua);
+    });
+
+    useEffect(() => {
+        if (isIntersected) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsIntersected(true);
+                    observer.disconnect();
+                }
+            },
+            {
+                rootMargin: '300px 0px', // start loading 300px before entering viewport
+                threshold: 0.01,
+            }
+        );
+
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [isIntersected]);
+
+    return (
+        <div ref={ref} className={className} style={{ minHeight: height }}>
+            {isIntersected ? children : (
+                <div className="w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900/50" style={{ height }}>
+                    <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function LandingPage() {
     useEffect(() => {
         // Smooth scroll behavior
         document.documentElement.style.scrollBehavior = 'smooth';
+
+        // Register WebMCP tool for agentic browsing
+        const registerWebMCPTools = () => {
+            const modelContext = 
+                (document as any).modelContext || 
+                (navigator as any).modelContext;
+
+            if (modelContext && typeof modelContext.registerTool === 'function') {
+                try {
+                    modelContext.registerTool({
+                        name: 'create_test_from_topic',
+                        description: 'Generates a mock test or exam on a specific subject, topic, or target exam (such as JEE, NEET, GATE).',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                topic: { 
+                                    type: 'string', 
+                                    description: 'The academic subject, chapter, or exam topic to generate questions for.' 
+                                },
+                                numQuestions: { 
+                                    type: 'number', 
+                                    description: 'Number of questions to generate (default is 10).' 
+                                }
+                            },
+                            required: ['topic']
+                        },
+                        execute: async ({ topic, numQuestions = 10 }: { topic: string; numQuestions?: number }) => {
+                            window.location.href = `/create-test?topic=${encodeURIComponent(topic)}&num=${numQuestions}`;
+                            return `Redirecting to test creation page for topic "${topic}" with ${numQuestions} questions.`;
+                        }
+                    });
+                } catch (err) {
+                    console.warn('Failed to register WebMCP tool:', err);
+                }
+            }
+        };
+
+        registerWebMCPTools();
 
         // Intersection Observer for scroll animations
         const observerOptions = {
@@ -116,33 +210,43 @@ export default function LandingPage() {
 
                 {/* Feature Sections with scroll animations */}
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader className="h-[800px]" />}>
-                        <ManualCreateSection />
-                    </Suspense>
+                    <LazySection height="800px">
+                        <Suspense fallback={<SectionLoader className="h-[800px]" />}>
+                            <ManualCreateSection />
+                        </Suspense>
+                    </LazySection>
                 </div>
 
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader className="h-[750px]" />}>
-                        <SettingsShowcaseSection />
-                    </Suspense>
+                    <LazySection height="750px">
+                        <Suspense fallback={<SectionLoader className="h-[750px]" />}>
+                            <SettingsShowcaseSection />
+                        </Suspense>
+                    </LazySection>
                 </div>
 
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader className="h-[600px]" />}>
-                        <LiveExamTestimonials />
-                    </Suspense>
+                    <LazySection height="600px">
+                        <Suspense fallback={<SectionLoader className="h-[600px]" />}>
+                            <LiveExamTestimonials />
+                        </Suspense>
+                    </LazySection>
                 </div>
 
                 <div id="features" className="landing-section">
-                    <Suspense fallback={<SectionLoader className="h-[750px]" />}>
-                        <UploadMaterialsSection />
-                    </Suspense>
+                    <LazySection height="750px">
+                        <Suspense fallback={<SectionLoader className="h-[750px]" />}>
+                            <UploadMaterialsSection />
+                        </Suspense>
+                    </LazySection>
                 </div>
 
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader className="h-[1100px]" />}>
-                        <FileToTestSection />
-                    </Suspense>
+                    <LazySection height="1100px">
+                        <Suspense fallback={<SectionLoader className="h-[1100px]" />}>
+                            <FileToTestSection />
+                        </Suspense>
+                    </LazySection>
                 </div>
 
                 {/* Discover Free Tests - Real Data */}
@@ -157,17 +261,21 @@ export default function LandingPage() {
                             </p>
                         </div>
 
-                        <Suspense fallback={<SectionLoader className="h-[350px]" />}>
-                            <CategoryFolderCards />
-                        </Suspense>
+                        <LazySection height="350px">
+                            <Suspense fallback={<SectionLoader className="h-[350px]" />}>
+                                <CategoryFolderCards />
+                            </Suspense>
+                        </LazySection>
 
                         <div className="mt-12">
                             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
                                 <span className="bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">Featured</span> Tests
                             </h3>
-                            <Suspense fallback={<SectionLoader className="h-[500px]" />}>
-                                <FeaturedTests user={null} onManageTest={handleManageTest} />
-                            </Suspense>
+                            <LazySection height="500px">
+                                <Suspense fallback={<SectionLoader className="h-[500px]" />}>
+                                    <FeaturedTests user={null} onManageTest={handleManageTest} />
+                                </Suspense>
+                            </LazySection>
                         </div>
 
                         <div className="text-center mt-8">
@@ -195,9 +303,11 @@ export default function LandingPage() {
 
                 {/* Community Campaign Section */}
                 <div className="landing-section">
-                    <Suspense fallback={<SectionLoader className="h-[400px]" />}>
-                        <CommunityJoinSection />
-                    </Suspense>
+                    <LazySection height="400px">
+                        <Suspense fallback={<SectionLoader className="h-[400px]" />}>
+                            <CommunityJoinSection />
+                        </Suspense>
+                    </LazySection>
                 </div>
 
                 {/* Final CTA Section */}

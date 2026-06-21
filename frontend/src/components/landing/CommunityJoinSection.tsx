@@ -29,6 +29,8 @@ export default function CommunityJoinSection() {
                                 <img
                                     src="/community-representation-image.jpg"
                                     alt="Community Campaign"
+                                    width={434}
+                                    height={290}
                                     className="w-full h-auto object-cover rounded-xl transition duration-500 group-hover:scale-[1.01]"
                                     loading="lazy"
                                 />
