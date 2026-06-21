@@ -1,10 +1,27 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import AnimatedBackground from '@/components/background/AnimatedBackground';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const slogans = [
+    "Create High-Level Tests & Conduct Them Online",
+    "Conduct Mock Exams in a Highly Secure Environment",
+    "Shift Seamlessly from Paper to Digital Assessments",
+    "Run Eco-Friendly & Sustainable Mock Tests"
+];
 
 export default function CreateTestsHero() {
     const navigate = useNavigate();
+    const [currentSloganIndex, setCurrentSloganIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentSloganIndex((prev) => (prev + 1) % slogans.length);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -21,12 +38,19 @@ export default function CreateTestsHero() {
                     </div>
 
                     {/* Main Heading */}
-                    <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white leading-tight">
-                        Create Tests
-                        <br />
-                        <span className="bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent">
-                            In Minute
-                        </span>
+                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight min-h-[140px] md:min-h-[180px] flex items-center justify-center overflow-hidden">
+                        <AnimatePresence mode="wait">
+                            <motion.span
+                                key={currentSloganIndex}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ duration: 0.5, ease: "easeInOut" }}
+                                className="inline-block bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent px-4 py-2"
+                            >
+                                {slogans[currentSloganIndex]}
+                            </motion.span>
+                        </AnimatePresence>
                     </h1>
 
                     {/* Subheading */}
