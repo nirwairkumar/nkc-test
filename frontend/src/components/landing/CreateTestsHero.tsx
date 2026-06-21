@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import AnimatedBackground from '@/components/background/AnimatedBackground';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,10 +31,17 @@ export default function CreateTestsHero() {
             {/* Content */}
             <div className="relative z-10 container mx-auto px-6 py-24 text-center">
                 <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-                    {/* Company Slogan Badge */}
-                    <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-amber-400/10 backdrop-blur-sm border border-amber-300/40 text-amber-200">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        <span className="text-sm font-semibold tracking-[0.18em] uppercase">The Educator's Choice</span>
+                    {/* Company Slogan — Institutional Motto Style */}
+                    <div className="flex items-center justify-center gap-4">
+                        <div className="h-[1px] w-16 bg-gradient-to-r from-transparent to-amber-400/60" />
+                        <div className="flex items-center">
+                            <span className="text-[14px] font-semibold tracking-[0.35em] uppercase text-amber-300/90 flex items-baseline">
+                                <span className="text-[20px] font-bold">T</span>he&nbsp;
+                                <span className="text-[20px] font-bold">E</span>ducator's&nbsp;
+                                <span className="text-[20px] font-bold">C</span>hoice
+                            </span>
+                        </div>
+                        <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-amber-400/60" />
                     </div>
 
                     {/* Main Heading */}
