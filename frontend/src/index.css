@@ -589,21 +589,3 @@
   z-index: 10;
   border-radius: inherit;
 }
-
-/* Responsive Lazy Section Height placeholders to prevent CLS */
-.lazy-section-placeholder {
-  min-height: var(--mobile-h, 400px);
-}
-
-.lazy-section-spinner {
-  height: var(--mobile-h, 400px);
-}
-
-@media (min-width: 768px) {
-  .lazy-section-placeholder {
-    min-height: var(--desktop-h, 400px);
-  }
-  .lazy-section-spinner {
-    height: var(--desktop-h, 400px);
-  }
-}
