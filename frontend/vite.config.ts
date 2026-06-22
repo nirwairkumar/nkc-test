@@ -62,6 +62,16 @@ export default defineConfig(({ mode }) => ({
     target: 'es2020',
     minify: 'esbuild',
     cssMinify: true,
+    modulePreload: {
+      resolveDependencies(filename: string, deps: string[]) {
+        return deps.filter(dep => {
+          return !dep.includes('vendor-tiptap') &&
+                 !dep.includes('vendor-charts') &&
+                 !dep.includes('vendor-files') &&
+                 !dep.includes('vendor-motion');
+        });
+      }
+    },
     rollupOptions: {
       output: {
         // --- Manual Chunk Splitting ---
