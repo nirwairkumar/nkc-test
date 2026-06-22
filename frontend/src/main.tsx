@@ -1,8 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import 'katex/dist/katex.min.css';
-import 'katex/dist/contrib/mhchem'; // Enable \ce{} and \pu{} for chemistry
 
 // WebMCP tool registration for Agentic Browsing (Lighthouse Audit compatibility)
 try {

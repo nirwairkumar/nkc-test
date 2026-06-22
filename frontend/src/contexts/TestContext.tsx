@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Question, TestData } from '@/data/questions';
+import type { Question, TestData } from '@/data/questions';
 
 export interface StudentAnswer {
   questionId: number;

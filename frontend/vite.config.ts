@@ -57,23 +57,6 @@ export default defineConfig(({ mode }) => ({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           // Data fetching & auth — always needed
           'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
-          // All Radix UI primitives — used across many pages but stable
-          'vendor-radix': [
-            '@radix-ui/react-accordion', '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio', '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox', '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu', '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu', '@radix-ui/react-hover-card',
-            '@radix-ui/react-label', '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu', '@radix-ui/react-popover',
-            '@radix-ui/react-progress', '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area', '@radix-ui/react-select',
-            '@radix-ui/react-separator', '@radix-ui/react-slider',
-            '@radix-ui/react-slot', '@radix-ui/react-switch',
-            '@radix-ui/react-tabs', '@radix-ui/react-toast',
-            '@radix-ui/react-toggle', '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip',
-          ],
           // Rich text editor — only on CreateTestPage (~300KB)
           'vendor-tiptap': [
             '@tiptap/react', '@tiptap/starter-kit',
@@ -90,8 +73,6 @@ export default defineConfig(({ mode }) => ({
           'vendor-charts': ['recharts'],
           // Animations — LandingPage & UI micro-interactions (~140KB)
           'vendor-motion': ['framer-motion'],
-          // Math rendering — wherever LaTeX/formulas appear
-          'vendor-math': ['katex', 'react-latex-next', 'rehype-katex', 'remark-math', 'remark-gfm', 'react-markdown'],
           // File processing — AI import & export pages only (~190KB)
           'vendor-files': ['xlsx', 'html2canvas'],
         },
