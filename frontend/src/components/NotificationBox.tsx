@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,8 +7,9 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import NotificationList from './NotificationList';
 import { useNotifications } from '@/hooks/useNotifications';
+
+const NotificationList = React.lazy(() => import('./NotificationList'));
 
 export default function NotificationBox() {
     const { notifications, unreadCount, handleDelete, handleClearAll, markAsRead } = useNotifications();
@@ -36,14 +37,16 @@ export default function NotificationBox() {
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
-                <NotificationList
-                    notifications={notifications}
-                    onDelete={handleDelete}
-                    onClearAll={handleClearAll}
-                    onMarkAsRead={markAsRead}
-                    maxHeight={300}
-                    onClose={() => setIsOpen(false)}
-                />
+                <Suspense fallback={<div className="p-4 text-center text-sm text-slate-500">Loading notifications...</div>}>
+                    <NotificationList
+                        notifications={notifications}
+                        onDelete={handleDelete}
+                        onClearAll={handleClearAll}
+                        onMarkAsRead={markAsRead}
+                        maxHeight={300}
+                        onClose={() => setIsOpen(false)}
+                    />
+                </Suspense>
             </PopoverContent>
         </Popover>
     );
