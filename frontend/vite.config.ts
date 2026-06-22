@@ -67,8 +67,7 @@ export default defineConfig(({ mode }) => ({
         return deps.filter(dep => {
           return !dep.includes('vendor-tiptap') &&
                  !dep.includes('vendor-charts') &&
-                 !dep.includes('vendor-files') &&
-                 !dep.includes('vendor-motion');
+                 !dep.includes('vendor-files');
         });
       }
     },

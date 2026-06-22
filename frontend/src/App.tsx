@@ -9,12 +9,13 @@ import PrivateRoute from "@/components/ui/PrivateRoute";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 
+import LandingPage from "./pages/LandingPage";
+import Layout from "./Layout";
 // Lazy Load Pages
 import { HelmetProvider } from 'react-helmet-async';
 
 const AITestImporter = lazy(() => import("./pages/AITestImporter"));
 
-const LandingPage = lazy(() => import("./pages/LandingPage"));
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));
 const TestList = lazy(() => import("./pages/TestList"));
 const TestPage = lazy(() => import("./pages/TestPage"));
@@ -65,7 +66,7 @@ const NewsPostView = lazy(() => import("./pages/NewsPostView"));
 const NewsPostEditor = lazy(() => import("./pages/NewsPostEditor"));
 const MyPosts = lazy(() => import("./pages/MyPosts"));
 
-const Layout = lazy(() => import("./Layout"));
+
 
 const queryClient = new QueryClient();
 
