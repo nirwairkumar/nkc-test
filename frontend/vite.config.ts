@@ -74,64 +74,32 @@ export default defineConfig(({ mode }) => ({
     },
     rollupOptions: {
       output: {
-        hoistTransitiveImports: false,
         // --- Manual Chunk Splitting ---
         // Separates heavy vendor libraries so they don't block the initial page load.
         // Each chunk loads only when the page/component that needs it is visited.
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            // Core React, Routing & Global Utilities (clsx, tailwind-merge, lucide-react)
-            // Placing shared utilities here prevents Rollup from leaking them into lazy-loaded vendor chunks.
-            if (
-              id.includes('react') ||
-              id.includes('scheduler') ||
-              id.includes('prop-types') ||
-              id.includes('clsx') ||
-              id.includes('tailwind-merge') ||
-              id.includes('lucide-react')
-            ) {
-              return 'vendor-react';
-            }
-            // Data fetching & database client
-            if (
-              id.includes('@supabase') ||
-              id.includes('@tanstack')
-            ) {
-              return 'vendor-data';
-            }
-            // Rich text editor
-            if (
-              id.includes('@tiptap') ||
-              id.includes('tiptap-extension') ||
-              id.includes('prosemirror')
-            ) {
-              return 'vendor-tiptap';
-            }
-            // Charts
-            if (
-              id.includes('recharts') ||
-              id.includes('d3-') ||
-              id.includes('internmap') ||
-              id.includes('victory-vendor')
-            ) {
-              return 'vendor-charts';
-            }
-            // Animations
-            if (
-              id.includes('framer-motion') ||
-              id.includes('motion-dom') ||
-              id.includes('motion-utils')
-            ) {
-              return 'vendor-motion';
-            }
-            // File processing
-            if (
-              id.includes('xlsx') ||
-              id.includes('html2canvas')
-            ) {
-              return 'vendor-files';
-            }
-          }
+        manualChunks: {
+          // Core React runtime — always needed, cached aggressively
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Data fetching & auth — always needed
+          'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
+          // Rich text editor — only on CreateTestPage (~420KB)
+          'vendor-tiptap': [
+            '@tiptap/react', '@tiptap/starter-kit',
+            '@tiptap/extension-color', '@tiptap/extension-font-family',
+            '@tiptap/extension-heading', '@tiptap/extension-highlight',
+            '@tiptap/extension-image', '@tiptap/extension-link',
+            '@tiptap/extension-placeholder', '@tiptap/extension-table',
+            '@tiptap/extension-table-cell', '@tiptap/extension-table-header',
+            '@tiptap/extension-table-row', '@tiptap/extension-text-align',
+            '@tiptap/extension-text-style', '@tiptap/extension-underline',
+            'tiptap-extension-resize-image',
+          ],
+          // Charts — only on analytics/results pages (~395KB)
+          'vendor-charts': ['recharts'],
+          // Animations — LandingPage & UI micro-interactions (~140KB)
+          'vendor-motion': ['framer-motion'],
+          // File processing — AI import & export pages only (~486KB)
+          'vendor-files': ['xlsx', 'html2canvas'],
         },
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
