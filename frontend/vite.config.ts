@@ -37,6 +37,21 @@ export default defineConfig(({ mode }) => ({
       exclude: [/\.(br)$/, /\.(gz)$/, /\.(png|jpe?g|gif|ico|webp|svg)$/i],
       threshold: 1024, // Only compress files > 1KB
     }),
+    {
+      name: 'async-css-plugin',
+      transformIndexHtml: {
+        order: 'post',
+        handler(html) {
+          const linkRegex = /<link\s+([^>]*?rel=["']stylesheet["'][^>]*?)>/gi;
+          return html.replace(linkRegex, (match, attributes) => {
+            if (attributes.includes('media="print"') || attributes.includes('onload=')) {
+              return match;
+            }
+            return `<link ${attributes} media="print" onload="this.media='all'"><noscript><link ${attributes}></noscript>`;
+          });
+        }
+      }
+    }
   ].filter(Boolean),
   resolve: {
     alias: {
