@@ -126,6 +126,13 @@ Opens interactive visualization of bundle composition.
 
 **Configuration:** `frontend/index.html`
 
+### 10. Non-Blocking Production CSS Delivery
+- **Deferred main CSS loading** in production builds to eliminate the render-blocking CSS resource warning in Google PageSpeed Insights.
+- **Custom inline Vite plugin** intercepts the final `index.html` build and rewrites synchronous `<link rel="stylesheet">` tags to load asynchronously using `media="print" onload="this.media='all'"`, with a `<noscript>` fallback.
+- Avoids Flash of Unstyled Content (FOUC) because the React SPA is client-side rendered and has no visible above-the-fold content until JS executes anyway.
+
+**Configuration:** `frontend/vite.config.ts`
+
 ---
 
 ## 📊 Expected Performance Improvements
@@ -137,6 +144,7 @@ Opens interactive visualization of bundle composition.
 | Asset Compression | None | Brotli + Gzip | **-60-80%** |
 | Font Loading | Blocking | Swap (non-blocking) | **Faster FCP** |
 | Image Loading | All immediate | Lazy loaded | **Faster LCP** |
+| CSS Loading | Blocking | Asynchronous (non-blocking) | **Zero Render-Block** |
 | Caching | Default | Optimized headers | **Better repeat visits** |
 
 ### Core Web Vitals Impact
@@ -192,7 +200,7 @@ Already optimized! All PNG files now have WebP versions. Update your components 
 - `PERFORMANCE.md` - This documentation
 
 ### Modified Files
-- `frontend/vite.config.ts` - Build optimization & code splitting
+- `frontend/vite.config.ts` - Build optimization, code splitting & async CSS delivery plugin
 - `frontend/index.html` - Resource hints & preconnect
 - `frontend/src/index.css` - Font loading optimization
 - `frontend/package.json` - New scripts & dependencies
@@ -206,9 +214,8 @@ Already optimized! All PNG files now have WebP versions. Update your components 
 
 1. **Service Worker**: Add PWA capabilities with Workbox
 2. **Image CDN**: Use Cloudinary/Imgix for dynamic optimization
-3. **Critical CSS**: Inline above-the-fold styles
-4. **Web Vitals Monitoring**: Add real user monitoring
-5. **HTTP/3**: Enable on Vercel for faster connections
+3. **Web Vitals Monitoring**: Add real user monitoring
+4. **HTTP/3**: Enable on Vercel for faster connections
 
 ---
 
