@@ -76,6 +76,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const checkPremiumStatus = async (userId: string | undefined, preloadedProfile?: any) => {
         setPremiumLoading(true);
+        if (!userId) {
+            setIsGlobalUnlock(false);
+            setHasActivePlans(true);
+            setIsPremium(false);
+            setPremiumLoading(false);
+            return;
+        }
         try {
             const { checkPremiumAccess } = await import('@/lib/pricingApi');
             const { data: accessData } = await checkPremiumAccess();
@@ -88,11 +95,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (unlockAll || !hasPlans) {
                 setIsPremium(true);
-                return;
-            }
-
-            if (!userId) {
-                setIsPremium(false);
                 return;
             }
 

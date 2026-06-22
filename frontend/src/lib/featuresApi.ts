@@ -31,9 +31,12 @@ export const fetchFeatureFlags = async (): Promise<FeatureFlags> => {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
             const { data, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < CACHE_DURATION) {
-                // Return cached version immediately, trigger background refresh
-                getFreshFlags().catch(err => console.error("Background feature flags refresh failed:", err));
+            const age = Date.now() - timestamp;
+            if (age < CACHE_DURATION) {
+                // Only trigger background refresh if cache is older than 3 minutes to avoid duplicate request overhead on page navigation
+                if (age > 3 * 60 * 1000) {
+                    getFreshFlags().catch(err => console.error("Background feature flags refresh failed:", err));
+                }
                 return data;
             }
         }

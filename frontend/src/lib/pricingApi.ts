@@ -129,9 +129,12 @@ export async function checkPremiumAccess() {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
             const { data, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < CACHE_DURATION) {
-                // Return cached version immediately, trigger background refresh
-                getFreshPremium().catch(err => console.error("Background checkPremiumAccess failed:", err));
+            const age = Date.now() - timestamp;
+            if (age < CACHE_DURATION) {
+                // Only trigger background refresh if cache is older than 3 minutes to avoid duplicate request overhead on page navigation
+                if (age > 3 * 60 * 1000) {
+                    getFreshPremium().catch(err => console.error("Background checkPremiumAccess failed:", err));
+                }
                 return { data, error: null };
             }
         }
