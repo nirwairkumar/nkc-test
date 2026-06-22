@@ -99,6 +99,9 @@ export async function fetchPremiumSettings() {
 export async function updatePremiumSettings(unlockAll: boolean) {
     try {
         const response = await apiClient.put('/pricing/settings', { unlock_all_premium: unlockAll });
+        try {
+            localStorage.removeItem('testoza_premium_access_cache');
+        } catch (e) {}
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error: error };
@@ -106,9 +109,38 @@ export async function updatePremiumSettings(unlockAll: boolean) {
 }
 
 export async function checkPremiumAccess() {
-    try {
+    const CACHE_KEY = 'testoza_premium_access_cache';
+    const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes cache
+
+    const getFreshPremium = async () => {
         const response = await apiClient.get('/pricing/check-premium-access');
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                data: response.data,
+                timestamp: Date.now()
+            }));
+        } catch (e) {
+            console.warn("Failed to cache premium access:", e);
+        }
         return { data: response.data, error: null };
+    };
+
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < CACHE_DURATION) {
+                // Return cached version immediately, trigger background refresh
+                getFreshPremium().catch(err => console.error("Background checkPremiumAccess failed:", err));
+                return { data, error: null };
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to parse premium access cache:", e);
+    }
+
+    try {
+        return await getFreshPremium();
     } catch (error: any) {
         return { data: null, error: error };
     }
