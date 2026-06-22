@@ -73,22 +73,6 @@ export default defineConfig(({ mode }) => ({
       }
     },
     rollupOptions: {
-      treeshake: {
-        moduleSideEffects(id) {
-          if (
-            id.includes('recharts') ||
-            id.includes('d3-') ||
-            id.includes('@tiptap') ||
-            id.includes('prosemirror') ||
-            id.includes('framer-motion') ||
-            id.includes('xlsx') ||
-            id.includes('html2canvas')
-          ) {
-            return false;
-          }
-          return true;
-        }
-      },
       output: {
         hoistTransitiveImports: false,
         // --- Manual Chunk Splitting ---
