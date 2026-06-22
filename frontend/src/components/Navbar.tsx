@@ -90,6 +90,7 @@ export default function Navbar() {
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/dashboard')}
+                                aria-label="Dashboard"
                                 className={`relative flex items-center h-10 ${
                                     location.pathname === '/dashboard' 
                                         ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
@@ -106,6 +107,7 @@ export default function Navbar() {
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/create-test')}
+                                aria-label="Create Test"
                                 className={`relative flex items-center h-10 ${
                                     location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai'
                                         ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
@@ -122,6 +124,7 @@ export default function Navbar() {
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate(isAdmin ? '/manage-tests' : '/my-tests')}
+                                aria-label={isAdmin ? 'Manage Tests' : 'Your Tests'}
                                 className={`relative flex items-center h-10 ${
                                     location.pathname === '/my-tests' || location.pathname === '/manage-tests'
                                         ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
@@ -173,6 +176,7 @@ export default function Navbar() {
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/login', { state: { from: '/my-tests' } })}
+                                aria-label="Your Tests"
                                 className={`relative flex items-center h-10 ${
                                     location.pathname === '/my-tests' || location.pathname === '/manage-tests'
                                         ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
@@ -233,7 +237,7 @@ export default function Navbar() {
                         <div className="md:hidden">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
+                                    <Button variant="ghost" size="icon" aria-label="Open navigation menu">
                                         <Menu className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -275,7 +279,7 @@ export default function Navbar() {
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="Open user account menu">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name} />
                                             <AvatarFallback>{getInitials(user.user_metadata?.full_name)}</AvatarFallback>
