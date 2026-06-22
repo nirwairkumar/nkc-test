@@ -40,10 +40,10 @@ export default defineConfig(({ mode }) => ({
     {
       name: 'async-css-plugin',
       transformIndexHtml: {
-        order: 'post',
-        handler(html) {
+        order: 'post' as const,
+        handler(html: string) {
           const linkRegex = /<link\s+([^>]*?rel=["']stylesheet["'][^>]*?)>/gi;
-          return html.replace(linkRegex, (match, attributes) => {
+          return html.replace(linkRegex, (match: string, attributes: string) => {
             if (attributes.includes('media="print"') || attributes.includes('onload=')) {
               return match;
             }
