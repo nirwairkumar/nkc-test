@@ -60,28 +60,36 @@
 
   <!-- Inline Critical CSS for instant first paint -->
   <style>
-    /* Pre-render skeleton — visible before any JS runs (non-dashboard routes) */
-    #root:empty::after {
-      content: '';
+    /* Clean neutral pre-render fallback — matches dashboard theme, avoids dark blue flash */
+    #root:empty {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       width: 100%;
-      background: linear-gradient(to top, #0f172a, #312e81);
+      background-color: #f8fafc;
+      font-family: 'Outfit', system-ui, sans-serif;
     }
     #root:empty::before {
-      content: 'TestoZa';
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 10;
-      font-family: 'Outfit', system-ui, sans-serif;
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: #056eab;
-      letter-spacing: -0.02em;
+      content: '';
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 3px solid #e2e8f0;
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1.25rem;
+    }
+    #root:empty::after {
+      content: 'Loading TestoZa...';
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #475569;
+      letter-spacing: -0.01em;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     /* Dashboard pre-render skeleton styles */
     .pre-nav{height:64px;background:rgba(255,255,255,.85);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 1.5rem;position:sticky;top:0;z-index:50;backdrop-filter:blur(8px)}
@@ -295,7 +303,7 @@
   <script>
     (function(){
       var p=window.location.pathname;
-      if(p==='/dashboard'||p==='/dashboard/'){
+      if(p.startsWith('/dashboard')){
         document.getElementById('root').innerHTML=
           '<div style="min-height:100vh;background:#f8fafc">'+
           '<div class="pre-nav"><span class="pre-nav-logo">TestoZa</span></div>'+
