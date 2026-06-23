@@ -946,7 +946,7 @@ MATHEMATICAL EXPRESSION RULES
 
 5. Example:
 √(x^2 + y^2)
-→ "$\sqrt{x^2 + y^2}$"
+→ "$\\sqrt{x^2 + y^2}$"
 
 --------------------------------------------------
 
@@ -967,14 +967,14 @@ Original table:
 
 Convert to:
 $$
-\begin{array}{|c|c|}
-\hline
+\\begin{array}{|c|c|}
+\\hline
 A & B \\
-\hline
+\\hline
 1 & 2 \\
 3 & 4 \\
-\hline
-\end{array}
+\\hline
+\\end{array}
 $$
 
 Embed this directly inside the "question" string.
@@ -1009,14 +1009,14 @@ B. Car             II. Vehicle
 
 Convert to:
 $$
-\begin{array}{|ll|ll|}
-\hline
-& \text{Column I} & & \text{Column II} \\
-\hline
-A. & \text{Apple} & I. & \text{Fruit} \\
-B. & \text{Car} & II. & \text{Vehicle} \\
-\hline
-\end{array}
+\\begin{array}{|ll|ll|}
+\\hline
+& \\text{Column I} & & \\text{Column II} \\
+\\hline
+A. & \\text{Apple} & I. & \\text{Fruit} \\
+B. & \\text{Car} & II. & \\text{Vehicle} \\
+\\hline
+\\end{array}
 $$
 
 Embed this structure inside the question text string. Do NOT output HTML or raw tables.
@@ -1079,8 +1079,8 @@ Convert to:
 Example:
 CH3-CH=CH-CO-CH3  
 → "$\\ce{CH3-CH=CH-CO-CH3}$"
-$\ce{CH3-CH=CH-\overset{O}{\overset{||}{C}}-CH3}$
-4. Units must use the "\pu{ }" syntax.
+$\\ce{CH3-CH=CH-\\overset{O}{\\overset{||}{C}}-CH3}$
+4. Units must use the "\\pu{ }" syntax.
 
 Example:
 4.18 J g⁻¹ K⁻¹  
@@ -1111,7 +1111,8 @@ question id same as question number
 ->reverify each question/options until adjectly same as question paper.
 -> remove [cite:$$$] then add in json.
 -> you must match the answer from solution pdf correctly.
--> -> put adject question in json without any small change or modify.`;
+-> -> put adject question in json without any small change or modify.
+-> if document have bold/underline text then it should rewrite adject same.`;
 
   const jsonTemplateSectionAddon = `--------------------------------------------------
 

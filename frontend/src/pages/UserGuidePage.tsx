@@ -1045,7 +1045,7 @@ export default function UserGuidePage() {
                             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                                 When you export test results using the <strong>Download Excel</strong> feature, TestoZa compiles a multi-column spreadsheet layout structured as follows:
                             </p>
-                            
+
                             <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/10">
                                 <table className="w-full text-left text-xs border-collapse">
                                     <thead>
@@ -1073,7 +1073,7 @@ export default function UserGuidePage() {
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Roll number</td>
                                             <td className="p-3">Roll number or candidate ID entered in the Start Form.</td>
                                         </tr>
-                                        
+
                                         <tr>
                                             <td className="p-3 font-semibold text-slate-900 dark:text-white" rowSpan={3}>Session Info</td>
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Date</td>
@@ -1087,7 +1087,7 @@ export default function UserGuidePage() {
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Time Taken</td>
                                             <td className="p-3">Total duration spent solving the exam (e.g., 45m 12s).</td>
                                         </tr>
-                                        
+
                                         <tr>
                                             <td className="p-3 font-semibold text-slate-900 dark:text-white" rowSpan={4}>Section Breakdown</td>
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Correct / Wrong</td>
@@ -1105,7 +1105,7 @@ export default function UserGuidePage() {
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Section Score</td>
                                             <td className="p-3">Net score achieved in the specific section.</td>
                                         </tr>
-                                        
+
                                         <tr>
                                             <td className="p-3 font-semibold text-slate-900 dark:text-white" rowSpan={6}>Overall Summary</td>
                                             <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">Total Questions</td>
@@ -1445,7 +1445,10 @@ STRICT JSON OUTPUT FORMAT (SECTION MODE):
       ]
     }
   ]
-}`;
+}
+
+ADDITIONAL RULES:
+- if document have bold/underline text then it should rewrite adject same using LaTeX/KaTeX/mhchem.`;
 
 const AI_SOLUTIONS_PROMPT = `ROLE:
 You are an AI document parser specialized in bulk exam explanations.
