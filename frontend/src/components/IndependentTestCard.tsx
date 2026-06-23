@@ -12,7 +12,8 @@ import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { shareTest } from '@/utils/shareUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import CloneTestDialog from '@/components/CloneTestDialog';
+
+const CloneTestDialog = React.lazy(() => import('@/components/CloneTestDialog'));
 
 interface IndependentTestCardProps {
     testId: string;
@@ -249,13 +250,15 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
 
         {/* Clone Dialog */}
         {test && authUser?.id && (
-            <CloneTestDialog
-                test={test}
-                userId={authUser.id}
-                isPremium={isPremium}
-                open={cloneDialogOpen}
-                onClose={() => setCloneDialogOpen(false)}
-            />
+            <Suspense fallback={null}>
+                <CloneTestDialog
+                    test={test}
+                    userId={authUser.id}
+                    isPremium={isPremium}
+                    open={cloneDialogOpen}
+                    onClose={() => setCloneDialogOpen(false)}
+                />
+            </Suspense>
         )}
         </>
     );

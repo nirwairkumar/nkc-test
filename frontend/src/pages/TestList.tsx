@@ -38,8 +38,22 @@ export default function TestList() {
     const [configuringTest, setConfiguringTest] = useState<any>(null);
     const [loading, setLoading] = useState(false); // Global loading for refresh
     const [generatedTest, setGeneratedTest] = useState<any>(null);
+    const [renderStage, setRenderStage] = useState(0);
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    // Progressive rendering stages to optimize FCP, LCP, and TBT
+    useEffect(() => {
+        const timer1 = setTimeout(() => setRenderStage(1), 50);
+        const timer2 = setTimeout(() => setRenderStage(2), 300);
+        const timer3 = setTimeout(() => setRenderStage(3), 800);
+
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+            clearTimeout(timer3);
+        };
+    }, []);
 
     // Clear generated test after 30 seconds
     useEffect(() => {
@@ -63,12 +77,10 @@ export default function TestList() {
     const handleTestGenerated = (test?: any) => {
         if (test) {
             setGeneratedTest(test);
-            // Optionally scroll to it?
         } else {
-            // refresh or something if needed
             handleRefresh();
         }
-    }
+    };
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl animate-in fade-in duration-500">
@@ -87,16 +99,24 @@ export default function TestList() {
             </div>
 
             {/* 2. Test Link Paster (Replaces YouTube Generator) */}
-            <Suspense fallback={<div className="h-20 w-full bg-slate-100 rounded-2xl animate-pulse mb-8" />}>
-                <TestLinkPaster />
-            </Suspense>
+            {renderStage >= 1 ? (
+                <Suspense fallback={<div className="h-20 w-full bg-slate-100/50 rounded-2xl animate-pulse mb-8" />}>
+                    <TestLinkPaster />
+                </Suspense>
+            ) : (
+                <div className="h-20 w-full bg-slate-100/50 rounded-2xl animate-pulse mb-8" />
+            )}
 
             {/* 3. Your Recent Tests (Lazy) - Only when NOT searching */}
             {user && !searchQuery && (
-                <Suspense fallback={<SectionSkeleton />}>
-                    <UserRecentTests user={user} onManageTest={onManageTest} />
-                    <div className="section-divider" />
-                </Suspense>
+                renderStage >= 1 ? (
+                    <Suspense fallback={<SectionSkeleton />}>
+                        <UserRecentTests user={user} onManageTest={onManageTest} />
+                        <div className="section-divider" />
+                    </Suspense>
+                ) : (
+                    <div className="mb-8"><SectionSkeleton /></div>
+                )
             )}
 
             {/* 4. Explore Tests / Search */}
@@ -119,23 +139,33 @@ export default function TestList() {
             ) : (
                 <div className="space-y-12 md:space-y-16 mt-10">
                     {/* 5. Category Folders */}
-                    <Suspense fallback={<SectionSkeleton />}>
-                        <CategoryFolderCards />
-                    </Suspense>
+                    {renderStage >= 2 ? (
+                        <Suspense fallback={<SectionSkeleton />}>
+                            <CategoryFolderCards />
+                        </Suspense>
+                    ) : (
+                        <SectionSkeleton />
+                    )}
                     
                     <div className="section-divider" />
 
                     {/* 6b. Combined Sessions */}
-                    <Suspense fallback={null}>
-                        <CombinedSessionsSection user={user} />
-                    </Suspense>
+                    {renderStage >= 2 ? (
+                        <Suspense fallback={null}>
+                            <CombinedSessionsSection user={user} />
+                        </Suspense>
+                    ) : null}
 
                     <div className="section-divider" />
 
                     {/* 6. Featured Tests */}
-                    <Suspense fallback={<SectionSkeleton />}>
-                        <FeaturedTests user={user} onManageTest={onManageTest} />
-                    </Suspense>
+                    {renderStage >= 2 ? (
+                        <Suspense fallback={<SectionSkeleton />}>
+                            <FeaturedTests user={user} onManageTest={onManageTest} />
+                        </Suspense>
+                    ) : (
+                        <SectionSkeleton />
+                    )}
                     
                     {/* Advanced Section-Wise Builder Showcase */}
                      <div className="mt-16 sm:mt-24">
@@ -147,24 +177,24 @@ export default function TestList() {
                                 The best-in-class workflow to create highly specialized exams like JEE Advanced. With flawless support for matrices, rich equations, and diagrams.
                             </p>
                         </div>
-                        <Suspense fallback={<div className="h-40 w-full animate-pulse bg-slate-100 rounded-xl" />}>
-                            <SectionWiseBuilderShowcase />
-                        </Suspense>
+                        {renderStage >= 3 ? (
+                            <Suspense fallback={<div className="h-40 w-full animate-pulse bg-slate-100 rounded-xl" />}>
+                                <SectionWiseBuilderShowcase />
+                            </Suspense>
+                        ) : (
+                            <div className="h-40 w-full animate-pulse bg-slate-100 rounded-xl" />
+                        )}
                     </div>
 
                     {/* 7. YouTube Generator */}
                     <div className="mt-20 pt-10 border-t border-slate-200 dark:border-slate-800">
-                        {/* <div className="text-center mb-6">
-                            <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent inline-block">
-                                Generate Tests from YouTube
-                            </h3>
-                            <p className="text-muted-foreground mt-1">
-                                Don't see what you're looking for? Create a test instantly from any video.
-                            </p>
-                        </div> */}
-                        <Suspense fallback={<SectionSkeleton />}>
-                            <YouTubeGenerator onTestGenerated={handleTestGenerated} />
-                        </Suspense>
+                        {renderStage >= 3 ? (
+                            <Suspense fallback={<SectionSkeleton />}>
+                                <YouTubeGenerator onTestGenerated={handleTestGenerated} />
+                            </Suspense>
+                        ) : (
+                            <SectionSkeleton />
+                        )}
 
                         {/* Temporary Generated Test Display */}
                         {generatedTest && (
