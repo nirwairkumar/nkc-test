@@ -22,7 +22,7 @@ import aioredis
 router = APIRouter(prefix="/sitemap", tags=["sitemap"])
 
 # Configuration
-SITE_URL = "https://www.testoza.com"
+SITE_URL = os.getenv("SITE_URL", "https://testoza.com")
 MAX_URLS_PER_SITEMAP = 45000  # Google limit
 CACHE_TTL_SECONDS = 3600  # 1 hour
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")

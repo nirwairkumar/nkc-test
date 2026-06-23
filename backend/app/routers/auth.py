@@ -124,7 +124,7 @@ async def get_me(
 @router.post("/password-reset")
 async def password_reset(payload: PasswordResetRequest, request: Request):
     try:
-        host = request.headers.get("origin") or "https://www.testoza.com"
+        host = request.headers.get("origin") or "https://testoza.com"
         response = supabase.auth.reset_password_for_email(
             payload.email,
             {"redirect_to": f"{host}/update-password"}
