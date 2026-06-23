@@ -82,6 +82,43 @@ export default function LandingPage() {
         // Smooth scroll behavior
         document.documentElement.style.scrollBehavior = 'smooth';
 
+        // Register WebMCP tool for agentic browsing
+        const registerWebMCPTools = () => {
+            const modelContext = 
+                (document as any).modelContext || 
+                (navigator as any).modelContext;
+
+            if (modelContext && typeof modelContext.registerTool === 'function') {
+                try {
+                    modelContext.registerTool({
+                        name: 'create_test_from_topic',
+                        description: 'Generates a mock test or exam on a specific subject, topic, or target exam (such as JEE, NEET, GATE).',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                topic: { 
+                                    type: 'string', 
+                                    description: 'The academic subject, chapter, or exam topic to generate questions for.' 
+                                },
+                                numQuestions: { 
+                                    type: 'number', 
+                                    description: 'Number of questions to generate (default is 10).' 
+                                }
+                            },
+                            required: ['topic']
+                        },
+                        execute: async ({ topic, numQuestions = 10 }: { topic: string; numQuestions?: number }) => {
+                            window.location.href = `/create-test?topic=${encodeURIComponent(topic)}&num=${numQuestions}`;
+                            return `Redirecting to test creation page for topic "${topic}" with ${numQuestions} questions.`;
+                        }
+                    });
+                } catch (err) {
+                    console.warn('Failed to register WebMCP tool:', err);
+                }
+            }
+        };
+
+        registerWebMCPTools();
 
         // Intersection Observer for scroll animations
         const observerOptions = {

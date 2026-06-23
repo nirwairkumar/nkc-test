@@ -3,17 +3,16 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
+import { analyticsTracker } from '@/lib/analyticsTracker';
 
 export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, profile, loading } = useAuth();
 
-    // Track page views on route change — lazy loaded to avoid blocking render
+    // Track page views on route change
     React.useEffect(() => {
-        import('@/lib/analyticsTracker').then(({ analyticsTracker }) => {
-            analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
-        });
+        analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
     }, [location.pathname, user?.id]);
 
     // Check for redirect intent after login is handled specifically 
@@ -42,10 +41,10 @@ export default function Layout() {
     // Hide navbar only on live test page (/test/:id)
     // Also hiding on /test-intro/:id as requested
     const isResultsPage = location.pathname.startsWith('/results');
-    const isLiveTestPage = 
-        location.pathname.startsWith('/test/') || 
-        location.pathname.startsWith('/test-intro/') || 
-        location.pathname.startsWith('/live/') || 
+    const isLiveTestPage =
+        location.pathname.startsWith('/test/') ||
+        location.pathname.startsWith('/test-intro/') ||
+        location.pathname.startsWith('/live/') ||
         location.pathname.startsWith('/test-submitted') ||
         location.pathname.startsWith('/combined-');
 

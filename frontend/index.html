@@ -52,77 +52,19 @@
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
   <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
   <link rel="dns-prefetch" href="https://apigcp.testoza.com" />
-  <!-- Google Fonts — async load (non-blocking), reduced to only critical weights -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" media="print" onload="this.media='all'" />
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" /></noscript>
+  <!-- Google Fonts — async load (non-blocking) to avoid render delay -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Ribeye&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&family=Dancing+Script:wght@400;700&display=swap"
+    media="print" onload="this.media='all'" />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Ribeye&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&family=Dancing+Script:wght@400;700&display=swap"
+      rel="stylesheet" />
+  </noscript>
   <!-- Preload Critical Assets -->
   <link rel="preload" href="/logo-testoza.svg" as="image" type="image/svg+xml" />
 
-  <!-- Inline Critical CSS for instant first paint -->
-  <style>
-    /* Clean neutral pre-render fallback — matches dashboard theme, avoids dark blue flash */
-    #root:empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      width: 100%;
-      background-color: #f8fafc;
-      font-family: 'Outfit', system-ui, sans-serif;
-    }
-    #root:empty::before {
-      content: '';
-      width: 2.5rem;
-      height: 2.5rem;
-      border: 3px solid #e2e8f0;
-      border-top-color: #4f46e5;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 1.25rem;
-    }
-    #root:empty::after {
-      content: 'Loading TestoZa...';
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #475569;
-      letter-spacing: -0.01em;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    /* Dashboard pre-render skeleton styles */
-    .pre-nav{height:64px;background:rgba(255,255,255,.85);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 1.5rem;position:sticky;top:0;z-index:50;backdrop-filter:blur(8px)}
-    .pre-nav-logo{font-family:'Outfit',system-ui,sans-serif;font-size:1.5rem;font-weight:700;color:#0f172a;letter-spacing:1px}
-    .pre-hero{max-width:80rem;margin:0 auto;padding:2rem 1rem}
-    .pre-hero-card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1.5rem 2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
-    .pre-hero-badge{display:inline-flex;align-items:center;background:#eef2ff;color:#4f46e5;font-size:.75rem;font-weight:600;padding:.25rem .75rem;border-radius:9999px;border:1px solid #c7d2fe;margin-bottom:.5rem}
-    .pre-hero-card h1{font-size:clamp(1.75rem,5vw,3rem);font-weight:700;color:#0f172a;line-height:1.2;margin:0 0 .5rem}
-    .pre-hero-card p{color:#475569;font-size:1rem;margin:0}
-    .pre-skeleton{height:80px;background:#f1f5f9;border-radius:1rem;margin-bottom:1.5rem;animation:pre-pulse 1.5s ease-in-out infinite}
-    .pre-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1.5rem}
-    .pre-grid-item{height:140px;background:#fff;border:1px solid #e2e8f0;border-radius:1rem;animation:pre-pulse 1.5s ease-in-out infinite}
-    @keyframes pre-pulse{0%,100%{opacity:1}50%{opacity:.5}}
-    @media(min-width:768px){.pre-grid{grid-template-columns:repeat(4,1fr)}}
-  </style>
 
-  <!-- Deferred secondary fonts: only needed for below-fold sections and inner pages -->
-  <script>
-    var secondaryFontsLoaded = false;
-    function loadSecondaryFonts() {
-      if (secondaryFontsLoaded) return;
-      secondaryFontsLoaded = true;
-      var link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Ribeye&family=Instrument+Serif:ital,wght@0,400;1,400&family=Mukta:wght@300;400;500;600;700&display=swap';
-      document.head.appendChild(link);
-    }
-    // Load on first user interaction or after 4s
-    ['scroll','click','touchstart'].forEach(function(e) {
-      document.addEventListener(e, loadSecondaryFonts, { once: true, passive: true });
-    });
-    setTimeout(loadSecondaryFonts, 4000);
-  </script>
 
   <!-- WebSite Schema (enables Google Sitelinks & Search Box) -->
   <script type="application/ld+json">
@@ -263,68 +205,35 @@
 
   <!-- Google Analytics + Google Ads — lazily injected post-load to prevent blocking critical rendering -->
   <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });   // Google Analytics 4
+    gtag('config', 'AW-18082120928'); // Google Ads Conversion Tracking
+
     function initAnalytics() {
-      var script = document.createElement('script');
+      const script = document.createElement('script');
       script.async = true;
       script.src = "https://www.googletagmanager.com/gtag/js?id=G-H9VZL1VTKL";
       document.head.appendChild(script);
     }
 
-    // Delay analytics initialization until user interaction or 5s timeout
-    // This prevents it from competing with critical resources
-    var analyticsLoaded = false;
-    function loadAnalyticsOnce() {
-      if (analyticsLoaded) return;
-      analyticsLoaded = true;
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      window.gtag = gtag;
-      gtag('js', new Date());
-      gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });
-      gtag('config', 'AW-18082120928');
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(initAnalytics);
-      } else {
-        setTimeout(initAnalytics, 3000);
-      }
+    if (window.addEventListener) {
+      window.addEventListener('load', function () {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(initAnalytics);
+        } else {
+          setTimeout(initAnalytics, 2000);
+        }
+      });
+    } else {
+      setTimeout(initAnalytics, 2000);
     }
-    // First user interaction triggers analytics
-    ['scroll','click','keydown','touchstart'].forEach(function(e) {
-      document.addEventListener(e, loadAnalyticsOnce, { once: true, passive: true });
-    });
-    // Fallback: load after 5s even without interaction
-    setTimeout(loadAnalyticsOnce, 5000);
   </script>
 </head>
 
 <body>
   <div id="root"></div>
-  <!-- Route-aware pre-render: injects dashboard skeleton BEFORE React loads for instant LCP -->
-  <script>
-    (function(){
-      var p=window.location.pathname;
-      if(p.startsWith('/dashboard')){
-        document.getElementById('root').innerHTML=
-          '<div style="min-height:100vh;background:#f8fafc">'+
-          '<div class="pre-nav"><span class="pre-nav-logo">TestoZa</span></div>'+
-          '<div class="pre-hero">'+
-          '<div class="pre-hero-card">'+
-          '<div class="pre-hero-badge">Dashboard Workspace</div>'+
-          '<h1>Welcome to TestoZa</h1>'+
-          '<p>Discover thousands of premium assessments or create your own with AI.</p>'+
-          '</div>'+
-          '<div class="pre-skeleton"></div>'+
-          '<div class="pre-grid">'+
-          '<div class="pre-grid-item"></div>'+
-          '<div class="pre-grid-item"></div>'+
-          '<div class="pre-grid-item"></div>'+
-          '<div class="pre-grid-item"></div>'+
-          '</div>'+
-          '</div>'+
-          '</div>';
-      }
-    })();
-  </script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

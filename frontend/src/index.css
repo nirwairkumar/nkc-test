@@ -1,8 +1,8 @@
 /* Critical CSS - Inline for above-the-fold content */
-/* Prevent FOIT (Flash of Invisible Text) and font-swap CLS */
+/* Prevent FOIT (Flash of Invisible Text) */
 @font-face {
   font-family: 'Mukta';
-  font-display: optional;
+  font-display: swap;
   src: local('Mukta');
 }
 
@@ -366,7 +366,7 @@
 }
 
 .animate-slide-up-fade {
-  animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes glow-pulse {
