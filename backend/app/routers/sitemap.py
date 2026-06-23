@@ -7,6 +7,7 @@ Handles thousands of pages with Redis/SQLite caching
 from fastapi import APIRouter, Response, HTTPException, Depends, Request
 from fastapi.responses import Response as XMLResponse
 from supabase import Client
+from app.core.database import get_db
 from datetime import datetime, timezone
 from typing import List, Optional, Dict
 from pydantic import BaseModel
