@@ -60,7 +60,7 @@
 
   <!-- Inline Critical CSS for instant first paint -->
   <style>
-    /* Pre-render skeleton — visible before any JS runs */
+    /* Pre-render skeleton — visible before any JS runs (non-dashboard routes) */
     #root:empty::after {
       content: '';
       display: flex;
@@ -83,6 +83,19 @@
       color: #056eab;
       letter-spacing: -0.02em;
     }
+    /* Dashboard pre-render skeleton styles */
+    .pre-nav{height:64px;background:rgba(255,255,255,.85);border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 1.5rem;position:sticky;top:0;z-index:50;backdrop-filter:blur(8px)}
+    .pre-nav-logo{font-family:'Outfit',system-ui,sans-serif;font-size:1.5rem;font-weight:700;color:#0f172a;letter-spacing:1px}
+    .pre-hero{max-width:80rem;margin:0 auto;padding:2rem 1rem}
+    .pre-hero-card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1.5rem 2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+    .pre-hero-badge{display:inline-flex;align-items:center;background:#eef2ff;color:#4f46e5;font-size:.75rem;font-weight:600;padding:.25rem .75rem;border-radius:9999px;border:1px solid #c7d2fe;margin-bottom:.5rem}
+    .pre-hero-card h1{font-size:clamp(1.75rem,5vw,3rem);font-weight:700;color:#0f172a;line-height:1.2;margin:0 0 .5rem}
+    .pre-hero-card p{color:#475569;font-size:1rem;margin:0}
+    .pre-skeleton{height:80px;background:#f1f5f9;border-radius:1rem;margin-bottom:1.5rem;animation:pre-pulse 1.5s ease-in-out infinite}
+    .pre-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1.5rem}
+    .pre-grid-item{height:140px;background:#fff;border:1px solid #e2e8f0;border-radius:1rem;animation:pre-pulse 1.5s ease-in-out infinite}
+    @keyframes pre-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    @media(min-width:768px){.pre-grid{grid-template-columns:repeat(4,1fr)}}
   </style>
 
   <!-- Deferred secondary fonts: only needed for below-fold sections and inner pages -->
@@ -278,6 +291,32 @@
 
 <body>
   <div id="root"></div>
+  <!-- Route-aware pre-render: injects dashboard skeleton BEFORE React loads for instant LCP -->
+  <script>
+    (function(){
+      var p=window.location.pathname;
+      if(p==='/dashboard'||p==='/dashboard/'){
+        document.getElementById('root').innerHTML=
+          '<div style="min-height:100vh;background:#f8fafc">'+
+          '<div class="pre-nav"><span class="pre-nav-logo">TestoZa</span></div>'+
+          '<div class="pre-hero">'+
+          '<div class="pre-hero-card">'+
+          '<div class="pre-hero-badge">Dashboard Workspace</div>'+
+          '<h1>Welcome to TestoZa</h1>'+
+          '<p>Discover thousands of premium assessments or create your own with AI.</p>'+
+          '</div>'+
+          '<div class="pre-skeleton"></div>'+
+          '<div class="pre-grid">'+
+          '<div class="pre-grid-item"></div>'+
+          '<div class="pre-grid-item"></div>'+
+          '<div class="pre-grid-item"></div>'+
+          '<div class="pre-grid-item"></div>'+
+          '</div>'+
+          '</div>'+
+          '</div>';
+      }
+    })();
+  </script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

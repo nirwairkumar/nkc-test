@@ -6,7 +6,6 @@ import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, FileText, User } fr
 import { useNavigate } from 'react-router-dom';
 import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTests, Test } from '@/lib/testsApi';
-import { fetchCategoryStats } from '@/lib/categoriesApi';
 import { toast } from 'sonner';
 import FolderCard from '@/components/home/FolderCard';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
@@ -57,7 +56,7 @@ export default function SearchResults({ searchQuery, user, onManageTest }: { sea
             // 2. Fetch Category Stats (Enriched with counts) - Run in parallel
             const [testsRes, statsRes] = await Promise.all([
                 fetchTests({ page: 1, limit: 100, searchQuery: searchQuery, signal: controller.signal }),
-                fetchCategoryStats()
+                import('@/lib/categoriesApi').then(m => m.fetchCategoryStats())
             ]);
 
             const allData = testsRes.data;

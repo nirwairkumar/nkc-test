@@ -15,7 +15,7 @@ export default function ExploreFilters({ searchQuery, setSearchQuery }: ExploreF
     const animatedPlaceholder = searchQuery ? '' : 'Search by Title, Tag or Category...';
 
     return (
-        <div className="relative group mb-8 animate-slide-up-fade stagger-1">
+        <div className="relative group mb-8">
             {/* Glossy gradient outline effect */}
             <div className={cn(
                 "absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-xl opacity-20 group-hover:opacity-40 blur transition duration-500",
@@ -33,7 +33,14 @@ export default function ExploreFilters({ searchQuery, setSearchQuery }: ExploreF
                     </div>
                 </div>
                 
-                <div className="relative w-full md:w-80 lg:w-96">
+                <form
+                    className="relative w-full md:w-80 lg:w-96"
+                    data-tool-name="search_available_tests"
+                    data-tool-description="Search through thousands of public mock exams, quizzes, and assessments by title, tag, or category."
+                    onSubmit={(e) => e.preventDefault()}
+                    role="search"
+                    aria-label="Search tests"
+                >
                     <div className={cn(
                         "absolute left-3 top-1/2 -translate-y-1/2 transition-transform duration-300",
                         isFocused && "scale-110 text-indigo-600 dark:text-indigo-400"
@@ -41,6 +48,7 @@ export default function ExploreFilters({ searchQuery, setSearchQuery }: ExploreF
                         <Search className="h-4 w-4 text-slate-400" />
                     </div>
                     <Input
+                        name="query"
                         placeholder={animatedPlaceholder}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -51,7 +59,7 @@ export default function ExploreFilters({ searchQuery, setSearchQuery }: ExploreF
                             isFocused && "bg-white dark:bg-slate-900 border-indigo-300 dark:border-indigo-700 ring-2 ring-indigo-500/20 shadow-lg"
                         )}
                     />
-                </div>
+                </form>
             </div>
         </div>
     );
