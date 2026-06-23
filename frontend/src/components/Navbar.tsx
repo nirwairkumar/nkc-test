@@ -13,10 +13,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench } from 'lucide-react';
-import NotificationBox from './NotificationBox';
-import { useNotifications } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
 import TestoZaLogo from './TestoZaLogo';
+
+// Lazy load heavy components to keep them out of the main bundle
+const NotificationBox = React.lazy(() => import('./NotificationBox'));
 
 // Lazy Load Guides to keep them out of the main index bundle
 const TestUploadFormatGuide = React.lazy(() => 
@@ -30,17 +31,32 @@ const SolutionUploadGuide = React.lazy(() =>
 export default function Navbar() {
     const { user, isAdmin, profile } = useAuth();
 
-    // Feature Flag for News
-    const [isNewsEnabled, setIsNewsEnabled] = React.useState(true);
-    const [newsChecked, setNewsChecked] = React.useState(false);
+    // Feature Flag for News — read from cache synchronously, defer network call
+    const [isNewsEnabled, setIsNewsEnabled] = React.useState(() => {
+        try {
+            const cached = localStorage.getItem('testoza_feature_flags_cache');
+            if (cached) {
+                const { data } = JSON.parse(cached);
+                return data?.enable_news_updates ?? true;
+            }
+        } catch {}
+        return true;
+    });
 
+    // Lazy background refresh — non-blocking, only after idle
     React.useEffect(() => {
-        import('@/lib/featuresApi').then(({ fetchFeatureFlags }) => {
-            fetchFeatureFlags().then(data => {
-                setIsNewsEnabled(data.enable_news_updates ?? true);
-                setNewsChecked(true);
-            }).catch(() => setNewsChecked(true));
-        });
+        const refresh = () => {
+            import('@/lib/featuresApi').then(({ fetchFeatureFlags }) => {
+                fetchFeatureFlags().then(data => {
+                    setIsNewsEnabled(data.enable_news_updates ?? true);
+                }).catch(() => {});
+            });
+        };
+        if ('requestIdleCallback' in window) {
+            (window as any).requestIdleCallback(refresh);
+        } else {
+            setTimeout(refresh, 3000);
+        }
     }, []);
 
     // If admin hide it no one can see except admin
@@ -49,8 +65,6 @@ export default function Navbar() {
     // If you only meant creators, keeping profile?.is_verified_creator would be needed.
     // Based on standard platform logic: News should be visible to all logged-in users when enabled.
     const canSeeNews = isAdmin || isNewsEnabled;
-
-    const { unreadCount } = useNotifications();
     const navigate = useNavigate();
     const location = useLocation();
     const isLiveTest = location.pathname.startsWith('/live');
@@ -274,7 +288,13 @@ export default function Navbar() {
                         <>
                             {/* Hide Bell on Mobile, Show on Desktop */}
                             <div className="hidden md:block">
-                                <NotificationBox />
+                                <React.Suspense fallback={
+                                    <Button variant="ghost" size="icon" className="relative">
+                                        <Bell className="h-5 w-5" />
+                                    </Button>
+                                }>
+                                    <NotificationBox />
+                                </React.Suspense>
                             </div>
 
                             <DropdownMenu>
@@ -304,11 +324,6 @@ export default function Navbar() {
                                                 <Bell className="mr-2 h-4 w-4" />
                                                 <span>Notifications</span>
                                             </div>
-                                            {unreadCount > 0 && (
-                                                <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">
-                                                    {unreadCount > 9 ? '9+' : unreadCount}
-                                                </Badge>
-                                            )}
                                         </DropdownMenuItem>
 
                                         <DropdownMenuItem onClick={() => navigate('/support')}>

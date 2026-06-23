@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import AnimatedBackground from '@/components/background/AnimatedBackground';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const slogans = [
     "Create High-Level Tests & Conduct Them Online",
@@ -15,18 +13,27 @@ const slogans = [
 export default function CreateTestsHero() {
     const navigate = useNavigate();
     const [currentSloganIndex, setCurrentSloganIndex] = useState(0);
+    const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setCurrentSloganIndex((prev) => (prev + 1) % slogans.length);
+            setIsVisible(false);
+            setTimeout(() => {
+                setCurrentSloganIndex((prev) => (prev + 1) % slogans.length);
+                setIsVisible(true);
+            }, 400);
         }, 4000);
         return () => clearInterval(interval);
     }, []);
 
     return (
         <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-            {/* Animated Background */}
-            <AnimatedBackground />
+            {/* Pure CSS Background — no component overhead */}
+            <div className="absolute inset-0 w-full h-full overflow-hidden" style={{ background: 'linear-gradient(to top, #0f172a, #312e81)' }}>
+                <div className="absolute inset-0 pointer-events-none opacity-50" style={{
+                    background: 'radial-gradient(circle at center, transparent 0%, #020617 100%)'
+                }} />
+            </div>
 
             {/* Content */}
             <div className="relative z-10 container mx-auto px-6 py-24 text-center">
@@ -44,20 +51,18 @@ export default function CreateTestsHero() {
                         <div className="h-[1px] w-16 bg-gradient-to-l from-transparent to-amber-400/60" />
                     </div>
 
-                    {/* Main Heading */}
+                    {/* Main Heading — CSS transition instead of framer-motion */}
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight min-h-[140px] md:min-h-[180px] flex items-center justify-center overflow-hidden">
-                        <AnimatePresence mode="wait">
-                            <motion.span
-                                key={currentSloganIndex}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.5, ease: "easeInOut" }}
-                                className="inline-block bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent px-4 py-2"
-                            >
-                                {slogans[currentSloganIndex]}
-                            </motion.span>
-                        </AnimatePresence>
+                        <span
+                            className="inline-block bg-gradient-to-r from-yellow-200 via-pink-200 to-purple-200 bg-clip-text text-transparent px-4 py-2"
+                            style={{
+                                opacity: isVisible ? 1 : 0,
+                                transform: isVisible ? 'translateY(0)' : 'translateY(-20px)',
+                                transition: 'opacity 0.4s ease-in-out, transform 0.4s ease-in-out',
+                            }}
+                        >
+                            {slogans[currentSloganIndex]}
+                        </span>
                     </h1>
 
                     {/* Subheading — space preserved */}

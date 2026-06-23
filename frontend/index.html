@@ -52,13 +52,56 @@
   <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
   <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
   <link rel="dns-prefetch" href="https://apigcp.testoza.com" />
-  <!-- Google Fonts — async load (non-blocking) to avoid render delay -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ribeye&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&family=Dancing+Script:wght@400;700&display=swap" media="print" onload="this.media='all'" />
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Ribeye&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" /></noscript>
+  <!-- Google Fonts — async load (non-blocking), reduced to only critical weights -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" /></noscript>
   <!-- Preload Critical Assets -->
   <link rel="preload" href="/logo-testoza.svg" as="image" type="image/svg+xml" />
 
+  <!-- Inline Critical CSS for instant first paint -->
+  <style>
+    /* Pre-render skeleton — visible before any JS runs */
+    #root:empty::after {
+      content: '';
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100%;
+      background: linear-gradient(to top, #0f172a, #312e81);
+    }
+    #root:empty::before {
+      content: 'TestoZa';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #056eab;
+      letter-spacing: -0.02em;
+    }
+  </style>
 
+  <!-- Deferred secondary fonts: only needed for below-fold sections and inner pages -->
+  <script>
+    var secondaryFontsLoaded = false;
+    function loadSecondaryFonts() {
+      if (secondaryFontsLoaded) return;
+      secondaryFontsLoaded = true;
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Ribeye&family=Instrument+Serif:ital,wght@0,400;1,400&family=Mukta:wght@300;400;500;600;700&display=swap';
+      document.head.appendChild(link);
+    }
+    // Load on first user interaction or after 4s
+    ['scroll','click','touchstart'].forEach(function(e) {
+      document.addEventListener(e, loadSecondaryFonts, { once: true, passive: true });
+    });
+    setTimeout(loadSecondaryFonts, 4000);
+  </script>
 
   <!-- WebSite Schema (enables Google Sitelinks & Search Box) -->
   <script type="application/ld+json">
@@ -199,30 +242,37 @@
 
   <!-- Google Analytics + Google Ads — lazily injected post-load to prevent blocking critical rendering -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });   // Google Analytics 4
-    gtag('config', 'AW-18082120928'); // Google Ads Conversion Tracking
-
     function initAnalytics() {
-      const script = document.createElement('script');
+      var script = document.createElement('script');
       script.async = true;
       script.src = "https://www.googletagmanager.com/gtag/js?id=G-H9VZL1VTKL";
       document.head.appendChild(script);
     }
 
-    if (window.addEventListener) {
-      window.addEventListener('load', function() {
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(initAnalytics);
-        } else {
-          setTimeout(initAnalytics, 2000);
-        }
-      });
-    } else {
-      setTimeout(initAnalytics, 2000);
+    // Delay analytics initialization until user interaction or 5s timeout
+    // This prevents it from competing with critical resources
+    var analyticsLoaded = false;
+    function loadAnalyticsOnce() {
+      if (analyticsLoaded) return;
+      analyticsLoaded = true;
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });
+      gtag('config', 'AW-18082120928');
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(initAnalytics);
+      } else {
+        setTimeout(initAnalytics, 3000);
+      }
     }
+    // First user interaction triggers analytics
+    ['scroll','click','keydown','touchstart'].forEach(function(e) {
+      document.addEventListener(e, loadAnalyticsOnce, { once: true, passive: true });
+    });
+    // Fallback: load after 5s even without interaction
+    setTimeout(loadAnalyticsOnce, 5000);
   </script>
 </head>
 

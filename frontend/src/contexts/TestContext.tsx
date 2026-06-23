@@ -1,5 +1,24 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { Question, TestData } from '@/data/questions';
+
+// Inline lightweight type definitions to avoid importing the 102KB questions.ts data file
+// into the critical rendering path. The actual data is only needed in test-taking pages.
+export interface Question {
+  id: number;
+  question: string;
+  options: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+  correctAnswer: 'A' | 'B' | 'C' | 'D';
+}
+
+export interface TestData {
+  title: string;
+  description: string;
+  questions: Question[];
+}
 
 export interface StudentAnswer {
   questionId: number;

@@ -67,7 +67,9 @@ export default defineConfig(({ mode }) => ({
         return deps.filter(dep => {
           return !dep.includes('vendor-tiptap') &&
                  !dep.includes('vendor-charts') &&
-                 !dep.includes('vendor-files');
+                 !dep.includes('vendor-files') &&
+                 !dep.includes('vendor-motion') &&
+                 !dep.includes('vendor-katex');
         });
       }
     },
@@ -99,6 +101,8 @@ export default defineConfig(({ mode }) => ({
           'vendor-motion': ['framer-motion'],
           // File processing — AI import & export pages only (~486KB)
           'vendor-files': ['xlsx', 'html2canvas'],
+          // KaTeX math rendering — only on test pages (~256KB)
+          'vendor-katex': ['katex'],
         },
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',

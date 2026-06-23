@@ -9,8 +9,8 @@ import PrivateRoute from "@/components/ui/PrivateRoute";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 
-import LandingPage from "./pages/LandingPage";
-import Layout from "./Layout";
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Layout = lazy(() => import("./Layout"));
 // Lazy Load Pages
 import { HelmetProvider } from 'react-helmet-async';
 

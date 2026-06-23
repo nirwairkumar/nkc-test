@@ -3,16 +3,17 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import { analyticsTracker } from '@/lib/analyticsTracker';
 
 export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, profile, loading } = useAuth();
 
-    // Track page views on route change
+    // Track page views on route change — lazy loaded to avoid blocking render
     React.useEffect(() => {
-        analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
+        import('@/lib/analyticsTracker').then(({ analyticsTracker }) => {
+            analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
+        });
     }, [location.pathname, user?.id]);
 
     // Check for redirect intent after login is handled specifically 
