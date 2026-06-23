@@ -22,13 +22,41 @@ const SectionWiseBuilderShowcase = React.lazy(() => import('@/components/landing
 // Only loaded when a test is generated via YouTube tool (ephemeral 30s display)
 const TestCard = React.lazy(() => import('@/components/TestCard'));
 
-// Skeletons
-function SectionSkeleton() {
+// Skeletons — reserve space to prevent CLS (Cumulative Layout Shift)
+function SectionSkeleton({ minHeight }: { minHeight?: string }) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" style={{ minHeight: minHeight || '240px' }}>
             {[1, 2, 3].map(i => (
                 <TestCardSkeleton key={i} />
             ))}
+        </div>
+    );
+}
+
+// Combined Sessions skeleton — matches the real component's height to prevent 0.108 CLS
+function CombinedSessionsSkeleton() {
+    return (
+        <div className="space-y-5" style={{ minHeight: '320px' }}>
+            <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+                <div>
+                    <div className="h-5 w-48 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mb-1" />
+                    <div className="h-3 w-64 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2].map(i => (
+                    <div key={i} className="h-[280px] w-full rounded-2xl bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-800 animate-pulse p-5">
+                        <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded mb-4" />
+                        <div className="h-4 w-1/2 bg-slate-100 dark:bg-slate-800 rounded mb-6" />
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                            <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                        </div>
+                        <div className="h-10 w-full bg-slate-200 dark:bg-slate-800 rounded-md mt-4" />
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -83,7 +111,7 @@ export default function TestList() {
     };
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl animate-in fade-in duration-500">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
             <SEO
                 title="Explore Free Mock Tests Online - TestoZa"
                 description="Find free online mock tests for JEE, NEET, GATE, UPSC, SSC, and more. Practice with real exam-like interface on TestoZa."
@@ -140,21 +168,23 @@ export default function TestList() {
                 <div className="space-y-12 md:space-y-16 mt-10">
                     {/* 5. Category Folders */}
                     {renderStage >= 2 ? (
-                        <Suspense fallback={<SectionSkeleton />}>
+                        <Suspense fallback={<SectionSkeleton minHeight="200px" />}>
                             <CategoryFolderCards />
                         </Suspense>
                     ) : (
-                        <SectionSkeleton />
+                        <SectionSkeleton minHeight="200px" />
                     )}
                     
                     <div className="section-divider" />
 
-                    {/* 6b. Combined Sessions */}
+                    {/* 6b. Combined Sessions — use height-reserving skeleton to prevent CLS */}
                     {renderStage >= 2 ? (
-                        <Suspense fallback={null}>
+                        <Suspense fallback={<CombinedSessionsSkeleton />}>
                             <CombinedSessionsSection user={user} />
                         </Suspense>
-                    ) : null}
+                    ) : (
+                        <CombinedSessionsSkeleton />
+                    )}
 
                     <div className="section-divider" />
 

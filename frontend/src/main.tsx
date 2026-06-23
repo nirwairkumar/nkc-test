@@ -109,6 +109,17 @@ const registerWebMCP = () => {
   }
 };
 
-// Defer registration slightly to ensure it doesn't block the very first paint,
-// but keep the timeout low (100ms) so automated crawlers/testing run AFTER it registers.
-setTimeout(registerWebMCP, 100);
+// Run registration immediately and synchronously so it is available from the first millisecond
+registerWebMCP();
+
+// Register on key lifecycle events to handle asynchronous or late injection
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', registerWebMCP);
+}
+window.addEventListener('load', registerWebMCP);
+
+// Periodically check and register in the background at various intervals
+const registrationIntervals = [50, 100, 200, 500, 1000, 2000];
+registrationIntervals.forEach(delay => {
+  setTimeout(registerWebMCP, delay);
+});

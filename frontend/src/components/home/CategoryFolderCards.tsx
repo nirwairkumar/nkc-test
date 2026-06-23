@@ -43,7 +43,7 @@ export default function CategoryFolderCards() {
     const visibleCategories = showAll ? categories : categories.slice(0, 8);
 
     return (
-        <div className="mb-10 animate-slide-up-fade stagger-2 relative z-10">
+        <div className="mb-10 relative z-10">
             <div className="flex items-center gap-3 mb-6 pl-1">
                 <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white">
                     <FolderOpen className="h-5 w-5 md:h-6 md:w-6" />
