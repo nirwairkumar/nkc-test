@@ -1,5 +1,6 @@
-// src/hooks/useAuthActions.ts
+import { supabase } from '@/integrations/supabase/client';
 import { authApi } from '@/lib/authApi';
+
 
 export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string) {
     try {
@@ -58,19 +59,19 @@ export async function resetPasswordForEmail(email: string) {
 
 export async function signInWithGoogle() {
     try {
-        const responseData = await authApi.signInWithGoogle();
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`
+            }
+        });
 
-        // The backend returns { data: { provider: 'google', url: '...' }, error: null }
-        const url = responseData?.data?.url || responseData?.url;
-
-        if (url) {
-            window.location.href = url;
-            return { error: null };
-        } else {
-            throw new Error("Could not get Google login URL");
-        }
+        if (error) throw error;
+        return { error: null };
     } catch (error: any) {
+        console.error("Client Google Auth error:", error);
         return { error };
     }
 }
+
 

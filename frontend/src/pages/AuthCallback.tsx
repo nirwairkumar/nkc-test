@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import apiClient from '@/lib/apiClient';
+import { supabase } from '@/integrations/supabase/client';
+
 
 /**
  * AuthCallback — handles the redirect from Supabase after Google OAuth.
@@ -71,11 +73,11 @@ export default function AuthCallback() {
                 setStatus('Exchanging authorization code...');
 
                 try {
-                    // Send the code to the backend to exchange for tokens
-                    const response = await apiClient.post('/auth/callback', { code });
-                    const data = response.data;
+                    // Exchange the code directly using Supabase client
+                    const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+                    if (exchangeError) throw exchangeError;
 
-                    const session = data?.data?.session || data?.session;
+                    const session = exchangeData?.session;
 
                     if (session?.access_token) {
                         localStorage.setItem('testoza_token', session.access_token);
@@ -88,7 +90,7 @@ export default function AuthCallback() {
                         redirectToIntent();
                         return;
                     } else {
-                        console.error('[AuthCallback] No session in PKCE response:', data);
+                        console.error('[AuthCallback] No session in PKCE response:', exchangeData);
                         navigate('/auth-error?error=pkce_error&detail=Could+not+exchange+code+for+session', { replace: true });
                         return;
                     }
@@ -98,6 +100,7 @@ export default function AuthCallback() {
                     return;
                 }
             }
+
 
             // --- Check for error in query params too ---
             const errorParam = searchParams.get('error');

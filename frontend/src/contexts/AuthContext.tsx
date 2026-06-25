@@ -147,22 +147,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const token = localStorage.getItem('testoza_token');
             if (token) {
                 try {
-                    const response = await authApi.getMe();
-                    if (response.data?.user) {
-                        const userData = response.data.user;
-                        setUser(userData);
-                        // Build a minimal session object for compatibility
-                        setSession({ user: userData, access_token: token });
+                    let userId: string | undefined;
+                    try {
+                        const payloadBase64 = token.split('.')[1];
+                        const decodedPayload = JSON.parse(atob(payloadBase64));
+                        userId = decodedPayload.sub;
+                    } catch (err) {
+                        console.warn("Failed to parse JWT payload client-side:", err);
+                    }
 
-                        // Optimize: Fetch profile once and reuse it for checkPremiumStatus
-                        const profileData = await fetchProfileData(userData.id);
-
-                        await Promise.all([
-                            checkAdminStatus(userData.id),
-                            checkPremiumStatus(userData.id, profileData)
+                    if (userId) {
+                        // Parallelize: authApi.getMe(), profile details, and admin status
+                        const [meResponse, profileData] = await Promise.all([
+                            authApi.getMe(),
+                            fetchProfileData(userId),
+                            checkAdminStatus(userId)
                         ]);
+
+                        if (meResponse.data?.user) {
+                            const userData = meResponse.data.user;
+                            setUser(userData);
+                            // Build a minimal session object for compatibility
+                            setSession({ user: userData, access_token: token });
+
+                            // checkPremiumStatus uses the preloaded profileData to prevent a duplicate fetch
+                            await checkPremiumStatus(userData.id, profileData);
+                        } else {
+                            throw new Error("No user in response");
+                        }
                     } else {
-                        throw new Error("No user in response");
+                        // Fallback to sequential flow if token parsing fails
+                        const response = await authApi.getMe();
+                        if (response.data?.user) {
+                            const userData = response.data.user;
+                            setUser(userData);
+                            setSession({ user: userData, access_token: token });
+
+                            const profileData = await fetchProfileData(userData.id);
+                            await Promise.all([
+                                checkAdminStatus(userData.id),
+                                checkPremiumStatus(userData.id, profileData)
+                            ]);
+                        } else {
+                            throw new Error("No user in response");
+                        }
                     }
                 } catch (e) {
                     // Token invalid or expired
@@ -172,6 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setSession(null);
                     await checkPremiumStatus(undefined);
                 }
+
             } else {
                 setUser(null);
                 setSession(null);
