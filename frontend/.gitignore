@@ -234,7 +234,7 @@ dist
 
 # User
 .gemini/
-supabase/
+
 
 # frontend folder for shearing only. not in use of this project:
 lint_output.txt
