@@ -304,11 +304,16 @@ DIAGRAM AND IMAGE EXTRACTION (CRITICAL):
 
 STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
 
+First, analyze the document layout and content to decide if the exam is structured section-wise (e.g., divided into Subject sections like Physics, Chemistry, Math, or Section A, Section B, Section C, etc.).
+- IF it is section-wise: Use format 1 (structured section-wise JSON with "sections" field and "enable_section_mode": true).
+- IF it is a flat list of questions: Use format 2 (flat JSON with "questions" array at the top level).
+- Always auto-generate a descriptive, relevant test title and description based on the document text (e.g. "JEE Advanced Practice Test - Physics & Chemistry", "CBSE Class 12 Term 1 Mathematics Exam"). DO NOT use generic placeholders like "Extracted Exam" if a better title can be inferred from the document headers.
+
 1. IF the document contains section-wise questions (e.g. Physics, Chemistry, Mathematics, Section A, Section B, etc.):
 You MUST structure the output using the "sections" field instead of the top-level "questions" field. The top-level structure MUST be:
 {
-  "title": "Extracted from document or inferred",
-  "description": "Auto-generated from document content",
+  "title": "Descriptive test title inferred from document headers",
+  "description": "Auto-generated description summarizing the test contents and sections",
   "duration": 180,
   "enable_section_mode": true,
   "sections": [
@@ -491,11 +496,16 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
 
 ## Return ONLY valid JSON (no markdown fences, no explanation):
 
+First, analyze the document layout and content to decide if the exam should be structured section-wise (e.g., divided into Subject sections like Physics, Chemistry, Math, or Section A, Section B, Section C, etc.).
+- IF it should be section-wise: Use format 1 (structured section-wise JSON with "sections" field and "enable_section_mode": true).
+- IF it should be a flat list of questions: Use format 2 (flat JSON with "questions" array at the top level).
+- Always auto-generate a descriptive, relevant test title and description based on the document text (e.g. "Practice Test: Electrostatics and Chemical Bonding"). DO NOT use generic placeholders if a better title can be inferred from the document headers.
+
 1. IF the generated exam is structured by subject or section (e.g. Physics, Chemistry, Math, Section A, etc.):
 You MUST structure the output using the "sections" field instead of a top-level "questions" field. The top-level structure MUST be:
 {
-  "title": "Generated: [Topic/Subject]",
-  "description": "AI-generated questions based on [content summary]",
+  "title": "Descriptive test title auto-generated from topics",
+  "description": "AI-generated questions based on document content",
   "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2\\n...",
   "enable_section_mode": true,
   "sections": [
@@ -1019,15 +1029,86 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         await asyncio.gather(*upload_tasks)
         logger.info("All diagram uploads completed.")
 
-    # Step 3: Process pages with overlap for cross-page questions
+    # Step 3: Process pages (use single batch for smaller files, chunked for larger ones)
+    SINGLE_BATCH_PAGE_LIMIT = 15
+    prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
+    total_pages = len(all_page_images)
+    
+    if total_pages <= SINGLE_BATCH_PAGE_LIMIT:
+        logger.info(f"Processing all {total_pages} pages in a single batch (no chunking)...")
+        content_parts = [prompt]
+        for idx, page_img in enumerate(all_page_images):
+            content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
+            content_parts.append(
+                types.Part.from_bytes(data=page_img, mime_type="image/png")
+            )
+            
+        try:
+            raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
+            logger.info(f"Single batch response received. Length: {len(raw_text)}")
+            
+            batch_result = _parse_response(raw_text, all_embedded_images)
+            unique_questions = batch_result.get("questions", [])
+            
+            if not unique_questions:
+                raise ValueError("No questions could be extracted in single batch mode.")
+                
+            # Step 5: Match answer key with questions if provided (PRIORITY)
+            if answer_key_mappings:
+                logger.info("Matching separate answer key with extracted questions...")
+                unique_questions = _match_answer_key(unique_questions, answer_key_mappings)
+            
+            # Reconstruct sections if section mode is detected
+            has_sections = any(q.get("section_name") for q in unique_questions)
+            
+            result = {
+                "title": batch_result.get("title") or "Extracted Exam",
+                "description": batch_result.get("description") or f"Extracted from {total_pages} pages",
+                "questions": [
+                    {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+                    for q in unique_questions
+                ],
+                "canConfirm": all(q.get("correctAnswer") is not None for q in unique_questions),
+                "unansweredCount": sum(1 for q in unique_questions if q.get("correctAnswer") is None),
+            }
+
+            if has_sections:
+                sections_map = {}
+                sections_list = []
+                for q in unique_questions:
+                    sec_name = q.get("section_name") or "General"
+                    sec_key = sec_name.strip().lower()
+                    if sec_key not in sections_map:
+                        attempt_control = q.get("section_attempt_control") or {"enabled": False}
+                        sec_obj = {
+                            "id": q.get("section_id") or f"section-{len(sections_list) + 1}",
+                            "name": sec_name,
+                            "attempt_control": attempt_control,
+                            "questions": []
+                        }
+                        sections_map[sec_key] = sec_obj
+                        sections_list.append(sec_obj)
+                    
+                    q_clean = {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+                    sections_map[sec_key]["questions"].append(q_clean)
+                
+                result["enable_section_mode"] = True
+                result["sections"] = sections_list
+                
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in single batch processing: {e}. Falling back to chunked processing...")
+
+    # Fallback to chunked/parallel processing for larger files
     MAX_PAGES_PER_BATCH = 5
     OVERLAP_PAGES = 1  # Include last page of previous batch in next batch
-    prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
     all_questions = []
     
-    total_pages = len(all_page_images)
     start_idx = 0
     batch_num = 0
+    first_batch_title = None
+    first_batch_desc = None
     
     while start_idx < total_pages:
         batch_num += 1
@@ -1064,6 +1145,10 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             batch_result = _parse_response(raw_text, all_embedded_images)
             questions = batch_result.get("questions", [])
             
+            if batch_num == 1:
+                first_batch_title = batch_result.get("title")
+                first_batch_desc = batch_result.get("description")
+            
             if questions:
                 logger.info(f"Extracted {len(questions)} questions from batch {batch_num}")
                 all_questions.extend(questions)
@@ -1099,8 +1184,8 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
     has_sections = any(q.get("section_name") for q in unique_questions)
     
     result = {
-        "title": "Extracted Exam",
-        "description": f"Extracted from {total_pages} pages",
+        "title": first_batch_title or "Extracted Exam",
+        "description": first_batch_desc or f"Extracted from {total_pages} pages",
         "questions": [
             {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
             for q in unique_questions
@@ -1743,7 +1828,132 @@ async def process_files_stream(
     if upload_tasks:
         await asyncio.gather(*upload_tasks)
     
-    # Step 5: Create ULTRA-FAST batches with intelligent sizing
+    prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
+    
+    # Step 5: Process pages (use single batch for smaller files, chunked for larger ones)
+    SINGLE_BATCH_PAGE_LIMIT = 15
+    first_batch_title = None
+    first_batch_desc = None
+    
+    if total_pages <= SINGLE_BATCH_PAGE_LIMIT:
+        logger.info(f"Processing all {total_pages} pages in a single batch (streaming)...")
+        if progress_callback:
+            await progress_callback({
+                'stage': 'processing',
+                'percent': 40,
+                'message': f'Sending all {total_pages} pages to Gemini in a single request...',
+                'data': {
+                    'total_pages': total_pages,
+                    'total_batches': 1,
+                    'dpi': selected_dpi
+                }
+            })
+            
+        content_parts = [prompt]
+        for idx, page_img in enumerate(all_page_images):
+            content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
+            content_parts.append(
+                types.Part.from_bytes(data=page_img, mime_type="image/png")
+            )
+            
+        try:
+            raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
+            
+            if progress_callback:
+                await progress_callback({
+                    'stage': 'processing',
+                    'percent': 80,
+                    'message': 'Parsing single batch response from Gemini...',
+                    'data': {
+                        'total_pages': total_pages,
+                        'total_batches': 1,
+                        'dpi': selected_dpi
+                    }
+                })
+                
+            batch_result = _parse_response(raw_text, all_embedded_images)
+            unique_questions = batch_result.get("questions", [])
+            
+            if not unique_questions:
+                raise ValueError("No questions could be extracted in single batch streaming mode.")
+                
+            # Stream individual questions if callback is provided
+            if question_callback:
+                for q in unique_questions:
+                    try:
+                        await question_callback({
+                            'type': 'question',
+                            'question': q,
+                            'batch': 1
+                        })
+                    except Exception as e:
+                        logger.warning(f"Failed to stream question: {e}")
+            
+            # Match answer key if provided
+            if answer_key:
+                answer_key_mappings = await process_answer_key(answer_key)
+                unique_questions = _match_answer_key(unique_questions, answer_key_mappings)
+            
+            # Final progress update
+            if progress_callback:
+                await progress_callback({
+                    'stage': 'complete',
+                    'percent': 100,
+                    'message': f'Complete! Extracted {len(unique_questions)} questions.',
+                    'data': {
+                        'questions_count': len(unique_questions),
+                        'total_batches': 1,
+                        'successful_batches': 1,
+                        'failed_batches': 0,
+                        'quality_tier': quality_tier,
+                        'dpi_used': selected_dpi
+                    }
+                })
+            
+            has_sections = any(q.get("section_name") for q in unique_questions)
+            
+            result = {
+                'title': batch_result.get("title") or 'Extracted Exam',
+                'description': batch_result.get("description") or f'Extracted from {total_pages} pages',
+                'questions': [
+                    {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+                    for q in unique_questions
+                ],
+                'canConfirm': all(q.get('correctAnswer') is not None for q in unique_questions),
+                'unansweredCount': sum(1 for q in unique_questions if q.get('correctAnswer') is None),
+                'quality_tier': quality_tier,
+                'dpi_used': selected_dpi
+            }
+            
+            if has_sections:
+                sections_map = {}
+                sections_list = []
+                for q in unique_questions:
+                    sec_name = q.get("section_name") or "General"
+                    sec_key = sec_name.strip().lower()
+                    if sec_key not in sections_map:
+                        attempt_control = q.get("section_attempt_control") or {"enabled": False}
+                        sec_obj = {
+                            "id": q.get("section_id") or f"section-{len(sections_list) + 1}",
+                            "name": sec_name,
+                            "attempt_control": attempt_control,
+                            "questions": []
+                        }
+                        sections_map[sec_key] = sec_obj
+                        sections_list.append(sec_obj)
+                    
+                    q_clean = {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+                    sections_map[sec_key]["questions"].append(q_clean)
+                
+                result["enable_section_mode"] = True
+                result["sections"] = sections_list
+
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in single batch streaming: {e}. Falling back to chunked processing...")
+
+    # Fallback/chunked mode for larger files
     MAX_PAGES_PER_BATCH = 5
     OVERLAP_PAGES = 1
     
@@ -1796,7 +2006,7 @@ async def process_files_stream(
     total_questions_found = 0
     
     async def process_batch_with_progress(batch_data):
-        nonlocal completed_batches, total_questions_found
+        nonlocal completed_batches, total_questions_found, first_batch_title, first_batch_desc
         
         async with semaphore:
             batch_num = batch_data['batch_num']
@@ -1814,10 +2024,15 @@ async def process_files_stream(
                 })
             
             try:
-                questions = await _process_single_batch_stream(
+                result_data = await _process_single_batch_stream(
                     batch_data, 
                     question_callback=question_callback
                 )
+                questions = result_data["questions"]
+                
+                if batch_num == 1:
+                    first_batch_title = result_data.get("title")
+                    first_batch_desc = result_data.get("description")
                 
                 completed_batches += 1
                 total_questions_found += len(questions)
@@ -1930,8 +2145,8 @@ async def process_files_stream(
     has_sections = any(q.get("section_name") for q in unique_questions)
     
     result = {
-        'title': 'Extracted Exam',
-        'description': f'Extracted from {total_pages} pages',
+        'title': first_batch_title or 'Extracted Exam',
+        'description': first_batch_desc or f'Extracted from {total_pages} pages',
         'questions': [
             {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
             for q in unique_questions
@@ -2007,7 +2222,7 @@ async def _process_image(image_bytes: bytes) -> bytes:
 async def _process_single_batch_stream(
     batch_data: Dict,
     question_callback: Optional[Callable] = None
-) -> List[Dict]:
+) -> Dict:
     """
     Process a single batch and stream questions immediately
     """
@@ -2049,4 +2264,8 @@ async def _process_single_batch_stream(
             except Exception as e:
                 logger.warning(f"Failed to stream question: {e}")
     
-    return questions
+    return {
+        "questions": questions,
+        "title": batch_result.get("title"),
+        "description": batch_result.get("description")
+    }
