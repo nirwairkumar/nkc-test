@@ -36,6 +36,20 @@ interface Question {
     page?: number;
 }
 
+interface Section {
+    id?: string;
+    name?: string;
+    attempt_control?: {
+        enabled: boolean;
+        mode?: string;
+        max_attempts?: number;
+    };
+    questions?: Question[];
+    marks_per_question?: number;
+    negative_marks?: number;
+    question_type?: string;
+}
+
 interface ParseResponse {
     title?: string;
     description?: string;
@@ -45,6 +59,9 @@ interface ParseResponse {
     unansweredCount?: number;
     totalPages?: number;
     processedPages?: number;
+    enable_section_mode?: boolean;
+    sections?: Section[];
+    duration?: number;
 }
 
 type ProcessMode = 'extract' | 'generate';
@@ -460,16 +477,19 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     setStreamingQuestions(prev => [...prev, data.question]);
                                     break;
 
-                                case 'complete':
-                                    if (!data.questions || data.questions.length === 0) {
-                                        throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
-                                    }
-                                    setParsedData(data);
-                                    setIsStreaming(false);
-                                    setLoading(false);
-                                    setStreamProgress(null);
-                                    setAbortController(null);
-                                    return;
+                                case 'complete': {
+                                     const hasQuestions = data.questions && data.questions.length > 0;
+                                     const hasSections = data.sections && data.sections.length > 0;
+                                     if (!hasQuestions && !hasSections) {
+                                         throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
+                                     }
+                                     setParsedData(data);
+                                     setIsStreaming(false);
+                                     setLoading(false);
+                                     setStreamProgress(null);
+                                     setAbortController(null);
+                                     return;
+                                 }
 
                                 case 'error':
                                     throw new Error(data.message);
@@ -533,7 +553,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
             const data: ParseResponse = await response.json();
 
-            if (!data.questions || data.questions.length === 0) {
+            const hasQuestionsLegacy = data.questions && data.questions.length > 0;
+            const hasSectionsLegacy = data.sections && data.sections.length > 0;
+            if (!hasQuestionsLegacy && !hasSectionsLegacy) {
                 throw new Error(isContinue
                     ? 'No additional questions found in the remaining content.'
                     : 'AI returned 0 questions. Try a different file or mode.'
@@ -590,35 +612,86 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         document.body.removeChild(link);
     };
 
-    const handleImport = () => {
+    const handleImport = useCallback(() => {
         if (!parsedData || !onImport) return;
 
-        const questions = parsedData.questions.map((q, index) => {
-            let processedOptions: { [key: string]: { text: string; image: string | null } } = {};
-
-            if (q.type !== 'numerical' && q.options && typeof q.options === 'object') {
-                Object.entries(q.options).forEach(([key, val]) => {
-                    const optionVal = val as any;
-                    if (optionVal && typeof optionVal === 'object' && 'text' in optionVal) {
+        // Helper to map option structure
+        const mapOptions = (
+            options: Question['options'] | undefined,
+            optionImages: Question['optionImages'] | undefined,
+            type: string
+        ) => {
+            const processedOptions: { [key: string]: { text: string; image: string | null } } = {};
+            if (type !== 'numerical' && options && typeof options === 'object') {
+                Object.entries(options).forEach(([key, val]) => {
+                    if (val && typeof val === 'object' && 'text' in val) {
+                        const optionObj = val as { text: string; image?: string | null };
                         processedOptions[key] = {
-                            text: optionVal.text || '',
-                            image: optionVal.image || null
+                            text: optionObj.text || '',
+                            image: optionObj.image || null
                         };
                     } else {
                         processedOptions[key] = {
                             text: String(val || ''),
-                            image: q.optionImages?.[key] || null
+                            image: optionImages?.[key] || null
                         };
                     }
                 });
             }
+            return processedOptions;
+        };
 
+        // If section mode is enabled and sections are present, map them:
+        if (parsedData.enable_section_mode && parsedData.sections && parsedData.sections.length > 0) {
+            const sections = parsedData.sections.map((sec: Section) => {
+                const mappedQuestions = (sec.questions || []).map((q: Question, index: number) => {
+                    return {
+                        id: q.id || index + 1,
+                        type: q.type || 'single',
+                        question: q.question,
+                        questionText: q.question,
+                        options: mapOptions(q.options, q.optionImages, q.type || 'single'),
+                        correctAnswer: q.correctAnswer,
+                        image: q.image,
+                        marks: String(q.marks || 4),
+                        negativeMarks: String(q.negativeMarks || 1),
+                        explanation: "",
+                        passageContent: q.passageContent || "",
+                        typingMode: 'en' as const
+                    };
+                });
+                return {
+                    id: sec.id || `section-${Math.random().toString(36).substring(2, 9)}`,
+                    name: sec.name || 'Untitled Section',
+                    attempt_control: sec.attempt_control || { enabled: false },
+                    questions: mappedQuestions,
+                    marks_per_question: sec.marks_per_question || 4,
+                    negative_marks: sec.negative_marks || 1,
+                    question_type: sec.question_type || 'single'
+                };
+            });
+
+            const importPayload = {
+                title: parsedData.title,
+                description: parsedData.description,
+                revision_notes: parsedData.revision_notes,
+                enable_section_mode: true,
+                sections: sections,
+                duration: parsedData.duration ? Number(parsedData.duration) : sections.reduce((sum: number, s) => sum + (s.questions?.length || 0), 0),
+            };
+
+            onImport(importPayload);
+            return;
+        }
+
+        // Otherwise fallback to flat questions list
+        const questions = (parsedData.questions || []).map((q, index) => {
             return {
                 id: q.id || index + 1,
                 type: q.type || 'single',
                 question: q.question,
                 questionText: q.question,
-                options: processedOptions,
+                options: mapOptions(q.options, q.optionImages, q.type || 'single'),
                 correctAnswer: q.correctAnswer,
                 image: q.image,
                 marks: String(q.marks || 1),
@@ -629,29 +702,32 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             };
         });
 
-        const importPayload: any = {
+        const importPayload = {
+            title: parsedData.title,
+            description: parsedData.description,
+            revision_notes: parsedData.revision_notes,
             questions: questions,
-            duration: questions.length,
+            duration: parsedData.duration ? Number(parsedData.duration) : questions.length,
             marks_per_question: 1,
             negative_marks: 0,
         };
 
-        if (parsedData.title) importPayload.title = parsedData.title;
-        if (parsedData.description) importPayload.description = parsedData.description;
-        if (parsedData.revision_notes) importPayload.revision_notes = parsedData.revision_notes;
-
         onImport(importPayload);
-    };
+    }, [parsedData, onImport]);
 
     // Auto-navigate to Test Editor upon successful test generation (Step 7)
     useEffect(() => {
-        if (parsedData && parsedData.questions && parsedData.questions.length > 0) {
-            const timer = setTimeout(() => {
-                handleImport();
-            }, 500); // Small delay to let user realize success before redirecting
-            return () => clearTimeout(timer);
+        if (parsedData) {
+            const hasQuestions = parsedData.questions && parsedData.questions.length > 0;
+            const hasSections = parsedData.sections && parsedData.sections.length > 0;
+            if (hasQuestions || hasSections) {
+                const timer = setTimeout(() => {
+                    handleImport();
+                }, 500); // Small delay to let user realize success before redirecting
+                return () => clearTimeout(timer);
+            }
         }
-    }, [parsedData, onImport]);
+    }, [parsedData, handleImport]);
 
     if (featureFlags && featureFlags.enable_ai_test_generation === false) {
         return (

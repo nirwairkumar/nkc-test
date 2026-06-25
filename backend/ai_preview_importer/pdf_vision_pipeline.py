@@ -286,13 +286,10 @@ CHEMISTRY FORMATTING (mhchem) - CRITICAL:
 - Isotopes: $\\\\ce{^{14}C}$, $\\\\ce{^{235}U}$
 - IMPORTANT: Always wrap \\\\ce{...} inside $...$
 
---------------------------------------------------
-
-TEXT & LINE-BREAK RULES:
-- DO NOT use escaped newline characters (\\n).
-- DO NOT use real line breaks.
-- Use <br> tags for line breaks in questions and options.
-- Multi-line questions must use <br>.
+--------------------------------TEXT & LINE-BREAK RULES:
+- Use standard newline characters (\n) for line breaks in questions, options, and passageContent.
+- DO NOT use <br> tags.
+- Ensure proper escaping of newlines as \n inside the JSON strings.
 - Do NOT use other HTML tags.
 - Do NOT use markdown formatting.
 
@@ -306,9 +303,57 @@ DIAGRAM AND IMAGE EXTRACTION (CRITICAL):
 --------------------------------------------------
 
 STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
+
+1. IF the document contains section-wise questions (e.g. Physics, Chemistry, Mathematics, Section A, Section B, etc.):
+You MUST structure the output using the "sections" field instead of the top-level "questions" field. The top-level structure MUST be:
 {
   "title": "Extracted from document or inferred",
   "description": "Auto-generated from document content",
+  "duration": 180,
+  "enable_section_mode": true,
+  "sections": [
+    {
+      "id": "section-1",
+      "name": "Section Name (e.g. Physics)",
+      "attempt_control": {
+        "enabled": false
+      },
+      "questions": [
+        {
+          "id": 1,
+          "type": "single",
+          "question": "Exact extracted question text with LaTeX",
+          "imagePlaceholder": null,
+          "options": {
+            "A": "Option text only - no numbering prefix",
+            "B": "Option text only",
+            "C": "Option text only",
+            "D": "Option text only"
+          },
+          "correctAnswer": "A",
+          "marks": 4,
+          "negativeMarks": 1,
+          "crossPage": false,
+          "passageContent": null
+        }
+      ]
+    }
+  ]
+}
+
+If instructions for a section restrict the number of attempts (e.g., "Attempt any 5 out of 10 questions" or "Only the first 10 attempted will be evaluated"), configure the "attempt_control" object inside that section:
+"attempt_control": {
+  "enabled": true,
+  "mode": "hard" (prevent choosing more than limit) or "soft" (only first N will be evaluated),
+  "max_attempts": 5
+}
+Otherwise, set "attempt_control" to {"enabled": false}.
+
+2. IF the document is flat (no sections), use the top-level "questions" array:
+{
+  "title": "Extracted from document or inferred",
+  "description": "Auto-generated from document content",
+  "duration": 180,
   "questions": [
     {
       "id": 1,
@@ -444,8 +489,39 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
 - Questions may span multiple pages - combine them into complete questions
 - Never split a single question into multiple entries
 
-## OUTPUT FORMAT
-Return ONLY valid JSON (no markdown fences, no explanation):
+## Return ONLY valid JSON (no markdown fences, no explanation):
+
+1. IF the generated exam is structured by subject or section (e.g. Physics, Chemistry, Math, Section A, etc.):
+You MUST structure the output using the "sections" field instead of a top-level "questions" field. The top-level structure MUST be:
+{
+  "title": "Generated: [Topic/Subject]",
+  "description": "AI-generated questions based on [content summary]",
+  "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2\\n...",
+  "enable_section_mode": true,
+  "sections": [
+    {
+      "id": "section-1",
+      "name": "Section Name",
+      "attempt_control": {
+        "enabled": false
+      },
+      "questions": [
+        {
+          "id": 1,
+          "type": "single",
+          "question": "Original question text here",
+          "options": { "A": "Option A", "B": "Option B", "C": "Option C", "D": "Option D" },
+          "correctAnswer": "C",
+          "marks": 4,
+          "negativeMarks": 1,
+          "crossPage": false
+        }
+      ]
+    }
+  ]
+}
+
+2. Otherwise, if the generated exam is flat (no sections), use the top-level "questions" array:
 {
   "title": "Generated: [Topic/Subject]",
   "description": "AI-generated questions based on [content summary]",
@@ -847,7 +923,7 @@ def merge_question_parts(parts: List[Dict]) -> Dict:
             seen_texts.add(text)
             unique_texts.append(text)
     
-    merged["question"] = " <br><br> ".join(unique_texts)
+    merged["question"] = "\n\n".join(unique_texts)
     
     # Merge options
     if all_options:
@@ -1019,13 +1095,42 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         # If no separate answer key, check if inline answers were detected
         logger.info("No separate answer key provided - relying on inline answer detection")
 
+    # Reconstruct sections if section mode is detected
+    has_sections = any(q.get("section_name") for q in unique_questions)
+    
     result = {
         "title": "Extracted Exam",
         "description": f"Extracted from {total_pages} pages",
-        "questions": unique_questions,
+        "questions": [
+            {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+            for q in unique_questions
+        ],
         "canConfirm": all(q.get("correctAnswer") is not None for q in unique_questions),
         "unansweredCount": sum(1 for q in unique_questions if q.get("correctAnswer") is None),
     }
+
+    if has_sections:
+        sections_map = {}
+        sections_list = []
+        for q in unique_questions:
+            sec_name = q.get("section_name") or "General"
+            sec_key = sec_name.strip().lower()
+            if sec_key not in sections_map:
+                attempt_control = q.get("section_attempt_control") or {"enabled": False}
+                sec_obj = {
+                    "id": q.get("section_id") or f"section-{len(sections_list) + 1}",
+                    "name": sec_name,
+                    "attempt_control": attempt_control,
+                    "questions": []
+                }
+                sections_map[sec_key] = sec_obj
+                sections_list.append(sec_obj)
+            
+            q_clean = {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+            sections_map[sec_key]["questions"].append(q_clean)
+        
+        result["enable_section_mode"] = True
+        result["sections"] = sections_list
 
     return result
 
@@ -1245,16 +1350,30 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             else:
                 raise ValueError(f"AI returned invalid JSON: {e2}")
 
-    questions = data.get("questions", [])
-    if not questions:
-        # User prompt structure might nest questions inside a 'sections' array
-        sections = data.get("sections", [])
-        if sections and isinstance(sections, list):
-            if questions is None:
-                questions = []
-            for section in sections:
-                if isinstance(section, dict):
-                    questions.extend(section.get("questions", []))
+    questions = []
+    sections = data.get("sections", [])
+    if sections and isinstance(sections, list):
+        for s in sections:
+            if isinstance(s, dict):
+                sec_name = s.get("name") or s.get("title") or "General"
+                sec_id = s.get("id")
+                sec_attempt = s.get("attempt_control")
+                for q in s.get("questions", []):
+                    if isinstance(q, dict):
+                        q["section_name"] = sec_name
+                        if sec_id:
+                            q["section_id"] = sec_id
+                        if sec_attempt:
+                            q["section_attempt_control"] = sec_attempt
+                        questions.append(q)
+    else:
+        questions = data.get("questions", [])
+        if not isinstance(questions, list):
+            questions = []
+        for q in questions:
+            if isinstance(q, dict):
+                if "section" in q and "section_name" not in q:
+                    q["section_name"] = q["section"]
             
     if not questions:
         logger.warning(f"AI returned 0 questions. Raw snippet: {clean[:500]}")
@@ -1314,7 +1433,11 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
                 elif isinstance(v, dict) and "text" in v:
                     v["text"] = replace_placeholders(v["text"])
 
-        validated.append({
+        sec_name = q.get("section_name")
+        sec_id = q.get("section_id")
+        sec_attempt = q.get("section_attempt_control")
+
+        val_q = {
             "id": q.get("id", i + 1),
             "type": q_type,
             "question": question_text,
@@ -1327,7 +1450,15 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             "crossPage": q.get("crossPage", False),
             "groupId": q.get("groupId", ""),
             "passageContent": q.get("passageContent", ""),
-        })
+        }
+        if sec_name:
+            val_q["section_name"] = sec_name
+        if sec_id:
+            val_q["section_id"] = sec_id
+        if sec_attempt:
+            val_q["section_attempt_control"] = sec_attempt
+
+        validated.append(val_q)
 
     # ── POST-PROCESSING ──────────────────────────────────────────────────
     
@@ -1796,15 +1927,45 @@ async def process_files_stream(
             }
         })
     
-    return {
+    has_sections = any(q.get("section_name") for q in unique_questions)
+    
+    result = {
         'title': 'Extracted Exam',
         'description': f'Extracted from {total_pages} pages',
-        'questions': unique_questions,
+        'questions': [
+            {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+            for q in unique_questions
+        ],
         'canConfirm': all(q.get('correctAnswer') is not None for q in unique_questions),
         'unansweredCount': sum(1 for q in unique_questions if q.get('correctAnswer') is None),
         'quality_tier': quality_tier,
         'dpi_used': selected_dpi
     }
+    
+    if has_sections:
+        sections_map = {}
+        sections_list = []
+        for q in unique_questions:
+            sec_name = q.get("section_name") or "General"
+            sec_key = sec_name.strip().lower()
+            if sec_key not in sections_map:
+                attempt_control = q.get("section_attempt_control") or {"enabled": False}
+                sec_obj = {
+                    "id": q.get("section_id") or f"section-{len(sections_list) + 1}",
+                    "name": sec_name,
+                    "attempt_control": attempt_control,
+                    "questions": []
+                }
+                sections_map[sec_key] = sec_obj
+                sections_list.append(sec_obj)
+            
+            q_clean = {k: v for k, v in q.items() if k not in ["section_name", "section_id", "section_attempt_control"]}
+            sections_map[sec_key]["questions"].append(q_clean)
+        
+        result["enable_section_mode"] = True
+        result["sections"] = sections_list
+
+    return result
 
 
 async def _render_pdf_pages(pdf_bytes: bytes, dpi: int) -> Tuple[List[bytes], List[Dict]]:
