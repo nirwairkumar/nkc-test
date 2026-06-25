@@ -76,19 +76,11 @@ interface SelectedFile {
 }
 
 
+import LatexRenderer from '@/components/ui/LatexRenderer';
+
 // Helper component for markdown preview
 const MarkdownPreview = ({ content }: { content: string }) => (
-    <div className="prose dark:prose-invert max-w-none text-sm">
-        <ReactMarkdown
-            remarkPlugins={[remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-            components={{
-                p: ({ children }) => <span className="block mb-2 last:mb-0">{children}</span>
-            }}
-        >
-            {content}
-        </ReactMarkdown>
-    </div>
+    <LatexRenderer className="text-sm">{content}</LatexRenderer>
 );
 
 // Error Boundary Component
@@ -1204,9 +1196,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                         {q.id}.
                                                     </span>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm line-clamp-2 text-foreground">
-                                                            {q.question || 'No question text'}
-                                                        </p>
+                                                        <div className="text-sm line-clamp-2 text-foreground">
+                                                            <MarkdownPreview content={q.question || 'No question text'} />
+                                                        </div>
                                                         {q.options && Object.keys(q.options).length > 0 && (
                                                             <div className="flex gap-2 mt-2 flex-wrap">
                                                                 {Object.entries(q.options).slice(0, 4).map(([key, value]) => (
