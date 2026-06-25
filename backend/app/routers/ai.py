@@ -14,10 +14,28 @@ import asyncio
 
 router = APIRouter()
 
-# Initialize Gemini Client
+# Initialize Gemini Client using Google Cloud Vertex AI / Agent Platform
+import os
+
 client = None
-if settings.GEMINI_API_KEY:
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
+try:
+    if settings.GEMINI_API_KEY:
+        client = genai.Client(
+            vertexai=True,
+            api_key=settings.GEMINI_API_KEY
+        )
+        print("Initialized google-genai client with Vertex AI using API key (Express Mode).")
+    else:
+        gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
+        client = genai.Client(
+            vertexai=True,
+            project=gcp_project,
+            location="us-central1"
+        )
+        print(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
+except Exception as e:
+    print(f"Error initializing Vertex AI client: {e}")
+
 
 class GenerateYoutubeRequest(BaseModel):
     url: str
@@ -104,7 +122,7 @@ async def generate_youtube_test(
     db: Client = Depends(get_db)
 ):
     if not client:
-         raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
+         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
 
     video_id = extract_video_id(payload.url)
     print(f"Extracted video ID: {video_id} from URL: {payload.url}")
@@ -248,7 +266,7 @@ async def generate_youtube_test(
         response = await asyncio.wait_for(
             asyncio.to_thread(
                 client.models.generate_content,
-                model="gemini-2.0-flash",
+                model="gemini-3.5-flash",
                 contents=request_content
             ),
             timeout=120.0
@@ -569,7 +587,7 @@ async def generate_topics(
     payload: GenerateTopicsRequest
 ):
     if not client:
-        raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
+        raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
     if not payload.questions:
         return {"topics": {}}
@@ -595,7 +613,7 @@ async def generate_topics(
         """
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -623,7 +641,7 @@ class PredictRankRequest(BaseModel):
 @router.post("/predict-rank")
 async def predict_rank(payload: PredictRankRequest):
     if not client:
-        raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
+        raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
     prompt = f"""
     You are an expert AI educational counselor.
@@ -646,7 +664,7 @@ async def predict_rank(payload: PredictRankRequest):
     try:
         response = await asyncio.to_thread(
             client.models.generate_content,
-            model="gemini-2.0-flash",
+            model="gemini-3.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 tools=[{"google_search": {}}],
@@ -834,7 +852,7 @@ async def chat_with_ai(
     db: Client = Depends(get_db)
 ):
     if not client:
-        raise HTTPException(status_code=500, detail="Server misconfigured: Missing AI Key")
+        raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
     context = payload.test_context
     
@@ -887,7 +905,7 @@ async def chat_with_ai(
     try:
         response = await asyncio.to_thread(
             client.models.generate_content,
-            model="gemini-2.0-flash",
+            model="gemini-3.5-flash",
             contents=contents,
             config=types.GenerateContentConfig(
                 temperature=0.7

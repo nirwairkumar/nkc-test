@@ -35,12 +35,28 @@ logger = get_logger(__name__)
 # Lazy-load flag for optional Tesseract
 TESSERACT_AVAILABLE = None  # None = not yet checked
 
-# Configure Gemini using the app settings (loaded from .env)
-api_key = settings.GEMINI_API_KEY
-if api_key:
-    client = genai.Client(api_key=api_key)
-else:
-    logger.warning("GEMINI_API_KEY not found in settings/.env")
+# Configure Gemini using Vertex AI
+import os
+
+client = None
+try:
+    if settings.GEMINI_API_KEY:
+        client = genai.Client(
+            vertexai=True,
+            api_key=settings.GEMINI_API_KEY
+        )
+        logger.info("Initialized google-genai client with Vertex AI using API key (Express Mode).")
+    else:
+        gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
+        client = genai.Client(
+            vertexai=True,
+            project=gcp_project,
+            location="us-central1"
+        )
+        logger.info(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
+except Exception as e:
+    logger.error(f"Failed to initialize Vertex AI client: {e}")
+
 
 
 # ---------------------------------------------------------------------------
@@ -608,8 +624,8 @@ async def process_answer_key(answer_key_data: Dict) -> List[Dict]:
     Process an answer key file (PDF or image) and extract answer mappings.
     Returns a list of {question_number, answer} dictionaries.
     """
-    if not api_key:
-        logger.warning("No Gemini API key configured, skipping answer key processing")
+    if not client:
+        logger.warning("Vertex AI client not initialized, skipping answer key processing")
         return []
     
     logger.info("Processing answer key...")
@@ -638,7 +654,7 @@ async def process_answer_key(answer_key_data: Dict) -> List[Dict]:
         })
     
     try:
-        model = "gemini-2.0-flash"
+        model = "gemini-3.5-flash"
         
         response = await asyncio.wait_for(
             asyncio.to_thread(
@@ -725,7 +741,7 @@ async def _call_gemini_with_retry(content_parts: list, batch_num: int, max_retri
     """
     Call Gemini API with retry logic, exponential backoff, and fallback models/settings.
     """
-    base_model = "gemini-2.0-flash"
+    base_model = "gemini-3.5-flash"
     fallback_model = "gemini-2.0-flash-lite"
     
     for attempt in range(max_retries):
@@ -861,8 +877,8 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
     5. Separately extract embedded images for diagram matching
     6. Merge questions that span across pages
     """
-    if not api_key:
-        raise ValueError("Gemini API key not configured. Set GEMINI_API_KEY environment variable.")
+    if not client:
+        raise ValueError("Vertex AI client not initialized. Check configuration.")
 
     logger.info(f"Starting Vision Pipeline in '{mode}' mode with {len(file_data)} file(s)...")
 
@@ -1408,8 +1424,8 @@ async def process_files_stream(
     
     Expected speed improvement: 70-85% faster than sequential processing
     """
-    if not api_key:
-        raise ValueError("Gemini API key not configured")
+    if not client:
+        raise ValueError("Vertex AI client not initialized")
     
     logger.info(f"🚀 Starting ULTRA-FAST stream processing with {len(file_data)} file(s)...")
     
