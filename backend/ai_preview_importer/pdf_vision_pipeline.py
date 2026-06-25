@@ -21,12 +21,14 @@ import re
 import json
 import base64
 import asyncio
+import fitz
 from google import genai
 from google.genai import types
 from typing import Dict, List, Optional, Tuple, Callable
 from utils.logger import get_logger
 from app.core.config import settings
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
+
 
 logger = get_logger(__name__)
 
