@@ -271,6 +271,50 @@ Always use LaTeX array.
 
 --------------------------------------------------
 
+CHEMISTRY & SCIENTIFIC NOTATION RULES
+
+The platform supports KaTeX + mhchem.
+
+When converting chemistry content:
+
+1. Chemical formulas, ions, and coordination compounds must use mhchem inside KaTeX:
+• Simple formulas: H2SO4 → "$\ce{H2SO4}$"
+• Ions: Fe3+ → "$\ce{Fe^3+}$", SO4^2- → "$\ce{SO4^2-}$"
+• Isotopes: 14C → "$\ce{^{14}C}$"
+• Coordination complexes: [Co(NH3)6]Cl3 → "$\ce{[Co(NH3)6]Cl3}$"
+
+2. Chemical reactions and equilibria must use mhchem arrows and state symbols:
+• Basic reaction: 2Na + 2H2O → 2NaOH + H2 → "$\ce{2Na + 2H2O -> 2NaOH + H2}$"
+• Reversible/Equilibrium reaction: N2 + 3H2 ⇌ 2NH3 → "$\ce{N2 + 3H2 <=> 2NH3}$"
+• Reactions with state symbols: Zn(s) + 2HCl(aq) → ZnCl2(aq) + H2(g) → "$\ce{Zn(s) + 2HCl(aq) -> ZnCl2(aq) + H2(g)}$"
+
+3. Structural formulas (organic chains):
+Do not use the LaTeX "array" environment as it creates too much blank space between bonds and atoms. Keep organic structures compact, tightly packed, and perfectly aligned using these rules:
+• Horizontal Chain & Bonds: Use standard text characters wrapped in "\text{}" for chemical symbols (e.g., \text{CH}_3). Use "\text{-}" for single bonds so math spacing does not push atoms apart (e.g. "$\text{CH}_3\text{-}\text{CH}_2\text{-}\text{OH}$").
+• Vertical Double Bonds: Use "\overset{\text{O}}{\overset{\parallel}{\text{C}}}" for carbonyl groups (C=O).
+• Vertical Branching Alignment (CRITICAL): When a branching chain goes downward (e.g., -CH₂-CH₃) from a main-chain atom (like CH), use "\mathrlap" inside the bottom "\underset" block. This forces the branch to align perfectly by its first atom (the CH₂) and prevents it from pushing horizontal bonds away or creating gaps.
+  Example structure: "$\text{CH}_3\text{-}\underset{\mathrlap{\text{CH}_2\text{-}\text{CH}_3}}{\\underset{\\vert}{\\text{CH}}}\text{-}\text{CH}_3$"
+
+4. Units must use the "\pu{ }" syntax.
+• Example: 4.18 J g⁻¹ K⁻¹ → "$\pu{4.18 J g-1 K-1}$"
+• Example: 9.65 × 10⁴ C mol⁻¹ → "$\pu{9.65 x 10^4 C mol-1}$"
+
+5. If a question contains complex chemical diagrams such as:
+• benzene rings  
+• Haworth projections  
+• resonance structures  
+• skeletal organic structures  
+• reaction mechanisms  
+
+DO NOT convert them to LaTeX.
+
+Instead mark them as images using:
+"image": "image-true"
+or
+"optionImages": { ... }
+
+--------------------------------------------------
+
 STRICT VALIDATION BEFORE OUTPUT
 
 Internally verify:

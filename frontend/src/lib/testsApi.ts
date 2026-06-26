@@ -173,6 +173,7 @@ export async function importTestJson(file: File) {
         const formData = new FormData();
         formData.append('file', file);
         const response = await apiClient.post('tests/import/json', formData, {
+            timeout: 120000, // 120s timeout for large uploads
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

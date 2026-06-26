@@ -179,28 +179,58 @@ async def import_json(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only JSON files are allowed")
     try:
         content = await file.read()
-        data = json.loads(content)
-        
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as jde:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON file syntax: {str(jde)}")
+
+        if not isinstance(data, dict):
+            raise HTTPException(status_code=400, detail="Root element of JSON must be an object")
+
         has_questions = "questions" in data and isinstance(data["questions"], list) and len(data["questions"]) > 0
         has_sections = "sections" in data and isinstance(data["sections"], list) and len(data["sections"]) > 0
         
         if not data.get("title") or (not has_questions and not has_sections):
-            raise HTTPException(status_code=400, detail="Invalid JSON format: Must have title and either questions or sections")
+            raise HTTPException(status_code=400, detail="Invalid JSON format: Must have a 'title' and either a non-empty 'questions' or 'sections' list")
             
         def map_question(q: dict, index: int) -> dict:
+            if not isinstance(q, dict):
+                raise ValueError(f"Question at index {index} is not a valid object")
+                
             mapped_q = {**q}
             mapped_q["id"] = q.get("id", index + 1)
             mapped_q["type"] = q.get("type", "single")
             mapped_q["question"] = q.get("question") or q.get("questionText", "")
             mapped_q["typingMode"] = "en"
-            mapped_q["marks"] = str(q.get("marks", 4))
-            mapped_q["negativeMarks"] = str(q.get("negativeMarks", 1))
+            
+            # Safe marks parsing
+            marks_val = q.get("marks")
+            if marks_val is None or str(marks_val).strip() == "":
+                mapped_q["marks"] = "4"
+            else:
+                try:
+                    float(marks_val)
+                    mapped_q["marks"] = str(marks_val)
+                except ValueError:
+                    mapped_q["marks"] = "4"
+                    
+            # Safe negative marks parsing
+            neg_marks_val = q.get("negativeMarks")
+            if neg_marks_val is None or str(neg_marks_val).strip() == "":
+                mapped_q["negativeMarks"] = "1"
+            else:
+                try:
+                    float(neg_marks_val)
+                    mapped_q["negativeMarks"] = str(neg_marks_val)
+                except ValueError:
+                    mapped_q["negativeMarks"] = "1"
+
             mapped_q["passageContent"] = q.get("passageContent", "")
             mapped_q["groupId"] = q.get("groupId", "")
             mapped_q["image"] = q.get("image", None)
             
             flat_options = {}
-            flat_option_images = q.get("optionImages", {})
+            flat_option_images = q.get("optionImages") if isinstance(q.get("optionImages"), dict) else {}
             raw_options = q.get("options")
             
             if isinstance(raw_options, dict):
@@ -214,22 +244,46 @@ async def import_json(file: UploadFile = File(...)):
                 
                 if flat_option_images:
                     mapped_q["optionImages"] = flat_option_images
-            elif not raw_options:
+            elif isinstance(raw_options, list):
+                for i, v in enumerate(raw_options):
+                    key = chr(65 + i) # A, B, C, D...
+                    if isinstance(v, dict) and "text" in v:
+                        flat_options[key] = v.get("text", "")
+                        if "image" in v and v["image"]:
+                            flat_option_images[key] = v["image"]
+                    else:
+                        flat_options[key] = str(v) if v is not None else ""
+                if flat_option_images:
+                    mapped_q["optionImages"] = flat_option_images
+            else:
                 flat_options = {"A": "", "B": "", "C": "", "D": ""}
                 
             mapped_q["options"] = flat_options
             
             # Type-specific correctAnswer mapping
-            if mapped_q["type"] == "single" and not mapped_q.get("correctAnswer"):
-                mapped_q["correctAnswer"] = "A"
+            if mapped_q["type"] == "single":
+                correct = mapped_q.get("correctAnswer")
+                if not correct or not isinstance(correct, str):
+                    mapped_q["correctAnswer"] = "A"
             elif mapped_q["type"] == "multiple":
                 correct = mapped_q.get("correctAnswer")
                 if not isinstance(correct, list):
-                    mapped_q["correctAnswer"] = []
+                    if isinstance(correct, str):
+                        mapped_q["correctAnswer"] = [c.strip() for c in correct.split(",") if c.strip()]
+                    else:
+                        mapped_q["correctAnswer"] = []
             elif mapped_q["type"] == "numerical":
                 correct = mapped_q.get("correctAnswer")
                 if not isinstance(correct, dict):
-                    mapped_q["correctAnswer"] = {"min": 0, "max": 0, "exactMatch": False, "exactAnswers": ""}
+                    if correct is not None and str(correct).strip() != "":
+                        mapped_q["correctAnswer"] = {
+                            "min": 0.0,
+                            "max": 0.0,
+                            "exactMatch": True,
+                            "exactAnswers": str(correct).strip()
+                        }
+                    else:
+                        mapped_q["correctAnswer"] = {"min": 0.0, "max": 0.0, "exactMatch": False, "exactAnswers": ""}
                     
             return mapped_q
             
@@ -237,40 +291,64 @@ async def import_json(file: UploadFile = File(...)):
 
         if data.get("sections") and has_sections:
             data["enable_section_mode"] = True
-            for s in data["sections"]:
-                section_questions = [map_question(q, i) for i, q in enumerate(s.get("questions", []))]
+            sections_list = data["sections"]
+            for s_idx, s in enumerate(sections_list):
+                if not isinstance(s, dict):
+                    raise ValueError(f"Section at index {s_idx} is not a valid object")
+                
+                section_questions = []
+                for q_idx, q in enumerate(s.get("questions", [])):
+                    try:
+                        section_questions.append(map_question(q, len(section_questions)))
+                    except Exception as q_err:
+                        raise ValueError(f"Error in Section '{s.get('name', s_idx)}', Question index {q_idx}: {str(q_err)}")
                 s["questions"] = section_questions
                 
                 # Check for attempt control to calculate specific section marks
-                attempt_control = s.get("attempt_control", {})
+                attempt_control = s.get("attempt_control", {}) if isinstance(s.get("attempt_control"), dict) else {}
                 is_attempt_control_enabled = attempt_control.get("enabled", False)
-                max_attempts = attempt_control.get("max_attempts", len(section_questions))
+                max_attempts = attempt_control.get("max_attempts")
+                
+                if max_attempts is not None:
+                    try:
+                        max_attempts = int(max_attempts)
+                    except ValueError:
+                        max_attempts = len(section_questions)
+                else:
+                    max_attempts = len(section_questions)
                 
                 if is_attempt_control_enabled and max_attempts:
-                    # Sort questions by marks descending and pick top `max_attempts`
-                    # In real JEE this assumes uniform marks (typically 4) so we do simplistic maxing
                     sorted_marks = sorted([float(q["marks"]) for q in section_questions], reverse=True)
                     total_max_marks += sum(sorted_marks[:max_attempts])
                 else:
                     total_max_marks += sum(float(q["marks"]) for q in section_questions)
         elif has_questions:
             data["enable_section_mode"] = False
-            data["questions"] = [map_question(q, i) for i, q in enumerate(data.get("questions", []))]
+            questions_list = []
+            for q_idx, q in enumerate(data.get("questions", [])):
+                try:
+                    questions_list.append(map_question(q, len(questions_list)))
+                except Exception as q_err:
+                    raise ValueError(f"Error in Question index {q_idx}: {str(q_err)}")
+            data["questions"] = questions_list
             total_max_marks = sum(float(q["marks"]) for q in data["questions"])
             
         data["enable_section_mode"] = data.get("enable_section_mode", False)
         data["has_scientific_calculator"] = data.get("has_scientific_calculator", False)
         data["section_marking_model"] = data.get("section_marking_model", "section-wise")
         
-        # Override data maxMarks with true calculated maximum
         data["duration"] = data.get("duration", 180)
         data["maxMarks"] = int(total_max_marks)
         data["description"] = data.get("description", "")
         
         return data
-        
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON file")
+
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=f"An error occurred while importing JSON: {str(e)}")
 
 @router.post("/{test_id}/clone")
 async def clone_test(
