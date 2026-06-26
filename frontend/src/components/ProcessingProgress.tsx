@@ -24,6 +24,9 @@ export interface ProcessingProgressProps {
     quality_tier?: 'high' | 'medium' | 'low';
     dpi?: number;
     warning?: boolean;
+    pipeline?: 'hybrid' | 'vision';
+    text_pages?: number;
+    image_pages?: number;
   };
   className?: string;
 }
@@ -49,9 +52,9 @@ const stageConfig = {
   },
   extracting: {
     icon: FileSearch,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500',
-    label: 'Extracting'
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500',
+    label: 'Extracting Questions'
   },
   finalizing: {
     icon: Loader2,
@@ -117,7 +120,7 @@ export function ProcessingProgress({
             {stage !== 'complete' && stage !== 'error' && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                 <Zap className="w-3 h-3 mr-1" />
-                Ultra-Fast
+                {data?.pipeline === 'hybrid' ? 'Hybrid OCR+AI' : 'Ultra-Fast'}
               </span>
             )}
           </div>
@@ -148,8 +151,23 @@ export function ProcessingProgress({
               )}
               
               {data.questions_found !== undefined && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                  {data.questions_found} questions
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 animate-pulse">
+                  {data.questions_found} questions found
+                </span>
+              )}
+              
+              {data.pipeline && (
+                <span className={cn(
+                  "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+                  data.pipeline === 'hybrid' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                )}>
+                  {data.pipeline === 'hybrid' ? 'Text+Vision' : 'Vision'}
+                </span>
+              )}
+              
+              {data.text_pages !== undefined && data.text_pages > 0 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                  {data.text_pages} text / {data.image_pages || 0} image pages
                 </span>
               )}
               

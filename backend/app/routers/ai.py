@@ -494,9 +494,9 @@ async def parse_document_stream(
             nonlocal processing_complete, final_result, processing_error
             
             try:
-                # Process with streaming (file_data already read above)
-                from ai_preview_importer.pdf_vision_pipeline import process_files_stream  # lazy import
-                result = await process_files_stream(
+                # Use the new HYBRID pipeline (OCR + Vision + Streaming)
+                from ai_preview_importer.hybrid_pipeline import process_files_hybrid_stream  # lazy import
+                result = await process_files_hybrid_stream(
                     file_data,
                     mode=mode,
                     answer_key=answer_key_data,

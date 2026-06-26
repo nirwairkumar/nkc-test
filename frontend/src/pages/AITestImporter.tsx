@@ -387,7 +387,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const handleStreamProcess = async (selectedMode: ProcessMode) => {
         setIsStreaming(true);
         setStreamingQuestions([]);
-        setStreamProgress(null);
+        // Initialize streamProgress with placeholder so we immediately enter the streaming UI
+        setStreamProgress({
+            stage: 'uploading',
+            percent: 5,
+            message: 'Uploading document to server...'
+        });
 
         const formData = new FormData();
 
@@ -428,6 +433,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
+            let currentEvent = '';
+            let currentData = '';
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -437,56 +444,72 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 const lines = buffer.split('\n');
                 buffer = lines.pop() || '';
 
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) {
+                        // Empty line means event completion: dispatch the collected payload
+                        if (currentEvent && currentData) {
+                            try {
+                                const parsed = JSON.parse(currentData);
 
-                    // Parse SSE events
-                    if (line.startsWith('event: ')) {
-                        const eventType = line.slice(7).trim();
-                        const dataLine = lines[i + 1];
-
-                        if (dataLine && dataLine.startsWith('data: ')) {
-                            const data = JSON.parse(dataLine.slice(6));
-
-                            switch (eventType) {
-                                case 'progress':
-                                    setStreamProgress({
-                                        stage: data.stage,
-                                        percent: data.percent,
-                                        message: data.message,
-                                        data: data.data
-                                    });
-                                    if (data.data && data.data.quality_tier) {
-                                        setExtractionMeta({
-                                            quality_tier: data.data.quality_tier,
-                                            dpi: data.data.dpi,
-                                            warning: data.data.warning
+                                switch (currentEvent) {
+                                    case 'progress':
+                                        setStreamProgress({
+                                            stage: parsed.stage,
+                                            percent: parsed.percent,
+                                            message: parsed.message,
+                                            data: parsed.data
                                         });
+                                        if (parsed.data && parsed.data.quality_tier) {
+                                            setExtractionMeta({
+                                                quality_tier: parsed.data.quality_tier,
+                                                dpi: parsed.data.dpi,
+                                                warning: parsed.data.warning
+                                            });
+                                        }
+                                        break;
+
+                                    case 'question':
+                                        if (parsed.question) {
+                                            setStreamingQuestions(prev => {
+                                                // Avoid duplicate entries if any
+                                                const exists = prev.some(q => q.id === parsed.question.id);
+                                                if (exists) return prev;
+                                                return [...prev, parsed.question];
+                                            });
+                                        }
+                                        break;
+
+                                    case 'complete': {
+                                        const hasQuestions = parsed.questions && parsed.questions.length > 0;
+                                        const hasSections = parsed.sections && parsed.sections.length > 0;
+                                        if (!hasQuestions && !hasSections) {
+                                            throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
+                                        }
+                                        setParsedData(parsed);
+                                        setIsStreaming(false);
+                                        setLoading(false);
+                                        setStreamProgress(null);
+                                        setAbortController(null);
+                                        return;
                                     }
-                                    break;
 
-                                case 'question':
-                                    setStreamingQuestions(prev => [...prev, data.question]);
-                                    break;
-
-                                case 'complete': {
-                                     const hasQuestions = data.questions && data.questions.length > 0;
-                                     const hasSections = data.sections && data.sections.length > 0;
-                                     if (!hasQuestions && !hasSections) {
-                                         throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
-                                     }
-                                     setParsedData(data);
-                                     setIsStreaming(false);
-                                     setLoading(false);
-                                     setStreamProgress(null);
-                                     setAbortController(null);
-                                     return;
-                                 }
-
-                                case 'error':
-                                    throw new Error(data.message);
+                                    case 'error':
+                                        throw new Error(parsed.message);
+                                }
+                            } catch (e) {
+                                console.error('Failed to parse SSE data:', e, currentData);
                             }
+                            currentEvent = '';
+                            currentData = '';
                         }
+                        continue;
+                    }
+
+                    if (trimmedLine.startsWith('event:')) {
+                        currentEvent = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
+                    } else if (trimmedLine.startsWith('data:')) {
+                        currentData = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
                     }
                 }
             }
@@ -500,6 +523,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             }
             setIsStreaming(false);
             setLoading(false);
+            setStreamProgress(null);
             setAbortController(null);
         }
     };
@@ -707,19 +731,19 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         onImport(importPayload);
     }, [parsedData, onImport]);
 
-    // Auto-navigate to Test Editor upon successful test generation (Step 7)
+    // Scroll to bottom of streaming questions
+    const scrollRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        if (parsedData) {
-            const hasQuestions = parsedData.questions && parsedData.questions.length > 0;
-            const hasSections = parsedData.sections && parsedData.sections.length > 0;
-            if (hasQuestions || hasSections) {
-                const timer = setTimeout(() => {
-                    handleImport();
-                }, 500); // Small delay to let user realize success before redirecting
-                return () => clearTimeout(timer);
-            }
+        if (scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [parsedData, handleImport]);
+    }, [streamingQuestions.length]);
+
+    // Auto-navigate disabled to allow user review before importing
+    // Keep it here as empty or commented out so we don't break logic references
+    useEffect(() => {
+        // Disabled for better UX and review flow
+    }, [parsedData]);
 
     if (featureFlags && featureFlags.enable_ai_test_generation === false) {
         return (
@@ -1151,110 +1175,276 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     // Step 3: Loading state - ULTRA-FAST Streaming with Progress
     if (loading || generatingMore) {
         // Show ULTRA-FAST streaming UI for new uploads
-        if (isStreaming && streamProgress) {
+        if (isStreaming) {
+            const currentStage = streamProgress?.stage || 'uploading';
+            const currentPercent = streamProgress?.percent || 10;
+            const currentMessage = streamProgress?.message || 'Connecting to AI model...';
+            const pipelineType = streamProgress?.data?.pipeline || 'hybrid';
+
             return (
-                <div className="container mx-auto p-4 max-w-4xl space-y-8">
-                    {/* Progress Component */}
-                    <ProcessingProgress
-                        stage={streamProgress.stage}
-                        percent={streamProgress.percent}
-                        message={streamProgress.message}
-                        data={streamProgress.data}
+                <div className="container mx-auto p-4 max-w-6xl space-y-6">
+                    <SEO
+                        title="Extracting Exam Questions - TestoZa"
+                        description="Extracting questions in real time using Hybrid OCR + Gemini."
                     />
 
-                    {/* Progressive Question Display */}
-                    {streamingQuestions.length > 0 && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-lg font-semibold">
-                                        Questions Found
-                                    </h3>
-                                    <Badge variant="default" className="bg-green-600">
-                                        {streamingQuestions.length}
-                                    </Badge>
-                                </div>
-                                {streamProgress.stage !== 'complete' && (
-                                    <span className="text-sm text-muted-foreground animate-pulse flex items-center gap-1">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        More coming...
-                                    </span>
-                                )}
-                            </div>
+                    {/* Inject custom styling for premium animations */}
+                    <style dangerouslySetInnerHTML={{__html: `
+                        @keyframes scan-line {
+                            0% { top: 0%; }
+                            50% { top: 100%; }
+                            100% { top: 0%; }
+                        }
+                        @keyframes pulse-ring {
+                            0% { transform: scale(0.95); opacity: 0.5; }
+                            50% { transform: scale(1.05); opacity: 0.8; }
+                            100% { transform: scale(0.95); opacity: 0.5; }
+                        }
+                        .animate-scan-line {
+                            position: absolute;
+                            left: 0;
+                            width: 100%;
+                            height: 3px;
+                            background: linear-gradient(90deg, transparent, #3b82f6, #6366f1, transparent);
+                            animation: scan-line 3.5s infinite linear;
+                            box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+                        }
+                        .animate-pulse-ring {
+                            animation: pulse-ring 3.5s infinite ease-in-out;
+                        }
+                    `}} />
 
-                            <ScrollArea className="h-[400px] border rounded-lg p-4 bg-muted/20">
-                                <div className="space-y-3">
-                                    {streamingQuestions.map((q, idx) => (
-                                        <Card
-                                            key={idx}
-                                            className="border-l-4 border-l-primary/50 hover:border-l-primary transition-all duration-300 animate-in slide-in-from-left-2"
-                                            style={{ animationDelay: `${idx * 50}ms` }}
-                                        >
-                                            <CardContent className="p-3">
-                                                <div className="flex gap-3">
-                                                    <span className="font-bold text-primary min-w-[28px] text-sm">
-                                                        {q.id}.
-                                                    </span>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="text-sm line-clamp-2 text-foreground">
-                                                            <MarkdownPreview content={q.question || 'No question text'} />
-                                                        </div>
-                                                        {q.options && Object.keys(q.options).length > 0 && (
-                                                            <div className="flex gap-2 mt-2 flex-wrap">
-                                                                {Object.entries(q.options).slice(0, 4).map(([key, value]) => (
-                                                                    <span
-                                                                        key={key}
-                                                                        className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded"
-                                                                    >
-                                                                        {key}: {typeof value === 'string' ? value.slice(0, 20) : '...'}
-                                                                        {typeof value === 'string' && value.length > 20 ? '...' : ''}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <Badge variant="outline" className="text-xs shrink-0">
-                                                        {q.type || 'single'}
-                                                    </Badge>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-
-                            {/* Actions Area */}
-                            <div className="flex flex-col items-center mt-6 w-full">
-                                {streamProgress.stage === 'complete' ? (
-                                    <div className="w-full mt-4 border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                            <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                            Review complete? Send these questions to the editor to finalize.
+                    {/* Progress Overview Header */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                        
+                        {/* LEFT COLUMN: Pipeline Dashboard & Checkpoints (4 cols) */}
+                        <div className="md:col-span-4 space-y-4">
+                            <Card className="border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden bg-card">
+                                <div className="p-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 animate-pulse" />
+                                <CardContent className="p-6 space-y-6">
+                                    {/* App Info / Header */}
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 border-0 flex items-center gap-1 font-semibold">
+                                                <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                                Active Stream
+                                            </Badge>
+                                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                                         </div>
-                                        <Button
-                                            onClick={() => onImport && onImport({ questions: streamingQuestions })}
-                                            size="lg"
-                                            className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md text-white font-medium px-8 w-full md:w-auto"
-                                        >
-                                            <Sparkles className="w-5 h-5 text-amber-300" />
-                                            Continue to Test Builder
-                                            <ArrowLeft className="w-5 h-5 ml-1 rotate-180" />
-                                        </Button>
+                                        <h3 className="text-xl font-bold tracking-tight">AI Engine Pipeline</h3>
+                                        <p className="text-xs text-muted-foreground">Hybrid OCR & Vision architecture</p>
                                     </div>
-                                ) : (
+
+                                    {/* Progress Meter */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-xs font-semibold">
+                                            <span className="text-muted-foreground">Total Completion</span>
+                                            <span className="text-primary">{currentPercent}%</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 transition-all duration-500 ease-out shadow-inner"
+                                                style={{ width: `${currentPercent}%` }}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground italic text-center animate-pulse">
+                                            "{currentMessage}"
+                                        </p>
+                                    </div>
+
+                                    {/* Status Checkpoints */}
+                                    <div className="space-y-4 pt-4 border-t text-sm">
+                                        {/* Step 1: Upload */}
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage !== 'uploading' 
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' 
+                                                    : 'bg-blue-100 text-blue-600 animate-pulse'
+                                            }`}>
+                                                {currentStage !== 'uploading' ? <Check className="w-3.5 h-3.5" /> : '1'}
+                                            </div>
+                                            <span className={currentStage === 'uploading' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                File Upload & Parse
+                                            </span>
+                                        </div>
+
+                                        {/* Step 2: Analyzer */}
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage !== 'uploading' && currentStage !== 'analyzing'
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                    : currentStage === 'analyzing'
+                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {currentStage !== 'uploading' && currentStage !== 'analyzing' ? <Check className="w-3.5 h-3.5" /> : '2'}
+                                            </div>
+                                            <span className={currentStage === 'analyzing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                OCR Page Classification
+                                            </span>
+                                        </div>
+
+                                        {/* Step 3: Extraction */}
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage === 'finalizing' || currentStage === 'complete'
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                    : currentStage === 'processing' || currentStage === 'extracting'
+                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {currentStage === 'finalizing' || currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '3'}
+                                            </div>
+                                            <span className={currentStage === 'processing' || currentStage === 'extracting' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                AI Question Extraction
+                                            </span>
+                                        </div>
+
+                                        {/* Step 4: Finalizing */}
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage === 'complete'
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                    : currentStage === 'finalizing'
+                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '4'}
+                                            </div>
+                                            <span className={currentStage === 'finalizing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                Structure Finalization
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Live stats */}
+                                    {extractionMeta && (
+                                        <div className="p-3 bg-muted/50 rounded-lg text-xs space-y-2 border border-slate-100 dark:border-slate-800">
+                                            <p className="font-semibold text-muted-foreground">DOCUMENT METADATA</p>
+                                            <div className="flex justify-between">
+                                                <span>Scan Tier:</span>
+                                                <span className="font-medium text-foreground">{extractionMeta.quality_tier?.toUpperCase()}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>DPI setting:</span>
+                                                <span className="font-medium text-foreground">{extractionMeta.dpi} DPI</span>
+                                            </div>
+                                            {extractionMeta.warning && (
+                                                <p className="text-[10px] text-amber-500 font-medium leading-normal pt-1">
+                                                    ⚠️ Image resolution is low. Results may need review.
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={handleCancelStream}
-                                        className="text-muted-foreground hover:text-destructive"
+                                        className="w-full text-muted-foreground hover:text-destructive border-slate-200 dark:border-slate-800"
                                     >
-                                        <X className="w-4 h-4 mr-1" />
+                                        <X className="w-4 h-4 mr-2" />
                                         Cancel Processing
                                     </Button>
-                                )}
-                            </div>
+                                </CardContent>
+                            </Card>
                         </div>
-                    )}
+
+                        {/* RIGHT COLUMN: Stream Output Feed (8 cols) */}
+                        <div className="md:col-span-8 space-y-4">
+                            <Card className="border border-slate-200 dark:border-slate-800 shadow-xl bg-card min-h-[500px] flex flex-col">
+                                <CardHeader className="py-4 border-b flex flex-row items-center justify-between">
+                                    <CardTitle className="text-lg flex items-center gap-2">
+                                        <span>Extracted Questions</span>
+                                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                            LIVE FEED
+                                        </span>
+                                    </CardTitle>
+                                    <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800">
+                                        {streamingQuestions.length} Found
+                                    </Badge>
+                                </CardHeader>
+                                
+                                <div className="flex-1 flex flex-col p-4">
+                                    {streamingQuestions.length > 0 ? (
+                                        <ScrollArea className="h-[480px] w-full pr-2">
+                                            <div className="space-y-4">
+                                                {streamingQuestions.map((q, idx) => (
+                                                    <Card
+                                                        key={idx}
+                                                        className="border-l-4 border-l-primary/60 hover:border-l-primary shadow-sm bg-slate-50/50 dark:bg-slate-900/50 transition-all duration-300 transform translate-y-0 animate-in fade-in-50 duration-500"
+                                                    >
+                                                        <CardContent className="p-4 space-y-3">
+                                                            <div className="flex gap-2 justify-between">
+                                                                <div className="flex gap-2">
+                                                                    <span className="font-bold text-primary min-w-[20px]">
+                                                                        Q{q.id}.
+                                                                    </span>
+                                                                    <div className="text-sm font-medium text-foreground">
+                                                                        <MarkdownPreview content={q.question || 'No question text'} />
+                                                                    </div>
+                                                                </div>
+                                                                <Badge variant="outline" className="text-xs self-start shrink-0 font-medium uppercase">
+                                                                    {q.type || 'single'}
+                                                                </Badge>
+                                                            </div>
+                                                            {q.options && Object.keys(q.options).length > 0 && (
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-7 pt-1">
+                                                                    {Object.entries(q.options).slice(0, 4).map(([key, value]) => {
+                                                                        const optionText = typeof value === 'object' && value !== null 
+                                                                            ? (value as any).text 
+                                                                            : String(value || '');
+                                                                        return (
+                                                                            <div
+                                                                                key={key}
+                                                                                className="text-xs text-muted-foreground bg-muted p-2 rounded border border-slate-100 dark:border-slate-800 flex gap-1.5 items-start"
+                                                                            >
+                                                                                <span className="font-bold text-slate-500 dark:text-slate-400 shrink-0">{key}:</span>
+                                                                                <span className="line-clamp-2">{optionText}</span>
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                                {/* Auto Scroll Target */}
+                                                <div ref={scrollRef} />
+                                            </div>
+                                        </ScrollArea>
+                                    ) : (
+                                        /* Elegant Scanning / Document analyzing visualizer */
+                                        <div className="flex-1 flex flex-col items-center justify-center py-10 space-y-6">
+                                            <div className="relative w-44 h-56 border-2 border-dashed border-primary/20 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 flex flex-col items-center justify-center p-4 overflow-hidden shadow-inner">
+                                                {/* Scanner scanning bar */}
+                                                <div className="animate-scan-line" />
+                                                
+                                                {/* Pulsing glow orb */}
+                                                <div className="absolute w-24 h-24 rounded-full bg-primary/20 animate-pulse-ring blur-xl" />
+                                                
+                                                {/* Mock doc details */}
+                                                <FileText className="w-14 h-14 text-primary/40 mb-3" />
+                                                <div className="w-full space-y-2">
+                                                    <div className="h-2 bg-primary/10 rounded w-5/6 mx-auto animate-pulse" />
+                                                    <div className="h-2 bg-primary/10 rounded w-4/6 mx-auto animate-pulse" />
+                                                    <div className="h-2 bg-primary/10 rounded w-5/6 mx-auto animate-pulse" />
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="text-center space-y-2 max-w-sm">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">AI Reading Document</h4>
+                                                <p className="text-xs text-muted-foreground leading-normal">
+                                                    Using PyMuPDF native OCR. Examining page structure to extract bold text, symbols, formatting, and mathematical equations...
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
                 </div>
             );
         }
