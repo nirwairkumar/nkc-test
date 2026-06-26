@@ -132,14 +132,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const refreshToken = params.get('refresh_token');
                 const type = params.get('type');
 
-                if (type === 'recovery' && accessToken) {
+                if (accessToken) {
                     localStorage.setItem('testoza_token', accessToken);
                     if (refreshToken) {
                         localStorage.setItem('testoza_refresh_token', refreshToken);
                     }
                     window.history.replaceState(null, '', window.location.pathname);
-                    window.location.href = '/update-password';
-                    return;
+                    
+                    if (type === 'recovery') {
+                        window.location.href = '/update-password';
+                        return;
+                    }
                 }
             }
 
