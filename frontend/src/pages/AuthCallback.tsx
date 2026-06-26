@@ -114,6 +114,14 @@ export default function AuthCallback() {
             }
 
             // --- No data at all ---
+            const localToken = localStorage.getItem('testoza_token');
+            if (localToken) {
+                setStatus('Login successful! Redirecting...');
+                await refreshSession();
+                redirectToIntent();
+                return;
+            }
+
             console.warn('[AuthCallback] No hash, no code, no error. Full URL:', window.location.href);
             setStatus('No authentication data found. Redirecting...');
             setTimeout(() => navigate('/login', { replace: true }), 2000);
