@@ -450,9 +450,40 @@ function _getCachedTest(id: string, excludeQuestions: boolean = false): any | nu
 }
 
 function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false) {
+    const key = `test_cache_${id}_eq_${excludeQuestions}`;
+    const value = JSON.stringify({ data, ts: Date.now() });
     try {
-        localStorage.setItem(`test_cache_${id}_eq_${excludeQuestions}`, JSON.stringify({ data, ts: Date.now() }));
-    } catch { /* storage full — ignore */ }
+        localStorage.setItem(key, value);
+    } catch (e) {
+        if (e instanceof DOMException && (
+            e.name === 'QuotaExceededError' ||
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+            e.code === 22 ||
+            e.code === 1014
+        )) {
+            console.warn('[testsApi] LocalStorage quota exceeded. Evicting old test caches to make space...');
+            try {
+                // Find all keys starting with 'test_cache_'
+                const keysToRemove: string[] = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && k.startsWith('test_cache_')) {
+                        keysToRemove.push(k);
+                    }
+                }
+                // Evict them
+                keysToRemove.forEach(k => {
+                    try {
+                        localStorage.removeItem(k);
+                    } catch {}
+                });
+                // Retry setting the item
+                localStorage.setItem(key, value);
+            } catch (retryError) {
+                console.error('[testsApi] Failed to write cache even after eviction:', retryError);
+            }
+        }
+    }
 }
 
 export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
