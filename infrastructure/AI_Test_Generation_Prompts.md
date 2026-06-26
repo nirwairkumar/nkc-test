@@ -79,10 +79,9 @@ Each question must follow:
   "question": "Exact extracted text (KaTeX preserved)",
   "marks": "2",
   "negativeMarks": "0",
-  "groupId": "",
   "options": {...},
-  "correctAnswer": ...,
-  "passageContent": ""
+  "correctAnswer": ...
+  // Include "groupId" and "passageContent" ONLY if question belongs to a passage/comprehension group.
 }
 
 --------------------------------------------------
@@ -126,11 +125,7 @@ If multiple questions share a passage:
 
 - Assign SAME groupId (e.g., "grp1")
 - Include SAME passageContent inside each question
-- If not comprehension:
-    groupId = ""
-    passageContent = ""
-
-These two keys must ALWAYS exist.
+- If NOT comprehension, DO NOT include "groupId" or "passageContent" keys in the question object. Do NOT output them as empty strings or null.
 
 --------------------------------------------------
 

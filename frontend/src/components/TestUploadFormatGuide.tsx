@@ -258,6 +258,7 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
    - Extract the passage text ONCE.
    - For EVERY question belonging to that passage, include a "passageContent" field.
    - Set "passageContent" to the FULL passage text for each question in the group.
+   - If NOT a passage/comprehension question, DO NOT include the "passageContent" key in the question object.
 
 --------------------------------------------------
 
@@ -399,8 +400,8 @@ STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
       "correctAnswer":
         "A" |
         ["A","C"] |
-        { "min": 9.8, "max": 10.2 },
-      "passageContent": null
+        { "min": 9.8, "max": 10.2 }
+      // Include "passageContent" ONLY if question belongs to a passage/comprehension group.
     }
   ]
 }
@@ -819,10 +820,9 @@ Each question must follow:
   "question": "Exact extracted text (KaTeX preserved)",
   "marks": "2",
   "negativeMarks": "0",
-  "groupId": "",
   "options": {...},
-  "correctAnswer": ...,
-  "passageContent": ""
+  "correctAnswer": ...
+  // Include "groupId" and "passageContent" ONLY if question belongs to a passage/comprehension group.
 }
 
 --------------------------------------------------
@@ -866,11 +866,7 @@ If multiple questions share a passage:
 
 - Assign SAME groupId (e.g., "grp1")
 - Include SAME passageContent inside each question
-- If not comprehension:
-    groupId = ""
-    passageContent = ""
-
-These two keys must ALWAYS exist.
+- If NOT comprehension, DO NOT include "groupId" or "passageContent" keys in the question object. Do NOT output them as empty strings or null.
 
 --------------------------------------------------
 
