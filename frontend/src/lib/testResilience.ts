@@ -46,8 +46,9 @@ export async function withExponentialRetry<T>(
 // ─── 2. ANSWER VAULT (IndexedDB) ─────────────────────────────────────────────
 
 const DB_NAME = 'testoza_vault';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'answer_backups';
+const KV_STORE_NAME = 'kv_store';
 
 function openVaultDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -56,6 +57,9 @@ function openVaultDB(): Promise<IDBDatabase> {
             const db = (e.target as IDBOpenDBRequest).result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 db.createObjectStore(STORE_NAME, { keyPath: 'key' });
+            }
+            if (!db.objectStoreNames.contains(KV_STORE_NAME)) {
+                db.createObjectStore(KV_STORE_NAME, { keyPath: 'key' });
             }
         };
         req.onsuccess = () => resolve(req.result);
@@ -170,3 +174,48 @@ export function startProactiveTokenRefresh(apiBaseUrl: string): () => void {
 
     return () => clearInterval(intervalId);
 }
+
+export const IndexedDBStorage = {
+    async getItem(key: string): Promise<any | null> {
+        try {
+            const db = await openVaultDB();
+            return await new Promise((resolve, reject) => {
+                const tx = db.transaction(KV_STORE_NAME, 'readonly');
+                const req = tx.objectStore(KV_STORE_NAME).get(key);
+                req.onsuccess = () => resolve(req.result ? req.result.value : null);
+                req.onerror = () => reject(req.error);
+            });
+        } catch (e) {
+            console.warn('[IndexedDBStorage] getItem failed:', e);
+            return null;
+        }
+    },
+
+    async setItem(key: string, value: any): Promise<void> {
+        try {
+            const db = await openVaultDB();
+            await new Promise<void>((resolve, reject) => {
+                const tx = db.transaction(KV_STORE_NAME, 'readwrite');
+                tx.objectStore(KV_STORE_NAME).put({ key, value, savedAt: new Date().toISOString() });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        } catch (e) {
+            console.warn('[IndexedDBStorage] setItem failed:', e);
+        }
+    },
+
+    async removeItem(key: string): Promise<void> {
+        try {
+            const db = await openVaultDB();
+            await new Promise<void>((resolve, reject) => {
+                const tx = db.transaction(KV_STORE_NAME, 'readwrite');
+                tx.objectStore(KV_STORE_NAME).delete(key);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        } catch (e) {
+            console.warn('[IndexedDBStorage] removeItem failed:', e);
+        }
+    }
+};

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
+import { IndexedDBStorage } from '@/lib/testResilience';
 import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -357,23 +358,41 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     useEffect(() => {
         // Only restore draft if creating a new test (no ID) and draft exists
         if (!testId && !initialData) {
-            const draft = localStorage.getItem('create_test_draft');
-            if (draft) {
+            const checkDraft = async () => {
+                let draftData = null;
                 try {
-                    const parsed = JSON.parse(draft);
-                    populateData(parsed);
-                    // If categories were saved, restore them too
-                    if (parsed.selectedCategories) {
-                        setSelectedCategories(parsed.selectedCategories);
-                    }
-                    if (parsed.tags) {
-                        setTags(parsed.tags);
-                    }
-                    toast.success("Your test draft has been restored. You can continue editing.");
+                    draftData = await IndexedDBStorage.getItem('create_test_draft');
                 } catch (e) {
-                    console.error("Failed to parse draft", e);
+                    console.warn("Failed to load draft from IndexedDB", e);
                 }
-            }
+
+                if (!draftData) {
+                    const raw = localStorage.getItem('create_test_draft');
+                    if (raw) {
+                        try {
+                            draftData = JSON.parse(raw);
+                        } catch (e) {
+                            console.error("Failed to parse draft from LocalStorage", e);
+                        }
+                    }
+                }
+
+                if (draftData) {
+                    try {
+                        populateData(draftData);
+                        if (draftData.selectedCategories) {
+                            setSelectedCategories(draftData.selectedCategories);
+                        }
+                        if (draftData.tags) {
+                            setTags(draftData.tags);
+                        }
+                        toast.success("Your test draft has been restored. You can continue editing.");
+                    } catch (e) {
+                        console.error("Failed to parse draft", e);
+                    }
+                }
+            };
+            checkDraft();
         }
     }, [testId, initialData]);
 
@@ -409,7 +428,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     enable_section_mode: enableSectionMode,
                     sections
                 };
-                localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+                try {
+                    localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+                } catch (e) {
+                    console.warn("Storage quota exceeded, could not save draft to LocalStorage", e);
+                }
+                IndexedDBStorage.setItem('create_test_draft', draftData).catch(err => {
+                    console.error("Failed to save draft to IndexedDB", err);
+                });
             }, 1000);
             return () => clearTimeout(timer);
         }
@@ -911,7 +937,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 has_scientific_calculator: hasScientificCalculator,
                 sections
             };
-            localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+            try {
+                localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+            } catch (e) {
+                console.warn("Storage quota exceeded, could not save draft to LocalStorage", e);
+            }
+            IndexedDBStorage.setItem('create_test_draft', draftData).catch(err => {
+                console.error("Failed to save draft to IndexedDB", err);
+            });
             localStorage.setItem('auth_redirect_intent', '/create-test');
 
             toast.error("Please login to save your test. Redirecting...");
@@ -977,6 +1010,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         try {
             await performSave(false);
             localStorage.removeItem('create_test_draft');
+            IndexedDBStorage.removeItem('create_test_draft').catch(() => {});
             toast.success(isEditMode ? "Test updated successfully!" : "Test created successfully!");
             if (onSuccess) onSuccess();
             else navigate('/my-tests');
@@ -1055,6 +1089,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             setTags([]);
             // Clear draft
             localStorage.removeItem('create_test_draft');
+            IndexedDBStorage.removeItem('create_test_draft').catch(() => {});
             toast.success("Form cleared");
         }
     };

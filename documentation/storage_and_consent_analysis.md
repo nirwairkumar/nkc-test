@@ -163,12 +163,18 @@ Because you use **Browser Fingerprinting** to track traffic (as detailed in `pla
 
 ## 5. Actual Implementation Details
 
-### Eviction Policy Implementation
-On **June 26, 2026**, the `_setCachedTest` function in `frontend/src/lib/testsApi.ts` was refactored. The updated function intercepts any `QuotaExceededError` or related quota-exceeded exception from the browser during cache writes.
+### Industry-Grade IndexedDB Storage Migration
+On **June 26, 2026**, the frontend was fully migrated from relying on browser `localStorage` for high-volume objects to using a dedicated **IndexedDB key-value store** wrapper (`IndexedDBStorage` inside `src/lib/testResilience.ts`). This upgrade resolves any potential `QuotaExceededError` issues by leveraging browser-allocated persistent database quotas (typically 100MB to 50%+ of disk space).
 
-Upon interception:
-1. It queries the `localStorage` key registry.
-2. It isolates and purges all entries prefixed with `test_cache_` (which represent large cached quiz schemas).
-3. It retries writing the current test page item.
-
-This keeps critical data (such as auth tokens or active student session metrics) from failing to write due to local storage overflow.
+The migration details include:
+1. **Database Schema Upgrade**:
+   - Bumped the database version of `testoza_vault` to `2`.
+   - Created a new transactional object store called `kv_store` with `key` as the primary key path.
+2. **Asynchronous Test Schema Cache**:
+   - Refactored `_getCachedTest` and `_setCachedTest` in `src/lib/testsApi.ts` to read and write to `IndexedDBStorage` asynchronously.
+   - Refactored `fetchTestById` to load cached schemas from `IndexedDBStorage` during stale-while-revalidate cycles.
+3. **Double-Write Session & Builder States**:
+   - Modified `src/pages/TestPage.tsx` to double-write live session states to both `localStorage` and `IndexedDBStorage` (safeguarded via try-catch). On mount, the session loader tries to load from IndexedDB first, falling back to `localStorage` only if IndexedDB is empty.
+   - Modified `src/components/TestBuilder.tsx` to auto-save and recover drafts using `IndexedDB` as the primary repository and `localStorage` as a fallback.
+4. **State Cleanup**:
+   - When test sessions or builder drafts are cleared, the entries are fully deleted from both LocalStorage and IndexedDB, ensuring zero orphaned records.

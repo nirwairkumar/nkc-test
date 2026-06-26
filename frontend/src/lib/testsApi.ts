@@ -1,4 +1,5 @@
 import apiClient from '@/lib/apiClient';
+import { IndexedDBStorage } from '@/lib/testResilience';
 
 export interface TestSection {
     id: string;
@@ -436,59 +437,29 @@ export async function fetchConductModeTests() {
 // ─── Test Data Cache (stale-while-revalidate) ─────────────────
 const TEST_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
-function _getCachedTest(id: string, excludeQuestions: boolean = false): any | null {
+async function _getCachedTest(id: string, excludeQuestions: boolean = false): Promise<any | null> {
     try {
-        const raw = localStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`);
-        if (!raw) return null;
-        const { data, ts } = JSON.parse(raw);
+        const key = `test_cache_${id}_eq_${excludeQuestions}`;
+        const cached = await IndexedDBStorage.getItem(key);
+        if (!cached) return null;
+        const { data, ts } = cached;
         if (Date.now() - ts > TEST_CACHE_TTL) {
-            localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
+            await IndexedDBStorage.removeItem(key);
             return null;
         }
         return data;
     } catch { return null; }
 }
 
-function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false) {
+async function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false): Promise<void> {
     const key = `test_cache_${id}_eq_${excludeQuestions}`;
-    const value = JSON.stringify({ data, ts: Date.now() });
-    try {
-        localStorage.setItem(key, value);
-    } catch (e) {
-        if (e instanceof DOMException && (
-            e.name === 'QuotaExceededError' ||
-            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-            e.code === 22 ||
-            e.code === 1014
-        )) {
-            console.warn('[testsApi] LocalStorage quota exceeded. Evicting old test caches to make space...');
-            try {
-                // Find all keys starting with 'test_cache_'
-                const keysToRemove: string[] = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (k && k.startsWith('test_cache_')) {
-                        keysToRemove.push(k);
-                    }
-                }
-                // Evict them
-                keysToRemove.forEach(k => {
-                    try {
-                        localStorage.removeItem(k);
-                    } catch {}
-                });
-                // Retry setting the item
-                localStorage.setItem(key, value);
-            } catch (retryError) {
-                console.error('[testsApi] Failed to write cache even after eviction:', retryError);
-            }
-        }
-    }
+    const value = { data, ts: Date.now() };
+    await IndexedDBStorage.setItem(key, value);
 }
 
 export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
     // Serve stale cache immediately, revalidate in background
-    const cached = _getCachedTest(id, excludeQuestions);
+    const cached = await _getCachedTest(id, excludeQuestions);
     if (cached && onCacheHit) {
         onCacheHit(cached);
     }
@@ -501,12 +472,12 @@ export async function fetchTestById(id: string, onCacheHit?: (data: any) => void
                 params: { exclude_questions: excludeQuestions }
             });
             const data = response.data;
-            _setCachedTest(id, data, excludeQuestions);
+            await _setCachedTest(id, data, excludeQuestions);
             return { data, error: null };
         } catch (error: any) {
             // Don't retry on 404 (test genuinely doesn't exist or access revoked)
             if (error.response?.status === 404) {
-                try { localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`); } catch {}
+                try { await IndexedDBStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`); } catch {}
                 return { data: null, error: error };
             }
 

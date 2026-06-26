@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
-import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
+import { AnswerVault, startProactiveTokenRefresh, IndexedDBStorage } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
 import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus } from 'lucide-react';
 import { useTheme } from "next-themes";
@@ -290,8 +290,13 @@ export default function TestPage() {
     try {
       localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
     } catch (e) {
-      console.warn("Storage quota exceeded, could not save session draft", e);
+      console.warn("Storage quota exceeded, could not save session draft to LocalStorage", e);
     }
+    
+    // Asynchronously write to IndexedDB
+    IndexedDBStorage.setItem(`test_session_${user.id}_${id}`, sessionData).catch(err => {
+      console.error("IndexedDB session save failed:", err);
+    });
   }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
@@ -433,32 +438,50 @@ export default function TestPage() {
       localStorage.removeItem(`test_submitted_${user.id}_${id}`);
     }
 
-    const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
-    const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
-
-    if (saved) {
+    const checkSession = async () => {
+      let sessionData = null;
       try {
-        const parsed = JSON.parse(saved);
-        setResumeData(parsed);
-
-        // If session storage exists, it's a refresh. If not, it's a fresh tab/disconnect return.
-        if (activeSession) {
-          setIsRefresh(true);
-        } else {
-          setIsRefresh(false);
-        }
-
-        // Mark tab as active
-        try {
-          sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
-        } catch (e) {
-          console.warn("Storage quota exceeded, could not mark session active", e);
-        }
-        setShowResumeDialog(true);
-      } catch (e) {
-        console.error("Failed to parse saved session", e);
+        sessionData = await IndexedDBStorage.getItem(`test_session_${user.id}_${id}`);
+      } catch (err) {
+        console.warn("Failed to load session from IndexedDB, falling back to LocalStorage", err);
       }
-    }
+
+      if (!sessionData) {
+        const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
+        if (saved) {
+          try {
+            sessionData = JSON.parse(saved);
+          } catch (e) {
+            console.error("Failed to parse saved session from LocalStorage", e);
+          }
+        }
+      }
+
+      const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
+
+      if (sessionData) {
+        try {
+          setResumeData(sessionData);
+
+          if (activeSession) {
+            setIsRefresh(true);
+          } else {
+            setIsRefresh(false);
+          }
+
+          try {
+            sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
+          } catch (e) {
+            console.warn("Storage quota exceeded, could not mark session active", e);
+          }
+          setShowResumeDialog(true);
+        } catch (e) {
+          console.error("Failed to process saved session", e);
+        }
+      }
+    };
+
+    checkSession();
   }, [user, id]);
 
   const handleResumeTest = () => {
@@ -478,6 +501,7 @@ export default function TestPage() {
     if (!id) return;
     if (user) {
       localStorage.removeItem(`test_session_${user.id}_${id}`);
+      IndexedDBStorage.removeItem(`test_session_${user.id}_${id}`).catch(() => {});
       sessionStorage.removeItem(`test_active_${user.id}_${id}`);
     }
     setShowResumeDialog(false);
@@ -1208,6 +1232,7 @@ export default function TestPage() {
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
       localStorage.removeItem(`test_session_${user.id}_${test.id}`);
+      IndexedDBStorage.removeItem(`test_session_${user.id}_${test.id}`).catch(() => {});
       localStorage.removeItem(`test_start_time_${user.id}_${test.id}`);
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
       sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
