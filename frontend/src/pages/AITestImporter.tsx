@@ -1139,10 +1139,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     // Scroll to bottom of streaming questions
-    const scrollRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (scrollContainerRef.current) {
+            const viewport = scrollContainerRef.current.querySelector('[data-radix-scroll-area-viewport]');
+            if (viewport) {
+                viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+            }
         }
     }, [streamingQuestions.length]);
 
@@ -2005,7 +2008,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 
                                 <div className="flex-1 flex flex-col p-4">
                                     {streamingQuestions.length > 0 ? (
-                                        <ScrollArea className="h-[480px] w-full pr-2">
+                                        <ScrollArea ref={scrollContainerRef} className="h-[480px] w-full pr-2">
                                             <div className="space-y-4">
                                                 {streamingQuestions.map((q, idx) => (
                                                     <Card
@@ -2047,8 +2050,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                         </CardContent>
                                                     </Card>
                                                 ))}
-                                                {/* Auto Scroll Target */}
-                                                <div ref={scrollRef} />
                                             </div>
                                         </ScrollArea>
                                     ) : (
