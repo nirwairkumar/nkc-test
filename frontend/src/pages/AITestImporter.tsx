@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ProcessingProgress } from "@/components/ProcessingProgress";
+import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
 
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -772,131 +773,170 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
-    // Step 1: File Upload - Separate sections for Documents and Images
+    // Step 1: File Upload — unified Gemini-style drop zone + manual creation card
     if (files.length === 0 && !uploadType) {
         return (
-            <div className="container mx-auto p-4 max-w-4xl">
+            <div className="container mx-auto px-4 max-w-2xl py-10">
                 <SEO
                     title="AI Test Generator - TestoZa"
                     description="Generate tests from PDF documents and images using AI. Extract exact questions or generate new ones."
                     keywords={["ai test generator", "pdf to quiz", "image to quiz", "exam maker ai"]}
                 />
-                <div className="text-center space-y-6 py-12">
-                    <div className="space-y-2">
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                            Import Test Questions
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Upload exam papers, question images, or study material to create a test
-                        </p>
-                    </div>
 
-                    {/* Two separate upload sections */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                        {/* Document Upload Section */}
-                        <Card className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
-                            <CardContent className="p-8">
-                                <div className="space-y-4">
-                                    <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-lg">Upload Document</p>
-                                        <p className="text-sm text-muted-foreground">PDF, DOC, PPT files</p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-xs text-muted-foreground">
-                                            Best for exam papers, textbooks, notes
-                                        </p>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => documentInputRef.current?.click()}
-                                            className="gap-2 w-full"
-                                        >
-                                            <FileText className="w-4 h-4" />
-                                            Choose Document
-                                        </Button>
-                                    </div>
-                                    <Input
-                                        ref={documentInputRef}
-                                        type="file"
-                                        accept=".pdf,.doc,.docx,.ppt,.pptx"
-                                        onChange={handleDocumentChange}
-                                        className="hidden"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
+                {/* Header */}
+                <div className="text-center mb-8 space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+                        Create a Test in Minutes
+                    </h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Upload any file — AI reads it and builds your test automatically
+                    </p>
+                </div>
 
-                        {/* Images Upload Section */}
-                        <Card
-                            className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group"
-                            onClick={() => {
-                                setUploadType('image');
-                                setError(null);
-                            }}
-                        >
-                            <CardContent className="p-8">
-                                <div className="space-y-4">
-                                    <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <FileImage className="w-8 h-8 text-green-600 dark:text-green-400" />
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-lg">Upload Images</p>
-                                        <p className="text-sm text-muted-foreground">JPG, PNG, WEBP</p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-xs text-muted-foreground">
-                                            Best for question photos, screenshots
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    imageInputRef.current?.click();
-                                                }}
-                                                className="gap-2 flex-1"
-                                            >
-                                                <ImageIcon className="w-4 h-4" />
-                                                Browse
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openCamera();
-                                                }}
-                                                className="gap-2 flex-1"
-                                            >
-                                                <Camera className="w-4 h-4" />
-                                                Camera
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <Input
-                                        ref={imageInputRef}
-                                        type="file"
-                                        accept=".png,.jpg,.jpeg,.webp"
-                                        multiple
-                                        onChange={handleImageChange}
-                                        className="hidden"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                {/* ── Unified Upload Drop Zone ── */}
+                <div
+                    className="relative bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-200 cursor-pointer group shadow-sm mb-4"
+                    onClick={() => documentInputRef.current?.click()}
+                >
+                    {/* Hidden file inputs */}
+                    <Input
+                        ref={documentInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
+                        multiple
+                        onChange={async (e) => {
+                            const selectedFiles = Array.from(e.target.files || []);
+                            if (!selectedFiles.length) return;
+                            const newFiles: SelectedFile[] = [];
+                            for (const file of selectedFiles) {
+                                const preview = await createPreview(file);
+                                newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
+                            }
+                            const hasImages = newFiles.some(f => f.type === 'image');
+                            setFiles(newFiles);
+                            setUploadType(hasImages ? 'image' : 'document');
+                            setError(null);
+                            setParsedData(null);
+                            setMode(null);
+                        }}
+                        className="hidden"
+                    />
+                    <Input
+                        ref={imageInputRef}
+                        type="file"
+                        accept=".png,.jpg,.jpeg,.webp"
+                        multiple
+                        onChange={handleImageChange}
+                        className="hidden"
+                    />
 
-                    <div className="max-w-2xl mx-auto bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-                        <p className="font-medium mb-2">💡 Tips:</p>
-                        <ul className="space-y-1 text-left list-disc list-inside">
-                            <li>Use <strong>Documents</strong> for full exam papers, PDFs, or presentations</li>
-                            <li>Use <strong>Images</strong> for question photos, screenshots, or individual question images</li>
-                            <li>You can select multiple images at once</li>
-                            <li>Add an answer key to help AI match correct answers automatically</li>
-                        </ul>
+                    {/* Drop zone body */}
+                    <div className="p-8 sm:p-10 flex flex-col items-center gap-4">
+                        {/* Animated icon */}
+                        <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                            <Sparkles className="w-8 h-8 text-indigo-500" />
+                        </div>
+
+                        <div className="text-center space-y-1">
+                            <p className="font-semibold text-slate-700 dark:text-slate-200">
+                                Drop your file here, or <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">browse</span>
+                            </p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500">
+                                PDF · DOC · PPT · JPG · PNG · and more
+                            </p>
+                        </div>
+
+                        {/* Upload type chips */}
+                        <div className="flex flex-wrap justify-center gap-2 pt-1">
+                            {/* PDF / Document */}
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); documentInputRef.current?.click(); }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
+                            >
+                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                PDF / DOC / PPT
+                            </button>
+
+                            {/* Image */}
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
+                            >
+                                <ImageIcon className="w-3.5 h-3.5 text-green-500" />
+                                Photo / Image
+                            </button>
+
+                            {/* Camera */}
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); openCamera(); }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
+                            >
+                                <Camera className="w-3.5 h-3.5 text-rose-500" />
+                                Camera
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                {/* Helper note */}
+                <p className="text-center text-xs text-slate-400 dark:text-slate-500 mb-8">
+                    AI will read your file and extract or generate questions automatically ✨
+                </p>
+
+                {/* ── Divider ── */}
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">or</span>
+                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+                </div>
+
+                {/* ── Manual Creation Card ── */}
+                <button
+                    type="button"
+                    onClick={() => { window.location.href = '/create-test'; }}
+                    className="w-full text-left bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl overflow-hidden flex items-stretch hover:shadow-xl hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 group"
+                    style={{ minHeight: '175px', maxHeight: '220px' }}
+                >
+                    {/* Left: scaled-down showcase preview (centered, organized, and larger) */}
+                    <div
+                        className="relative shrink-0 overflow-hidden bg-indigo-950/25 border-r border-white/10"
+                        style={{ width: '200px' }}
+                        aria-hidden="true"
+                    >
+                        {/* semi-transparent overlay so it blends with card */}
+                        <div className="absolute inset-0 bg-indigo-600/10 z-10 pointer-events-none" />
+                        {/* Showcase centered & scaled to fit nicely with padding */}
+                        <div
+                            className="absolute top-1/2 left-1/2"
+                            style={{
+                                transform: 'translate(-50%, -50%) scale(0.29)',
+                                width: '640px',   /* original max-width */
+                                height: '580px',  /* original height */
+                                pointerEvents: 'none',
+                                userSelect: 'none',
+                            }}
+                        >
+                            <ManualEditorShowcase />
+                        </div>
+                    </div>
+
+                    {/* Right: text + arrow */}
+                    <div className="flex flex-1 items-center justify-between gap-3 px-5 py-5">
+                        <div className="min-w-0">
+                            <p className="font-bold text-white text-sm sm:text-base leading-snug">
+                                ✏️ Build Your Own Test
+                            </p>
+                            <p className="text-xs text-indigo-100 mt-1 leading-relaxed">
+                                Write questions yourself — set marks, sections &amp; rules. Full control, no AI needed.
+                            </p>
+                        </div>
+                        <ArrowLeft className="w-5 h-5 text-white/70 rotate-180 shrink-0 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                </button>
 
                 {/* Camera Dialog */}
                 <Dialog open={showCamera} onOpenChange={setShowCamera}>
@@ -937,147 +977,158 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         const hasImages = files.some(f => f.type === 'image');
 
         return (
-            <div className="container mx-auto p-4 max-w-4xl">
+            <div className="container mx-auto p-4 max-w-2xl">
                 <SEO
                     title="AI Test Generator - TestoZa"
                     description="Generate tests from PDF documents and images using AI."
                     keywords={["ai test generator", "pdf to quiz", "image to quiz"]}
                 />
 
-                <div className="space-y-6">
-                    {/* Files Preview */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={() => {
-                                            if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
-                                                clearAllFiles();
-                                            }
-                                        }}
-                                    >
-                                        <ArrowLeft className="w-4 h-4" />
-                                    </Button>
-                                    <span>
-                                        {uploadType === 'document' ? 'Document' : 'Images'}
-                                        {' '}({files.length} {files.length === 1 ? 'file' : 'files'})
-                                    </span>
-                                </div>
-                                <Button variant="ghost" size="sm" onClick={clearAllFiles} className="text-muted-foreground hover:text-destructive">
-                                    <X className="w-4 h-4 mr-1" /> Clear All
+                {/* Hidden input to allow adding more files during Step 2 */}
+                <Input
+                    ref={documentInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
+                    multiple
+                    onChange={async (e) => {
+                        const selectedFiles = Array.from(e.target.files || []);
+                        if (!selectedFiles.length) return;
+                        const newFiles: SelectedFile[] = [];
+                        for (const file of selectedFiles) {
+                            const preview = await createPreview(file);
+                            newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
+                        }
+                        setFiles(prev => [...prev, ...newFiles]);
+                        setError(null);
+                    }}
+                    className="hidden"
+                />
+
+                <div className="space-y-4">
+                    {/* Files Preview - Clean List View */}
+                    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-500 hover:text-slate-700"
+                                    onClick={() => {
+                                        if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
+                                            clearAllFiles();
+                                        }
+                                    }}
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
                                 </Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">
+                                    Selected {uploadType === 'document' ? 'Document' : 'Images'} ({files.length})
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => documentInputRef.current?.click()}
+                                    className="h-8 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 font-semibold"
+                                >
+                                    <Plus className="w-3.5 h-3.5 mr-1" /> Add File
+                                </Button>
+                                <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={clearAllFiles} 
+                                    className="h-8 text-xs text-slate-400 hover:text-red-500 transition-colors"
+                                >
+                                    <X className="w-3.5 h-3.5 mr-1" /> Clear All
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="p-3">
+                            <div className="space-y-1.5">
                                 {files.map((fileObj) => (
-                                    <div key={fileObj.id} className="relative group">
-                                        {fileObj.preview ? (
-                                            <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
-                                                <img
-                                                    src={fileObj.preview}
-                                                    alt={fileObj.file.name}
-                                                    className="w-full h-full object-cover"
-                                                />
+                                    <div 
+                                        key={fileObj.id} 
+                                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-900/30 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            {fileObj.preview ? (
+                                                <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
+                                                    <img
+                                                        src={fileObj.preview}
+                                                        alt={fileObj.file.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-500 shrink-0">
+                                                    <FileText className="w-5 h-5" />
+                                                </div>
+                                            )}
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[180px] sm:max-w-xs">
+                                                    {fileObj.file.name}
+                                                </p>
+                                                <p className="text-[10px] text-slate-400">
+                                                    {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
+                                                </p>
                                             </div>
-                                        ) : (
-                                            <div className="aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2">
-                                                <FileText className="w-8 h-8 text-muted-foreground mb-1" />
-                                                <span className="text-xs text-center truncate w-full">{fileObj.file.name}</span>
-                                            </div>
-                                        )}
-                                        <button
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
                                             onClick={() => removeFile(fileObj.id)}
-                                            className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                                         >
-                                            <X className="w-3 h-3" />
-                                        </button>
+                                            <X className="w-4 h-4" />
+                                        </Button>
                                     </div>
                                 ))}
-
-                                {/* Add More Button - only for images */}
-                                {uploadType === 'image' && (
-                                    <>
-                                        <button
-                                            onClick={() => imageInputRef.current?.click()}
-                                            className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
-                                        >
-                                            <Plus className="w-6 h-6 text-muted-foreground" />
-                                            <span className="text-xs text-muted-foreground">Add Image</span>
-                                        </button>
-                                        <button
-                                            onClick={openCamera}
-                                            className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
-                                        >
-                                            <Camera className="w-6 h-6 text-muted-foreground" />
-                                            <span className="text-xs text-muted-foreground">Camera</span>
-                                        </button>
-                                    </>
-                                )}
                             </div>
+                        </div>
+                    </div>
 
-
-
-                            <Input
-                                ref={imageInputRef}
-                                type="file"
-                                accept=".png,.jpg,.jpeg,.webp"
-                                multiple
-                                onChange={handleImageChange}
-                                className="hidden"
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Answer Key Upload - Show for both document and image uploads */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Key className="w-5 h-5" />
-                                Answer Key (Optional)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {answerKeyFile ? (
-                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <Key className="w-5 h-5 text-primary" />
-                                        <div>
-                                            <p className="font-medium">{answerKeyFile.name}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                AI will use this to match correct answers with questions
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <Button variant="ghost" size="sm" onClick={() => setAnswerKeyFile(null)}>
-                                        <X className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div
-                                    className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 rounded-lg p-6 text-center cursor-pointer transition-colors"
-                                    onClick={() => answerKeyInputRef.current?.click()}
-                                >
-                                    <Key className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                                    <p className="font-medium">Upload Answer Key</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        Helps AI accurately match correct answers (PDF or Image)
-                                    </p>
-                                    <Input
-                                        ref={answerKeyInputRef}
-                                        type="file"
-                                        accept=".pdf,.png,.jpg,.jpeg"
-                                        onChange={handleAnswerKeyChange}
-                                        className="hidden"
-                                    />
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    {/* Answer Key Upload - Reduced Inline Style */}
+                    <div className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-500 shrink-0">
+                                <Key className="w-4.5 h-4.5" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Answer Key (Optional)</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[180px] sm:max-w-xs">
+                                    {answerKeyFile ? answerKeyFile.name : "Upload key to auto-match correct answers"}
+                                </p>
+                            </div>
+                        </div>
+                        {answerKeyFile ? (
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setAnswerKeyFile(null)} 
+                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => answerKeyInputRef.current?.click()}
+                                className="text-[11px] h-8 px-3 shrink-0 border-dashed hover:border-solid"
+                            >
+                                Upload Key
+                            </Button>
+                        )}
+                        <Input
+                            ref={answerKeyInputRef}
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg"
+                            onChange={handleAnswerKeyChange}
+                            className="hidden"
+                        />
+                    </div>
 
                     {error && (
                         <Alert variant="destructive">
@@ -1113,55 +1164,65 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
                                 {/* Extract Mode */}
                                 <Card
-                                    className="cursor-pointer border-2 hover:border-blue-500 hover:shadow-lg transition-all group"
+                                    className="cursor-pointer border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between"
                                     onClick={() => handleProcess('extract')}
                                 >
-                                    <CardContent className="p-6 text-center space-y-4">
-                                        <div className="w-14 h-14 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                                    <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
+                                        <div className="space-y-4 flex-1">
+                                            <div className="w-14 h-14 mx-auto rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Extract Questions</h3>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                                    Extract exact questions, options, and diagrams from the exam paper as-is
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5 justify-center">
+                                                <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                    Best for: Exam papers, question banks
+                                                </Badge>
+                                                <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
+                                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
+                                                    ULTRA-FAST
+                                                </Badge>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-lg font-bold">Extract Questions</h3>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                Extract exact questions, options, and diagrams from the exam paper as-is
-                                            </p>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2 justify-center">
-                                            <Badge variant="secondary" className="text-xs">
-                                                Best for: Exam papers, question banks
-                                            </Badge>
-                                            <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                                                <Zap className="w-3 h-3 mr-1" />
-                                                ULTRA-FAST
-                                            </Badge>
-                                        </div>
+                                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200 group-hover:scale-[1.01]">
+                                            Extract Questions →
+                                        </Button>
                                     </CardContent>
                                 </Card>
 
                                 {/* Generate Mode */}
                                 <Card
-                                    className="cursor-pointer border-2 hover:border-purple-500 hover:shadow-lg transition-all group"
+                                    className="cursor-pointer border border-slate-200 dark:border-slate-800 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/5 hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between"
                                     onClick={() => handleProcess('generate')}
                                 >
-                                    <CardContent className="p-6 text-center space-y-4">
-                                        <div className="w-14 h-14 mx-auto rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                    <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
+                                        <div className="space-y-4 flex-1">
+                                            <div className="w-14 h-14 mx-auto rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Generate New Questions</h3>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                                    AI creates original questions based on the content and topics in the document
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5 justify-center">
+                                                <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                    Best for: Textbooks, notes, study material
+                                                </Badge>
+                                                <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
+                                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
+                                                    ULTRA-FAST
+                                                </Badge>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-lg font-bold">Generate New Questions</h3>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                                AI creates original questions based on the content and topics in the document
-                                            </p>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2 justify-center">
-                                            <Badge variant="secondary" className="text-xs">
-                                                Best for: Textbooks, notes, study material
-                                            </Badge>
-                                            <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                                                <Zap className="w-3 h-3 mr-1" />
-                                                ULTRA-FAST
-                                            </Badge>
-                                        </div>
+                                        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200 group-hover:scale-[1.01]">
+                                            Generate Questions →
+                                        </Button>
                                     </CardContent>
                                 </Card>
                             </div>
