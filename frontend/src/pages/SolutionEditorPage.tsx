@@ -187,7 +187,7 @@ export default function SolutionEditorPage() {
         return (
             <div className="container mx-auto py-10 text-center">
                 <h2 className="text-2xl font-bold mb-4">Test Not Found</h2>
-                <Button onClick={() => navigate('/creator/tests')}>Back to Dashboard</Button>
+                <Button onClick={() => navigate('/my-tests')}>Back to Dashboard</Button>
             </div>
         );
     }
@@ -203,7 +203,7 @@ export default function SolutionEditorPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate('/creator/tests')}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate('/my-tests')}>
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <div>

@@ -1080,7 +1080,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (error) throw error;
 
             toast.success("Test saved successfully!");
-            navigate('/creator/tests'); // Redirect to creator dashboard
+            navigate('/my-tests'); // Redirect to creator dashboard
         } catch (err: any) {
             console.error("Error direct saving test:", err);
             toast.error("Failed to save test: " + (err.message || String(err)));
