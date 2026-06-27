@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2, MoreVertical, PenLine } from "lucide-react";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2, MoreVertical, PenLine, History, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -165,10 +166,76 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
+    // AI Generation History State
+    const [historyItems, setHistoryItems] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+
     // Fetch feature flags
     useEffect(() => {
         fetchFeatureFlags().then(data => setFeatureFlags(data));
     }, []);
+
+    // Sync guest history on login and load history
+    useEffect(() => {
+        const syncAndLoadHistory = async () => {
+            setLoadingHistory(true);
+            try {
+                if (user) {
+                    // Authenticated: Sync guest history from localStorage
+                    const guestHistoryStr = localStorage.getItem('guest_ai_history');
+                    if (guestHistoryStr) {
+                        try {
+                            const guestHistory = JSON.parse(guestHistoryStr);
+                            if (Array.isArray(guestHistory) && guestHistory.length > 0) {
+                                // Upload guest history items to database
+                                const { saveAiHistory } = await import('@/lib/aiHistoryApi');
+                                for (const item of guestHistory) {
+                                    await saveAiHistory({
+                                        mode: item.mode,
+                                        title: item.title,
+                                        description: item.description,
+                                        file_name: item.file_name,
+                                        question_count: item.question_count,
+                                        parsed_data: item.parsed_data
+                                    });
+                                }
+                                toast.success(`Synced ${guestHistory.length} local AI generations to your account!`);
+                            }
+                        } catch (e) {
+                            console.error("Error migrating guest AI history:", e);
+                        } finally {
+                            localStorage.removeItem('guest_ai_history');
+                        }
+                    }
+
+                    // Fetch history from DB
+                    const { fetchAiHistory } = await import('@/lib/aiHistoryApi');
+                    const { data, error } = await fetchAiHistory();
+                    if (error) throw error;
+                    setHistoryItems(data || []);
+                } else {
+                    // Unauthenticated (Guest): Load from localStorage
+                    const guestHistoryStr = localStorage.getItem('guest_ai_history');
+                    if (guestHistoryStr) {
+                        try {
+                            setHistoryItems(JSON.parse(guestHistoryStr));
+                        } catch {
+                            setHistoryItems([]);
+                        }
+                    } else {
+                        setHistoryItems([]);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load AI history:", err);
+            } finally {
+                setLoadingHistory(false);
+            }
+        };
+
+        syncAndLoadHistory();
+    }, [user]);
 
     // Track active stage timers
     useEffect(() => {
@@ -200,6 +267,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         if (pendingParsedData && streamProgress?.stage === 'complete') {
             const timer = setTimeout(() => {
                 setParsedData(pendingParsedData);
+                saveToHistory(pendingParsedData);
                 setPendingParsedData(null);
                 setIsStreaming(false);
                 setLoading(false);
@@ -209,6 +277,25 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             return () => clearTimeout(timer);
         }
     }, [pendingParsedData, streamProgress?.stage]);
+
+    // Restore pending AI import after login redirection
+    useEffect(() => {
+        const pendingDataStr = localStorage.getItem('pending_ai_import_test');
+        if (pendingDataStr) {
+            try {
+                const { parsedData: restoredParsedData, mode: restoredMode } = JSON.parse(pendingDataStr);
+                if (restoredParsedData) {
+                    setParsedData(restoredParsedData);
+                    if (restoredMode) setMode(restoredMode);
+                    toast.success("Restored your AI-generated questions!");
+                }
+            } catch (e) {
+                console.error("Failed to restore pending AI import:", e);
+            } finally {
+                localStorage.removeItem('pending_ai_import_test');
+            }
+        }
+    }, []);
 
     const documentInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
@@ -411,6 +498,86 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         }
 
         return String(q.correctAnswer);
+    };
+
+    const saveToHistory = async (data: ParseResponse) => {
+        if (!data) return;
+        const qCount = data.questions?.length || 0;
+        if (qCount === 0) return;
+
+        const historyPayload = {
+            mode: mode || 'extract',
+            title: data.title || (mode === 'extract' ? 'Extracted Questions' : 'Generated Questions'),
+            description: data.description || '',
+            file_name: files?.[0]?.file?.name || null,
+            question_count: qCount,
+            parsed_data: data
+        };
+
+        if (user) {
+            try {
+                const { saveAiHistory } = await import('@/lib/aiHistoryApi');
+                const { data: savedItem, error } = await saveAiHistory(historyPayload);
+                if (!error && savedItem) {
+                    setHistoryItems(prev => [savedItem, ...prev]);
+                }
+            } catch (err) {
+                console.error("Failed to save generation to database:", err);
+            }
+        } else {
+            try {
+                const guestHistoryStr = localStorage.getItem('guest_ai_history');
+                let guestHistory = [];
+                if (guestHistoryStr) {
+                    try { guestHistory = JSON.parse(guestHistoryStr); } catch { guestHistory = []; }
+                }
+                const newLocalItem = {
+                    ...historyPayload,
+                    id: Math.random().toString(36).substring(2, 9),
+                    created_at: new Date().toISOString()
+                };
+                guestHistory = [newLocalItem, ...guestHistory];
+                localStorage.setItem('guest_ai_history', JSON.stringify(guestHistory));
+                setHistoryItems(guestHistory);
+            } catch (err) {
+                console.warn("Failed to save generation to guest storage:", err);
+            }
+        }
+    };
+
+    const handleSelectHistoryItem = (item: any) => {
+        setParsedData(item.parsed_data);
+        if (item.mode) setMode(item.mode);
+        toast.info(`Loaded generation: ${item.title || 'Untitled'}`);
+    };
+
+    const handleDeleteHistoryItem = async (e: React.MouseEvent, id: string, index: number) => {
+        e.stopPropagation();
+        if (user) {
+            try {
+                const { deleteAiHistory } = await import('@/lib/aiHistoryApi');
+                const { error } = await deleteAiHistory(id);
+                if (error) throw error;
+                setHistoryItems(prev => prev.filter(item => item.id !== id));
+                toast.success("History item deleted.");
+            } catch (err) {
+                console.error("Failed to delete history item:", err);
+                toast.error("Failed to delete history item.");
+            }
+        } else {
+            try {
+                const guestHistoryStr = localStorage.getItem('guest_ai_history');
+                if (guestHistoryStr) {
+                    let guestHistory = JSON.parse(guestHistoryStr);
+                    guestHistory = guestHistory.filter((_: any, idx: number) => idx !== index);
+                    localStorage.setItem('guest_ai_history', JSON.stringify(guestHistory));
+                    setHistoryItems(guestHistory);
+                    toast.success("History item deleted.");
+                }
+            } catch (err) {
+                console.error("Failed to delete guest history item:", err);
+            }
+        }
     };
 
     const handleProcess = async (selectedMode: ProcessMode, isContinue: boolean = false) => {
@@ -649,12 +816,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     id: maxId + idx + 1
                 }));
 
-                setParsedData({
+                const combinedData = {
                     ...data,
                     questions: [...parsedData.questions, ...adjustedQuestions]
-                });
+                };
+                setParsedData(combinedData);
+                saveToHistory(combinedData);
             } else {
                 setParsedData(data);
+                saveToHistory(data);
             }
         } catch (err: any) {
             console.error('Process Error:', err);
@@ -796,8 +966,17 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const handleDirectSave = async () => {
         if (!parsedData) return;
         if (!user) {
-            toast.error("Please login to save the test.");
-            navigate('/login');
+            try {
+                localStorage.setItem('pending_ai_import_test', JSON.stringify({
+                    parsedData,
+                    mode,
+                }));
+                localStorage.setItem('auth_redirect_intent', '/generate-with-ai');
+            } catch (e) {
+                console.warn("Could not save pending test to localStorage", e);
+            }
+            toast.error("Please login to save the test. Redirecting...");
+            setTimeout(() => navigate('/login'), 1000);
             return;
         }
 
@@ -954,197 +1133,350 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     // Step 1: File Upload — unified Gemini-style drop zone + manual creation card
     if (files.length === 0 && !uploadType) {
         return (
-            <div className="container mx-auto px-4 max-w-2xl py-10">
+            <div className="flex min-h-[calc(100vh-4rem)] w-full bg-slate-50 dark:bg-slate-900/50">
                 <SEO
                     title="AI Test Generator - TestoZa"
                     description="Generate tests from PDF documents and images using AI. Extract exact questions or generate new ones."
                     keywords={["ai test generator", "pdf to quiz", "image to quiz", "exam maker ai"]}
                 />
 
-                {/* Header */}
-                <div className="text-center mb-8 space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
-                        Create a Test in Minutes
-                    </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Upload any file — AI reads it and builds your test automatically
-                    </p>
-                </div>
-
-                {/* ── Unified Upload Drop Zone ── */}
-                <div
-                    className="relative bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-200 cursor-pointer group shadow-sm mb-4"
-                    onClick={() => documentInputRef.current?.click()}
+                {/* Desktop History Sidebar (ChatGPT style) */}
+                <div 
+                    className={`shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-all duration-300 flex flex-col ${
+                        sidebarOpen ? 'w-64' : 'w-0 overflow-hidden border-r-0'
+                    } hidden md:flex`}
                 >
-                    {/* Hidden file inputs */}
-                    <Input
-                        ref={documentInputRef}
-                        type="file"
-                        accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
-                        multiple
-                        onChange={async (e) => {
-                            const selectedFiles = Array.from(e.target.files || []);
-                            if (!selectedFiles.length) return;
-                            const newFiles: SelectedFile[] = [];
-                            for (const file of selectedFiles) {
-                                const preview = await createPreview(file);
-                                newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
-                            }
-                            const hasImages = newFiles.some(f => f.type === 'image');
-                            setFiles(newFiles);
-                            setUploadType(hasImages ? 'image' : 'document');
-                            setError(null);
-                            setParsedData(null);
-                            setMode(null);
-                        }}
-                        className="hidden"
-                    />
-                    <Input
-                        ref={imageInputRef}
-                        type="file"
-                        accept=".png,.jpg,.jpeg,.webp"
-                        multiple
-                        onChange={handleImageChange}
-                        className="hidden"
-                    />
-
-                    {/* Drop zone body */}
-                    <div className="p-8 sm:p-10 flex flex-col items-center gap-4">
-                        {/* Animated icon */}
-                        <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                            <Sparkles className="w-8 h-8 text-indigo-500" />
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm">
+                            <History className="w-4 h-4 text-indigo-500" />
+                            AI Import History
                         </div>
-
-                        <div className="text-center space-y-1">
-                            <p className="font-semibold text-slate-700 dark:text-slate-200">
-                                Drop your file here, or <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">browse</span>
-                            </p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">
-                                PDF · DOC · PPT · JPG · PNG · and more
-                            </p>
-                        </div>
-
-                        {/* Upload type chips */}
-                        <div className="flex flex-wrap justify-center gap-2 pt-1">
-                            {/* PDF / Document */}
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); documentInputRef.current?.click(); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                            >
-                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                                PDF / DOC / PPT
-                            </button>
-
-                            {/* Image */}
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                            >
-                                <ImageIcon className="w-3.5 h-3.5 text-green-500" />
-                                Photo / Image
-                            </button>
-
-                            {/* Camera */}
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); openCamera(); }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                            >
-                                <Camera className="w-3.5 h-3.5 text-rose-500" />
-                                Camera
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Helper note */}
-                <p className="text-center text-xs text-slate-400 dark:text-slate-500 mb-8">
-                    AI will read your file and extract or generate questions automatically ✨
-                </p>
-
-                {/* ── Divider ── */}
-                <div className="flex items-center gap-3 mb-8">
-                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">or</span>
-                    <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-                </div>
-
-                {/* ── Manual Creation Card ── */}
-                <button
-                    type="button"
-                    onClick={() => { window.location.href = '/create-test'; }}
-                    className="w-full text-left bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl overflow-hidden flex items-stretch hover:shadow-xl hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 group"
-                    style={{ minHeight: '175px', maxHeight: '220px' }}
-                >
-                    {/* Left: scaled-down showcase preview (centered, organized, and larger) */}
-                    <div
-                        className="relative shrink-0 overflow-hidden bg-indigo-950/25 border-r border-white/10"
-                        style={{ width: '200px' }}
-                        aria-hidden="true"
-                    >
-                        {/* semi-transparent overlay so it blends with card */}
-                        <div className="absolute inset-0 bg-indigo-600/10 z-10 pointer-events-none" />
-                        {/* Showcase centered & scaled to fit nicely with padding */}
-                        <div
-                            className="absolute top-1/2 left-1/2"
-                            style={{
-                                transform: 'translate(-50%, -50%) scale(0.29)',
-                                width: '640px',   /* original max-width */
-                                height: '580px',  /* original height */
-                                pointerEvents: 'none',
-                                userSelect: 'none',
-                            }}
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7 text-slate-400 hover:text-slate-600"
+                            onClick={() => setSidebarOpen(false)}
                         >
-                            <ManualEditorShowcase />
+                            <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                    </div>
+
+                    <ScrollArea className="flex-1 p-2">
+                        {loadingHistory ? (
+                            <div className="flex items-center justify-center p-8">
+                                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                            </div>
+                        ) : historyItems.length === 0 ? (
+                            <div className="text-center p-4 text-xs text-slate-400 dark:text-slate-500">
+                                No past generations
+                            </div>
+                        ) : (
+                            <div className="space-y-1">
+                                {historyItems.map((item, idx) => (
+                                    <button
+                                        key={item.id || idx}
+                                        onClick={() => handleSelectHistoryItem(item)}
+                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-start justify-between gap-2 transition-colors relative"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                                {item.title || 'AI Generated Test'}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5">
+                                                {item.mode === 'extract' ? '📥 Extracted' : '✨ Generated'}
+                                                <span>•</span>
+                                                {item.question_count} Qs
+                                            </p>
+                                            {item.file_name && (
+                                                <p className="text-[9px] text-slate-400/80 truncate mt-0.5 flex items-center gap-1 max-w-[170px]">
+                                                    📄 {item.file_name}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
+                                            className="opacity-0 group-hover:opacity-100 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-opacity"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </ScrollArea>
+                </div>
+
+                {/* Mobile Drawer (Sheet) Toggle / Sidebar closed Toggle */}
+                <div className="flex-1 flex flex-col min-w-0">
+                    <div className="p-4 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 md:border-b-0 md:bg-transparent">
+                        {/* Toggle sidebar button when closed */}
+                        {!sidebarOpen && (
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="hidden md:flex h-9 w-9 border-slate-200"
+                                onClick={() => setSidebarOpen(true)}
+                            >
+                                <History className="w-4 h-4 text-slate-500" />
+                            </Button>
+                        )}
+
+                        {/* Mobile Toggle Button using Sheet */}
+                        <div className="md:hidden w-full flex items-center justify-between">
+                            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Test Generator</h2>
+                            <Sheet>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                                        <History className="w-3.5 h-3.5 text-slate-500" />
+                                        History
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent side="left" className="w-72 p-0 flex flex-col bg-white dark:bg-slate-950">
+                                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm">
+                                        <History className="w-4 h-4 text-indigo-500" />
+                                        AI Import History
+                                    </div>
+                                    <ScrollArea className="flex-1 p-2">
+                                        {loadingHistory ? (
+                                            <div className="flex items-center justify-center p-8">
+                                                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                                            </div>
+                                        ) : historyItems.length === 0 ? (
+                                            <div className="text-center p-4 text-xs text-slate-400 dark:text-slate-500">
+                                                No past generations
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                {historyItems.map((item, idx) => (
+                                                    <SheetClose asChild key={item.id || idx}>
+                                                        <button
+                                                            onClick={() => handleSelectHistoryItem(item)}
+                                                            className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-start justify-between gap-2 transition-colors relative"
+                                                        >
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                                                    {item.title || 'AI Generated Test'}
+                                                                </p>
+                                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5">
+                                                                    {item.mode === 'extract' ? '📥 Extracted' : '✨ Generated'}
+                                                                    <span>•</span>
+                                                                    {item.question_count} Qs
+                                                                </p>
+                                                                {item.file_name && (
+                                                                    <p className="text-[9px] text-slate-400/80 truncate mt-0.5 flex items-center gap-1 max-w-[190px]">
+                                                                        📄 {item.file_name}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
+                                                                className="h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                        </button>
+                                                    </SheetClose>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </ScrollArea>
+                                </SheetContent>
+                            </Sheet>
                         </div>
                     </div>
 
-                    {/* Right: text + arrow */}
-                    <div className="flex flex-1 items-center justify-between gap-3 px-5 py-5">
-                        <div className="min-w-0">
-                            <p className="font-bold text-white text-sm sm:text-base leading-snug">
-                                ✏️ Build Your Own Test
-                            </p>
-                            <p className="text-xs text-indigo-100 mt-1 leading-relaxed">
-                                Write questions yourself — set marks, sections &amp; rules. Full control, no AI needed.
+                    {/* Main Upload Page Container */}
+                    <div className="container mx-auto px-4 max-w-2xl py-10 flex-1 flex flex-col justify-center">
+                        {/* Header */}
+                        <div className="text-center mb-8 space-y-1">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+                                Create a Test in Minutes
+                            </h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Upload any file — AI reads it and builds your test automatically
                             </p>
                         </div>
-                        <ArrowLeft className="w-5 h-5 text-white/70 rotate-180 shrink-0 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                </button>
 
-                {/* Camera Dialog */}
-                <Dialog open={showCamera} onOpenChange={setShowCamera}>
-                    <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Capture Image</DialogTitle>
-                            <DialogDescription>
-                                Position your document in the camera view and click capture
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="relative">
-                            <video
-                                ref={videoRef}
-                                autoPlay
-                                playsInline
-                                className="w-full rounded-lg"
+                        {/* ── Unified Upload Drop Zone ── */}
+                        <div
+                            className="relative bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-200 cursor-pointer group shadow-sm mb-4"
+                            onClick={() => documentInputRef.current?.click()}
+                        >
+                            {/* Hidden file inputs */}
+                            <Input
+                                ref={documentInputRef}
+                                type="file"
+                                accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
+                                multiple
+                                onChange={async (e) => {
+                                    const selectedFiles = Array.from(e.target.files || []);
+                                    if (!selectedFiles.length) return;
+                                    const newFiles: SelectedFile[] = [];
+                                    for (const file of selectedFiles) {
+                                        const preview = await createPreview(file);
+                                        newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
+                                    }
+                                    const hasImages = newFiles.some(f => f.type === 'image');
+                                    setFiles(newFiles);
+                                    setUploadType(hasImages ? 'image' : 'document');
+                                    setError(null);
+                                    setParsedData(null);
+                                    setMode(null);
+                                }}
+                                className="hidden"
                             />
-                            <canvas ref={canvasRef} className="hidden" />
+                            <Input
+                                ref={imageInputRef}
+                                type="file"
+                                accept=".png,.jpg,.jpeg,.webp"
+                                multiple
+                                onChange={handleImageChange}
+                                className="hidden"
+                            />
+
+                            {/* Drop zone body */}
+                            <div className="p-8 sm:p-10 flex flex-col items-center gap-4">
+                                {/* Animated icon */}
+                                <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                                    <Sparkles className="w-8 h-8 text-indigo-500" />
+                                </div>
+
+                                <div className="text-center space-y-1">
+                                    <p className="font-semibold text-slate-700 dark:text-slate-200">
+                                        Drop your file here, or <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">browse</span>
+                                    </p>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                                        PDF · DOC · PPT · JPG · PNG · and more
+                                    </p>
+                                </div>
+
+                                {/* Upload type chips */}
+                                <div className="flex flex-wrap justify-center gap-2 pt-1">
+                                    {/* PDF / Document */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); documentInputRef.current?.click(); }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
+                                    >
+                                        <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                        PDF / DOC / PPT
+                                    </button>
+
+                                    {/* Image */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
+                                    >
+                                        <ImageIcon className="w-3.5 h-3.5 text-green-500" />
+                                        Photo / Image
+                                    </button>
+
+                                    {/* Camera */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); openCamera(); }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
+                                    >
+                                        <Camera className="w-3.5 h-3.5 text-rose-500" />
+                                        Camera
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex justify-center gap-2">
-                            <Button variant="outline" onClick={closeCamera}>
-                                Cancel
-                            </Button>
-                            <Button onClick={captureImage} className="gap-2">
-                                <Camera className="w-4 h-4" />
-                                Capture
-                            </Button>
+
+                        {/* Helper note */}
+                        <p className="text-center text-xs text-slate-400 dark:text-slate-500 mb-8">
+                            AI will read your file and extract or generate questions automatically ✨
+                        </p>
+
+                        {/* ── Divider ── */}
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">or</span>
+                            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
                         </div>
-                    </DialogContent>
-                </Dialog>
+
+                        {/* ── Manual Creation Card ── */}
+                        <button
+                            type="button"
+                            onClick={() => { window.location.href = '/create-test'; }}
+                            className="w-full text-left bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl overflow-hidden flex items-stretch hover:shadow-xl hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 group"
+                            style={{ minHeight: '175px', maxHeight: '220px' }}
+                        >
+                            {/* Left: scaled-down showcase preview (centered, organized, and larger) */}
+                            <div
+                                className="relative shrink-0 overflow-hidden bg-indigo-950/25 border-r border-white/10"
+                                style={{ width: '200px' }}
+                                aria-hidden="true"
+                            >
+                                {/* semi-transparent overlay so it blends with card */}
+                                <div className="absolute inset-0 bg-indigo-600/10 z-10 pointer-events-none" />
+                                {/* Showcase centered & scaled to fit nicely with padding */}
+                                <div
+                                    className="absolute top-1/2 left-1/2"
+                                    style={{
+                                        transform: 'translate(-50%, -50%) scale(0.29)',
+                                        width: '640px',   /* original max-width */
+                                        height: '580px',  /* original height */
+                                        pointerEvents: 'none',
+                                        userSelect: 'none',
+                                    }}
+                                >
+                                    <ManualEditorShowcase />
+                                </div>
+                            </div>
+
+                            {/* Right: text + arrow */}
+                            <div className="flex flex-1 items-center justify-between gap-3 px-5 py-5">
+                                <div className="min-w-0">
+                                    <p className="font-bold text-white text-sm sm:text-base leading-snug">
+                                        ✏️ Build Your Own Test
+                                    </p>
+                                    <p className="text-xs text-indigo-100 mt-1 leading-relaxed">
+                                        Write questions yourself — set marks, sections &amp; rules. Full control, no AI needed.
+                                    </p>
+                                </div>
+                                <ArrowLeft className="w-5 h-5 text-white/70 rotate-180 shrink-0 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </button>
+
+                        {/* Camera Dialog */}
+                        <Dialog open={showCamera} onOpenChange={setShowCamera}>
+                            <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Capture Image</DialogTitle>
+                                    <DialogDescription>
+                                        Position your document in the camera view and click capture
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="relative">
+                                    <video
+                                        ref={videoRef}
+                                        autoPlay
+                                        playsInline
+                                        className="w-full rounded-lg"
+                                    />
+                                    <canvas ref={canvasRef} className="hidden" />
+                                </div>
+                                <div className="flex justify-center gap-2">
+                                    <Button variant="outline" onClick={closeCamera}>
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={captureImage} className="gap-2">
+                                        <Camera className="w-4 h-4" />
+                                        Capture
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
             </div>
         );
     }
