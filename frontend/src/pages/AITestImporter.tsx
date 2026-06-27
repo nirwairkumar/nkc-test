@@ -1131,7 +1131,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     }
 
     // Step 1: File Upload — unified Gemini-style drop zone + manual creation card
-    if (files.length === 0 && !uploadType) {
+    if (!parsedData && files.length === 0 && !uploadType) {
         return (
             <div className="flex min-h-[calc(100vh-4rem)] w-full bg-slate-50 dark:bg-slate-900/50">
                 <SEO
