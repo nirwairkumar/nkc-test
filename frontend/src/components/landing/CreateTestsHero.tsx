@@ -74,8 +74,7 @@ export default function CreateTestsHero() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
                         <Button
                             size="lg"
-                            // onClick={() => navigate('/generate-with-ai')}
-                            onClick={() => navigate('/create-test')}
+                            onClick={() => navigate('/generate-with-ai')}
                             className="bg-white text-purple-600 hover:bg-white/90 text-lg px-8 py-6 rounded-full shadow-2xl hover:shadow-white/50 transition-all duration-300 hover:scale-105"
                         >
                             Start Creating
