@@ -1188,9 +1188,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 </Badge>
                                             </div>
                                         </div>
-                                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200 group-hover:scale-[1.01]">
-                                            Extract Questions →
-                                        </Button>
+                                        <div className="w-full border-beam-container p-[1.5px] rounded-xl mt-2 shadow-sm">
+                                            <div className="border-beam-gradient-blue" />
+                                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-[11px] py-2 border-0 relative z-10 transition-all duration-200 group-hover:scale-[1.01] overflow-hidden">
+                                                Extract Questions →
+                                            </Button>
+                                        </div>
                                     </CardContent>
                                 </Card>
 
@@ -1220,9 +1223,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 </Badge>
                                             </div>
                                         </div>
-                                        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200 group-hover:scale-[1.01]">
-                                            Generate Questions →
-                                        </Button>
+                                        <div className="w-full border-beam-container p-[1.5px] rounded-xl mt-2 shadow-sm">
+                                            <div className="border-beam-gradient-purple" />
+                                            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-[11px] py-2 border-0 relative z-10 transition-all duration-200 group-hover:scale-[1.01] overflow-hidden">
+                                                Generate Questions →
+                                            </Button>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </div>
