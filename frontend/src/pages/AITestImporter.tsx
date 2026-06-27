@@ -1166,7 +1166,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 <div className="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 dark:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between">
                                     <div className="border-beam-gradient-blue" />
                                     <Card
-                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
+                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
                                         onClick={() => handleProcess('extract')}
                                     >
                                         <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
@@ -1201,7 +1201,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 <div className="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 dark:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between">
                                     <div className="border-beam-gradient-purple" />
                                     <Card
-                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
+                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
                                         onClick={() => handleProcess('generate')}
                                     >
                                         <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
