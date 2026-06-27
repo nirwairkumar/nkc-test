@@ -562,11 +562,16 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             try {
                 const { saveAiHistory } = await import('@/lib/aiHistoryApi');
                 const { data: savedItem, error } = await saveAiHistory(historyPayload);
-                if (!error && savedItem) {
+                if (error) {
+                    console.error("Failed to save generation to database:", error);
+                    toast.error(`Could not save generation to history: ${error.message || String(error)}`);
+                } else if (savedItem) {
                     setHistoryItems(prev => [savedItem, ...prev]);
+                    toast.success("Generation saved to your history!");
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to save generation to database:", err);
+                toast.error(`Could not save generation to history: ${err.message || String(err)}`);
             }
         } else {
             try {
