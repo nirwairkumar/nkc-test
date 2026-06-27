@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2, MoreVertical, PenLine } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ProcessingProgress } from "@/components/ProcessingProgress";
 import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -121,6 +129,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const [files, setFiles] = useState<SelectedFile[]>([]);
     const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
@@ -136,10 +145,14 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [extractionMeta, setExtractionMeta] = useState<{ quality_tier?: string, dpi?: number, warning?: boolean } | null>(null);
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null);
 
-    // Fetch feature flags
-    useEffect(() => {
-        fetchFeatureFlags().then(data => setFeatureFlags(data));
-    }, []);
+    const [savingTest, setSavingTest] = useState(false);
+    const [pendingParsedData, setPendingParsedData] = useState<ParseResponse | null>(null);
+    const [timers, setTimers] = useState<{
+        uploading: number;
+        analyzing: number;
+        extracting: number;
+        finalizing: number;
+    }>({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
 
     // ULTRA-FAST Streaming State
     const [isStreaming, setIsStreaming] = useState(false);
@@ -151,6 +164,51 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     } | null>(null);
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
     const [abortController, setAbortController] = useState<AbortController | null>(null);
+
+    // Fetch feature flags
+    useEffect(() => {
+        fetchFeatureFlags().then(data => setFeatureFlags(data));
+    }, []);
+
+    // Track active stage timers
+    useEffect(() => {
+        if (!isStreaming) return;
+
+        const interval = setInterval(() => {
+            const currentStage = streamProgress?.stage || 'uploading';
+            let stageKey: 'uploading' | 'analyzing' | 'extracting' | 'finalizing' = 'uploading';
+
+            if (currentStage === 'analyzing') {
+                stageKey = 'analyzing';
+            } else if (currentStage === 'processing' || currentStage === 'extracting') {
+                stageKey = 'extracting';
+            } else if (currentStage === 'finalizing' || currentStage === 'complete') {
+                stageKey = 'finalizing';
+            }
+
+            setTimers(prev => ({
+                ...prev,
+                [stageKey]: Math.round((prev[stageKey] + 0.1) * 10) / 10
+            }));
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, [isStreaming, streamProgress?.stage]);
+
+    // Handle smooth transition from stream completion to preview stage
+    useEffect(() => {
+        if (pendingParsedData && streamProgress?.stage === 'complete') {
+            const timer = setTimeout(() => {
+                setParsedData(pendingParsedData);
+                setPendingParsedData(null);
+                setIsStreaming(false);
+                setLoading(false);
+                setStreamProgress(null);
+                setAbortController(null);
+            }, 1500); // 1.5s delay to review checkmarks/timers
+            return () => clearTimeout(timer);
+        }
+    }, [pendingParsedData, streamProgress?.stage]);
 
     const documentInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
@@ -388,6 +446,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const handleStreamProcess = async (selectedMode: ProcessMode) => {
         setIsStreaming(true);
         setStreamingQuestions([]);
+        setTimers({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
+        
         // Initialize streamProgress with placeholder so we immediately enter the streaming UI
         setStreamProgress({
             stage: 'uploading',
@@ -487,11 +547,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         if (!hasQuestions && !hasSections) {
                                             throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
                                         }
-                                        setParsedData(parsed);
-                                        setIsStreaming(false);
-                                        setLoading(false);
-                                        setStreamProgress(null);
-                                        setAbortController(null);
+                                        setPendingParsedData(parsed);
+                                        setStreamProgress({
+                                            stage: 'complete',
+                                            percent: 100,
+                                            message: 'All questions processed successfully!'
+                                        });
                                         return;
                                     }
 
@@ -731,6 +792,123 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
         onImport(importPayload);
     }, [parsedData, onImport]);
+
+    const handleDirectSave = async () => {
+        if (!parsedData) return;
+        if (!user) {
+            toast.error("Please login to save the test.");
+            navigate('/login');
+            return;
+        }
+
+        setSavingTest(true);
+        try {
+            const { getNextTestId, createTest } = await import('@/lib/testsApi');
+            const customId = await getNextTestId('M');
+
+            // Helper to map options for backend format
+            const mapOptionsForBackend = (
+                options: Question['options'] | undefined,
+                optionImages: Question['optionImages'] | undefined,
+                type: string
+            ) => {
+                const flatOptions: { [key: string]: string } = {};
+                const flatOptionImages: { [key: string]: string } = {};
+
+                if (type !== 'numerical' && options && typeof options === 'object') {
+                    Object.entries(options).forEach(([key, val]) => {
+                        if (val && typeof val === 'object' && 'text' in val) {
+                            flatOptions[key] = val.text || '';
+                            if (val.image) flatOptionImages[key] = val.image;
+                        } else {
+                            flatOptions[key] = String(val || '');
+                            if (optionImages?.[key]) {
+                                flatOptionImages[key] = optionImages[key] || '';
+                            }
+                        }
+                    });
+                }
+                return { options: flatOptions, optionImages: flatOptionImages };
+            };
+
+            let sanitizedQuestions: any[] = [];
+            let sanitizedSections: any[] = [];
+
+            if (parsedData.enable_section_mode && parsedData.sections && parsedData.sections.length > 0) {
+                sanitizedSections = parsedData.sections.map((sec, secIdx) => {
+                    const mappedQuestions = (sec.questions || []).map((q, index) => {
+                        const { options, optionImages } = mapOptionsForBackend(q.options, q.optionImages, q.type || 'single');
+                        return {
+                            id: q.id || index + 1,
+                            type: q.type || 'single',
+                            question: q.question,
+                            options,
+                            optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
+                            correctAnswer: q.correctAnswer || 'A',
+                            image: q.image || undefined,
+                            marks: String(q.marks || sec.marks_per_question || 4),
+                            negativeMarks: String(q.negativeMarks || sec.negative_marks || 1),
+                            passageContent: q.passageContent || ""
+                        };
+                    });
+
+                    return {
+                        id: sec.id || `section-${Math.random().toString(36).substring(2, 9)}`,
+                        name: sec.name || 'Untitled Section',
+                        attempt_control: sec.attempt_control || { enabled: false },
+                        questions: mappedQuestions,
+                        marks_per_question: sec.marks_per_question || 4,
+                        negative_marks: sec.negative_marks || 1,
+                        question_type: sec.question_type || 'single'
+                    };
+                });
+                sanitizedQuestions = sanitizedSections.flatMap(s => s.questions);
+            } else {
+                sanitizedQuestions = (parsedData.questions || []).map((q, index) => {
+                    const { options, optionImages } = mapOptionsForBackend(q.options, q.optionImages, q.type || 'single');
+                    return {
+                        id: q.id || index + 1,
+                        type: q.type || 'single',
+                        question: q.question,
+                        options,
+                        optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
+                        correctAnswer: q.correctAnswer || 'A',
+                        image: q.image || undefined,
+                        marks: String(q.marks || 1),
+                        negativeMarks: String(q.negativeMarks || 0),
+                        passageContent: q.passageContent || ""
+                    };
+                });
+            }
+
+            const payload = {
+                title: parsedData.title || "AI Generated Test",
+                description: parsedData.description || "",
+                revision_notes: parsedData.revision_notes || "",
+                duration: parsedData.duration ? Number(parsedData.duration) : sanitizedQuestions.length,
+                is_public: false,
+                questions: sanitizedQuestions,
+                enable_section_mode: !!parsedData.enable_section_mode,
+                sections: sanitizedSections.length > 0 ? sanitizedSections : undefined,
+                created_by: user.id,
+                custom_id: customId,
+                creator_name: user.user_metadata?.full_name || 'Anonymous',
+                creator_avatar: user.user_metadata?.avatar_url || '',
+                created_at: new Date().toISOString()
+            };
+
+            const { data, error } = await createTest(payload);
+            if (error) throw error;
+
+            toast.success("Test saved successfully!");
+            navigate('/creator/tests'); // Redirect to creator dashboard
+        } catch (err: any) {
+            console.error("Error direct saving test:", err);
+            toast.error("Failed to save test: " + (err.message || String(err)));
+        } finally {
+            setSavingTest(false);
+        }
+    };
 
     // Scroll to bottom of streaming questions
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -1322,64 +1500,84 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     {/* Status Checkpoints */}
                                     <div className="space-y-4 pt-4 border-t text-sm">
                                         {/* Step 1: Upload */}
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                currentStage !== 'uploading' 
-                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' 
-                                                    : 'bg-blue-100 text-blue-600 animate-pulse'
-                                            }`}>
-                                                {currentStage !== 'uploading' ? <Check className="w-3.5 h-3.5" /> : '1'}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                    currentStage !== 'uploading' 
+                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' 
+                                                        : 'bg-blue-100 text-blue-600 animate-pulse'
+                                                }`}>
+                                                    {currentStage !== 'uploading' ? <Check className="w-3.5 h-3.5" /> : '1'}
+                                                </div>
+                                                <span className={currentStage === 'uploading' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                    File Upload & Parse
+                                                </span>
                                             </div>
-                                            <span className={currentStage === 'uploading' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                File Upload & Parse
+                                            <span className="text-xs font-mono text-muted-foreground">
+                                                {timers.uploading > 0 ? `${timers.uploading.toFixed(1)}s` : ''}
                                             </span>
                                         </div>
 
                                         {/* Step 2: Analyzer */}
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                currentStage !== 'uploading' && currentStage !== 'analyzing'
-                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                    : currentStage === 'analyzing'
-                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                    : 'bg-muted text-muted-foreground'
-                                            }`}>
-                                                {currentStage !== 'uploading' && currentStage !== 'analyzing' ? <Check className="w-3.5 h-3.5" /> : '2'}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                    currentStage !== 'uploading' && currentStage !== 'analyzing'
+                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                        : currentStage === 'analyzing'
+                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                        : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    {currentStage !== 'uploading' && currentStage !== 'analyzing' ? <Check className="w-3.5 h-3.5" /> : '2'}
+                                                </div>
+                                                <span className={currentStage === 'analyzing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                    OCR Page Classification
+                                                </span>
                                             </div>
-                                            <span className={currentStage === 'analyzing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                OCR Page Classification
+                                            <span className="text-xs font-mono text-muted-foreground">
+                                                {timers.analyzing > 0 ? `${timers.analyzing.toFixed(1)}s` : ''}
                                             </span>
                                         </div>
 
                                         {/* Step 3: Extraction */}
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                currentStage === 'finalizing' || currentStage === 'complete'
-                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                    : currentStage === 'processing' || currentStage === 'extracting'
-                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                    : 'bg-muted text-muted-foreground'
-                                            }`}>
-                                                {currentStage === 'finalizing' || currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '3'}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                    currentStage === 'finalizing' || currentStage === 'complete'
+                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                        : currentStage === 'processing' || currentStage === 'extracting'
+                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                        : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    {currentStage === 'finalizing' || currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '3'}
+                                                </div>
+                                                <span className={currentStage === 'processing' || currentStage === 'extracting' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                    AI Question Extraction
+                                                </span>
                                             </div>
-                                            <span className={currentStage === 'processing' || currentStage === 'extracting' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                AI Question Extraction
+                                            <span className="text-xs font-mono text-muted-foreground">
+                                                {timers.extracting > 0 ? `${timers.extracting.toFixed(1)}s` : ''}
                                             </span>
                                         </div>
 
                                         {/* Step 4: Finalizing */}
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                currentStage === 'complete'
-                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                    : currentStage === 'finalizing'
-                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                    : 'bg-muted text-muted-foreground'
-                                            }`}>
-                                                {currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '4'}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                    currentStage === 'complete'
+                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                        : currentStage === 'finalizing'
+                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                        : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                    {currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '4'}
+                                                </div>
+                                                <span className={currentStage === 'finalizing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                    Structure Finalization
+                                                </span>
                                             </div>
-                                            <span className={currentStage === 'finalizing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                Structure Finalization
+                                            <span className="text-xs font-mono text-muted-foreground">
+                                                {timers.finalizing > 0 ? `${timers.finalizing.toFixed(1)}s` : ''}
                                             </span>
                                         </div>
                                     </div>
@@ -1420,17 +1618,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         {/* RIGHT COLUMN: Stream Output Feed (8 cols) */}
                         <div className="md:col-span-8 space-y-4">
                             <Card className="border border-slate-200 dark:border-slate-800 shadow-xl bg-card min-h-[500px] flex flex-col">
-                                <CardHeader className="py-4 border-b flex flex-row items-center justify-between">
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <span>Extracted Questions</span>
-                                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                            LIVE FEED
-                                        </span>
-                                    </CardTitle>
-                                    <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800">
-                                        {streamingQuestions.length} Found
-                                    </Badge>
+                                <CardHeader className="py-4 border-b">
+                                    <CardTitle className="text-lg">Extracted Questions</CardTitle>
                                 </CardHeader>
                                 
                                 <div className="flex-1 flex flex-col p-4">
@@ -1630,25 +1819,27 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
-                                        onClick={handleDownloadJSON}
-                                        className="gap-2"
-                                        title="Download raw JSON for debugging"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                        JSON
-                                    </Button>
-                                    <Button
-                                        variant="outline"
                                         onClick={() => { setParsedData(null); setMode(null); }}
                                     >
                                         Try Again
                                     </Button>
                                     <Button
                                         onClick={handleImport}
-                                        className="bg-green-600 hover:bg-green-700 font-bold gap-2"
+                                        className="bg-blue-600 hover:bg-blue-700 font-bold gap-2 text-white"
                                     >
-                                        <Check className="w-4 h-4" />
-                                        Import to Editor
+                                        <PenLine className="w-4 h-4" />
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        onClick={handleDirectSave}
+                                        disabled={savingTest}
+                                        className="bg-green-600 hover:bg-green-700 font-bold gap-2 text-white"
+                                    >
+                                        {savingTest ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                                        ) : (
+                                            <><Check className="w-4 h-4" /> Save & Continue</>
+                                        )}
                                     </Button>
                                 </div>
                             </div>
@@ -1813,7 +2004,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 ))}
                             </ScrollArea>
 
-                            {/* Generate More Questions Button */}
                             {files.length > 0 && mode && (
                                 <Card className="mt-4 border-dashed border-2 border-primary/30">
                                     <CardContent className="p-4">
@@ -1845,17 +2035,45 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             <div className="mt-8 mb-4 border-t pt-8 flex items-center justify-between">
                                 <div className="text-sm text-muted-foreground flex items-center gap-2">
                                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                                    Review complete? Send these questions to the editor to finalize.
+                                    <span>Review complete? Save directly or edit to customize.</span>
+                                    
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full">
+                                                <MoreVertical className="w-4 h-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start">
+                                            <DropdownMenuItem onClick={handleDownloadJSON} className="gap-2">
+                                                <Download className="w-4 h-4" />
+                                                Download raw JSON
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
-                                <Button
-                                    onClick={() => onImport && onImport(parsedData)}
-                                    size="lg"
-                                    className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md text-white font-medium px-8"
-                                >
-                                    <Sparkles className="w-5 h-5 text-amber-300" />
-                                    Continue to Test Builder
-                                    <ArrowLeft className="w-5 h-5 ml-1 rotate-180" />
-                                </Button>
+                                <div className="flex gap-3">
+                                    <Button
+                                        onClick={handleImport}
+                                        size="lg"
+                                        variant="outline"
+                                        className="gap-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 font-medium px-8"
+                                    >
+                                        <PenLine className="w-5 h-5" />
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        onClick={handleDirectSave}
+                                        disabled={savingTest}
+                                        size="lg"
+                                        className="gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md text-white font-medium px-8"
+                                    >
+                                        {savingTest ? (
+                                            <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</>
+                                        ) : (
+                                            <><Check className="w-5 h-5 text-emerald-200" /> Save & Continue</>
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </ErrorBoundary>
