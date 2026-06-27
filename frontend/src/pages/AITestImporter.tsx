@@ -128,6 +128,18 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     }
 }
 
+// Utility to recursively parse strings that might be JSON-encoded
+const ensureParsedObject = (val: any): any => {
+    if (typeof val === 'string') {
+        try {
+            return ensureParsedObject(JSON.parse(val));
+        } catch {
+            return val;
+        }
+    }
+    return val;
+};
+
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -182,7 +194,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             setLoadingHistory(true);
             try {
                 if (user) {
-                    // Authenticated: Sync guest history from localStorage
+                    // Check local storage for guest history to migrate
                     const guestHistoryStr = localStorage.getItem('guest_ai_history');
                     if (guestHistoryStr) {
                         try {
@@ -190,36 +202,68 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             if (Array.isArray(guestHistory) && guestHistory.length > 0) {
                                 // Upload guest history items to database
                                 const { saveAiHistory } = await import('@/lib/aiHistoryApi');
+                                let syncedCount = 0;
+                                const failedItems = [];
                                 for (const item of guestHistory) {
-                                    await saveAiHistory({
+                                    const { error } = await saveAiHistory({
                                         mode: item.mode,
                                         title: item.title,
                                         description: item.description,
                                         file_name: item.file_name,
                                         question_count: item.question_count,
-                                        parsed_data: item.parsed_data
+                                        parsed_data: ensureParsedObject(item.parsed_data)
                                     });
+                                    if (!error) {
+                                        syncedCount++;
+                                    } else {
+                                        failedItems.push(item);
+                                        console.error("Failed to sync history item to database:", error);
+                                    }
                                 }
-                                toast.success(`Synced ${guestHistory.length} local AI generations to your account!`);
+                                if (syncedCount > 0) {
+                                    toast.success(`Synced ${syncedCount} local AI generations to your account!`);
+                                }
+                                if (failedItems.length > 0) {
+                                    localStorage.setItem('guest_ai_history', JSON.stringify(failedItems));
+                                } else {
+                                    localStorage.removeItem('guest_ai_history');
+                                }
                             }
                         } catch (e) {
                             console.error("Error migrating guest AI history:", e);
-                        } finally {
-                            localStorage.removeItem('guest_ai_history');
                         }
                     }
 
                     // Fetch history from DB
                     const { fetchAiHistory } = await import('@/lib/aiHistoryApi');
                     const { data, error } = await fetchAiHistory();
-                    if (error) throw error;
-                    setHistoryItems(data || []);
+                    if (error) {
+                        const errorMsg = error.message || String(error);
+                        if (errorMsg.includes('relation "ai_generation_history" does not exist') || errorMsg.includes('does not exist')) {
+                            console.warn("Database table 'ai_generation_history' does not exist yet.");
+                        } else {
+                            throw error;
+                        }
+                    }
+                    const parsedDataList = (data || []).map((item: any) => ({
+                        ...item,
+                        parsed_data: ensureParsedObject(item.parsed_data)
+                    }));
+                    setHistoryItems(parsedDataList);
                 } else {
                     // Unauthenticated (Guest): Load from localStorage
                     const guestHistoryStr = localStorage.getItem('guest_ai_history');
                     if (guestHistoryStr) {
                         try {
-                            setHistoryItems(JSON.parse(guestHistoryStr));
+                            const parsedList = JSON.parse(guestHistoryStr);
+                            if (Array.isArray(parsedList)) {
+                                setHistoryItems(parsedList.map((item: any) => ({
+                                    ...item,
+                                    parsed_data: ensureParsedObject(item.parsed_data)
+                                })));
+                            } else {
+                                setHistoryItems([]);
+                            }
                         } catch {
                             setHistoryItems([]);
                         }
@@ -285,7 +329,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             try {
                 const { parsedData: restoredParsedData, mode: restoredMode } = JSON.parse(pendingDataStr);
                 if (restoredParsedData) {
-                    setParsedData(restoredParsedData);
+                    setParsedData(ensureParsedObject(restoredParsedData));
                     if (restoredMode) setMode(restoredMode);
                     toast.success("Restored your AI-generated questions!");
                 }
@@ -546,7 +590,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     };
 
     const handleSelectHistoryItem = (item: any) => {
-        setParsedData(item.parsed_data);
+        setParsedData(ensureParsedObject(item.parsed_data));
         if (item.mode) setMode(item.mode);
         toast.info(`Loaded generation: ${item.title || 'Untitled'}`);
     };
