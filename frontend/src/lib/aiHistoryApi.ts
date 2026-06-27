@@ -12,10 +12,31 @@ export interface AiHistoryItem {
     created_at?: string;
 }
 
+async function ensureSupabaseAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) return session.user;
+
+    const token = localStorage.getItem('testoza_token');
+    const refreshToken = localStorage.getItem('testoza_refresh_token') || '';
+    if (token) {
+        try {
+            const { data, error } = await supabase.auth.setSession({
+                access_token: token,
+                refresh_token: refreshToken
+            });
+            if (error) throw error;
+            return data.user;
+        } catch (e) {
+            console.error("Failed to sync session to Supabase client:", e);
+        }
+    }
+    return null;
+}
+
 // Fetch all AI history items for the logged-in user
 export async function fetchAiHistory() {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await ensureSupabaseAuth();
         if (!user) return { data: null, error: new Error('User not authenticated') };
 
         const { data, error } = await supabase
@@ -32,7 +53,7 @@ export async function fetchAiHistory() {
 // Save a new AI history item
 export async function saveAiHistory(item: Omit<AiHistoryItem, 'id' | 'user_id' | 'created_at'>) {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await ensureSupabaseAuth();
         if (!user) return { data: null, error: new Error('User not authenticated') };
 
         const { data, error } = await supabase
@@ -53,6 +74,9 @@ export async function saveAiHistory(item: Omit<AiHistoryItem, 'id' | 'user_id' |
 // Delete an AI history item
 export async function deleteAiHistory(id: string) {
     try {
+        const user = await ensureSupabaseAuth();
+        if (!user) return { error: new Error('User not authenticated') };
+
         const { error } = await supabase
             .from('ai_generation_history' as any)
             .delete()
