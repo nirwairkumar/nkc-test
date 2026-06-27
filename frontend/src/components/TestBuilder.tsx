@@ -2046,25 +2046,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                         <div className="flex items-center justify-between">
                                                                             <h4 className="font-bold text-sm">Attempt Control</h4>
                                                                             <Switch
-                                                                                checked={!!section.attempt_control}
+                                                                                checked={!!section.attempt_control?.enabled}
                                                                                 onCheckedChange={(checked) => {
                                                                                     if (checked) {
                                                                                         updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
                                                                                     } else {
-                                                                                        updateSection(sIdx, 'attempt_control', undefined);
+                                                                                        updateSection(sIdx, 'attempt_control', { enabled: false });
                                                                                     }
                                                                                 }}
                                                                             />
                                                                         </div>
 
-                                                                        {section.attempt_control && (
+                                                                        {section.attempt_control?.enabled && (
                                                                             <>
                                                                                 <div className="space-y-2">
                                                                                     <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
                                                                                     <Input
                                                                                         type="number"
                                                                                         value={section.attempt_control?.max_attempts || 0}
-                                                                                        onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
+                                                                                        onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, enabled: true, max_attempts: parseInt(e.target.value) || 1 })}
                                                                                         placeholder="e.g. 5"
                                                                                     />
                                                                                 </div>
@@ -2073,7 +2073,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
                                                                                     <RadioGroup
                                                                                         value={section.attempt_control?.mode || 'hard'}
-                                                                                        onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
+                                                                                        onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, enabled: true, mode: val })}
                                                                                         className="flex gap-4"
                                                                                     >
                                                                                         <div className="flex items-center space-x-2">
@@ -2092,7 +2092,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
                                                                                         <RadioGroup
                                                                                             value={section.attempt_control?.soft_type || 'first_n'}
-                                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
+                                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, enabled: true, soft_type: val })}
                                                                                             className="flex flex-col gap-2"
                                                                                         >
                                                                                             <div className="flex items-center space-x-2">
