@@ -1339,7 +1339,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     </div>
 
                     {/* Main Upload Page Container */}
-                    <div className="container mx-auto px-4 max-w-2xl py-10 flex-1 flex flex-col justify-center">
+                    <div className="container mx-auto px-4 max-w-2xl pt-4 pb-12 flex-1 flex flex-col justify-start">
                         {/* Header */}
                         <div className="text-center mb-8 space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>
@@ -1446,9 +1446,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                         {/* ── Divider ── */}
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">or</span>
-                            <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800" />
+                            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-700" />
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">or</span>
+                            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-700" />
                         </div>
 
                         {/* ── Manual Creation Card ── */}
