@@ -1163,74 +1163,74 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
                                 {/* Extract Mode */}
-                                <Card
-                                    className="cursor-pointer border border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between"
-                                    onClick={() => handleProcess('extract')}
-                                >
-                                    <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
-                                        <div className="space-y-4 flex-1">
-                                            <div className="w-14 h-14 mx-auto rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                                <div className="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 dark:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between">
+                                    <div className="border-beam-gradient-blue" />
+                                    <Card
+                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
+                                        onClick={() => handleProcess('extract')}
+                                    >
+                                        <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
+                                            <div className="space-y-4 flex-1">
+                                                <div className="w-14 h-14 mx-auto rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                    <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Extract Questions</h3>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                                        Extract exact questions, options, and diagrams from the exam paper as-is
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5 justify-center">
+                                                    <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                        Best for: Exam papers, question banks
+                                                    </Badge>
+                                                    <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
+                                                        <Zap className="w-2.5 h-2.5 mr-0.5" />
+                                                        ULTRA-FAST
+                                                    </Badge>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Extract Questions</h3>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                                    Extract exact questions, options, and diagrams from the exam paper as-is
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5 justify-center">
-                                                <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                                    Best for: Exam papers, question banks
-                                                </Badge>
-                                                <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
-                                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
-                                                    ULTRA-FAST
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                        <div className="w-full border-beam-container p-[1.5px] rounded-xl mt-2 shadow-sm">
-                                            <div className="border-beam-gradient-blue" />
-                                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-[11px] py-2 border-0 relative z-10 transition-all duration-200 group-hover:scale-[1.01] overflow-hidden">
+                                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200">
                                                 Extract Questions →
                                             </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                </div>
 
                                 {/* Generate Mode */}
-                                <Card
-                                    className="cursor-pointer border border-slate-200 dark:border-slate-800 hover:border-purple-500 dark:hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/5 hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between"
-                                    onClick={() => handleProcess('generate')}
-                                >
-                                    <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
-                                        <div className="space-y-4 flex-1">
-                                            <div className="w-14 h-14 mx-auto rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                <div className="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 dark:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between">
+                                    <div className="border-beam-gradient-purple" />
+                                    <Card
+                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
+                                        onClick={() => handleProcess('generate')}
+                                    >
+                                        <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
+                                            <div className="space-y-4 flex-1">
+                                                <div className="w-14 h-14 mx-auto rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                    <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Generate New Questions</h3>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                                        AI creates original questions based on the content and topics in the document
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5 justify-center">
+                                                    <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                        Best for: Textbooks, notes, study material
+                                                    </Badge>
+                                                    <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
+                                                        <Zap className="w-2.5 h-2.5 mr-0.5" />
+                                                        ULTRA-FAST
+                                                    </Badge>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Generate New Questions</h3>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                                    AI creates original questions based on the content and topics in the document
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5 justify-center">
-                                                <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                                    Best for: Textbooks, notes, study material
-                                                </Badge>
-                                                <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
-                                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
-                                                    ULTRA-FAST
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                        <div className="w-full border-beam-container p-[1.5px] rounded-xl mt-2 shadow-sm">
-                                            <div className="border-beam-gradient-purple" />
-                                            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-[11px] py-2 border-0 relative z-10 transition-all duration-200 group-hover:scale-[1.01] overflow-hidden">
+                                            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200">
                                                 Generate Questions →
                                             </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </div>
                         </>
                     )}
