@@ -55,7 +55,7 @@ async function ensureSupabaseAuth() {
     return null;
 }
 
-// Fetch AI history items metadata for the logged-in user only (performance-optimized, excludes parsed_data)
+// Fetch AI history items metadata for the logged-in user only (performance-optimized, only title and question_count)
 export async function fetchAiHistory() {
     try {
         const user = await ensureSupabaseAuth();
@@ -63,7 +63,7 @@ export async function fetchAiHistory() {
 
         const { data, error } = await supabase
             .from('ai_generation_history' as any)
-            .select('id, user_id, mode, title, description, file_name, question_count, created_at')
+            .select('id, title, question_count')
             .eq('user_id', user.id)          // explicit user-scoped filter
             .order('created_at', { ascending: false });
 

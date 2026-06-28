@@ -1330,33 +1330,26 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 handleSelectHistoryItem(item);
                                             }
                                         }}
-                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative"
+                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative pr-10"
                                     >
                                         <div className="min-w-0 flex-1">
                                             <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
                                                 {item.title || 'AI Generated Test'}
                                             </p>
-                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5">
-                                                {item.mode === 'extract' ? '📥 Extracted' : '✨ Generated'}
-                                                <span>•</span>
-                                                {item.question_count} Qs
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                                {item.question_count} Questions
                                             </p>
-                                            {item.file_name && (
-                                                <p className="text-[9px] text-slate-400/80 truncate mt-0.5 flex items-center gap-1 max-w-[170px]">
-                                                    📄 {item.file_name}
-                                                </p>
-                                            )}
                                         </div>
-                                        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                                        <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-opacity"
+                                                        className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
                                                         title="Options"
                                                     >
-                                                        <MoreVertical className="w-3.5 h-3.5" />
+                                                        <MoreVertical className="w-4 h-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-40">
@@ -1437,7 +1430,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 {historyItems.map((item, idx) => (
                                                     <div
                                                         key={item.id || idx}
-                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative"
+                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative pr-10"
                                                     >
                                                         <SheetClose asChild>
                                                             <div
@@ -1455,29 +1448,22 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                 <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
                                                                     {item.title || 'AI Generated Test'}
                                                                 </p>
-                                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1.5">
-                                                                    {item.mode === 'extract' ? '📥 Extracted' : '✨ Generated'}
-                                                                    <span>•</span>
-                                                                    {item.question_count} Qs
+                                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                                                                    {item.question_count} Questions
                                                                 </p>
-                                                                {item.file_name && (
-                                                                    <p className="text-[9px] text-slate-400/80 truncate mt-0.5 flex items-center gap-1 max-w-[170px]">
-                                                                        📄 {item.file_name}
-                                                                    </p>
-                                                                )}
                                                             </div>
                                                         </SheetClose>
                                                         
-                                                        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                                                        <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-opacity"
+                                                                        className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
                                                                         title="Options"
                                                                     >
-                                                                        <MoreVertical className="w-3.5 h-3.5" />
+                                                                        <MoreVertical className="w-4 h-4" />
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end" className="w-40">
