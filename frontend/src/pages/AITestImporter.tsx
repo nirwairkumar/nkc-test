@@ -1305,7 +1305,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         </div>
                     </div>
 
-                    <ScrollArea className="flex-1 p-2">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
                         {loadingHistory ? (
                             <div className="flex items-center justify-center p-8">
                                 <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
@@ -1330,59 +1330,54 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 handleSelectHistoryItem(item);
                                             }
                                         }}
-                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative pr-8 overflow-hidden"
+                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative pr-9 overflow-hidden"
                                     >
                                         <div className="min-w-0 flex-1">
-                                            <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                            <p className="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap overflow-hidden">
                                                 {item.title || 'AI Generated Test'}
                                             </p>
                                             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                                                 {item.question_count} Questions
                                             </p>
                                         </div>
-                                        <div className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-end pr-2 bg-gradient-to-l from-white group-hover:from-slate-100 dark:from-slate-950 dark:group-hover:from-slate-800/60 to-transparent z-10 pointer-events-none">
-                                            <div onClick={(e) => e.stopPropagation()} className="pointer-events-auto">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
-                                                            title="Options"
-                                                        >
-                                                            <MoreVertical className="w-4 h-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-40">
-                                                        <DropdownMenuItem 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleDeleteHistoryItem(e, item.id, idx);
-                                                            }}
-                                                            className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                            Delete Item
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setShowClearAllConfirm(true);
-                                                            }}
-                                                            className="text-slate-700 dark:text-slate-350 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                            Clear All History
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
+                                        <div className="absolute right-7 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-white group-hover:to-slate-100 dark:to-slate-950 dark:group-hover:from-slate-800/60 z-10 pointer-events-none" />
+                                        <div 
+                                            onClick={(e) => e.stopPropagation()} 
+                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center"
+                                        >
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors flex items-center justify-center cursor-pointer">
+                                                    <MoreVertical className="w-4 h-4" />
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-40">
+                                                    <DropdownMenuItem 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteHistoryItem(e, item.id, idx);
+                                                        }}
+                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        Delete Item
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShowClearAllConfirm(true);
+                                                        }}
+                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                        Clear All History
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
-                    </ScrollArea>
+                    </div>
                 </div>
 
                 {/* Mobile Drawer (Sheet) Toggle / Sidebar closed Toggle */}
@@ -1417,7 +1412,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                             AI Import History
                                         </div>
                                     </div>
-                                    <ScrollArea className="flex-1 p-2">
+                                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
                                         {loadingHistory ? (
                                             <div className="flex items-center justify-center p-8">
                                                 <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
@@ -1432,7 +1427,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 {historyItems.map((item, idx) => (
                                                     <div
                                                         key={item.id || idx}
-                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative pr-8 overflow-hidden"
+                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative pr-9 overflow-hidden"
                                                     >
                                                         <SheetClose asChild>
                                                             <div
@@ -1447,7 +1442,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                 }}
                                                                 className="min-w-0 flex-1 cursor-pointer"
                                                             >
-                                                                <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                                                <p className="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap overflow-hidden">
                                                                     {item.title || 'AI Generated Test'}
                                                                 </p>
                                                                 <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
@@ -1456,49 +1451,44 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                             </div>
                                                         </SheetClose>
                                                         
-                                                        <div className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-end pr-2 bg-gradient-to-l from-white group-hover:from-slate-100 dark:from-slate-950 dark:group-hover:from-slate-800/60 to-transparent z-10 pointer-events-none">
-                                                            <div onClick={(e) => e.stopPropagation()} className="pointer-events-auto">
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger asChild>
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
-                                                                            title="Options"
-                                                                        >
-                                                                            <MoreVertical className="w-4 h-4" />
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent align="end" className="w-40">
-                                                                        <DropdownMenuItem 
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleDeleteHistoryItem(e, item.id, idx);
-                                                                            }}
-                                                                            className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                        >
-                                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                                            Delete Item
-                                                                        </DropdownMenuItem>
-                                                                        <DropdownMenuItem 
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setShowClearAllConfirm(true);
-                                                                            }}
-                                                                            className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                        >
-                                                                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                                            Clear All History
-                                                                        </DropdownMenuItem>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
-                                                            </div>
+                                                        <div className="absolute right-7 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-white group-hover:to-slate-100 dark:to-slate-950 dark:group-hover:from-slate-800/60 z-10 pointer-events-none" />
+                                                        <div 
+                                                            onClick={(e) => e.stopPropagation()} 
+                                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center"
+                                                        >
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors flex items-center justify-center cursor-pointer">
+                                                                    <MoreVertical className="w-4 h-4" />
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-40">
+                                                                    <DropdownMenuItem 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteHistoryItem(e, item.id, idx);
+                                                                        }}
+                                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                        Delete Item
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setShowClearAllConfirm(true);
+                                                                        }}
+                                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                                        Clear All History
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
-                                    </ScrollArea>
+                                    </div>
                                 </SheetContent>
                             </Sheet>
                         </div>
