@@ -606,10 +606,39 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         }
     };
 
-    const handleSelectHistoryItem = (item: any) => {
-        setParsedData(ensureParsedObject(item.parsed_data));
-        if (item.mode) setMode(item.mode);
-        toast.info(`Loaded generation: ${item.title || 'Untitled'}`);
+    const handleSelectHistoryItem = async (item: any) => {
+        if (user && item.id && !item.parsed_data) {
+            const loadToastId = toast.loading("Loading generation data...");
+            try {
+                const { fetchAiHistoryItemById } = await import('@/lib/aiHistoryApi');
+                const { data, error } = await fetchAiHistoryItemById(item.id);
+                if (error) throw error;
+                if (data) {
+                    const parsedItem = {
+                        ...data,
+                        parsed_data: ensureParsedObject(data.parsed_data)
+                    };
+                    // Cache the fetched full item in state
+                    setHistoryItems(prev => prev.map(h => h.id === item.id ? parsedItem : h));
+                    
+                    setParsedData(parsedItem.parsed_data);
+                    if (data.mode) setMode(data.mode);
+                    toast.dismiss(loadToastId);
+                    toast.success(`Loaded generation: ${data.title || 'Untitled'}`);
+                } else {
+                    toast.dismiss(loadToastId);
+                    toast.error("Failed to load generation data.");
+                }
+            } catch (err) {
+                console.error("Failed to load history item by id:", err);
+                toast.dismiss(loadToastId);
+                toast.error("Failed to load generation data.");
+            }
+        } else {
+            setParsedData(ensureParsedObject(item.parsed_data));
+            if (item.mode) setMode(item.mode);
+            toast.info(`Loaded generation: ${item.title || 'Untitled'}`);
+        }
     };
 
     const handleDeleteHistoryItem = async (e: React.MouseEvent, id: string, index: number) => {
@@ -1265,17 +1294,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             <span className="truncate">AI Import History</span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                            {historyItems.length > 0 && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    title="Clear all history"
-                                    className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                    onClick={() => setShowClearAllConfirm(true)}
-                                >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                            )}
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -1335,13 +1353,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700/50 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-opacity"
                                                         title="Options"
                                                     >
                                                         <MoreVertical className="w-3.5 h-3.5" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-32">
+                                                <DropdownMenuContent align="end" className="w-40">
                                                     <DropdownMenuItem 
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -1350,7 +1368,17 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                         className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5" />
-                                                        Delete
+                                                        Delete Item
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShowClearAllConfirm(true);
+                                                        }}
+                                                        className="text-slate-700 dark:text-slate-350 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                        Clear All History
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
@@ -1393,17 +1421,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                             <History className="w-4 h-4 text-indigo-500" />
                                             AI Import History
                                         </div>
-                                        {historyItems.length > 0 && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                title="Clear all history"
-                                                className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                                onClick={() => setShowClearAllConfirm(true)}
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
-                                        )}
                                     </div>
                                     <ScrollArea className="flex-1 p-2">
                                         {loadingHistory ? (
@@ -1444,7 +1461,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                     {item.question_count} Qs
                                                                 </p>
                                                                 {item.file_name && (
-                                                                    <p className="text-[9px] text-slate-400/80 truncate mt-0.5 flex items-center gap-1 max-w-[190px]">
+                                                                    <p className="text-[9px] text-slate-400/80 truncate mt-0.5 flex items-center gap-1 max-w-[170px]">
                                                                         📄 {item.file_name}
                                                                     </p>
                                                                 )}
@@ -1457,13 +1474,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700/50 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-opacity"
                                                                         title="Options"
                                                                     >
                                                                         <MoreVertical className="w-3.5 h-3.5" />
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className="w-32">
+                                                                <DropdownMenuContent align="end" className="w-40">
                                                                     <DropdownMenuItem 
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
@@ -1472,7 +1489,17 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                         className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
                                                                     >
                                                                         <Trash2 className="w-3.5 h-3.5" />
-                                                                        Delete
+                                                                        Delete Item
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setShowClearAllConfirm(true);
+                                                                        }}
+                                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                                        Clear All History
                                                                     </DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>

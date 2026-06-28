@@ -55,7 +55,7 @@ async function ensureSupabaseAuth() {
     return null;
 }
 
-// Fetch AI history items for the logged-in user only (explicit user_id filter + RLS)
+// Fetch AI history items metadata for the logged-in user only (performance-optimized, excludes parsed_data)
 export async function fetchAiHistory() {
     try {
         const user = await ensureSupabaseAuth();
@@ -63,9 +63,28 @@ export async function fetchAiHistory() {
 
         const { data, error } = await supabase
             .from('ai_generation_history' as any)
-            .select('*')
+            .select('id, user_id, mode, title, description, file_name, question_count, created_at')
             .eq('user_id', user.id)          // explicit user-scoped filter
             .order('created_at', { ascending: false });
+
+        return { data, error };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
+
+// Fetch a single AI history item by ID including its full parsed_data payload
+export async function fetchAiHistoryItemById(id: string) {
+    try {
+        const user = await ensureSupabaseAuth();
+        if (!user) return { data: null, error: new Error('User not authenticated') };
+
+        const { data, error } = await supabase
+            .from('ai_generation_history' as any)
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', user.id)
+            .single();
 
         return { data, error };
     } catch (error: any) {
