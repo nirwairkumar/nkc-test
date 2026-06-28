@@ -1301,10 +1301,18 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         ) : (
                             <div className="space-y-1">
                                 {historyItems.map((item, idx) => (
-                                    <button
+                                    <div
                                         key={item.id || idx}
+                                        role="button"
+                                        tabIndex={0}
                                         onClick={() => handleSelectHistoryItem(item)}
-                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-start justify-between gap-2 transition-colors relative"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                handleSelectHistoryItem(item);
+                                            }
+                                        }}
+                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative"
                                     >
                                         <div className="min-w-0 flex-1">
                                             <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
@@ -1321,16 +1329,33 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 </p>
                                             )}
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
-                                            className="opacity-0 group-hover:opacity-100 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-opacity shrink-0"
-                                            title="Delete this item"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </button>
+                                        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700/50 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                                        title="Options"
+                                                    >
+                                                        <MoreVertical className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-32">
+                                                    <DropdownMenuItem 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteHistoryItem(e, item.id, idx);
+                                                        }}
+                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -1393,12 +1418,23 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         ) : (
                                             <div className="space-y-1">
                                                 {historyItems.map((item, idx) => (
-                                                    <SheetClose asChild key={item.id || idx}>
-                                                        <button
-                                                            onClick={() => handleSelectHistoryItem(item)}
-                                                            className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-start justify-between gap-2 transition-colors relative"
-                                                        >
-                                                            <div className="min-w-0 flex-1">
+                                                    <div
+                                                        key={item.id || idx}
+                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative"
+                                                    >
+                                                        <SheetClose asChild>
+                                                            <div
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                onClick={() => handleSelectHistoryItem(item)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                        e.preventDefault();
+                                                                        handleSelectHistoryItem(item);
+                                                                    }
+                                                                }}
+                                                                className="min-w-0 flex-1 cursor-pointer"
+                                                            >
                                                                 <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
                                                                     {item.title || 'AI Generated Test'}
                                                                 </p>
@@ -1413,17 +1449,35 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                     </p>
                                                                 )}
                                                             </div>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
-                                                                className="opacity-0 group-hover:opacity-100 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-opacity shrink-0"
-                                                                title="Delete this item"
-                                                            >
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </Button>
-                                                        </button>
-                                                    </SheetClose>
+                                                        </SheetClose>
+                                                        
+                                                        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-7 w-7 text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700/50 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                                                        title="Options"
+                                                                    >
+                                                                        <MoreVertical className="w-3.5 h-3.5" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-32">
+                                                                    <DropdownMenuItem 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteHistoryItem(e, item.id, idx);
+                                                                        }}
+                                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                        Delete
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}

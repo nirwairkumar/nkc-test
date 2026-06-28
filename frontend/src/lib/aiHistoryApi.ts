@@ -13,21 +13,43 @@ export interface AiHistoryItem {
 }
 
 async function ensureSupabaseAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) return session.user;
-
     const token = localStorage.getItem('testoza_token');
     const refreshToken = localStorage.getItem('testoza_refresh_token') || '';
-    if (token) {
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    // If there is no token in localStorage, make sure Supabase is signed out
+    if (!token) {
+        if (session) {
+            await supabase.auth.signOut();
+        }
+        return null;
+    }
+
+    // If the active session matches the current token, return the user
+    if (session && session.access_token === token) {
+        return session.user;
+    }
+
+    // If session access token doesn't match or session doesn't exist, synchronize it
+    try {
+        const { data, error } = await supabase.auth.setSession({
+            access_token: token,
+            refresh_token: refreshToken
+        });
+        if (error) throw error;
+        return data.user;
+    } catch (e) {
+        console.error("Failed to sync session to Supabase client:", e);
+        // Fallback: decode JWT to extract user id in case setSession fails
         try {
-            const { data, error } = await supabase.auth.setSession({
-                access_token: token,
-                refresh_token: refreshToken
-            });
-            if (error) throw error;
-            return data.user;
-        } catch (e) {
-            console.error("Failed to sync session to Supabase client:", e);
+            const payloadBase64 = token.split('.')[1];
+            const decodedPayload = JSON.parse(atob(payloadBase64));
+            if (decodedPayload && decodedPayload.sub) {
+                return { id: decodedPayload.sub };
+            }
+        } catch (jwtErr) {
+            console.error("Failed to parse JWT fallback:", jwtErr);
         }
     }
     return null;
