@@ -33,7 +33,7 @@ async function ensureSupabaseAuth() {
     return null;
 }
 
-// Fetch all AI history items for the logged-in user
+// Fetch AI history items for the logged-in user only (explicit user_id filter + RLS)
 export async function fetchAiHistory() {
     try {
         const user = await ensureSupabaseAuth();
@@ -42,6 +42,7 @@ export async function fetchAiHistory() {
         const { data, error } = await supabase
             .from('ai_generation_history' as any)
             .select('*')
+            .eq('user_id', user.id)          // explicit user-scoped filter
             .order('created_at', { ascending: false });
 
         return { data, error };
@@ -50,7 +51,7 @@ export async function fetchAiHistory() {
     }
 }
 
-// Save a new AI history item
+// Save a new AI history item (always stamped with the current user's id)
 export async function saveAiHistory(item: Omit<AiHistoryItem, 'id' | 'user_id' | 'created_at'>) {
     try {
         const user = await ensureSupabaseAuth();
@@ -71,7 +72,7 @@ export async function saveAiHistory(item: Omit<AiHistoryItem, 'id' | 'user_id' |
     }
 }
 
-// Delete an AI history item
+// Delete a single AI history item (user_id guard + RLS)
 export async function deleteAiHistory(id: string) {
     try {
         const user = await ensureSupabaseAuth();
@@ -80,7 +81,25 @@ export async function deleteAiHistory(id: string) {
         const { error } = await supabase
             .from('ai_generation_history' as any)
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('user_id', user.id);         // prevent cross-user deletion
+
+        return { error };
+    } catch (error: any) {
+        return { error };
+    }
+}
+
+// Delete ALL AI history items for the logged-in user
+export async function deleteAllAiHistory() {
+    try {
+        const user = await ensureSupabaseAuth();
+        if (!user) return { error: new Error('User not authenticated') };
+
+        const { error } = await supabase
+            .from('ai_generation_history' as any)
+            .delete()
+            .eq('user_id', user.id);
 
         return { error };
     } catch (error: any) {

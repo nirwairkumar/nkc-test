@@ -6,6 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { Input } from "@/components/ui/input";
 import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2, MoreVertical, PenLine, History, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -182,6 +192,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [historyItems, setHistoryItems] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+    const [clearingAllHistory, setClearingAllHistory] = useState(false);
 
     // Fetch feature flags
     useEffect(() => {
@@ -626,6 +638,29 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             } catch (err) {
                 console.error("Failed to delete guest history item:", err);
             }
+        }
+    };
+
+    const handleClearAllHistory = async () => {
+        setClearingAllHistory(true);
+        try {
+            if (user) {
+                const { deleteAllAiHistory } = await import('@/lib/aiHistoryApi');
+                const { error } = await deleteAllAiHistory();
+                if (error) throw error;
+                setHistoryItems([]);
+                toast.success("All AI history cleared.");
+            } else {
+                localStorage.removeItem('guest_ai_history');
+                setHistoryItems([]);
+                toast.success("All AI history cleared.");
+            }
+        } catch (err: any) {
+            console.error("Failed to clear all history:", err);
+            toast.error("Failed to clear history.");
+        } finally {
+            setClearingAllHistory(false);
+            setShowClearAllConfirm(false);
         }
     };
 
@@ -1192,25 +1227,64 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     keywords={["ai test generator", "pdf to quiz", "image to quiz", "exam maker ai"]}
                 />
 
+                {/* Clear All History Confirmation Dialog */}
+                <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Clear all AI history?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all {historyItems.length} generation{historyItems.length !== 1 ? 's' : ''} from your history. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={clearingAllHistory}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={handleClearAllHistory}
+                                disabled={clearingAllHistory}
+                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                            >
+                                {clearingAllHistory ? (
+                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Clearing...</>
+                                ) : (
+                                    'Clear all'
+                                )}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
                 {/* Desktop History Sidebar (ChatGPT style) */}
                 <div 
                     className={`shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-all duration-300 flex flex-col ${
                         sidebarOpen ? 'w-64' : 'w-0 overflow-hidden border-r-0'
                     } hidden md:flex`}
                 >
-                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                            <History className="w-4 h-4 text-indigo-500" />
-                            AI Import History
+                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm min-w-0">
+                            <History className="w-4 h-4 text-indigo-500 shrink-0" />
+                            <span className="truncate">AI Import History</span>
                         </div>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-slate-400 hover:text-slate-600"
-                            onClick={() => setSidebarOpen(false)}
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1 shrink-0">
+                            {historyItems.length > 0 && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Clear all history"
+                                    className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                    onClick={() => setShowClearAllConfirm(true)}
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                            )}
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 text-slate-400 hover:text-slate-600"
+                                onClick={() => setSidebarOpen(false)}
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
 
                     <ScrollArea className="flex-1 p-2">
@@ -1219,8 +1293,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
                             </div>
                         ) : historyItems.length === 0 ? (
-                            <div className="text-center p-4 text-xs text-slate-400 dark:text-slate-500">
-                                No past generations
+                            <div className="text-center p-6 text-xs text-slate-400 dark:text-slate-500 space-y-1">
+                                <History className="w-6 h-6 mx-auto mb-2 opacity-30" />
+                                <p>No past generations</p>
+                                <p className="text-[10px]">Your AI-generated tests will appear here</p>
                             </div>
                         ) : (
                             <div className="space-y-1">
@@ -1249,7 +1325,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                             variant="ghost"
                                             size="icon"
                                             onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
-                                            className="opacity-0 group-hover:opacity-100 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-opacity"
+                                            className="opacity-0 group-hover:opacity-100 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-opacity shrink-0"
+                                            title="Delete this item"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </Button>
@@ -1286,9 +1363,22 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     </Button>
                                 </SheetTrigger>
                                 <SheetContent side="left" className="w-72 p-0 flex flex-col bg-white dark:bg-slate-950">
-                                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                                        <History className="w-4 h-4 text-indigo-500" />
-                                        AI Import History
+                                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
+                                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm">
+                                            <History className="w-4 h-4 text-indigo-500" />
+                                            AI Import History
+                                        </div>
+                                        {historyItems.length > 0 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                title="Clear all history"
+                                                className="h-7 w-7 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                                onClick={() => setShowClearAllConfirm(true)}
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </Button>
+                                        )}
                                     </div>
                                     <ScrollArea className="flex-1 p-2">
                                         {loadingHistory ? (
@@ -1296,8 +1386,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
                                             </div>
                                         ) : historyItems.length === 0 ? (
-                                            <div className="text-center p-4 text-xs text-slate-400 dark:text-slate-500">
-                                                No past generations
+                                            <div className="text-center p-6 text-xs text-slate-400 dark:text-slate-500 space-y-1">
+                                                <History className="w-6 h-6 mx-auto mb-2 opacity-30" />
+                                                <p>No past generations</p>
                                             </div>
                                         ) : (
                                             <div className="space-y-1">
@@ -1326,7 +1417,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
-                                                                className="h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                                                className="opacity-0 group-hover:opacity-100 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-opacity shrink-0"
+                                                                title="Delete this item"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
                                                             </Button>
