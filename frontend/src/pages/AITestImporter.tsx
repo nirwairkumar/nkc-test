@@ -1330,7 +1330,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 handleSelectHistoryItem(item);
                                             }
                                         }}
-                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative pr-10"
+                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative pr-8 overflow-hidden"
                                     >
                                         <div className="min-w-0 flex-1">
                                             <p className="font-semibold text-slate-700 dark:text-slate-300 truncate">
@@ -1340,41 +1340,43 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 {item.question_count} Questions
                                             </p>
                                         </div>
-                                        <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
-                                                        title="Options"
-                                                    >
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-40">
-                                                    <DropdownMenuItem 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteHistoryItem(e, item.id, idx);
-                                                        }}
-                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                        Delete Item
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShowClearAllConfirm(true);
-                                                        }}
-                                                        className="text-slate-700 dark:text-slate-350 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                        Clear All History
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                        <div className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-end pr-2 bg-gradient-to-l from-white group-hover:from-slate-100 dark:from-slate-950 dark:group-hover:from-slate-800/60 to-transparent z-10 pointer-events-none">
+                                            <div onClick={(e) => e.stopPropagation()} className="pointer-events-auto">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
+                                                            title="Options"
+                                                        >
+                                                            <MoreVertical className="w-4 h-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-40">
+                                                        <DropdownMenuItem 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteHistoryItem(e, item.id, idx);
+                                                            }}
+                                                            className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                            Delete Item
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setShowClearAllConfirm(true);
+                                                            }}
+                                                            className="text-slate-700 dark:text-slate-350 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                            Clear All History
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -1430,7 +1432,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                 {historyItems.map((item, idx) => (
                                                     <div
                                                         key={item.id || idx}
-                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative pr-10"
+                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative pr-8 overflow-hidden"
                                                     >
                                                         <SheetClose asChild>
                                                             <div
@@ -1454,41 +1456,43 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                             </div>
                                                         </SheetClose>
                                                         
-                                                        <div onClick={(e) => e.stopPropagation()} className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
-                                                                        title="Options"
-                                                                    >
-                                                                        <MoreVertical className="w-4 h-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className="w-40">
-                                                                    <DropdownMenuItem 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleDeleteHistoryItem(e, item.id, idx);
-                                                                        }}
-                                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                        Delete Item
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setShowClearAllConfirm(true);
-                                                                        }}
-                                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                                        Clear All History
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
+                                                        <div className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-end pr-2 bg-gradient-to-l from-white group-hover:from-slate-100 dark:from-slate-950 dark:group-hover:from-slate-800/60 to-transparent z-10 pointer-events-none">
+                                                            <div onClick={(e) => e.stopPropagation()} className="pointer-events-auto">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors"
+                                                                            title="Options"
+                                                                        >
+                                                                            <MoreVertical className="w-4 h-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" className="w-40">
+                                                                        <DropdownMenuItem 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleDeleteHistoryItem(e, item.id, idx);
+                                                                            }}
+                                                                            className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                            Delete Item
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem 
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setShowClearAllConfirm(true);
+                                                                            }}
+                                                                            className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                                            Clear All History
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 ))}
