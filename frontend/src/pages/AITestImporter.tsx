@@ -1382,7 +1382,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                 {/* Mobile Drawer (Sheet) Toggle / Sidebar closed Toggle */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <div className="p-4 flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950 md:border-b-0 md:bg-transparent">
+                    <div className={`flex items-center gap-2 bg-white dark:bg-slate-950 md:bg-transparent ${
+                        sidebarOpen 
+                            ? 'p-2 md:p-0 md:h-0 md:overflow-hidden border-b border-slate-100 dark:border-slate-800 md:border-b-0' 
+                            : 'p-2 md:py-3 md:px-4 border-b border-slate-100 dark:border-slate-800 md:border-b-0'
+                    }`}>
                         {/* Toggle sidebar button when closed */}
                         {!sidebarOpen && (
                             <Button
@@ -1495,9 +1499,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     </div>
 
                     {/* Main Upload Page Container */}
-                    <div className="container mx-auto px-4 max-w-2xl pt-4 pb-12 flex-1 flex flex-col justify-start">
+                    <div className="container mx-auto px-4 max-w-2xl pt-1 md:pt-4 pb-12 flex-1 flex flex-col justify-start">
                         {/* Header */}
-                        <div className="text-center mb-8 space-y-1">
+                        <div className="text-center mt-2 mb-6 md:mb-8 space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>
                             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
                                 Create a Test in Minutes
@@ -1611,13 +1615,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         <button
                             type="button"
                             onClick={() => { window.location.href = '/create-test'; }}
-                            className="w-full text-left bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl overflow-hidden flex items-stretch hover:shadow-xl hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 group"
-                            style={{ minHeight: '175px', maxHeight: '220px' }}
+                            className="w-full text-left bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl overflow-hidden flex items-stretch hover:shadow-xl hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 group min-h-[140px] sm:min-h-[175px] max-h-[220px]"
                         >
                             {/* Left: scaled-down showcase preview (centered, organized, and larger) */}
                             <div
-                                className="relative shrink-0 overflow-hidden bg-indigo-950/25 border-r border-white/10"
-                                style={{ width: '200px' }}
+                                className="relative shrink-0 overflow-hidden bg-indigo-950/25 border-r border-white/10 hidden sm:block w-[140px] md:w-[200px]"
                                 aria-hidden="true"
                             >
                                 {/* semi-transparent overlay so it blends with card */}
@@ -1692,7 +1694,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         const hasImages = files.some(f => f.type === 'image');
 
         return (
-            <div className="container mx-auto p-4 max-w-2xl">
+            <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-2xl">
                 <SEO
                     title="AI Test Generator - TestoZa"
                     description="Generate tests from PDF documents and images using AI."
@@ -1722,7 +1724,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 <div className="space-y-4">
                     {/* Files Preview - Clean List View */}
                     <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+                        <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-slate-100 dark:border-slate-800/80 flex flex-col xs:flex-row gap-2 items-stretch xs:items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
                             <div className="flex items-center gap-2">
                                 <Button
                                     variant="ghost"
@@ -1964,7 +1966,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const pipelineType = streamProgress?.data?.pipeline || 'hybrid';
 
             return (
-                <div className="container mx-auto p-4 max-w-6xl space-y-6">
+                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-6xl space-y-6">
                     <SEO
                         title="Extracting Exam Questions - TestoZa"
                         description="Extracting questions in real time using Hybrid OCR + Gemini."
@@ -2316,7 +2318,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const numericalCount = questions.filter(q => q.type === 'numerical').length;
 
             return (
-                <div className="container mx-auto p-4 max-w-4xl">
+                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-4xl">
                     <ErrorBoundary>
                         <div className="space-y-6 slide-in-from-bottom-5 animate-in duration-500">
                             {/* Header */}
@@ -2351,16 +2353,17 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                                     <Button
                                         variant="outline"
                                         onClick={() => { setParsedData(null); setMode(null); }}
+                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4"
                                     >
                                         Try Again
                                     </Button>
                                     <Button
                                         onClick={handleImport}
-                                        className="bg-blue-600 hover:bg-blue-700 font-bold gap-2 text-white"
+                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4 bg-blue-600 hover:bg-blue-700 font-bold gap-2 text-white"
                                     >
                                         <PenLine className="w-4 h-4" />
                                         Edit
@@ -2368,7 +2371,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     <Button
                                         onClick={handleDirectSave}
                                         disabled={savingTest}
-                                        className="bg-green-600 hover:bg-green-700 font-bold gap-2 text-white"
+                                        className="w-full sm:w-auto text-xs sm:text-sm px-2.5 sm:px-4 bg-green-600 hover:bg-green-700 font-bold gap-2 text-white"
                                     >
                                         {savingTest ? (
                                             <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
@@ -2474,7 +2477,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                                             {/* Options - Only show for single/multiple choice */}
                                             {q.type !== 'numerical' && q.options && Object.keys(q.options).length > 0 && (
-                                                <div className="space-y-2 ml-10 mt-2">
+                                                <div className="space-y-2 ml-2 sm:ml-10 mt-2">
                                                     <label className="text-xs font-semibold uppercase text-muted-foreground">Options</label>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         {Object.entries(q.options).map(([key, text]) => (
@@ -2518,7 +2521,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                                             {/* Numerical Answer Display */}
                                             {q.type === 'numerical' && (
-                                                <div className="ml-10 mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-800">
+                                                <div className="ml-2 sm:ml-10 mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-800">
                                                     <label className="text-xs font-semibold uppercase text-purple-600 dark:text-purple-400">Correct Answer (Numerical)</label>
                                                     <div className="text-lg font-mono mt-1 text-purple-800 dark:text-purple-200">
                                                         {formatCorrectAnswer(q)}
@@ -2528,7 +2531,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                                             {/* Unanswered Warning */}
                                             {!q.correctAnswer && (
-                                                <div className="ml-10">
+                                                <div className="ml-2 sm:ml-10">
                                                     <Badge variant="outline" className="text-orange-600 border-orange-300">
                                                         ⚠ Correct answer not detected — set it in the editor
                                                     </Badge>
@@ -2567,14 +2570,14 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             )}
 
                             {/* Proceed to test builder button */}
-                            <div className="mt-8 mb-4 border-t pt-8 flex items-center justify-between">
-                                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                            <div className="mt-8 mb-4 border-t pt-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
                                     <span>Review complete? Save directly or edit to customize.</span>
                                     
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full shrink-0">
                                                 <MoreVertical className="w-4 h-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
@@ -2586,26 +2589,26 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 w-full md:w-auto">
                                     <Button
                                         onClick={handleImport}
                                         size="lg"
                                         variant="outline"
-                                        className="gap-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 font-medium px-8"
+                                        className="flex-1 md:flex-none gap-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
                                     >
-                                        <PenLine className="w-5 h-5" />
+                                        <PenLine className="w-4 h-4 md:w-5 md:h-5" />
                                         Edit
                                     </Button>
                                     <Button
                                         onClick={handleDirectSave}
                                         disabled={savingTest}
                                         size="lg"
-                                        className="gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md text-white font-medium px-8"
+                                        className="flex-1 md:flex-none gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md text-white font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
                                     >
                                         {savingTest ? (
-                                            <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</>
+                                            <><Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> Saving...</>
                                         ) : (
-                                            <><Check className="w-5 h-5 text-emerald-200" /> Save & Continue</>
+                                            <><Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-200" /> Save & Continue</>
                                         )}
                                     </Button>
                                 </div>
