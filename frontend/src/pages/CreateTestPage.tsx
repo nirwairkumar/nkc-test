@@ -33,9 +33,6 @@ export default function CreateTestPage() {
     if (showImporter) {
         return (
             <div className="container mx-auto py-6">
-                <Button variant="ghost" onClick={() => setShowImporter(false)} className="mb-4">
-                    Back to Editor
-                </Button>
                 <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
                     <AITestImporter onImport={handleImport} />
                 </Suspense>
