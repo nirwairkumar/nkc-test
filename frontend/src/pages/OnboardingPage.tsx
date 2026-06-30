@@ -48,10 +48,14 @@ export default function OnboardingPage() {
     });
 
     useEffect(() => {
-        if (!loading && user) {
-            form.setValue('name', user.user_metadata?.full_name || '');
+        if (!loading) {
+            if (!user) {
+                navigate('/login', { replace: true });
+            } else {
+                form.setValue('name', user.user_metadata?.full_name || user.user_metadata?.name || '');
+            }
         }
-    }, [user, loading, form]);
+    }, [user, loading, form, navigate]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);

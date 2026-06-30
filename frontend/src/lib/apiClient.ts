@@ -141,13 +141,17 @@ apiClient.interceptors.response.use(
 
                 // Both strategies exhausted
                 throw new Error('All session recovery strategies exhausted');
-
             } catch (recoveryError) {
                 processQueue(recoveryError, null);
 
-                // Clean up stored tokens (they are definitely invalid now)
-                localStorage.removeItem('testoza_token');
-                localStorage.removeItem('testoza_refresh_token');
+                const status = (recoveryError as any)?.response?.status;
+                const isTransient = status === 500 || status === 502 || status === 503 || status === 504 || (!(recoveryError as any)?.response && (recoveryError as any)?.request);
+
+                if (!isTransient) {
+                    // Clean up stored tokens (they are definitely invalid now)
+                    localStorage.removeItem('testoza_token');
+                    localStorage.removeItem('testoza_refresh_token');
+                }
 
                 // ── Strategy C: Graceful event — NEVER hard-redirect ──────────────
                 // Dispatching an event lets the exam page catch this and show a

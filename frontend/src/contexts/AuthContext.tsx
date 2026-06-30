@@ -1,6 +1,10 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authApi } from '@/lib/authApi';
+import { supabase } from '@/integrations/supabase/client';
+
+// Shared initialization promise to prevent duplicate concurrent runs
+let initPromise: Promise<void> | null = null;
 
 type AuthContextType = {
     session: any | null;
@@ -121,99 +125,180 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const initializeAuth = async () => {
-        setLoading(true);
-        try {
-            // 1. Check for password recovery tokens in URL hash (from password reset links)
-            // OAuth tokens are now handled by the /auth/callback page
-            const hash = window.location.hash;
-            if (hash) {
-                const params = new URLSearchParams(hash.substring(1));
-                const accessToken = params.get('access_token');
-                const refreshToken = params.get('refresh_token');
-                const type = params.get('type');
+        if (initPromise) {
+            return initPromise;
+        }
 
-                if (accessToken) {
-                    localStorage.setItem('testoza_token', accessToken);
-                    if (refreshToken) {
-                        localStorage.setItem('testoza_refresh_token', refreshToken);
-                    }
-                    window.history.replaceState(null, '', window.location.pathname);
-                    
-                    if (type === 'recovery') {
-                        window.location.href = '/update-password';
-                        return;
+        initPromise = (async () => {
+            setLoading(true);
+            try {
+                // 1. Check for password recovery tokens in URL hash (from password reset links)
+                const hash = window.location.hash;
+                if (hash) {
+                    const params = new URLSearchParams(hash.substring(1));
+                    const accessToken = params.get('access_token');
+                    const refreshToken = params.get('refresh_token');
+                    const type = params.get('type');
+
+                    if (accessToken) {
+                        localStorage.setItem('testoza_token', accessToken);
+                        if (refreshToken) {
+                            localStorage.setItem('testoza_refresh_token', refreshToken);
+                        }
+                        window.history.replaceState(null, '', window.location.pathname);
+                        
+                        if (type === 'recovery') {
+                            window.location.href = '/update-password';
+                            return;
+                        }
                     }
                 }
-            }
 
-            // 2. Load from localStorage
-            const token = localStorage.getItem('testoza_token');
-            if (token) {
-                try {
-                    let userId: string | undefined;
+                // 2. Load from localStorage
+                const token = localStorage.getItem('testoza_token');
+                if (token) {
                     try {
-                        const payloadBase64 = token.split('.')[1];
-                        const decodedPayload = JSON.parse(atob(payloadBase64));
-                        userId = decodedPayload.sub;
-                    } catch (err) {
-                        console.warn("Failed to parse JWT payload client-side:", err);
-                    }
-
-                    if (userId) {
-                        // Parallelize: authApi.getMe(), profile details, and admin status
-                        const [meResponse, profileData] = await Promise.all([
-                            authApi.getMe(),
-                            fetchProfileData(userId),
-                            checkAdminStatus(userId)
-                        ]);
-
-                        if (meResponse.data?.user) {
-                            const userData = meResponse.data.user;
-                            setUser(userData);
-                            // Build a minimal session object for compatibility
-                            setSession({ user: userData, access_token: token });
-
-                            // checkPremiumStatus uses the preloaded profileData to prevent a duplicate fetch
-                            await checkPremiumStatus(userData.id, profileData);
-                        } else {
-                            throw new Error("No user in response");
+                        let userId: string | undefined;
+                        try {
+                            const payloadBase64 = token.split('.')[1];
+                            const decodedPayload = JSON.parse(atob(payloadBase64));
+                            userId = decodedPayload.sub;
+                        } catch (err) {
+                            console.warn("Failed to parse JWT payload client-side:", err);
                         }
-                    } else {
-                        // Fallback to sequential flow if token parsing fails
-                        const response = await authApi.getMe();
-                        if (response.data?.user) {
-                            const userData = response.data.user;
-                            setUser(userData);
-                            setSession({ user: userData, access_token: token });
 
-                            const profileData = await fetchProfileData(userData.id);
-                            await Promise.all([
-                                checkAdminStatus(userData.id),
-                                checkPremiumStatus(userData.id, profileData)
+                        if (userId) {
+                            // Parallelize: authApi.getMe(), profile details, and admin status
+                            const [meResponse, profileData] = await Promise.all([
+                                authApi.getMe(),
+                                fetchProfileData(userId),
+                                checkAdminStatus(userId)
                             ]);
+
+                            if (meResponse.data?.user) {
+                                const userData = meResponse.data.user;
+                                setUser(userData);
+                                setSession({ user: userData, access_token: token });
+
+                                // Sync back into Supabase client SDK so its internal session stays warm
+                                try {
+                                    const refreshToken = localStorage.getItem('testoza_refresh_token');
+                                    if (refreshToken) {
+                                        await supabase.auth.setSession({
+                                            access_token: token,
+                                            refresh_token: refreshToken
+                                        });
+                                    }
+                                } catch (sdkErr) {
+                                    console.warn("Failed to sync session to Supabase SDK:", sdkErr);
+                                }
+
+                                // Frontend Auto-Provisioning: if profile is missing (404), create it using JWT metadata
+                                let activeProfile = profileData;
+                                if (!activeProfile) {
+                                    console.log("Profile not found in database. Auto-provisioning from frontend...");
+                                    try {
+                                        const { updateProfile } = await import('@/lib/usersApi');
+                                        const provisionRes = await updateProfile(userData.id, {
+                                            email: userData.email,
+                                            full_name: userData.user_metadata?.full_name || userData.user_metadata?.name || '',
+                                            avatar_url: userData.user_metadata?.avatar_url || userData.user_metadata?.picture || ''
+                                        });
+                                        if (provisionRes.data) {
+                                            activeProfile = provisionRes.data;
+                                            setProfile(activeProfile);
+                                            console.log("Profile auto-provisioned successfully:", activeProfile);
+                                        }
+                                    } catch (provErr) {
+                                        console.error("Failed to auto-provision profile from frontend:", provErr);
+                                    }
+                                }
+
+                                // checkPremiumStatus uses the preloaded profileData to prevent a duplicate fetch
+                                await checkPremiumStatus(userData.id, activeProfile);
+                            } else {
+                                throw new Error("No user in response");
+                            }
                         } else {
-                            throw new Error("No user in response");
+                            // Fallback to sequential flow if token parsing fails
+                            const response = await authApi.getMe();
+                            if (response.data?.user) {
+                                const userData = response.data.user;
+                                setUser(userData);
+                                setSession({ user: userData, access_token: token });
+
+                                // Sync back into Supabase client SDK so its internal session stays warm
+                                try {
+                                    const refreshToken = localStorage.getItem('testoza_refresh_token');
+                                    if (refreshToken) {
+                                        await supabase.auth.setSession({
+                                            access_token: token,
+                                            refresh_token: refreshToken
+                                        });
+                                    }
+                                } catch (sdkErr) {
+                                    console.warn("Failed to sync session to Supabase SDK:", sdkErr);
+                                }
+
+                                let profileData = await fetchProfileData(userData.id);
+                                
+                                // Frontend Auto-Provisioning fallback
+                                if (!profileData) {
+                                    console.log("Profile not found. Auto-provisioning from frontend (sequential path)...");
+                                    try {
+                                        const { updateProfile } = await import('@/lib/usersApi');
+                                        const provisionRes = await updateProfile(userData.id, {
+                                            email: userData.email,
+                                            full_name: userData.user_metadata?.full_name || userData.user_metadata?.name || '',
+                                            avatar_url: userData.user_metadata?.avatar_url || userData.user_metadata?.picture || ''
+                                        });
+                                        if (provisionRes.data) {
+                                            profileData = provisionRes.data;
+                                            setProfile(profileData);
+                                            console.log("Profile auto-provisioned successfully:", profileData);
+                                        }
+                                    } catch (provErr) {
+                                        console.error("Failed to auto-provision profile from frontend:", provErr);
+                                    }
+                                }
+
+                                await Promise.all([
+                                    checkAdminStatus(userData.id),
+                                    checkPremiumStatus(userData.id, profileData)
+                                ]);
+                            } else {
+                                throw new Error("No user in response");
+                            }
+                        }
+                    } catch (e: any) {
+                        // Only wipe token and logout on definitive auth error (401/403)
+                        const isAuthError = e?.response?.status === 401 || e?.response?.status === 403 || e?.message === "No user in response";
+                        if (isAuthError) {
+                            console.warn("Authentication invalid, clearing session:", e);
+                            localStorage.removeItem('testoza_token');
+                            localStorage.removeItem('testoza_refresh_token');
+                            setUser(null);
+                            setSession(null);
+                            await checkPremiumStatus(undefined);
+                        } else {
+                            console.error("Auth initialization failed due to server/network error:", e);
                         }
                     }
-                } catch (e) {
-                    // Token invalid or expired
-                    localStorage.removeItem('testoza_token');
-                    localStorage.removeItem('testoza_refresh_token');
+
+                } else {
                     setUser(null);
                     setSession(null);
                     await checkPremiumStatus(undefined);
                 }
-
-            } else {
-                setUser(null);
-                setSession(null);
-                await checkPremiumStatus(undefined);
+            } catch (error) {
+                console.error('Auth initialization error:', error);
+            } finally {
+                setLoading(false);
+                initPromise = null;
             }
-        } catch (error) {
-            console.error('Auth initialization error:', error);
-        } finally {
-            setLoading(false);
-        }
+        })();
+
+        return initPromise;
     };
 
     useEffect(() => {
