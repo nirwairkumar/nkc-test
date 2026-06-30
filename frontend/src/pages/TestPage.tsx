@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
-import { AnswerVault, startProactiveTokenRefresh, IndexedDBStorage } from '@/lib/testResilience';
+import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus, PlayCircle, BookOpen } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -95,6 +95,9 @@ export default function TestPage() {
   // ── Phase 2: Connection health indicator state ──
   type ConnectionStatus = 'online' | 'offline' | 'reconnecting';
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('online');
+
+  // Track delayed proctoring start state
+  const [isExamStarted, setIsExamStarted] = useState(false);
 
   // Reporting State
   const [reportReason, setReportReason] = useState<string>('');
@@ -251,6 +254,7 @@ export default function TestPage() {
   }, [id]);
 
   useEffect(() => {
+    if (!isExamStarted) return;
     if (timeRemaining > 0 && !isTimeUp && !isTimerDisabled) {
       timerRef.current = setInterval(() => {
         setTimeRemaining((prev) => {
@@ -266,11 +270,12 @@ export default function TestPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timeRemaining, isTimeUp]);
+  }, [timeRemaining, isTimeUp, isExamStarted]);
 
   // Mark current question as visited
   // Save progress to localStorage
   useEffect(() => {
+    if (!isExamStarted) return;
     // Attempt tracking requires user logic currently, skip for anonymous for now or use simplified local storage
     if (!test || isSubmitting || isTimeUp || !id) return;
 
@@ -290,14 +295,9 @@ export default function TestPage() {
     try {
       localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
     } catch (e) {
-      console.warn("Storage quota exceeded, could not save session draft to LocalStorage", e);
+      console.warn("Storage quota exceeded, could not save session draft", e);
     }
-    
-    // Asynchronously write to IndexedDB
-    IndexedDBStorage.setItem(`test_session_${user.id}_${id}`, sessionData).catch(err => {
-      console.error("IndexedDB session save failed:", err);
-    });
-  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id]);
+  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, isExamStarted]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
   useEffect(() => {
@@ -328,6 +328,7 @@ export default function TestPage() {
   }, [visited]);
 
   useEffect(() => {
+    if (!isExamStarted) return;
     if (!test || !user || isSubmitting) return;
     const syncInterval = setInterval(async () => {
       if (submittedRef.current) return;
@@ -343,7 +344,7 @@ export default function TestPage() {
       } catch { /* non-fatal: will retry next interval */ }
     }, 2 * 60 * 1000); // every 2 minutes
     return () => clearInterval(syncInterval);
-  }, [test, user, isSubmitting]);
+  }, [test, user, isSubmitting, isExamStarted]);
 
   // ── Phase 2: Network online/offline listener ──
   useEffect(() => {
@@ -362,15 +363,17 @@ export default function TestPage() {
 
   // On test load: register anonymous start
   useEffect(() => {
+    if (!isExamStarted) return;
     if (!test || !id) return;
     if (!user) {
       // Anonymous user starts — track in dedicated anon table
       analyticsApi.startAnonAttempt(id);
     }
-  }, [test?.id]);
+  }, [test?.id, isExamStarted]);
 
   // Periodic progress ping (every 60 seconds)
   useEffect(() => {
+    if (!isExamStarted) return;
     if (!test || !id || isSubmitting) return;
     const interval = setInterval(() => {
       if (submittedRef.current) return;
@@ -386,10 +389,11 @@ export default function TestPage() {
       }
     }, 60000); // every 60 seconds
     return () => clearInterval(interval);
-  }, [test, user, id, answers, isSubmitting]);
+  }, [test, user, id, answers, isSubmitting, isExamStarted]);
 
   // Abandon detection on tab close / navigation away
   useEffect(() => {
+    if (!isExamStarted) return;
     if (!test || !id) return;
     const handleBeforeUnload = () => {
       if (submittedRef.current) return; // already submitted, don't mark abandoned
@@ -409,7 +413,7 @@ export default function TestPage() {
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [test, user, id, answers]);
+  }, [test, user, id, answers, isExamStarted]);
 
   // ─── Guard: Redirect away if this test was already submitted ─────────────
   useEffect(() => {
@@ -438,50 +442,32 @@ export default function TestPage() {
       localStorage.removeItem(`test_submitted_${user.id}_${id}`);
     }
 
-    const checkSession = async () => {
-      let sessionData = null;
+    const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
+    const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
+
+    if (saved) {
       try {
-        sessionData = await IndexedDBStorage.getItem(`test_session_${user.id}_${id}`);
-      } catch (err) {
-        console.warn("Failed to load session from IndexedDB, falling back to LocalStorage", err);
-      }
+        const parsed = JSON.parse(saved);
+        setResumeData(parsed);
 
-      if (!sessionData) {
-        const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
-        if (saved) {
-          try {
-            sessionData = JSON.parse(saved);
-          } catch (e) {
-            console.error("Failed to parse saved session from LocalStorage", e);
-          }
+        // If session storage exists, it's a refresh. If not, it's a fresh tab/disconnect return.
+        if (activeSession) {
+          setIsRefresh(true);
+        } else {
+          setIsRefresh(false);
         }
-      }
 
-      const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
-
-      if (sessionData) {
+        // Mark tab as active
         try {
-          setResumeData(sessionData);
-
-          if (activeSession) {
-            setIsRefresh(true);
-          } else {
-            setIsRefresh(false);
-          }
-
-          try {
-            sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
-          } catch (e) {
-            console.warn("Storage quota exceeded, could not mark session active", e);
-          }
-          setShowResumeDialog(true);
+          sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
         } catch (e) {
-          console.error("Failed to process saved session", e);
+          console.warn("Storage quota exceeded, could not mark session active", e);
         }
+        setShowResumeDialog(true);
+      } catch (e) {
+        console.error("Failed to parse saved session", e);
       }
-    };
-
-    checkSession();
+    }
   }, [user, id]);
 
   const handleResumeTest = () => {
@@ -493,6 +479,7 @@ export default function TestPage() {
     if (resumeData.timeRemaining) {
       setTimeRemaining(resumeData.timeRemaining);
     }
+    setIsExamStarted(true);
     setShowResumeDialog(false);
     toast.success("Test session resumed!");
   };
@@ -501,7 +488,6 @@ export default function TestPage() {
     if (!id) return;
     if (user) {
       localStorage.removeItem(`test_session_${user.id}_${id}`);
-      IndexedDBStorage.removeItem(`test_session_${user.id}_${id}`).catch(() => {});
       sessionStorage.removeItem(`test_active_${user.id}_${id}`);
     }
     setShowResumeDialog(false);
@@ -533,6 +519,7 @@ export default function TestPage() {
   // Uses the W3C Screen Wake Lock API (supported in Chrome 84+, Edge 84+, Firefox 126+).
   // Automatically re-acquires the lock when the page becomes visible again.
   useEffect(() => {
+    if (!isExamStarted) return;
     if (!test || isSubmitting || isTimeUp) return;
     const isConductExam = !!test.settings?.conduct_exam?.enabled;
     if (!isConductExam) return; // Only apply wake lock for proctored conduct-exam tests
@@ -568,23 +555,14 @@ export default function TestPage() {
         wakeLockRef.current = null;
       }
     };
-  }, [test?.id, isSubmitting, isTimeUp]);
+  }, [test?.id, isSubmitting, isTimeUp, isExamStarted]);
 
   // Proctoring: Full Screen & Tab Switching & Action Blocking
   // NOTE: Violations (tab switch, fullscreen exit) only apply to conduct-exam tests.
   // Regular public/private tests never trigger violation warnings.
   useEffect(() => {
+    if (!isExamStarted) return;
     if (!test || isSubmitting || isTimeUp) return;
-
-    // Exempt search engine crawlers and security auditing bots (like Google Ads Safety bot, PageSpeed, Lighthouse)
-    // from proctoring overrides to bypass "Circumventing Systems" ad flags and maintain compliance.
-    const ua = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
-    const isBot = /bot|googlebot|crawler|spider|robot|crawling|lighthouse|pagespeed/i.test(ua);
-    if (isBot) {
-      console.log("Proctoring disabled: Safety bot/crawler detected.");
-      return;
-    }
-
     const settings = test.settings;
     if (!settings) return;
 
@@ -692,7 +670,7 @@ export default function TestPage() {
       document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
       window.removeEventListener('resize', handleFullScreenChange);
     };
-  }, [test, isSubmitting, isTimeUp, warnings]);
+  }, [test, isSubmitting, isTimeUp, warnings, isExamStarted]);
 
   const handleViolation = (reason: string) => {
     if (!test?.settings) return;
@@ -836,7 +814,7 @@ export default function TestPage() {
       }
     }
 
-    if (targetSection && targetSection.attempt_control?.enabled && targetSection.attempt_control.mode === 'hard') {
+    if (targetSection && targetSection.attempt_control && targetSection.attempt_control.mode === 'hard') {
       let attemptCount = 0;
       targetSection.questions.forEach((q: any) => {
         const ans = answers[q.id];
@@ -991,7 +969,7 @@ export default function TestPage() {
           .map(([qId, ans]) => ({ id: Number(qId), ans }));
 
         const control = (section as any).attempt_control;
-        if (control?.enabled && control.mode === 'soft') {
+        if (control && control.mode === 'soft') {
           const max = control.max_attempts || 0;
           if (sectionAnswers.length > max) {
             if (control.soft_type === 'first_n') {
@@ -1242,7 +1220,6 @@ export default function TestPage() {
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
       localStorage.removeItem(`test_session_${user.id}_${test.id}`);
-      IndexedDBStorage.removeItem(`test_session_${user.id}_${test.id}`).catch(() => {});
       localStorage.removeItem(`test_start_time_${user.id}_${test.id}`);
       sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
       sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
@@ -1688,6 +1665,96 @@ export default function TestPage() {
       </div>
     );
   };
+
+  if (!isExamStarted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in duration-300">
+          
+          <div className="text-center space-y-2">
+            <div className="inline-flex p-3.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-2xl mb-2">
+              <BookOpen className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              {test?.title || "Examination Gateway"}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              Please review the guidelines below before beginning your attempt.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-center space-y-1">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Questions</span>
+              <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                {test?.questions?.length || 0}
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-center space-y-1">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Duration</span>
+              <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                {test?.duration ? `${test.duration}m` : "N/A"}
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-center space-y-1">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Passing Marks</span>
+              <p className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                {test?.passing_marks || "N/A"}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Important Rules:</h3>
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80">
+              <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
+                <TriangleAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Do Not Close or Switch Tabs:</span> Leaving the browser page or switching tabs might trigger cheating warnings or auto-submit your exam.
+                </div>
+              </div>
+              <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
+                <Clock className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Continuous Timer:</span> Once started, the countdown timer cannot be paused or stopped under any circumstances.
+                </div>
+              </div>
+              <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
+                <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Auto-Save Active:</span> Your answers are continuously synced and saved to the cloud, allowing recovery in case of connection failure.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/')}
+              className="w-full sm:w-1/3 py-6 text-sm font-bold rounded-2xl border-2 border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+            >
+              Exit Portal
+            </Button>
+            <Button
+              onClick={() => {
+                setIsExamStarted(true);
+                // Trigger full screen request on start if required
+                if (test?.settings?.force_fullscreen) {
+                  enterFullScreen();
+                }
+              }}
+              className="w-full sm:w-2/3 py-6 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+            >
+              <PlayCircle className="w-5 h-5" />
+              Start Examination Now
+            </Button>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">

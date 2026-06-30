@@ -196,19 +196,9 @@ You are an AI document parser, OCR analyst, and exam-content extractor.
 -> Give full output in one **code snippet** only.
 
 GOAL:
-Convert the PROVIDED PDF/IMAGE/TEXT into a STRICTLY VALID JSON test file that exactly matches the required structure.
+Convert the PROVIDED PDF or IMAGE into a STRICT, VALID JSON test file.
 DO NOT generate new questions.
 ONLY extract and restructure content that exists in the file.
-
-The platform supports:
-• Mixed question types
-• Comprehension groups using passageContent
-• KaTeX + Markdown rendering
-• Mathematical expressions
-• Tables
-• Match-the-following
-• Optional images
-• Numerical range answers
 
 --------------------------------------------------
 
@@ -219,15 +209,14 @@ ABSOLUTE OUTPUT RULES
 3. NO markdown formatting
 4. NO text before or after JSON
 5. JSON must be syntactically valid
-6. DO NOT include keys if their value is null or truly absent
-7. Question IDs must be sequential integers (1,2,3,...)
-8. Deeply scan mathematical syntax before finalizing
-9. CRITICAL: Use DOUBLE BACKSLASHES (\\) for all LaTeX commands (e.g., use \\frac instead of \frac).
+6. Question IDs must be sequential integers (1,2,3,...)
+7. Deeply scan mathematical syntax before finalizing
+8. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
 
 --------------------------------------------------
 
 CRITICAL BEHAVIOR RULES:
-- Read the uploaded PDF/Image/Text visually (OCR + layout reasoning).
+- Read the uploaded PDF/Image/Video visually (OCR + layout reasoning).
 - Identify QUESTIONS, OPTIONS, ANSWERS, IMAGES, TABLES, and COLUMN STRUCTURES based on layout.
 - If a diagram/image appears immediately before or after a question, attach it to that question.
 - NEVER hallucinate or invent content.
@@ -269,80 +258,72 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
    - Extract the passage text ONCE.
    - For EVERY question belonging to that passage, include a "passageContent" field.
    - Set "passageContent" to the FULL passage text for each question in the group.
-   - If NOT a passage/comprehension question, DO NOT include the "passageContent" key in the question object.
 
 --------------------------------------------------
 
-🔥 TABLE DETECTION RULE (CRITICAL)
+🔥 TABLE DETECTION RULE (NEW)
 
-If a question contains a TABLE or tabular data:
+If a question contains a table (rows/columns/grid structure):
 
-You MUST convert it into KaTeX array format.
+- Convert the table into KaTeX array format.
+- NEVER output HTML table.
+- NEVER output markdown table.
+- Embed the LaTeX array inside the "question" field.
 
 Example conversion:
 
-Original table:
+Original:
 
 | A | B |
 |---|---|
 | 1 | 2 |
-| 3 | 4 |
 
 Convert to:
+
 $$
 \\begin{array}{|c|c|}
 \\hline
-A & B \\
+A & B \\\\
 \\hline
-1 & 2 \\
-3 & 4 \\
+1 & 2 \\\\
 \\hline
 \\end{array}
 $$
 
-Embed this directly inside the "question" string.
-
-NEVER output HTML table.
-NEVER output raw markdown table.
-
-Always convert to LaTeX array environment.
-
---------------------------------------------------
-Line break:
-Use standard newline characters (\n) for all line breaks across all formats.
+- Use proper column alignment.
+- Preserve headers exactly.
+- Preserve all table values exactly.
+- Do NOT simplify or restructure content.
 
 --------------------------------------------------
 
-🔥 MATCH-THE-FOLLOWING RULE (4-COLUMN SPACING)
+🔥 MATCH-THE-FOLLOWING RULE (NEW)
 
-If a question is "Match the Following" or has a two-column list comparison:
+If question is "Match the Following" OR contains two-column pairing:
 
-You MUST convert it into a structured 4-column KaTeX array where label columns (\`A.\`, \`B.\`, \`I.\`, \`II.\`) are kept narrow and separate from the content text. 
+- Convert the two columns into structured LaTeX array format.
+- Keep original numbering/labels.
+- Embed inside the "question" field.
 
-**Rules:**
-1. Use column template \`\\begin{array}{|ll|ll|}\` to specify alignment and borders.
-2. The header row MUST start with an empty cell \`&\` and have an empty cell \`& &\` between lists. This aligns list titles correctly without stretching the label columns.
-3. Every row must use a 4-column layout (\`Cell1 & Cell2 & Cell3 & Cell4\`).
+Example:
 
-Example Conversion:
-
-Column I           Column II
-A. Apple           I. Fruit
-B. Car             II. Vehicle
+Column I        Column II
+A. Apple        1. Fruit
+B. Car          2. Vehicle
 
 Convert to:
+
 $$
-\\begin{array}{|ll|ll|}
-\\hline
-& \\text{Column I} & & \\text{Column II} \\
-\\hline
-A. & \\text{Apple} & I. & \\text{Fruit} \\
-B. & \\text{Car} & II. & \\text{Vehicle} \\
-\\hline
+\\begin{array}{ll}
+\\text{Column I} & \\text{Column II} \\\\
+A.\\ \\text{Apple} & 1.\\ \\text{Fruit} \\\\
+B.\\ \\text{Car} & 2.\\ \\text{Vehicle}
 \\end{array}
 $$
 
-Embed this structure inside the question text string. Do NOT output HTML or raw tables.
+- Do NOT output as plain text table.
+- Do NOT use HTML.
+- Always use LaTeX array.
 
 --------------------------------------------------
 
@@ -384,6 +365,17 @@ MATH & FORMATTING RULES:
 
 --------------------------------------------------
 
+TEXT & LINE-BREAK RULES:
+
+- DO NOT use escaped newline characters (\\n).
+- DO NOT use real line breaks.
+- Use <br> tags for line breaks in questions and options.
+- Multi-line questions must use <br>.
+- Do NOT use other HTML tags.
+- Do NOT use markdown formatting.
+
+--------------------------------------------------
+
 STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
 
 {
@@ -407,8 +399,8 @@ STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
       "correctAnswer":
         "A" |
         ["A","C"] |
-        { "min": 9.8, "max": 10.2 }
-      // Include "passageContent" ONLY if question belongs to a passage/comprehension group.
+        { "min": 9.8, "max": 10.2 },
+      "passageContent": null
     }
   ]
 }
@@ -430,6 +422,8 @@ FAIL-SAFE RULES:
 - If options are missing → infer from alignment or labels.
 - If answer key exists separately → map carefully to question IDs.
 - If ANY field is missing → set it to null (never omit keys).
+- If a question contains multiple statements or expressions,
+  format them using <br>.
 - For Passage questions, ensure "passageContent" is IDENTICAL for all questions in the set.
 - If table or match structure is unclear, preserve structure using LaTeX array format.
 
@@ -444,8 +438,6 @@ Internally verify:
 ✔ Single → string correctAnswer
 ✔ Multiple → array correctAnswer
 ✔ Numerical → object correctAnswer
-✔ groupId consistent for comprehension
-✔ No null fields written
 ✔ Valid JSON
 
 --------------------------------------------------
@@ -459,67 +451,8 @@ Pay special attention to:
 • Match-the-following
 • Comprehension blocks
 • Mixed question types
--> Give full output in ONLY RAW JSON in one **code snippet** only.
------------------------------------------
-question id should same as question number. analyse question and make is perfect and complete without any skipping.
 
---------------------------------------------------
-
-CHEMISTRY & SCIENTIFIC NOTATION RULES
-
-The platform supports KaTeX + mhchem.
-
-When converting chemistry content:
-
-1. Chemical formulas, ions, and coordination compounds must use mhchem inside KaTeX:
-• Simple formulas: H2SO4 → "$\\ce{H2SO4}$"
-• Ions: Fe3+ → "$\\ce{Fe^3+}$", SO4^2- → "$\\ce{SO4^2-}$"
-• Isotopes: 14C → "$\\ce{^{14}C}$"
-• Coordination complexes: [Co(NH3)6]Cl3 → "$\\ce{[Co(NH3)6]Cl3}$"
-
-2. Chemical reactions and equilibria must use mhchem arrows and state symbols:
-• Basic reaction: 2Na + 2H2O → 2NaOH + H2 → "$\\ce{2Na + 2H2O -> 2NaOH + H2}$"
-• Reversible/Equilibrium reaction: N2 + 3H2 ⇌ 2NH3 → "$\\ce{N2 + 3H2 <=> 2NH3}$"
-• Reactions with state symbols: Zn(s) + 2HCl(aq) → ZnCl2(aq) + H2(g) → "$\\ce{Zn(s) + 2HCl(aq) -> ZnCl2(aq) + H2(g)}$"
-
-3. Structural formulas (organic chains):
-Do not use the LaTeX "array" environment as it creates too much blank space between bonds and atoms. Keep organic structures compact, tightly packed, and perfectly aligned using these rules:
-• Horizontal Chain & Bonds: Use standard text characters wrapped in "\\text{}" for chemical symbols (e.g., \\text{CH}_3). Use "\\text{-}" for single bonds so math spacing does not push atoms apart (e.g. "$\\text{CH}_3\\text{-}\\text{CH}_2\\text{-}\\text{OH}$").
-• Vertical Double Bonds: Use "\\overset{\\text{O}}{\\overset{\\parallel}{\\text{C}}}" for carbonyl groups (C=O).
-• Vertical Branching Alignment (CRITICAL): When a branching chain goes downward (e.g., -CH₂-CH₃) from a main-chain atom (like CH), use "\\mathrlap" inside the bottom "\\underset" block. This forces the branch to align perfectly by its first atom (the CH₂) and prevents it from pushing horizontal bonds away or creating gaps.
-  Example structure: "$\\text{CH}_3\\text{-}\\underset{\\mathrlap{\\text{CH}_2\\text{-}\\text{CH}_3}}{\\underset{\\vert}{\\text{CH}}}\\text{-}\\text{CH}_3$"
-
-4. Units must use the "\\pu{ }" syntax.
-• Example: 4.18 J g⁻¹ K⁻¹ → "$\\pu{4.18 J g-1 K-1}$"
-• Example: 9.65 × 10⁴ C mol⁻¹ → "$\\pu{9.65 x 10^4 C mol-1}$"
-
-5. If a question contains complex chemical diagrams such as:
-• benzene rings  
-• Haworth projections  
-• resonance structures  
-• skeletal organic structures  
-• reaction mechanisms  
-
-DO NOT convert them to LaTeX.
-
-Instead mark them as images using:
-
-"image": "image-true"
-
-or
-
-"optionImages": { ... }
-
---------------------------------------------------
-question id same as question number
--> Give full output in ONLY RAW JSON in one **code snippet** only.
--> each question should have different id (you can go sequencely).
--> consider only english part. scan each question, and extract the same without any change.
--> reverify each question/options until adjectly same as question paper.
--> remove [cite:$$$] then add in json.
--> you must match the answer from solution pdf correctly.
--> put adject question in json without any small change or modify.
--> if document have bold/underline text then it should rewrite adject same.`;
+Return ONLY RAW JSON.`;
 
   //------section wise questions 2.0-------->
   //   const jsonTemplateSection = `ROLE:
@@ -886,9 +819,10 @@ Each question must follow:
   "question": "Exact extracted text (KaTeX preserved)",
   "marks": "2",
   "negativeMarks": "0",
+  "groupId": "",
   "options": {...},
-  "correctAnswer": ...
-  // Include "groupId" and "passageContent" ONLY if question belongs to a passage/comprehension group.
+  "correctAnswer": ...,
+  "passageContent": ""
 }
 
 --------------------------------------------------
@@ -932,7 +866,11 @@ If multiple questions share a passage:
 
 - Assign SAME groupId (e.g., "grp1")
 - Include SAME passageContent inside each question
-- If NOT comprehension, DO NOT include "groupId" or "passageContent" keys in the question object. Do NOT output them as empty strings or null.
+- If not comprehension:
+    groupId = ""
+    passageContent = ""
+
+These two keys must ALWAYS exist.
 
 --------------------------------------------------
 
@@ -1121,27 +1059,32 @@ The platform supports KaTeX + mhchem.
 
 When converting chemistry content:
 
-1. Chemical formulas, ions, and coordination compounds must use mhchem inside KaTeX:
-• Simple formulas: H2SO4 → "$\\ce{H2SO4}$"
-• Ions: Fe3+ → "$\\ce{Fe^3+}$", SO4^2- → "$\\ce{SO4^2-}$"
-• Isotopes: 14C → "$\\ce{^{14}C}$"
-• Coordination complexes: [Co(NH3)6]Cl3 → "$\\ce{[Co(NH3)6]Cl3}$"
+1. Chemical formulas must use mhchem inside KaTeX.
 
-2. Chemical reactions and equilibria must use mhchem arrows and state symbols:
-• Basic reaction: 2Na + 2H2O → 2NaOH + H2 → "$\\ce{2Na + 2H2O -> 2NaOH + H2}$"
-• Reversible/Equilibrium reaction: N2 + 3H2 ⇌ 2NH3 → "$\\ce{N2 + 3H2 <=> 2NH3}$"
-• Reactions with state symbols: Zn(s) + 2HCl(aq) → ZnCl2(aq) + H2(g) → "$\\ce{Zn(s) + 2HCl(aq) -> ZnCl2(aq) + H2(g)}$"
+Examples:
+H2SO4 → "$\\ce{H2SO4}$"
+Fe3+ → "$\\ce{Fe^3+}$"
+SO4^2- → "$\\ce{SO4^2-}$"
 
-3. Structural formulas (organic chains):
-Do not use the LaTeX "array" environment as it creates too much blank space between bonds and atoms. Keep organic structures compact, tightly packed, and perfectly aligned using these rules:
-• Horizontal Chain & Bonds: Use standard text characters wrapped in "\\text{}" for chemical symbols (e.g., \\text{CH}_3). Use "\\text{-}" for single bonds so math spacing does not push atoms apart (e.g. "$\\text{CH}_3\\text{-}\\text{CH}_2\\text{-}\\text{OH}$").
-• Vertical Double Bonds: Use "\\overset{\\text{O}}{\\overset{\\parallel}{\\text{C}}}" for carbonyl groups (C=O).
-• Vertical Branching Alignment (CRITICAL): When a branching chain goes downward (e.g., -CH₂-CH₃) from a main-chain atom (like CH), use "\\mathrlap" inside the bottom "\\underset" block. This forces the branch to align perfectly by its first atom (the CH₂) and prevents it from pushing horizontal bonds away or creating gaps.
-  Example structure: "$\\text{CH}_3\\text{-}\\underset{\\mathrlap{\\text{CH}_2\\text{-}\\text{CH}_3}}{\\underset{\\vert}{\\text{CH}}}\\text{-}\\text{CH}_3$"
+2. Chemical reactions must use mhchem arrows.
 
+Example:
+2Na + 2H2O → 2NaOH + H2
+
+Convert to:
+"$\\ce{2Na + 2H2O -> 2NaOH + H2}$"
+
+3. Structural formulas (organic chains) must use mhchem when possible.
+
+Example:
+CH3-CH=CH-CO-CH3  
+→ "$\\ce{CH3-CH=CH-CO-CH3}$"
+$\\ce{CH3-CH=CH-\\overset{O}{\\overset{||}{C}}-CH3}$
 4. Units must use the "\\pu{ }" syntax.
-• Example: 4.18 J g⁻¹ K⁻¹ → "$\\pu{4.18 J g-1 K-1}$"
-• Example: 9.65 × 10⁴ C mol⁻¹ → "$\\pu{9.65 x 10^4 C mol-1}$"
+
+Example:
+4.18 J g⁻¹ K⁻¹  
+→ "$\\pu{4.18 J g-1 K-1}$"
 
 5. If a question contains complex chemical diagrams such as:
 • benzene rings  

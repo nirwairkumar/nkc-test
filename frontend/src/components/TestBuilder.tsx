@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { IndexedDBStorage } from '@/lib/testResilience';
 import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -358,41 +357,23 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     useEffect(() => {
         // Only restore draft if creating a new test (no ID) and draft exists
         if (!testId && !initialData) {
-            const checkDraft = async () => {
-                let draftData = null;
+            const draft = localStorage.getItem('create_test_draft');
+            if (draft) {
                 try {
-                    draftData = await IndexedDBStorage.getItem('create_test_draft');
+                    const parsed = JSON.parse(draft);
+                    populateData(parsed);
+                    // If categories were saved, restore them too
+                    if (parsed.selectedCategories) {
+                        setSelectedCategories(parsed.selectedCategories);
+                    }
+                    if (parsed.tags) {
+                        setTags(parsed.tags);
+                    }
+                    toast.success("Your test draft has been restored. You can continue editing.");
                 } catch (e) {
-                    console.warn("Failed to load draft from IndexedDB", e);
+                    console.error("Failed to parse draft", e);
                 }
-
-                if (!draftData) {
-                    const raw = localStorage.getItem('create_test_draft');
-                    if (raw) {
-                        try {
-                            draftData = JSON.parse(raw);
-                        } catch (e) {
-                            console.error("Failed to parse draft from LocalStorage", e);
-                        }
-                    }
-                }
-
-                if (draftData) {
-                    try {
-                        populateData(draftData);
-                        if (draftData.selectedCategories) {
-                            setSelectedCategories(draftData.selectedCategories);
-                        }
-                        if (draftData.tags) {
-                            setTags(draftData.tags);
-                        }
-                        toast.success("Your test draft has been restored. You can continue editing.");
-                    } catch (e) {
-                        console.error("Failed to parse draft", e);
-                    }
-                }
-            };
-            checkDraft();
+            }
         }
     }, [testId, initialData]);
 
@@ -428,14 +409,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     enable_section_mode: enableSectionMode,
                     sections
                 };
-                try {
-                    localStorage.setItem('create_test_draft', JSON.stringify(draftData));
-                } catch (e) {
-                    console.warn("Storage quota exceeded, could not save draft to LocalStorage", e);
-                }
-                IndexedDBStorage.setItem('create_test_draft', draftData).catch(err => {
-                    console.error("Failed to save draft to IndexedDB", err);
-                });
+                localStorage.setItem('create_test_draft', JSON.stringify(draftData));
             }, 1000);
             return () => clearTimeout(timer);
         }
@@ -937,14 +911,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 has_scientific_calculator: hasScientificCalculator,
                 sections
             };
-            try {
-                localStorage.setItem('create_test_draft', JSON.stringify(draftData));
-            } catch (e) {
-                console.warn("Storage quota exceeded, could not save draft to LocalStorage", e);
-            }
-            IndexedDBStorage.setItem('create_test_draft', draftData).catch(err => {
-                console.error("Failed to save draft to IndexedDB", err);
-            });
+            localStorage.setItem('create_test_draft', JSON.stringify(draftData));
             localStorage.setItem('auth_redirect_intent', '/create-test');
 
             toast.error("Please login to save your test. Redirecting...");
@@ -1010,7 +977,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         try {
             await performSave(false);
             localStorage.removeItem('create_test_draft');
-            IndexedDBStorage.removeItem('create_test_draft').catch(() => {});
             toast.success(isEditMode ? "Test updated successfully!" : "Test created successfully!");
             if (onSuccess) onSuccess();
             else navigate('/my-tests');
@@ -1089,7 +1055,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             setTags([]);
             // Clear draft
             localStorage.removeItem('create_test_draft');
-            IndexedDBStorage.removeItem('create_test_draft').catch(() => {});
             toast.success("Form cleared");
         }
     };
@@ -2046,25 +2011,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                         <div className="flex items-center justify-between">
                                                                             <h4 className="font-bold text-sm">Attempt Control</h4>
                                                                             <Switch
-                                                                                checked={!!section.attempt_control?.enabled}
+                                                                                checked={!!section.attempt_control}
                                                                                 onCheckedChange={(checked) => {
                                                                                     if (checked) {
                                                                                         updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
                                                                                     } else {
-                                                                                        updateSection(sIdx, 'attempt_control', { enabled: false });
+                                                                                        updateSection(sIdx, 'attempt_control', undefined);
                                                                                     }
                                                                                 }}
                                                                             />
                                                                         </div>
 
-                                                                        {section.attempt_control?.enabled && (
+                                                                        {section.attempt_control && (
                                                                             <>
                                                                                 <div className="space-y-2">
                                                                                     <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
                                                                                     <Input
                                                                                         type="number"
                                                                                         value={section.attempt_control?.max_attempts || 0}
-                                                                                        onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, enabled: true, max_attempts: parseInt(e.target.value) || 1 })}
+                                                                                        onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
                                                                                         placeholder="e.g. 5"
                                                                                     />
                                                                                 </div>
@@ -2073,7 +2038,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
                                                                                     <RadioGroup
                                                                                         value={section.attempt_control?.mode || 'hard'}
-                                                                                        onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, enabled: true, mode: val })}
+                                                                                        onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
                                                                                         className="flex gap-4"
                                                                                     >
                                                                                         <div className="flex items-center space-x-2">
@@ -2092,7 +2057,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
                                                                                         <RadioGroup
                                                                                             value={section.attempt_control?.soft_type || 'first_n'}
-                                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, enabled: true, soft_type: val })}
+                                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
                                                                                             className="flex flex-col gap-2"
                                                                                         >
                                                                                             <div className="flex items-center space-x-2">

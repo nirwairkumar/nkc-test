@@ -18,40 +18,6 @@ class LinkMaterialCreate(BaseModel):
     thumbnail_url: Optional[str] = None
     class_id: Optional[str] = None
 
-def _verify_owner_or_admin(user_id: str, request: Request, db: Client):
-    # 1. Authenticate / Identify the requester
-    requesting_user_id: str | None = None
-    is_admin = False
-    
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header:
-        raise HTTPException(status_code=401, detail="Missing Authorization header")
-        
-    if auth_header.startswith("Bearer "):
-        try:
-            token = auth_header[7:]
-            user_res = db.auth.get_user(token)
-            if user_res and user_res.user:
-                requesting_user_id = user_res.user.id
-                # Check if admin
-                profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
-                if profile_res.data:
-                    email = profile_res.data[0].get("email")
-                    if email:
-                        admin_res = db.table("admins").select("email").eq("email", email).execute()
-                        is_admin = bool(admin_res.data)
-        except Exception:
-            pass
-
-    if not requesting_user_id:
-        raise HTTPException(status_code=401, detail="Authentication failed")
-
-    # 2. Authorization Enforcement
-    is_owner = (requesting_user_id == user_id)
-    if not is_owner and not is_admin:
-        raise HTTPException(status_code=403, detail="Unauthorized materials access")
-    return requesting_user_id
-
 @router.get("/user/{user_id}")
 async def get_user_materials(
     user_id: str,
@@ -60,7 +26,31 @@ async def get_user_materials(
     db: Client = Depends(get_db)
 ):
     try:
-        _verify_owner_or_admin(user_id, request, db)
+        # 1. Authenticate / Identify the requester
+        requesting_user_id: str | None = None
+        is_admin = False
+        
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            try:
+                token = auth_header[7:]
+                user_res = db.auth.get_user(token)
+                if user_res and user_res.user:
+                    requesting_user_id = user_res.user.id
+                    # Check if admin
+                    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+                    if profile_res.data:
+                        email = profile_res.data[0].get("email")
+                        if email:
+                            admin_res = db.table("admins").select("email").eq("email", email).execute()
+                            is_admin = bool(admin_res.data)
+            except Exception:
+                pass
+
+        # 2. Authorization Enforcement
+        is_owner = (requesting_user_id == user_id)
+        if not is_owner and not is_admin:
+            raise HTTPException(status_code=403, detail="Unauthorized materials access")
 
         if fastapi_response:
             set_public_cache(fastapi_response, 60, 60)
@@ -74,27 +64,19 @@ async def get_user_materials(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/link")
-async def add_link_material(
-    payload: LinkMaterialCreate,
-    request: Request,
-    db: Client = Depends(get_db)
-):
+async def add_link_material(payload: LinkMaterialCreate, db: Client = Depends(get_db)):
     try:
-        _verify_owner_or_admin(payload.user_id, request, db)
         data = payload.dict(exclude_unset=True)
         response = db.table("materials").insert(data).execute()
         if response.data and len(response.data) > 0:
             return response.data[0]
         return response.data
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"Error adding link material: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/upload")
 async def upload_file_material(
-    request: Request,
     file: UploadFile = File(...),
     title: str = Form(...),
     user_id: str = Form(...),
@@ -102,7 +84,6 @@ async def upload_file_material(
     db: Client = Depends(get_db)
 ):
     try:
-        _verify_owner_or_admin(user_id, request, db)
         # 1. Upload to Supabase Storage
         file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'bin'
         file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
@@ -136,8 +117,6 @@ async def upload_file_material(
             return response.data[0]
         return response.data
         
-    except HTTPException:
-        raise
     except Exception as e:
         import traceback
         print(f"Error uploading material: {e}")
@@ -149,18 +128,10 @@ async def upload_file_material(
 @router.delete("/{material_id}")
 async def delete_material(
     material_id: str, 
-    request: Request,
     file_path: Optional[str] = None, # Passed as query param if available
     db: Client = Depends(get_db)
 ):
     try:
-        # Get material owner to verify ownership
-        material_res = db.table("materials").select("user_id").eq("id", material_id).execute()
-        if not material_res.data or len(material_res.data) == 0:
-            raise HTTPException(status_code=404, detail="Material not found")
-        owner_id = material_res.data[0]["user_id"]
-        _verify_owner_or_admin(owner_id, request, db)
-
         # 1. Delete file if exists
         if file_path:
              db.storage.from_("materials").remove([file_path])
@@ -168,9 +139,6 @@ async def delete_material(
         # 2. Delete DB record
         db.table("materials").delete().eq("id", material_id).execute()
         return {"success": True}
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"Error deleting material: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-

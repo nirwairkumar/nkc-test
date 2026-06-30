@@ -8,6 +8,7 @@ import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
+import SubdomainGuard from "@/components/SubdomainGuard";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Layout = lazy(() => import("./Layout"));
@@ -84,6 +85,7 @@ const App = () => (
           <Sonner />
           <TestProvider>
             <BrowserRouter>
+              <SubdomainGuard />
               <Suspense fallback={
                 <div className="flex h-screen w-full items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />

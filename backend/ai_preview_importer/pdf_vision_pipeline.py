@@ -139,9 +139,8 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
 
 8. FOR PASSAGE/COMPREHENSION QUESTIONS:
    - Extract the passage text ONCE.
-   - For EVERY question belonging to that passage, include the "passageContent" and "groupId" fields.
-   - Set "passageContent" to the FULL passage text for each question in the group, and "groupId" to a unique group identifier (e.g. "grp1").
-   - If NOT a passage/comprehension question, DO NOT include "passageContent" or "groupId" keys in the question object.
+   - For EVERY question belonging to that passage, include a "passageContent" field.
+   - Set "passageContent" to the FULL passage text for each question in the group.
 
 --------------------------------------------------
 
@@ -339,8 +338,8 @@ You MUST structure the output using the "sections" field instead of the top-leve
           "correctAnswer": "A",
           "marks": 4,
           "negativeMarks": 1,
-          "crossPage": false
-          // Include "passageContent" and "groupId" ONLY if question belongs to a passage/comprehension group.
+          "crossPage": false,
+          "passageContent": null
         }
       ]
     }
@@ -375,8 +374,8 @@ Otherwise, set "attempt_control" to {"enabled": false}.
       "correctAnswer": "A",
       "marks": 4,
       "negativeMarks": 1,
-      "crossPage": false
-      // Include "passageContent" and "groupId" ONLY if question belongs to a passage/comprehension group.
+      "crossPage": false,
+      "passageContent": null
     }
   ]
 }

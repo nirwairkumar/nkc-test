@@ -559,7 +559,7 @@ export default function TestIntroPage() {
     const getSectionDetails = (sec: any) => {
         const totalQs = sec.questions?.length !== undefined ? sec.questions.length : (sec.total_questions || 0);
         const attemptControl = sec.attempt_control;
-        const isEnabled = !!attemptControl?.enabled;
+        const isEnabled = attemptControl && (attemptControl.enabled !== false);
         const maxAllowed = isEnabled && attemptControl.max_attempts ? Math.min(attemptControl.max_attempts, totalQs) : totalQs;
 
         let sectionMaxMarks = 0;
@@ -589,7 +589,7 @@ export default function TestIntroPage() {
         return { totalQs, maxAllowed, sectionMaxMarks, isEnabled };
     };
 
-    const hasAnyAttemptControl = test.enable_section_mode && test.sections?.some((s: any) => !!s.attempt_control?.enabled);
+    const hasAnyAttemptControl = test.enable_section_mode && test.sections?.some((s: any) => s.attempt_control && (s.attempt_control.enabled !== false));
 
     let totalMaxMarks = 0;
     // 1. Prioritize the pre-calculated database column (Bypassing calculations)

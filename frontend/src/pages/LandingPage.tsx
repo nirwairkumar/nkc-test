@@ -1,6 +1,7 @@
 import { useEffect, Suspense, lazy, useRef, useState } from 'react';
 import CreateTestsHero from '@/components/landing/CreateTestsHero';
 import { SEO } from '@/components/SEO';
+import { getAppUrl } from '@/utils/subdomain';
 
 // Lazy load heavy sections
 const UploadMaterialsSection = lazy(() => import('@/components/landing/UploadMaterialsSection'));
@@ -108,7 +109,7 @@ export default function LandingPage() {
                             required: ['topic']
                         },
                         execute: async ({ topic, numQuestions = 10 }: { topic: string; numQuestions?: number }) => {
-                            window.location.href = `/create-test?topic=${encodeURIComponent(topic)}&num=${numQuestions}`;
+                            window.location.href = getAppUrl(`/create-test?topic=${encodeURIComponent(topic)}&num=${numQuestions}`);
                             return `Redirecting to test creation page for topic "${topic}" with ${numQuestions} questions.`;
                         }
                     });
@@ -280,7 +281,7 @@ export default function LandingPage() {
 
                         <div className="text-center mt-8">
                             <a
-                                href="/dashboard"
+                                href={getAppUrl('/dashboard')}
                                 className="inline-flex items-center justify-center bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 text-base px-6 py-3 rounded-full transition-all font-medium"
                             >
                                 View All Tests on Dashboard
@@ -322,13 +323,13 @@ export default function LandingPage() {
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                             <a
-                                href="/create-test"
+                                href={getAppUrl('/create-test')}
                                 className="inline-flex items-center justify-center bg-white text-purple-600 hover:bg-white/90 text-lg px-8 py-4 rounded-full shadow-2xl hover:shadow-white/50 transition-all duration-300 hover:scale-105 font-semibold"
                             >
                                 Get Started Free
                             </a>
                             <a
-                                href="/dashboard"
+                                href={getAppUrl('/dashboard')}
                                 className="inline-flex items-center justify-center bg-white/10 text-white border-2 border-white/30 hover:bg-white/20 text-lg px-8 py-4 rounded-full backdrop-blur-sm transition-all duration-300 font-semibold"
                             >
                                 Explore Tests

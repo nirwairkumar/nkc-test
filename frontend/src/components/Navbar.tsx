@@ -15,6 +15,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import TestoZaLogo from './TestoZaLogo';
+import { getAppUrl } from '@/utils/subdomain';
 
 // Lazy load heavy components to keep them out of the main bundle
 const NotificationBox = React.lazy(() => import('./NotificationBox'));
@@ -73,6 +74,16 @@ export default function Navbar() {
     const [isUploadGuideOpen, setIsUploadGuideOpen] = React.useState(false);
 
     if (isLiveTest) return null;
+
+    const handleLoginNavigation = (isSignup: boolean = false, fromPath: string = '') => {
+        const path = `/login${isSignup ? '?signup=true' : ''}${fromPath ? `${isSignup ? '&' : '?'}from=${encodeURIComponent(fromPath)}` : ''}`;
+        const targetUrl = getAppUrl(path);
+        if (targetUrl.startsWith('http')) {
+            window.location.href = targetUrl;
+        } else {
+            navigate(path, { state: { isSignup, from: fromPath } });
+        }
+    };
 
     const handleSignOut = async () => {
         await signOut();
@@ -189,7 +200,7 @@ export default function Navbar() {
 
                             <Button
                                 variant="ghost"
-                                onClick={() => navigate('/login', { state: { from: '/my-tests' } })}
+                                onClick={() => handleLoginNavigation(false, '/my-tests')}
                                 aria-label="Your Tests"
                                 className={`relative flex items-center h-10 ${
                                     location.pathname === '/my-tests' || location.pathname === '/manage-tests'
@@ -270,11 +281,11 @@ export default function Navbar() {
                                         <span>User Guide</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => navigate('/login', { state: { from: location.pathname } })}>
+                                    <DropdownMenuItem onClick={() => handleLoginNavigation(false, location.pathname)}>
                                         <User className="mr-2 h-4 w-4" />
                                         <span>Login</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate('/login', { state: { isSignup: true, from: location.pathname } })}>
+                                    <DropdownMenuItem onClick={() => handleLoginNavigation(true, location.pathname)}>
                                         <User className="mr-2 h-4 w-4" />
                                         <span>Sign Up</span>
                                     </DropdownMenuItem>
@@ -423,10 +434,10 @@ export default function Navbar() {
                         </>
                     ) : (
                         <div className="hidden md:flex gap-2">
-                            <Button variant="ghost" onClick={() => navigate('/login', { state: { from: location.pathname } })}>
+                            <Button variant="ghost" onClick={() => handleLoginNavigation(false, location.pathname)}>
                                 Login
                             </Button>
-                            <Button onClick={() => navigate('/login', { state: { isSignup: true, from: location.pathname } })}>
+                            <Button onClick={() => handleLoginNavigation(true, location.pathname)}>
                                 Sign Up
                             </Button>
                         </div>

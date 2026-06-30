@@ -1,5 +1,4 @@
 import apiClient from '@/lib/apiClient';
-import { IndexedDBStorage } from '@/lib/testResilience';
 
 export interface TestSection {
     id: string;
@@ -173,7 +172,6 @@ export async function importTestJson(file: File) {
         const formData = new FormData();
         formData.append('file', file);
         const response = await apiClient.post('tests/import/json', formData, {
-            timeout: 120000, // 120s timeout for large uploads
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -438,29 +436,28 @@ export async function fetchConductModeTests() {
 // ─── Test Data Cache (stale-while-revalidate) ─────────────────
 const TEST_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
-async function _getCachedTest(id: string, excludeQuestions: boolean = false): Promise<any | null> {
+function _getCachedTest(id: string, excludeQuestions: boolean = false): any | null {
     try {
-        const key = `test_cache_${id}_eq_${excludeQuestions}`;
-        const cached = await IndexedDBStorage.getItem(key);
-        if (!cached) return null;
-        const { data, ts } = cached;
+        const raw = localStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`);
+        if (!raw) return null;
+        const { data, ts } = JSON.parse(raw);
         if (Date.now() - ts > TEST_CACHE_TTL) {
-            await IndexedDBStorage.removeItem(key);
+            localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
             return null;
         }
         return data;
     } catch { return null; }
 }
 
-async function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false): Promise<void> {
-    const key = `test_cache_${id}_eq_${excludeQuestions}`;
-    const value = { data, ts: Date.now() };
-    await IndexedDBStorage.setItem(key, value);
+function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false) {
+    try {
+        localStorage.setItem(`test_cache_${id}_eq_${excludeQuestions}`, JSON.stringify({ data, ts: Date.now() }));
+    } catch { /* storage full — ignore */ }
 }
 
 export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
     // Serve stale cache immediately, revalidate in background
-    const cached = await _getCachedTest(id, excludeQuestions);
+    const cached = _getCachedTest(id, excludeQuestions);
     if (cached && onCacheHit) {
         onCacheHit(cached);
     }
@@ -473,12 +470,12 @@ export async function fetchTestById(id: string, onCacheHit?: (data: any) => void
                 params: { exclude_questions: excludeQuestions }
             });
             const data = response.data;
-            await _setCachedTest(id, data, excludeQuestions);
+            _setCachedTest(id, data, excludeQuestions);
             return { data, error: null };
         } catch (error: any) {
             // Don't retry on 404 (test genuinely doesn't exist or access revoked)
             if (error.response?.status === 404) {
-                try { await IndexedDBStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`); } catch {}
+                try { localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`); } catch {}
                 return { data: null, error: error };
             }
 

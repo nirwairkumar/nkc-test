@@ -5,17 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2, MoreVertical, PenLine, History, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,16 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ProcessingProgress } from "@/components/ProcessingProgress";
-import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -138,21 +118,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     }
 }
 
-// Utility to recursively parse strings that might be JSON-encoded
-const ensureParsedObject = (val: any): any => {
-    if (typeof val === 'string') {
-        try {
-            return ensureParsedObject(JSON.parse(val));
-        } catch {
-            return val;
-        }
-    }
-    return val;
-};
-
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
     const navigate = useNavigate();
-    const { user } = useAuth();
 
     const [files, setFiles] = useState<SelectedFile[]>([]);
     const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
@@ -168,14 +135,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [extractionMeta, setExtractionMeta] = useState<{ quality_tier?: string, dpi?: number, warning?: boolean } | null>(null);
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null);
 
-    const [savingTest, setSavingTest] = useState(false);
-    const [pendingParsedData, setPendingParsedData] = useState<ParseResponse | null>(null);
-    const [timers, setTimers] = useState<{
-        uploading: number;
-        analyzing: number;
-        extracting: number;
-        finalizing: number;
-    }>({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
+    // Fetch feature flags
+    useEffect(() => {
+        fetchFeatureFlags().then(data => setFeatureFlags(data));
+    }, []);
 
     // ULTRA-FAST Streaming State
     const [isStreaming, setIsStreaming] = useState(false);
@@ -187,171 +150,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     } | null>(null);
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
     const [abortController, setAbortController] = useState<AbortController | null>(null);
-
-    // AI Generation History State
-    const [historyItems, setHistoryItems] = useState<any[]>([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
-    const [clearingAllHistory, setClearingAllHistory] = useState(false);
-
-    // Fetch feature flags
-    useEffect(() => {
-        fetchFeatureFlags().then(data => setFeatureFlags(data));
-    }, []);
-
-    // Sync guest history on login and load history
-    useEffect(() => {
-        const syncAndLoadHistory = async () => {
-            setLoadingHistory(true);
-            try {
-                if (user) {
-                    // Check local storage for guest history to migrate
-                    const guestHistoryStr = localStorage.getItem('guest_ai_history');
-                    if (guestHistoryStr) {
-                        try {
-                            const guestHistory = JSON.parse(guestHistoryStr);
-                            if (Array.isArray(guestHistory) && guestHistory.length > 0) {
-                                // Upload guest history items to database
-                                const { saveAiHistory } = await import('@/lib/aiHistoryApi');
-                                let syncedCount = 0;
-                                const failedItems = [];
-                                for (const item of guestHistory) {
-                                    const { error } = await saveAiHistory({
-                                        mode: item.mode,
-                                        title: item.title,
-                                        description: item.description,
-                                        file_name: item.file_name,
-                                        question_count: item.question_count,
-                                        parsed_data: ensureParsedObject(item.parsed_data)
-                                    });
-                                    if (!error) {
-                                        syncedCount++;
-                                    } else {
-                                        failedItems.push(item);
-                                        console.error("Failed to sync history item to database:", error);
-                                    }
-                                }
-                                if (syncedCount > 0) {
-                                    toast.success(`Synced ${syncedCount} local AI generations to your account!`);
-                                }
-                                if (failedItems.length > 0) {
-                                    localStorage.setItem('guest_ai_history', JSON.stringify(failedItems));
-                                } else {
-                                    localStorage.removeItem('guest_ai_history');
-                                }
-                            }
-                        } catch (e) {
-                            console.error("Error migrating guest AI history:", e);
-                        }
-                    }
-
-                    // Fetch history from DB
-                    const { fetchAiHistory } = await import('@/lib/aiHistoryApi');
-                    const { data, error } = await fetchAiHistory();
-                    if (error) {
-                        const errorMsg = error.message || String(error);
-                        if (errorMsg.includes('relation "ai_generation_history" does not exist') || errorMsg.includes('does not exist')) {
-                            console.warn("Database table 'ai_generation_history' does not exist yet.");
-                        } else {
-                            throw error;
-                        }
-                    }
-                    const parsedDataList = (data || []).map((item: any) => ({
-                        ...item,
-                        parsed_data: ensureParsedObject(item.parsed_data)
-                    }));
-                    setHistoryItems(parsedDataList);
-                } else {
-                    // Unauthenticated (Guest): Load from localStorage
-                    const guestHistoryStr = localStorage.getItem('guest_ai_history');
-                    if (guestHistoryStr) {
-                        try {
-                            const parsedList = JSON.parse(guestHistoryStr);
-                            if (Array.isArray(parsedList)) {
-                                setHistoryItems(parsedList.map((item: any) => ({
-                                    ...item,
-                                    parsed_data: ensureParsedObject(item.parsed_data)
-                                })));
-                            } else {
-                                setHistoryItems([]);
-                            }
-                        } catch {
-                            setHistoryItems([]);
-                        }
-                    } else {
-                        setHistoryItems([]);
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to load AI history:", err);
-            } finally {
-                setLoadingHistory(false);
-            }
-        };
-
-        syncAndLoadHistory();
-    }, [user]);
-
-    // Track active stage timers
-    useEffect(() => {
-        if (!isStreaming) return;
-
-        const interval = setInterval(() => {
-            const currentStage = streamProgress?.stage || 'uploading';
-            let stageKey: 'uploading' | 'analyzing' | 'extracting' | 'finalizing' = 'uploading';
-
-            if (currentStage === 'analyzing') {
-                stageKey = 'analyzing';
-            } else if (currentStage === 'processing' || currentStage === 'extracting') {
-                stageKey = 'extracting';
-            } else if (currentStage === 'finalizing' || currentStage === 'complete') {
-                stageKey = 'finalizing';
-            }
-
-            setTimers(prev => ({
-                ...prev,
-                [stageKey]: Math.round((prev[stageKey] + 0.1) * 10) / 10
-            }));
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [isStreaming, streamProgress?.stage]);
-
-    // Handle smooth transition from stream completion to preview stage
-    useEffect(() => {
-        if (pendingParsedData && streamProgress?.stage === 'complete') {
-            const timer = setTimeout(() => {
-                setParsedData(pendingParsedData);
-                saveToHistory(pendingParsedData);
-                setPendingParsedData(null);
-                setIsStreaming(false);
-                setLoading(false);
-                setStreamProgress(null);
-                setAbortController(null);
-            }, 1500); // 1.5s delay to review checkmarks/timers
-            return () => clearTimeout(timer);
-        }
-    }, [pendingParsedData, streamProgress?.stage]);
-
-    // Restore pending AI import after login redirection
-    useEffect(() => {
-        const pendingDataStr = localStorage.getItem('pending_ai_import_test');
-        if (pendingDataStr) {
-            try {
-                const { parsedData: restoredParsedData, mode: restoredMode } = JSON.parse(pendingDataStr);
-                if (restoredParsedData) {
-                    setParsedData(ensureParsedObject(restoredParsedData));
-                    if (restoredMode) setMode(restoredMode);
-                    toast.success("Restored your AI-generated questions!");
-                }
-            } catch (e) {
-                console.error("Failed to restore pending AI import:", e);
-            } finally {
-                localStorage.removeItem('pending_ai_import_test');
-            }
-        }
-    }, []);
 
     const documentInputRef = useRef<HTMLInputElement>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
@@ -556,143 +354,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         return String(q.correctAnswer);
     };
 
-    const saveToHistory = async (data: ParseResponse) => {
-        if (!data) return;
-        const qCount = data.questions?.length || 0;
-        if (qCount === 0) return;
-
-        const historyPayload = {
-            mode: mode || 'extract',
-            title: data.title || (mode === 'extract' ? 'Extracted Questions' : 'Generated Questions'),
-            description: data.description || '',
-            file_name: files?.[0]?.file?.name || null,
-            question_count: qCount,
-            parsed_data: data
-        };
-
-        if (user) {
-            try {
-                const { saveAiHistory } = await import('@/lib/aiHistoryApi');
-                const { data: savedItem, error } = await saveAiHistory(historyPayload);
-                if (error) {
-                    console.error("Failed to save generation to database:", error);
-                    toast.error(`Could not save generation to history: ${error.message || String(error)}`);
-                } else if (savedItem) {
-                    setHistoryItems(prev => [savedItem, ...prev]);
-                    toast.success("Generation saved to your history!");
-                }
-            } catch (err: any) {
-                console.error("Failed to save generation to database:", err);
-                toast.error(`Could not save generation to history: ${err.message || String(err)}`);
-            }
-        } else {
-            try {
-                const guestHistoryStr = localStorage.getItem('guest_ai_history');
-                let guestHistory = [];
-                if (guestHistoryStr) {
-                    try { guestHistory = JSON.parse(guestHistoryStr); } catch { guestHistory = []; }
-                }
-                const newLocalItem = {
-                    ...historyPayload,
-                    id: Math.random().toString(36).substring(2, 9),
-                    created_at: new Date().toISOString()
-                };
-                guestHistory = [newLocalItem, ...guestHistory];
-                localStorage.setItem('guest_ai_history', JSON.stringify(guestHistory));
-                setHistoryItems(guestHistory);
-            } catch (err) {
-                console.warn("Failed to save generation to guest storage:", err);
-            }
-        }
-    };
-
-    const handleSelectHistoryItem = async (item: any) => {
-        if (user && item.id && !item.parsed_data) {
-            const loadToastId = toast.loading("Loading generation data...");
-            try {
-                const { fetchAiHistoryItemById } = await import('@/lib/aiHistoryApi');
-                const { data, error } = await fetchAiHistoryItemById(item.id);
-                if (error) throw error;
-                if (data) {
-                    const parsedItem = {
-                        ...data,
-                        parsed_data: ensureParsedObject(data.parsed_data)
-                    };
-                    // Cache the fetched full item in state
-                    setHistoryItems(prev => prev.map(h => h.id === item.id ? parsedItem : h));
-                    
-                    setParsedData(parsedItem.parsed_data);
-                    if (data.mode) setMode(data.mode);
-                    toast.dismiss(loadToastId);
-                    toast.success(`Loaded generation: ${data.title || 'Untitled'}`);
-                } else {
-                    toast.dismiss(loadToastId);
-                    toast.error("Failed to load generation data.");
-                }
-            } catch (err) {
-                console.error("Failed to load history item by id:", err);
-                toast.dismiss(loadToastId);
-                toast.error("Failed to load generation data.");
-            }
-        } else {
-            setParsedData(ensureParsedObject(item.parsed_data));
-            if (item.mode) setMode(item.mode);
-            toast.info(`Loaded generation: ${item.title || 'Untitled'}`);
-        }
-    };
-
-    const handleDeleteHistoryItem = async (e: React.MouseEvent, id: string, index: number) => {
-        e.stopPropagation();
-        if (user) {
-            try {
-                const { deleteAiHistory } = await import('@/lib/aiHistoryApi');
-                const { error } = await deleteAiHistory(id);
-                if (error) throw error;
-                setHistoryItems(prev => prev.filter(item => item.id !== id));
-                toast.success("History item deleted.");
-            } catch (err) {
-                console.error("Failed to delete history item:", err);
-                toast.error("Failed to delete history item.");
-            }
-        } else {
-            try {
-                const guestHistoryStr = localStorage.getItem('guest_ai_history');
-                if (guestHistoryStr) {
-                    let guestHistory = JSON.parse(guestHistoryStr);
-                    guestHistory = guestHistory.filter((_: any, idx: number) => idx !== index);
-                    localStorage.setItem('guest_ai_history', JSON.stringify(guestHistory));
-                    setHistoryItems(guestHistory);
-                    toast.success("History item deleted.");
-                }
-            } catch (err) {
-                console.error("Failed to delete guest history item:", err);
-            }
-        }
-    };
-
-    const handleClearAllHistory = async () => {
-        setClearingAllHistory(true);
-        try {
-            if (user) {
-                const { deleteAllAiHistory } = await import('@/lib/aiHistoryApi');
-                const { error } = await deleteAllAiHistory();
-                if (error) throw error;
-                setHistoryItems([]);
-                toast.success("All AI history cleared.");
-            } else {
-                localStorage.removeItem('guest_ai_history');
-                setHistoryItems([]);
-                toast.success("All AI history cleared.");
-            }
-        } catch (err: any) {
-            console.error("Failed to clear all history:", err);
-            toast.error("Failed to clear history.");
-        } finally {
-            setClearingAllHistory(false);
-            setShowClearAllConfirm(false);
-        }
-    };
-
     const handleProcess = async (selectedMode: ProcessMode, isContinue: boolean = false) => {
         if (featureFlags && featureFlags.enable_ai_test_generation === false) {
             setError(featureFlags.ai_test_generation_notes || "This feature is currently disabled.");
@@ -726,8 +387,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const handleStreamProcess = async (selectedMode: ProcessMode) => {
         setIsStreaming(true);
         setStreamingQuestions([]);
-        setTimers({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
-        
         // Initialize streamProgress with placeholder so we immediately enter the streaming UI
         setStreamProgress({
             stage: 'uploading',
@@ -827,12 +486,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         if (!hasQuestions && !hasSections) {
                                             throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
                                         }
-                                        setPendingParsedData(parsed);
-                                        setStreamProgress({
-                                            stage: 'complete',
-                                            percent: 100,
-                                            message: 'All questions processed successfully!'
-                                        });
+                                        setParsedData(parsed);
+                                        setIsStreaming(false);
+                                        setLoading(false);
+                                        setStreamProgress(null);
+                                        setAbortController(null);
                                         return;
                                     }
 
@@ -929,15 +587,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     id: maxId + idx + 1
                 }));
 
-                const combinedData = {
+                setParsedData({
                     ...data,
                     questions: [...parsedData.questions, ...adjustedQuestions]
-                };
-                setParsedData(combinedData);
-                saveToHistory(combinedData);
+                });
             } else {
                 setParsedData(data);
-                saveToHistory(data);
             }
         } catch (err: any) {
             console.error('Process Error:', err);
@@ -1076,140 +731,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         onImport(importPayload);
     }, [parsedData, onImport]);
 
-    const handleDirectSave = async () => {
-        if (!parsedData) return;
-        if (!user) {
-            try {
-                localStorage.setItem('pending_ai_import_test', JSON.stringify({
-                    parsedData,
-                    mode,
-                }));
-                localStorage.setItem('auth_redirect_intent', '/generate-with-ai');
-            } catch (e) {
-                console.warn("Could not save pending test to localStorage", e);
-            }
-            toast.error("Please login to save the test. Redirecting...");
-            setTimeout(() => navigate('/login'), 1000);
-            return;
-        }
-
-        setSavingTest(true);
-        try {
-            const { getNextTestId, createTest } = await import('@/lib/testsApi');
-            const customId = await getNextTestId('M');
-
-            // Helper to map options for backend format
-            const mapOptionsForBackend = (
-                options: Question['options'] | undefined,
-                optionImages: Question['optionImages'] | undefined,
-                type: string
-            ) => {
-                const flatOptions: { [key: string]: string } = {};
-                const flatOptionImages: { [key: string]: string } = {};
-
-                if (type !== 'numerical' && options && typeof options === 'object') {
-                    Object.entries(options).forEach(([key, val]) => {
-                        if (val && typeof val === 'object' && 'text' in val) {
-                            flatOptions[key] = val.text || '';
-                            if (val.image) flatOptionImages[key] = val.image;
-                        } else {
-                            flatOptions[key] = String(val || '');
-                            if (optionImages?.[key]) {
-                                flatOptionImages[key] = optionImages[key] || '';
-                            }
-                        }
-                    });
-                }
-                return { options: flatOptions, optionImages: flatOptionImages };
-            };
-
-            let sanitizedQuestions: any[] = [];
-            let sanitizedSections: any[] = [];
-
-            if (parsedData.enable_section_mode && parsedData.sections && parsedData.sections.length > 0) {
-                sanitizedSections = parsedData.sections.map((sec, secIdx) => {
-                    const mappedQuestions = (sec.questions || []).map((q, index) => {
-                        const { options, optionImages } = mapOptionsForBackend(q.options, q.optionImages, q.type || 'single');
-                        return {
-                            id: q.id || index + 1,
-                            type: q.type || 'single',
-                            question: q.question,
-                            options,
-                            optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
-                            correctAnswer: q.correctAnswer || 'A',
-                            image: q.image || undefined,
-                            marks: String(q.marks || sec.marks_per_question || 4),
-                            negativeMarks: String(q.negativeMarks || sec.negative_marks || 1),
-                            passageContent: q.passageContent || ""
-                        };
-                    });
-
-                    return {
-                        id: sec.id || `section-${Math.random().toString(36).substring(2, 9)}`,
-                        name: sec.name || 'Untitled Section',
-                        attempt_control: sec.attempt_control || { enabled: false },
-                        questions: mappedQuestions,
-                        marks_per_question: sec.marks_per_question || 4,
-                        negative_marks: sec.negative_marks || 1,
-                        question_type: sec.question_type || 'single'
-                    };
-                });
-                sanitizedQuestions = sanitizedSections.flatMap(s => s.questions);
-            } else {
-                sanitizedQuestions = (parsedData.questions || []).map((q, index) => {
-                    const { options, optionImages } = mapOptionsForBackend(q.options, q.optionImages, q.type || 'single');
-                    return {
-                        id: q.id || index + 1,
-                        type: q.type || 'single',
-                        question: q.question,
-                        options,
-                        optionImages: Object.keys(optionImages).length > 0 ? optionImages : undefined,
-                        correctAnswer: q.correctAnswer || 'A',
-                        image: q.image || undefined,
-                        marks: String(q.marks || 1),
-                        negativeMarks: String(q.negativeMarks || 0),
-                        passageContent: q.passageContent || ""
-                    };
-                });
-            }
-
-            const payload = {
-                title: parsedData.title || "AI Generated Test",
-                description: parsedData.description || "",
-                revision_notes: parsedData.revision_notes || "",
-                duration: parsedData.duration ? Number(parsedData.duration) : sanitizedQuestions.length,
-                is_public: false,
-                questions: sanitizedQuestions,
-                enable_section_mode: !!parsedData.enable_section_mode,
-                sections: sanitizedSections.length > 0 ? sanitizedSections : undefined,
-                created_by: user.id,
-                custom_id: customId,
-                creator_name: user.user_metadata?.full_name || 'Anonymous',
-                creator_avatar: user.user_metadata?.avatar_url || '',
-                created_at: new Date().toISOString()
-            };
-
-            const { data, error } = await createTest(payload);
-            if (error) throw error;
-
-            toast.success("Test saved successfully!");
-            navigate('/my-tests'); // Redirect to creator dashboard
-        } catch (err: any) {
-            console.error("Error direct saving test:", err);
-            toast.error("Failed to save test: " + (err.message || String(err)));
-        } finally {
-            setSavingTest(false);
-        }
-    };
-
     // Scroll to bottom of streaming questions
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        if (scrollContainerRef.current) {
-            const viewport = scrollContainerRef.current.querySelector('[data-radix-scroll-area-viewport]');
-            if (viewport) {
-                viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
-            }
+        if (scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [streamingQuestions.length]);
 
@@ -1246,444 +772,161 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
-    // Step 1: File Upload — unified Gemini-style drop zone + manual creation card
-    if (!parsedData && files.length === 0 && !uploadType) {
+    // Step 1: File Upload - Separate sections for Documents and Images
+    if (files.length === 0 && !uploadType) {
         return (
-            <div className="flex min-h-[calc(100vh-4rem)] w-full bg-slate-50 dark:bg-slate-900/50">
+            <div className="container mx-auto p-4 max-w-4xl">
                 <SEO
                     title="AI Test Generator - TestoZa"
                     description="Generate tests from PDF documents and images using AI. Extract exact questions or generate new ones."
                     keywords={["ai test generator", "pdf to quiz", "image to quiz", "exam maker ai"]}
                 />
-
-                {/* Clear All History Confirmation Dialog */}
-                <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Clear all AI history?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete all {historyItems.length} generation{historyItems.length !== 1 ? 's' : ''} from your history. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={clearingAllHistory}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleClearAllHistory}
-                                disabled={clearingAllHistory}
-                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                            >
-                                {clearingAllHistory ? (
-                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Clearing...</>
-                                ) : (
-                                    'Clear all'
-                                )}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                {/* Desktop History Sidebar (ChatGPT style) */}
-                <div 
-                    className={`shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-all duration-300 flex flex-col ${
-                        sidebarOpen ? 'w-64' : 'w-0 overflow-hidden border-r-0'
-                    } hidden md:flex`}
-                >
-                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm min-w-0">
-                            <History className="w-4 h-4 text-indigo-500 shrink-0" />
-                            <span className="truncate">AI Import History</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7 text-slate-400 hover:text-slate-600"
-                                onClick={() => setSidebarOpen(false)}
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
-                        {loadingHistory ? (
-                            <div className="flex items-center justify-center p-8">
-                                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                            </div>
-                        ) : historyItems.length === 0 ? (
-                            <div className="text-center p-6 text-xs text-slate-400 dark:text-slate-500 space-y-1">
-                                <History className="w-6 h-6 mx-auto mb-2 opacity-30" />
-                                <p>No past generations</p>
-                                <p className="text-[10px]">Your AI-generated tests will appear here</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-1">
-                                {historyItems.map((item, idx) => (
-                                    <div
-                                        key={item.id || idx}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => handleSelectHistoryItem(item)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                e.preventDefault();
-                                                handleSelectHistoryItem(item);
-                                            }
-                                        }}
-                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative pr-9 overflow-hidden"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap overflow-hidden">
-                                                {item.title || 'AI Generated Test'}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                                                {item.question_count} Questions
-                                            </p>
-                                        </div>
-                                        <div className="absolute right-7 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-white group-hover:to-slate-100 dark:to-slate-950 dark:group-hover:from-slate-800/60 z-10 pointer-events-none" />
-                                        <div 
-                                            onClick={(e) => e.stopPropagation()} 
-                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center"
-                                        >
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors flex items-center justify-center cursor-pointer">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-40">
-                                                    <DropdownMenuItem 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteHistoryItem(e, item.id, idx);
-                                                        }}
-                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                        Delete Item
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShowClearAllConfirm(true);
-                                                        }}
-                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                        Clear All History
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Mobile Drawer (Sheet) Toggle / Sidebar closed Toggle */}
-                <div className="flex-1 flex flex-col min-w-0">
-                    <div className={`flex items-center gap-2 bg-white dark:bg-slate-950 md:bg-transparent ${
-                        sidebarOpen 
-                            ? 'p-2 md:p-0 md:h-0 md:overflow-hidden border-b border-slate-100 dark:border-slate-800 md:border-b-0' 
-                            : 'p-2 md:py-3 md:px-4 border-b border-slate-100 dark:border-slate-800 md:border-b-0'
-                    }`}>
-                        {/* Toggle sidebar button when closed */}
-                        {!sidebarOpen && (
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="hidden md:flex h-9 w-9 border-slate-200"
-                                onClick={() => setSidebarOpen(true)}
-                            >
-                                <History className="w-4 h-4 text-slate-500" />
-                            </Button>
-                        )}
-
-                        {/* Mobile Toggle Button using Sheet */}
-                        <div className="md:hidden w-full flex items-center justify-between">
-                            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Test Generator</h2>
-                            <Sheet>
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                                        <History className="w-3.5 h-3.5 text-slate-500" />
-                                        History
-                                    </Button>
-                                </SheetTrigger>
-                                <SheetContent side="left" className="w-72 p-0 flex flex-col bg-white dark:bg-slate-950">
-                                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
-                                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                                            <History className="w-4 h-4 text-indigo-500" />
-                                            AI Import History
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
-                                        {loadingHistory ? (
-                                            <div className="flex items-center justify-center p-8">
-                                                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                                            </div>
-                                        ) : historyItems.length === 0 ? (
-                                            <div className="text-center p-6 text-xs text-slate-400 dark:text-slate-500 space-y-1">
-                                                <History className="w-6 h-6 mx-auto mb-2 opacity-30" />
-                                                <p>No past generations</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-1">
-                                                {historyItems.map((item, idx) => (
-                                                    <div
-                                                        key={item.id || idx}
-                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative pr-9 overflow-hidden"
-                                                    >
-                                                        <SheetClose asChild>
-                                                            <div
-                                                                role="button"
-                                                                tabIndex={0}
-                                                                onClick={() => handleSelectHistoryItem(item)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter' || e.key === ' ') {
-                                                                        e.preventDefault();
-                                                                        handleSelectHistoryItem(item);
-                                                                    }
-                                                                }}
-                                                                className="min-w-0 flex-1 cursor-pointer"
-                                                            >
-                                                                <p className="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap overflow-hidden">
-                                                                    {item.title || 'AI Generated Test'}
-                                                                </p>
-                                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                                                                    {item.question_count} Questions
-                                                                </p>
-                                                            </div>
-                                                        </SheetClose>
-                                                        
-                                                        <div className="absolute right-7 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-white group-hover:to-slate-100 dark:to-slate-950 dark:group-hover:from-slate-800/60 z-10 pointer-events-none" />
-                                                        <div 
-                                                            onClick={(e) => e.stopPropagation()} 
-                                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center"
-                                                        >
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors flex items-center justify-center cursor-pointer">
-                                                                    <MoreVertical className="w-4 h-4" />
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className="w-40">
-                                                                    <DropdownMenuItem 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleDeleteHistoryItem(e, item.id, idx);
-                                                                        }}
-                                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                        Delete Item
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setShowClearAllConfirm(true);
-                                                                        }}
-                                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                                        Clear All History
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </SheetContent>
-                            </Sheet>
-                        </div>
-                    </div>
-
-                    {/* Main Upload Page Container */}
-                    <div className="container mx-auto px-4 max-w-2xl pt-1 md:pt-4 pb-12 flex-1 flex flex-col justify-start">
-                        {/* Header */}
-                        <div className="text-center mt-2 mb-6 md:mb-8 space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
-                                Create a Test in Minutes
-                            </h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Upload any file — AI reads it and builds your test automatically
-                            </p>
-                        </div>
-
-                        {/* ── Unified Upload Drop Zone ── */}
-                        <div
-                            className="relative bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-200 cursor-pointer group shadow-sm mb-4"
-                            onClick={() => documentInputRef.current?.click()}
-                        >
-                            {/* Hidden file inputs */}
-                            <Input
-                                ref={documentInputRef}
-                                type="file"
-                                accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
-                                multiple
-                                onChange={async (e) => {
-                                    const selectedFiles = Array.from(e.target.files || []);
-                                    if (!selectedFiles.length) return;
-                                    const newFiles: SelectedFile[] = [];
-                                    for (const file of selectedFiles) {
-                                        const preview = await createPreview(file);
-                                        newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
-                                    }
-                                    const hasImages = newFiles.some(f => f.type === 'image');
-                                    setFiles(newFiles);
-                                    setUploadType(hasImages ? 'image' : 'document');
-                                    setError(null);
-                                    setParsedData(null);
-                                    setMode(null);
-                                }}
-                                className="hidden"
-                            />
-                            <Input
-                                ref={imageInputRef}
-                                type="file"
-                                accept=".png,.jpg,.jpeg,.webp"
-                                multiple
-                                onChange={handleImageChange}
-                                className="hidden"
-                            />
-
-                            {/* Drop zone body */}
-                            <div className="p-8 sm:p-10 flex flex-col items-center gap-4">
-                                {/* Animated icon */}
-                                <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                                    <Sparkles className="w-8 h-8 text-indigo-500" />
-                                </div>
-
-                                <div className="text-center space-y-1">
-                                    <p className="font-semibold text-slate-700 dark:text-slate-200">
-                                        Drop your file here, or <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">browse</span>
-                                    </p>
-                                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                                        PDF · DOC · PPT · JPG · PNG · and more
-                                    </p>
-                                </div>
-
-                                {/* Upload type chips */}
-                                <div className="flex flex-wrap justify-center gap-2 pt-1">
-                                    {/* PDF / Document */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); documentInputRef.current?.click(); }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                                    >
-                                        <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                                        PDF / DOC / PPT
-                                    </button>
-
-                                    {/* Image */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                                    >
-                                        <ImageIcon className="w-3.5 h-3.5 text-green-500" />
-                                        Photo / Image
-                                    </button>
-
-                                    {/* Camera */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); openCamera(); }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                                    >
-                                        <Camera className="w-3.5 h-3.5 text-rose-500" />
-                                        Camera
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Helper note */}
-                        <p className="text-center text-xs text-slate-400 dark:text-slate-500 mb-8">
-                            AI will read your file and extract or generate questions automatically ✨
+                <div className="text-center space-y-6 py-12">
+                    <div className="space-y-2">
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                            Import Test Questions
+                        </h1>
+                        <p className="text-muted-foreground">
+                            Upload exam papers, question images, or study material to create a test
                         </p>
+                    </div>
 
-                        {/* ── Divider ── */}
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-700" />
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">or</span>
-                            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-700" />
-                        </div>
-
-                        {/* ── Manual Creation Card ── */}
-                        <button
-                            type="button"
-                            onClick={() => { window.location.href = '/create-test'; }}
-                            className="w-full text-left bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl overflow-hidden flex items-stretch hover:shadow-xl hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 group min-h-[140px] sm:min-h-[175px] max-h-[220px]"
-                        >
-                            {/* Left: scaled-down showcase preview (centered, organized, and larger) */}
-                            <div
-                                className="relative shrink-0 overflow-hidden bg-indigo-950/25 border-r border-white/10 hidden sm:block w-[140px] md:w-[200px]"
-                                aria-hidden="true"
-                            >
-                                {/* semi-transparent overlay so it blends with card */}
-                                <div className="absolute inset-0 bg-indigo-600/10 z-10 pointer-events-none" />
-                                {/* Showcase centered & scaled to fit nicely with padding */}
-                                <div
-                                    className="absolute top-1/2 left-1/2"
-                                    style={{
-                                        transform: 'translate(-50%, -50%) scale(0.29)',
-                                        width: '640px',   /* original max-width */
-                                        height: '580px',  /* original height */
-                                        pointerEvents: 'none',
-                                        userSelect: 'none',
-                                    }}
-                                >
-                                    <ManualEditorShowcase />
-                                </div>
-                            </div>
-
-                            {/* Right: text + arrow */}
-                            <div className="flex flex-1 items-center justify-between gap-3 px-5 py-5">
-                                <div className="min-w-0">
-                                    <p className="font-bold text-white text-sm sm:text-base leading-snug">
-                                        ✏️ Build Your Own Test
-                                    </p>
-                                    <p className="text-xs text-indigo-100 mt-1 leading-relaxed">
-                                        Write questions yourself — set marks, sections &amp; rules. Full control, no AI needed.
-                                    </p>
-                                </div>
-                                <ArrowLeft className="w-5 h-5 text-white/70 rotate-180 shrink-0 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </button>
-
-                        {/* Camera Dialog */}
-                        <Dialog open={showCamera} onOpenChange={setShowCamera}>
-                            <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                    <DialogTitle>Capture Image</DialogTitle>
-                                    <DialogDescription>
-                                        Position your document in the camera view and click capture
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="relative">
-                                    <video
-                                        ref={videoRef}
-                                        autoPlay
-                                        playsInline
-                                        className="w-full rounded-lg"
+                    {/* Two separate upload sections */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+                        {/* Document Upload Section */}
+                        <Card className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group">
+                            <CardContent className="p-8">
+                                <div className="space-y-4">
+                                    <div className="w-16 h-16 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-lg">Upload Document</p>
+                                        <p className="text-sm text-muted-foreground">PDF, DOC, PPT files</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-muted-foreground">
+                                            Best for exam papers, textbooks, notes
+                                        </p>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => documentInputRef.current?.click()}
+                                            className="gap-2 w-full"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                            Choose Document
+                                        </Button>
+                                    </div>
+                                    <Input
+                                        ref={documentInputRef}
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.ppt,.pptx"
+                                        onChange={handleDocumentChange}
+                                        className="hidden"
                                     />
-                                    <canvas ref={canvasRef} className="hidden" />
                                 </div>
-                                <div className="flex justify-center gap-2">
-                                    <Button variant="outline" onClick={closeCamera}>
-                                        Cancel
-                                    </Button>
-                                    <Button onClick={captureImage} className="gap-2">
-                                        <Camera className="w-4 h-4" />
-                                        Capture
-                                    </Button>
+                            </CardContent>
+                        </Card>
+
+                        {/* Images Upload Section */}
+                        <Card
+                            className="border-2 border-dashed hover:border-primary/50 transition-colors cursor-pointer group"
+                            onClick={() => {
+                                setUploadType('image');
+                                setError(null);
+                            }}
+                        >
+                            <CardContent className="p-8">
+                                <div className="space-y-4">
+                                    <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <FileImage className="w-8 h-8 text-green-600 dark:text-green-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-lg">Upload Images</p>
+                                        <p className="text-sm text-muted-foreground">JPG, PNG, WEBP</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-muted-foreground">
+                                            Best for question photos, screenshots
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    imageInputRef.current?.click();
+                                                }}
+                                                className="gap-2 flex-1"
+                                            >
+                                                <ImageIcon className="w-4 h-4" />
+                                                Browse
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openCamera();
+                                                }}
+                                                className="gap-2 flex-1"
+                                            >
+                                                <Camera className="w-4 h-4" />
+                                                Camera
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <Input
+                                        ref={imageInputRef}
+                                        type="file"
+                                        accept=".png,.jpg,.jpeg,.webp"
+                                        multiple
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                    />
                                 </div>
-                            </DialogContent>
-                        </Dialog>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="max-w-2xl mx-auto bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
+                        <p className="font-medium mb-2">💡 Tips:</p>
+                        <ul className="space-y-1 text-left list-disc list-inside">
+                            <li>Use <strong>Documents</strong> for full exam papers, PDFs, or presentations</li>
+                            <li>Use <strong>Images</strong> for question photos, screenshots, or individual question images</li>
+                            <li>You can select multiple images at once</li>
+                            <li>Add an answer key to help AI match correct answers automatically</li>
+                        </ul>
                     </div>
                 </div>
+
+                {/* Camera Dialog */}
+                <Dialog open={showCamera} onOpenChange={setShowCamera}>
+                    <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Capture Image</DialogTitle>
+                            <DialogDescription>
+                                Position your document in the camera view and click capture
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="relative">
+                            <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                className="w-full rounded-lg"
+                            />
+                            <canvas ref={canvasRef} className="hidden" />
+                        </div>
+                        <div className="flex justify-center gap-2">
+                            <Button variant="outline" onClick={closeCamera}>
+                                Cancel
+                            </Button>
+                            <Button onClick={captureImage} className="gap-2">
+                                <Camera className="w-4 h-4" />
+                                Capture
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         );
     }
@@ -1694,158 +937,147 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         const hasImages = files.some(f => f.type === 'image');
 
         return (
-            <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-2xl">
+            <div className="container mx-auto p-4 max-w-4xl">
                 <SEO
                     title="AI Test Generator - TestoZa"
                     description="Generate tests from PDF documents and images using AI."
                     keywords={["ai test generator", "pdf to quiz", "image to quiz"]}
                 />
 
-                {/* Hidden input to allow adding more files during Step 2 */}
-                <Input
-                    ref={documentInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
-                    multiple
-                    onChange={async (e) => {
-                        const selectedFiles = Array.from(e.target.files || []);
-                        if (!selectedFiles.length) return;
-                        const newFiles: SelectedFile[] = [];
-                        for (const file of selectedFiles) {
-                            const preview = await createPreview(file);
-                            newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
-                        }
-                        setFiles(prev => [...prev, ...newFiles]);
-                        setError(null);
-                    }}
-                    className="hidden"
-                />
-
-                <div className="space-y-4">
-                    {/* Files Preview - Clean List View */}
-                    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-slate-100 dark:border-slate-800/80 flex flex-col xs:flex-row gap-2 items-stretch xs:items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-slate-500 hover:text-slate-700"
-                                    onClick={() => {
-                                        if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
-                                            clearAllFiles();
-                                        }
-                                    }}
-                                >
-                                    <ArrowLeft className="w-4 h-4" />
-                                </Button>
-                                <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">
-                                    Selected {uploadType === 'document' ? 'Document' : 'Images'} ({files.length})
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => documentInputRef.current?.click()}
-                                    className="h-8 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 font-semibold"
-                                >
-                                    <Plus className="w-3.5 h-3.5 mr-1" /> Add File
-                                </Button>
-                                <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    onClick={clearAllFiles} 
-                                    className="h-8 text-xs text-slate-400 hover:text-red-500 transition-colors"
-                                >
-                                    <X className="w-3.5 h-3.5 mr-1" /> Clear All
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="p-3">
-                            <div className="space-y-1.5">
-                                {files.map((fileObj) => (
-                                    <div 
-                                        key={fileObj.id} 
-                                        className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-900/30 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                <div className="space-y-6">
+                    {/* Files Preview */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                            if (files.length === 0 || confirm("Going back will clear your selection. Continue?")) {
+                                                clearAllFiles();
+                                            }
+                                        }}
                                     >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            {fileObj.preview ? (
-                                                <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 shrink-0">
-                                                    <img
-                                                        src={fileObj.preview}
-                                                        alt={fileObj.file.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center text-indigo-500 shrink-0">
-                                                    <FileText className="w-5 h-5" />
-                                                </div>
-                                            )}
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[180px] sm:max-w-xs">
-                                                    {fileObj.file.name}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400">
-                                                    {(fileObj.file.size / (1024 * 1024)).toFixed(2)} MB
-                                                </p>
+                                        <ArrowLeft className="w-4 h-4" />
+                                    </Button>
+                                    <span>
+                                        {uploadType === 'document' ? 'Document' : 'Images'}
+                                        {' '}({files.length} {files.length === 1 ? 'file' : 'files'})
+                                    </span>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={clearAllFiles} className="text-muted-foreground hover:text-destructive">
+                                    <X className="w-4 h-4 mr-1" /> Clear All
+                                </Button>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {files.map((fileObj) => (
+                                    <div key={fileObj.id} className="relative group">
+                                        {fileObj.preview ? (
+                                            <div className="aspect-square rounded-lg overflow-hidden border bg-muted">
+                                                <img
+                                                    src={fileObj.preview}
+                                                    alt={fileObj.file.name}
+                                                    className="w-full h-full object-cover"
+                                                />
                                             </div>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
+                                        ) : (
+                                            <div className="aspect-square rounded-lg border bg-muted flex flex-col items-center justify-center p-2">
+                                                <FileText className="w-8 h-8 text-muted-foreground mb-1" />
+                                                <span className="text-xs text-center truncate w-full">{fileObj.file.name}</span>
+                                            </div>
+                                        )}
+                                        <button
                                             onClick={() => removeFile(fileObj.id)}
-                                            className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                            className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
-                                            <X className="w-4 h-4" />
-                                        </Button>
+                                            <X className="w-3 h-3" />
+                                        </button>
                                     </div>
                                 ))}
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Answer Key Upload - Reduced Inline Style */}
-                    <div className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-500 shrink-0">
-                                <Key className="w-4.5 h-4.5" />
+                                {/* Add More Button - only for images */}
+                                {uploadType === 'image' && (
+                                    <>
+                                        <button
+                                            onClick={() => imageInputRef.current?.click()}
+                                            className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
+                                        >
+                                            <Plus className="w-6 h-6 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">Add Image</span>
+                                        </button>
+                                        <button
+                                            onClick={openCamera}
+                                            className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 flex flex-col items-center justify-center gap-2 transition-colors"
+                                        >
+                                            <Camera className="w-6 h-6 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">Camera</span>
+                                        </button>
+                                    </>
+                                )}
                             </div>
-                            <div className="min-w-0">
-                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Answer Key (Optional)</p>
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[180px] sm:max-w-xs">
-                                    {answerKeyFile ? answerKeyFile.name : "Upload key to auto-match correct answers"}
-                                </p>
-                            </div>
-                        </div>
-                        {answerKeyFile ? (
-                            <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => setAnswerKeyFile(null)} 
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
-                            >
-                                <X className="w-4 h-4" />
-                            </Button>
-                        ) : (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => answerKeyInputRef.current?.click()}
-                                className="text-[11px] h-8 px-3 shrink-0 border-dashed hover:border-solid"
-                            >
-                                Upload Key
-                            </Button>
-                        )}
-                        <Input
-                            ref={answerKeyInputRef}
-                            type="file"
-                            accept=".pdf,.png,.jpg,.jpeg"
-                            onChange={handleAnswerKeyChange}
-                            className="hidden"
-                        />
-                    </div>
+
+
+
+                            <Input
+                                ref={imageInputRef}
+                                type="file"
+                                accept=".png,.jpg,.jpeg,.webp"
+                                multiple
+                                onChange={handleImageChange}
+                                className="hidden"
+                            />
+                        </CardContent>
+                    </Card>
+
+                    {/* Answer Key Upload - Show for both document and image uploads */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Key className="w-5 h-5" />
+                                Answer Key (Optional)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {answerKeyFile ? (
+                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                        <Key className="w-5 h-5 text-primary" />
+                                        <div>
+                                            <p className="font-medium">{answerKeyFile.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                AI will use this to match correct answers with questions
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" size="sm" onClick={() => setAnswerKeyFile(null)}>
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div
+                                    className="border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 rounded-lg p-6 text-center cursor-pointer transition-colors"
+                                    onClick={() => answerKeyInputRef.current?.click()}
+                                >
+                                    <Key className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                                    <p className="font-medium">Upload Answer Key</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Helps AI accurately match correct answers (PDF or Image)
+                                    </p>
+                                    <Input
+                                        ref={answerKeyInputRef}
+                                        type="file"
+                                        accept=".pdf,.png,.jpg,.jpeg"
+                                        onChange={handleAnswerKeyChange}
+                                        className="hidden"
+                                    />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {error && (
                         <Alert variant="destructive">
@@ -1880,74 +1112,58 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
                                 {/* Extract Mode */}
-                                <div className="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 dark:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between">
-                                    <div className="border-beam-gradient-blue" />
-                                    <Card
-                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
-                                        onClick={() => handleProcess('extract')}
-                                    >
-                                        <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
-                                            <div className="space-y-4 flex-1">
-                                                <div className="w-14 h-14 mx-auto rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                    <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Extract Questions</h3>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                                        Extract exact questions, options, and diagrams from the exam paper as-is
-                                                    </p>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1.5 justify-center">
-                                                    <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                                        Best for: Exam papers, question banks
-                                                    </Badge>
-                                                    <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
-                                                        <Zap className="w-2.5 h-2.5 mr-0.5" />
-                                                        ULTRA-FAST
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200">
-                                                Extract Questions →
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                </div>
+                                <Card
+                                    className="cursor-pointer border-2 hover:border-blue-500 hover:shadow-lg transition-all group"
+                                    onClick={() => handleProcess('extract')}
+                                >
+                                    <CardContent className="p-6 text-center space-y-4">
+                                        <div className="w-14 h-14 mx-auto rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold">Extract Questions</h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                Extract exact questions, options, and diagrams from the exam paper as-is
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            <Badge variant="secondary" className="text-xs">
+                                                Best for: Exam papers, question banks
+                                            </Badge>
+                                            <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                                                <Zap className="w-3 h-3 mr-1" />
+                                                ULTRA-FAST
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
 
                                 {/* Generate Mode */}
-                                <div className="border-beam-container p-[1.5px] rounded-2xl bg-slate-200 dark:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 hover:scale-[1.01] transition-all duration-200 group flex flex-col justify-between">
-                                    <div className="border-beam-gradient-purple" />
-                                    <Card
-                                        className="cursor-pointer border-0 bg-white dark:bg-slate-950 relative z-10 w-full h-full flex flex-col justify-between rounded-[15px] hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
-                                        onClick={() => handleProcess('generate')}
-                                    >
-                                        <CardContent className="p-6 text-center flex flex-col justify-between h-full space-y-4">
-                                            <div className="space-y-4 flex-1">
-                                                <div className="w-14 h-14 mx-auto rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                    <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Generate New Questions</h3>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                                        AI creates original questions based on the content and topics in the document
-                                                    </p>
-                                                </div>
-                                                <div className="flex flex-wrap gap-1.5 justify-center">
-                                                    <Badge variant="secondary" className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                                        Best for: Textbooks, notes, study material
-                                                    </Badge>
-                                                    <Badge className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 py-0.5">
-                                                        <Zap className="w-2.5 h-2.5 mr-0.5" />
-                                                        ULTRA-FAST
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl py-2 mt-2 shadow-sm transition-all duration-200">
-                                                Generate Questions →
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                </div>
+                                <Card
+                                    className="cursor-pointer border-2 hover:border-purple-500 hover:shadow-lg transition-all group"
+                                    onClick={() => handleProcess('generate')}
+                                >
+                                    <CardContent className="p-6 text-center space-y-4">
+                                        <div className="w-14 h-14 mx-auto rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <Sparkles className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold">Generate New Questions</h3>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                                AI creates original questions based on the content and topics in the document
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            <Badge variant="secondary" className="text-xs">
+                                                Best for: Textbooks, notes, study material
+                                            </Badge>
+                                            <Badge className="text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                                                <Zap className="w-3 h-3 mr-1" />
+                                                ULTRA-FAST
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </div>
                         </>
                     )}
@@ -1966,7 +1182,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const pipelineType = streamProgress?.data?.pipeline || 'hybrid';
 
             return (
-                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-6xl space-y-6">
+                <div className="container mx-auto p-4 max-w-6xl space-y-6">
                     <SEO
                         title="Extracting Exam Questions - TestoZa"
                         description="Extracting questions in real time using Hybrid OCR + Gemini."
@@ -2039,84 +1255,64 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                     {/* Status Checkpoints */}
                                     <div className="space-y-4 pt-4 border-t text-sm">
                                         {/* Step 1: Upload */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage !== 'uploading' 
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' 
-                                                        : 'bg-blue-100 text-blue-600 animate-pulse'
-                                                }`}>
-                                                    {currentStage !== 'uploading' ? <Check className="w-3.5 h-3.5" /> : '1'}
-                                                </div>
-                                                <span className={currentStage === 'uploading' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    File Upload & Parse
-                                                </span>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage !== 'uploading' 
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' 
+                                                    : 'bg-blue-100 text-blue-600 animate-pulse'
+                                            }`}>
+                                                {currentStage !== 'uploading' ? <Check className="w-3.5 h-3.5" /> : '1'}
                                             </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.uploading > 0 ? `${timers.uploading.toFixed(1)}s` : ''}
+                                            <span className={currentStage === 'uploading' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                File Upload & Parse
                                             </span>
                                         </div>
 
                                         {/* Step 2: Analyzer */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage !== 'uploading' && currentStage !== 'analyzing'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'analyzing'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage !== 'uploading' && currentStage !== 'analyzing' ? <Check className="w-3.5 h-3.5" /> : '2'}
-                                                </div>
-                                                <span className={currentStage === 'analyzing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    OCR Page Classification
-                                                </span>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage !== 'uploading' && currentStage !== 'analyzing'
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                    : currentStage === 'analyzing'
+                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {currentStage !== 'uploading' && currentStage !== 'analyzing' ? <Check className="w-3.5 h-3.5" /> : '2'}
                                             </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.analyzing > 0 ? `${timers.analyzing.toFixed(1)}s` : ''}
+                                            <span className={currentStage === 'analyzing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                OCR Page Classification
                                             </span>
                                         </div>
 
                                         {/* Step 3: Extraction */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage === 'finalizing' || currentStage === 'complete'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'processing' || currentStage === 'extracting'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage === 'finalizing' || currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '3'}
-                                                </div>
-                                                <span className={currentStage === 'processing' || currentStage === 'extracting' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    AI Question Extraction
-                                                </span>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage === 'finalizing' || currentStage === 'complete'
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                    : currentStage === 'processing' || currentStage === 'extracting'
+                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {currentStage === 'finalizing' || currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '3'}
                                             </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.extracting > 0 ? `${timers.extracting.toFixed(1)}s` : ''}
+                                            <span className={currentStage === 'processing' || currentStage === 'extracting' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                AI Question Extraction
                                             </span>
                                         </div>
 
                                         {/* Step 4: Finalizing */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage === 'complete'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'finalizing'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '4'}
-                                                </div>
-                                                <span className={currentStage === 'finalizing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    Structure Finalization
-                                                </span>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                                                currentStage === 'complete'
+                                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+                                                    : currentStage === 'finalizing'
+                                                    ? 'bg-blue-100 text-blue-600 animate-pulse'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                                {currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '4'}
                                             </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.finalizing > 0 ? `${timers.finalizing.toFixed(1)}s` : ''}
+                                            <span className={currentStage === 'finalizing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
+                                                Structure Finalization
                                             </span>
                                         </div>
                                     </div>
@@ -2157,13 +1353,22 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         {/* RIGHT COLUMN: Stream Output Feed (8 cols) */}
                         <div className="md:col-span-8 space-y-4">
                             <Card className="border border-slate-200 dark:border-slate-800 shadow-xl bg-card min-h-[500px] flex flex-col">
-                                <CardHeader className="py-4 border-b">
-                                    <CardTitle className="text-lg">Extracted Questions</CardTitle>
+                                <CardHeader className="py-4 border-b flex flex-row items-center justify-between">
+                                    <CardTitle className="text-lg flex items-center gap-2">
+                                        <span>Extracted Questions</span>
+                                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                            LIVE FEED
+                                        </span>
+                                    </CardTitle>
+                                    <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800">
+                                        {streamingQuestions.length} Found
+                                    </Badge>
                                 </CardHeader>
                                 
                                 <div className="flex-1 flex flex-col p-4">
                                     {streamingQuestions.length > 0 ? (
-                                        <ScrollArea ref={scrollContainerRef} className="h-[480px] w-full pr-2">
+                                        <ScrollArea className="h-[480px] w-full pr-2">
                                             <div className="space-y-4">
                                                 {streamingQuestions.map((q, idx) => (
                                                     <Card
@@ -2205,6 +1410,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                         </CardContent>
                                                     </Card>
                                                 ))}
+                                                {/* Auto Scroll Target */}
+                                                <div ref={scrollRef} />
                                             </div>
                                         </ScrollArea>
                                     ) : (
@@ -2318,7 +1525,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const numericalCount = questions.filter(q => q.type === 'numerical').length;
 
             return (
-                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-4xl">
+                <div className="container mx-auto p-4 max-w-4xl">
                     <ErrorBoundary>
                         <div className="space-y-6 slide-in-from-bottom-5 animate-in duration-500">
                             {/* Header */}
@@ -2353,31 +1560,28 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleDownloadJSON}
+                                        className="gap-2"
+                                        title="Download raw JSON for debugging"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        JSON
+                                    </Button>
                                     <Button
                                         variant="outline"
                                         onClick={() => { setParsedData(null); setMode(null); }}
-                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4"
                                     >
                                         Try Again
                                     </Button>
                                     <Button
                                         onClick={handleImport}
-                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4 bg-blue-600 hover:bg-blue-700 font-bold gap-2 text-white"
+                                        className="bg-green-600 hover:bg-green-700 font-bold gap-2"
                                     >
-                                        <PenLine className="w-4 h-4" />
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        onClick={handleDirectSave}
-                                        disabled={savingTest}
-                                        className="w-full sm:w-auto text-xs sm:text-sm px-2.5 sm:px-4 bg-green-600 hover:bg-green-700 font-bold gap-2 text-white"
-                                    >
-                                        {savingTest ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                                        ) : (
-                                            <><Check className="w-4 h-4" /> Save & Continue</>
-                                        )}
+                                        <Check className="w-4 h-4" />
+                                        Import to Editor
                                     </Button>
                                 </div>
                             </div>
@@ -2477,7 +1681,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                                             {/* Options - Only show for single/multiple choice */}
                                             {q.type !== 'numerical' && q.options && Object.keys(q.options).length > 0 && (
-                                                <div className="space-y-2 ml-2 sm:ml-10 mt-2">
+                                                <div className="space-y-2 ml-10 mt-2">
                                                     <label className="text-xs font-semibold uppercase text-muted-foreground">Options</label>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         {Object.entries(q.options).map(([key, text]) => (
@@ -2521,7 +1725,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                                             {/* Numerical Answer Display */}
                                             {q.type === 'numerical' && (
-                                                <div className="ml-2 sm:ml-10 mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-800">
+                                                <div className="ml-10 mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-800">
                                                     <label className="text-xs font-semibold uppercase text-purple-600 dark:text-purple-400">Correct Answer (Numerical)</label>
                                                     <div className="text-lg font-mono mt-1 text-purple-800 dark:text-purple-200">
                                                         {formatCorrectAnswer(q)}
@@ -2531,7 +1735,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                                             {/* Unanswered Warning */}
                                             {!q.correctAnswer && (
-                                                <div className="ml-2 sm:ml-10">
+                                                <div className="ml-10">
                                                     <Badge variant="outline" className="text-orange-600 border-orange-300">
                                                         ⚠ Correct answer not detected — set it in the editor
                                                     </Badge>
@@ -2542,6 +1746,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 ))}
                             </ScrollArea>
 
+                            {/* Generate More Questions Button */}
                             {files.length > 0 && mode && (
                                 <Card className="mt-4 border-dashed border-2 border-primary/30">
                                     <CardContent className="p-4">
@@ -2570,48 +1775,20 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             )}
 
                             {/* Proceed to test builder button */}
-                            <div className="mt-8 mb-4 border-t pt-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                                    <span>Review complete? Save directly or edit to customize.</span>
-                                    
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full shrink-0">
-                                                <MoreVertical className="w-4 h-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start">
-                                            <DropdownMenuItem onClick={handleDownloadJSON} className="gap-2">
-                                                <Download className="w-4 h-4" />
-                                                Download raw JSON
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                            <div className="mt-8 mb-4 border-t pt-8 flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                    Review complete? Send these questions to the editor to finalize.
                                 </div>
-                                <div className="flex gap-3 w-full md:w-auto">
-                                    <Button
-                                        onClick={handleImport}
-                                        size="lg"
-                                        variant="outline"
-                                        className="flex-1 md:flex-none gap-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
-                                    >
-                                        <PenLine className="w-4 h-4 md:w-5 md:h-5" />
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        onClick={handleDirectSave}
-                                        disabled={savingTest}
-                                        size="lg"
-                                        className="flex-1 md:flex-none gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md text-white font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
-                                    >
-                                        {savingTest ? (
-                                            <><Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> Saving...</>
-                                        ) : (
-                                            <><Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-200" /> Save & Continue</>
-                                        )}
-                                    </Button>
-                                </div>
+                                <Button
+                                    onClick={() => onImport && onImport(parsedData)}
+                                    size="lg"
+                                    className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md text-white font-medium px-8"
+                                >
+                                    <Sparkles className="w-5 h-5 text-amber-300" />
+                                    Continue to Test Builder
+                                    <ArrowLeft className="w-5 h-5 ml-1 rotate-180" />
+                                </Button>
                             </div>
                         </div>
                     </ErrorBoundary>

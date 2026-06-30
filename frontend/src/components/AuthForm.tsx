@@ -60,7 +60,10 @@ export default function AuthForm() {
     const { refreshSession } = useAuth();
 
     useEffect(() => {
-        if (location.state?.isSignup) {
+        const queryParams = new URLSearchParams(location.search);
+        const isSignupParam = queryParams.get('signup') === 'true' || queryParams.get('isSignup') === 'true';
+
+        if (location.state?.isSignup || isSignupParam) {
             setView('signup');
         } else {
             setView('login');
@@ -73,7 +76,7 @@ export default function AuthForm() {
         if (redirectPath && redirectPath !== '/login' && redirectPath !== '/onboarding') {
             localStorage.setItem('auth_redirect_intent', redirectPath);
         }
-    }, [location.state]);
+    }, [location.state, location.search]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),

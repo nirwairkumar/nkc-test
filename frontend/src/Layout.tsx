@@ -27,9 +27,8 @@ export default function Layout() {
             const hasDesignation = user.user_metadata?.designation || profile?.designation || localDesignation;
 
             if (!hasDesignation) {
-                // Allow staying on /onboarding and avoid redirecting during authentication callback or login flows
-                const isAuthFlow = ['/auth/callback', '/login', '/auth-error', '/update-password'].includes(location.pathname);
-                if (location.pathname !== '/onboarding' && !isAuthFlow) {
+                // Allow staying on /onboarding
+                if (location.pathname !== '/onboarding') {
                     localStorage.setItem('auth_redirect_intent', location.pathname + location.search);
                     navigate('/onboarding', { replace: true });
                 }
