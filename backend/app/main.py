@@ -28,7 +28,9 @@ def read_root():
 origins = [
     "https://testoza.com",
     "https://www.testoza.com",
-    "http://localhost:5173",# Local dev
+    "https://app.testoza.com",
+    "https://testing.testoza.com",
+    "http://localhost:5173", # Local dev
     "http://localhost:8081", # Local dev
     "*" # Re-enable wildcard temporarily for transition if needed, but per plan specify origins
 ]
