@@ -151,10 +151,23 @@ async def update_user_profile(
 ):
     try:
         # Security: In real app, verify user_id matches token user_id
-        # For now, we trust the logic calling this (via RLS in Supabase or here)
+        # Check if profile exists
+        profile_check = db.table("profiles").select("id").eq("id", user_id).execute()
         
-        # 1. Update Profile
-        response = db.table("profiles").update(updates).eq("id", user_id).execute()
+        if not profile_check.data:
+            print(f"Profile doesn't exist for user {user_id} in update_user_profile. Inserting new profile...")
+            if "email" not in updates:
+                try:
+                    auth_user = supabase.auth.admin.get_user_by_id(user_id)
+                    if auth_user and auth_user.user:
+                        updates["email"] = auth_user.user.email
+                except Exception as auth_err:
+                    print(f"Error fetching email from auth in update_user_profile: {auth_err}")
+            
+            updates["id"] = user_id
+            response = db.table("profiles").insert(updates).execute()
+        else:
+            response = db.table("profiles").update(updates).eq("id", user_id).execute()
         
         # 2. Sync with Tests (if name or avatar changed)
         if updates.get("full_name") or updates.get("avatar_url"):
@@ -182,8 +195,31 @@ async def get_user_details(
     try:
         response = db.table("profiles").select("*").eq("id", user_id).execute()
         if not response.data:
+            print(f"Profile check in get_user_details: profile does not exist for {user_id}. Attempting auto-provisioning...")
+            try:
+                auth_user = supabase.auth.admin.get_user_by_id(user_id)
+                if auth_user and auth_user.user:
+                    email = auth_user.user.email
+                    full_name = None
+                    if auth_user.user.user_metadata:
+                        full_name = auth_user.user.user_metadata.get("full_name")
+                    
+                    profile_data = {
+                        "id": user_id,
+                        "email": email,
+                        "full_name": full_name,
+                    }
+                    print(f"Auto-creating profile in get_user_details: {profile_data}")
+                    create_result = db.table("profiles").insert(profile_data).execute()
+                    if create_result.data:
+                        return create_result.data[0]
+            except Exception as create_error:
+                print(f"Error auto-creating profile in get_user_details: {create_error}")
+            
             raise HTTPException(status_code=404, detail="User not found")
         return response.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching user details: {e}")
         raise HTTPException(status_code=404, detail="User not found")

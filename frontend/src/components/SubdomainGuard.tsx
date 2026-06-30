@@ -32,7 +32,7 @@ export default function SubdomainGuard() {
 
       if (!isAllowed) {
         console.log(`SubdomainGuard: Redirecting restricted path ${location.pathname} to app subdomain.`);
-        window.location.replace(`https://app.testoza.com${location.pathname}${location.search}`);
+        window.location.replace(`https://app.testoza.com${location.pathname}${location.search}${location.hash}`);
       }
     } else if (isAppDomain) {
       // App subdomain root page should go to dashboard or login
