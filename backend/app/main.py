@@ -35,6 +35,7 @@ origins = [
     "*" # Re-enable wildcard temporarily for transition if needed, but per plan specify origins
 ]
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

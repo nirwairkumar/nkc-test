@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 
 
+
 export default function AdminMigration() {
     const { user, loading: authLoading, isAdmin } = useAuth();
     const navigate = useNavigate();
