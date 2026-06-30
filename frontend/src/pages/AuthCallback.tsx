@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import apiClient from '@/lib/apiClient';
 import { supabase } from '@/integrations/supabase/client';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 
 /**
@@ -54,10 +55,7 @@ export default function AuthCallback() {
                 const refreshToken = params.get('refresh_token');
 
                 if (accessToken) {
-                    localStorage.setItem('testoza_token', accessToken);
-                    if (refreshToken) {
-                        localStorage.setItem('testoza_refresh_token', refreshToken);
-                    }
+                    tokenStorage.setTokens(accessToken, refreshToken || undefined);
 
                     window.history.replaceState(null, '', window.location.pathname);
                     setStatus('Login successful! Redirecting...');
@@ -80,10 +78,7 @@ export default function AuthCallback() {
                     const session = exchangeData?.session;
 
                     if (session?.access_token) {
-                        localStorage.setItem('testoza_token', session.access_token);
-                        if (session.refresh_token) {
-                            localStorage.setItem('testoza_refresh_token', session.refresh_token);
-                        }
+                        tokenStorage.setTokens(session.access_token, session.refresh_token || undefined);
 
                         setStatus('Login successful! Redirecting...');
                         await refreshSession();
@@ -114,7 +109,7 @@ export default function AuthCallback() {
             }
 
             // --- No data at all ---
-            const localToken = localStorage.getItem('testoza_token');
+            const localToken = tokenStorage.getTokens().token;
             if (localToken) {
                 setStatus('Login successful! Redirecting...');
                 await refreshSession();

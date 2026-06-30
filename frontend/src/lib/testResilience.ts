@@ -6,6 +6,7 @@
  *   2. AnswerVault           – IndexedDB-backed local backup of live answers
  *   3. ProactiveTokenRefresh – keeps the JWT alive during long (2-3 hr) exams
  */
+import { tokenStorage } from '@/utils/tokenStorage';
 
 // ─── 1. EXPONENTIAL RETRY ─────────────────────────────────────────────────────
 
@@ -138,7 +139,7 @@ const REFRESH_INTERVAL_MS = 45 * 60 * 1000; // 45 minutes
 export function startProactiveTokenRefresh(apiBaseUrl: string): () => void {
     const intervalId = setInterval(async () => {
         try {
-            const refreshToken = localStorage.getItem('testoza_refresh_token');
+            const refreshToken = tokenStorage.getTokens().refreshToken;
             if (!refreshToken) return;
 
             const res = await fetch(`${apiBaseUrl}auth/refresh`, {
@@ -156,10 +157,7 @@ export function startProactiveTokenRefresh(apiBaseUrl: string): () => void {
             const session = data?.data?.session;
 
             if (session?.access_token) {
-                localStorage.setItem('testoza_token', session.access_token);
-                if (session.refresh_token) {
-                    localStorage.setItem('testoza_refresh_token', session.refresh_token);
-                }
+                tokenStorage.setTokens(session.access_token, session.refresh_token || undefined);
                 console.log('[TokenRefresh] Token refreshed proactively ✓');
             }
         } catch (e) {

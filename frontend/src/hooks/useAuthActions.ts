@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { authApi } from '@/lib/authApi';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 
 export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string) {
@@ -24,10 +25,10 @@ export async function signInWithEmail(email: string, password: string) {
 
         // After successful login, store tokens
         if (response.data?.session?.access_token) {
-            localStorage.setItem('testoza_token', response.data.session.access_token);
-            if (response.data.session.refresh_token) {
-                localStorage.setItem('testoza_refresh_token', response.data.session.refresh_token);
-            }
+            tokenStorage.setTokens(
+                response.data.session.access_token,
+                response.data.session.refresh_token
+            );
         }
 
         return response;
@@ -42,8 +43,7 @@ export async function signOut() {
     } catch (error) {
         console.error("Logout error:", error);
     } finally {
-        localStorage.removeItem('testoza_token');
-        localStorage.removeItem('testoza_refresh_token');
+        tokenStorage.clearTokens();
         window.location.reload(); // Force full reload to clear state
     }
 }

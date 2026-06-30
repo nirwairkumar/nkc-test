@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 // Use environment variable for API URL or default to localhost
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '') + '/';
@@ -13,7 +14,7 @@ const apiClient = axios.create({
 
 // ─── Request Interceptor: Attach token if logged in ──────────────────────────
 apiClient.interceptors.request.use(async (config) => {
-    const token = localStorage.getItem('testoza_token');
+    const token = tokenStorage.getTokens().token;
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -67,7 +68,7 @@ apiClient.interceptors.response.use(
         //
         if (error.response?.status === 401 && !originalRequest._retry) {
             // Guard: never attempt recovery for anonymous users
-            const hadToken = !!localStorage.getItem('testoza_token');
+            const hadToken = !!tokenStorage.getTokens().token;
             if (!hadToken) {
                 return Promise.reject(error);
             }
@@ -98,8 +99,7 @@ apiClient.interceptors.response.use(
                     const newRefresh = sdkSession.session.refresh_token;
 
                     // Sync into our custom token storage so backend requests work
-                    localStorage.setItem('testoza_token', newToken);
-                    if (newRefresh) localStorage.setItem('testoza_refresh_token', newRefresh);
+                    tokenStorage.setTokens(newToken, newRefresh || undefined);
 
                     apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
                     originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
@@ -110,7 +110,7 @@ apiClient.interceptors.response.use(
                 // ── Strategy B: Backend /auth/refresh (legacy fallback) ────────────
                 // Some tokens may be stored only in our custom storage and not in
                 // the Supabase SDK's session. This catches that edge case.
-                const storedRefresh = localStorage.getItem('testoza_refresh_token');
+                const storedRefresh = tokenStorage.getTokens().refreshToken;
                 if (storedRefresh) {
                     const response = await axios.post(
                         `${API_URL}auth/refresh`,
@@ -123,8 +123,7 @@ apiClient.interceptors.response.use(
                         const newToken   = session.access_token;
                         const newRefresh = session.refresh_token;
 
-                        localStorage.setItem('testoza_token', newToken);
-                        if (newRefresh) localStorage.setItem('testoza_refresh_token', newRefresh);
+                        tokenStorage.setTokens(newToken, newRefresh || undefined);
 
                         // Also sync back into the Supabase client so SDK stays warm
                         await supabase.auth.setSession({
@@ -149,8 +148,7 @@ apiClient.interceptors.response.use(
 
                 if (!isTransient) {
                     // Clean up stored tokens (they are definitely invalid now)
-                    localStorage.removeItem('testoza_token');
-                    localStorage.removeItem('testoza_refresh_token');
+                    tokenStorage.clearTokens();
                 }
 
                 // ── Strategy C: Graceful event — NEVER hard-redirect ──────────────

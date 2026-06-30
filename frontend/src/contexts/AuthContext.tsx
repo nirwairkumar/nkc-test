@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authApi } from '@/lib/authApi';
 import { supabase } from '@/integrations/supabase/client';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 // Shared initialization promise to prevent duplicate concurrent runs
 let initPromise: Promise<void> | null = null;
@@ -141,10 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const type = params.get('type');
 
                     if (accessToken) {
-                        localStorage.setItem('testoza_token', accessToken);
-                        if (refreshToken) {
-                            localStorage.setItem('testoza_refresh_token', refreshToken);
-                        }
+                        tokenStorage.setTokens(accessToken, refreshToken || undefined);
                         window.history.replaceState(null, '', window.location.pathname);
                         
                         if (type === 'recovery') {
@@ -155,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
 
                 // 2. Load from localStorage
-                const token = localStorage.getItem('testoza_token');
+                const token = tokenStorage.getTokens().token;
                 if (token) {
                     try {
                         let userId: string | undefined;
@@ -182,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                                 // Sync back into Supabase client SDK so its internal session stays warm
                                 try {
-                                    const refreshToken = localStorage.getItem('testoza_refresh_token');
+                                    const refreshToken = tokenStorage.getTokens().refreshToken;
                                     if (refreshToken) {
                                         await supabase.auth.setSession({
                                             access_token: token,
@@ -229,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                                 // Sync back into Supabase client SDK so its internal session stays warm
                                 try {
-                                    const refreshToken = localStorage.getItem('testoza_refresh_token');
+                                    const refreshToken = tokenStorage.getTokens().refreshToken;
                                     if (refreshToken) {
                                         await supabase.auth.setSession({
                                             access_token: token,
@@ -275,8 +273,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         const isAuthError = e?.response?.status === 401 || e?.response?.status === 403 || e?.message === "No user in response";
                         if (isAuthError) {
                             console.warn("Authentication invalid, clearing session:", e);
-                            localStorage.removeItem('testoza_token');
-                            localStorage.removeItem('testoza_refresh_token');
+                            tokenStorage.clearTokens();
                             setUser(null);
                             setSession(null);
                             await checkPremiumStatus(undefined);
