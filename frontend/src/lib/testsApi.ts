@@ -43,6 +43,7 @@ export interface Test {
     custom_category?: string;
     class_id?: string; // Optional Class Assignment
     settings?: TestSettings;
+    passing_marks?: number | string;
 
     // New Features
     has_scientific_calculator?: boolean;
