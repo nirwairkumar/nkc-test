@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
 from app.core.database import get_db, supabase
 from supabase import Client
 from pydantic import BaseModel
@@ -31,7 +31,41 @@ class PostUpdate(BaseModel):
     is_pinned: Optional[bool] = None
 
 # --- Helpers ---
-def require_verified_creator(user_id: str, db: Client):
+def _verify_auth_token(user_id: str, request: Request, db: Client):
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    
+    requesting_user_id = None
+    if auth_header.startswith("Bearer "):
+        try:
+            token = auth_header[7:]
+            user_res = db.auth.get_user(token)
+            if user_res and user_res.user:
+                requesting_user_id = user_res.user.id
+        except Exception:
+            pass
+
+    if not requesting_user_id:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+    if requesting_user_id != user_id:
+        # Check if requesting user is an admin
+        profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+        is_admin = False
+        if profile_res.data:
+            email = profile_res.data[0].get("email")
+            if email:
+                admin_res = db.table("admins").select("email").eq("email", email).execute()
+                is_admin = bool(admin_res.data)
+        if not is_admin:
+            raise HTTPException(status_code=403, detail="Unauthorized access")
+            
+    return requesting_user_id
+
+def require_verified_creator(user_id: str, request: Request, db: Client):
+    _verify_auth_token(user_id, request, db)
+    
     profile = db.table("profiles").select("is_verified_creator").eq("id", user_id).execute()
     admin_check = db.table("admins").select("*").eq("user_id", user_id).execute()
     
@@ -39,7 +73,7 @@ def require_verified_creator(user_id: str, db: Client):
     is_admin = bool(admin_check.data)
     
     if not is_verified and not is_admin:
-        raise HTTPException(status_code=403, detail="Only verified creators or admins can create/edit posts")
+        raise HTTPException(status_code=403, detail="Only verified creators or admins can perform this action")
 
 def generate_slug(title: str) -> str:
     import re
@@ -135,12 +169,13 @@ async def get_post_by_slug(
 @router.post("")
 async def create_post(
     payload: PostCreate,
+    request: Request,
     user_id: str = Query(...), 
     db: Client = Depends(get_db)
 ):
     try:
         # 1. Verify user can post
-        require_verified_creator(user_id, db)
+        require_verified_creator(user_id, request, db)
         
         # 2. Prepare data
         post_data = payload.dict()
@@ -164,10 +199,14 @@ async def create_post(
 async def update_post(
     post_id: str,
     payload: PostUpdate,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
+        # Authenticate requesting user
+        _verify_auth_token(user_id, request, db)
+
         # Check ownership
         post_res = db.table("posts").select("author_id, status").eq("id", post_id).execute()
         if not post_res.data:
@@ -200,10 +239,14 @@ async def update_post(
 @router.delete("/{post_id}")
 async def delete_post(
     post_id: str,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
+        # Authenticate requesting user
+        _verify_auth_token(user_id, request, db)
+
         # Check ownership
         post_res = db.table("posts").select("author_id, cover_image").eq("id", post_id).execute()
         if not post_res.data:
@@ -239,13 +282,14 @@ async def delete_post(
 
 @router.post("/upload-image")
 async def upload_post_image(
+    request: Request,
     file: UploadFile = File(...),
     user_id: str = Form(...),
     db: Client = Depends(get_db)
 ):
     """Upload an inline or cover image for a post"""
     try:
-        require_verified_creator(user_id, db)
+        require_verified_creator(user_id, request, db)
         
         file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'webp'
         file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
@@ -267,10 +311,14 @@ async def upload_post_image(
 @router.post("/{post_id}/like")
 async def toggle_like(
     post_id: str,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
+        # Authenticate requesting user
+        _verify_auth_token(user_id, request, db)
+
         # Check if already liked
         like_check = db.table("post_likes").select("id").eq("post_id", post_id).eq("user_id", user_id).execute()
         
@@ -292,7 +340,8 @@ async def toggle_like(
             new_likes = current_likes + 1
             db.table("posts").update({"like_count": new_likes}).eq("id", post_id).execute()
             return {"liked": True, "likeCount": new_likes}
-            
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error toggling like: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -300,13 +349,20 @@ async def toggle_like(
 @router.get("/{post_id}/liked")
 async def check_liked(
     post_id: str,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
+        # Authenticate requesting user
+        _verify_auth_token(user_id, request, db)
+
         like_check = db.table("post_likes").select("id").eq("post_id", post_id).eq("user_id", user_id).execute()
         is_liked = bool(like_check.data and len(like_check.data) > 0)
         return {"liked": is_liked}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error checking like status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
