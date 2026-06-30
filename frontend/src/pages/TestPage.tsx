@@ -90,7 +90,7 @@ export default function TestPage() {
   const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
   const [fullScreenLogs, setFullScreenLogs] = useState<{ event: string, timestamp: number }[]>([]);
   const [isFullScreen, setIsFullScreen] = useState(true);
-  const [violationWarningData, setViolationWarningData] = useState<{show: boolean, title: string, message: string}>({show: false, title: '', message: ''});
+  const [violationWarningData, setViolationWarningData] = useState<{ show: boolean, title: string, message: string }>({ show: false, title: '', message: '' });
 
   // ── Phase 2: Connection health indicator state ──
   type ConnectionStatus = 'online' | 'offline' | 'reconnecting';
@@ -551,7 +551,7 @@ export default function TestPage() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityForWakeLock);
       if (wakeLockRef.current) {
-        wakeLockRef.current.release().catch(() => {});
+        wakeLockRef.current.release().catch(() => { });
         wakeLockRef.current = null;
       }
     };
@@ -1670,7 +1670,7 @@ export default function TestPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in duration-300">
-          
+
           <div className="text-center space-y-2">
             <div className="inline-flex p-3.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-2xl mb-2">
               <BookOpen className="w-7 h-7" />
@@ -1712,6 +1712,7 @@ export default function TestPage() {
                 <div>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">Do Not Close or Switch Tabs:</span> Leaving the browser page or switching tabs might trigger cheating warnings or auto-submit your exam.
                 </div>
+
               </div>
               <div className="flex gap-3 text-sm text-slate-600 dark:text-slate-400">
                 <Clock className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
