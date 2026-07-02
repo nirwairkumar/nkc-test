@@ -1341,7 +1341,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                 <div className="flex flex-wrap items-center gap-2.5">
                     {onAiImport && !isEditMode && (
-                        <Button onClick={onAiImport} variant="outline" className="h-9 gap-2 shrink-0 border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors shadow-sm text-xs font-medium rounded-xl">
+                        <Button onClick={onAiImport} variant="outline" className="h-9 gap-2 shrink-0 animate-google-border hover:bg-indigo-50 hover:text-indigo-700 transition-colors shadow-sm text-xs font-medium rounded-xl">
                             <FileText className="w-3.5 h-3.5" />
                             Import PDF
                         </Button>

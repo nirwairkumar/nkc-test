@@ -52,6 +52,7 @@ import { UserTestCard } from '@/components/UserTestCard';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import CreatorDashboardTour from '@/components/CreatorDashboardTour';
+import SplashLoader from '@/components/ui/SplashLoader';
 
 const isProctoringEnabled = (test: any) => {
     const s = test?.settings;
@@ -558,7 +559,7 @@ export default function UserTestManager() {
         }
     };
 
-    if (authLoading || checkingCreator) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
+    if (authLoading || checkingCreator) return <SplashLoader text="Checking permissions..." />;
     if (!user) return null;
 
     // Non-creator lock screen

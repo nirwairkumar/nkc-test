@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import TestoZaLogo from './TestoZaLogo';
-import { getAppUrl } from '@/utils/subdomain';
+import { getAppUrl, getMarketingUrl } from '@/utils/subdomain';
 
 // Lazy load heavy components to keep them out of the main bundle
 const NotificationBox = React.lazy(() => import('./NotificationBox'));
@@ -350,9 +350,20 @@ export default function Navbar() {
                                         )}
                                     </div>
 
-                                    <DropdownMenuItem onClick={() => navigate('/')}>
+                                    <DropdownMenuItem onClick={() => {
+                                        const url = getMarketingUrl('/');
+                                        if (url.startsWith('http')) {
+                                            window.location.href = url;
+                                        } else {
+                                            navigate('/');
+                                        }
+                                    }}>
                                         <Home className="mr-2 h-4 w-4" />
                                         <span>Home</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => navigate('/generate-with-ai')}>
+                                        <Sparkles className="mr-2 h-4 w-4 text-violet-600 dark:text-violet-400" />
+                                        <span className="text-violet-600 dark:text-violet-400 font-medium">Generate with AI</span>
                                     </DropdownMenuItem>
                                     {canSeeNews && (
                                         <DropdownMenuItem onClick={() => navigate('/news')} className="hidden md:flex">

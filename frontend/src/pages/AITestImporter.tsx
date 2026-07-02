@@ -1113,7 +1113,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
                                 {/* Extract Mode */}
                                 <Card
-                                    className="cursor-pointer border-2 hover:border-blue-500 hover:shadow-lg transition-all group"
+                                    className="cursor-pointer border-2 hover:border-blue-500 hover:shadow-lg transition-all group animate-google-border"
                                     onClick={() => handleProcess('extract')}
                                 >
                                     <CardContent className="p-6 text-center space-y-4">
@@ -1140,7 +1140,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
                                 {/* Generate Mode */}
                                 <Card
-                                    className="cursor-pointer border-2 hover:border-purple-500 hover:shadow-lg transition-all group"
+                                    className="cursor-pointer border-2 hover:border-purple-500 hover:shadow-lg transition-all group animate-google-border"
                                     onClick={() => handleProcess('generate')}
                                 >
                                     <CardContent className="p-6 text-center space-y-4">
