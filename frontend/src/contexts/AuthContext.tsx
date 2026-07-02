@@ -300,6 +300,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         initializeAuth();
+        
+        // Silent background ping to wake up Cloud Run from throttled state (prevents login preflight timeouts)
+        const warmUpBackend = async () => {
+            try {
+                const { default: apiClient } = await import('@/lib/apiClient');
+                await apiClient.get('health');
+            } catch (err) {
+                // Fail silently since this is only a wake-up call
+            }
+        };
+        warmUpBackend();
     }, []);
 
     return (
