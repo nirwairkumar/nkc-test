@@ -4,9 +4,8 @@ import { Switch } from "@/components/ui/switch";
 import { fetchFeatureFlags, updateFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { toast } from 'sonner';
 import { Wrench, ShieldAlert, Loader2, Youtube } from 'lucide-react';
-import { SEO } from '@/components/SEO';
 
-const AdminFeatureControl = () => {
+export default function AdminFeatureControlPanel() {
     const [flags, setFlags] = useState<FeatureFlags>({
         enable_anonymous_tests: false,
         enable_ai_test_generation: true,
@@ -65,15 +64,14 @@ const AdminFeatureControl = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-[80vh]">
+            <div className="flex justify-center items-center h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="container max-w-4xl py-10 px-4 md:px-8 animate-in fade-in duration-500">
-            <SEO title="Feature Control | Admin" />
+        <div className="animate-in fade-in duration-500">
             <div className="flex items-center gap-3 mb-8">
                 <div className="h-12 w-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
                     <Wrench className="h-6 w-6" />
@@ -147,6 +145,7 @@ const AdminFeatureControl = () => {
                                 </div>
                             )}
                         </div>
+
                         {/* YouTube Generation Toggle */}
                         <div className="flex flex-col gap-4 p-4 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors mt-4">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -230,6 +229,4 @@ const AdminFeatureControl = () => {
             </div>
         </div>
     );
-};
-
-export default AdminFeatureControl;
+}

@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,9 +17,7 @@ interface Plan {
     is_active: boolean;
 }
 
-export default function AdminPricing() {
-    const { isAdmin, loading: authLoading } = useAuth();
-    const navigate = useNavigate();
+export default function AdminPricingPanel() {
     const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -44,16 +39,10 @@ export default function AdminPricing() {
     const [featuresInput, setFeaturesInput] = useState('');
 
     useEffect(() => {
-        if (!authLoading) {
-            if (!isAdmin) {
-                navigate('/admin-login');
-            } else {
-                fetchPlans();
-                fetchGlobalSettings();
-                fetchPremiumUsersCount();
-            }
-        }
-    }, [authLoading, isAdmin, navigate]);
+        fetchPlans();
+        fetchGlobalSettings();
+        fetchPremiumUsersCount();
+    }, []);
 
     const fetchPlans = async () => {
         setLoading(true);
@@ -134,7 +123,7 @@ export default function AdminPricing() {
         const payload = {
             name: formData.name,
             description: formData.description,
-            price: formData.price, // Stored in paise
+            price: formData.price,
             duration_days: formData.duration_days,
             features: featuresArray,
             is_active: formData.is_active
@@ -177,7 +166,6 @@ export default function AdminPricing() {
         setIsEditing(plan.id);
         setFormData(plan);
         setFeaturesInput(Array.isArray(plan.features) ? plan.features.join('\n') : '');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const resetForm = () => {
@@ -193,15 +181,9 @@ export default function AdminPricing() {
         }).format(paise / 100);
     };
 
-    if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
-    if (!isAdmin) return null;
-
     return (
-        <div className="container mx-auto max-w-5xl py-10 space-y-8">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Manage Pricing Plans</h1>
-                <Button variant="outline" onClick={() => navigate('/admin-migration')}>Back to Migration</Button>
-            </div>
+        <div className="space-y-8">
+            <h1 className="text-3xl font-bold">Manage Pricing Plans</h1>
 
             {/* Global Premium Access Control */}
             <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -270,27 +252,12 @@ export default function AdminPricing() {
                             </p>
                         </div>
                     </div>
-
-                    {/* Info Message */}
-                    {!globalUnlock && plans.filter(p => p.is_active).length === 0 && (
-                        <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                            <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-500 mt-0.5 flex-shrink-0" />
-                            <div className="space-y-1">
-                                <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
-                                    No Active Plans - Premium Features Unlocked
-                                </p>
-                                <p className="text-sm text-blue-700 dark:text-blue-300">
-                                    Since there are no active subscription plans, all users can access premium features by default.
-                                </p>
-                            </div>
-                        </div>
-                    )}
                 </CardContent>
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* Editor Column */}
-                <Card className="md:col-span-1 h-fit sticky top-4">
+                <Card className="md:col-span-1 h-fit">
                     <CardHeader>
                         <CardTitle>{isEditing ? 'Edit Plan' : 'Create New Plan'}</CardTitle>
                         <CardDescription>

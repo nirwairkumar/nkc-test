@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -20,14 +17,12 @@ interface PromoCode {
     min_order_value: number;
     max_uses: number | null;
     used_count: number;
-    valid_from: string; // ISO String
-    valid_till: string | null; // ISO String
+    valid_from: string;
+    valid_till: string | null;
     is_active: boolean;
 }
 
-export default function AdminPromoCodes() {
-    const { isAdmin, loading: authLoading } = useAuth();
-    const navigate = useNavigate();
+export default function AdminPromoCodesPanel() {
     const [promos, setPromos] = useState<PromoCode[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -40,20 +35,14 @@ export default function AdminPromoCodes() {
         max_discount: null,
         min_order_value: 0,
         max_uses: null,
-        valid_from: new Date().toISOString().split('T')[0], // Today YYYY-MM-DD
+        valid_from: new Date().toISOString().split('T')[0],
         valid_till: null,
         is_active: true
     });
 
     useEffect(() => {
-        if (!authLoading) {
-            if (!isAdmin) {
-                navigate('/admin-login');
-            } else {
-                fetchPromos();
-            }
-        }
-    }, [authLoading, isAdmin, navigate]);
+        fetchPromos();
+    }, []);
 
     const fetchPromos = async () => {
         setLoading(true);
@@ -128,7 +117,6 @@ export default function AdminPromoCodes() {
             valid_from: promo.valid_from ? promo.valid_from.split('T')[0] : '',
             valid_till: promo.valid_till ? promo.valid_till.split('T')[0] : '',
         });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const resetForm = () => {
@@ -150,19 +138,13 @@ export default function AdminPromoCodes() {
         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val / 100);
     }
 
-    if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
-    if (!isAdmin) return null;
-
     return (
-        <div className="container mx-auto max-w-6xl py-10 space-y-8">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Manage Promo Codes</h1>
-                <Button variant="outline" onClick={() => navigate('/admin-pricing')}>Back to Pricing</Button>
-            </div>
+        <div className="space-y-8">
+            <h1 className="text-3xl font-bold">Manage Promo Codes</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Editor Column */}
-                <Card className="lg:col-span-1 h-fit sticky top-4">
+                <Card className="lg:col-span-1 h-fit">
                     <CardHeader>
                         <CardTitle>{isEditing ? 'Edit Promo Code' : 'Create New Promo'}</CardTitle>
                         <CardDescription>

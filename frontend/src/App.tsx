@@ -32,11 +32,7 @@ const AuthForm = lazy(() => import("@/components/AuthForm"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const AuthError = lazy(() => import("./pages/AuthError"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
-const AdminMigration = lazy(() => import("./pages/AdminMigration"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
-const AdminPricing = lazy(() => import("./pages/AdminPricing"));
-const AdminPromoCodes = lazy(() => import("./pages/AdminPromoCodes"));
-const AdminFeatureControl = lazy(() => import("./pages/AdminFeatureControl"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 const ManageTests = lazy(() => import("./pages/ManageTests"));
@@ -56,7 +52,7 @@ const AboutPage = lazy(() => import("./pages/AboutPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
 const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
-const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
+
 const CombinedIntroPage = lazy(() => import("./pages/CombinedIntroPage"));
 const CombinedBreakScreen = lazy(() => import("./pages/CombinedBreakScreen"));
 const MoreTestsPage = lazy(() => import("./pages/MoreTestsPage"));
@@ -119,26 +115,13 @@ const App = () => (
                     <Route path="/onboarding" element={<OnboardingPage />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/update-password" element={<UpdatePassword />} />
-                    <Route path="/admin-migration" element={<AdminMigration />} />
-                    <Route path="/admin-login" element={<AdminLogin />} />
-                    <Route path="/admin-pricing" element={<AdminPricing />} />
-                    <Route path="/admin-promo-codes" element={<AdminPromoCodes />} />
-                    <Route 
-                      path="/admin-features" 
-                      element={
-                        <PrivateRoute>
-                          <AdminFeatureControl />
-                        </PrivateRoute>
-                      } 
-                    />
-                    <Route
-                      path="/admin/analytics"
-                      element={
-                        <PrivateRoute>
-                          <AdminAnalytics />
-                        </PrivateRoute>
-                      }
-                    />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin-migration" element={<Navigate to="/admin?tab=migration" replace />} />
+                    <Route path="/admin-login" element={<Navigate to="/admin" replace />} />
+                    <Route path="/admin-pricing" element={<Navigate to="/admin?tab=pricing" replace />} />
+                    <Route path="/admin-promo-codes" element={<Navigate to="/admin?tab=promos" replace />} />
+                    <Route path="/admin-features" element={<Navigate to="/admin?tab=features" replace />} />
+                    <Route path="/admin/analytics" element={<Navigate to="/admin?tab=analytics" replace />} />
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/premium" element={<PremiumPage />} />
                     <Route path="/manage-tests" element={<ManageTests />} />

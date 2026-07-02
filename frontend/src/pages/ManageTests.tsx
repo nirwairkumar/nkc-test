@@ -55,7 +55,7 @@ export default function ManageTests() {
 
     useEffect(() => {
         if (!authLoading && !isAdmin) {
-            navigate('/admin-login');
+            navigate('/admin');
         }
     }, [authLoading, isAdmin, navigate]);
 

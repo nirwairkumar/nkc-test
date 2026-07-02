@@ -375,23 +375,23 @@ export default function Navbar() {
                                                 <Shield className="mr-2 h-4 w-4" />
                                                 <span>Manage Tests</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin-migration')}>
+                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=migration')}>
                                                 <Shield className="mr-2 h-4 w-4" />
                                                 <span>Admin Data Migration</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin/analytics')}>
+                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=analytics')}>
                                                 <ChartSpline className="mr-2 h-4 w-4 text-orange-500" />
                                                 <span>Visitor Analytics</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin-pricing')}>
+                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=pricing')}>
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>Manage Pricing</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin-features')}>
+                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=features')}>
                                                 <Wrench className="mr-2 h-4 w-4" />
                                                 <span>Feature Control</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin-promo-codes')}>
+                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=promos')}>
                                                 <TicketPercent className="mr-2 h-4 w-4" />
                                                 <span>Manage Promo Codes</span>
                                             </DropdownMenuItem>
