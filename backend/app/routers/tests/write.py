@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, BackgroundTasks, Request
 from app.core.database import get_db
 from supabase import Client
 from typing import Optional, List, Dict, Any
@@ -9,6 +9,40 @@ from app.utils.google_indexing import notify_test_created, notify_test_updated
 from app.routers.tests.cache_config import bust_test_cache
 
 router = APIRouter()
+
+def _verify_auth_token(request: Request, db: Client) -> str:
+    """Verify JWT from Authorization header and return requesting user's ID."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    token = auth_header.replace("Bearer ", "")
+    try:
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_response.user.id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
+    requesting_user_id = _verify_auth_token(request, db)
+    if requesting_user_id == user_id:
+        return requesting_user_id
+        
+    # Check if admin
+    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+    is_admin = False
+    if profile_res.data:
+        email = profile_res.data[0].get("email")
+        if email:
+            admin_res = db.table("admins").select("email").eq("email", email).execute()
+            is_admin = bool(admin_res.data)
+            
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+    return requesting_user_id
 
 @router.get("/debug/schema")
 async def debug_schema(db: Client = Depends(get_db)):
@@ -49,10 +83,12 @@ VALID_TEST_COLUMNS = {
 @router.post("/")
 async def create_test(
     payload: CreateTestRequest,
+    request: Request,
     background_tasks: BackgroundTasks,
     db: Client = Depends(get_db)
 ):
     try:
+        _verify_owner_or_admin(payload.created_by, request, db)
         data = payload.dict(exclude_unset=True)
         # Filter to valid DB columns to prevent column not found errors
         data = {k: v for k, v in data.items() if k in VALID_TEST_COLUMNS}
@@ -89,6 +125,8 @@ async def create_test(
                 background_tasks.add_task(notify_test_created, result)
             return result
             
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error creating test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -98,10 +136,18 @@ async def create_test(
 async def update_test(
     test_id: str,
     payload: Dict[str, Any],
+    request: Request,
     background_tasks: BackgroundTasks,
     db: Client = Depends(get_db)
 ):
     try:
+        # Check ownership
+        test_res = db.table("tests").select("created_by").eq("id", test_id).execute()
+        if not test_res.data:
+            raise HTTPException(status_code=404, detail="Test not found")
+        owner_id = test_res.data[0]["created_by"]
+        _verify_owner_or_admin(owner_id, request, db)
+
         # Filter payload to only valid columns to avoid PostgREST column errors
         payload = {k: v for k, v in payload.items() if k in VALID_TEST_COLUMNS}
 
@@ -158,23 +204,44 @@ async def update_test(
                 return response.data[0]
             return None
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error updating test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{test_id}")
-async def delete_test(test_id: str, db: Client = Depends(get_db)):
+async def delete_test(
+    test_id: str,
+    request: Request,
+    db: Client = Depends(get_db)
+):
     try:
+        # Check ownership
+        test_res = db.table("tests").select("created_by").eq("id", test_id).execute()
+        if not test_res.data:
+            raise HTTPException(status_code=404, detail="Test not found")
+        owner_id = test_res.data[0]["created_by"]
+        _verify_owner_or_admin(owner_id, request, db)
+
         response = db.table("tests").delete().eq("id", test_id).execute()
         bust_test_cache(test_id)
         return {"success": True}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error deleting test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/import/json")
-async def import_json(file: UploadFile = File(...)):
+async def import_json(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Client = Depends(get_db)
+):
+    _verify_auth_token(request, db)
     if not file.filename.endswith(".json"):
         raise HTTPException(status_code=400, detail="Only JSON files are allowed")
     try:
@@ -247,8 +314,6 @@ async def import_json(file: UploadFile = File(...)):
                 max_attempts = attempt_control.get("max_attempts", len(section_questions))
                 
                 if is_attempt_control_enabled and max_attempts:
-                    # Sort questions by marks descending and pick top `max_attempts`
-                    # In real JEE this assumes uniform marks (typically 4) so we do simplistic maxing
                     sorted_marks = sorted([float(q["marks"]) for q in section_questions], reverse=True)
                     total_max_marks += sum(sorted_marks[:max_attempts])
                 else:
@@ -269,13 +334,19 @@ async def import_json(file: UploadFile = File(...)):
         
         return data
         
+    except HTTPException:
+        raise
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON file")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to import JSON: {str(e)}")
+
 
 @router.post("/{test_id}/clone")
 async def clone_test(
     test_id: str,
     payload: CloneTestRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     """
@@ -286,6 +357,8 @@ async def clone_test(
       - Cloner must have an active premium subscription (profiles.premium_expiry > now)
     """
     try:
+        _verify_owner_or_admin(payload.cloner_id, request, db)
+        
         # 1. Fetch the source test in full
         src_res = db.table("tests").select("*").eq("id", test_id).single().execute()
         if not src_res.data:

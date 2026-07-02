@@ -1,16 +1,40 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request
 from app.core.database import get_db
 from supabase import Client
 import uuid
 
 router = APIRouter()
 
+def _verify_auth_token(request: Request, db: Client) -> str:
+    """Verify JWT from Authorization header and return requesting user's ID."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    token = auth_header.replace("Bearer ", "")
+    try:
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_response.user.id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
 @router.post("/upload")
 async def upload_file(
     bucket: str,
+    request: Request,
     file: UploadFile = File(...),
     db: Client = Depends(get_db)
 ):
+    # Verify auth
+    _verify_auth_token(request, db)
+    
+    ALLOWED_BUCKETS = ["avatars", "materials", "post-images", "test-images"]
+    if bucket not in ALLOWED_BUCKETS:
+        raise HTTPException(status_code=400, detail="Forbidden bucket path")
+
     try:
         file_content = await file.read()
         file_ext = file.filename.split(".")[-1]

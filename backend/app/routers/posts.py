@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
 from app.core.database import get_db, supabase
 from supabase import Client
 from pydantic import BaseModel
@@ -31,7 +31,42 @@ class PostUpdate(BaseModel):
     is_pinned: Optional[bool] = None
 
 # --- Helpers ---
-def require_verified_creator(user_id: str, db: Client):
+def _verify_auth_token(request: Request, db: Client) -> str:
+    """Verify JWT from Authorization header and return requesting user's ID."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    token = auth_header.replace("Bearer ", "")
+    try:
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_response.user.id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
+    requesting_user_id = _verify_auth_token(request, db)
+    if requesting_user_id == user_id:
+        return requesting_user_id
+        
+    # Check if admin
+    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+    is_admin = False
+    if profile_res.data:
+        email = profile_res.data[0].get("email")
+        if email:
+            admin_res = db.table("admins").select("email").eq("email", email).execute()
+            is_admin = bool(admin_res.data)
+            
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+    return requesting_user_id
+
+def require_verified_creator(user_id: str, request: Request, db: Client):
+    _verify_owner_or_admin(user_id, request, db)
     profile = db.table("profiles").select("is_verified_creator").eq("id", user_id).execute()
     admin_check = db.table("admins").select("*").eq("user_id", user_id).execute()
     
@@ -39,7 +74,7 @@ def require_verified_creator(user_id: str, db: Client):
     is_admin = bool(admin_check.data)
     
     if not is_verified and not is_admin:
-        raise HTTPException(status_code=403, detail="Only verified creators or admins can create/edit posts")
+        raise HTTPException(status_code=403, detail="Only verified creators or admins can perform this action")
 
 def generate_slug(title: str) -> str:
     import re
@@ -76,9 +111,6 @@ async def get_posts_feed(
         if tag:
             query = query.contains("tags", [tag])
             
-        # Pinned posts logic is usually handled on the frontend by sorting, but we can order here
-        # Supabase Python client doesn't support multiple orders easily in one chain sometimes, 
-        # so we rely on published_at and handle pinned on frontend OR two queries.
         query = query.order("is_pinned", desc=True).order("published_at", desc=True)
         
         # Pagination
@@ -94,12 +126,16 @@ async def get_posts_feed(
 
 @router.get("/my")
 async def get_my_posts(
+    request: Request,
     user_id: str = Query(...), # Passed by frontend or auth middleware
     db: Client = Depends(get_db)
 ):
     try:
+        _verify_owner_or_admin(user_id, request, db)
         response = db.table("posts").select("id, author_id, title, slug, summary, cover_image, category, tags, status, is_pinned, view_count, like_count, published_at, created_at, updated_at").eq("author_id", user_id).order("created_at", desc=True).execute()
         return response.data
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching my posts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -121,7 +157,6 @@ async def get_post_by_slug(
         
         # Increment view count (if published)
         if post.get("status") == "published":
-            # Using RPC or direct update
             db.table("posts").update({"view_count": post["view_count"] + 1}).eq("id", post["id"]).execute()
             post["view_count"] += 1
             
@@ -135,12 +170,13 @@ async def get_post_by_slug(
 @router.post("")
 async def create_post(
     payload: PostCreate,
+    request: Request,
     user_id: str = Query(...), 
     db: Client = Depends(get_db)
 ):
     try:
         # 1. Verify user can post
-        require_verified_creator(user_id, db)
+        require_verified_creator(user_id, request, db)
         
         # 2. Prepare data
         post_data = payload.dict()
@@ -164,11 +200,15 @@ async def create_post(
 async def update_post(
     post_id: str,
     payload: PostUpdate,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
-        # Check ownership
+        # Check ownership / permissions of user_id
+        _verify_owner_or_admin(user_id, request, db)
+        
+        # Check ownership of the post itself
         post_res = db.table("posts").select("author_id, status").eq("id", post_id).execute()
         if not post_res.data:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -200,11 +240,15 @@ async def update_post(
 @router.delete("/{post_id}")
 async def delete_post(
     post_id: str,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
-        # Check ownership
+        # Check ownership / permissions of user_id
+        _verify_owner_or_admin(user_id, request, db)
+        
+        # Check ownership of the post itself
         post_res = db.table("posts").select("author_id, cover_image").eq("id", post_id).execute()
         if not post_res.data:
             raise HTTPException(status_code=404, detail="Post not found")
@@ -219,8 +263,6 @@ async def delete_post(
         cover = post_res.data[0].get("cover_image")
         if cover and "post-images" in cover:
             try:
-                # Extract file path from URL (naive approach, can fail depending on exact URL format)
-                # Typically: https://your-project.supabase.co/storage/v1/object/public/post-images/user_id/file.webp
                 parts = cover.split("/post-images/")
                 if len(parts) > 1:
                     file_path = parts[1]
@@ -228,7 +270,7 @@ async def delete_post(
             except Exception as store_err:
                 print(f"Failed to delete cover image: {store_err}")
                 
-        # Delete post (cascade will handle likes)
+        # Delete post
         db.table("posts").delete().eq("id", post_id).execute()
         return {"success": True}
     except HTTPException:
@@ -239,13 +281,14 @@ async def delete_post(
 
 @router.post("/upload-image")
 async def upload_post_image(
+    request: Request,
     file: UploadFile = File(...),
     user_id: str = Form(...),
     db: Client = Depends(get_db)
 ):
     """Upload an inline or cover image for a post"""
     try:
-        require_verified_creator(user_id, db)
+        require_verified_creator(user_id, request, db)
         
         file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'webp'
         file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
@@ -267,10 +310,13 @@ async def upload_post_image(
 @router.post("/{post_id}/like")
 async def toggle_like(
     post_id: str,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
+        _verify_owner_or_admin(user_id, request, db)
+        
         # Check if already liked
         like_check = db.table("post_likes").select("id").eq("post_id", post_id).eq("user_id", user_id).execute()
         
@@ -293,6 +339,8 @@ async def toggle_like(
             db.table("posts").update({"like_count": new_likes}).eq("id", post_id).execute()
             return {"liked": True, "likeCount": new_likes}
             
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error toggling like: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -300,13 +348,17 @@ async def toggle_like(
 @router.get("/{post_id}/liked")
 async def check_liked(
     post_id: str,
+    request: Request,
     user_id: str = Query(...),
     db: Client = Depends(get_db)
 ):
     try:
+        _verify_owner_or_admin(user_id, request, db)
         like_check = db.table("post_likes").select("id").eq("post_id", post_id).eq("user_id", user_id).execute()
         is_liked = bool(like_check.data and len(like_check.data) > 0)
         return {"liked": is_liked}
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error checking like status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
