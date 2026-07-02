@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, FileImage, Key, Zap, CheckCircle2, MoreVertical, PenLine, History, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, Key, Zap, CheckCircle2, MoreVertical, PenLine, History, Trash2, ChevronLeft } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ProcessingProgress } from "@/components/ProcessingProgress";
 import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -33,11 +32,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 
 // Type definitions matching backend response
 interface Question {
@@ -1213,11 +1207,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         }
     }, [streamingQuestions.length]);
 
-    // Auto-navigate disabled to allow user review before importing
-    // Keep it here as empty or commented out so we don't break logic references
-    useEffect(() => {
-        // Disabled for better UX and review flow
-    }, [parsedData]);
+
 
     if (featureFlags && featureFlags.enable_ai_test_generation === false) {
         return (
