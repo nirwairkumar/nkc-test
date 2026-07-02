@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
+import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 import SubdomainGuard from "@/components/SubdomainGuard";
@@ -86,11 +87,7 @@ const App = () => (
           <TestProvider>
             <BrowserRouter>
               <SubdomainGuard />
-              <Suspense fallback={
-                <div className="flex h-screen w-full items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              }>
+              <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route element={<Layout />}>
                     <Route path="/" element={<LandingPage />} />
