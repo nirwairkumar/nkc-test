@@ -12,6 +12,7 @@ import AdminMigrationPanel from './AdminMigrationPanel';
 import AdminPricingPanel from './AdminPricingPanel';
 import AdminPromoCodesPanel from './AdminPromoCodesPanel';
 import { authApi } from '@/lib/authApi';
+import SplashLoader from '@/components/ui/SplashLoader';
 
 type TabId = 'analytics' | 'features' | 'migration' | 'pricing' | 'promos';
 
@@ -35,11 +36,7 @@ export default function AdminDashboard() {
     };
 
     if (authLoading) {
-        return (
-            <div className="flex h-[80vh] w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
+        return <SplashLoader text="Checking permissions..." />;
     }
 
     if (!user || !isAdmin) {

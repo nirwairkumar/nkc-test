@@ -34,6 +34,7 @@ import {
 } from '@/lib/combinedSessionsApi';
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
+import SplashLoader from '@/components/ui/SplashLoader';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -855,7 +856,7 @@ export default function ManageTests() {
     });
 
 
-    if (authLoading) return <div className="p-10 text-center">Checking permissions...</div>;
+    if (authLoading) return <SplashLoader text="Checking permissions..." />;
     if (!isAdmin) return null;
 
     return (
