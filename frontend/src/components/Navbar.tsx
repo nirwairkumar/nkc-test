@@ -330,94 +330,145 @@ export default function Navbar() {
 
                                     {/* Mobile Only Links moved here */}
                                     <div className="md:hidden">
-                                        <DropdownMenuItem onClick={() => navigate('/notifications')} className="flex justify-between items-center">
+                                        <DropdownMenuItem 
+                                            onClick={() => navigate('/notifications')} 
+                                            className={`flex justify-between items-center ${location.pathname === '/notifications' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}`}
+                                        >
                                             <div className="flex items-center">
                                                 <Bell className="mr-2 h-4 w-4" />
                                                 <span>Notifications</span>
                                             </div>
                                         </DropdownMenuItem>
 
-                                        <DropdownMenuItem onClick={() => navigate('/support')}>
+                                        <DropdownMenuItem 
+                                            onClick={() => navigate('/support')}
+                                            className={location.pathname === '/support' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                        >
                                             <HelpCircle className="mr-2 h-4 w-4" />
                                             <span>Support</span>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         {canSeeNews && (
-                                            <DropdownMenuItem onClick={() => navigate('/news')}>
-                                                <FileText className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                                <span className="text-blue-600 dark:text-blue-400 font-medium">News & Updates</span>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/news')}
+                                                className={location.pathname === '/news' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
+                                                <FileText className={`mr-2 h-4 w-4 ${location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400'}`} />
+                                                <span className={location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400 font-medium'}>News & Updates</span>
                                             </DropdownMenuItem>
                                         )}
                                     </div>
 
-                                    <DropdownMenuItem onClick={() => {
-                                        const url = getMarketingUrl('/');
-                                        if (url.startsWith('http')) {
-                                            window.location.href = url;
-                                        } else {
-                                            navigate('/');
-                                        }
-                                    }}>
+                                    <DropdownMenuItem 
+                                        onClick={() => {
+                                            const url = getMarketingUrl('/');
+                                            if (url.startsWith('http')) {
+                                                window.location.href = url;
+                                            } else {
+                                                navigate('/');
+                                            }
+                                        }}
+                                        className={location.pathname === '/' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                    >
                                         <Home className="mr-2 h-4 w-4" />
                                         <span>Home</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate('/generate-with-ai')}>
-                                        <Sparkles className="mr-2 h-4 w-4 text-violet-600 dark:text-violet-400" />
-                                        <span className="text-violet-600 dark:text-violet-400 font-medium">Generate with AI</span>
+                                    <DropdownMenuItem 
+                                        onClick={() => navigate('/generate-with-ai')}
+                                        className={location.pathname === '/generate-with-ai' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                    >
+                                        <Sparkles className={`mr-2 h-4 w-4 ${location.pathname === '/generate-with-ai' ? '' : 'text-violet-600 dark:text-violet-400'}`} />
+                                        <span className={location.pathname === '/generate-with-ai' ? '' : 'text-violet-600 dark:text-violet-400 font-medium'}>Generate with AI</span>
                                     </DropdownMenuItem>
                                     {canSeeNews && (
-                                        <DropdownMenuItem onClick={() => navigate('/news')} className="hidden md:flex">
-                                            <FileText className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                            <span className="text-blue-600 dark:text-blue-400 font-medium">News & Updates</span>
+                                        <DropdownMenuItem 
+                                            onClick={() => navigate('/news')} 
+                                            className={`hidden md:flex ${location.pathname === '/news' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}`}
+                                        >
+                                            <FileText className={`mr-2 h-4 w-4 ${location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400'}`} />
+                                            <span className={location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400 font-medium'}>News & Updates</span>
                                         </DropdownMenuItem>
                                     )}
-                                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                                    <DropdownMenuItem 
+                                        onClick={() => navigate('/profile')}
+                                        className={location.pathname === '/profile' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                    >
                                         <User className="mr-2 h-4 w-4" />
                                         <span>Profile</span>
                                     </DropdownMenuItem>
 
-                                    <DropdownMenuItem onClick={() => navigate('/settings')}>
+                                    <DropdownMenuItem 
+                                        onClick={() => navigate('/settings')}
+                                        className={location.pathname === '/settings' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                    >
                                         <Settings className="mr-2 h-4 w-4" />
                                         <span>Settings</span>
                                     </DropdownMenuItem>
                                     {isAdmin ? (
                                         <>
-                                            <DropdownMenuItem onClick={() => navigate('/manage-tests')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/manage-tests')}
+                                                className={location.pathname === '/manage-tests' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <Shield className="mr-2 h-4 w-4" />
                                                 <span>Manage Tests</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=migration')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/admin?tab=migration')}
+                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=migration')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <Shield className="mr-2 h-4 w-4" />
                                                 <span>Admin Data Migration</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=analytics')}>
-                                                <ChartSpline className="mr-2 h-4 w-4 text-orange-500" />
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/admin?tab=analytics')}
+                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=analytics')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
+                                                <ChartSpline className={`mr-2 h-4 w-4 ${(location.pathname.startsWith('/admin') && location.search.includes('tab=analytics')) ? '' : 'text-orange-500'}`} />
                                                 <span>Visitor Analytics</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=pricing')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/admin?tab=pricing')}
+                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=pricing')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <DollarSign className="mr-2 h-4 w-4" />
                                                 <span>Manage Pricing</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=features')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/admin?tab=features')}
+                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=features')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <Wrench className="mr-2 h-4 w-4" />
                                                 <span>Feature Control</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/admin?tab=promos')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/admin?tab=promos')}
+                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=promos')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <TicketPercent className="mr-2 h-4 w-4" />
                                                 <span>Manage Promo Codes</span>
                                             </DropdownMenuItem>
                                         </>
                                     ) : (
                                         <>
-                                            <DropdownMenuItem onClick={() => navigate('/my-tests')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/my-tests')}
+                                                className={location.pathname === '/my-tests' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <Shield className="mr-2 h-4 w-4" />
                                                 <span>Your Tests</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/materials')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/materials')}
+                                                className={location.pathname === '/materials' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <FileText className="mr-2 h-4 w-4" />
                                                 <span>Materials</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => navigate('/history')}>
+                                            <DropdownMenuItem 
+                                                onClick={() => navigate('/history')}
+                                                className={location.pathname === '/history' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                            >
                                                 <History className="mr-2 h-4 w-4" />
                                                 <span>Test History</span>
                                             </DropdownMenuItem>
@@ -425,12 +476,18 @@ export default function Navbar() {
                                     )}
 
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => window.open('/user-guide', '_blank')}>
-                                        <Book className="mr-2 h-4 w-4 text-indigo-600" />
+                                    <DropdownMenuItem 
+                                        onClick={() => window.open('/user-guide', '_blank')}
+                                        className={location.pathname.startsWith('/user-guide') ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                    >
+                                        <Book className={`mr-2 h-4 w-4 ${location.pathname.startsWith('/user-guide') ? '' : 'text-indigo-600'}`} />
                                         <span>User Guide</span>
                                     </DropdownMenuItem>
 
-                                    <DropdownMenuItem onClick={() => navigate('/create-test')}>
+                                    <DropdownMenuItem 
+                                        onClick={() => navigate('/create-test')}
+                                        className={(location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                    >
                                         <Plus className="mr-2 h-4 w-4" />
                                         <span>Create Test</span>
                                     </DropdownMenuItem>
