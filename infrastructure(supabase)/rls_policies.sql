@@ -1,11 +1,11 @@
--- Enable Row Level Security (RLS) on remaining public tables to prevent anonymous client modifications
+-- 1. Enable Row Level Security (RLS) on remaining public tables
 ALTER TABLE public.tests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.support_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.question_reports ENABLE ROW LEVEL SECURITY;
 
--- Create policies for public.tests table
+-- 2. Create policies for the tests table
 DROP POLICY IF EXISTS "Allow public read access to non-private tests" ON public.tests;
 CREATE POLICY "Allow public read access to non-private tests" 
 ON public.tests 
