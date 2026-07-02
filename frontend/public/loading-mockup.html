@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TestoZa Loader Preview</title>
+  <!-- Google Fonts Outfit & Ribeye -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Ribeye&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      background: #020617;
+      color: #fff;
+    }
+    .preview-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Common Logo Styles */
+    .logo-container {
+      display: inline-flex;
+      align-items: baseline;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      user-select: none;
+    }
+    .logo-blue {
+      color: #38bdf8;
+    }
+    .logo-z {
+      font-size: 1.26em;
+      font-weight: 900;
+      margin: 0 0.02em;
+      background: linear-gradient(to bottom, #FFE885, #F4B838, #9E6400);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)) drop-shadow(0 0 8px rgba(244, 184, 56, 0.45));
+      display: inline-block;
+    }
+
+    /* Design 1: Landing Page Static Screen */
+    .design-1 {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to top, #0f172a, #312e81);
+      transition: opacity 0.5s ease;
+      z-index: 1;
+    }
+    .design-1::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 0%, #020617 100%);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .design-1 .logo-container {
+      font-size: 64px;
+    }
+
+    /* Design 2: Proposed Premium Pulsing Screen */
+    .design-2 {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to top, #020617, #0b1528, #020617);
+      transition: opacity 0.5s ease;
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .design-2::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 0%, #000 100%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .design-2 .logo-container {
+      font-size: 72px;
+      animation: pulse-glow 2s infinite ease-in-out;
+      filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.25));
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.25));
+      }
+      50% {
+        transform: scale(1.03);
+        filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.45));
+      }
+    }
+
+    /* Bouncing loaders */
+    .dots-container {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+      z-index: 10;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    .dot-1 {
+      background-color: #38bdf8;
+      animation-delay: -0.32s;
+    }
+    .dot-2 {
+      background-color: #F4B838;
+      animation-delay: -0.16s;
+    }
+    .dot-3 {
+      background-color: #38bdf8;
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: scale(0);
+      }
+      40% {
+        transform: scale(1.0);
+      }
+    }
+
+    /* Controls Overlay */
+    .controls {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px border rgba(255, 255, 255, 0.1);
+      padding: 10px 20px;
+      border-radius: 50px;
+      display: flex;
+      gap: 15px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+    }
+    .btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+    .btn.active {
+      background: #3b82f6;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-container">
+    <!-- Design 1 Screen -->
+    <div id="screen1" class="design-1">
+      <div class="logo-container">
+        <span class="logo-blue">Testo</span><span class="logo-z">Z</span><span class="logo-blue">a</span>
+      </div>
+    </div>
+
+    <!-- Design 2 Screen -->
+    <div id="screen2" class="design-2">
+      <div class="logo-container">
+        <span class="logo-blue">Testo</span><span class="logo-z">Z</span><span class="logo-blue">a</span>
+      </div>
+      <div class="dots-container">
+        <div class="dot dot-1"></div>
+        <div class="dot dot-2"></div>
+        <div class="dot dot-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggle Buttons -->
+  <div class="controls">
+    <button id="btn1" class="btn active" onclick="switchDesign(1)">Design 1 (Landing Page static style)</button>
+    <button id="btn2" class="btn" onclick="switchDesign(2)">Design 2 (Glowing & Pulsing style)</button>
+  </div>
+
+  <script>
+    function switchDesign(num) {
+      const s1 = document.getElementById('screen1');
+      const s2 = document.getElementById('screen2');
+      const b1 = document.getElementById('btn1');
+      const b2 = document.getElementById('btn2');
+
+      if (num === 1) {
+        s1.style.opacity = '1';
+        s1.style.pointerEvents = 'auto';
+        s2.style.opacity = '0';
+        s2.style.pointerEvents = 'none';
+        b1.classList.add('active');
+        b2.classList.remove('active');
+      } else {
+        s1.style.opacity = '0';
+        s1.style.pointerEvents = 'none';
+        s2.style.opacity = '1';
+        s2.style.pointerEvents = 'auto';
+        b1.classList.remove('active');
+        b2.classList.add('active');
+      }
+    }
+  </script>
+</body>
+</html>
