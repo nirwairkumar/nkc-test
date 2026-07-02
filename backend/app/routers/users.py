@@ -1,13 +1,64 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from app.core.database import get_db, supabase # Import global supabase client
 from supabase import Client
 from typing import Optional, List, Dict, Any
 
 router = APIRouter()
 
+def _verify_auth_token(request: Request, db: Client) -> str:
+    """Verify JWT from Authorization header and return requesting user's ID."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    token = auth_header.replace("Bearer ", "")
+    try:
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_response.user.id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+def _verify_is_admin(request: Request, db: Client) -> str:
+    requesting_user_id = _verify_auth_token(request, db)
+    
+    # Check if admin
+    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+    is_admin = False
+    if profile_res.data:
+        email = profile_res.data[0].get("email")
+        if email:
+            admin_res = db.table("admins").select("email").eq("email", email).execute()
+            is_admin = bool(admin_res.data)
+            
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin authorization required")
+    return requesting_user_id
+
+def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
+    requesting_user_id = _verify_auth_token(request, db)
+    if requesting_user_id == user_id:
+        return requesting_user_id
+        
+    # Check if admin
+    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
+    is_admin = False
+    if profile_res.data:
+        email = profile_res.data[0].get("email")
+        if email:
+            admin_res = db.table("admins").select("email").eq("email", email).execute()
+            is_admin = bool(admin_res.data)
+            
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
+    return requesting_user_id
+
 @router.put("/{user_id}/verify")
 async def verify_creator(
     user_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     print(f"\n{'='*60}")
@@ -15,6 +66,7 @@ async def verify_creator(
     print(f"{'='*60}")
     
     try:
+        _verify_is_admin(request, db)
         from datetime import datetime, timezone
         
         # Step 1: Check if profile exists
@@ -85,9 +137,11 @@ async def verify_creator(
 @router.put("/{user_id}/revoke")
 async def revoke_verification(
     user_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        _verify_is_admin(request, db)
         updates = {
             "is_verified_creator": False,
             "verified_role": None,
@@ -99,13 +153,20 @@ async def revoke_verification(
         if response.data:
             return response.data[0]
         return response.data
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error revoking verification: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/check-admin")
-async def check_admin(user_id: str):
+async def check_admin(
+    request: Request,
+    user_id: str,
+    db: Client = Depends(get_db)
+):
     try:
+        _verify_auth_token(request, db)
         # 1. Fetch user's email from profiles
         user_profile = supabase.table("profiles").select("email").eq("id", user_id).execute()
         if not user_profile.data:
@@ -124,10 +185,12 @@ async def check_admin(user_id: str):
 
 @router.get("/")
 async def get_all_users(
+    request: Request,
     ids: Optional[str] = None,
     db: Client = Depends(get_db)
 ):
     try:
+        _verify_is_admin(request, db)
         query = db.table("profiles").select("*")
         
         if ids:
@@ -139,6 +202,8 @@ async def get_all_users(
             
         response = query.execute()
         return response.data
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching users: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -147,10 +212,12 @@ async def get_all_users(
 async def update_user_profile(
     user_id: str,
     updates: Dict[str, Any],
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
-        # Security: In real app, verify user_id matches token user_id
+        _verify_owner_or_admin(user_id, request, db)
+        
         # Check if profile exists
         profile_check = db.table("profiles").select("id").eq("id", user_id).execute()
         
@@ -183,6 +250,8 @@ async def update_user_profile(
         if response.data:
             return response.data[0]
         return None
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error updating user profile: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -190,9 +259,11 @@ async def update_user_profile(
 @router.get("/{user_id}")
 async def get_user_details(
     user_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        _verify_auth_token(request, db)
         response = db.table("profiles").select("*").eq("id", user_id).execute()
         if not response.data:
             print(f"Profile check in get_user_details: profile does not exist for {user_id}. Attempting auto-provisioning...")
