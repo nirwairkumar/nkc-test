@@ -586,3 +586,40 @@
   z-index: 10;
   border-radius: inherit;
 }
+
+/* ===== Border Beam Animation ===== */
+@keyframes border-beam-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.border-beam-container {
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+
+.border-beam-gradient-blue {
+  position: absolute;
+  inset: -200%;
+  animation: border-beam-spin 4s linear infinite;
+  background: conic-gradient(from 0deg, transparent 0%, transparent 65%, #3b82f6 85%, #60a5fa 97%, transparent 100%);
+  pointer-events: none;
+}
+
+.border-beam-gradient-purple {
+  position: absolute;
+  inset: -200%;
+  animation: border-beam-spin 4s linear infinite;
+  background: conic-gradient(from 0deg, transparent 0%, transparent 65%, #9333ea 85%, #c084fc 97%, transparent 100%);
+  pointer-events: none;
+}
+
+.border-beam-content {
+  position: relative;
+  z-index: 10;
+}
