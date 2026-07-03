@@ -14,19 +14,19 @@ export default function SettingsShowcase() {
     const deviceRef       = useRef<HTMLDivElement>(null);
     const cursorRef       = useRef<HTMLDivElement>(null);
     const popupRef        = useRef<HTMLDivElement>(null);
-    // Proctoring tab
-    const fsToggleRef     = useRef<HTMLDivElement>(null);
-    const tsToggleRef     = useRef<HTMLDivElement>(null);
+    // Security tab
+    const focusToggleRef  = useRef<HTMLDivElement>(null);
+    const activityToggleRef = useRef<HTMLDivElement>(null);
     const violationSecRef = useRef<HTMLDivElement>(null);
     const radioWarnRef    = useRef<HTMLDivElement>(null);
     const radioNoneRef    = useRef<HTMLDivElement>(null);
-    const blockBtnRef     = useRef<HTMLDivElement>(null);
-    const disableExitRef  = useRef<HTMLDivElement>(null);
+    const navWarnToggleRef = useRef<HTMLDivElement>(null);
+    const calcToggleRef   = useRef<HTMLDivElement>(null);
     // Tab panes
-    const tabProcRef      = useRef<HTMLDivElement>(null);
+    const tabSecRef       = useRef<HTMLDivElement>(null);
     const tabAccessRef    = useRef<HTMLDivElement>(null);
     const tabResultsRef   = useRef<HTMLDivElement>(null);
-    const paneProc        = useRef<HTMLDivElement>(null);
+    const paneSec         = useRef<HTMLDivElement>(null);
     const paneAccess      = useRef<HTMLDivElement>(null);
     const paneResults     = useRef<HTMLDivElement>(null);
     // Access tab — separated container vs text-span refs for date fields
@@ -180,7 +180,7 @@ export default function SettingsShowcase() {
         // ── RESET ─────────────────────────────────────────────
         function resetAll() {
             tomorrow = getTomorrowDateStr();
-            [fsToggleRef, tsToggleRef, blockBtnRef, disableExitRef,
+            [focusToggleRef, activityToggleRef, navWarnToggleRef, calcToggleRef,
              schedToggleRef, attemptRef, startFormRef, strictTimerRef
             ].forEach(function (r) { if (r.current) r.current.classList.remove('on'); });
             // Flexible Timer starts ON (it gets toggled off during the demo)
@@ -206,10 +206,10 @@ export default function SettingsShowcase() {
             if (addFieldBtn2Ref.current) addFieldBtn2Ref.current.style.display = 'none';
             if (radioNoneRef.current)    radioNoneRef.current.classList.add('checked');
             if (radioWarnRef.current)    radioWarnRef.current.classList.remove('checked');
-            if (tabProcRef.current)      tabProcRef.current.classList.add('active');
+            if (tabSecRef.current)       tabSecRef.current.classList.add('active');
             if (tabAccessRef.current)    tabAccessRef.current.classList.remove('active');
             if (tabResultsRef.current)   tabResultsRef.current.classList.remove('active');
-            if (paneProc.current)        paneProc.current.classList.add('active');
+            if (paneSec.current)         paneSec.current.classList.add('active');
             if (paneAccess.current)      paneAccess.current.classList.remove('active');
             if (paneResults.current)     paneResults.current.classList.remove('active');
             if (popupRef.current)        popupRef.current.classList.remove('visible');
@@ -218,15 +218,15 @@ export default function SettingsShowcase() {
         }
 
         // ══════════════════════════════════════════════════════
-        // PART 1 – PROCTORING
+        // PART 1 – SECURITY & FOCUS
         // ══════════════════════════════════════════════════════
         function startSequence() {
             if (aborted) return;
             resetAll();
 
             T(function () {
-                clickEl(fsToggleRef.current!, 5, function () {
-                    toggleOn(fsToggleRef.current!, function () {
+                clickEl(focusToggleRef.current!, 5, function () {
+                    toggleOn(focusToggleRef.current!, function () {
                         if (violationSecRef.current) {
                             violationSecRef.current.classList.add('visible');
                             T(function () {
@@ -234,25 +234,25 @@ export default function SettingsShowcase() {
                             }, 50);
                         }
                         T(function () {
-                            clickEl(tsToggleRef.current!, 5, function () {
-                                toggleOn(tsToggleRef.current!, function () {
+                            clickEl(activityToggleRef.current!, 5, function () {
+                                toggleOn(activityToggleRef.current!, function () {
                                     T(function () {
                                         clickEl(radioWarnRef.current!, 5, function () {
                                             if (radioNoneRef.current) radioNoneRef.current.classList.remove('checked');
                                             if (radioWarnRef.current) radioWarnRef.current.classList.add('checked');
                                             T(function () {
                                                 scrollBodyTo(220, function () {
-                                                    clickEl(blockBtnRef.current!, 5, function () {
-                                                        toggleOn(blockBtnRef.current!, function () {
+                                                    clickEl(navWarnToggleRef.current!, 5, function () {
+                                                        toggleOn(navWarnToggleRef.current!, function () {
                                                             T(function () {
-                                                                clickEl(disableExitRef.current!, 5, function () {
-                                                                    toggleOn(disableExitRef.current!, function () {
+                                                                clickEl(calcToggleRef.current!, 5, function () {
+                                                                    toggleOn(calcToggleRef.current!, function () {
                                                                         T(function () {
                                                                             clickEl(tabAccessRef.current!, 5, function () {
                                                                                 switchToTab(
                                                                                     tabAccessRef.current!, paneAccess.current!,
-                                                                                    [tabProcRef.current!, tabResultsRef.current!],
-                                                                                    [paneProc.current!, paneResults.current!],
+                                                                                    [tabSecRef.current!, tabResultsRef.current!],
+                                                                                    [paneSec.current!, paneResults.current!],
                                                                                     runPart2
                                                                                 );
                                                                             });
@@ -401,8 +401,8 @@ export default function SettingsShowcase() {
             clickEl(tabResultsRef.current!, 5, function () {
                 switchToTab(
                     tabResultsRef.current!, paneResults.current!,
-                    [tabProcRef.current!, tabAccessRef.current!],
-                    [paneProc.current!, paneAccess.current!],
+                    [tabSecRef.current!, tabAccessRef.current!],
+                    [paneSec.current!, paneAccess.current!],
                     runPart3
                 );
             });
@@ -486,11 +486,11 @@ export default function SettingsShowcase() {
 
                 {/* TABS BAR */}
                 <div className="ss-tabs-bar">
-                    <div className="ss-tab active" ref={tabProcRef}>
+                    <div className="ss-tab active" ref={tabSecRef}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                         </svg>
-                        Proctoring
+                        Security
                     </div>
                     <div className="ss-tab" ref={tabAccessRef}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -517,10 +517,10 @@ export default function SettingsShowcase() {
                 {/* SCROLLABLE BODY */}
                 <div className="ss-body" ref={bodyRef}>
 
-                    {/* ── PROCTORING PANE ─────────────────────── */}
-                    <div className="ss-tab-pane active" ref={paneProc}>
+                    {/* ── SECURITY PANE ─────────────────────── */}
+                    <div className="ss-tab-pane active" ref={paneSec}>
                         <div className="ss-monitoring-card">
-                            <div className="ss-section-label">Monitoring</div>
+                            <div className="ss-section-label">Focus &amp; Security</div>
 
                             <div className="ss-row">
                                 <div className="ss-row-info">
@@ -528,11 +528,11 @@ export default function SettingsShowcase() {
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2">
                                             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
                                         </svg>
-                                        Force Full Screen
+                                        Focus Mode
                                     </div>
-                                    <div className="ss-row-desc">User must enter full screen to start. Exiting counts as a violation.</div>
+                                    <div className="ss-row-desc">Prompts users to focus on the exam window. Log exits and distractions.</div>
                                 </div>
-                                <div className="ss-toggle" ref={fsToggleRef}>
+                                <div className="ss-toggle" ref={focusToggleRef}>
                                     <div className="ss-toggle-track"><div className="ss-toggle-thumb"></div></div>
                                 </div>
                             </div>
@@ -547,18 +547,18 @@ export default function SettingsShowcase() {
                                             <line x1="12" y1="9" x2="12" y2="13"/>
                                             <line x1="12" y1="17" x2="12.01" y2="17"/>
                                         </svg>
-                                        Tab Switch Detection
+                                        Tab Activity Detection
                                     </div>
-                                    <div className="ss-row-desc">Detect if user switches tabs or minimizes browser.</div>
+                                    <div className="ss-row-desc">Log when candidates navigate away from the test tab.</div>
                                 </div>
-                                <div className="ss-toggle" ref={tsToggleRef}>
+                                <div className="ss-toggle" ref={activityToggleRef}>
                                     <div className="ss-toggle-track"><div className="ss-toggle-thumb"></div></div>
                                 </div>
                             </div>
 
                             <div className="ss-violation-section" ref={violationSecRef}>
                                 <hr className="ss-hr"/>
-                                <div className="ss-section-label">Violation Action</div>
+                                <div className="ss-section-label">Focus Violations</div>
                                 <div className="ss-radio-row">
                                     <div className="ss-radio checked" ref={radioNoneRef}></div>
                                     <span className="ss-radio-label">No limit (Warn only)</span>
@@ -572,40 +572,40 @@ export default function SettingsShowcase() {
                                     <span className="ss-warn-count">2</span>
                                     <span className="ss-radio-label">warnings then Submit</span>
                                 </div>
-                                <div className="ss-violation-hint">Both fullscreen exits and tab switches count toward this limit.</div>
+                                <div className="ss-violation-hint">Both window exits and tab focus losses count toward this limit.</div>
                             </div>
                         </div>
 
                         <div className="ss-grid-2">
                             <div className="ss-mini-card">
                                 <div className="ss-row-info">
-                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Disable Copy/Paste</div>
-                                    <div className="ss-row-desc">Prevent clipboard actions</div>
+                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Question Shuffling</div>
+                                    <div className="ss-row-desc">Shuffle question order for each candidate</div>
                                 </div>
                                 <div className="ss-toggle"><div className="ss-toggle-track"><div className="ss-toggle-thumb"></div></div></div>
                             </div>
                             <div className="ss-mini-card">
                                 <div className="ss-row-info">
-                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Disable Right Click</div>
-                                    <div className="ss-row-desc">Prevent context menu</div>
+                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Option Shuffling</div>
+                                    <div className="ss-row-desc">Shuffle multiple-choice answer options</div>
                                 </div>
                                 <div className="ss-toggle"><div className="ss-toggle-track"><div className="ss-toggle-thumb"></div></div></div>
                             </div>
                             <div className="ss-mini-card">
                                 <div className="ss-row-info">
-                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Block Back Button</div>
-                                    <div className="ss-row-desc">Prevent accidental navigation</div>
+                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Navigation Warnings</div>
+                                    <div className="ss-row-desc">Warn candidate before leaving the page</div>
                                 </div>
-                                <div className="ss-toggle" ref={blockBtnRef}>
+                                <div className="ss-toggle" ref={navWarnToggleRef}>
                                     <div className="ss-toggle-track"><div className="ss-toggle-thumb"></div></div>
                                 </div>
                             </div>
                             <div className="ss-mini-card">
                                 <div className="ss-row-info">
-                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Disable Exit Button</div>
-                                    <div className="ss-row-desc">Hide exit button on live test</div>
+                                    <div style={{fontWeight:600,fontSize:'12px',color:'#1e293b'}}>Calculator Widget</div>
+                                    <div className="ss-row-desc">Enable scientific calculator widget</div>
                                 </div>
-                                <div className="ss-toggle" ref={disableExitRef}>
+                                <div className="ss-toggle" ref={calcToggleRef}>
                                     <div className="ss-toggle-track"><div className="ss-toggle-thumb"></div></div>
                                 </div>
                             </div>

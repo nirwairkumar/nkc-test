@@ -23,6 +23,8 @@ async function generateSitemap() {
             { url: '/login', changefreq: 'monthly', priority: 0.5 },
             { url: '/create-test', changefreq: 'weekly', priority: 0.8 },
             { url: '/generate-with-ai', changefreq: 'weekly', priority: 0.8 },
+            { url: '/quiz-creator', changefreq: 'weekly', priority: 0.9 },
+            { url: '/assessment-platform', changefreq: 'weekly', priority: 0.9 },
             { url: '/pricing', changefreq: 'monthly', priority: 0.8 },
             { url: '/premium', changefreq: 'monthly', priority: 0.8 },
             { url: '/about', changefreq: 'monthly', priority: 0.6 },

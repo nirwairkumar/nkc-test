@@ -21,7 +21,9 @@ export default function SubdomainGuard() {
         '/terms-and-conditions',
         '/support',
         '/user-guide',
-        '/convert'
+        '/convert',
+        '/quiz-creator',
+        '/assessment-platform'
       ];
 
       // Check if current path matches allowed list or starts with an allowed list subpath (e.g. /user-guide/:slug)

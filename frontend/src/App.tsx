@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const GoogleAdsLanding = lazy(() => import("./pages/GoogleAdsLanding"));
 const Layout = lazy(() => import("./Layout"));
 // Lazy Load Pages
 import { HelmetProvider } from 'react-helmet-async';
@@ -87,6 +88,8 @@ const App = () => (
                 <Routes>
                   <Route element={<Layout />}>
                     <Route path="/" element={<LandingPage />} />
+                    <Route path="/quiz-creator" element={<GoogleAdsLanding />} />
+                    <Route path="/assessment-platform" element={<GoogleAdsLanding />} />
                     <Route path="/dashboard" element={<TestList />} />
                     <Route path="/more-tests" element={<MoreTestsPage />} />
 
