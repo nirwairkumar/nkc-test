@@ -28,12 +28,57 @@ export default function GoogleAdsLanding() {
     window.location.href = getAppUrl('/login');
   };
 
+  // Dynamically configure content to avoid duplicate content flags
+  const isAssessmentPlatform = typeof window !== 'undefined' && window.location.pathname.includes('assessment-platform');
+
+  const content = isAssessmentPlatform ? {
+    seoTitle: "CBT & Assessment Platform | Free Online Exam Creator",
+    seoDesc: "Create, distribute, and grade computer-based tests (CBT) and classroom assessments online. Get detailed student score reports and automated analytics instantly.",
+    canonical: "https://testoza.com/assessment-platform",
+    heroBadge: "Online Assessment Suite",
+    heroTitlePrefix: "Secure Computer-Based Tests ",
+    heroTitleSuffix: "and Class Assessments",
+    heroDesc: "TestoZa is a powerful computer-based assessment simulator. Set up online tests, manage candidate registration, and track real-time grading and performance analytics.",
+    sectionTitle: "Assess Classroom Performance Better",
+    sectionDesc: "A complete software suite tailored for organizing secure computer-based examinations and grading.",
+    feature1Title: "Custom Exam Composer",
+    feature1Desc: "Structure your exams with single-choice, multiple-choice, or numerical answer formats. Shuffle layouts automatically to maintain evaluation integrity.",
+    feature2Title: "CBT Exam Simulator",
+    feature2Desc: "Provide candidates with a clean, standard web-based exam layout. Perfect for administering midterms, competitive prep, and entrance assessments.",
+    feature3Title: "Automatic Evaluation & Reporting",
+    feature3Desc: "Eliminate manual checking. Receive instant digital score reports containing student average curves, standard deviation, and key explanations on submission.",
+    benefitHeadline: "Organize Tests, Mock Exams, and Practice Drills Seamlessly",
+    benefitParagraph: "Configuring class tests manually usually requires hours of layout structure planning, answer key writing, and spreadsheet logging. TestoZa streamlines student exam cycles so you can spend less time grading and more time teaching.",
+    ctaHeadline: "Ready to Administer Your Next Online Exam?",
+    ctaDesc: "Establish your assessment portal now. Formulate tests, register participants, and retrieve live analytical scorecards."
+  } : {
+    seoTitle: "Free AI Quiz & Test Generator for Teachers | TestoZa",
+    seoDesc: "Instantly create tests, quizzes, and exams online using AI. Generate assessments from text, PDFs, or YouTube videos. Clean, modern, and distraction-free CBT simulator.",
+    canonical: "https://testoza.com/quiz-creator",
+    heroBadge: "AI-Powered Test Platform",
+    heroTitlePrefix: "Create Exams and Quizzes ",
+    heroTitleSuffix: "in Seconds with AI",
+    heroDesc: "TestoZa is the fastest online assessment platform. Upload your notes, PDFs, or paste a link to generate professional, ready-to-take exams immediately.",
+    sectionTitle: "Assess Smarter, Not Harder",
+    sectionDesc: "Discover a suite of tools designed to take the friction out of test creation and grading.",
+    feature1Title: "AI Question Generator",
+    feature1Desc: "Enter any topic, paste lecture notes, upload a textbook PDF, or use a YouTube URL. Our AI creates customized single-choice, multiple-choice, or numerical questions instantly.",
+    feature2Title: "Realistic CBT Engine",
+    feature2Desc: "Provide students with a clean, standard computer-based test simulator. Ideal for preparing candidates for major competitive exams, term tests, or self-assessment.",
+    feature3Title: "Instant Auto-Grading",
+    feature3Desc: "No more manual grading. Receive instant reports containing accuracy metrics, performance distribution curves, and solution keys as soon as a student submits.",
+    benefitHeadline: "Designed for Teachers, Educators, and Self-Learners",
+    benefitParagraph: "Creating test materials manually takes hours of planning, writing, and proofreading. TestoZa shortens this entire cycle into minutes, allowing you to spend more time addressing learning gaps.",
+    ctaHeadline: "Ready to Save Hours of Assessment Time?",
+    ctaDesc: "Get started for free. Generate online exams, assign them to students, and view analytical reports today."
+  };
+
   return (
     <>
       <SEO
-        title="Free AI Test & Exam Generator for Teachers"
-        description="Instantly create tests, quizzes, and exams online using AI. Generate assessments from text, PDFs, or YouTube videos. Clean, modern, and distraction-free CBT simulator."
-        canonicalUrl="https://testoza.com/quiz-creator"
+        title={content.seoTitle}
+        description={content.seoDesc}
+        canonicalUrl={content.canonical}
         keywords={[
           "online test maker for teachers",
           "ai quiz generator",
@@ -55,16 +100,16 @@ export default function GoogleAdsLanding() {
           <div className="container mx-auto px-6 relative z-10 max-w-5xl text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 mb-6 font-medium text-sm">
               <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>AI-Powered Test Platform</span>
+              <span>{content.heroBadge}</span>
             </div>
             
             <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-900 dark:from-white dark:via-indigo-200 dark:to-purple-300 bg-clip-text text-transparent">
-              Create Exams and Quizzes <br />
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">in Seconds with AI</span>
+              {content.heroTitlePrefix}<br />
+              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{content.heroTitleSuffix}</span>
             </h1>
 
             <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              TestoZa is the fastest online assessment platform. Upload your notes, PDFs, or paste a link to generate professional, ready-to-take exams immediately.
+              {content.heroDesc}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -97,10 +142,10 @@ export default function GoogleAdsLanding() {
           <div className="container mx-auto px-6 max-w-6xl">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">
-                Assess Smarter, Not Harder
+                {content.sectionTitle}
               </h2>
               <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-                Discover a suite of tools designed to take the friction out of test creation and grading.
+                {content.sectionDesc}
               </p>
             </div>
 
@@ -111,10 +156,10 @@ export default function GoogleAdsLanding() {
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  AI Question Generator
+                  {content.feature1Title}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Enter any topic, paste lecture notes, upload a textbook PDF, or use a YouTube URL. Our AI creates customized single-choice, multiple-choice, or numerical questions instantly.
+                  {content.feature1Desc}
                 </p>
               </div>
 
@@ -124,10 +169,10 @@ export default function GoogleAdsLanding() {
                   <GraduationCap className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                  Realistic CBT Engine
+                  {content.feature2Title}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Provide students with a clean, standard computer-based test simulator. Ideal for preparing candidates for major competitive exams, term tests, or self-assessment.
+                  {content.feature2Desc}
                 </p>
               </div>
 
@@ -137,10 +182,10 @@ export default function GoogleAdsLanding() {
                   <BarChart3 className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                  Instant Auto-Grading
+                  {content.feature3Title}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  No more manual grading. Receive instant reports containing accuracy metrics, performance distribution curves, and solution keys as soon as a student submits.
+                  {content.feature3Desc}
                 </p>
               </div>
             </div>
@@ -153,10 +198,10 @@ export default function GoogleAdsLanding() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white leading-tight">
-                  Designed for Teachers, Educators, and Self-Learners
+                  {content.benefitHeadline}
                 </h2>
                 <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                  Creating test materials manually takes hours of planning, writing, and proofreading. TestoZa shortens this entire cycle into minutes, allowing you to spend more time addressing learning gaps.
+                  {content.benefitParagraph}
                 </p>
 
                 <div className="space-y-4">
@@ -207,10 +252,10 @@ export default function GoogleAdsLanding() {
         <section className="py-20 text-center relative overflow-hidden bg-white dark:bg-slate-950">
           <div className="container mx-auto px-6 max-w-4xl relative z-10">
             <h2 className="text-3xl md:text-5xl font-black mb-6 text-slate-900 dark:text-white">
-              Ready to Save Hours of Assessment Time?
+              {content.ctaHeadline}
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mb-10 max-w-xl mx-auto">
-              Get started for free. Generate online exams, assign them to students, and view analytical reports today.
+              {content.ctaDesc}
             </p>
             <button 
               onClick={handleStartFree}
