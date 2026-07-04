@@ -386,43 +386,19 @@ export default {
         }
       }
 
-      // HTML pages (ignore paths with common static file extensions)
+      // Static assets - pass through directly to let Cloudflare Pages handle native caching & compression
       const hasStaticExtension = /\.(txt|xml|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i.test(url.pathname);
-      if (request.headers.get('accept')?.includes('text/html') && !hasStaticExtension) {
+      if (hasStaticExtension) {
+        return fetch(request);
+      }
+
+      // HTML pages
+      if (request.headers.get('accept')?.includes('text/html')) {
         return await handleHTMLRequest(request);
       }
 
-      // Static assets - pass through with caching
-      const cache = caches.default;
-      const cached = await cache.match(request);
-
-      if (cached) {
-        return new Response(cached.body, {
-          headers: {
-            ...Object.fromEntries(cached.headers),
-            'X-Cache': 'HIT'
-          }
-        });
-      }
-
-      const originResponse = await fetch(request);
-
-      if (originResponse.ok && !shouldBypassCache(request.url)) {
-        const ttl = url.pathname.includes('.') ? CONFIG.CACHE_TTL.STATIC : CONFIG.CACHE_TTL.HTML;
-        const response = new Response(originResponse.body, {
-          status: originResponse.status,
-          headers: {
-            ...Object.fromEntries(originResponse.headers),
-            'Cache-Control': `public, max-age=${ttl}`,
-            'X-Cache': 'MISS'
-          }
-        });
-
-        ctx.waitUntil(cache.put(request, response.clone()));
-        return response;
-      }
-
-      return originResponse;
+      // Fallback for any other API/resource requests
+      return fetch(request);
 
     } catch (error) {
       console.error('Worker error:', error);

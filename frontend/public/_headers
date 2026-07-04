@@ -1,0 +1,27 @@
+# Caching rules for static assets on Cloudflare Pages
+
+# 1. Vite hashed assets inside /assets/ (JS, CSS, images) - 1 year cache (immutable)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 2. Font files - 1 year cache
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+/*.woff
+  Cache-Control: public, max-age=31536000, immutable
+/*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+
+# 3. Static SVGs (e.g. logos) - 1 year cache
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+# 4. Root static images and badge files - 1 day cache, revalidated in background
+/*.png
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.jpg
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.webp
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.ico
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
