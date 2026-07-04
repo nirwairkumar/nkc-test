@@ -42,12 +42,24 @@ export default defineConfig(({ mode }) => ({
       transformIndexHtml: {
         order: 'post' as const,
         handler(html: string) {
+          // Extract noscript tags to avoid modifying stylesheet links inside them
+          const noscripts: string[] = [];
+          let cleanHtml = html.replace(/<noscript>([\s\S]*?)<\/noscript>/gi, (match) => {
+            noscripts.push(match);
+            return `<!--NOSCRIPT_PLACEHOLDER_${noscripts.length - 1}-->`;
+          });
+
           const linkRegex = /<link\s+([^>]*?rel=["']stylesheet["'][^>]*?)>/gi;
-          return html.replace(linkRegex, (match: string, attributes: string) => {
+          cleanHtml = cleanHtml.replace(linkRegex, (match: string, attributes: string) => {
             if (attributes.includes('media="print"') || attributes.includes('onload=')) {
               return match;
             }
             return `<link ${attributes} media="print" onload="this.media='all'"><noscript><link ${attributes}></noscript>`;
+          });
+
+          // Restore noscript tags
+          return cleanHtml.replace(/<!--NOSCRIPT_PLACEHOLDER_(\d+)-->/g, (_, index) => {
+            return noscripts[parseInt(index, 10)];
           });
         }
       }

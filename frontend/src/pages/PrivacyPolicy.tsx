@@ -5,6 +5,16 @@ const PrivacyPolicy = () => {
   const revealRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
+    // Dynamically load DM Sans and Instrument Serif for this page only
+    const linkId = 'legal-page-fonts';
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap';
+      document.head.appendChild(link);
+    }
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {

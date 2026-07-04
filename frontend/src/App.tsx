@@ -11,12 +11,12 @@ import { Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const GoogleAdsLanding = lazy(() => import("./pages/GoogleAdsLanding"));
-const Layout = lazy(() => import("./Layout"));
+import Layout from "./Layout";
 // Lazy Load Pages
 import { HelmetProvider } from 'react-helmet-async';
 
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const GoogleAdsLanding = lazy(() => import("./pages/GoogleAdsLanding"));
 const AITestImporter = lazy(() => import("./pages/AITestImporter"));
 
 const CategoryPage = lazy(() => import("./pages/CategoryPage"));

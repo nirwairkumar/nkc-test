@@ -54,17 +54,84 @@
   <link rel="dns-prefetch" href="https://apigcp.testoza.com" />
   <!-- Google Fonts — async load (non-blocking) to avoid render delay -->
   <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Ribeye&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&family=Dancing+Script:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Ribeye&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&display=swap"
     media="print" onload="this.media='all'" />
   <noscript>
     <link
-      href="https://fonts.googleapis.com/css2?family=Ribeye&family=DM+Sans:wght@300;400;500&family=Instrument+Serif:ital,wght@0,400;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&family=Dancing+Script:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Ribeye&family=Outfit:wght@400;500;600;700;800;900&family=Mukta:wght@200;300;400;500;600;700;800&display=swap"
       rel="stylesheet" />
   </noscript>
   <!-- Preload Critical Assets -->
   <link rel="preload" href="/logo-testoza.svg" as="image" type="image/svg+xml" />
 
 
+
+
+  <!-- Google Analytics + Google Ads — lazily injected post-load to prevent blocking critical rendering -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });   // Google Analytics 4
+    gtag('config', 'AW-18082120928'); // Google Ads Conversion Tracking
+
+    function initAnalytics() {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = "https://www.googletagmanager.com/gtag/js?id=G-H9VZL1VTKL";
+      document.head.appendChild(script);
+    }
+
+    if (window.addEventListener) {
+      window.addEventListener('load', function () {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(initAnalytics);
+        } else {
+          setTimeout(initAnalytics, 2000);
+        }
+      });
+    } else {
+      setTimeout(initAnalytics, 2000);
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root">
+    <!-- Premium initial HTML/CSS splash loader -->
+    <div style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(to top, #020617, #0b1528, #020617); overflow: hidden; font-family: 'Outfit', sans-serif;">
+      <!-- Radial vignette overlay -->
+      <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, #000 100%); opacity: 0.7; pointer-events: none;"></div>
+      
+      <!-- Pulsing Logo -->
+      <div style="position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 24px;">
+        <div style="display: inline-flex; align-items: baseline; font-weight: 700; font-size: 54px; line-height: 1; letter-spacing: -0.02em; user-select: none; animation: pulseGlow 2s infinite ease-in-out;">
+          <span style="color: #38bdf8; transition: color 0.2s;">Testo</span>
+          <span style="font-size: 1.26em; font-weight: 900; margin: 0 0.02em; background: linear-gradient(to bottom, #FFE885, #F4B838, #9E6400); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)) drop-shadow(0 0 8px rgba(244, 184, 56, 0.45)); display: inline-block;">Z</span>
+          <span style="color: #38bdf8; transition: color 0.2s;">a</span>
+        </div>
+        
+        <!-- Bouncing Loader Dots -->
+        <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+          <div class="initial-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color: #38bdf8; animation: bounceKey 1.4s infinite ease-in-out both; animation-delay: -0.32s;"></div>
+          <div class="initial-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color: #F4B838; animation: bounceKey 1.4s infinite ease-in-out both; animation-delay: -0.16s;"></div>
+          <div class="initial-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color: #38bdf8; animation: bounceKey 1.4s infinite ease-in-out both;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <style>
+      @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.25)); }
+        50% { transform: scale(1.03); filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.45)); }
+      }
+      @keyframes bounceKey {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+      }
+    </style>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
 
   <!-- WebSite Schema (enables Google Sitelinks & Search Box) -->
   <script type="application/ld+json">
@@ -144,7 +211,6 @@
 }
 </script>
 
-
   <!-- FAQPage Schema -->
   <script type="application/ld+json">
     {
@@ -202,72 +268,6 @@
       ]
     }
   </script>
-
-  <!-- Google Analytics + Google Ads — lazily injected post-load to prevent blocking critical rendering -->
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });   // Google Analytics 4
-    gtag('config', 'AW-18082120928'); // Google Ads Conversion Tracking
-
-    function initAnalytics() {
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = "https://www.googletagmanager.com/gtag/js?id=G-H9VZL1VTKL";
-      document.head.appendChild(script);
-    }
-
-    if (window.addEventListener) {
-      window.addEventListener('load', function () {
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(initAnalytics);
-        } else {
-          setTimeout(initAnalytics, 2000);
-        }
-      });
-    } else {
-      setTimeout(initAnalytics, 2000);
-    }
-  </script>
-</head>
-
-<body>
-  <div id="root">
-    <!-- Premium initial HTML/CSS splash loader -->
-    <div style="position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(to top, #020617, #0b1528, #020617); overflow: hidden; font-family: 'Outfit', sans-serif;">
-      <!-- Radial vignette overlay -->
-      <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, #000 100%); opacity: 0.7; pointer-events: none;"></div>
-      
-      <!-- Pulsing Logo -->
-      <div style="position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 24px;">
-        <div style="display: inline-flex; align-items: baseline; font-weight: 700; font-size: 54px; line-height: 1; letter-spacing: -0.02em; user-select: none; animation: pulseGlow 2s infinite ease-in-out;">
-          <span style="color: #38bdf8; transition: color 0.2s;">Testo</span>
-          <span style="font-size: 1.26em; font-weight: 900; margin: 0 0.02em; background: linear-gradient(to bottom, #FFE885, #F4B838, #9E6400); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15)) drop-shadow(0 0 8px rgba(244, 184, 56, 0.45)); display: inline-block;">Z</span>
-          <span style="color: #38bdf8; transition: color 0.2s;">a</span>
-        </div>
-        
-        <!-- Bouncing Loader Dots -->
-        <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-          <div class="initial-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color: #38bdf8; animation: bounceKey 1.4s infinite ease-in-out both; animation-delay: -0.32s;"></div>
-          <div class="initial-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color: #F4B838; animation: bounceKey 1.4s infinite ease-in-out both; animation-delay: -0.16s;"></div>
-          <div class="initial-dot" style="width: 10px; height: 10px; border-radius: 50%; background-color: #38bdf8; animation: bounceKey 1.4s infinite ease-in-out both;"></div>
-        </div>
-      </div>
-    </div>
-    
-    <style>
-      @keyframes pulseGlow {
-        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.25)); }
-        50% { transform: scale(1.03); filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.45)); }
-      }
-      @keyframes bounceKey {
-        0%, 80%, 100% { transform: scale(0); }
-        40% { transform: scale(1); }
-      }
-    </style>
-  </div>
-  <script type="module" src="/src/main.tsx"></script>
 </body>
 
 </html>
