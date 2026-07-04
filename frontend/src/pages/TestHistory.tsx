@@ -32,7 +32,7 @@ const containerVariants = {
             delayChildren: 0.1
         }
     }
-};
+} as const;
 
 const rowVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -44,7 +44,7 @@ const rowVariants = {
             ease: "easeOut"
         }
     }
-};
+} as const;
 
 function HistoryRowSkeleton() {
     return (
