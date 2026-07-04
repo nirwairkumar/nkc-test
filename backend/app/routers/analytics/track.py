@@ -19,9 +19,14 @@ _geo_client = httpx.AsyncClient(
 
 async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Client):
     try:
-        # 1. Parse User Agent
+        # 0. Skip known bots — keeps analytics data clean
         ua_string = event.user_agent or ""
         user_agent = parse(ua_string)
+        if user_agent.is_bot:
+            logger.debug(f"Skipping bot traffic: {user_agent}")
+            return
+
+        # 1. Parse User Agent
         
         device_type = "desktop"
         if user_agent.is_mobile:
@@ -139,8 +144,13 @@ async def track_event(
     Fire-and-forget endpoint for tracking page views.
     Processes the event in the background to keep the response fast.
     """
-    # Simple IP extraction suitable for proxy setups (like Railway/Cloudflare)
-    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+    # IP extraction: Cloudflare sets CF-Connecting-IP with the real visitor IP.
+    # X-Forwarded-For often contains Cloudflare's own edge node IP when proxied,
+    # which causes geo-lookup to return "Unknown" or the wrong country.
+    client_ip = request.headers.get(
+        "cf-connecting-ip",
+        request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+    )
     if "," in client_ip:
         client_ip = client_ip.split(",")[0].strip()
 
