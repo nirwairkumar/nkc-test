@@ -46,18 +46,12 @@ FOR ALL
 USING (is_admin());
 
 
--- 3. Create policies for the test_results table
+-- 3. Create policies for the test_results table (this table is unused but needs RLS enabled)
 DROP POLICY IF EXISTS "Anyone can insert test results" ON public.test_results;
 DROP POLICY IF EXISTS "Anyone can view test results" ON public.test_results;
 DROP POLICY IF EXISTS "Users can view their own results" ON public.test_results;
 DROP POLICY IF EXISTS "Users can submit test results" ON public.test_results;
 DROP POLICY IF EXISTS "Admins can view all results" ON public.test_results;
-
-CREATE POLICY "Users can view their own results" ON public.test_results
-FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can submit test results" ON public.test_results
-FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Admins can view all results" ON public.test_results
 FOR SELECT USING (
