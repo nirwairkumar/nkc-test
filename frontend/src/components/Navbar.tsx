@@ -46,6 +46,8 @@ export default function Navbar() {
 
     // Lazy background refresh — non-blocking, only after idle
     React.useEffect(() => {
+        if (!user) return; // Skip cold-start API overhead for guest visitors and bots
+
         const refresh = () => {
             import('@/lib/featuresApi').then(({ fetchFeatureFlags }) => {
                 fetchFeatureFlags().then(data => {
@@ -58,7 +60,7 @@ export default function Navbar() {
         } else {
             setTimeout(refresh, 3000);
         }
-    }, []);
+    }, [user]);
 
     // If admin hide it no one can see except admin
     // Before this change, the news link was only visible to verified creators and admins.

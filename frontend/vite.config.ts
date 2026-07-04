@@ -92,7 +92,18 @@ export default defineConfig(({ mode }) => ({
         // Each chunk loads only when the page/component that needs it is visited.
         manualChunks: {
           // Core React runtime — always needed, cached aggressively
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-react': [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'clsx',
+            'tailwind-merge',
+            'class-variance-authority',
+            'use-sync-external-store',
+            'use-sync-external-store/shim',
+            'use-sync-external-store/shim/index.js',
+            'use-sync-external-store/shim/with-selector.js'
+          ],
           // Data fetching & auth — always needed
           'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
           // Rich text editor — only on CreateTestPage (~420KB)
