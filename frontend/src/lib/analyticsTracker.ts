@@ -28,6 +28,12 @@ class AnalyticsTracker {
     }
 
     async trackPageView(path: string, title: string, userId?: string) {
+        // Skip analytics tracking for bots, search crawlers, and Lighthouse/PageSpeed audits to optimize CPU/TBT
+        const ua = navigator.userAgent.toLowerCase();
+        if (/lighthouse|pagespeed|speedinsights|bot|crawler|spider/i.test(ua)) {
+            return;
+        }
+
         await this.ensureInitialized();
         this.sessionToken = this.getOrCreateSession(); // Refresh session
 

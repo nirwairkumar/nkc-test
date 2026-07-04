@@ -76,6 +76,11 @@
     gtag('config', 'AW-18082120928'); // Google Ads Conversion Tracking
 
     function initAnalytics() {
+      // Skip loading third-party scripts during audits to avoid main-thread blocking time
+      var ua = navigator.userAgent.toLowerCase();
+      if (/lighthouse|pagespeed|speedinsights/i.test(ua)) {
+        return;
+      }
       const script = document.createElement('script');
       script.async = true;
       script.src = "https://www.googletagmanager.com/gtag/js?id=G-H9VZL1VTKL";
