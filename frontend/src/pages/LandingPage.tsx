@@ -153,13 +153,16 @@ export default function LandingPage() {
     return (
         <>
             <SEO
-                title="Free Online Test Maker for Teachers – Create Exam Online with AI"
-                description="Create online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Free quiz creator, mock tests, CBT platform & secure proctoring tools."
+                title="Free Online Test Maker – Conduct Online Tests & Exams with AI"
+                description="Create and conduct online tests in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Conduct online exams, mock tests, CBT platform & secure proctoring tools."
                 canonicalUrl="https://testoza.com/"
                 keywords={[
+                    "conduct online test",
+                    "conduct online exam",
+                    "conduct online mock test",
+                    "create online test",
                     "online test maker for teachers",
                     "free online test maker for teachers",
-                    "create online test",
                     "online quiz maker for teachers",
                     "create exam online",
                     "make test online",
@@ -172,17 +175,9 @@ export default function LandingPage() {
                     "ai quiz generator",
                     "secure online proctoring software",
                     "how to create a test online",
-                    "learning management system",
-                    "conduct online mock tests",
-                    "secure online exam environment",
-                    "high level online tests",
-                    "paper to digital assessment",
-                    "digital exam platform",
-                    "eco-friendly mock tests",
                     "online mock test platform",
                     "conduct exams online securely",
-                    "paperless examination system",
-                    "sustainable online testing"
+                    "digital exam platform"
                 ]}
             />
 

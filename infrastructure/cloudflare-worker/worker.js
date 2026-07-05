@@ -414,7 +414,7 @@ export default {
  */
 const ROBOTS_TXT = `# TestoZa SEO Robots Configuration
 # Domain: https://testoza.com
-# Last Updated: 2026-02-12
+# Last Updated: 2026-07-05
 
 User-agent: *
 Allow: /
@@ -422,10 +422,7 @@ Allow: /
 # Sitemap location
 Sitemap: https://testoza.com/sitemap/index.xml
 Sitemap: https://testoza.com/sitemap/static.xml
-Sitemap: https://testoza.com/sitemap/tests.xml
-Sitemap: https://testoza.com/sitemap/categories.xml
-Sitemap: https://testoza.com/sitemap/tags.xml
-Sitemap: https://testoza.com/sitemap/creators.xml
+Sitemap: https://testoza.com/sitemap.xml
 
 # Crawl rate
 Crawl-delay: 1
@@ -437,9 +434,7 @@ Disallow: /manage-tests
 Disallow: /my-tests
 Disallow: /history
 Disallow: /results
-Disallow: /create-test
 Disallow: /edit-test/
-Disallow: /generate-with-ai
 Disallow: /profile
 Disallow: /settings
 Disallow: /materials
@@ -447,19 +442,19 @@ Disallow: /notifications
 Disallow: /update-password
 Disallow: /onboarding
 Disallow: /test-submitted
-Disallow: /login
-Disallow: /*?*  # Block query parameters
-Allow: /*?page=  # Allow pagination
+Disallow: /test-session/
+Disallow: /attempt/
+Disallow: /payment/
+Disallow: /checkout/
 
-# Block specific file types
+# Block internal/build files
+Disallow: /api/
+Disallow: /_next/
+Disallow: /*.js.map$
+Disallow: /*.css.map$
 Disallow: /*.json$
 Disallow: /*.xml$
 Allow: /sitemap*.xml$
-
-# Block development/internal paths
-Disallow: /internal/
-Disallow: /api/
-Disallow: /_next/
 
 # Google-specific
 User-agent: Googlebot

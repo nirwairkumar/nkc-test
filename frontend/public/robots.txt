@@ -15,15 +15,12 @@ Crawl-delay: 1
 # ============================================
 # SITEMAP DECLARATION
 # ============================================
-# Main sitemap index - lists all sub-sitemaps
+# Main sitemap index
 Sitemap: https://testoza.com/sitemap/index.xml
 
-# Individual sitemaps (also referenced in index)
+# Static pages sitemap
 Sitemap: https://testoza.com/sitemap/static.xml
-Sitemap: https://testoza.com/sitemap/tests.xml
-Sitemap: https://testoza.com/sitemap/categories.xml
-Sitemap: https://testoza.com/sitemap/tags.xml
-Sitemap: https://testoza.com/sitemap/creators.xml
+
 # Main sitemap
 Sitemap: https://testoza.com/sitemap.xml
 
@@ -69,11 +66,7 @@ Disallow: /checkout/
 Disallow: /api/
 Disallow: /api/*
 
-# ============================================
-# QUERY PARAMETER HANDLING
-# ============================================
-
-# Block URLs with query parameters by default
+# Block URLs with most query parameters
 # This prevents duplicate content issues
 Disallow: /*?*
 
