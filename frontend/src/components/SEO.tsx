@@ -35,8 +35,10 @@ export const SEO: React.FC<SEOProps> = ({
     const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - AI Test Maker`;
     const metaImage = image || DEFAULT_IMAGE;
 
-    // Ensure URL is absolute if provided, otherwise use current location if available (client-side)
-    const metaUrl = url ? (url.startsWith('http') ? url : `${SITE_URL}${url}`) : window.location.href;
+    // Ensure URL is absolute if provided, otherwise use current path on the main domain to consolidate indexing authority.
+    const metaUrl = url 
+        ? (url.startsWith('http') ? url : `${SITE_URL}${url}`) 
+        : `${SITE_URL}${window.location.pathname}${window.location.search}`;
     const finalCanonicalUrl = canonicalUrl || metaUrl;
 
     // Build description including categories if relevant
