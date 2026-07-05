@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" width="360" height="100%">
   <defs>
-    <!-- Import Google Font Outfit -->
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&amp;display=swap');
       
@@ -24,7 +23,6 @@
       }
     </style>
     
-    <!-- Linear Gradient matching index.html loading page -->
     <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#FFE885" />
       <stop offset="50%" stop-color="#F4B838" />
@@ -32,6 +30,5 @@
     </linearGradient>
   </defs>
 
-  <!-- Centered Logo Text -->
   <text x="180" y="68" class="logo-text"><tspan class="cyan-part">Testo</tspan><tspan class="gold-z" dx="-3">Z</tspan><tspan class="cyan-part" dx="-2">a</tspan></text>
 </svg>
