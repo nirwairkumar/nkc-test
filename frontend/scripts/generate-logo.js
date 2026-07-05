@@ -51,11 +51,7 @@ const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100
   </defs>
 
   <!-- Centered Logo Text -->
-  <text x="180" y="68" class="logo-text">
-    <tspan class="cyan-part">Testo</tspan>
-    <tspan class="gold-z" dx="1">Z</tspan>
-    <tspan class="cyan-part" dx="1">a</tspan>
-  </text>
+  <text x="180" y="68" class="logo-text"><tspan class="cyan-part">Testo</tspan><tspan class="gold-z" dx="-3">Z</tspan><tspan class="cyan-part" dx="-2">a</tspan></text>
 </svg>`;
 
 // Write SVG files
