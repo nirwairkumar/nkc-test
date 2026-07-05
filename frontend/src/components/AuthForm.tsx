@@ -60,6 +60,10 @@ export default function AuthForm() {
     const { refreshSession } = useAuth();
 
     useEffect(() => {
+        // Eagerly warm up the auth endpoint — by the time the user types
+        // credentials and clicks login, Cloud Run's auth path is already hot
+        apiClient.get('health').catch(() => {});
+
         const queryParams = new URLSearchParams(location.search);
         const isSignupParam = queryParams.get('signup') === 'true' || queryParams.get('isSignup') === 'true';
 

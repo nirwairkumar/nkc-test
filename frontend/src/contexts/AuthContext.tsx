@@ -299,18 +299,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        initializeAuth();
-        
-        // Silent background ping to wake up Cloud Run from throttled state (prevents login preflight timeouts)
-        const warmUpBackend = async () => {
-            try {
-                const { default: apiClient } = await import('@/lib/apiClient');
-                await apiClient.get('health');
-            } catch (err) {
-                // Fail silently since this is only a wake-up call
-            }
+        // Fire backend warmup FIRST — Cloud Run may be CPU-throttled and needs
+        // maximum head-start before the user interacts with login/dashboard.
+        // Using top-level imported apiClient (no dynamic import delay).
+        const warmUpBackend = () => {
+            // Warm both the health endpoint AND the auth path (different route handlers)
+            import('@/lib/apiClient').then(({ default: client }) => {
+                client.get('health').catch(() => {});
+                // Also warm the auth route so CORS preflight is cached by the browser
+                client.options('auth/login').catch(() => {});
+            });
         };
         warmUpBackend();
+
+        initializeAuth();
     }, []);
 
     return (

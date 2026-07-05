@@ -37,15 +37,16 @@ apiClient.interceptors.response.use(
         const originalRequest = error.config;
 
         // ══ 1. TRANSIENT RETRY (500 / 503 / network) ════════════════════════════
-        // Handles Railway cold starts — transparent to the student.
-        // Retries up to 2 times: 800ms, then 2000ms.
+        // Handles Cloud Run cold starts and CPU-throttled instances.
+        // Retries up to 2 times with delays tuned for Cloud Run spin-up time.
         const isNetworkError = !error.response && error.request;
         const isTransient    = error.response?.status === 503 || error.response?.status === 500;
         const retryCount     = originalRequest._retryCount ?? 0;
 
         if ((isNetworkError || isTransient) && retryCount < 2) {
             originalRequest._retryCount = retryCount + 1;
-            await new Promise(r => setTimeout(r, retryCount === 0 ? 800 : 2000));
+            // First retry at 1.5s, second at 3s — matches Cloud Run throttle-to-ready cycle
+            await new Promise(r => setTimeout(r, retryCount === 0 ? 1500 : 3000));
             return apiClient(originalRequest);
         }
 
