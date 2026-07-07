@@ -162,14 +162,27 @@ async function handleSitemap(request) {
 }
 
 /**
+ * Formats category slugs into clean, readable titles, preserving common educational acronyms
+ */
+function formatCategoryName(slug) {
+  if (!slug) return '';
+  const words = slug.split('-');
+  const acronyms = ['jee', 'gate', 'cat', 'iit', 'jam', 'neet', 'ssc', 'upsc', 'clat', 'nda'];
+  
+  return words.map(word => {
+    const lower = word.toLowerCase();
+    if (acronyms.includes(lower)) {
+      return lower.toUpperCase();
+    }
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
+
+/**
  * Inject SEO meta tags into HTML for crawlers
  * This is a lightweight prerendering approach
  */
 async function injectSEOMetaTags(html, url, testData = null) {
-  // Extract test data from URL if available
-  const urlObj = new URL(url);
-  const pathParts = urlObj.pathname.split('/');
-
   // Generate meta tags
   const metaTags = generateMetaTags(url, testData);
 
@@ -177,8 +190,17 @@ async function injectSEOMetaTags(html, url, testData = null) {
   const headEndIndex = html.indexOf('</head>');
   if (headEndIndex === -1) return html;
 
-  const beforeHead = html.substring(0, headEndIndex);
+  let beforeHead = html.substring(0, headEndIndex);
   const afterHead = html.substring(headEndIndex);
+
+  // Strip existing/duplicate SEO tags from beforeHead to prevent crawler confusion
+  beforeHead = beforeHead.replace(/<title>[\s\S]*?<\/title>/gi, '');
+  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']description["'][\s\S]*?>/gi, '');
+  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']keywords["'][\s\S]*?>/gi, '');
+  beforeHead = beforeHead.replace(/<link\s+[^>]*?rel=["']canonical["'][\s\S]*?>/gi, '');
+  beforeHead = beforeHead.replace(/<meta\s+[^>]*?property=["']og:[\s\S]*?["'][\s\S]*?>/gi, '');
+  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']twitter:[\s\S]*?["'][\s\S]*?>/gi, '');
+  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']robots["'][\s\S]*?>/gi, '');
 
   return `${beforeHead}${metaTags}${afterHead}`;
 }
@@ -190,29 +212,37 @@ function generateMetaTags(url, testData = null) {
   const siteUrl = CONFIG.FRONTEND_URL;
   const path = new URL(url).pathname;
 
-  // Default meta
-  let title = 'TestoZa - AI-Powered Online Test Platform';
-  let description = 'Create AI-powered tests in minutes. Free online test maker for teachers and students.';
+  // Default meta - matching the high quality ones in index.html
+  let title = 'TestoZa – Free Online Test Maker for Teachers | Create Exam Online with AI';
+  let description = 'Create online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Free quiz creator, mock tests, CBT platform & secure proctoring tools.';
   let type = 'website';
   let image = `${siteUrl}/default-og.png`;
-  let keywords = 'online test maker, ai test generator, quiz creator, exam builder';
+  let keywords = 'online test maker, ai test generator, quiz creator, exam builder, conduct online exam, mock test platform';
 
   // Customize based on route
   if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
     if (testData) {
       title = `${testData.title} | TestoZa`;
-      description = `Practice ${testData.title} online. ${testData.questions?.length || 0} questions, instant results.`;
+      const testDesc = testData.description
+        ? (testData.description.length > 150 ? testData.description.substring(0, 147) + '...' : testData.description)
+        : `Practice ${testData.title} online. Timed mock exam with instant results and solutions.`;
+      
+      const questionCount = testData.total_questions || testData.questions?.length || 0;
+      const countStr = questionCount > 0 ? `${questionCount} questions` : 'Practice test';
+      description = `${testDesc} (${countStr}, instant results & solutions on TestoZa).`;
       type = 'article';
-      keywords = `${testData.title}, online test, practice test, ${testData.categories?.join(', ') || ''}`;
+      keywords = `${testData.title}, online test, practice test, ${testData.categories?.map(c => c.name).join(', ') || ''}`;
     } else {
       title = 'Online Test | TestoZa';
       description = 'Take this online test on TestoZa. Practice and improve your skills.';
     }
   } else if (path.startsWith('/tests/')) {
     const category = path.split('/')[2];
-    title = `${category?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} Tests | TestoZa`;
-    description = `Browse ${category} practice tests. Prepare for your exams with our curated test collection.`;
+    const catName = formatCategoryName(category);
+    title = `${catName} Practice Tests & Mock Exams | TestoZa`;
+    description = `Free ${catName} practice tests and mock exams online. Take timed practice papers with instant grading, detailed solutions, and analysis.`;
     type = 'website';
+    keywords = `${catName} test, ${catName} practice test, online exam, mock test, competitive exam prep`;
   } else if (path.startsWith('/creator/')) {
     title = 'Creator Profile | TestoZa';
     description = 'View tests and educational content from this creator on TestoZa.';
@@ -220,6 +250,21 @@ function generateMetaTags(url, testData = null) {
     title = 'Pricing | TestoZa';
     description = 'Affordable pricing plans for online test creation. Start free, upgrade anytime.';
     type = 'product';
+  } else if (path === '/more-tests' || path === '/dashboard' || path === '/explore') {
+    title = 'Explore Free Mock Tests & Online Exams | TestoZa';
+    description = 'Find and take free mock tests across various competitive exams, subjects, and topics. Access timed practice papers with real-time analytics and detailed solutions.';
+  } else if (path === '/create-test') {
+    title = 'Create Online Tests & Mock Exams | TestoZa';
+    description = 'Easily build custom online tests, quizzes, and exams. Customize settings including timer, marking schemes, section rules, and remote proctoring options.';
+  } else if (path === '/generate-with-ai') {
+    title = 'Free AI Quiz & Test Generator | Create Exams in Minutes | TestoZa';
+    description = 'Generate comprehensive quizzes and tests in seconds using AI. Import PDFs, YouTube videos, docx, or text prompts to create ready-to-take exams.';
+  } else if (path.startsWith('/user-guide')) {
+    title = 'TestoZa User Guide & Tutorials for Teachers | TestoZa';
+    description = 'Learn how to use TestoZa to create exams, manage classrooms, invite students, and analyze test results with our step-by-step documentation and guide.';
+  } else if (path === '/about') {
+    title = 'Why TestoZa - Best Free Online Test Maker | TestoZa';
+    description = 'Discover why TestoZa is the preferred choice for educators and institutions. Secure proctoring, AI question generation, and instant grading analytics.';
   }
 
   // Build meta tag HTML
@@ -292,9 +337,36 @@ async function handleHTMLRequest(request) {
 
   let html = await originResponse.text();
 
-  // Inject SEO meta tags for crawlers or test pages
-  if (isCrawler(request) || new URL(request.url).pathname.startsWith('/test/')) {
-    html = await injectSEOMetaTags(html, request.url);
+  const urlObj = new URL(request.url);
+  const path = urlObj.pathname;
+
+  // Skip homepage / so it keeps the default highly optimized static tags from index.html
+  if (path !== '/' && path !== '') {
+    let testData = null;
+    if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
+      const parts = path.split('/');
+      const identifier = parts[2];
+      if (identifier) {
+        try {
+          // Fetch test data (excluding large questions list for efficiency)
+          const apiResponse = await fetch(`${CONFIG.API_BASE_URL}/api/tests/${identifier}?exclude_questions=true`, {
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          if (apiResponse.ok) {
+            testData = await apiResponse.json();
+          }
+        } catch (e) {
+          console.error('Failed to fetch test data in worker:', e);
+        }
+      }
+    }
+
+    // Inject SEO meta tags for crawlers or test pages
+    if (isCrawler(request) || path.startsWith('/test/') || path.startsWith('/test-intro/')) {
+      html = await injectSEOMetaTags(html, request.url, testData);
+    }
   }
 
   // Create response with cache headers
@@ -431,11 +503,9 @@ Crawl-delay: 1
 Disallow: /live/
 Disallow: /admin
 Disallow: /manage-tests
-Disallow: /my-tests
 Disallow: /history
 Disallow: /results
 Disallow: /edit-test/
-Disallow: /profile
 Disallow: /settings
 Disallow: /materials
 Disallow: /notifications

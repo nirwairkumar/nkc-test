@@ -5,6 +5,8 @@ name = "testoza-seo-worker"
 main = "worker.js"
 compatibility_date = "2026-02-12"
 
+minify = true
+
 # Environment variables (non-sensitive)
 [vars]
 FRONTEND_URL = "https://testoza.com"
@@ -20,6 +22,9 @@ route = { pattern = "testoza.com/*", zone_name = "testoza.com" }
 [env.production.vars]
 API_BASE_URL = "https://apigcp.testoza.com"  # Update with your Cloud Run URL
 FRONTEND_URL = "https://testoza.com"
+CACHE_TTL_SITEMAP = "3600"
+CACHE_TTL_STATIC = "86400"
+CACHE_TTL_HTML = "300"
 
 # Secrets (set via wrangler secret put)
 # SITEMAP_INVALIDATE_SECRET
@@ -40,16 +45,6 @@ analytics_engine_datasets = [
   { binding = "SEO_ANALYTICS", dataset = "testoza-seo-metrics" }
 ]
 
-# Logs
-[env.production.logpush]
-binding = "LOGPUSH"
-
 # Build settings
 [build]
 command = ""
-
-# Minification
-minify = true
-
-# Source maps
-sourcemap = false
