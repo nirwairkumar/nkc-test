@@ -30,6 +30,7 @@ async function generateSitemap() {
             { url: '/about', changefreq: 'monthly', priority: 0.6 },
             { url: '/support', changefreq: 'monthly', priority: 0.6 },
             { url: '/convert', changefreq: 'monthly', priority: 0.7 },
+            { url: '/survey', changefreq: 'monthly', priority: 0.7 },
             { url: '/privacy-policy', changefreq: 'monthly', priority: 0.4 },
             { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.4 },
         ];
