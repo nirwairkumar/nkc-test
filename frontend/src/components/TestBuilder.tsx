@@ -2353,7 +2353,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                         group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
                                                                                                         ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                                         focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                                        ${isLastOption ? 'mb-2' : ''}
+                                                                                                        ${isLastOption ? 'mb-6' : ''}
                                                                                                     `}>
                                                                                                         <button onClick={handleSelect} className={`
                                                                                                             mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
@@ -2452,20 +2452,56 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                         </div>
 
                                                                                                         {isLastOption && (
-                                                                                                            <button
-                                                                                                                type="button"
-                                                                                                                onClick={() => handleAddOptionToSection(sIdx, qIdx)}
-                                                                                                                className={`
-                                                                                                                    absolute left-1/2 -bottom-3.5 -translate-x-1/2 z-20 
-                                                                                                                    w-7 h-7 rounded-full bg-white border shadow-sm flex items-center justify-center transition-all cursor-pointer hover:scale-110 active:scale-95
-                                                                                                                    ${isSelected 
-                                                                                                                        ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50' 
-                                                                                                                        : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 group-focus-within/option:border-blue-400 group-focus-within/option:text-blue-500'}
-                                                                                                                `}
-                                                                                                                title="Add Option"
-                                                                                                            >
-                                                                                                                <Plus className="w-4 h-4" />
-                                                                                                            </button>
+                                                                                                            <div className="absolute left-0 right-0 -bottom-5 h-4 flex items-center pointer-events-none">
+                                                                                                                {/* Left curved connection line */}
+                                                                                                                <div className={`flex-1 h-[1px] transition-colors duration-200 ${
+                                                                                                                    isSelected 
+                                                                                                                        ? 'bg-emerald-400' 
+                                                                                                                        : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
+                                                                                                                }`}></div>
+
+                                                                                                                {/* Center U-pocket curve */}
+                                                                                                                <div className="relative w-8 h-4 shrink-0 pointer-events-auto">
+                                                                                                                    <svg 
+                                                                                                                        className={`absolute inset-0 w-full h-full transition-colors duration-200 ${
+                                                                                                                            isSelected 
+                                                                                                                                ? 'text-emerald-400' 
+                                                                                                                                : 'text-slate-200 group-hover/option:text-blue-300 group-focus-within/option:text-blue-300'
+                                                                                                                        }`}
+                                                                                                                        viewBox="0 0 32 16"
+                                                                                                                        preserveAspectRatio="none"
+                                                                                                                    >
+                                                                                                                        <path 
+                                                                                                                            d="M0,8 L8,8 C12,8 12,15 16,15 C20,15 20,8 24,8 L32,8" 
+                                                                                                                            stroke="currentColor" 
+                                                                                                                            strokeWidth="1.5" 
+                                                                                                                            fill="none" 
+                                                                                                                        />
+                                                                                                                    </svg>
+                                                                                                                    <button
+                                                                                                                        type="button"
+                                                                                                                        onClick={() => handleAddOptionToSection(sIdx, qIdx)}
+                                                                                                                        className={`
+                                                                                                                            absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-1.5
+                                                                                                                            w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer 
+                                                                                                                            hover:scale-125 hover:rotate-90
+                                                                                                                            ${isSelected 
+                                                                                                                                ? 'text-emerald-600 hover:text-emerald-700' 
+                                                                                                                                : 'text-slate-400 hover:text-blue-600 group-focus-within/option:text-blue-500'}
+                                                                                                                        `}
+                                                                                                                        title="Add Option"
+                                                                                                                    >
+                                                                                                                        <Plus className="w-4 h-4" />
+                                                                                                                    </button>
+                                                                                                                </div>
+
+                                                                                                                {/* Right curved connection line */}
+                                                                                                                <div className={`flex-1 h-[1px] transition-colors duration-200 ${
+                                                                                                                    isSelected 
+                                                                                                                        ? 'bg-emerald-400' 
+                                                                                                                        : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
+                                                                                                                }`}></div>
+                                                                                                            </div>
                                                                                                         )}
                                                                                                     </div>
                                                                                                 );
@@ -2816,7 +2852,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
                                                                                 ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                ${isLastOption ? 'mb-2' : ''}
+                                                                                ${isLastOption ? 'mb-6' : ''}
                                                                              `}>
 
                                                                             {/* Option Label/Selector */}
@@ -2923,20 +2959,56 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             </div>
 
                                                                             {isLastOption && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => handleAddOption(index)}
-                                                                                    className={`
-                                                                                        absolute left-1/2 -bottom-3.5 -translate-x-1/2 z-20 
-                                                                                        w-7 h-7 rounded-full bg-white border shadow-sm flex items-center justify-center transition-all cursor-pointer hover:scale-110 active:scale-95
-                                                                                        ${isSelected 
-                                                                                            ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50' 
-                                                                                            : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 group-focus-within/option:border-blue-400 group-focus-within/option:text-blue-500'}
-                                                                                    `}
-                                                                                    title="Add Option"
-                                                                                >
-                                                                                    <Plus className="w-4 h-4" />
-                                                                                </button>
+                                                                                <div className="absolute left-0 right-0 -bottom-5 h-4 flex items-center pointer-events-none">
+                                                                                    {/* Left curved connection line */}
+                                                                                    <div className={`flex-1 h-[1px] transition-colors duration-200 ${
+                                                                                        isSelected 
+                                                                                            ? 'bg-emerald-400' 
+                                                                                            : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
+                                                                                    }`}></div>
+
+                                                                                    {/* Center U-pocket curve */}
+                                                                                    <div className="relative w-8 h-4 shrink-0 pointer-events-auto">
+                                                                                        <svg 
+                                                                                            className={`absolute inset-0 w-full h-full transition-colors duration-200 ${
+                                                                                                isSelected 
+                                                                                                    ? 'text-emerald-400' 
+                                                                                                    : 'text-slate-200 group-hover/option:text-blue-300 group-focus-within/option:text-blue-300'
+                                                                                            }`}
+                                                                                            viewBox="0 0 32 16"
+                                                                                            preserveAspectRatio="none"
+                                                                                        >
+                                                                                            <path 
+                                                                                                d="M0,8 L8,8 C12,8 12,15 16,15 C20,15 20,8 24,8 L32,8" 
+                                                                                                stroke="currentColor" 
+                                                                                                strokeWidth="1.5" 
+                                                                                                fill="none" 
+                                                                                            />
+                                                                                        </svg>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => handleAddOption(index)}
+                                                                                            className={`
+                                                                                                absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-1.5
+                                                                                                w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer 
+                                                                                                hover:scale-125 hover:rotate-90
+                                                                                                ${isSelected 
+                                                                                                    ? 'text-emerald-600 hover:text-emerald-700' 
+                                                                                                    : 'text-slate-400 hover:text-blue-600 group-focus-within/option:text-blue-500'}
+                                                                                            `}
+                                                                                            title="Add Option"
+                                                                                        >
+                                                                                            <Plus className="w-4 h-4" />
+                                                                                        </button>
+                                                                                    </div>
+
+                                                                                    {/* Right curved connection line */}
+                                                                                    <div className={`flex-1 h-[1px] transition-colors duration-200 ${
+                                                                                        isSelected 
+                                                                                            ? 'bg-emerald-400' 
+                                                                                            : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
+                                                                                    }`}></div>
+                                                                                </div>
                                                                             )}
                                                                         </div>
                                                                     );
