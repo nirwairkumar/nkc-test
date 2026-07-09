@@ -1112,8 +1112,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
     };
 
-    const handleAddSection = () => {
-        const nextId = sections.length + 1;
+    const handleAddSection = (insertAtIndex?: number) => {
         const nextLetter = String.fromCharCode(65 + sections.length);
         const newSection: SectionState = {
             id: `section-${Date.now()}`,
@@ -1123,7 +1122,23 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             negative_marks: 0,
             question_type: 'single'
         };
-        setSections([...sections, newSection]);
+        
+        if (typeof insertAtIndex === 'number') {
+            const newSections = [...sections];
+            newSections.splice(insertAtIndex, 0, newSection);
+            
+            // Re-index default named sections (e.g. "Section A", "Section B"...)
+            const updatedSections = newSections.map((sec, idx) => {
+                const expectedDefaultName = `Section ${String.fromCharCode(65 + idx)}`;
+                if (/^Section [A-Z]$/.test(sec.name)) {
+                    return { ...sec, name: expectedDefaultName };
+                }
+                return sec;
+            });
+            setSections(updatedSections);
+        } else {
+            setSections([...sections, newSection]);
+        }
     };
 
     const handleRemoveSection = (index: number) => {
@@ -1933,12 +1948,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     const style = SECTION_STYLES[sIdx % SECTION_STYLES.length];
 
                                     return (
-                                        <Card
-                                            key={section.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStartSection(e, section.id)}
-                                            onDragOver={(e) => e.preventDefault()}
-                                            onDrop={(e) => handleDropSection(e, section.id)}
+                                        <div key={section.id} className="relative">
+                                            <Card
+                                                draggable
+                                                onDragStart={(e) => handleDragStartSection(e, section.id)}
+                                                onDragOver={(e) => e.preventDefault()}
+                                                onDrop={(e) => handleDropSection(e, section.id)}
                                             className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2 transition-all duration-300 ${swappedSections.has(section.id) ? 'scale-[1.01] shadow-lg brightness-105' : ''
                                                 } ${swapGlowSections.has(section.id) ? 'section-swap-glow' : ''}`}
                                         >
@@ -2522,7 +2537,20 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                     </div>
                                                 </CardContent>
                                             )}
-                                        </Card>
+                                            </Card>
+                                            {sIdx < sections.length - 1 && (
+                                                <div className="absolute right-8 -bottom-4 z-30">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAddSection(sIdx + 1)}
+                                                        className="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-blue-600 hover:scale-125 active:scale-95 transition-all duration-200 cursor-pointer"
+                                                        title="Insert Section Here"
+                                                    >
+                                                        <Plus className="w-5 h-5 stroke-[3]" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     );
                                 })}
                                 <Button onClick={handleAddSection} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
