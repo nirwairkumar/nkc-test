@@ -148,6 +148,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
     const [swappedSections, setSwappedSections] = useState<Set<string>>(new Set());
     const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
+    const [deletingSections, setDeletingSections] = useState<Set<string>>(new Set());
+    const [deletingQuestions, setDeletingQuestions] = useState<Set<string | number>>(new Set());
     const [showSupportedFormats, setShowSupportedFormats] = useState(false);
     const [showAdvancedFormats, setShowAdvancedFormats] = useState(false);
     const [showMathKeyboard, setShowMathKeyboard] = useState(false);
@@ -605,9 +607,23 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     };
 
     const handleRemoveQuestion = (index: number) => {
-        const newQuestions = [...questions];
-        newQuestions.splice(index, 1);
-        setQuestions(newQuestions);
+        if (questions.length <= 1) {
+            toast.error("Test must have at least one question");
+            return;
+        }
+        const questionId = questions[index].id;
+        const newDeleting = new Set(deletingQuestions);
+        newDeleting.add(questionId);
+        setDeletingQuestions(newDeleting);
+
+        setTimeout(() => {
+            setQuestions(prevQuestions => prevQuestions.filter(q => q.id !== questionId));
+            setDeletingQuestions(prev => {
+                const next = new Set(prev);
+                next.delete(questionId);
+                return next;
+            });
+        }, 400);
     };
 
     const sanitizeNumericalMark = (val: string): string => {
@@ -1158,9 +1174,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             toast.error("At least one section is required");
             return;
         }
-        const newSections = [...sections];
-        newSections.splice(index, 1);
-        setSections(newSections);
+        const sectionId = sections[index].id;
+        const newDeleting = new Set(deletingSections);
+        newDeleting.add(sectionId);
+        setDeletingSections(newDeleting);
+
+        setTimeout(() => {
+            setSections(prevSections => prevSections.filter(s => s.id !== sectionId));
+            setDeletingSections(prev => {
+                const next = new Set(prev);
+                next.delete(sectionId);
+                return next;
+            });
+        }, 400);
     };
 
     const updateSection = (index: number, field: keyof TestSection, value: any) => {
@@ -1230,9 +1256,34 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     };
 
     const handleRemoveQuestionFromSection = (sectionIndex: number, qIndex: number) => {
-        const newSections = [...sections];
-        newSections[sectionIndex].questions.splice(qIndex, 1);
-        setSections(newSections);
+        const sec = sections[sectionIndex];
+        if (sec.questions.length <= 1) {
+            toast.error("Section must have at least one question");
+            return;
+        }
+        const questionId = sec.questions[qIndex].id;
+        const newDeleting = new Set(deletingQuestions);
+        newDeleting.add(questionId);
+        setDeletingQuestions(newDeleting);
+
+        setTimeout(() => {
+            setSections(prevSections => {
+                return prevSections.map((s, idx) => {
+                    if (idx === sectionIndex) {
+                        return {
+                            ...s,
+                            questions: s.questions.filter(q => q.id !== questionId)
+                        };
+                    }
+                    return s;
+                });
+            });
+            setDeletingQuestions(prev => {
+                const next = new Set(prev);
+                next.delete(questionId);
+                return next;
+            });
+        }, 400);
     };
 
     const updateQuestionInSection = (sectionIndex: number, qIndex: number, field: keyof QuestionState, value: any) => {
@@ -1365,6 +1416,37 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 .ios-collapse-transition.expanded {
                     grid-template-rows: 1fr;
                     opacity: 1;
+                }
+                @keyframes iosDelete {
+                    0% {
+                        opacity: 1;
+                        transform: scale(1) translateX(0);
+                        max-height: 1200px;
+                        margin-top: inherit;
+                        margin-bottom: inherit;
+                        padding-top: inherit;
+                        padding-bottom: inherit;
+                    }
+                    30% {
+                        opacity: 0.3;
+                        transform: scale(0.97) translateX(-20px);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: scale(0.9) translateX(-100%);
+                        max-height: 0;
+                        margin-top: 0;
+                        margin-bottom: 0;
+                        padding-top: 0;
+                        padding-bottom: 0;
+                        border-width: 0;
+                        overflow: hidden;
+                    }
+                }
+                .animate-ios-delete {
+                    animation: iosDelete 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+                    transform-origin: center center;
+                    overflow: hidden;
                 }
             `}</style>
             <div className="mb-2 sm:mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-0 gap-2 sm:gap-4">
@@ -1998,9 +2080,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                     const timestampStr = section.id.startsWith('section-') ? section.id.split('-')[1] : null;
                                     const timestamp = timestampStr ? parseInt(timestampStr, 10) : null;
                                     const isNew = timestamp ? (Date.now() - timestamp < 1500) : false;
+                                    const isDeleting = deletingSections.has(section.id);
 
                                     return (
-                                        <div key={section.id} className={`relative ${isNew ? 'animate-ios-insert' : ''}`}>
+                                        <div key={section.id} className={`relative ${isNew ? 'animate-ios-insert' : ''} ${isDeleting ? 'animate-ios-delete' : ''}`}>
                                             <Card
                                                 draggable
                                                 onDragStart={(e) => handleDragStartSection(e, section.id)}
@@ -2148,8 +2231,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             const isEndOfGroup = !!currentGroupId && currentGroupId !== nextGroupId;
                                                             const isInGroup = !!currentGroupId;
 
+                                                            const isDeleting = deletingQuestions.has(q.id);
                                                             return (
-                                                                <div key={q.id} className={isInGroup ? "mb-0" : "mb-6"}>
+                                                                <div key={q.id} className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
                                                                         <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
@@ -2610,8 +2694,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 const isEndOfGroup = !!currentGroupId && currentGroupId !== nextGroupId;
                                 const isInGroup = !!currentGroupId;
 
+                                const isDeleting = deletingQuestions.has(q.id);
                                 return (
-                                    <div key={index} className={isInGroup ? "space-y-0" : "space-y-6"}>
+                                    <div key={q.id} className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
 
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
