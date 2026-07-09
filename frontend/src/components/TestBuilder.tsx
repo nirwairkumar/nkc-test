@@ -2452,55 +2452,45 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                         </div>
 
                                                                                                         {isLastOption && (
-                                                                                                            <div className="absolute left-0 right-0 -bottom-5 h-4 flex items-center pointer-events-none">
-                                                                                                                {/* Left curved connection line */}
-                                                                                                                <div className={`flex-1 h-[1px] transition-colors duration-200 ${
-                                                                                                                    isSelected 
-                                                                                                                        ? 'bg-emerald-400' 
-                                                                                                                        : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
-                                                                                                                }`}></div>
+                                                                                                            <div className="group/add-btn absolute left-0 right-0 -bottom-6 h-6 flex items-center pointer-events-none">
+                                                                                                                {/* Left corner curve */}
+                                                                                                                <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                                                    <path d="M0,0 C8,0 8,12 16,12" stroke="currentColor" strokeWidth="1.5" />
+                                                                                                                </svg>
+
+                                                                                                                {/* Left horizontal line */}
+                                                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
 
                                                                                                                 {/* Center U-pocket curve */}
-                                                                                                                <div className="relative w-8 h-4 shrink-0 pointer-events-auto">
+                                                                                                                <div className="relative w-14 h-6 shrink-0 pointer-events-auto">
                                                                                                                     <svg 
-                                                                                                                        className={`absolute inset-0 w-full h-full transition-colors duration-200 ${
-                                                                                                                            isSelected 
-                                                                                                                                ? 'text-emerald-400' 
-                                                                                                                                : 'text-slate-200 group-hover/option:text-blue-300 group-focus-within/option:text-blue-300'
-                                                                                                                        }`}
-                                                                                                                        viewBox="0 0 32 16"
-                                                                                                                        preserveAspectRatio="none"
+                                                                                                                        className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible"
+                                                                                                                        viewBox="0 0 56 24"
+                                                                                                                        fill="none"
                                                                                                                     >
                                                                                                                         <path 
-                                                                                                                            d="M0,8 L8,8 C12,8 12,15 16,15 C20,15 20,8 24,8 L32,8" 
+                                                                                                                            d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
                                                                                                                             stroke="currentColor" 
                                                                                                                             strokeWidth="1.5" 
-                                                                                                                            fill="none" 
                                                                                                                         />
                                                                                                                     </svg>
                                                                                                                     <button
                                                                                                                         type="button"
                                                                                                                         onClick={() => handleAddOptionToSection(sIdx, qIdx)}
-                                                                                                                        className={`
-                                                                                                                            absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-1.5
-                                                                                                                            w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer 
-                                                                                                                            hover:scale-125 hover:rotate-90
-                                                                                                                            ${isSelected 
-                                                                                                                                ? 'text-emerald-600 hover:text-emerald-700' 
-                                                                                                                                : 'text-slate-400 hover:text-blue-600 group-focus-within/option:text-blue-500'}
-                                                                                                                        `}
+                                                                                                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:scale-125 transition-all duration-200 cursor-pointer"
                                                                                                                         title="Add Option"
                                                                                                                     >
-                                                                                                                        <Plus className="w-4 h-4" />
+                                                                                                                        <Plus className="w-4 h-4 stroke-[2.5]" />
                                                                                                                     </button>
                                                                                                                 </div>
 
-                                                                                                                {/* Right curved connection line */}
-                                                                                                                <div className={`flex-1 h-[1px] transition-colors duration-200 ${
-                                                                                                                    isSelected 
-                                                                                                                        ? 'bg-emerald-400' 
-                                                                                                                        : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
-                                                                                                                }`}></div>
+                                                                                                                {/* Right horizontal line */}
+                                                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
+
+                                                                                                                {/* Right corner curve */}
+                                                                                                                <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                                                    <path d="M0,12 C8,12 8,0 16,0" stroke="currentColor" strokeWidth="1.5" />
+                                                                                                                </svg>
                                                                                                             </div>
                                                                                                         )}
                                                                                                     </div>
@@ -2959,55 +2949,45 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             </div>
 
                                                                             {isLastOption && (
-                                                                                <div className="absolute left-0 right-0 -bottom-5 h-4 flex items-center pointer-events-none">
-                                                                                    {/* Left curved connection line */}
-                                                                                    <div className={`flex-1 h-[1px] transition-colors duration-200 ${
-                                                                                        isSelected 
-                                                                                            ? 'bg-emerald-400' 
-                                                                                            : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
-                                                                                    }`}></div>
+                                                                                <div className="group/add-btn absolute left-0 right-0 -bottom-6 h-6 flex items-center pointer-events-none">
+                                                                                    {/* Left corner curve */}
+                                                                                    <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                        <path d="M0,0 C8,0 8,12 16,12" stroke="currentColor" strokeWidth="1.5" />
+                                                                                    </svg>
+
+                                                                                    {/* Left horizontal line */}
+                                                                                    <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
 
                                                                                     {/* Center U-pocket curve */}
-                                                                                    <div className="relative w-8 h-4 shrink-0 pointer-events-auto">
+                                                                                    <div className="relative w-14 h-6 shrink-0 pointer-events-auto">
                                                                                         <svg 
-                                                                                            className={`absolute inset-0 w-full h-full transition-colors duration-200 ${
-                                                                                                isSelected 
-                                                                                                    ? 'text-emerald-400' 
-                                                                                                    : 'text-slate-200 group-hover/option:text-blue-300 group-focus-within/option:text-blue-300'
-                                                                                            }`}
-                                                                                            viewBox="0 0 32 16"
-                                                                                            preserveAspectRatio="none"
+                                                                                            className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible"
+                                                                                            viewBox="0 0 56 24"
+                                                                                            fill="none"
                                                                                         >
                                                                                             <path 
-                                                                                                d="M0,8 L8,8 C12,8 12,15 16,15 C20,15 20,8 24,8 L32,8" 
+                                                                                                d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
                                                                                                 stroke="currentColor" 
                                                                                                 strokeWidth="1.5" 
-                                                                                                fill="none" 
                                                                                             />
                                                                                         </svg>
                                                                                         <button
                                                                                             type="button"
                                                                                             onClick={() => handleAddOption(index)}
-                                                                                            className={`
-                                                                                                absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-1.5
-                                                                                                w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer 
-                                                                                                hover:scale-125 hover:rotate-90
-                                                                                                ${isSelected 
-                                                                                                    ? 'text-emerald-600 hover:text-emerald-700' 
-                                                                                                    : 'text-slate-400 hover:text-blue-600 group-focus-within/option:text-blue-500'}
-                                                                                            `}
+                                                                                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:scale-125 transition-all duration-200 cursor-pointer"
                                                                                             title="Add Option"
                                                                                         >
-                                                                                            <Plus className="w-4 h-4" />
+                                                                                            <Plus className="w-4 h-4 stroke-[2.5]" />
                                                                                         </button>
                                                                                     </div>
 
-                                                                                    {/* Right curved connection line */}
-                                                                                    <div className={`flex-1 h-[1px] transition-colors duration-200 ${
-                                                                                        isSelected 
-                                                                                            ? 'bg-emerald-400' 
-                                                                                            : 'bg-slate-200 group-hover/option:bg-blue-300 group-focus-within/option:bg-blue-300'
-                                                                                    }`}></div>
+                                                                                    {/* Right horizontal line */}
+                                                                                    <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
+
+                                                                                    {/* Right corner curve */}
+                                                                                    <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                        <path d="M0,12 C8,12 8,0 16,0" stroke="currentColor" strokeWidth="1.5" />
+                                                                                    </svg>
                                                                                 </div>
                                                                             )}
                                                                         </div>
