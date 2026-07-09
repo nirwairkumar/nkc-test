@@ -1116,7 +1116,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     };
 
     const handleAddSection = (insertAtIndex?: number) => {
-        const nextLetter = String.fromCharCode(65 + sections.length);
+        // Find the first unused letter from A to Z for the section name
+        let nextLetter = 'A';
+        for (let i = 0; i < 26; i++) {
+            const letter = String.fromCharCode(65 + i);
+            const isUsed = sections.some(s => s.name === `Section ${letter}`);
+            if (!isUsed) {
+                nextLetter = letter;
+                break;
+            }
+        }
+
+        // Find the first unused color index
+        let nextColorIndex = 0;
+        const usedColors = new Set(sections.map(s => s.colorIndex).filter(c => typeof c === 'number'));
+        while (usedColors.has(nextColorIndex)) {
+            nextColorIndex++;
+        }
+
         const newSection: SectionState = {
             id: `section-${Date.now()}`,
             name: `Section ${nextLetter}`,
@@ -1124,7 +1141,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             marks_per_question: 1,
             negative_marks: 0,
             question_type: 'single',
-            colorIndex: sections.length
+            colorIndex: nextColorIndex
         };
         
         if (typeof insertAtIndex === 'number') {
