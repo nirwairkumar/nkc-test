@@ -2112,7 +2112,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                     <div className="hidden xs:flex items-center gap-1.5 px-3 py-1 bg-white/80 rounded-lg border border-slate-100 text-xs font-semibold text-slate-600 shadow-sm">
                                                         <span>{section.questions.length} Qs</span>
                                                         <span className="text-slate-300">•</span>
-                                                        <span>{section.questions.length * section.marks_per_question} Marks</span>
+                                                        <span>{section.questions.length * Number(section.marks_per_question ?? 0)} Marks</span>
                                                     </div>
 
                                                     <Popover>
