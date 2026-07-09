@@ -2539,14 +2539,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             )}
                                             </Card>
                                             {sIdx < sections.length - 1 && (
-                                                <div className="absolute right-8 -bottom-4 z-30">
+                                                <div className="absolute right-4 -bottom-5 z-30">
                                                     <button
                                                         type="button"
                                                         onClick={() => handleAddSection(sIdx + 1)}
-                                                        className="flex items-center justify-center w-8 h-8 text-slate-400 hover:text-blue-600 hover:scale-125 active:scale-95 transition-all duration-200 cursor-pointer"
+                                                        className="flex items-center justify-center w-6 h-6 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300 hover:shadow-md hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer shadow-sm"
                                                         title="Insert Section Here"
                                                     >
-                                                        <Plus className="w-5 h-5 stroke-[3]" />
+                                                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                                                     </button>
                                                 </div>
                                             )}
