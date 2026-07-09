@@ -2333,131 +2333,144 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     </div>
                                                                                 ) : (
                                                                                     <div className="grid grid-cols-1 gap-3">
-                                                                                        {Object.keys(q.options).sort().map(optKey => {
-                                                                                            const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
-                                                                                            const handleSelect = () => {
-                                                                                                if (q.type === 'multiple') {
-                                                                                                    const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
-                                                                                                    const idx = current.indexOf(optKey);
-                                                                                                    if (idx > -1) current.splice(idx, 1); else current.push(optKey);
-                                                                                                    updateQuestionInSection(sIdx, qIdx, 'correctAnswer', current.sort());
-                                                                                                } else {
-                                                                                                    updateQuestionInSection(sIdx, qIdx, 'correctAnswer', optKey);
-                                                                                                }
-                                                                                            };
-                                                                                            return (
-                                                                                                <div key={optKey} className={`
-                                                                                                    group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
-                                                                                                    ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
-                                                                                                    focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                                `}>
-                                                                                                    <button onClick={handleSelect} className={`
-                                                                                                        mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
-                                                                                                        ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-white border border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600'}
+                                                                                        {(() => {
+                                                                                            const sortedKeys = Object.keys(q.options).sort();
+                                                                                            return sortedKeys.map((optKey, optIdx) => {
+                                                                                                const isLastOption = optIdx === sortedKeys.length - 1;
+                                                                                                const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                                                                const handleSelect = () => {
+                                                                                                    if (q.type === 'multiple') {
+                                                                                                        const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                                                        const idx = current.indexOf(optKey);
+                                                                                                        if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                                                        updateQuestionInSection(sIdx, qIdx, 'correctAnswer', current.sort());
+                                                                                                    } else {
+                                                                                                        updateQuestionInSection(sIdx, qIdx, 'correctAnswer', optKey);
+                                                                                                    }
+                                                                                                };
+                                                                                                return (
+                                                                                                    <div key={optKey} className={`
+                                                                                                        group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
+                                                                                                        ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
+                                                                                                        focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
+                                                                                                        ${isLastOption ? 'mb-2' : ''}
                                                                                                     `}>
-                                                                                                        {isSelected ? (
-                                                                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                                                                                <polyline points="20 6 9 17 4 12"></polyline>
-                                                                                                            </svg>
-                                                                                                        ) : (
-                                                                                                            optKey
-                                                                                                        )}
-                                                                                                    </button>
+                                                                                                        <button onClick={handleSelect} className={`
+                                                                                                            mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
+                                                                                                            ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-white border border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600'}
+                                                                                                        `}>
+                                                                                                            {isSelected ? (
+                                                                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                                                                                </svg>
+                                                                                                            ) : (
+                                                                                                                optKey
+                                                                                                            )}
+                                                                                                        </button>
 
-                                                                                                    <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
-                                                                                                        <div className="relative">
-                                                                                                            <IMEInput
-                                                                                                                ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] = el}
-                                                                                                                as="textarea"
-                                                                                                                typingMode={q.typingMode}
-                                                                                                                placeholder={`Option ${optKey}`}
-                                                                                                                value={q.options[optKey]}
-                                                                                                                onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }}
-                                                                                                                className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-16 focus:ring-0 w-full resize-none placeholder:text-slate-300"
-                                                                                                            />
+                                                                                                        <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
+                                                                                                            <div className="relative">
+                                                                                                                <IMEInput
+                                                                                                                    ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] = el}
+                                                                                                                    as="textarea"
+                                                                                                                    typingMode={q.typingMode}
+                                                                                                                    placeholder={`Option ${optKey}`}
+                                                                                                                    value={q.options[optKey]}
+                                                                                                                    onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }}
+                                                                                                                    className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-16 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                                                />
 
-                                                                                                            {/* Right Side Actions - Overlay on Text Area */}
-                                                                                                            <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10">
-                                                                                                                <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}>
-                                                                                                                    <Cloud className="w-3.5 h-3.5" />
-                                                                                                                </button>
-                                                                                                                <Button
-                                                                                                                    variant="ghost"
-                                                                                                                    size="icon"
-                                                                                                                    className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
-                                                                                                                    onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}
-                                                                                                                    title="Add Image"
-                                                                                                                >
-                                                                                                                    <ImageIcon className="w-3.5 h-3.5" />
-                                                                                                                </Button>
-                                                                                                                <Button
-                                                                                                                    variant="ghost"
-                                                                                                                    size="icon"
-                                                                                                                    className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
-                                                                                                                    onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
-                                                                                                                    title="Remove Option"
-                                                                                                                >
-                                                                                                                    <X className="w-3.5 h-3.5" />
-                                                                                                                </Button>
+                                                                                                                {/* Right Side Actions - Overlay on Text Area */}
+                                                                                                                <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10">
+                                                                                                                    <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}>
+                                                                                                                        <Cloud className="w-3.5 h-3.5" />
+                                                                                                                    </button>
+                                                                                                                    <Button
+                                                                                                                        variant="ghost"
+                                                                                                                        size="icon"
+                                                                                                                        className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
+                                                                                                                        onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}
+                                                                                                                        title="Add Image"
+                                                                                                                    >
+                                                                                                                        <ImageIcon className="w-3.5 h-3.5" />
+                                                                                                                    </Button>
+                                                                                                                    <Button
+                                                                                                                        variant="ghost"
+                                                                                                                        size="icon"
+                                                                                                                        className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
+                                                                                                                        onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
+                                                                                                                        title="Remove Option"
+                                                                                                                    >
+                                                                                                                        <X className="w-3.5 h-3.5" />
+                                                                                                                    </Button>
+                                                                                                                </div>
                                                                                                             </div>
+
+                                                                                                            {/* Option Image Section (Appears Below) */}
+                                                                                                            {(q.optionImages?.[optKey] || expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`]) && (
+                                                                                                                <div className="relative group/optimg w-fit">
+                                                                                                                    {q.optionImages?.[optKey] ? (
+                                                                                                                        <div className="relative group/optimg w-fit">
+                                                                                                                            <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
+                                                                                                                            <button
+                                                                                                                                onClick={() => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (q.optionImages) delete q.optionImages[optKey]; setSections(newSections); }}
+                                                                                                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
+                                                                                                                            >
+                                                                                                                                <X className="w-3 h-3" />
+                                                                                                                            </button>
+                                                                                                                        </div>
+                                                                                                                    ) : (
+                                                                                                                        <div className="flex items-center gap-1">
+                                                                                                                            <Input
+                                                                                                                                placeholder="Image URL"
+                                                                                                                                className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
+                                                                                                                                onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }}
+                                                                                                                            />
+                                                                                                                            <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
+                                                                                                                                {uploadingImages[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? (
+                                                                                                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                                                                                                ) : (
+                                                                                                                                    <Upload className="w-3 h-3" />
+                                                                                                                                )}
+                                                                                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                                                                                                    const uploadKey = `sec-${sIdx}-q-${qIdx}-opt-${optKey}`;
+                                                                                                                                    setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
+                                                                                                                                    handleFileUpload(e, (base64) => {
+                                                                                                                                        const newSections = [...sections];
+                                                                                                                                        const q = newSections[sIdx].questions[qIdx];
+                                                                                                                                        if (!q.optionImages) q.optionImages = {};
+                                                                                                                                        q.optionImages[optKey] = base64;
+                                                                                                                                        setSections(newSections);
+                                                                                                                                        setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
+                                                                                                                                    });
+                                                                                                                                }} />
+                                                                                                                            </label>
+                                                                                                                        </div>
+                                                                                                                    )}
+                                                                                                                </div>
+                                                                                                            )}
                                                                                                         </div>
 
-                                                                                                        {/* Option Image Section (Appears Below) */}
-                                                                                                        {(q.optionImages?.[optKey] || expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`]) && (
-                                                                                                            <div className="relative group/optimg w-fit">
-                                                                                                                {q.optionImages?.[optKey] ? (
-                                                                                                                    <div className="relative group/optimg w-fit">
-                                                                                                                        <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
-                                                                                                                        <button
-                                                                                                                            onClick={() => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (q.optionImages) delete q.optionImages[optKey]; setSections(newSections); }}
-                                                                                                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
-                                                                                                                        >
-                                                                                                                            <X className="w-3 h-3" />
-                                                                                                                        </button>
-                                                                                                                    </div>
-                                                                                                                ) : (
-                                                                                                                    <div className="flex items-center gap-1">
-                                                                                                                        <Input
-                                                                                                                            placeholder="Image URL"
-                                                                                                                            className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
-                                                                                                                            onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }}
-                                                                                                                        />
-                                                                                                                        <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
-                                                                                                                            {uploadingImages[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? (
-                                                                                                                                <Loader2 className="w-3 h-3 animate-spin" />
-                                                                                                                            ) : (
-                                                                                                                                <Upload className="w-3 h-3" />
-                                                                                                                            )}
-                                                                                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                                                                                                                                const uploadKey = `sec-${sIdx}-q-${qIdx}-opt-${optKey}`;
-                                                                                                                                setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
-                                                                                                                                handleFileUpload(e, (base64) => {
-                                                                                                                                    const newSections = [...sections];
-                                                                                                                                    const q = newSections[sIdx].questions[qIdx];
-                                                                                                                                    if (!q.optionImages) q.optionImages = {};
-                                                                                                                                    q.optionImages[optKey] = base64;
-                                                                                                                                    setSections(newSections);
-                                                                                                                                    setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
-                                                                                                                                });
-                                                                                                                            }} />
-                                                                                                                        </label>
-                                                                                                                    </div>
-                                                                                                                )}
-                                                                                                            </div>
+                                                                                                        {isLastOption && (
+                                                                                                            <button
+                                                                                                                type="button"
+                                                                                                                onClick={() => handleAddOptionToSection(sIdx, qIdx)}
+                                                                                                                className={`
+                                                                                                                    absolute left-1/2 -bottom-3.5 -translate-x-1/2 z-20 
+                                                                                                                    w-7 h-7 rounded-full bg-white border shadow-sm flex items-center justify-center transition-all cursor-pointer hover:scale-110 active:scale-95
+                                                                                                                    ${isSelected 
+                                                                                                                        ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50' 
+                                                                                                                        : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 group-focus-within/option:border-blue-400 group-focus-within/option:text-blue-500'}
+                                                                                                                `}
+                                                                                                                title="Add Option"
+                                                                                                            >
+                                                                                                                <Plus className="w-4 h-4" />
+                                                                                                            </button>
                                                                                                         )}
                                                                                                     </div>
-                                                                                                </div>
-                                                                                            );
-                                                                                        })}
-                                                                                        {/* Add Option Button */}
-                                                                                        <div className="flex justify-center pt-2">
-                                                                                            <button
-                                                                                                onClick={() => handleAddOptionToSection(sIdx, qIdx)}
-                                                                                                className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all text-xs font-semibold uppercase tracking-wide"
-                                                                                            >
-                                                                                                <Plus className="w-4 h-4" /> Add Option
-                                                                                            </button>
-                                                                                        </div>
+                                                                                                );
+                                                                                            });
+                                                                                        })()}
                                                                                     </div>
                                                                                 )}
                                                                             </div>
@@ -2781,142 +2794,154 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         </div>
                                                     ) : (
                                                         <div className="grid grid-cols-1 gap-3">
-                                                            {Object.keys(q.options).sort().map(optKey => {
-                                                                const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
-                                                                const handleSelect = () => {
-                                                                    if (q.type === 'multiple') {
-                                                                        const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
-                                                                        const idx = current.indexOf(optKey);
-                                                                        if (idx > -1) current.splice(idx, 1); else current.push(optKey);
-                                                                        updateQuestion(index, 'correctAnswer', current.sort());
-                                                                    } else {
-                                                                        updateQuestion(index, 'correctAnswer', optKey);
-                                                                    }
-                                                                };
+                                                            {(() => {
+                                                                const sortedKeys = Object.keys(q.options).sort();
+                                                                return sortedKeys.map((optKey, optIdx) => {
+                                                                    const isLastOption = optIdx === sortedKeys.length - 1;
+                                                                    const isSelected = q.type === 'multiple' ? Array.isArray(q.correctAnswer) && q.correctAnswer.includes(optKey) : q.correctAnswer === optKey;
+                                                                    const handleSelect = () => {
+                                                                        if (q.type === 'multiple') {
+                                                                            const current = Array.isArray(q.correctAnswer) ? [...q.correctAnswer] : [];
+                                                                            const idx = current.indexOf(optKey);
+                                                                            if (idx > -1) current.splice(idx, 1); else current.push(optKey);
+                                                                            updateQuestion(index, 'correctAnswer', current.sort());
+                                                                        } else {
+                                                                            updateQuestion(index, 'correctAnswer', optKey);
+                                                                        }
+                                                                    };
 
-                                                                return (
-                                                                    <div key={optKey}
-                                                                        className={`
-                                                                            group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
-                                                                            ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
-                                                                            focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                         `}>
-
-                                                                        {/* Option Label/Selector */}
-                                                                        <button
-                                                                            onClick={handleSelect}
+                                                                    return (
+                                                                        <div key={optKey}
                                                                             className={`
-                                                                                mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm
-                                                                                ${q.type === 'single' ? 'rounded-full' : 'rounded-lg'}
-                                                                                ${isSelected
-                                                                                    ? 'bg-emerald-500 text-white shadow-emerald-200'
-                                                                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'}
-                                                                            `}
-                                                                        >
-                                                                            {q.type === 'multiple' && isSelected ? <Check className="w-5 h-5" /> : optKey}
-                                                                        </button>
+                                                                                group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
+                                                                                ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
+                                                                                focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
+                                                                                ${isLastOption ? 'mb-2' : ''}
+                                                                             `}>
 
-                                                                        <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
-                                                                            {/* Option Text Input */}
-                                                                            <div className="relative">
-                                                                                <IMEInput
-                                                                                    ref={(el) => imeRefs.current[`std-q-${index}-opt-${optKey}`] = el}
-                                                                                    as="textarea"
-                                                                                    typingMode={q.typingMode}
-                                                                                    placeholder={`Type option ${optKey}...`}
-                                                                                    value={q.options[optKey]}
-                                                                                    onChange={(val: string) => updateOption(index, optKey, val)}
-                                                                                    className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-8 focus:ring-0 w-full resize-none placeholder:text-slate-300"
-                                                                                    onKeyDown={(e: React.KeyboardEvent) => {
-                                                                                        // Auto focus logic skipped for now
-                                                                                    }}
-                                                                                />
+                                                                            {/* Option Label/Selector */}
+                                                                            <button
+                                                                                onClick={handleSelect}
+                                                                                className={`
+                                                                                    mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm
+                                                                                    ${q.type === 'single' ? 'rounded-full' : 'rounded-lg'}
+                                                                                    ${isSelected
+                                                                                        ? 'bg-emerald-500 text-white shadow-emerald-200'
+                                                                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'}
+                                                                                `}
+                                                                            >
+                                                                                {q.type === 'multiple' && isSelected ? <Check className="w-5 h-5" /> : optKey}
+                                                                            </button>
 
-                                                                                {/* Right Side Actions - Overlay on Text Area */}
-                                                                                <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10 pointer-events-auto">
-                                                                                    <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}-opt-${optKey}`)}>
-                                                                                        <Cloud className="w-3.5 h-3.5" />
-                                                                                    </button>
-                                                                                    <Button
-                                                                                        variant="ghost"
-                                                                                        size="icon"
-                                                                                        className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`q-${index}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
-                                                                                        onClick={() => toggleImageInput(`q-${index}-opt-${optKey}`)}
-                                                                                        title="Add Image"
-                                                                                    >
-                                                                                        <ImageIcon className="w-3.5 h-3.5" />
-                                                                                    </Button>
-                                                                                    <Button
-                                                                                        variant="ghost"
-                                                                                        size="icon"
-                                                                                        className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
-                                                                                        onClick={() => handleRemoveOption(index, optKey)}
-                                                                                        title="Remove Option"
-                                                                                    >
-                                                                                        <X className="w-3.5 h-3.5" />
-                                                                                    </Button>
+                                                                            <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
+                                                                                {/* Option Text Input */}
+                                                                                <div className="relative">
+                                                                                    <IMEInput
+                                                                                        ref={(el) => imeRefs.current[`std-q-${index}-opt-${optKey}`] = el}
+                                                                                        as="textarea"
+                                                                                        typingMode={q.typingMode}
+                                                                                        placeholder={`Type option ${optKey}...`}
+                                                                                        value={q.options[optKey]}
+                                                                                        onChange={(val: string) => updateOption(index, optKey, val)}
+                                                                                        className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-8 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                        onKeyDown={(e: React.KeyboardEvent) => {
+                                                                                            // Auto focus logic skipped for now
+                                                                                        }}
+                                                                                    />
+
+                                                                                    {/* Right Side Actions - Overlay on Text Area */}
+                                                                                    <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10 pointer-events-auto">
+                                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}-opt-${optKey}`)}>
+                                                                                            <Cloud className="w-3.5 h-3.5" />
+                                                                                        </button>
+                                                                                        <Button
+                                                                                            variant="ghost"
+                                                                                            size="icon"
+                                                                                            className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`q-${index}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
+                                                                                            onClick={() => toggleImageInput(`q-${index}-opt-${optKey}`)}
+                                                                                            title="Add Image"
+                                                                                        >
+                                                                                            <ImageIcon className="w-3.5 h-3.5" />
+                                                                                        </Button>
+                                                                                        <Button
+                                                                                            variant="ghost"
+                                                                                            size="icon"
+                                                                                            className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
+                                                                                            onClick={() => handleRemoveOption(index, optKey)}
+                                                                                            title="Remove Option"
+                                                                                        >
+                                                                                            <X className="w-3.5 h-3.5" />
+                                                                                        </Button>
+                                                                                    </div>
                                                                                 </div>
+
+                                                                                {/* Option Image Section (Appears Below) */}
+                                                                                {(q.optionImages?.[optKey] || expandedImageInputs[`q-${index}-opt-${optKey}`]) && (
+                                                                                    <div className="relative group/optimg w-fit">
+                                                                                        {q.optionImages?.[optKey] ? (
+                                                                                            <>
+                                                                                                <img src={q.optionImages[optKey]} alt="" className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
+                                                                                                <button
+                                                                                                    onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
+                                                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
+                                                                                                >
+                                                                                                    <X className="w-3 h-3" />
+                                                                                                </button>
+                                                                                            </>
+                                                                                        ) : (
+                                                                                            <div className="flex items-center gap-1 mt-1">
+                                                                                                <Input
+                                                                                                    placeholder="Image URL"
+                                                                                                    className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
+                                                                                                    onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }}
+                                                                                                />
+                                                                                                <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
+                                                                                                    {uploadingImages[`q-${index}-opt-${optKey}`] ? (
+                                                                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                                                                    ) : (
+                                                                                                        <Upload className="w-3 h-3" />
+                                                                                                    )}
+                                                                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                                                                        const uploadKey = `q-${index}-opt-${optKey}`;
+                                                                                                        setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
+                                                                                                        handleFileUpload(e, (base64) => {
+                                                                                                            const nq = [...questions];
+                                                                                                            if (!nq[index].optionImages) nq[index].optionImages = {};
+                                                                                                            nq[index].optionImages![optKey] = base64;
+                                                                                                            setQuestions(nq);
+                                                                                                            setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
+                                                                                                        });
+                                                                                                    }} />
+                                                                                                </label>
+                                                                                                <button type="button" className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" onClick={() => openCaptureModal('option', index, optKey)} title="Capture Snip">
+                                                                                                    <Monitor className="w-3 h-3" />
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
 
-                                                                            {/* Option Image Section (Appears Below) */}
-                                                                            {(q.optionImages?.[optKey] || expandedImageInputs[`q-${index}-opt-${optKey}`]) && (
-                                                                                <div className="relative group/optimg w-fit">
-                                                                                    {q.optionImages?.[optKey] ? (
-                                                                                        <>
-                                                                                            <img src={q.optionImages[optKey]} alt="" className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
-                                                                                            <button
-                                                                                                onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
-                                                                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
-                                                                                            >
-                                                                                                <X className="w-3 h-3" />
-                                                                                            </button>
-                                                                                        </>
-                                                                                    ) : (
-                                                                                        <div className="flex items-center gap-1 mt-1">
-                                                                                            <Input
-                                                                                                placeholder="Image URL"
-                                                                                                className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
-                                                                                                onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }}
-                                                                                            />
-                                                                                            <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
-                                                                                                {uploadingImages[`q-${index}-opt-${optKey}`] ? (
-                                                                                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                                                                                ) : (
-                                                                                                    <Upload className="w-3 h-3" />
-                                                                                                )}
-                                                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                                                                                                    const uploadKey = `q-${index}-opt-${optKey}`;
-                                                                                                    setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
-                                                                                                    handleFileUpload(e, (base64) => {
-                                                                                                        const nq = [...questions];
-                                                                                                        if (!nq[index].optionImages) nq[index].optionImages = {};
-                                                                                                        nq[index].optionImages![optKey] = base64;
-                                                                                                        setQuestions(nq);
-                                                                                                        setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
-                                                                                                    });
-                                                                                                }} />
-                                                                                            </label>
-                                                                                            <button type="button" className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" onClick={() => openCaptureModal('option', index, optKey)} title="Capture Snip">
-                                                                                                <Monitor className="w-3 h-3" />
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
+                                                                            {isLastOption && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleAddOption(index)}
+                                                                                    className={`
+                                                                                        absolute left-1/2 -bottom-3.5 -translate-x-1/2 z-20 
+                                                                                        w-7 h-7 rounded-full bg-white border shadow-sm flex items-center justify-center transition-all cursor-pointer hover:scale-110 active:scale-95
+                                                                                        ${isSelected 
+                                                                                            ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50' 
+                                                                                            : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 group-focus-within/option:border-blue-400 group-focus-within/option:text-blue-500'}
+                                                                                    `}
+                                                                                    title="Add Option"
+                                                                                >
+                                                                                    <Plus className="w-4 h-4" />
+                                                                                </button>
                                                                             )}
                                                                         </div>
-                                                                    </div>
-                                                                );
-                                                            })}
-
-                                                            {/* Add Option Button */}
-                                                            <div className="flex justify-center pt-2">
-                                                                <button
-                                                                    onClick={() => handleAddOption(index)}
-                                                                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-slate-300 text-slate-500 hover:text-blue-600 hover:border-blue-400 hover:bg-blue-50 transition-all text-xs font-semibold uppercase tracking-wide"
-                                                                >
-                                                                    <Plus className="w-4 h-4" /> Add Option
-                                                                </button>
-                                                            </div>
+                                                                    );
+                                                                });
+                                                            })()}
                                                         </div>
                                                     )}
                                                 </div>
