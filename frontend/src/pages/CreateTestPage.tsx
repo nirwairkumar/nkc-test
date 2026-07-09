@@ -47,8 +47,8 @@ export default function CreateTestPage() {
     return (
         <div className="relative">
             <SEO
-                title="Create Online Test Free \u2013 AI Exam Maker for Teachers | TestoZa"
-                description="Create your online test in minutes. Free test maker for teachers with AI \u2014 generate MCQ quizzes, mock exams, and CBT practice tests from PDFs, YouTube videos, or text. No technical skills needed."
+                title={"Create Online Test Free – AI Exam Maker for Teachers | TestoZa"}
+                description={"Create your online test in minutes. Free test maker for teachers with AI — generate MCQ quizzes, mock exams, and CBT practice tests from PDFs, YouTube videos, or text. No technical skills needed."}
                 canonicalUrl="https://testoza.com/create-test"
                 keywords={[
                     "create online test",

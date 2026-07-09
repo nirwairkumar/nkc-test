@@ -42,8 +42,8 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-50 selection:bg-indigo-100 selection:text-indigo-900 leading-relaxed pb-20">
       <SEO
-        title="Why TestoZa \u2013 Best Free Online Exam Platform for Teachers & Students"
-        description="Discover why TestoZa is the best online examination platform. Free quiz creator for teachers, AI test generator, CBT practice environment, and secure online proctoring software \u2014 built for India's competitive exam preparation."
+        title={"Why TestoZa – Best Free Online Exam Platform for Teachers & Students"}
+        description={"Discover why TestoZa is the best online examination platform. Free quiz creator for teachers, AI test generator, CBT practice environment, and secure online proctoring software — built for India's competitive exam preparation."}
         canonicalUrl="https://testoza.com/about"
         keywords={[
           "why testoza",
