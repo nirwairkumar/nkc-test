@@ -168,7 +168,7 @@ function formatCategoryName(slug) {
   if (!slug) return '';
   const words = slug.split('-');
   const acronyms = ['jee', 'gate', 'cat', 'iit', 'jam', 'neet', 'ssc', 'upsc', 'clat', 'nda'];
-  
+
   return words.map(word => {
     const lower = word.toLowerCase();
     if (acronyms.includes(lower)) {
@@ -178,32 +178,7 @@ function formatCategoryName(slug) {
   }).join(' ');
 }
 
-/**
- * Inject SEO meta tags into HTML for crawlers
- * This is a lightweight prerendering approach
- */
-async function injectSEOMetaTags(html, url, testData = null) {
-  // Generate meta tags
-  const metaTags = generateMetaTags(url, testData);
-
-  // Inject into HTML head
-  const headEndIndex = html.indexOf('</head>');
-  if (headEndIndex === -1) return html;
-
-  let beforeHead = html.substring(0, headEndIndex);
-  const afterHead = html.substring(headEndIndex);
-
-  // Strip existing/duplicate SEO tags from beforeHead to prevent crawler confusion
-  beforeHead = beforeHead.replace(/<title>[\s\S]*?<\/title>/gi, '');
-  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']description["'][\s\S]*?>/gi, '');
-  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']keywords["'][\s\S]*?>/gi, '');
-  beforeHead = beforeHead.replace(/<link\s+[^>]*?rel=["']canonical["'][\s\S]*?>/gi, '');
-  beforeHead = beforeHead.replace(/<meta\s+[^>]*?property=["']og:[\s\S]*?["'][\s\S]*?>/gi, '');
-  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']twitter:[\s\S]*?["'][\s\S]*?>/gi, '');
-  beforeHead = beforeHead.replace(/<meta\s+[^>]*?name=["']robots["'][\s\S]*?>/gi, '');
-
-  return `${beforeHead}${metaTags}${afterHead}`;
-}
+// injectSEOMetaTags is deprecated and replaced by native HTMLRewriter streaming injection in handleHTMLRequest
 
 /**
  * Generate comprehensive meta tags
@@ -226,7 +201,7 @@ function generateMetaTags(url, testData = null) {
       const testDesc = testData.description
         ? (testData.description.length > 150 ? testData.description.substring(0, 147) + '...' : testData.description)
         : `Practice ${testData.title} online. Timed mock exam with instant results and solutions.`;
-      
+
       const questionCount = testData.total_questions || testData.questions?.length || 0;
       const countStr = questionCount > 0 ? `${questionCount} questions` : 'Practice test';
       description = `${testDesc} (${countStr}, instant results & solutions on TestoZa).`;
@@ -335,46 +310,87 @@ async function handleHTMLRequest(request) {
     return originResponse;
   }
 
-  let html = await originResponse.text();
-
   const urlObj = new URL(request.url);
   const path = urlObj.pathname;
 
+  let responseToReturn = originResponse;
+
   // Skip homepage / so it keeps the default highly optimized static tags from index.html
   if (path !== '/' && path !== '') {
-    let testData = null;
-    if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
-      const parts = path.split('/');
-      const identifier = parts[2];
-      if (identifier) {
-        try {
-          // Fetch test data (excluding large questions list for efficiency)
-          const apiResponse = await fetch(`${CONFIG.API_BASE_URL}/api/tests/${identifier}?exclude_questions=true`, {
-            headers: {
-              'Accept': 'application/json'
+    const isCrawlerRequest = isCrawler(request);
+    const isTestRoute = path.startsWith('/test/') || path.startsWith('/test-intro/');
+
+    if (isCrawlerRequest || isTestRoute) {
+      let testData = null;
+      if (isTestRoute) {
+        const parts = path.split('/');
+        const identifier = parts[2];
+        if (identifier) {
+          try {
+            // Fetch test data (excluding large questions list for efficiency)
+            const apiResponse = await fetch(`${CONFIG.API_BASE_URL}/api/tests/${identifier}?exclude_questions=true`, {
+              headers: {
+                'Accept': 'application/json'
+              }
+            });
+            if (apiResponse.ok) {
+              testData = await apiResponse.json();
             }
-          });
-          if (apiResponse.ok) {
-            testData = await apiResponse.json();
+          } catch (e) {
+            console.error('Failed to fetch test data in worker:', e);
           }
-        } catch (e) {
-          console.error('Failed to fetch test data in worker:', e);
         }
       }
-    }
 
-    // Inject SEO meta tags for crawlers or test pages
-    if (isCrawler(request) || path.startsWith('/test/') || path.startsWith('/test-intro/')) {
-      html = await injectSEOMetaTags(html, request.url, testData);
+      // Generate meta tags HTML
+      const metaTags = generateMetaTags(request.url, testData);
+
+      // Use native HTMLRewriter to strip old SEO tags and append new ones cleanly
+      const rewriter = new HTMLRewriter()
+        .on('title', {
+          element(el) { el.remove(); }
+        })
+        .on('meta[name="description"]', {
+          element(el) { el.remove(); }
+        })
+        .on('meta[name="keywords"]', {
+          element(el) { el.remove(); }
+        })
+        .on('meta[name="author"]', {
+          element(el) { el.remove(); }
+        })
+        .on('meta[name="robots"]', {
+          element(el) { el.remove(); }
+        })
+        .on('meta[name="googlebot"]', {
+          element(el) { el.remove(); }
+        })
+        .on('link[rel="canonical"]', {
+          element(el) { el.remove(); }
+        })
+        .on('meta[property^="og:"]', {
+          element(el) { el.remove(); }
+        })
+        .on('meta[name^="twitter:"]', {
+          element(el) { el.remove(); }
+        })
+        .on('head', {
+          element(el) {
+            el.append(metaTags, { html: true });
+          }
+        });
+
+      responseToReturn = rewriter.transform(originResponse);
     }
   }
 
   // Create response with cache headers
   const ttl = getCacheTTL(request.url);
-  const response = new Response(html, {
-    status: originResponse.status,
+  const response = new Response(responseToReturn.body, {
+    status: responseToReturn.status,
     headers: {
-      'Content-Type': 'text/html',
+      ...Object.fromEntries(responseToReturn.headers),
+      'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': shouldBypassCache(request.url)
         ? 'no-store, no-cache, must-revalidate'
         : `public, max-age=${ttl}`,
