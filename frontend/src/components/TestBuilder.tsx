@@ -2539,7 +2539,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             )}
                                             </Card>
                                             {sIdx < sections.length - 1 && (
-                                                <div className="absolute right-4 -bottom-5 z-30">
+                                                <div className="absolute right-4 bottom-[-28px] z-30">
                                                     <button
                                                         type="button"
                                                         onClick={() => handleAddSection(sIdx + 1)}
