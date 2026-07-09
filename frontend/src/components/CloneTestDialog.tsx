@@ -38,14 +38,14 @@ export default function CloneTestDialog({
         try {
             const { data, error } = await cloneTest(test.id, userId);
             if (error) throw new Error(typeof error === 'string' ? error : 'Clone failed');
-            toast.success('Test cloned! Find it in your Creator Dashboard.', {
+            toast.success('Test copied! Find it in your Creator Dashboard.', {
                 description: `"Copy of ${test.title}" saved as private.`,
                 duration: 5000,
             });
             onClose();
             if (onSuccess) onSuccess(data);
         } catch (err: any) {
-            toast.error(err.message || 'Failed to clone test. Please try again.');
+            toast.error(err.message || 'Failed to copy test. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -70,7 +70,7 @@ export default function CloneTestDialog({
 
                     <DialogHeader className="space-y-0">
                         <DialogTitle className="text-white text-lg font-bold leading-tight">
-                            Clone this Test?
+                            Copy and Conduct this Test?
                         </DialogTitle>
                     </DialogHeader>
 
@@ -109,7 +109,7 @@ export default function CloneTestDialog({
                                 </div>
                                 <p className="font-semibold text-slate-800 text-sm">Premium Feature</p>
                                 <p className="text-xs text-slate-500 leading-relaxed max-w-[260px]">
-                                    Cloning tests is available exclusively for subscribed creators. Upgrade to get full access.
+                                    Copying and conducting tests is available exclusively for subscribed creators. Upgrade to get full access.
                                 </p>
                             </div>
 
@@ -167,7 +167,7 @@ export default function CloneTestDialog({
                                     ) : (
                                         <>
                                             <GitFork className="w-4 h-4 mr-2" />
-                                            Clone Test
+                                            Copy & Conduct
                                         </>
                                     )}
                                 </Button>

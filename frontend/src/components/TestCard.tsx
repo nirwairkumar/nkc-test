@@ -362,10 +362,10 @@ export default function TestCard({
                                 variant="outline"
                                 size="sm"
                                 className="h-9 px-3 border-violet-200 text-violet-600 hover:bg-violet-50 hover:text-violet-700 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-900/50 transition-colors font-medium"
-                                title="Clone this test"
+                                title="Copy and conduct"
                                 onClick={(e) => { e.stopPropagation(); setCloneDialogOpen(true); }}
                             >
-                                <GitFork className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Clone</span>
+                                <GitFork className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Copy & Conduct</span>
                             </Button>
                         )}
                         <Button size="sm" className={`h-9 px-4 font-semibold shadow-sm transition-all hover:scale-105 ${progress?.status === 'in_progress' ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0'}`} onClick={() => navigate(`/test-intro/${test.id}`)}>

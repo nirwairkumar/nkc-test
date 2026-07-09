@@ -233,10 +233,10 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                                 variant="outline"
                                 size="sm"
                                 className="h-8 px-3 border-violet-200 text-violet-600 hover:bg-violet-50 hover:text-violet-700 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-900/50 transition-colors"
-                                title="Clone this test"
+                                title="Copy and conduct"
                                 onClick={(e) => { e.stopPropagation(); setCloneDialogOpen(true); }}
                             >
-                                <GitFork className="h-4 w-4 mr-1.5" /> Clone
+                                <GitFork className="h-4 w-4 mr-1.5" /> Copy & Conduct
                             </Button>
                         )}
                         <Button size="sm" className={`h-8 text-sm px-4 ${progress?.status === 'in_progress' ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`} onClick={() => navigate(`/test-intro/${test.id}`)}>
