@@ -130,7 +130,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     // Section Mode & Calculator State
-    type SectionState = TestSection & { questions: QuestionState[] };
+    type SectionState = TestSection & { questions: QuestionState[]; colorIndex?: number };
     const [enableSectionMode, setEnableSectionMode] = useState(false);
     const [sectionMarkingModel, setSectionMarkingModel] = useState<'section-wise' | 'question-wise'>('section-wise');
     const [hasScientificCalculator, setHasScientificCalculator] = useState(false);
@@ -141,7 +141,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             questions: [DEFAULT_QUESTION],
             marks_per_question: 1,
             negative_marks: 0,
-            question_type: 'single'
+            question_type: 'single',
+            colorIndex: 0
         }
     ]);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
@@ -555,8 +556,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setTimeout(() => {
             if (data.enable_section_mode && hasSections) {
                 setEnableSectionMode(true);
-                setSections(parsedSections.map((s: any) => ({
+                setSections(parsedSections.map((s: any, sIdx: number) => ({
                     ...s,
+                    colorIndex: s.colorIndex !== undefined ? s.colorIndex : sIdx,
                     questions: (s.questions || []).map(mapQuestion)
                 })));
             } else if (hasQuestions) {
@@ -1100,7 +1102,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     questions: [...questions],
                     marks_per_question: 1,
                     negative_marks: 0,
-                    question_type: 'single'
+                    question_type: 'single',
+                    colorIndex: 0
                 } as SectionState]);
             }
         } else {
@@ -1120,22 +1123,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             questions: [{ ...DEFAULT_QUESTION, id: Math.random() }],
             marks_per_question: 1,
             negative_marks: 0,
-            question_type: 'single'
+            question_type: 'single',
+            colorIndex: sections.length
         };
         
         if (typeof insertAtIndex === 'number') {
             const newSections = [...sections];
             newSections.splice(insertAtIndex, 0, newSection);
-            
-            // Re-index default named sections (e.g. "Section A", "Section B"...)
-            const updatedSections = newSections.map((sec, idx) => {
-                const expectedDefaultName = `Section ${String.fromCharCode(65 + idx)}`;
-                if (/^Section [A-Z]$/.test(sec.name)) {
-                    return { ...sec, name: expectedDefaultName };
-                }
-                return sec;
-            });
-            setSections(updatedSections);
+            setSections(newSections);
         } else {
             setSections([...sections, newSection]);
         }
@@ -1320,6 +1315,25 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     return (
         <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 w-full max-w-5xl" style={{ overflowAnchor: 'none' }}>
+            <style>{`
+                @keyframes iosInsert {
+                    0% {
+                        opacity: 0;
+                        transform: scale(0.92) translateY(-20px);
+                        filter: blur(4px);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                        filter: blur(0);
+                    }
+                }
+                .animate-ios-insert {
+                    animation: iosInsert 450ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                    transform-origin: center center;
+                    will-change: transform, opacity;
+                }
+            `}</style>
             <div className="mb-2 sm:mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-0 gap-2 sm:gap-4">
                 <div className="flex items-center gap-3">
                     {onCancel && (
@@ -1945,10 +1959,15 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         { border: 'border-purple-200', header: 'bg-purple-100', bg: 'bg-purple-50/30' },
                                         { border: 'border-rose-200', header: 'bg-rose-100', bg: 'bg-rose-50/30' },
                                     ];
-                                    const style = SECTION_STYLES[sIdx % SECTION_STYLES.length];
+                                    const colorIndex = section.colorIndex !== undefined ? section.colorIndex : sIdx;
+                                    const style = SECTION_STYLES[colorIndex % SECTION_STYLES.length];
+                                    
+                                    const timestampStr = section.id.startsWith('section-') ? section.id.split('-')[1] : null;
+                                    const timestamp = timestampStr ? parseInt(timestampStr, 10) : null;
+                                    const isNew = timestamp ? (Date.now() - timestamp < 1500) : false;
 
                                     return (
-                                        <div key={section.id} className="relative">
+                                        <div key={section.id} className={`relative ${isNew ? 'animate-ios-insert' : ''}`}>
                                             <Card
                                                 draggable
                                                 onDragStart={(e) => handleDragStartSection(e, section.id)}
