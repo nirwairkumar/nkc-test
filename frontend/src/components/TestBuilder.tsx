@@ -1273,7 +1273,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                         return {
                             ...s,
                             questions: s.questions.filter(q => q.id !== questionId)
-                        };
+                        } as SectionState;
                     }
                     return s;
                 });
@@ -2674,7 +2674,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         </div>
                                     );
                                 })}
-                                <Button onClick={handleAddSection} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
+                                <Button onClick={() => handleAddSection()} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
                             </div>
                         </>
                     ) : (
