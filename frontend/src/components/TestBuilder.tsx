@@ -1350,6 +1350,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     transform-origin: center center;
                     will-change: transform, opacity;
                 }
+                .ios-collapse-transition {
+                    display: grid;
+                    grid-template-rows: 0fr;
+                    opacity: 0;
+                    transition: grid-template-rows 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms cubic-bezier(0.16, 1, 0.3, 1);
+                    will-change: grid-template-rows, opacity;
+                }
+                .ios-collapse-transition.collapsed {
+                    grid-template-rows: 0fr;
+                    opacity: 0;
+                    pointer-events: none;
+                }
+                .ios-collapse-transition.expanded {
+                    grid-template-rows: 1fr;
+                    opacity: 1;
+                }
             `}</style>
             <div className="mb-2 sm:mb-4 flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-0 gap-2 sm:gap-4">
                 <div className="flex items-center gap-3">
@@ -1993,151 +2009,134 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             className={`shadow-md overflow-hidden ${style.border} rounded-none sm:rounded-xl border-x-0 sm:border-2 border-y-2 transition-all duration-300 ${swappedSections.has(section.id) ? 'scale-[1.01] shadow-lg brightness-105' : ''
                                                 } ${swapGlowSections.has(section.id) ? 'section-swap-glow' : ''}`}
                                         >
-                                            <div className={`${style.header} border-b flex items-center transition-colors duration-300 ${collapsedSections.has(section.id) ? 'px-3 py-2' : 'px-4 py-3 flex-wrap gap-4'}`}>
-                                                {/* Collapsed: show only drag handle + section name chip + expand button */}
-                                                {collapsedSections.has(section.id) ? (
-                                                    <div className="flex items-center gap-2 w-full">
-                                                        <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-black/5 rounded transition-colors">
-                                                            <Grip className="w-4 h-4 text-slate-400" />
-                                                        </div>
-                                                        <span className="text-sm font-bold text-slate-600 flex-1 truncate">{section.name || `Section ${sIdx + 1}`}</span>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="text-slate-400 hover:text-blue-600 transition-colors h-7 w-7"
-                                                            onClick={() => {
-                                                                const newCollapsed = new Set(collapsedSections);
-                                                                newCollapsed.delete(section.id);
-                                                                setCollapsedSections(newCollapsed);
-                                                            }}
-                                                            title="Expand Section"
-                                                        >
-                                                            <ChevronDown className="w-4 h-4" />
-                                                        </Button>
+                                            <div className={`${style.header} border-b flex items-center transition-colors duration-300 px-4 py-3 flex-wrap sm:flex-nowrap gap-3`}>
+                                                <div className="flex-1 flex items-center gap-3 min-w-0">
+                                                    <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-black/5 rounded transition-colors mr-1 shrink-0">
+                                                        <Grip className="w-4 h-4 text-slate-400" />
                                                     </div>
-                                                ) : (
-                                                    /* Expanded header */
-                                                    <>
-                                                        <div className="flex-1 space-y-1 flex items-center gap-3">
-                                                            <div className="cursor-grab active:cursor-grabbing p-1 hover:bg-black/5 rounded transition-colors mr-1">
-                                                                <Grip className="w-4 h-4 text-slate-400" />
-                                                            </div>
-                                                            <div className="flex-1 space-y-0">
-                                                                <Input
-                                                                    value={section.name}
-                                                                    onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
-                                                                    className="font-bold text-lg bg-white/60 border-0 shadow-none focus-visible:ring-1 focus-visible:ring-slate-300 focus-visible:bg-white px-2 h-9"
-                                                                    placeholder={`Section ${sIdx + 1}`}
-                                                                />
-                                                            </div>
-                                                        </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <Input
+                                                            value={section.name}
+                                                            onChange={(e) => updateSection(sIdx, 'name', e.target.value)}
+                                                            className="font-bold text-lg bg-white/60 border-0 shadow-none focus-visible:ring-1 focus-visible:ring-slate-300 focus-visible:bg-white px-2 h-9 w-full truncate"
+                                                            placeholder={`Section ${sIdx + 1}`}
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                                        <div className="flex items-center gap-1 self-center">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="text-slate-400 hover:text-blue-600 transition-colors h-8 w-8"
-                                                                onClick={() => {
-                                                                    const newCollapsed = new Set(collapsedSections);
-                                                                    if (newCollapsed.has(section.id)) {
-                                                                        newCollapsed.delete(section.id);
-                                                                    } else {
-                                                                        newCollapsed.add(section.id);
-                                                                    }
-                                                                    setCollapsedSections(newCollapsed);
-                                                                }}
-                                                                title="Collapse Section"
-                                                            >
-                                                                <ChevronUp className="w-4 h-4" />
+                                                <div className="flex items-center gap-2 shrink-0 self-center">
+                                                    {/* Section Stats */}
+                                                    <div className="hidden xs:flex items-center gap-1.5 px-3 py-1 bg-white/80 rounded-lg border border-slate-100 text-xs font-semibold text-slate-600 shadow-sm">
+                                                        <span>{section.questions.length} Qs</span>
+                                                        <span className="text-slate-300">•</span>
+                                                        <span>{section.questions.length * section.marks_per_question} Marks</span>
+                                                    </div>
+
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600 h-8 w-8 rounded-full hover:bg-slate-100">
+                                                                <MoreVertical className="w-4 h-4" />
                                                             </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-80 p-4" align="end">
+                                                            <div className="space-y-4">
+                                                                <div className="flex items-center justify-between">
+                                                                    <h4 className="font-bold text-sm">Attempt Control</h4>
+                                                                    <Switch
+                                                                        checked={!!section.attempt_control}
+                                                                        onCheckedChange={(checked) => {
+                                                                            if (checked) {
+                                                                                updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
+                                                                            } else {
+                                                                                updateSection(sIdx, 'attempt_control', undefined);
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                </div>
 
-                                                            <Popover>
-                                                                <PopoverTrigger asChild>
-                                                                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600 h-8 w-8">
-                                                                        <MoreVertical className="w-4 h-4" />
-                                                                    </Button>
-                                                                </PopoverTrigger>
-                                                                <PopoverContent className="w-80 p-4" align="end">
-                                                                    <div className="space-y-4">
-                                                                        <div className="flex items-center justify-between">
-                                                                            <h4 className="font-bold text-sm">Attempt Control</h4>
-                                                                            <Switch
-                                                                                checked={!!section.attempt_control}
-                                                                                onCheckedChange={(checked) => {
-                                                                                    if (checked) {
-                                                                                        updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
-                                                                                    } else {
-                                                                                        updateSection(sIdx, 'attempt_control', undefined);
-                                                                                    }
-                                                                                }}
+                                                                {section.attempt_control && (
+                                                                    <>
+                                                                        <div className="space-y-2">
+                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
+                                                                            <Input
+                                                                                type="number"
+                                                                                value={section.attempt_control?.max_attempts || 0}
+                                                                                onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
+                                                                                placeholder="e.g. 5"
                                                                             />
                                                                         </div>
 
-                                                                        {section.attempt_control && (
-                                                                            <>
-                                                                                <div className="space-y-2">
-                                                                                    <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
-                                                                                    <Input
-                                                                                        type="number"
-                                                                                        value={section.attempt_control?.max_attempts || 0}
-                                                                                        onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
-                                                                                        placeholder="e.g. 5"
-                                                                                    />
+                                                                        <div className="space-y-2">
+                                                                            <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
+                                                                            <RadioGroup
+                                                                                value={section.attempt_control?.mode || 'hard'}
+                                                                                onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
+                                                                                className="flex gap-4"
+                                                                            >
+                                                                                <div className="flex items-center space-x-2">
+                                                                                    <RadioGroupItem value="hard" id={`hard-${sIdx}`} />
+                                                                                    <Label htmlFor={`hard-${sIdx}`} className="text-sm">Hard</Label>
                                                                                 </div>
-
-                                                                                <div className="space-y-2">
-                                                                                    <Label className="text-xs font-bold text-slate-500 uppercase">Mode</Label>
-                                                                                    <RadioGroup
-                                                                                        value={section.attempt_control?.mode || 'hard'}
-                                                                                        onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, mode: val })}
-                                                                                        className="flex gap-4"
-                                                                                    >
-                                                                                        <div className="flex items-center space-x-2">
-                                                                                            <RadioGroupItem value="hard" id={`hard-${sIdx}`} />
-                                                                                            <Label htmlFor={`hard-${sIdx}`} className="text-sm">Hard</Label>
-                                                                                        </div>
-                                                                                        <div className="flex items-center space-x-2">
-                                                                                            <RadioGroupItem value="soft" id={`soft-${sIdx}`} />
-                                                                                            <Label htmlFor={`soft-${sIdx}`} className="text-sm">Soft</Label>
-                                                                                        </div>
-                                                                                    </RadioGroup>
+                                                                                <div className="flex items-center space-x-2">
+                                                                                    <RadioGroupItem value="soft" id={`soft-${sIdx}`} />
+                                                                                    <Label htmlFor={`soft-${sIdx}`} className="text-sm">Soft</Label>
                                                                                 </div>
+                                                                            </RadioGroup>
+                                                                        </div>
 
-                                                                                {section.attempt_control?.mode === 'soft' && (
-                                                                                    <div className="space-y-2">
-                                                                                        <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
-                                                                                        <RadioGroup
-                                                                                            value={section.attempt_control?.soft_type || 'first_n'}
-                                                                                            onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
-                                                                                            className="flex flex-col gap-2"
-                                                                                        >
-                                                                                            <div className="flex items-center space-x-2">
-                                                                                                <RadioGroupItem value="first_n" id={`first_n-${sIdx}`} />
-                                                                                                <Label htmlFor={`first_n-${sIdx}`} className="text-sm">First N Questions</Label>
-                                                                                            </div>
-                                                                                            <div className="flex items-center space-x-2">
-                                                                                                <RadioGroupItem value="best_n" id={`best_n-${sIdx}`} />
-                                                                                                <Label htmlFor={`best_n-${sIdx}`} className="text-sm">Best N Questions</Label>
-                                                                                            </div>
-                                                                                        </RadioGroup>
+                                                                        {section.attempt_control?.mode === 'soft' && (
+                                                                            <div className="space-y-2">
+                                                                                <Label className="text-xs font-bold text-slate-500 uppercase">Soft Filter Type</Label>
+                                                                                <RadioGroup
+                                                                                    value={section.attempt_control?.soft_type || 'first_n'}
+                                                                                    onValueChange={(val) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, soft_type: val })}
+                                                                                    className="flex flex-col gap-2"
+                                                                                >
+                                                                                    <div className="flex items-center space-x-2">
+                                                                                        <RadioGroupItem value="first_n" id={`first_n-${sIdx}`} />
+                                                                                        <Label htmlFor={`first_n-${sIdx}`} className="text-sm">First N Questions</Label>
                                                                                     </div>
-                                                                                )}
-                                                                            </>
+                                                                                    <div className="flex items-center space-x-2">
+                                                                                        <RadioGroupItem value="best_n" id={`best_n-${sIdx}`} />
+                                                                                        <Label htmlFor={`best_n-${sIdx}`} className="text-sm">Best N Questions</Label>
+                                                                                    </div>
+                                                                                </RadioGroup>
+                                                                            </div>
                                                                         )}
-                                                                    </div>
-                                                                </PopoverContent>
-                                                            </Popover>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
 
-                                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="text-slate-400 hover:text-red-500 h-8 w-8">
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </>
-                                                )}
+                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(sIdx)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 h-8 w-8 rounded-full">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors h-8 w-8 rounded-full"
+                                                        onClick={() => {
+                                                            const newCollapsed = new Set(collapsedSections);
+                                                            if (newCollapsed.has(section.id)) {
+                                                                newCollapsed.delete(section.id);
+                                                            } else {
+                                                                newCollapsed.add(section.id);
+                                                            }
+                                                            setCollapsedSections(newCollapsed);
+                                                        }}
+                                                        title={collapsedSections.has(section.id) ? "Expand Section" : "Collapse Section"}
+                                                    >
+                                                        <ChevronDown className={`w-4 h-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${!collapsedSections.has(section.id) ? 'rotate-180' : ''}`} />
+                                                    </Button>
+                                                </div>
                                             </div>
 
-                                            {!collapsedSections.has(section.id) && (
-                                                <CardContent className={`p-4 ${style.bg} transition-colors`}>
+                                            <div className={`ios-collapse-transition ${collapsedSections.has(section.id) ? 'collapsed' : 'expanded'}`}>
+                                                <div className="overflow-hidden">
+                                                    <CardContent className={`p-4 ${style.bg} transition-colors`}>
+                                                        
                                                     <div className="space-y-4">
                                                         {section.questions.map((q, qIdx) => {
                                                             // VISUAL GROUPING LOGIC
@@ -2571,8 +2570,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         })}
                                                         <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
                                                     </div>
-                                                </CardContent>
-                                            )}
+                                                
+                                                    </CardContent>
+                                                </div>
+                                            </div>
                                             </Card>
                                             {sIdx < sections.length - 1 && (
                                                 <div className="absolute right-4 bottom-[-28px] z-30">
