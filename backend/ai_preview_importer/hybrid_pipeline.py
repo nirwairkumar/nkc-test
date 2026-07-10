@@ -35,6 +35,7 @@ from ai_preview_importer.pdf_vision_pipeline import (
     convert_image_to_bytes,
     render_pages_as_images,
     extract_embedded_images,
+    append_extracted_images_to_content,
     process_answer_key,
     merge_cross_page_questions,
     _parse_response,
@@ -444,6 +445,7 @@ async def process_files_hybrid_stream(
             })
 
         content_parts = build_hybrid_content_parts(all_page_infos, image_only_page_images, prompt)
+        append_extracted_images_to_content(content_parts, all_embedded_images)
 
         try:
             result_data = await stream_gemini_and_parse(
@@ -491,6 +493,7 @@ async def process_files_hybrid_stream(
         for idx, page_img in enumerate(all_page_images):
             content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
             content_parts.append(types.Part.from_bytes(data=page_img, mime_type="image/png"))
+        append_extracted_images_to_content(content_parts, all_embedded_images)
 
         try:
             result_data = await stream_gemini_and_parse(
@@ -535,6 +538,10 @@ async def process_files_hybrid_stream(
                     vq["options"][k] = v
         if not vq.get("image"):
             ph = vq.get("imagePlaceholder", "")
+            if ph and isinstance(ph, str):
+                match = re.search(r'(image_\d+)', ph)
+                if match:
+                    ph = match.group(1)
             if ph and ph in placeholder_map:
                 vq["image"] = placeholder_map[ph]
 

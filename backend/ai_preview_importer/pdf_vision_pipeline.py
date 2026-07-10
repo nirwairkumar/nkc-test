@@ -263,9 +263,7 @@ Convert to proper LaTeX:
 Matrix: $$\\\\begin{pmatrix} a & b \\\\\\\\ c & d \\\\end{pmatrix}$$
 Determinant: $$\\\\begin{vmatrix} a & b \\\\\\\\ c & d \\\\end{vmatrix}$$
 
---------------------------------------------------
-
-MATH & FORMATTING RULES (CRITICAL):
+--------------------------------MATH & FORMATTING RULES (CRITICAL):
 
 - Use LaTeX for ALL math: \\\\frac, \\\\sqrt, \\\\int, x^2, etc.
 - CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands inside the JSON strings.
@@ -275,6 +273,7 @@ MATH & FORMATTING RULES (CRITICAL):
 - Do NOT simplify expressions.
 - Preserve spacing and symbols exactly.
 - NEVER use align environments, use \\\\begin{aligned} ... \\\\end{aligned} instead.
+- CRITICAL: Apply these mathematical and formatting rules to BOTH the question text AND all option values. Ensure NO options are missing or omitted.
 
 CHEMISTRY FORMATTING (mhchem) - CRITICAL:
 - Use \\\\ce{} for ALL chemical formulas: $\\\\ce{H2O}$, $\\\\ce{NaCl}$, $\\\\ce{CO2}$
@@ -285,6 +284,7 @@ CHEMISTRY FORMATTING (mhchem) - CRITICAL:
 - State symbols: $\\\\ce{H2O (l)}$, $\\\\ce{CO2 (g)}$, $\\\\ce{NaCl (aq)}$
 - Isotopes: $\\\\ce{^{14}C}$, $\\\\ce{^{235}U}$
 - IMPORTANT: Always wrap \\\\ce{...} inside $...$
+- CRITICAL: Apply chemistry formatting strictly to options as well.
 
 --------------------------------TEXT & LINE-BREAK RULES:
 - Use standard newline characters (\n) for line breaks in questions, options, and passageContent.
@@ -296,9 +296,12 @@ CHEMISTRY FORMATTING (mhchem) - CRITICAL:
 --------------------------------------------------
 
 DIAGRAM AND IMAGE EXTRACTION (CRITICAL):
-- If a diagram/image appears near a question, set imagePlaceholder to "image_X" (X = visual order across document, top-left to bottom-right).
-- For inline image references in text or options, use markdown: ![image](image_X)
-- Ensure placeholder numbering matches visual order across all pages.
+- If a diagram/image (including chemical structures, geometric drawings, graphs, inline formula diagrams) appears near or inside a question, map it to the corresponding "image_X" identifier.
+- The visual order "image_1", "image_2", etc. corresponds to the order of the extracted diagram/structure images appended to this message.
+- Compare the content of each extracted diagram image with the page content to identify its correct location.
+- If a diagram is a large standalone figure for a question, set its "imagePlaceholder" to "image_X".
+- If a diagram/chemical structure is located inline within the question text or option text, insert a markdown image tag: ![image](image_X) at the exact place inside the question or option text.
+- IMPORTANT: Ignore any corporate logo, header branding, or footer page-number/institution logos that appear in the document. Do NOT assign them an "image_X" identifier or map them to any question. If a logo is extracted, ignore it.
 
 --------------------------------------------------
 
@@ -468,11 +471,12 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
 3. **Cover all topics** in the document proportionally.
 4. **Vary difficulty**: mix easy, medium, and hard questions.
 5. **CRITICAL - Mathematical content**:
-   - Use LaTeX for ALL math: \\frac, \\sqrt, \\int, x^2, etc.
+   - Use LaTeX for ALL math: \\\\frac, \\\\sqrt, \\\\int, x^2, etc.
    - Escape ALL backslashes for JSON: use \\\\ instead of \\.
    - Inline math: $...$
    - Block equations: $$...$$ 
-   - NEVER use align environments, use \\begin{aligned} ... \\end{aligned} instead.
+   - NEVER use align environments, use \\\\begin{aligned} ... \\\\end{aligned} instead.
+   - Apply these rules to both questions and options. Never omit options or choices.
 
 6. **CHEMISTRY FORMATTING (mhchem) - CRITICAL**:
    - Use \\\\ce{} for ALL chemical formulas: \\\\ce{H2O}, \\\\ce{NaCl}, \\\\ce{CO2}
@@ -482,13 +486,16 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
    - Organic: \\\\ce{CH3-CH2-OH}, \\\\ce{C6H12O6}
    - State symbols: \\\\ce{H2O (l)}, \\\\ce{CO2 (g)}, \\\\ce{NaCl (aq)}
    - Isotopes: \\\\ce{^{14}C}, \\\\ce{^{235}U}
+   - Wrap all chemical equations/formulas in $...$. Apply chemistry formatting to options too.
 
 7. **All questions must have exactly one correct answer** specified.
 8. **Create plausible distractors** — wrong options should be reasonable, not obviously wrong.
 
 9. **IMAGE INSERTION RULE**:
-   - If a generated question requires a diagram from the page, output "imagePlaceholder": "image_X" based on its visual sequence.
-   - For deeply inline insertions or option diagrams, use ![image](image_X).
+   - If a generated question requires a diagram/structure from the page, map it to the corresponding "image_X" identifier (which matches the appended reference diagram images).
+   - If a diagram is a large standalone figure for a question, set "imagePlaceholder": "image_X".
+   - If a diagram/chemical structure is located inline within the question text or option text, insert a markdown image tag: ![image](image_X) at the exact place inside the text.
+   - Exclude page headers, footers, and logos. For deeply inline insertions or option diagrams, use ![image](image_X).
 
 ## CROSS-PAGE HANDLING:
 - Questions may span multiple pages - combine them into complete questions
@@ -580,47 +587,51 @@ def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
 
 def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
     """
-    Extract ALL embedded images from the PDF.
-    Keeps diagrams of all sizes - even small chemical structures are important.
+    Extract ALL embedded images and vector diagrams from the PDF.
+    - Uses page.get_images() for raster images.
+    - Groups page.get_drawings() (vector graphics) and crops them.
+    - Filters out corporate logos (e.g. at the top or bottom of pages) and noise.
     """
-    import fitz  # lazy-loaded: only used by OCR pipeline
+    import fitz
+    import hashlib
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     images = []
     seen_hashes = set()
 
     for page_num in range(len(doc)):
         page = doc[page_num]
+        
+        # 1. Raster images
         image_list = page.get_images(full=True)
-
         for img_info in image_list:
             xref = img_info[0]
             try:
                 base_image = doc.extract_image(xref)
                 image_bytes = base_image["image"]
                 ext = base_image["ext"]
-
-                # Deduplicate by content hash
-                img_hash = hash(image_bytes)
-                if img_hash in seen_hashes:
-                    continue
-                seen_hashes.add(img_hash)
-
-                # Extract ALL images regardless of size
-                # Small diagrams (chemical structures, symbols) are important
-                w = base_image["width"]
-                h = base_image["height"]
                 
-                # Only filter out extremely tiny icons (less than 20x20)
+                # Check size
+                w, h = base_image["width"], base_image["height"]
                 if w < 20 or h < 20:
                     continue
-
-                # Get position on page
+                
+                # Exclude header/footer logos by coordinate heuristics:
                 rects = page.get_image_rects(xref)
                 bbox = None
                 if rects:
-                    rect = rects[0]
-                    bbox = (rect.x0, rect.y0, rect.x1, rect.y1)
-
+                    r = rects[0]
+                    bbox = (r.x0, r.y0, r.x1, r.y1)
+                    page_height = page.rect.height
+                    # Logo heuristic: top 12% or bottom 12% of page and not very tall
+                    if (r.y1 < page_height * 0.12 or r.y0 > page_height * 0.88) and (r.y1 - r.y0) < 80:
+                        logger.info(f"Skipping potential logo raster image on page {page_num + 1} at {bbox}")
+                        continue
+                
+                img_hash = hashlib.md5(image_bytes).hexdigest()
+                if img_hash in seen_hashes:
+                    continue
+                seen_hashes.add(img_hash)
+                
                 images.append({
                     "page": page_num + 1,
                     "data": base64.b64encode(image_bytes).decode("utf-8"),
@@ -631,7 +642,77 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                     "base64_uri": f"data:image/{ext};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
                 })
             except Exception as e:
-                logger.warning(f"Failed to extract image from page {page_num + 1}: {e}")
+                logger.warning(f"Failed to extract raster image: {e}")
+                
+        # 2. Vector Drawings grouping
+        try:
+            drawings = page.get_drawings()
+            if drawings:
+                rects_to_crop = []
+                for draw in drawings:
+                    r = draw["rect"]
+                    if r.width > page.rect.width * 0.95 or r.height > page.rect.height * 0.95:
+                        continue
+                    if r.width < 10 or r.height < 10:
+                        continue
+                    
+                    page_height = page.rect.height
+                    if (r.y1 < page_height * 0.10 or r.y0 > page_height * 0.90) and r.height < 20:
+                        continue
+                        
+                    rects_to_crop.append(r)
+                
+                # Merge overlapping or very close rects (within 30 points)
+                merged_rects = []
+                for r in rects_to_crop:
+                    expanded = fitz.Rect(r.x0 - 15, r.y0 - 15, r.x1 + 15, r.y1 + 15)
+                    merged = False
+                    for i, mr in enumerate(merged_rects):
+                        expanded_mr = fitz.Rect(mr.x0 - 15, mr.y0 - 15, mr.x1 + 15, mr.y1 + 15)
+                        if expanded_mr.intersects(expanded):
+                            merged_rects[i] = mr | r
+                            merged = True
+                            break
+                    if not merged:
+                        merged_rects.append(r)
+                
+                # Render/crop each merged rect
+                for r in merged_rects:
+                    margin = 5
+                    crop_rect = fitz.Rect(
+                        max(0, r.x0 - margin),
+                        max(0, r.y0 - margin),
+                        min(page.rect.width, r.x1 + margin),
+                        min(page.rect.height, r.y1 + margin)
+                    )
+                    
+                    if crop_rect.width < 15 or crop_rect.height < 15:
+                        continue
+                        
+                    page_height = page.rect.height
+                    if (crop_rect.y1 < page_height * 0.12 or crop_rect.y0 > page_height * 0.88) and crop_rect.height < 70:
+                        continue
+                    
+                    # Crop the drawing region
+                    pix = page.get_pixmap(clip=crop_rect, matrix=fitz.Matrix(2.0, 2.0), alpha=False)
+                    img_bytes = pix.tobytes("png")
+                    
+                    img_hash = hashlib.md5(img_bytes).hexdigest()
+                    if img_hash in seen_hashes:
+                        continue
+                    seen_hashes.add(img_hash)
+                    
+                    images.append({
+                        "page": page_num + 1,
+                        "data": base64.b64encode(img_bytes).decode("utf-8"),
+                        "ext": "png",
+                        "width": pix.width,
+                        "height": pix.height,
+                        "bbox": (crop_rect.x0, crop_rect.y0, crop_rect.x1, crop_rect.y1),
+                        "base64_uri": f"data:image/png;base64,{base64.b64encode(img_bytes).decode('utf-8')}"
+                    })
+        except Exception as e:
+            logger.warning(f"Failed to extract vector drawings on page {page_num + 1}: {e}")
 
     doc.close()
     
@@ -650,6 +731,27 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
         
     logger.info(f"Extracted and ordered {len(images)} images from PDF")
     return images
+
+
+def append_extracted_images_to_content(content_parts: List, embedded_images: List[Dict]):
+    """
+    Append extracted diagrams to Gemini content parts so the model can visually map them.
+    Each diagram is appended as a labeled image.
+    """
+    if not embedded_images:
+        return
+        
+    content_parts.append("\n\n--- EXTRACTED DIAGRAMS AND INLINE STRUCTURES FOR REFERENCE ---\n")
+    content_parts.append("Use the following labeled images to match with placeholders (image_1, image_2, etc.) inside the questions or options:\n")
+    
+    for img in embedded_images:
+        img_id = img["id"]
+        content_parts.append(f"\nID: {img_id}\n")
+        try:
+            raw_bytes = base64.b64decode(img["data"])
+            content_parts.append(types.Part.from_bytes(data=raw_bytes, mime_type="image/png"))
+        except Exception as e:
+            logger.error(f"Failed to append image {img_id} to content: {e}")
 
 
 def convert_image_to_bytes(image_bytes: bytes, target_format: str = "png") -> bytes:
@@ -1042,6 +1144,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             content_parts.append(
                 types.Part.from_bytes(data=page_img, mime_type="image/png")
             )
+        append_extracted_images_to_content(content_parts, all_embedded_images)
             
         try:
             raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
@@ -1134,6 +1237,9 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             content_parts.append(
                 types.Part.from_bytes(data=page_img, mime_type="image/png")
             )
+
+        batch_embedded = [img for img in all_embedded_images if batch_start_page + 1 <= img["page"] <= batch_start_page + actual_batch_size]
+        append_extracted_images_to_content(content_parts, batch_embedded)
 
         logger.info(f"Sending batch {batch_num} to Gemini...")
         
@@ -1494,6 +1600,10 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         # Match main question image placeholder
         q_image = q.get("image")
         image_placeholder = q.get("imagePlaceholder")
+        if image_placeholder and isinstance(image_placeholder, str):
+            match = re.search(r'(image_\d+)', image_placeholder)
+            if match:
+                image_placeholder = match.group(1)
 
         # If image is already a data URI or URL, keep it
         if q_image and isinstance(q_image, str) and (q_image.startswith("data:") or q_image.startswith("http")):
@@ -1855,6 +1965,7 @@ async def process_files_stream(
             content_parts.append(
                 types.Part.from_bytes(data=page_img, mime_type="image/png")
             )
+        append_extracted_images_to_content(content_parts, all_embedded_images)
             
         try:
             raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
@@ -1973,12 +2084,16 @@ async def process_files_stream(
             batch_images = all_page_images[start_idx - OVERLAP_PAGES:end_idx]
             batch_start_page = start_idx - OVERLAP_PAGES
         
+        # Filter batch-specific embedded images
+        batch_embedded = [img for img in all_embedded_images if batch_start_page + 1 <= img["page"] <= batch_start_page + len(batch_images)]
+        
         batches.append({
             'batch_num': batch_num,
             'start_page': batch_start_page,
             'images': batch_images,
             'mode': mode,
             'embedded_images': all_embedded_images,
+            'batch_embedded': batch_embedded,
             'total_pages': total_pages
         })
         
@@ -2107,6 +2222,10 @@ async def process_files_stream(
         # Resolve imagePlaceholder → Cloudinary URL
         if not vq.get("image"):
             placeholder = vq.get("imagePlaceholder", "")
+            if placeholder and isinstance(placeholder, str):
+                match = re.search(r'(image_\d+)', placeholder)
+                if match:
+                    placeholder = match.group(1)
             if placeholder and placeholder in placeholder_map:
                 vq["image"] = placeholder_map[placeholder]
     
@@ -2244,6 +2363,9 @@ async def _process_single_batch_stream(
         content_parts.append(
             types.Part.from_bytes(data=page_img, mime_type="image/png")
         )
+        
+    batch_embedded = batch_data.get('batch_embedded', [])
+    append_extracted_images_to_content(content_parts, batch_embedded)
     
     # Call Gemini with retry
     raw_text = await _call_gemini_with_retry(content_parts, batch_num)
