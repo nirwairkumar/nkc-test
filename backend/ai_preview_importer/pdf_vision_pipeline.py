@@ -176,6 +176,17 @@ IMAGE/DIAGRAM QUESTION HANDLING (CRITICAL - DO NOT SKIP):
    - question: "[Refer to the diagram]"
    - imagePlaceholder: "image_X"
 4. Questions with diagrams are JUST AS IMPORTANT as text-only questions
+5. CRITICAL - DIAGRAM VISUAL COORDINATES (DIAGRAM BOUNDING BOX):
+   If a question, its options, or its context contains any diagram, graph, chemical structure, geometry figure, table, or illustration on a page:
+   - You MUST detect its exact 2D bounding box on the page.
+   - Include a "diagram_bbox" object in the question JSON in the format:
+     "diagram_bbox": {
+       "page_number": <1-based page number where the diagram is located>,
+       "box_2d": [ymin, xmin, ymax, xmax]
+     }
+   - The coordinates in "box_2d" MUST be normalized integers from 0 to 1000 relative to the height and width of that page (e.g. top-left corner is [0, 0] and bottom-right corner is [1000, 1000]).
+   - If a question has no diagrams or tables, set "diagram_bbox": null.
+   - If a question has multiple diagrams, return the bounding box that encompasses all of them on that page.
 
 --------------------------------------------------
 
@@ -332,6 +343,10 @@ You MUST structure the output using the "sections" field instead of the top-leve
           "type": "single",
           "question": "Exact extracted question text with LaTeX",
           "imagePlaceholder": null,
+          "diagram_bbox": {
+            "page_number": 1,
+            "box_2d": [ymin, xmin, ymax, xmax]
+          },
           "options": {
             "A": "Option text only - no numbering prefix",
             "B": "Option text only",
@@ -368,6 +383,7 @@ Otherwise, set "attempt_control" to {"enabled": false}.
       "type": "single",
       "question": "Exact extracted question text with LaTeX",
       "imagePlaceholder": null,
+      "diagram_bbox": null,
       "options": {
         "A": "Option text only - no numbering prefix",
         "B": "Option text only",
@@ -491,11 +507,17 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
 7. **All questions must have exactly one correct answer** specified.
 8. **Create plausible distractors** — wrong options should be reasonable, not obviously wrong.
 
-9. **IMAGE INSERTION RULE**:
+9. **IMAGE INSERTION RULE & COORDINATES**:
    - If a generated question requires a diagram/structure from the page, map it to the corresponding "image_X" identifier (which matches the appended reference diagram images).
    - If a diagram is a large standalone figure for a question, set "imagePlaceholder": "image_X".
    - If a diagram/chemical structure is located inline within the question text or option text, insert a markdown image tag: ![image](image_X) at the exact place inside the text.
    - Exclude page headers, footers, and logos. For deeply inline insertions or option diagrams, use ![image](image_X).
+   - **CRITICAL**: If the generated question is based on or refers to any visual diagram, graph, table, or chemical structure from the page, you MUST identify its exact 2D bounding box on the source page. Include a "diagram_bbox" object in the question JSON in the format:
+     "diagram_bbox": {
+       "page_number": <1-based page number where the diagram is located>,
+       "box_2d": [ymin, xmin, ymax, xmax]
+     }
+     where coordinates are normalized integers (0-1000) relative to page dimensions. If no diagram/figure is used for the question, set "diagram_bbox": null.
 
 ## CROSS-PAGE HANDLING:
 - Questions may span multiple pages - combine them into complete questions
@@ -527,6 +549,7 @@ You MUST structure the output using the "sections" field instead of a top-level 
           "id": 1,
           "type": "single",
           "question": "Original question text here",
+          "diagram_bbox": null,
           "options": { "A": "Option A", "B": "Option B", "C": "Option C", "D": "Option D" },
           "correctAnswer": "C",
           "marks": 4,
@@ -548,6 +571,7 @@ You MUST structure the output using the "sections" field instead of a top-level 
       "id": 1,
       "type": "single",
       "question": "Original question text here",
+      "diagram_bbox": null,
       "options": { "A": "Option A", "B": "Option B", "C": "Option C", "D": "Option D" },
       "correctAnswer": "C",
       "marks": 1,
@@ -583,6 +607,142 @@ def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
     doc.close()
     logger.info(f"Rendered {len(page_images)} pages as images at {dpi} DPI")
     return page_images
+
+
+def build_page_sources(file_data: List[Dict]) -> List[Dict]:
+    """Build list of page sources to map flat page number to source PDF/image."""
+    page_sources = []
+    for file_info in file_data:
+        filename = file_info["filename"]
+        content = file_info["content"]
+        if is_pdf(content):
+            try:
+                import fitz
+                doc = fitz.open(stream=content, filetype="pdf")
+                num_pages = len(doc)
+                doc.close()
+                for i in range(num_pages):
+                    page_sources.append({
+                        "type": "pdf",
+                        "content": content,
+                        "page_idx": i
+                    })
+            except Exception as e:
+                logger.error(f"Error reading PDF page count for {filename}: {e}")
+        else:
+            page_sources.append({
+                "type": "image",
+                "content": content
+            })
+    return page_sources
+
+
+async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict]) -> None:
+    """
+    Looks for "diagram_bbox" inside each question. If found, crops the diagram region 
+    from the corresponding page image, uploads it to Cloudinary, and sets it as the 
+    question's "image" field.
+    """
+    from PIL import Image
+    import io
+    import asyncio
+    import fitz
+    
+    if not page_sources:
+        return
+
+    crop_tasks = []
+
+    async def _crop_and_upload(vq: Dict):
+        bbox_info = vq.get("diagram_bbox")
+        if not bbox_info or not isinstance(bbox_info, dict):
+            return
+            
+        page_num = bbox_info.get("page_number")
+        box_2d = bbox_info.get("box_2d")
+        
+        if not page_num or not box_2d or len(box_2d) != 4:
+            return
+            
+        try:
+            page_idx = int(page_num) - 1
+            if page_idx < 0 or page_idx >= len(page_sources):
+                logger.warning(f"Invalid page_number {page_num} in diagram_bbox. Total pages: {len(page_sources)}")
+                return
+                
+            source = page_sources[page_idx]
+            
+            # Render page or load image
+            if source["type"] == "pdf":
+                # Render page at 300 DPI for high resolution cropping
+                pdf_bytes = source["content"]
+                page_in_pdf = source["page_idx"]
+                
+                def _render_page():
+                    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                    page = doc[page_in_pdf]
+                    mat = fitz.Matrix(300/72, 300/72) # 300 DPI
+                    pix = page.get_pixmap(matrix=mat, alpha=False)
+                    img_bytes = pix.tobytes("png")
+                    doc.close()
+                    return img_bytes
+                    
+                page_img_bytes = await asyncio.to_thread(_render_page)
+            else:
+                page_img_bytes = convert_image_to_bytes(source["content"])
+            
+            # Crop using Pillow
+            img = Image.open(io.BytesIO(page_img_bytes))
+            width, height = img.size
+            
+            # BBox coordinates [ymin, xmin, ymax, xmax] (0-1000 scale)
+            ymin, xmin, ymax, xmax = box_2d
+            
+            ymin = max(0, min(1000, int(ymin)))
+            xmin = max(0, min(1000, int(xmin)))
+            ymax = max(0, min(1000, int(ymax)))
+            xmax = max(0, min(1000, int(xmax)))
+            
+            if ymin >= ymax or xmin >= xmax:
+                logger.warning(f"Invalid bbox dimensions for question {vq.get('id')}: {box_2d}")
+                return
+                
+            # Convert to actual pixels
+            left = int(xmin * width / 1000)
+            top = int(ymin * height / 1000)
+            right = int(xmax * width / 1000)
+            bottom = int(ymax * height / 1000)
+            
+            # Add a small padding (15 pixels)
+            padding = 15
+            left = max(0, left - padding)
+            top = max(0, top - padding)
+            right = min(width, right + padding)
+            bottom = min(height, bottom + padding)
+            
+            if (right - left) < 10 or (bottom - top) < 10:
+                logger.warning(f"Cropped region too small: {right - left}x{bottom - top}")
+                return
+                
+            cropped_img = img.crop((left, top, right, bottom))
+            
+            out_io = io.BytesIO()
+            cropped_img.save(out_io, format="PNG")
+            cropped_bytes = out_io.getvalue()
+            
+            # Upload to Cloudinary
+            cloudinary_url = await upload_image_to_cloudinary(cropped_bytes)
+            if cloudinary_url:
+                vq["image"] = cloudinary_url
+                logger.info(f"Successfully cropped diagram for Q{vq.get('id')} and uploaded to Cloudinary: {cloudinary_url}")
+        except Exception as e:
+            logger.error(f"Failed to crop diagram for question {vq.get('id')}: {e}")
+
+    for vq in questions:
+        crop_tasks.append(_crop_and_upload(vq))
+        
+    if crop_tasks:
+        await asyncio.gather(*crop_tasks)
 
 
 def wrap_bare_latex(text: str) -> str:
@@ -1101,6 +1261,9 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
 
     logger.info(f"Starting Vision Pipeline in '{mode}' mode with {len(file_data)} file(s)...")
 
+    page_sources = build_page_sources(file_data)
+
+
     # Step 1: Process answer key if provided
     answer_key_mappings = []
     if answer_key:
@@ -1183,6 +1346,8 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             
             batch_result = _parse_response(raw_text, all_embedded_images)
             unique_questions = batch_result.get("questions", [])
+            
+            await process_diagram_bboxes(unique_questions, page_sources)
             
             if not unique_questions:
                 raise ValueError("No questions could be extracted in single batch mode.")
@@ -1308,6 +1473,8 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
     logger.info("Merging cross-page questions...")
     unique_questions = merge_cross_page_questions(all_questions)
     logger.info(f"Total questions after merging: {len(unique_questions)}")
+
+    await process_diagram_bboxes(unique_questions, page_sources)
 
     # Step 5: Match answer key with questions if provided (PRIORITY)
     if answer_key_mappings:
@@ -1785,6 +1952,7 @@ async def process_files_stream(
         raise ValueError("Vertex AI client not initialized")
     
     logger.info(f"🚀 Starting ULTRA-FAST stream processing with {len(file_data)} file(s)...")
+    page_sources = build_page_sources(file_data)
     
     # Step 1: Notify upload start
     if progress_callback:
@@ -2016,6 +2184,8 @@ async def process_files_stream(
             batch_result = _parse_response(raw_text, all_embedded_images)
             unique_questions = batch_result.get("questions", [])
             
+            await process_diagram_bboxes(unique_questions, page_sources)
+            
             if not unique_questions:
                 raise ValueError("No questions could be extracted in single batch streaming mode.")
                 
@@ -2224,6 +2394,8 @@ async def process_files_stream(
     
     # Merge cross-page questions
     unique_questions = merge_cross_page_questions(all_questions)
+    
+    await process_diagram_bboxes(unique_questions, page_sources)
     
     # ── STREAM POST-PROCESSING (same as _parse_response) ─────────────────
     # IMPORTANT: Only match single-digit 1-4 numbering, NOT multi-digit content like "64.97"

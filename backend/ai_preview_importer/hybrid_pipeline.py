@@ -42,6 +42,8 @@ from ai_preview_importer.pdf_vision_pipeline import (
     _call_gemini_with_retry,
     _match_answer_key,
     wrap_bare_latex,
+    build_page_sources,
+    process_diagram_bboxes,
 )
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
@@ -546,6 +548,9 @@ async def process_files_hybrid_stream(
                     ph = match.group(1)
             if ph and ph in placeholder_map:
                 vq["image"] = placeholder_map[ph]
+
+    page_sources = build_page_sources(file_data)
+    await process_diagram_bboxes(unique_questions, page_sources)
 
     try:
         unique_questions.sort(key=lambda x: int(x.get("id", 0)))
