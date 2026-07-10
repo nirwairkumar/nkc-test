@@ -585,6 +585,23 @@ def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
     return page_images
 
 
+def wrap_bare_latex(text: str) -> str:
+    """
+    Ensures that bare LaTeX math expressions in options/choices are wrapped in $...$.
+    Scans for LaTeX commands or sub/superscripts and wraps the entire string if no '$' is present.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return text
+    if '$' in text:
+        return text
+    cmds = re.findall(r'\\([a-zA-Z]+)', text)
+    has_latex_cmd = any(cmd not in ('n', 't', 'r') for cmd in cmds)
+    has_sub_super = bool(re.search(r'[\^_]', text))
+    if has_latex_cmd or has_sub_super:
+        return f"${text.strip()}$"
+    return text
+
+
 def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
     """
     Extract ALL embedded images and vector diagrams from the PDF.
@@ -625,6 +642,13 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                     # Logo heuristic: top 12% or bottom 12% of page and not very tall
                     if (r.y1 < page_height * 0.12 or r.y0 > page_height * 0.88) and (r.y1 - r.y0) < 80:
                         logger.info(f"Skipping potential logo raster image on page {page_num + 1} at {bbox}")
+                        continue
+                    
+                    # Exclude full-page background scanned images:
+                    page_area = page.rect.width * page.rect.height
+                    img_area = r.width * r.height
+                    if img_area > page_area * 0.65:
+                        logger.info(f"Skipping full-page background raster image on page {page_num + 1} at {bbox} (area ratio: {img_area/page_area:.2f})")
                         continue
                 
                 img_hash = hashlib.md5(image_bytes).hexdigest()
@@ -691,6 +715,13 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                         
                     page_height = page.rect.height
                     if (crop_rect.y1 < page_height * 0.12 or crop_rect.y0 > page_height * 0.88) and crop_rect.height < 70:
+                        continue
+                    
+                    # Exclude too large cropped drawings (whole-page border/diagrams):
+                    page_area = page.rect.width * page.rect.height
+                    crop_area = crop_rect.width * crop_rect.height
+                    if crop_area > page_area * 0.65:
+                        logger.info(f"Skipping too large cropped drawing on page {page_num + 1} at {crop_rect} (area ratio: {crop_area/page_area:.2f})")
                         continue
                     
                     # Crop the drawing region
@@ -1624,9 +1655,9 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         if isinstance(options, dict):
             for k, v in options.items():
                 if isinstance(v, str):
-                    options[k] = replace_placeholders(v)
+                    options[k] = wrap_bare_latex(replace_placeholders(v))
                 elif isinstance(v, dict) and "text" in v:
-                    v["text"] = replace_placeholders(v["text"])
+                    v["text"] = wrap_bare_latex(replace_placeholders(v["text"]))
 
         sec_name = q.get("section_name")
         sec_id = q.get("section_id")
@@ -2217,6 +2248,7 @@ async def process_files_stream(
                 if isinstance(v, str):
                     v = citation_re.sub('', v).strip()
                     v = option_prefix_re.sub('', v).strip()
+                    v = wrap_bare_latex(v)
                     vq["options"][k] = v
         
         # Resolve imagePlaceholder → Cloudinary URL

@@ -41,6 +41,7 @@ from ai_preview_importer.pdf_vision_pipeline import (
     _parse_response,
     _call_gemini_with_retry,
     _match_answer_key,
+    wrap_bare_latex,
 )
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
@@ -535,6 +536,7 @@ async def process_files_hybrid_stream(
                 if isinstance(v, str):
                     v = citation_re.sub('', v).strip()
                     v = option_prefix_re.sub('', v).strip()
+                    v = wrap_bare_latex(v)
                     vq["options"][k] = v
         if not vq.get("image"):
             ph = vq.get("imagePlaceholder", "")
