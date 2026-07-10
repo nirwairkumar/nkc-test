@@ -33,7 +33,8 @@ async def upload_image_to_cloudinary(image_bytes: bytes) -> Optional[str]:
         async with aiohttp.ClientSession() as session:
             payload = {
                 "file": data_uri,
-                "upload_preset": UPLOAD_PRESET
+                "upload_preset": UPLOAD_PRESET,
+                "filename_override": "diagram"
             }
             
             async with session.post(UPLOAD_URL, data=payload) as response:
