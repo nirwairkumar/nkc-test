@@ -778,6 +778,12 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
     for page_num in range(len(doc)):
         page = doc[page_num]
         
+        # Skip scanned/image-only pages to avoid extracting the full-page background scanned image
+        page_text = page.get_text("text").strip()
+        if len(page_text) < 50:
+            logger.info(f"Skipping embedded image extraction for page {page_num + 1} (scanned/image-only page)")
+            continue
+        
         # 1. Raster images
         image_list = page.get_images(full=True)
         for img_info in image_list:
@@ -810,6 +816,13 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                     if img_area > page_area * 0.65:
                         logger.info(f"Skipping full-page background raster image on page {page_num + 1} at {bbox} (area ratio: {img_area/page_area:.2f})")
                         continue
+                else:
+                    # Fallback check if rects is empty:
+                    # Compare image pixel area. A typical full-page image at 150+ DPI has > 1M pixels
+                    # If page has text, we only filter if it is extremely large compared to normal embedded diagrams.
+                    if w > 800 and h > 1000 and (w * h) > 1000000:
+                        logger.info(f"Skipping potential full-page background raster image (no rects) on page {page_num + 1} ({w}x{h})")
+                        continue
                 
                 img_hash = hashlib.md5(image_bytes).hexdigest()
                 if img_hash in seen_hashes:
@@ -827,6 +840,7 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                 })
             except Exception as e:
                 logger.warning(f"Failed to extract raster image: {e}")
+
                 
         # 2. Vector Drawings grouping
         try:
@@ -1835,6 +1849,7 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             "type": q_type,
             "question": question_text,
             "image": q_image,
+            "diagram_bbox": q.get("diagram_bbox"),
             "options": options,
             "optionImages": q.get("optionImages", {k: None for k in options.keys()} if options else {}),
             "correctAnswer": q.get("correctAnswer"),
