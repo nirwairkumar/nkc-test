@@ -2391,13 +2391,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 {questions.map((q, idx) => (
                                     <Card key={idx} className="mb-4 hover:shadow-md transition-shadow">
                                         <CardContent className="p-4 sm:p-6 space-y-4">
-                                            {/* Question Diagram if present */}
-                                            {q.image && (
-                                                <div className="mb-4 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-md border text-center">
-                                                    <span className="text-xs text-muted-foreground block mb-2">Diagram Extracted</span>
-                                                    <img src={q.image} alt="Question Diagram" className="max-h-48 mx-auto object-contain rounded" />
-                                                </div>
-                                            )}
 
                                             <div className="flex gap-4">
                                                 <div className="font-bold text-lg min-w-[30px] pt-1 text-primary">{q.id}.</div>
