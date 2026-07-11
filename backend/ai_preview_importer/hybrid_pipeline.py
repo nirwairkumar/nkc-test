@@ -346,7 +346,7 @@ async def stream_gemini_and_parse(
 
     # Final full parse for metadata (title, description, sections)
     try:
-        full_result = _parse_response(token_buffer, embedded_images)
+        full_result = await _parse_response(token_buffer, embedded_images)
     except Exception as e:
         logger.warning(f"Full parse failed ({e}), using streamed questions")
         full_result = {
@@ -471,28 +471,6 @@ async def process_files_hybrid_stream(
             doc.close()
 
         logger.info(f"Rendered {len(image_only_page_images)} pages at {render_dpi} DPI")
-
-    # Step 2.5: Upload embedded images to Cloudinary
-    if all_embedded_images:
-        if progress_callback:
-            await progress_callback({
-                'stage': 'processing',
-                'percent': 35,
-                'message': f'Uploading {len(all_embedded_images)} diagrams...',
-            })
-
-        async def _upload(img_info):
-            try:
-                raw_bytes = base64.b64decode(img_info["data"])
-                url = await upload_image_to_cloudinary(raw_bytes)
-                if url:
-                    img_info["cloudinary_url"] = url
-                    img_info["base64_uri"] = url
-            except Exception as e:
-                logger.error(f"Diagram upload failed: {e}")
-
-        await asyncio.gather(*[_upload(img) for img in all_embedded_images])
-
     # Step 3: Build content and call Gemini
     prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
     result_data = None
@@ -864,7 +842,7 @@ async def process_files_hybrid_stream(
             except Exception as e:
                 logger.error(f"Vision streaming failed: {e}. Non-streaming fallback...")
                 raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
-                result_data = _parse_response(raw_text, all_embedded_images)
+                result_data = await _parse_response(raw_text, all_embedded_images)
         else:
             # Chunked/parallel mode
             MAX_PAGES_PER_BATCH = 5
@@ -1017,6 +995,30 @@ async def process_files_hybrid_stream(
 
     option_prefix_re = re.compile(r'^\s*(?:[1-4]\)\s+|\([1-4]\)\s+|\([a-dA-D]\)\s+|[A-Da-d]\.\s+)')
     citation_re = re.compile(r'\[cite:\s*[^\]]*\]')
+
+    # Identify referenced image placeholders from the extracted questions
+    referenced_placeholders = set()
+    for vq in unique_questions:
+        ph = vq.get("imagePlaceholder", "")
+        if ph and isinstance(ph, str):
+            match = re.search(r'(image_\d+)', ph)
+            if match:
+                referenced_placeholders.add(match.group(1))
+
+    # Upload ONLY the referenced embedded images to Cloudinary
+    referenced_images = [img for img in all_embedded_images if img.get("id") in referenced_placeholders]
+    if referenced_images:
+        logger.info(f"Uploading {len(referenced_images)} referenced embedded images to Cloudinary...")
+        async def _upload(img_info):
+            try:
+                raw_bytes = base64.b64decode(img_info["data"])
+                url = await upload_image_to_cloudinary(raw_bytes)
+                if url:
+                    img_info["cloudinary_url"] = url
+                    img_info["base64_uri"] = url
+            except Exception as e:
+                logger.error(f"Referenced diagram upload failed: {e}")
+        await asyncio.gather(*[_upload(img) for img in referenced_images])
 
     placeholder_map = {}
     for img in all_embedded_images:

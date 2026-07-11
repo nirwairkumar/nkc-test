@@ -595,7 +595,7 @@ You MUST structure the output using the "sections" field instead of a top-level 
 # ---------------------------------------------------------------------------
 
 def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
-    """Render each PDF page as a PNG image at the specified DPI."""
+    """Render each PDF page as a JPEG image at the specified DPI."""
     import fitz  # lazy-loaded: only used by OCR pipeline
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     page_images = []
@@ -607,7 +607,7 @@ def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
         page = doc[page_num]
         pix = page.get_pixmap(matrix=mat, alpha=False)
 
-        img_bytes = pix.tobytes("png")
+        img_bytes = pix.tobytes("jpg")
         page_images.append(img_bytes)
         logger.debug(f"Rendered page {page_num + 1}: {pix.width}x{pix.height} ({len(img_bytes)} bytes)")
 
@@ -1340,31 +1340,6 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         raise ValueError("No pages/images could be extracted from the provided files")
 
     logger.info(f"Total pages/images to process: {len(all_page_images)}")
-    
-    # 2.5: Upload all embedded images to Cloudinary in parallel
-    logger.info(f"Uploading {len(all_embedded_images)} extracted diagrams to Cloudinary...")
-    upload_tasks = []
-    
-    async def upload_and_update(img_info):
-        # We need the raw data for upload
-        import base64
-        try:
-            # Decode the base64 we created earlier
-            raw_bytes = base64.b64decode(img_info["data"])
-            cloudinary_url = await upload_image_to_cloudinary(raw_bytes)
-            if cloudinary_url:
-                img_info["cloudinary_url"] = cloudinary_url
-                # Switch the base64_uri to the much lighter Cloudinary URL
-                img_info["base64_uri"] = cloudinary_url
-        except Exception as e:
-            logger.error(f"Failed to upload diagram on page {img_info['page']} to Cloudinary: {e}")
-            
-    # Launch all uploads concurrently
-    upload_tasks = [upload_and_update(img) for img in all_embedded_images]
-    if upload_tasks:
-        await asyncio.gather(*upload_tasks)
-        logger.info("All diagram uploads completed.")
-
     # Step 3: Process pages (use single batch for smaller files, chunked for larger ones)
     SINGLE_BATCH_PAGE_LIMIT = 15
     prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
@@ -1376,7 +1351,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         for idx, page_img in enumerate(all_page_images):
             content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
             content_parts.append(
-                types.Part.from_bytes(data=page_img, mime_type="image/png")
+                types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
             )
         append_extracted_images_to_content(content_parts, all_embedded_images)
             
@@ -1384,7 +1359,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
             logger.info(f"Single batch response received. Length: {len(raw_text)}")
             
-            batch_result = _parse_response(raw_text, all_embedded_images)
+            batch_result = await _parse_response(raw_text, all_embedded_images)
             unique_questions = batch_result.get("questions", [])
             
             await process_diagram_bboxes(unique_questions, page_sources)
@@ -1471,7 +1446,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             actual_page_num = batch_start_page + i + 1
             content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
             content_parts.append(
-                types.Part.from_bytes(data=page_img, mime_type="image/png")
+                types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
             )
 
         batch_embedded = [img for img in all_embedded_images if batch_start_page + 1 <= img["page"] <= batch_start_page + actual_batch_size]
@@ -1484,7 +1459,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             
             logger.info(f"Batch {batch_num} response received. Length: {len(raw_text)}")
             
-            batch_result = _parse_response(raw_text, all_embedded_images)
+            batch_result = await _parse_response(raw_text, all_embedded_images)
             questions = batch_result.get("questions", [])
             
             if batch_num == 1:
@@ -1738,7 +1713,7 @@ def _extract_questions_regex(text: str) -> List[Dict]:
     return questions
 
 
-def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
+async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
     """Parse Gemini response into our strict Question format"""
     
     # DEBUG: dump raw response to analyze
@@ -1808,6 +1783,40 @@ def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         logger.warning(f"AI returned 0 questions. Raw snippet: {clean[:500]}")
         # Don't raise error, just return empty so batch can fail gracefully without breaking pipeline
         return {"questions": []}
+
+    # Identify referenced image placeholders from the parsed questions
+    referenced_placeholders = set()
+    for q in questions:
+        if not isinstance(q, dict):
+            continue
+        
+        # Check in question text
+        question_text = q.get("question") or q.get("questionText") or ""
+        for match in re.findall(r'(image_\d+)', question_text):
+            referenced_placeholders.add(match)
+            
+        # Check in imagePlaceholder field
+        image_placeholder = q.get("imagePlaceholder")
+        if image_placeholder and isinstance(image_placeholder, str):
+            match = re.search(r'(image_\d+)', image_placeholder)
+            if match:
+                referenced_placeholders.add(match.group(1))
+
+    # Upload ONLY the referenced embedded images to Cloudinary
+    referenced_images = [img for img in embedded_images if img.get("id") in referenced_placeholders]
+    if referenced_images:
+        logger.info(f"Uploading {len(referenced_images)} referenced embedded images to Cloudinary...")
+        async def _upload(img_info):
+            try:
+                import base64
+                raw_bytes = base64.b64decode(img_info["data"])
+                url = await upload_image_to_cloudinary(raw_bytes)
+                if url:
+                    img_info["cloudinary_url"] = url
+                    img_info["base64_uri"] = url
+            except Exception as e:
+                logger.error(f"Referenced diagram upload failed: {e}")
+        await asyncio.gather(*[_upload(img) for img in referenced_images])
 
     # Build image lookup for placeholder replacement
     placeholder_map = {}
@@ -2203,7 +2212,7 @@ async def process_files_stream(
         for idx, page_img in enumerate(all_page_images):
             content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
             content_parts.append(
-                types.Part.from_bytes(data=page_img, mime_type="image/png")
+                types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
             )
         append_extracted_images_to_content(content_parts, all_embedded_images)
             
@@ -2222,7 +2231,7 @@ async def process_files_stream(
                     }
                 })
                 
-            batch_result = _parse_response(raw_text, all_embedded_images)
+            batch_result = await _parse_response(raw_text, all_embedded_images)
             unique_questions = batch_result.get("questions", [])
             
             await process_diagram_bboxes(unique_questions, page_sources)
@@ -2606,7 +2615,7 @@ async def _process_single_batch_stream(
         actual_page_num = start_page + i + 1
         content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
         content_parts.append(
-            types.Part.from_bytes(data=page_img, mime_type="image/png")
+            types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
         )
         
     batch_embedded = batch_data.get('batch_embedded', [])
@@ -2616,7 +2625,7 @@ async def _process_single_batch_stream(
     raw_text = await _call_gemini_with_retry(content_parts, batch_num)
     
     # Parse response
-    batch_result = _parse_response(raw_text, embedded_images)
+    batch_result = await _parse_response(raw_text, embedded_images)
     questions = batch_result.get("questions", [])
     
     # Stream questions immediately if callback provided
