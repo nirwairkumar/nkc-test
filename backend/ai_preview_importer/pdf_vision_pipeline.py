@@ -797,7 +797,11 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
         
         # 1. Raster images
         image_list = page.get_images(full=True)
+        page_raster_count = 0
         for img_info in image_list:
+            if page_raster_count >= 5:
+                logger.info(f"Reached max raster images limit (5) for page {page_num + 1}, skipping remaining images")
+                break
             xref = img_info[0]
             try:
                 base_image = doc.extract_image(xref)
@@ -849,6 +853,7 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                     "bbox": bbox,
                     "base64_uri": f"data:image/{ext};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
                 })
+                page_raster_count += 1
             except Exception as e:
                 logger.warning(f"Failed to extract raster image: {e}")
 
@@ -857,6 +862,10 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
         try:
             drawings = page.get_drawings()
             if drawings:
+                if len(drawings) > 1000:
+                    logger.info(f"Page {page_num + 1} has too many vector drawings ({len(drawings)}), skipping vector crop to prevent slowdown")
+                    drawings = []
+                
                 rects_to_crop = []
                 for draw in drawings:
                     r = draw["rect"]
@@ -886,7 +895,12 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                         merged_rects.append(r)
                 
                 # Render/crop each merged rect
+                page_vector_count = 0
                 for r in merged_rects:
+                    if page_vector_count >= 5:
+                        logger.info(f"Reached max vector crops limit (5) for page {page_num + 1}, skipping remaining drawings")
+                        break
+                        
                     margin = 5
                     crop_rect = fitz.Rect(
                         max(0, r.x0 - margin),
@@ -927,6 +941,7 @@ def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
                         "bbox": (crop_rect.x0, crop_rect.y0, crop_rect.x1, crop_rect.y1),
                         "base64_uri": f"data:image/png;base64,{base64.b64encode(img_bytes).decode('utf-8')}"
                     })
+                    page_vector_count += 1
         except Exception as e:
             logger.warning(f"Failed to extract vector drawings on page {page_num + 1}: {e}")
 
