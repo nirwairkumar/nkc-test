@@ -187,6 +187,9 @@ IMAGE/DIAGRAM QUESTION HANDLING (CRITICAL - DO NOT SKIP):
    - The coordinates in "box_2d" MUST be normalized integers from 0 to 1000 relative to the height and width of that page (e.g. top-left corner is [0, 0] and bottom-right corner is [1000, 1000]).
    - If a question has no diagrams or tables, set "diagram_bbox": null.
    - If a question has multiple diagrams, return the bounding box that encompasses all of them on that page.
+6. CRITICAL - DO NOT EXTRACT SOLUTION/EXPLANATION DIAGRAMS:
+   - If a diagram is located within the "Solution", "Explanation", or "Hint" section of a question (e.g., under headings/labels like "Sol.", "Solution", "Hint", "Explanation", "Answer (1)"), do NOT extract it, do NOT assign it an imagePlaceholder, and set "diagram_bbox": null (unless the question stem itself also has a diagram).
+   - Only extract diagrams that are part of the question stem or option choices.
 
 --------------------------------------------------
 
