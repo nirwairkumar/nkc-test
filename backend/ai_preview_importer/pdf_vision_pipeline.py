@@ -190,6 +190,10 @@ IMAGE/DIAGRAM QUESTION HANDLING (CRITICAL - DO NOT SKIP):
 6. CRITICAL - DO NOT EXTRACT SOLUTION/EXPLANATION DIAGRAMS:
    - If a diagram is located within the "Solution", "Explanation", or "Hint" section of a question (e.g., under headings/labels like "Sol.", "Solution", "Hint", "Explanation", "Answer (1)"), do NOT extract it, do NOT assign it an imagePlaceholder, and set "diagram_bbox": null (unless the question stem itself also has a diagram).
    - Only extract diagrams that are part of the question stem or option choices.
+7. ACCURATE DIAGRAM-TO-QUESTION MAPPING:
+   - Make sure the "page_number" in "diagram_bbox" is EXACTLY the page where the question stem/options are printed.
+   - The diagram for a question is physically adjacent (usually directly below or beside the question text and above options).
+   - NEVER map a diagram from a different page or from a different question. Ensure the ymin/ymax bounds contain only the diagram belonging to the question.
 
 --------------------------------------------------
 
@@ -657,6 +661,10 @@ async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict]
     crop_tasks = []
 
     async def _crop_and_upload(vq: Dict):
+        # If the question already has a valid image resolved from an embedded placeholder, do NOT crop/overwrite it
+        if vq.get("image"):
+            return
+            
         bbox_info = vq.get("diagram_bbox")
         if not bbox_info or not isinstance(bbox_info, dict):
             return
