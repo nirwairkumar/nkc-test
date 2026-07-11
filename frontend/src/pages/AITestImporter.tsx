@@ -180,6 +180,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         data?: any;
     } | null>(null);
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
+    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('parallel');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // AI Generation History State
@@ -749,7 +750,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
             // Use ULTRA-FAST streaming endpoint
-            const response = await fetch(`${baseUrl}/ai/parse-stream?mode=${selectedMode}`, {
+            const response = await fetch(`${baseUrl}/ai/parse-stream?mode=${selectedMode}&algorithm=${algorithm}`, {
                 method: 'POST',
                 body: formData,
                 signal: abortCtrl.signal,
@@ -1733,6 +1734,65 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 </span>
                             </div>
                             <div className="flex items-center gap-1.5">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 text-xs gap-1.5 font-semibold text-slate-650 dark:text-slate-305 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        >
+                                            {algorithm === 'parallel' ? (
+                                                <>
+                                                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                                                    <span>Fast Mode</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                                                    <span>High Accuracy</span>
+                                                </>
+                                            )}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-64 p-1.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                                        <DropdownMenuItem
+                                            onClick={() => setAlgorithm('parallel')}
+                                            className={`flex flex-col items-start gap-1 p-2 rounded-lg cursor-pointer transition-colors ${
+                                                algorithm === 'parallel' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-slate-900'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between w-full font-bold text-xs">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                                                    <span>Fast Mode (Parallel)</span>
+                                                </div>
+                                                {algorithm === 'parallel' && <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal font-normal">
+                                                Splits pages into parallel chunks. Extremely fast (~15s) and streams questions instantly.
+                                            </p>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() => setAlgorithm('stateful')}
+                                            className={`flex flex-col items-start gap-1 p-2 rounded-lg cursor-pointer transition-colors ${
+                                                algorithm === 'stateful' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-300' : 'hover:bg-slate-50 dark:hover:bg-slate-900'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between w-full font-bold text-xs">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                                                    <span>High Accuracy (Stateful)</span>
+                                                </div>
+                                                {algorithm === 'stateful' && <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal font-normal">
+                                                Page-by-page stateful chat. Slower, but preserves sequence and extracts multi-page questions seamlessly.
+                                            </p>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
                                 <Button
                                     variant="ghost"
                                     size="sm"

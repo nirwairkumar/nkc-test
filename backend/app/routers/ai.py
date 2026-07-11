@@ -408,7 +408,8 @@ import asyncio
 async def parse_document_stream(
     files: List[UploadFile] = File(..., description="Upload PDF or image files"),
     answer_key: Optional[UploadFile] = File(None, description="Optional answer key file (PDF or image)"),
-    mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones")
+    mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones"),
+    algorithm: str = Query("parallel", pattern="^(parallel|stateful)$", description="Parsing pipeline: 'parallel' for fast chunked mode, 'stateful' for high-accuracy single stream")
 ):
     """
     ULTRA-FAST streaming document parsing with real-time progress updates.
@@ -502,7 +503,8 @@ async def parse_document_stream(
                     answer_key=answer_key_data,
                     progress_callback=progress_callback,
                     question_callback=question_callback,
-                    max_concurrent=15
+                    max_concurrent=15,
+                    algorithm=algorithm
                 )
                 
                 final_result = result

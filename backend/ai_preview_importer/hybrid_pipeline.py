@@ -376,6 +376,7 @@ async def process_files_hybrid_stream(
     progress_callback: Optional[Callable] = None,
     question_callback: Optional[Callable] = None,
     max_concurrent: int = 15,
+    algorithm: str = "parallel",
 ) -> Dict:
     """
     HYBRID OCR + Vision streaming pipeline.
@@ -496,7 +497,159 @@ async def process_files_hybrid_stream(
     prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
     result_data = None
 
-    if has_pdfs and text_rich_count > 0:
+    if algorithm == "stateful":
+        # --- STATEFUL SEQUENTIAL CHAT PIPELINE ---
+        logger.info("Using STATEFUL sequential chat pipeline")
+        
+        is_hybrid = (has_pdfs and text_rich_count > 0)
+        CHUNK_SIZE = 8 if is_hybrid else 5
+        
+        if is_hybrid:
+            total_pages = total_pdf_pages
+        else:
+            all_page_images = []
+            if has_pdfs:
+                if progress_callback:
+                    await progress_callback({
+                        'stage': 'processing',
+                        'percent': 40,
+                        'message': f'Rendering all {total_pdf_pages} pages for stateful vision...',
+                    })
+                for pdf_bytes in pdf_bytes_list:
+                    all_page_images.extend(render_pages_as_images(pdf_bytes, dpi=render_dpi))
+            for img_file in image_files:
+                all_page_images.append(convert_image_to_bytes(img_file['content']))
+            total_pages = len(all_page_images)
+            
+        if total_pages == 0:
+            raise ValueError("No pages could be processed")
+            
+        chunks = []
+        start_idx = 0
+        while start_idx < total_pages:
+            end_idx = min(start_idx + CHUNK_SIZE, total_pages)
+            chunks.append((start_idx, end_idx))
+            start_idx = end_idx
+            
+        total_chunks = len(chunks)
+        logger.info(f"Created {total_chunks} sequential chat turns for stateful processing")
+        
+        if progress_callback:
+            await progress_callback({
+                'stage': 'processing',
+                'percent': 40,
+                'message': f'Starting stateful sequential extraction ({total_pages} pages in {total_chunks} steps)...',
+                'data': {
+                    'pipeline': 'stateful',
+                    'total_pages': total_pages,
+                    'total_chunks': total_chunks
+                }
+            })
+            
+        chat_history = []
+        all_questions = []
+        first_title = None
+        first_desc = None
+        
+        for c_idx, (c_start, c_end) in enumerate(chunks):
+            step_num = c_idx + 1
+            
+            content_parts = []
+            if c_idx == 0:
+                content_parts.append(prompt)
+                content_parts.append(f"\n--- START OF DOCUMENT. Extract questions from page {c_start + 1} to {c_end} sequentially. ---\n")
+            else:
+                msg = (
+                    f"\n--- CONTINUATION OF DOCUMENT. Extract questions from page {c_start + 1} to {c_end} sequentially. ---\n"
+                    "IMPORTANT RULES:\n"
+                    "1. Continue extracting the next questions sequentially.\n"
+                    "2. Resume numbering question IDs exactly from where you left off in the previous turn (do NOT start from 1 again).\n"
+                    "3. Do NOT repeat or duplicate any questions that you have already generated/extracted in previous turns.\n"
+                    "4. If a question was split across the page boundary of the previous turn, merge and complete it here."
+                )
+                content_parts.append(msg)
+                
+            if is_hybrid:
+                chunk_infos = all_page_infos[c_start:c_end]
+                content_parts.extend(build_hybrid_content_parts(chunk_infos, image_only_page_images, ""))
+                chunk_embedded = [img for img in all_embedded_images if c_start + 1 <= img["page"] <= c_end]
+            else:
+                chunk_images = all_page_images[c_start:c_end]
+                for i, page_img in enumerate(chunk_images):
+                    actual_page_num = c_start + i + 1
+                    content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
+                    content_parts.append(types.Part.from_bytes(data=page_img, mime_type="image/jpeg"))
+                chunk_embedded = [img for img in all_embedded_images if c_start + 1 <= img["page"] <= c_end]
+                
+            append_extracted_images_to_content(content_parts, chunk_embedded)
+            
+            # Map strings to Part.from_text and build types.Content
+            typed_parts = []
+            for part in content_parts:
+                if isinstance(part, str):
+                    typed_parts.append(types.Part.from_text(text=part))
+                else:
+                    typed_parts.append(part)
+                    
+            current_user_content = types.Content(role="user", parts=typed_parts)
+            request_contents = chat_history + [current_user_content]
+            
+            try:
+                if progress_callback:
+                    await progress_callback({
+                        'stage': 'processing',
+                        'percent': 40 + int((c_idx / total_chunks) * 50),
+                        'message': f'Processing step {step_num}/{total_chunks} (pages {c_start + 1} to {c_end})...',
+                        'data': {
+                            'step': step_num,
+                            'total_steps': total_chunks,
+                            'questions_found': len(all_questions)
+                        }
+                    })
+                    
+                chunk_questions_found = []
+                async def local_question_callback(q_event):
+                    if q_event.get("type") == "question" and q_event.get("question"):
+                        q = q_event["question"]
+                        chunk_questions_found.append(q)
+                        if question_callback:
+                            await question_callback({"type": "question", "question": q, "batch": step_num})
+                            
+                result = await stream_gemini_and_parse(
+                    request_contents, chunk_embedded,
+                    progress_callback=None,
+                    question_callback=local_question_callback
+                )
+                
+                batch_questions = result.get("questions") or chunk_questions_found
+                
+                for idx, q in enumerate(batch_questions):
+                    q["batch_num"] = step_num
+                    q["original_idx"] = idx
+                
+                if step_num == 1:
+                    first_title = result.get("title")
+                    first_desc = result.get("description")
+                    
+                all_questions.extend(batch_questions)
+                
+                serialized_response = json.dumps(result)
+                chat_history.append(current_user_content)
+                chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text=serialized_response)]))
+                
+            except Exception as e:
+                logger.error(f"Stateful step {step_num} failed: {e}")
+                chat_history.append(current_user_content)
+                chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text="{}")]))
+                
+        unique_questions = deduplicate_and_merge_chunked_questions(all_questions)
+        result_data = {
+            "title": first_title or "Extracted Exam",
+            "description": first_desc or f"Extracted from {total_pages} pages (Stateful Mode)",
+            "questions": unique_questions
+        }
+
+    elif has_pdfs and text_rich_count > 0:
         # --- HYBRID MODE ---
         logger.info(f"Using HYBRID pipeline: {text_rich_count} text + {len(image_only_page_images)} image pages")
 
