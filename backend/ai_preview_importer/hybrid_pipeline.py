@@ -594,6 +594,15 @@ async def process_files_hybrid_stream(
             current_user_content = types.Content(role="user", parts=typed_parts)
             request_contents = chat_history + [current_user_content]
             
+            # Prepare compact user content for history log (omits image binary blobs to prevent vision token/latency blowout)
+            compact_parts = []
+            for part in typed_parts:
+                if part.text is not None:
+                    compact_parts.append(part)
+                else:
+                    compact_parts.append(types.Part.from_text(text="[Page Image/Diagram Omitted for History Brevity]"))
+            compact_user_content = types.Content(role="user", parts=compact_parts)
+            
             try:
                 if progress_callback:
                     await progress_callback({
@@ -634,12 +643,12 @@ async def process_files_hybrid_stream(
                 all_questions.extend(batch_questions)
                 
                 serialized_response = json.dumps(result)
-                chat_history.append(current_user_content)
+                chat_history.append(compact_user_content)
                 chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text=serialized_response)]))
                 
             except Exception as e:
                 logger.error(f"Stateful step {step_num} failed: {e}")
-                chat_history.append(current_user_content)
+                chat_history.append(compact_user_content)
                 chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text="{}")]))
                 
         unique_questions = deduplicate_and_merge_chunked_questions(all_questions)
