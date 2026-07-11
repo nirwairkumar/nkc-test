@@ -595,16 +595,28 @@ You MUST structure the output using the "sections" field instead of a top-level 
 # ---------------------------------------------------------------------------
 
 def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
-    """Render each PDF page as a JPEG image at the specified DPI."""
+    """Render each PDF page as a JPEG image with dynamic size capping to optimize memory and speed."""
     import fitz  # lazy-loaded: only used by OCR pipeline
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     page_images = []
 
-    zoom = dpi / 72  # 72 is the default DPI
-    mat = fitz.Matrix(zoom, zoom)
+    # Map DPI to maximum pixel dimension for the page to prevent rendering massive pages
+    # e.g., standard letter page: 612x792 points. At 300 DPI, height is ~3300px.
+    # We cap max dimension at 2048px (high accuracy) or 1600px (fast/standard).
+    max_dim = 2048 if dpi >= 300 else 1600
 
     for page_num in range(len(doc)):
         page = doc[page_num]
+        rect = page.rect
+        
+        # Calculate dynamic scale to keep maximum dimension within max_dim
+        scale = min(max_dim / rect.width, max_dim / rect.height)
+        
+        # Ensure we don't scale UP if the page is already smaller than target dimension
+        if scale > (dpi / 72):
+            scale = dpi / 72
+            
+        mat = fitz.Matrix(scale, scale)
         pix = page.get_pixmap(matrix=mat, alpha=False)
 
         img_bytes = pix.tobytes("jpg")
@@ -612,7 +624,7 @@ def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
         logger.debug(f"Rendered page {page_num + 1}: {pix.width}x{pix.height} ({len(img_bytes)} bytes)")
 
     doc.close()
-    logger.info(f"Rendered {len(page_images)} pages as images at {dpi} DPI")
+    logger.info(f"Rendered {len(page_images)} pages as JPEG images capped at max {max_dim}px")
     return page_images
 
 
@@ -692,7 +704,12 @@ async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict]
                 def _render_page():
                     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                     page = doc[page_in_pdf]
-                    mat = fitz.Matrix(300/72, 300/72) # 300 DPI
+                    rect = page.rect
+                    max_dim = 2048
+                    scale = min(max_dim / rect.width, max_dim / rect.height)
+                    if scale > (300/72):
+                        scale = 300/72
+                    mat = fitz.Matrix(scale, scale)
                     pix = page.get_pixmap(matrix=mat, alpha=False)
                     img_bytes = pix.tobytes("png")
                     doc.close()
@@ -2055,9 +2072,14 @@ async def process_files_stream(
                 doc = fitz.open(stream=file_info['content'], filetype="pdf")
                 if len(doc) > 0:
                     page = doc[0]
-                    mat = fitz.Matrix(150/72, 150/72)  # 150 DPI
+                    rect = page.rect
+                    max_dim = 1600
+                    scale = min(max_dim / rect.width, max_dim / rect.height)
+                    if scale > (150/72):
+                        scale = 150/72
+                    mat = fitz.Matrix(scale, scale)
                     pix = page.get_pixmap(matrix=mat, alpha=False)
-                    sample_pages.append(pix.tobytes("png"))
+                    sample_pages.append(pix.tobytes("jpg"))
                 doc.close()
             except Exception as e:
                 logger.warning(f"Failed to extract sample page: {e}")
@@ -2564,13 +2586,17 @@ async def _render_pdf_pages(pdf_bytes: bytes, dpi: int) -> Tuple[List[bytes], Li
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         page_images = []
         
-        zoom = dpi / 72
-        mat = fitz.Matrix(zoom, zoom)
+        max_dim = 2048 if dpi >= 300 else 1600
         
         for page_num in range(len(doc)):
             page = doc[page_num]
+            rect = page.rect
+            scale = min(max_dim / rect.width, max_dim / rect.height)
+            if scale > (dpi / 72):
+                scale = dpi / 72
+            mat = fitz.Matrix(scale, scale)
             pix = page.get_pixmap(matrix=mat, alpha=False)
-            img_bytes = pix.tobytes("png")
+            img_bytes = pix.tobytes("jpg")
             page_images.append(img_bytes)
         
         # Also extract embedded images

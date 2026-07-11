@@ -460,12 +460,16 @@ async def process_files_hybrid_stream(
 
         for pdf_bytes in pdf_bytes_list:
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-            zoom = render_dpi / 72
-            mat = fitz.Matrix(zoom, zoom)
+            max_dim = 2048 if render_dpi >= 300 else 1600
             for page_num in range(len(doc)):
                 one_based = page_num + 1
                 if one_based in pages_needing_render:
                     page = doc[page_num]
+                    rect = page.rect
+                    scale = min(max_dim / rect.width, max_dim / rect.height)
+                    if scale > (render_dpi / 72):
+                        scale = render_dpi / 72
+                    mat = fitz.Matrix(scale, scale)
                     pix = page.get_pixmap(matrix=mat, alpha=False)
                     image_only_page_images[one_based] = pix.tobytes("jpg")
             doc.close()
