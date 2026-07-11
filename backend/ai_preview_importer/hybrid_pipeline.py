@@ -48,6 +48,67 @@ from ai_preview_importer.pdf_vision_pipeline import (
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
 
+def are_questions_identical(q1: Dict, q2: Dict) -> bool:
+    t1 = (q1.get("question") or "").strip()
+    t2 = (q2.get("question") or "").strip()
+    
+    # Clean text to alphanumeric lowercase
+    c1 = re.sub(r'\W+', '', t1.lower())
+    c2 = re.sub(r'\W+', '', t2.lower())
+    
+    # Generic placeholders
+    placeholders = {"refertodiagram", "refertothediagram", "diagramextracted", "imageextracted", ""}
+    if c1 in placeholders or c2 in placeholders:
+        # If generic placeholder, they must share the same page number to be considered duplicates
+        page1 = q1.get("diagram_bbox", {}).get("page_number") if q1.get("diagram_bbox") else None
+        page2 = q2.get("diagram_bbox", {}).get("page_number") if q2.get("diagram_bbox") else None
+        return page1 == page2 and page1 is not None
+        
+    # Standard text similarity
+    if len(c1) < 20 or len(c2) < 20:
+        # For short text, they must match exactly
+        return c1 == c2
+        
+    # Substring check for longer text
+    if c1 in c2 or c2 in c1:
+        return True
+        
+    # Otherwise, not identical
+    return False
+
+def deduplicate_and_merge_chunked_questions(all_questions: List[Dict]) -> List[Dict]:
+    """
+    Deduplicate and merge questions across parallel batches.
+    Sorts questions by batch and index to preserve document order,
+    merges duplicate questions, and re-assigns sequential 1-based IDs.
+    """
+    # Sort by batch number and original index to preserve document order
+    all_questions = sorted(
+        all_questions, 
+        key=lambda x: (x.get("batch_num", 0), x.get("original_idx", 0))
+    )
+    
+    from ai_preview_importer.pdf_vision_pipeline import merge_question_parts
+    
+    merged_questions = []
+    for q in all_questions:
+        found_match = False
+        for idx, mq in enumerate(merged_questions):
+            if are_questions_identical(q, mq):
+                # Merge them!
+                merged_questions[idx] = merge_question_parts([mq, q])
+                found_match = True
+                break
+        if not found_match:
+            merged_questions.append(q.copy())
+            
+    # Assign sequential 1-based IDs
+    for idx, mq in enumerate(merged_questions):
+        mq["id"] = idx + 1
+        
+    return merged_questions
+
+
 # ---------------------------------------------------------------------------
 # Stage 1: Smart Text Extraction
 # ---------------------------------------------------------------------------
@@ -125,7 +186,7 @@ def build_hybrid_content_parts(
                 content_parts.append(
                     types.Part.from_bytes(
                         data=image_only_page_images[page_num],
-                        mime_type="image/png",
+                        mime_type="image/jpeg",
                     )
                 )
         else:
@@ -136,7 +197,7 @@ def build_hybrid_content_parts(
                 content_parts.append(
                     types.Part.from_bytes(
                         data=image_only_page_images[page_num],
-                        mime_type="image/png",
+                        mime_type="image/jpeg",
                     )
                 )
 
@@ -405,7 +466,7 @@ async def process_files_hybrid_stream(
                 if one_based in pages_needing_render:
                     page = doc[page_num]
                     pix = page.get_pixmap(matrix=mat, alpha=False)
-                    image_only_page_images[one_based] = pix.tobytes("png")
+                    image_only_page_images[one_based] = pix.tobytes("jpg")
             doc.close()
 
         logger.info(f"Rendered {len(image_only_page_images)} pages at {render_dpi} DPI")
@@ -439,26 +500,159 @@ async def process_files_hybrid_stream(
         # --- HYBRID MODE ---
         logger.info(f"Using HYBRID pipeline: {text_rich_count} text + {len(image_only_page_images)} image pages")
 
-        if progress_callback:
-            await progress_callback({
-                'stage': 'processing',
-                'percent': 40,
-                'message': f'Sending {text_rich_count} text pages + {len(image_only_page_images)} images to AI...',
-                'data': {'pipeline': 'hybrid'},
-            })
+        if total_pdf_pages <= 15:
+            if progress_callback:
+                await progress_callback({
+                    'stage': 'processing',
+                    'percent': 40,
+                    'message': f'Sending {text_rich_count} text pages + {len(image_only_page_images)} images to AI...',
+                    'data': {'pipeline': 'hybrid'},
+                })
 
-        content_parts = build_hybrid_content_parts(all_page_infos, image_only_page_images, prompt)
-        append_extracted_images_to_content(content_parts, all_embedded_images)
+            content_parts = build_hybrid_content_parts(all_page_infos, image_only_page_images, prompt)
+            append_extracted_images_to_content(content_parts, all_embedded_images)
 
-        try:
-            result_data = await stream_gemini_and_parse(
-                content_parts, all_embedded_images,
-                progress_callback=progress_callback,
-                question_callback=question_callback,
-            )
-        except Exception as e:
-            logger.error(f"Hybrid streaming failed: {e}. Falling back to vision...")
-            result_data = None
+            try:
+                result_data = await stream_gemini_and_parse(
+                    content_parts, all_embedded_images,
+                    progress_callback=progress_callback,
+                    question_callback=question_callback,
+                )
+            except Exception as e:
+                logger.error(f"Hybrid streaming failed: {e}. Falling back to vision...")
+                result_data = None
+        else:
+            # Chunked/parallel mode
+            MAX_PAGES_PER_BATCH = 5
+            OVERLAP_PAGES = 1
+            
+            batches = []
+            start_idx = 0
+            batch_num = 0
+            
+            while start_idx < total_pdf_pages:
+                batch_num += 1
+                end_idx = min(start_idx + MAX_PAGES_PER_BATCH, total_pdf_pages)
+                
+                if start_idx == 0:
+                    batch_page_infos = all_page_infos[start_idx:end_idx]
+                    batch_start_page = start_idx
+                else:
+                    batch_page_infos = all_page_infos[start_idx - OVERLAP_PAGES:end_idx]
+                    batch_start_page = start_idx - OVERLAP_PAGES
+                    
+                batches.append({
+                    'batch_num': batch_num,
+                    'start_page': batch_start_page,
+                    'page_infos': batch_page_infos
+                })
+                
+                start_idx = end_idx
+                
+            total_batches = len(batches)
+            logger.info(f"Created {total_batches} hybrid batches for parallel processing")
+            
+            if progress_callback:
+                await progress_callback({
+                    'stage': 'processing',
+                    'percent': 40,
+                    'message': f'Processing {total_pdf_pages} pages in {total_batches} parallel batches...',
+                    'data': {
+                        'pipeline': 'hybrid',
+                        'total_pages': total_pdf_pages,
+                        'total_batches': total_batches
+                    }
+                })
+                
+            semaphore = asyncio.Semaphore(max_concurrent)
+            all_questions = []
+            completed_batches = 0
+            total_questions_found = 0
+            first_batch_title = None
+            first_batch_desc = None
+            
+            async def process_hybrid_batch(batch_data):
+                nonlocal completed_batches, total_questions_found, first_batch_title, first_batch_desc
+                
+                async with semaphore:
+                    b_num = batch_data['batch_num']
+                    b_start = batch_data['start_page']
+                    b_infos = batch_data['page_infos']
+                    
+                    content_parts = build_hybrid_content_parts(b_infos, image_only_page_images, prompt)
+                    batch_embedded = [img for img in all_embedded_images if b_start + 1 <= img["page"] <= b_start + len(b_infos)]
+                    append_extracted_images_to_content(content_parts, batch_embedded)
+                    
+                    try:
+                        batch_questions_found = []
+                        
+                        async def local_question_callback(q_event):
+                            if q_event.get("type") == "question" and q_event.get("question"):
+                                q = q_event["question"]
+                                batch_questions_found.append(q)
+                                if question_callback:
+                                    await question_callback({"type": "question", "question": q, "batch": b_num})
+                                    
+                        result = await stream_gemini_and_parse(
+                            content_parts, batch_embedded,
+                            progress_callback=None,
+                            question_callback=local_question_callback
+                        )
+                        
+                        batch_questions = result.get("questions") or batch_questions_found
+                        
+                        if b_num == 1:
+                            first_batch_title = result.get("title")
+                            first_batch_desc = result.get("description")
+                            
+                        completed_batches += 1
+                        total_questions_found += len(batch_questions)
+                        
+                        if progress_callback:
+                            await progress_callback({
+                                'stage': 'processing',
+                                'percent': 40 + int((completed_batches / total_batches) * 40),
+                                'message': f'Processing batch {completed_batches}/{total_batches} ({total_questions_found} questions found)...',
+                                'data': {
+                                    'batch': b_num,
+                                    'total_batches': total_batches,
+                                    'questions_found': total_questions_found
+                                }
+                            })
+                            
+                        for idx, q in enumerate(batch_questions):
+                            q["batch_num"] = b_num
+                            q["original_idx"] = idx
+                        return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
+                    except Exception as e:
+                        logger.error(f"Hybrid batch {b_num} failed: {e}")
+                        completed_batches += 1
+                        if progress_callback:
+                            await progress_callback({
+                                'stage': 'processing',
+                                'percent': 40 + int((completed_batches / total_batches) * 40),
+                                'message': f'Batch {b_num} failed, continuing ({total_questions_found} questions found)...',
+                                'data': {
+                                    'batch': b_num,
+                                    'total_batches': total_batches,
+                                    'questions_found': total_questions_found
+                                }
+                            })
+                        return {'success': False, 'error': str(e)}
+                        
+            batch_tasks = [process_hybrid_batch(b) for b in batches]
+            batch_results = await asyncio.gather(*batch_tasks)
+            
+            for r in batch_results:
+                if r['success']:
+                    all_questions.extend(r['questions'])
+                    
+            unique_questions = deduplicate_and_merge_chunked_questions(all_questions)
+            result_data = {
+                "title": first_batch_title or "Extracted Exam",
+                "description": first_batch_desc or f"Extracted from {total_pdf_pages} pages",
+                "questions": unique_questions
+            }
 
         if result_data and not result_data.get("questions"):
             logger.warning("Hybrid returned 0 questions. Falling back...")
@@ -485,29 +679,167 @@ async def process_files_hybrid_stream(
         if total_pages == 0:
             raise ValueError("No pages could be processed")
 
-        if progress_callback:
-            await progress_callback({
-                'stage': 'processing',
-                'percent': 45,
-                'message': f'Sending {total_pages} pages to AI (vision mode)...',
-            })
+        if total_pages <= 15:
+            if progress_callback:
+                await progress_callback({
+                    'stage': 'processing',
+                    'percent': 45,
+                    'message': f'Sending {total_pages} pages to AI (vision mode)...',
+                })
 
-        content_parts = [prompt]
-        for idx, page_img in enumerate(all_page_images):
-            content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
-            content_parts.append(types.Part.from_bytes(data=page_img, mime_type="image/png"))
-        append_extracted_images_to_content(content_parts, all_embedded_images)
+            content_parts = [prompt]
+            for idx, page_img in enumerate(all_page_images):
+                content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
+                content_parts.append(types.Part.from_bytes(data=page_img, mime_type="image/jpeg"))
+            append_extracted_images_to_content(content_parts, all_embedded_images)
 
-        try:
-            result_data = await stream_gemini_and_parse(
-                content_parts, all_embedded_images,
-                progress_callback=progress_callback,
-                question_callback=question_callback,
-            )
-        except Exception as e:
-            logger.error(f"Vision streaming failed: {e}. Non-streaming fallback...")
-            raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
-            result_data = _parse_response(raw_text, all_embedded_images)
+            try:
+                result_data = await stream_gemini_and_parse(
+                    content_parts, all_embedded_images,
+                    progress_callback=progress_callback,
+                    question_callback=question_callback,
+                )
+            except Exception as e:
+                logger.error(f"Vision streaming failed: {e}. Non-streaming fallback...")
+                raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
+                result_data = _parse_response(raw_text, all_embedded_images)
+        else:
+            # Chunked/parallel mode
+            MAX_PAGES_PER_BATCH = 5
+            OVERLAP_PAGES = 1
+            
+            batches = []
+            start_idx = 0
+            batch_num = 0
+            
+            while start_idx < total_pages:
+                batch_num += 1
+                end_idx = min(start_idx + MAX_PAGES_PER_BATCH, total_pages)
+                
+                if start_idx == 0:
+                    batch_imgs = all_page_images[start_idx:end_idx]
+                    batch_start_page = start_idx
+                else:
+                    batch_imgs = all_page_images[start_idx - OVERLAP_PAGES:end_idx]
+                    batch_start_page = start_idx - OVERLAP_PAGES
+                    
+                batches.append({
+                    'batch_num': batch_num,
+                    'start_page': batch_start_page,
+                    'images': batch_imgs
+                })
+                
+                start_idx = end_idx
+                
+            total_batches = len(batches)
+            logger.info(f"Created {total_batches} pure vision batches for parallel processing")
+            
+            if progress_callback:
+                await progress_callback({
+                    'stage': 'processing',
+                    'percent': 45,
+                    'message': f'Sending {total_pages} pages in {total_batches} parallel batches (vision)...',
+                    'data': {
+                        'pipeline': 'vision',
+                        'total_pages': total_pages,
+                        'total_batches': total_batches
+                    }
+                })
+                
+            semaphore = asyncio.Semaphore(max_concurrent)
+            all_questions = []
+            completed_batches = 0
+            total_questions_found = 0
+            first_batch_title = None
+            first_batch_desc = None
+            
+            async def process_vision_batch(batch_data):
+                nonlocal completed_batches, total_questions_found, first_batch_title, first_batch_desc
+                
+                async with semaphore:
+                    b_num = batch_data['batch_num']
+                    b_start = batch_data['start_page']
+                    b_imgs = batch_data['images']
+                    
+                    content_parts = [prompt]
+                    for i, page_img in enumerate(b_imgs):
+                        actual_page_num = b_start + i + 1
+                        content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
+                        content_parts.append(types.Part.from_bytes(data=page_img, mime_type="image/jpeg"))
+                        
+                    batch_embedded = [img for img in all_embedded_images if b_start + 1 <= img["page"] <= b_start + len(b_imgs)]
+                    append_extracted_images_to_content(content_parts, batch_embedded)
+                    
+                    try:
+                        batch_questions_found = []
+                        
+                        async def local_question_callback(q_event):
+                            if q_event.get("type") == "question" and q_event.get("question"):
+                                q = q_event["question"]
+                                batch_questions_found.append(q)
+                                if question_callback:
+                                    await question_callback({"type": "question", "question": q, "batch": b_num})
+                                    
+                        result = await stream_gemini_and_parse(
+                            content_parts, batch_embedded,
+                            progress_callback=None,
+                            question_callback=local_question_callback
+                        )
+                        
+                        batch_questions = result.get("questions") or batch_questions_found
+                        
+                        if b_num == 1:
+                            first_batch_title = result.get("title")
+                            first_batch_desc = result.get("description")
+                            
+                        completed_batches += 1
+                        total_questions_found += len(batch_questions)
+                        
+                        if progress_callback:
+                            await progress_callback({
+                                'stage': 'processing',
+                                'percent': 45 + int((completed_batches / total_batches) * 45),
+                                'message': f'Processing batch {completed_batches}/{total_batches} ({total_questions_found} questions found)...',
+                                'data': {
+                                    'batch': b_num,
+                                    'total_batches': total_batches,
+                                    'questions_found': total_questions_found
+                                }
+                            })
+                            
+                        for idx, q in enumerate(batch_questions):
+                            q["batch_num"] = b_num
+                            q["original_idx"] = idx
+                        return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
+                    except Exception as e:
+                        logger.error(f"Vision batch {b_num} failed: {e}")
+                        completed_batches += 1
+                        if progress_callback:
+                            await progress_callback({
+                                'stage': 'processing',
+                                'percent': 45 + int((completed_batches / total_batches) * 45),
+                                'message': f'Batch {b_num} failed, continuing ({total_questions_found} questions found)...',
+                                'data': {
+                                    'batch': b_num,
+                                    'total_batches': total_batches,
+                                    'questions_found': total_questions_found
+                                }
+                            })
+                        return {'success': False, 'error': str(e)}
+                        
+            batch_tasks = [process_vision_batch(b) for b in batches]
+            batch_results = await asyncio.gather(*batch_tasks)
+            
+            for r in batch_results:
+                if r['success']:
+                    all_questions.extend(r['questions'])
+                    
+            unique_questions = deduplicate_and_merge_chunked_questions(all_questions)
+            result_data = {
+                "title": first_batch_title or "Extracted Exam",
+                "description": first_batch_desc or f"Extracted from {total_pages} pages",
+                "questions": unique_questions
+            }
 
     unique_questions = result_data.get("questions", [])
     if not unique_questions:
