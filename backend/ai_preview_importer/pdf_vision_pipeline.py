@@ -308,8 +308,12 @@ CHEMISTRY FORMATTING (mhchem) - CRITICAL:
 - Use standard newline characters (\n) for line breaks in questions, options, and passageContent.
 - DO NOT use <br> tags.
 - Ensure proper escaping of newlines as \n inside the JSON strings.
-- Do NOT use other HTML tags.
-- Do NOT use markdown formatting.
+- BOLD, ITALIC, AND UNDERLINE FORMATTING:
+  - If the original document has underlined text, you MUST wrap that text in <u>...</u> HTML tags. E.g., "The word <u>recapture</u> is underlined."
+  - If the original document has bold text, you MUST wrap that text in <strong>...</strong> HTML tags.
+  - If the original document has italic text, you MUST wrap that text in <em>...</em> HTML tags.
+  - DO NOT use markdown characters like ** or _ or * for bold/italic/underline styling.
+  - DO NOT use any other HTML tags (like <p>, <div>, <span>, etc.).
 
 --------------------------------------------------
 
