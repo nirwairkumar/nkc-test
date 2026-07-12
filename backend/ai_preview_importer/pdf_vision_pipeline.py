@@ -1484,6 +1484,19 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
                 first_batch_desc = batch_result.get("description")
             
             if questions:
+                # Adjust relative page numbers to global ones
+                for q in questions:
+                    bbox = q.get("diagram_bbox")
+                    if bbox and isinstance(bbox, dict):
+                        p_num = bbox.get("page_number")
+                        if p_num is not None:
+                            try:
+                                p_num = int(p_num)
+                                if p_num <= actual_batch_size and batch_start_page > 0:
+                                    bbox["page_number"] = batch_start_page + p_num
+                                    logger.info(f"Adjusted relative page_number {p_num} to global {batch_start_page + p_num} for Q {q.get('id')}")
+                            except (ValueError, TypeError):
+                                pass
                 logger.info(f"Extracted {len(questions)} questions from batch {batch_num}")
                 all_questions.extend(questions)
             else:
@@ -2654,6 +2667,21 @@ async def _process_single_batch_stream(
     batch_result = await _parse_response(raw_text, embedded_images)
     questions = batch_result.get("questions", [])
     
+    # Adjust relative page numbers to global ones
+    batch_size = len(images)
+    for q in questions:
+        bbox = q.get("diagram_bbox")
+        if bbox and isinstance(bbox, dict):
+            p_num = bbox.get("page_number")
+            if p_num is not None:
+                try:
+                    p_num = int(p_num)
+                    if p_num <= batch_size and start_page > 0:
+                        bbox["page_number"] = start_page + p_num
+                        logger.info(f"Adjusted relative page_number {p_num} to global {start_page + p_num} for Q {q.get('id')}")
+                except (ValueError, TypeError):
+                    pass
+                    
     # Stream questions immediately if callback provided
     if question_callback:
         for q in questions:

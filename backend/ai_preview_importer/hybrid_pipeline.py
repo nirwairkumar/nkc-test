@@ -599,9 +599,21 @@ async def process_files_hybrid_stream(
                     })
                     
                 chunk_questions_found = []
+                batch_size = len(chunk_infos) if is_hybrid else len(chunk_images)
                 async def local_question_callback(q_event):
                     if q_event.get("type") == "question" and q_event.get("question"):
                         q = q_event["question"]
+                        # Adjust relative page numbers to global ones
+                        bbox = q.get("diagram_bbox")
+                        if bbox and isinstance(bbox, dict):
+                            p_num = bbox.get("page_number")
+                            if p_num is not None:
+                                try:
+                                    p_num = int(p_num)
+                                    if p_num <= batch_size and c_start > 0:
+                                        bbox["page_number"] = c_start + p_num
+                                except (ValueError, TypeError):
+                                    pass
                         chunk_questions_found.append(q)
                         if question_callback:
                             await question_callback({"type": "question", "question": q, "batch": step_num})
@@ -617,8 +629,17 @@ async def process_files_hybrid_stream(
                 for idx, q in enumerate(batch_questions):
                     q["batch_num"] = step_num
                     q["original_idx"] = idx
-                
-                if step_num == 1:
+                    # Adjust relative page numbers to global ones (failsafe)
+                    bbox = q.get("diagram_bbox")
+                    if bbox and isinstance(bbox, dict):
+                        p_num = bbox.get("page_number")
+                        if p_num is not None:
+                            try:
+                                p_num = int(p_num)
+                                if p_num <= batch_size and c_start > 0:
+                                    bbox["page_number"] = c_start + p_num
+                            except (ValueError, TypeError):
+                                pass
                     first_title = result.get("title")
                     first_desc = result.get("description")
                     
@@ -733,6 +754,17 @@ async def process_files_hybrid_stream(
                         async def local_question_callback(q_event):
                             if q_event.get("type") == "question" and q_event.get("question"):
                                 q = q_event["question"]
+                                # Adjust relative page numbers to global ones
+                                bbox = q.get("diagram_bbox")
+                                if bbox and isinstance(bbox, dict):
+                                    p_num = bbox.get("page_number")
+                                    if p_num is not None:
+                                        try:
+                                            p_num = int(p_num)
+                                            if p_num <= len(b_infos) and b_start > 0:
+                                                bbox["page_number"] = b_start + p_num
+                                        except (ValueError, TypeError):
+                                            pass
                                 batch_questions_found.append(q)
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
@@ -764,9 +796,21 @@ async def process_files_hybrid_stream(
                                 }
                             })
                             
+                        batch_size = len(b_infos)
                         for idx, q in enumerate(batch_questions):
                             q["batch_num"] = b_num
                             q["original_idx"] = idx
+                            # Adjust relative page numbers to global ones (failsafe)
+                            bbox = q.get("diagram_bbox")
+                            if bbox and isinstance(bbox, dict):
+                                p_num = bbox.get("page_number")
+                                if p_num is not None:
+                                    try:
+                                        p_num = int(p_num)
+                                        if p_num <= batch_size and b_start > 0:
+                                            bbox["page_number"] = b_start + p_num
+                                    except (ValueError, TypeError):
+                                        pass
                         return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
                     except Exception as e:
                         logger.error(f"Hybrid batch {b_num} failed: {e}")
@@ -920,6 +964,17 @@ async def process_files_hybrid_stream(
                         async def local_question_callback(q_event):
                             if q_event.get("type") == "question" and q_event.get("question"):
                                 q = q_event["question"]
+                                # Adjust relative page numbers to global ones
+                                bbox = q.get("diagram_bbox")
+                                if bbox and isinstance(bbox, dict):
+                                    p_num = bbox.get("page_number")
+                                    if p_num is not None:
+                                        try:
+                                            p_num = int(p_num)
+                                            if p_num <= len(b_imgs) and b_start > 0:
+                                                bbox["page_number"] = b_start + p_num
+                                        except (ValueError, TypeError):
+                                            pass
                                 batch_questions_found.append(q)
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
@@ -951,9 +1006,21 @@ async def process_files_hybrid_stream(
                                 }
                             })
                             
+                        batch_size = len(b_imgs)
                         for idx, q in enumerate(batch_questions):
                             q["batch_num"] = b_num
                             q["original_idx"] = idx
+                            # Adjust relative page numbers to global ones (failsafe)
+                            bbox = q.get("diagram_bbox")
+                            if bbox and isinstance(bbox, dict):
+                                p_num = bbox.get("page_number")
+                                if p_num is not None:
+                                    try:
+                                        p_num = int(p_num)
+                                        if p_num <= batch_size and b_start > 0:
+                                            bbox["page_number"] = b_start + p_num
+                                    except (ValueError, TypeError):
+                                        pass
                         return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
                     except Exception as e:
                         logger.error(f"Vision batch {b_num} failed: {e}")

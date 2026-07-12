@@ -591,19 +591,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
     };
 
-    const handleAddQuestion = () => {
+    const handleAddQuestion = (insertAtIndex?: number | React.MouseEvent) => {
         const lastQ = questions.length > 0 ? questions[questions.length - 1] : null;
-        setQuestions([
-            ...questions,
-            {
-                ...DEFAULT_QUESTION,
-                id: questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1,
-                options: { ...DEFAULT_QUESTION.options },
-                typingMode: lastTypingMode,
-                marks: lastQ ? (lastQ.marks || '4') : '4',
-                negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1'
-            }
-        ]);
+        const newQ: QuestionState = {
+            ...DEFAULT_QUESTION,
+            id: questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1,
+            options: { ...DEFAULT_QUESTION.options },
+            typingMode: lastTypingMode,
+            marks: lastQ ? (lastQ.marks || '4') : '4',
+            negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1'
+        };
+
+        if (typeof insertAtIndex === 'number') {
+            const newQuestions = [...questions];
+            newQuestions.splice(insertAtIndex, 0, newQ);
+            setQuestions(newQuestions);
+        } else {
+            setQuestions([...questions, newQ]);
+        }
     };
 
     const handleRemoveQuestion = (index: number) => {
@@ -1202,7 +1207,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setSections(newSections);
     };
 
-    const handleAddQuestionToSection = (sectionIndex: number) => {
+    const handleAddQuestionToSection = (sectionIndex: number, insertAtIndex?: number | React.MouseEvent) => {
         const newSections = [...sections];
         const section = newSections[sectionIndex];
 
@@ -1220,7 +1225,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             marks: lastQuestion ? lastQuestion.marks : (section.marks_per_question?.toString() || '1'),
             negativeMarks: lastQuestion ? lastQuestion.negativeMarks : (section.negative_marks?.toString() || '0')
         };
-        section.questions.push(newQ);
+        
+        if (typeof insertAtIndex === 'number') {
+            section.questions.splice(insertAtIndex, 0, newQ);
+        } else {
+            section.questions.push(newQ);
+        }
         setSections(newSections);
     };
 
@@ -2232,8 +2242,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             const isInGroup = !!currentGroupId;
 
                                                             const isDeleting = deletingQuestions.has(q.id);
+
+                                                            const isSameGroup = q.groupId && section.questions[qIdx + 1] && q.groupId === section.questions[qIdx + 1].groupId;
+                                                            const showDivider = qIdx < section.questions.length - 1 && !isSameGroup;
+
                                                             return (
-                                                                <div key={q.id} className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
+                                                                <React.Fragment key={q.id}>
+                                                                    <div className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
                                                                         <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
@@ -2649,7 +2664,35 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             </Button>
                                                                         </div>
                                                                     )}
-                                                                </div>
+                                                                    </div>
+                                                                    {showDivider && (
+                                                                        <div className="group/add-q-btn relative h-8 flex items-center justify-center my-2 z-20 pointer-events-none">
+                                                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
+                                                                            <div className="relative w-14 h-8 shrink-0 pointer-events-auto">
+                                                                                <svg 
+                                                                                    className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:text-indigo-300 overflow-visible"
+                                                                                    viewBox="0 0 56 24"
+                                                                                    fill="none"
+                                                                                >
+                                                                                    <path 
+                                                                                        d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
+                                                                                        stroke="currentColor" 
+                                                                                        strokeWidth="1.5" 
+                                                                                    />
+                                                                                </svg>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleAddQuestionToSection(sIdx, qIdx + 1)}
+                                                                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 hover:scale-125 transition-all duration-200 cursor-pointer bg-white border border-slate-200 shadow-sm"
+                                                                                    title="Insert Question Here"
+                                                                                >
+                                                                                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                                                                                </button>
+                                                                            </div>
+                                                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
+                                                                        </div>
+                                                                    )}
+                                                                </React.Fragment>
                                                             );
                                                         })}
                                                         <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
@@ -2695,8 +2738,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 const isInGroup = !!currentGroupId;
 
                                 const isDeleting = deletingQuestions.has(q.id);
+
+                                const isSameGroup = q.groupId && questions[index + 1] && q.groupId === questions[index + 1].groupId;
+                                const showDivider = index < questions.length - 1 && !isSameGroup;
+
                                 return (
-                                    <div key={q.id} className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
+                                    <React.Fragment key={q.id}>
+                                        <div className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
 
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
@@ -3165,8 +3213,36 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             </div>
                                         )}
                                     </div>
-                                );
-                            })}
+                                    {showDivider && (
+                                        <div className="group/add-q-btn relative h-8 flex items-center justify-center my-2 z-20 pointer-events-none">
+                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
+                                            <div className="relative w-14 h-8 shrink-0 pointer-events-auto">
+                                                <svg 
+                                                    className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:text-indigo-300 overflow-visible"
+                                                    viewBox="0 0 56 24"
+                                                    fill="none"
+                                                >
+                                                    <path 
+                                                        d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
+                                                        stroke="currentColor" 
+                                                        strokeWidth="1.5" 
+                                                    />
+                                                </svg>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAddQuestion(index + 1)}
+                                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 hover:scale-125 transition-all duration-200 cursor-pointer bg-white border border-slate-200 shadow-sm"
+                                                    title="Insert Question Here"
+                                                >
+                                                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                                                </button>
+                                            </div>
+                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
 
                             <Button
                                 onClick={handleAddQuestion}
