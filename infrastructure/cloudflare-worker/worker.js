@@ -237,6 +237,39 @@ function generateMetaTags(url, testData = null) {
   } else if (path === '/about') {
     title = 'Why TestoZa - Best Free Online Test Maker | TestoZa';
     description = 'Discover why TestoZa is the preferred choice for educators and institutions. Secure proctoring, AI question generation, and instant grading analytics.';
+  } else if (path === '/quiz-creator') {
+    title = 'Free AI Quiz & Test Generator for Teachers | TestoZa';
+    description = 'Instantly create tests, quizzes, and exams online using AI. Generate assessments from text, PDFs, or YouTube videos. Clean, modern, distraction-free CBT simulator.';
+    keywords = 'online quiz creator, ai quiz generator, free quiz maker, create quiz online, exam builder for teachers';
+  } else if (path === '/assessment-platform') {
+    title = 'CBT & Online Assessment Platform | Free Exam Creator | TestoZa';
+    description = 'Create, distribute, and grade computer-based tests (CBT) and classroom assessments online. Get detailed student score reports and automated analytics instantly.';
+    keywords = 'cbt assessment platform, computer based test, online exam platform, classroom assessment, exam software';
+  } else if (path === '/login') {
+    title = 'Login to TestoZa | Free Online Test Maker';
+    description = 'Sign in to your TestoZa account to create tests, manage exams, and view student results.';
+  } else if (path === '/support') {
+    title = 'Contact Support | TestoZa Help Center';
+    description = 'Get help with TestoZa. Contact our support team for questions about creating tests, managing exams, or account issues.';
+  } else if (path === '/privacy-policy') {
+    title = 'Privacy Policy | TestoZa';
+    description = 'Read the TestoZa Privacy Policy to understand how we collect, use, and protect your data.';
+  } else if (path === '/terms-and-conditions') {
+    title = 'Terms and Conditions | TestoZa';
+    description = 'Read the TestoZa Terms and Conditions governing use of the platform for educators and students.';
+  } else if (path === '/survey') {
+    title = 'Community Survey | TestoZa';
+    description = 'Share your feedback and help us improve TestoZa for teachers and students.';
+  } else if (path === '/convert') {
+    title = 'Convert PDF to Quiz | TestoZa';
+    description = 'Convert any PDF document into a ready-to-take online quiz in seconds using AI.';
+  } else if (path === '/news' || path.startsWith('/news/')) {
+    title = 'Education News & Updates | TestoZa';
+    description = 'Stay up to date with the latest news, feature releases, and education tips from the TestoZa team.';
+  } else if (path === '/pricing') {
+    title = 'Pricing | TestoZa';
+    description = 'Affordable pricing plans for online test creation. Start free, upgrade anytime.';
+    type = 'product';
   }
 
   // Build meta tag HTML
