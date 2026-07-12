@@ -44,6 +44,7 @@ from ai_preview_importer.pdf_vision_pipeline import (
     wrap_bare_latex,
     build_page_sources,
     process_diagram_bboxes,
+    group_passage_questions,
 )
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
@@ -356,11 +357,20 @@ async def stream_gemini_and_parse(
         }
 
     full_qs = full_result.get("questions", [])
-    if len(full_qs) >= len(questions_found):
+    is_fallback = full_result.get("is_regex_fallback", False)
+    
+    if is_fallback and questions_found:
+        logger.info(f"Full parse used regex fallback. Preferring {len(questions_found)} streamed questions with options over {len(full_qs)} fallback questions.")
+        full_result["questions"] = questions_found
+        full_result["canConfirm"] = all(q.get("correctAnswer") is not None for q in questions_found)
+        full_result["unansweredCount"] = sum(1 for q in questions_found if q.get("correctAnswer") is None)
+    elif len(full_qs) >= len(questions_found):
         logger.info(f"Using full parse ({len(full_qs)} qs vs {len(questions_found)} streamed)")
     else:
         logger.info(f"Using streamed ({len(questions_found)} qs vs {len(full_qs)} full parse)")
         full_result["questions"] = questions_found
+        full_result["canConfirm"] = all(q.get("correctAnswer") is not None for q in questions_found)
+        full_result["unansweredCount"] = sum(1 for q in questions_found if q.get("correctAnswer") is None)
 
     return full_result
 
@@ -1118,6 +1128,9 @@ async def process_files_hybrid_stream(
 
     page_sources = build_page_sources(file_data)
     await process_diagram_bboxes(unique_questions, page_sources)
+
+    # Group consecutive passage questions sharing identical passageContent
+    unique_questions = group_passage_questions(unique_questions)
 
     try:
         unique_questions.sort(key=lambda x: int(x.get("id", 0)))

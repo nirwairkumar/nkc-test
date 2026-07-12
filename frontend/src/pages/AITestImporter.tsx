@@ -1013,6 +1013,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         negativeMarks: String(q.negativeMarks || 1),
                         explanation: "",
                         passageContent: q.passageContent || "",
+                        groupId: q.groupId || "",
                         typingMode: 'en' as const
                     };
                 });
@@ -1054,6 +1055,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 negativeMarks: String(q.negativeMarks || 0),
                 explanation: "",
                 passageContent: q.passageContent || "",
+                groupId: q.groupId || "",
                 typingMode: 'en' as const
             };
         });
@@ -1135,7 +1137,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             image: q.image || undefined,
                             marks: String(q.marks || sec.marks_per_question || 4),
                             negativeMarks: String(q.negativeMarks || sec.negative_marks || 1),
-                            passageContent: q.passageContent || ""
+                            passageContent: q.passageContent || "",
+                            groupId: q.groupId || ""
                         };
                     });
 
@@ -1163,7 +1166,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         image: q.image || undefined,
                         marks: String(q.marks || 1),
                         negativeMarks: String(q.negativeMarks || 0),
-                        passageContent: q.passageContent || ""
+                        passageContent: q.passageContent || "",
+                        groupId: q.groupId || ""
                     };
                 });
             }

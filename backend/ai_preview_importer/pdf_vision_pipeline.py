@@ -139,8 +139,8 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
 
 8. FOR PASSAGE/COMPREHENSION QUESTIONS:
    - Extract the passage text ONCE.
-   - For EVERY question belonging to that passage, include a "passageContent" field.
-   - Set "passageContent" to the FULL passage text for each question in the group.
+   - For EVERY question belonging to that passage, include a "passageContent" field containing the FULL passage text.
+   - Assign the EXACT SAME "groupId" string (e.g. "passage_grp_1") to all questions belonging to that passage. For non-passage questions, set "groupId" to null or omit it.
 
 --------------------------------------------------
 
@@ -364,7 +364,8 @@ You MUST structure the output using the "sections" field instead of the top-leve
           "marks": 4,
           "negativeMarks": 1,
           "crossPage": false,
-          "passageContent": null
+          "passageContent": null,
+          "groupId": null
         }
       ]
     }
@@ -401,7 +402,8 @@ Otherwise, set "attempt_control" to {"enabled": false}.
       "marks": 4,
       "negativeMarks": 1,
       "crossPage": false,
-      "passageContent": null
+      "passageContent": null,
+      "groupId": null
     }
   ]
 }
@@ -1743,6 +1745,48 @@ def _extract_questions_regex(text: str) -> List[Dict]:
     return questions
 
 
+def group_passage_questions(questions: List[Dict]) -> List[Dict]:
+    """
+    Ensure consecutive questions that share the exact same non-empty passageContent
+    have the exact same groupId so the platform treats them as a comprehension group.
+    """
+    current_group_id = None
+    current_passage_content = None
+    current_section = None
+    group_counter = 0
+
+    for vq in questions:
+        if not isinstance(vq, dict):
+            continue
+        p_content = vq.get("passageContent")
+        p_content_stripped = p_content.strip() if isinstance(p_content, str) else ""
+        section_name = vq.get("section_name")
+        
+        if p_content_stripped:
+            existing_group_id = vq.get("groupId")
+            if existing_group_id:
+                current_group_id = existing_group_id
+                current_passage_content = p_content_stripped
+                current_section = section_name
+            else:
+                if (current_passage_content == p_content_stripped and 
+                    current_group_id and 
+                    current_section == section_name):
+                    vq["groupId"] = current_group_id
+                else:
+                    group_counter += 1
+                    current_group_id = f"passage_group_{group_counter}"
+                    current_passage_content = p_content_stripped
+                    current_section = section_name
+                    vq["groupId"] = current_group_id
+        else:
+            current_group_id = None
+            current_passage_content = None
+            current_section = None
+            
+    return questions
+
+
 async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
     """Parse Gemini response into our strict Question format"""
     
@@ -1780,7 +1824,7 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             questions_fallback = _extract_questions_regex(sanitized)
             if questions_fallback:
                 logger.info(f"Regex extracted {len(questions_fallback)} questions")
-                data = {"questions": questions_fallback}
+                data = {"questions": questions_fallback, "is_regex_fallback": True}
             else:
                 raise ValueError(f"AI returned invalid JSON: {e2}")
 
@@ -1977,6 +2021,9 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             if placeholder in placeholder_map:
                 vq["image"] = placeholder_map[placeholder]
     
+    # 3.5 Group consecutive passage questions sharing identical passageContent
+    validated = group_passage_questions(validated)
+    
     # 4. Sort by original ID (as extracted) and re-assign sequential IDs
     try:
         validated.sort(key=lambda x: int(x.get("id", 0)))
@@ -1997,6 +2044,7 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         "questions": validated,
         "canConfirm": all(q.get("correctAnswer") is not None for q in validated),
         "unansweredCount": sum(1 for q in validated if q.get("correctAnswer") is None),
+        "is_regex_fallback": data.get("is_regex_fallback", False)
     }
 
     # Include revision notes for generate mode
@@ -2517,6 +2565,9 @@ async def process_files_stream(
                     placeholder = match.group(1)
             if placeholder and placeholder in placeholder_map:
                 vq["image"] = placeholder_map[placeholder]
+    
+    # Group consecutive passage questions sharing identical passageContent
+    unique_questions = group_passage_questions(unique_questions)
     
     # Sort by original ID and re-assign sequential IDs
     try:
