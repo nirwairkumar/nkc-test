@@ -150,6 +150,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
     const [deletingSections, setDeletingSections] = useState<Set<string>>(new Set());
     const [deletingQuestions, setDeletingQuestions] = useState<Set<string | number>>(new Set());
+    const [newlyAddedQuestionIds, setNewlyAddedQuestionIds] = useState<Set<string | number>>(new Set());
     const [showSupportedFormats, setShowSupportedFormats] = useState(false);
     const [showAdvancedFormats, setShowAdvancedFormats] = useState(false);
     const [showMathKeyboard, setShowMathKeyboard] = useState(false);
@@ -601,6 +602,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             marks: lastQ ? (lastQ.marks || '4') : '4',
             negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1'
         };
+
+        setNewlyAddedQuestionIds(prev => {
+            const next = new Set(prev);
+            next.add(newQ.id);
+            return next;
+        });
+        setTimeout(() => {
+            setNewlyAddedQuestionIds(prev => {
+                const next = new Set(prev);
+                next.delete(newQ.id);
+                return next;
+            });
+        }, 1500);
 
         if (typeof insertAtIndex === 'number') {
             const newQuestions = [...questions];
@@ -1226,6 +1240,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             negativeMarks: lastQuestion ? lastQuestion.negativeMarks : (section.negative_marks?.toString() || '0')
         };
         
+        setNewlyAddedQuestionIds(prev => {
+            const next = new Set(prev);
+            next.add(newQ.id);
+            return next;
+        });
+        setTimeout(() => {
+            setNewlyAddedQuestionIds(prev => {
+                const next = new Set(prev);
+                next.delete(newQ.id);
+                return next;
+            });
+        }, 1500);
+
         if (typeof insertAtIndex === 'number') {
             section.questions.splice(insertAtIndex, 0, newQ);
         } else {
@@ -2242,13 +2269,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             const isInGroup = !!currentGroupId;
 
                                                             const isDeleting = deletingQuestions.has(q.id);
+                                                            const isNew = newlyAddedQuestionIds.has(q.id);
 
                                                             const isSameGroup = q.groupId && section.questions[qIdx + 1] && q.groupId === section.questions[qIdx + 1].groupId;
                                                             const showDivider = qIdx < section.questions.length - 1 && !isSameGroup;
 
                                                             return (
                                                                 <React.Fragment key={q.id}>
-                                                                    <div className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
+                                                                    <div className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
                                                                         <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
@@ -2666,24 +2694,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     )}
                                                                     </div>
                                                                     {showDivider && (
-                                                                        <div className="group/add-q-btn relative h-8 flex items-center justify-center my-2 z-20 pointer-events-none">
+                                                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-3 -mb-3">
                                                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
-                                                                            <div className="relative w-14 h-8 shrink-0 pointer-events-auto">
-                                                                                <svg 
-                                                                                    className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:text-indigo-300 overflow-visible"
-                                                                                    viewBox="0 0 56 24"
-                                                                                    fill="none"
-                                                                                >
-                                                                                    <path 
-                                                                                        d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
-                                                                                        stroke="currentColor" 
-                                                                                        strokeWidth="1.5" 
-                                                                                    />
-                                                                                </svg>
+                                                                            <div className="mx-2 shrink-0 pointer-events-auto">
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => handleAddQuestionToSection(sIdx, qIdx + 1)}
-                                                                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 hover:scale-125 transition-all duration-200 cursor-pointer bg-white border border-slate-200 shadow-sm"
+                                                                                    className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 bg-white border border-slate-200 shadow-sm hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
                                                                                     title="Insert Question Here"
                                                                                 >
                                                                                     <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -2738,13 +2755,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 const isInGroup = !!currentGroupId;
 
                                 const isDeleting = deletingQuestions.has(q.id);
+                                const isNew = newlyAddedQuestionIds.has(q.id);
 
                                 const isSameGroup = q.groupId && questions[index + 1] && q.groupId === questions[index + 1].groupId;
                                 const showDivider = index < questions.length - 1 && !isSameGroup;
 
                                 return (
                                     <React.Fragment key={q.id}>
-                                        <div className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
+                                        <div className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
 
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
@@ -3214,24 +3232,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         )}
                                     </div>
                                     {showDivider && (
-                                        <div className="group/add-q-btn relative h-8 flex items-center justify-center my-2 z-20 pointer-events-none">
+                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-3 -mb-3">
                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
-                                            <div className="relative w-14 h-8 shrink-0 pointer-events-auto">
-                                                <svg 
-                                                    className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:text-indigo-300 overflow-visible"
-                                                    viewBox="0 0 56 24"
-                                                    fill="none"
-                                                >
-                                                    <path 
-                                                        d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
-                                                        stroke="currentColor" 
-                                                        strokeWidth="1.5" 
-                                                    />
-                                                </svg>
+                                            <div className="mx-2 shrink-0 pointer-events-auto">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleAddQuestion(index + 1)}
-                                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 hover:scale-125 transition-all duration-200 cursor-pointer bg-white border border-slate-200 shadow-sm"
+                                                    className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 bg-white border border-slate-200 shadow-sm hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
                                                     title="Insert Question Here"
                                                 >
                                                     <Plus className="w-4 h-4 stroke-[2.5]" />
