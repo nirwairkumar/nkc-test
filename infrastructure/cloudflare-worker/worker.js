@@ -67,11 +67,8 @@ function shouldBypassCache(url) {
  */
 function generateCacheKey(request) {
   const url = new URL(request.url);
-  const isCrawlerRequest = isCrawler(request);
-
-  // Different cache for crawlers vs humans
   return new Request(
-    `${url.origin}${url.pathname}${isCrawlerRequest ? '?_crawler=1' : ''}`,
+    `${url.origin}${url.pathname}`,
     request
   );
 }
@@ -317,10 +314,10 @@ async function handleHTMLRequest(request) {
 
   // Skip homepage / so it keeps the default highly optimized static tags from index.html
   if (path !== '/' && path !== '') {
-    const isCrawlerRequest = isCrawler(request);
     const isTestRoute = path.startsWith('/test/') || path.startsWith('/test-intro/');
 
-    if (isCrawlerRequest || isTestRoute) {
+    // Run dynamic rewrite for all visitors (crawlers and humans) to ensure consistency and prevent cloaking flags
+    if (true) {
       let testData = null;
       if (isTestRoute) {
         const parts = path.split('/');

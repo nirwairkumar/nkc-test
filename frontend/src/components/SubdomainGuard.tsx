@@ -8,15 +8,6 @@ export default function SubdomainGuard() {
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    // Detect search engines and ad bots to avoid triggering cloaking/redirect policies (Circumventing Systems)
-    const ua = navigator.userAgent.toLowerCase();
-    const isBot = /bot|google|googlebot|adsbot|mediapartners|slurp|duckduckbot|yandex|baidu|bing|sogou|exabot|ia_archiver|crawler|spider|robot|crawling|lighthouse|pagespeed/i.test(ua);
-    
-    if (isBot) {
-      console.log('SubdomainGuard: Bot user-agent detected, skipping client-side redirect.');
-      return;
-    }
-
     const hostname = window.location.hostname;
     const isMainDomain = hostname === 'testoza.com' || hostname === 'www.testoza.com';
     const isAppDomain = hostname === 'app.testoza.com';
