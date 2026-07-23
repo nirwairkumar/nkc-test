@@ -207,7 +207,7 @@ async def get_batch_status(
             .execute()
 
         # 2. Check user_tests for completed status and scores
-        att_res = db.table("user_tests")\
+        att_res = supabase.table("user_tests")\
             .select("test_id, score")\
             .eq("user_id", user_id)\
             .in_("test_id", test_ids)\
@@ -273,7 +273,7 @@ async def check_attempt_status(
             has_attempted = True
         else:
              # 2. Check user_tests
-            att_res = db.table("user_tests")\
+            att_res = supabase.table("user_tests")\
                 .select("id")\
                 .eq("user_id", user_id)\
                 .eq("test_id", test_id)\
@@ -569,7 +569,7 @@ async def delete_attempt(
     db: Client = Depends(get_db)
 ):
     try:
-        db.table("user_tests").delete().eq("id", attempt_id).execute()
+        supabase.table("user_tests").delete().eq("id", attempt_id).execute()
         return {"success": True}
     except Exception as e:
         print(f"Error deleting attempt: {e}")
