@@ -55,6 +55,20 @@ const parseMark = (value: string | number | undefined, defaultVal: number = 0): 
   }
 };
 
+// Helper to clear all local test persistence across route ID (slug/custom_id) and UUID keys
+const clearLocalTestSession = (userId: string, paramId?: string | null, testUuid?: string | null) => {
+  const keys = Array.from(new Set([paramId, testUuid].filter(Boolean) as string[]));
+  keys.forEach(k => {
+    localStorage.removeItem(`test_session_${userId}_${k}`);
+    localStorage.removeItem(`test_start_time_${userId}_${k}`);
+    localStorage.removeItem(`test_warnings_${userId}_${k}`);
+    localStorage.removeItem(`test_submitted_${userId}_${k}`);
+    sessionStorage.removeItem(`test_active_${userId}_${k}`);
+    sessionStorage.removeItem(`vault_emergency_${userId}_${k}`);
+    AnswerVault.clear(userId, k);
+  });
+};
+
 export default function TestPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -294,10 +308,13 @@ export default function TestPage() {
 
     try {
       localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
+      if (test?.id && test.id !== id) {
+        localStorage.setItem(`test_session_${user.id}_${test.id}`, JSON.stringify(sessionData));
+      }
     } catch (e) {
       console.warn("Storage quota exceeded, could not save session draft", e);
     }
-  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, isExamStarted]);
+  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, test?.id, isExamStarted]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
   useEffect(() => {
@@ -305,6 +322,9 @@ export default function TestPage() {
     if (vaultSaveTimerRef.current) clearTimeout(vaultSaveTimerRef.current);
     vaultSaveTimerRef.current = setTimeout(() => {
       AnswerVault.save(user.id, test.id, answers as Record<string, any>);
+      if (id && id !== test.id) {
+        AnswerVault.save(user.id, id, answers as Record<string, any>);
+      }
     }, 30_000); // save after 30s of inactivity
     return () => { if (vaultSaveTimerRef.current) clearTimeout(vaultSaveTimerRef.current); };
   }, [answers, user, test, id, isSubmitting]);
@@ -418,48 +438,71 @@ export default function TestPage() {
   // ─── Guard: Redirect away if this test was already submitted ─────────────
   useEffect(() => {
     if (!id || !user) return;
-    const submittedKey = `test_submitted_${user.id}_${id}`;
-    const alreadySubmitted = localStorage.getItem(submittedKey) === 'true';
+    const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
+    if (isFromIntro) return; // Handled in session mount effect below
+
+    const submittedKeyParam = `test_submitted_${user.id}_${id}`;
+    const submittedKeyUuid = test?.id ? `test_submitted_${user.id}_${test.id}` : null;
+    const alreadySubmitted = localStorage.getItem(submittedKeyParam) === 'true' ||
+      (submittedKeyUuid && localStorage.getItem(submittedKeyUuid) === 'true');
+
     if (alreadySubmitted) {
-      // The session localStorage was cleared on submit, so no resume data exists.
-      // Redirect student away from the test page — they cannot go back.
       toast.error('This test has already been submitted. You cannot re-enter it.');
       navigate('/', { replace: true });
     }
-  }, [user, id]);
+  }, [user, id, test?.id, location.state]);
 
   // Check for saved session on mount
   useEffect(() => {
-    if (!id) return;
-    // Only check persistence if user is logged in
-    if (!user) return;
+    if (!id || !user) return;
 
-    // If the student arrived here with a fresh intro-page entry (combinedMode, or
-    // location.state has introEntry flag), clear any stale submitted marker so
-    // unlimited-attempt tests can start a new attempt.
-    const isFromIntro = !!(location.state as any)?.fromIntro;
+    const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
     if (isFromIntro) {
-      localStorage.removeItem(`test_submitted_${user.id}_${id}`);
+      // User explicitly started a FRESH attempt from TestIntroPage.
+      // Purge all stale session data and submission markers from previous attempts.
+      clearLocalTestSession(user.id, id, test?.id);
+      setShowResumeDialog(false);
+      setResumeData(null);
+      return;
     }
 
-    const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
-    const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
+    // Guard: If test was already submitted, clear local session and do NOT prompt for resume
+    const submittedKeyParam = `test_submitted_${user.id}_${id}`;
+    const submittedKeyUuid = test?.id ? `test_submitted_${user.id}_${test.id}` : null;
+    const isSubmitted = localStorage.getItem(submittedKeyParam) === 'true' ||
+      (submittedKeyUuid && localStorage.getItem(submittedKeyUuid) === 'true');
+
+    if (isSubmitted) {
+      clearLocalTestSession(user.id, id, test?.id);
+      setShowResumeDialog(false);
+      setResumeData(null);
+      return;
+    }
+
+    const savedParam = localStorage.getItem(`test_session_${user.id}_${id}`);
+    const savedUuid = test?.id ? localStorage.getItem(`test_session_${user.id}_${test.id}`) : null;
+    const saved = savedParam || savedUuid;
+
+    const activeSessionParam = sessionStorage.getItem(`test_active_${user.id}_${id}`);
+    const activeSessionUuid = test?.id ? sessionStorage.getItem(`test_active_${user.id}_${test.id}`) : null;
+    const activeSession = activeSessionParam || activeSessionUuid;
 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setResumeData(parsed);
 
-        // If session storage exists, it's a refresh. If not, it's a fresh tab/disconnect return.
         if (activeSession) {
           setIsRefresh(true);
         } else {
           setIsRefresh(false);
         }
 
-        // Mark tab as active
         try {
           sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
+          if (test?.id && test.id !== id) {
+            sessionStorage.setItem(`test_active_${user.id}_${test.id}`, 'true');
+          }
         } catch (e) {
           console.warn("Storage quota exceeded, could not mark session active", e);
         }
@@ -468,7 +511,7 @@ export default function TestPage() {
         console.error("Failed to parse saved session", e);
       }
     }
-  }, [user, id]);
+  }, [user, id, test?.id, location.state]);
 
   const handleResumeTest = () => {
     if (!resumeData) return;
@@ -487,9 +530,9 @@ export default function TestPage() {
   const cancelResume = () => {
     if (!id) return;
     if (user) {
-      localStorage.removeItem(`test_session_${user.id}_${id}`);
-      sessionStorage.removeItem(`test_active_${user.id}_${id}`);
+      clearLocalTestSession(user.id, id, test?.id);
     }
+    setResumeData(null);
     setShowResumeDialog(false);
     toast.info("Starting fresh test session.");
   };
@@ -1219,16 +1262,15 @@ export default function TestPage() {
       setIsSubmitting(false);
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
-      localStorage.removeItem(`test_session_${user.id}_${test.id}`);
-      localStorage.removeItem(`test_start_time_${user.id}_${test.id}`);
-      sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
-      sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
-      AnswerVault.clear(user.id, test.id); // clean IndexedDB vault
-      // Mark this test as submitted — prevents student going back to live test page
-      try {
-        localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
-      } catch (e) {
-        console.warn("Storage quota exceeded, could not save submission marker", e);
+      if (user) {
+        clearLocalTestSession(user.id, id, test.id);
+        // Mark both route ID (slug/custom_id) and test UUID as submitted
+        try {
+          localStorage.setItem(`test_submitted_${user.id}_${id}`, 'true');
+          localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
+        } catch (e) {
+          console.warn("Storage quota exceeded, could not save submission marker", e);
+        }
       }
 
       // Exit Full Screen if active
