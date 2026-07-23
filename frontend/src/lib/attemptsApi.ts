@@ -1,5 +1,6 @@
 import apiClient from '@/lib/apiClient';
 import { withExponentialRetry } from '@/lib/testResilience';
+import { supabase } from '@/integrations/supabase/client';
 
 export async function saveAttempt(user_id: string, test_id: string, answers: any, score?: number, metadata?: any, completion_percentage?: number) {
     try {
@@ -22,6 +23,7 @@ export async function saveAttempt(user_id: string, test_id: string, answers: any
  * backoff (up to 5 tries: 1s, 2s, 4s, 8s, 15s). Use this for final submission.
  * @param onRetry optional callback fired before each retry (use to show toast)
  */
+
 export async function saveAttemptWithRetry(
     user_id: string,
     test_id: string,
@@ -43,8 +45,41 @@ export async function saveAttemptWithRetry(
             }
         );
         return { data, error: null };
-    } catch (error: any) {
-        return { data: null, error };
+    } catch (backendError: any) {
+        console.warn("Backend saveAttempt failed, trying direct Supabase fallback...", backendError);
+        try {
+            const { data: dbData, error: dbError } = await (supabase as any)
+                .from('user_tests')
+                .insert({
+                    user_id,
+                    test_id,
+                    answers,
+                    score: score ?? 0,
+                    metadata: metadata || {}
+                })
+                .select();
+
+            if (dbError) throw dbError;
+
+            try {
+                await (supabase as any)
+                    .from('test_registrations')
+                    .update({
+                        status: 'submitted',
+                        completion_percentage: completion_percentage ?? 100,
+                        last_active_at: new Date().toISOString()
+                    })
+                    .eq('user_id', user_id)
+                    .eq('test_id', test_id);
+            } catch (regErr) {
+                console.warn("Could not update registration status in fallback:", regErr);
+            }
+
+            return { data: dbData, error: null };
+        } catch (directError: any) {
+            console.error("Direct Supabase fallback also failed:", directError);
+            return { data: null, error: backendError || directError };
+        }
     }
 }
 

@@ -51,7 +51,7 @@ async def save_attempt(
         if test_data and test_data.get("settings", {}).get("conduct_exam", {}).get("enabled", False):
             metadata["is_conducted_attempt"] = True
 
-        response = db.table("user_tests").insert({
+        response = supabase.table("user_tests").insert({
             "user_id": payload.user_id,
             "test_id": payload.test_id,
             "answers": payload.answers,
