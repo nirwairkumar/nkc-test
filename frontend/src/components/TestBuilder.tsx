@@ -2288,10 +2288,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                             return (
                                                                 <React.Fragment key={q.id}>
-                                                                    <div className={`${isInGroup ? "border-l-2 border-r-2 border-indigo-300/80 bg-indigo-50/25 px-4 sm:px-5 py-2" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                                                    <div className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
-                                                                        <div className="rounded-t-2xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-4 space-y-3">
+                                                                        <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-6 space-y-3">
                                                                             <div className="flex justify-between items-center px-1">
                                                                                 <h3 className="text-xs font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
                                                                                     <FileText className="w-4 h-4" /> Comprehension Passage
@@ -2676,8 +2676,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     )}
                                                                     </div>
                                                                     {showDivider && (
-                                                                        <div className={isSameGroup ? "border-l-2 border-r-2 border-indigo-300/80 bg-indigo-50/25 px-4 sm:px-5 py-1" : ""}>
-                                                                         <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
+                                                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
                                                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                                                             <div className="mx-2 shrink-0 pointer-events-auto">
                                                                                 <button
@@ -2771,7 +2770,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
-                                            <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-6">
+                                            <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-6 space-y-3">
                                                 <div className="p-1">
                                                     <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                         <IMEInput
@@ -3201,8 +3200,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         )}
                                     </div>
                                     {showDivider && (
-                                        <div className={isSameGroup ? "border-l-2 border-r-2 border-indigo-300/80 bg-indigo-50/25 px-4 sm:px-5 py-1" : ""}>
-                                                                         <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
+                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                             <div className="mx-2 shrink-0 pointer-events-auto">
                                                 <button
