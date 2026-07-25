@@ -2694,7 +2694,18 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                 </React.Fragment>
                                                             );
                                                         })}
-                                                        <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
+                                                        <div className="flex items-center my-6">
+                                                            <div className="flex-1 h-[1px] bg-slate-200"></div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleAddQuestionToSection(sIdx)}
+                                                                className="mx-4 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
+                                                            >
+                                                                <Plus className="w-4 h-4 text-blue-600" />
+                                                                <span>Add Question</span>
+                                                            </button>
+                                                            <div className="flex-1 h-[1px] bg-slate-200"></div>
+                                                        </div>
                                                     </div>
                                                 
                                                     </CardContent>
@@ -2716,7 +2727,18 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         </div>
                                     );
                                 })}
-                                <Button onClick={() => handleAddSection()} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
+                                <div className="flex items-center my-8">
+                                    <div className="flex-1 h-[1px] bg-slate-200"></div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleAddSection()}
+                                        className="mx-4 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4 text-blue-600" />
+                                        <span>New Section</span>
+                                    </button>
+                                    <div className="flex-1 h-[1px] bg-slate-200"></div>
+                                </div>
                             </div>
                         </>
                     ) : (
@@ -3170,16 +3192,17 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                         {/* Add Sub-Question for Passage */}
                                         {isEndOfGroup && (
-                                            <div className="flex justify-center -mt-6 relative z-0">
-                                                <div className="h-6 w-px bg-indigo-200 absolute -top-6"></div>
-                                                <Button
-                                                    size="sm"
-                                                    variant="secondary"
+                                            <div className="flex items-center my-4">
+                                                <div className="flex-1 h-[1px] bg-indigo-200"></div>
+                                                <button
+                                                    type="button"
                                                     onClick={() => handleAddSubQuestion(index)}
-                                                    className="gap-2 bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 shadow-sm rounded-full px-4 mt-2"
+                                                    className="mx-4 text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
                                                 >
-                                                    <Plus className="w-4 h-4" /> Add Question to Passage
-                                                </Button>
+                                                    <Plus className="w-4 h-4 text-indigo-600" />
+                                                    <span>Add Question to Passage</span>
+                                                </button>
+                                                <div className="flex-1 h-[1px] bg-indigo-200"></div>
                                             </div>
                                         )}
                                     </div>
@@ -3203,14 +3226,18 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                             );
                         })}
 
-                            <Button
-                                onClick={handleAddQuestion}
-                                size="lg"
-                                variant="outline"
-                                className="w-full py-8 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/30 transition-all duration-300 text-base font-semibold"
-                            >
-                                <Plus className="w-6 h-6 mr-2" /> Add New Question
-                            </Button>
+                            <div className="flex items-center my-8">
+                                <div className="flex-1 h-[1px] bg-slate-200"></div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddQuestion}
+                                    className="mx-4 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4 text-blue-600" />
+                                    <span>Add Question</span>
+                                </button>
+                                <div className="flex-1 h-[1px] bg-slate-200"></div>
+                            </div>
                         </>
                     )}
                 </div>
