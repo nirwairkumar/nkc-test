@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
+import { Plus, PlusCircle, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -617,6 +617,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }, 1500);
 
         if (typeof insertAtIndex === 'number') {
+            const prevQ = questions[insertAtIndex - 1];
+            const nextQ = questions[insertAtIndex];
+            if (prevQ?.groupId && nextQ?.groupId && prevQ.groupId === nextQ.groupId) {
+                newQ.groupId = prevQ.groupId;
+                newQ.passageContent = prevQ.passageContent;
+            }
             const newQuestions = [...questions];
             newQuestions.splice(insertAtIndex, 0, newQ);
             setQuestions(newQuestions);
@@ -1254,6 +1260,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }, 1500);
 
         if (typeof insertAtIndex === 'number') {
+            const prevQ = section.questions[insertAtIndex - 1];
+            const nextQ = section.questions[insertAtIndex];
+            if (prevQ?.groupId && nextQ?.groupId && prevQ.groupId === nextQ.groupId) {
+                newQ.groupId = prevQ.groupId;
+                newQ.passageContent = prevQ.passageContent;
+            }
             section.questions.splice(insertAtIndex, 0, newQ);
         } else {
             section.questions.push(newQ);
@@ -2272,7 +2284,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             const isNew = newlyAddedQuestionIds.has(q.id);
 
                                                             const isSameGroup = q.groupId && section.questions[qIdx + 1] && q.groupId === section.questions[qIdx + 1].groupId;
-                                                            const showDivider = qIdx < section.questions.length - 1 && !isSameGroup;
+                                                            const showDivider = qIdx < section.questions.length - 1;
 
                                                             return (
                                                                 <React.Fragment key={q.id}>
@@ -2530,7 +2542,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                         group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
                                                                                                         ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                                         focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                                        ${isLastOption ? 'mb-6' : ''}
+                                                                                                        
                                                                                                     `}>
                                                                                                         <button onClick={handleSelect} className={`
                                                                                                             mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
@@ -2628,52 +2640,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                             )}
                                                                                                         </div>
 
-                                                                                                        {isLastOption && (
-                                                                                                            <div className="group/add-btn absolute left-0 right-0 -bottom-6 h-6 flex items-center pointer-events-none">
-                                                                                                                {/* Left corner curve */}
-                                                                                                                <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
-                                                                                                                    <path d="M0,0 C8,0 8,12 16,12" stroke="currentColor" strokeWidth="1.5" />
-                                                                                                                </svg>
-
-                                                                                                                {/* Left horizontal line */}
-                                                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
-
-                                                                                                                {/* Center U-pocket curve */}
-                                                                                                                <div className="relative w-14 h-6 shrink-0 pointer-events-auto">
-                                                                                                                    <svg 
-                                                                                                                        className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible"
-                                                                                                                        viewBox="0 0 56 24"
-                                                                                                                        fill="none"
-                                                                                                                    >
-                                                                                                                        <path 
-                                                                                                                            d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
-                                                                                                                            stroke="currentColor" 
-                                                                                                                            strokeWidth="1.5" 
-                                                                                                                        />
-                                                                                                                    </svg>
-                                                                                                                    <button
-                                                                                                                        type="button"
-                                                                                                                        onClick={() => handleAddOptionToSection(sIdx, qIdx)}
-                                                                                                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:scale-125 transition-all duration-200 cursor-pointer"
-                                                                                                                        title="Add Option"
-                                                                                                                    >
-                                                                                                                        <Plus className="w-4 h-4 stroke-[2.5]" />
-                                                                                                                    </button>
-                                                                                                                </div>
-
-                                                                                                                {/* Right horizontal line */}
-                                                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
-
-                                                                                                                {/* Right corner curve */}
-                                                                                                                <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
-                                                                                                                    <path d="M0,12 C8,12 8,0 16,0" stroke="currentColor" strokeWidth="1.5" />
-                                                                                                                </svg>
-                                                                                                            </div>
-                                                                                                        )}
+                                                                                                        
                                                                                                     </div>
                                                                                                 );
                                                                                             });
                                                                                         })()}
+                                                                                        <div className="flex justify-center pt-2">
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() => handleAddOptionToSection(sIdx, qIdx)}
+                                                                                                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-sm font-medium"
+                                                                                                title="Add option"
+                                                                                            >
+                                                                                                <PlusCircle className="w-4 h-4 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
+                                                                                                <span>Add option</span>
+                                                                                            </button>
+                                                                                        </div>
                                                                                     </div>
                                                                                 )}
                                                                             </div>
@@ -2758,7 +2740,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 const isNew = newlyAddedQuestionIds.has(q.id);
 
                                 const isSameGroup = q.groupId && questions[index + 1] && q.groupId === questions[index + 1].groupId;
-                                const showDivider = index < questions.length - 1 && !isSameGroup;
+                                const showDivider = index < questions.length - 1;
 
                                 return (
                                     <React.Fragment key={q.id}>
@@ -3058,7 +3040,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
                                                                                 ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                ${isLastOption ? 'mb-6' : ''}
+                                                                                
                                                                              `}>
 
                                                                             {/* Option Label/Selector */}
@@ -3164,52 +3146,22 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 )}
                                                                             </div>
 
-                                                                            {isLastOption && (
-                                                                                <div className="group/add-btn absolute left-0 right-0 -bottom-6 h-6 flex items-center pointer-events-none">
-                                                                                    {/* Left corner curve */}
-                                                                                    <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
-                                                                                        <path d="M0,0 C8,0 8,12 16,12" stroke="currentColor" strokeWidth="1.5" />
-                                                                                    </svg>
-
-                                                                                    {/* Left horizontal line */}
-                                                                                    <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
-
-                                                                                    {/* Center U-pocket curve */}
-                                                                                    <div className="relative w-14 h-6 shrink-0 pointer-events-auto">
-                                                                                        <svg 
-                                                                                            className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible"
-                                                                                            viewBox="0 0 56 24"
-                                                                                            fill="none"
-                                                                                        >
-                                                                                            <path 
-                                                                                                d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
-                                                                                                stroke="currentColor" 
-                                                                                                strokeWidth="1.5" 
-                                                                                            />
-                                                                                        </svg>
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => handleAddOption(index)}
-                                                                                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:scale-125 transition-all duration-200 cursor-pointer"
-                                                                                            title="Add Option"
-                                                                                        >
-                                                                                            <Plus className="w-4 h-4 stroke-[2.5]" />
-                                                                                        </button>
-                                                                                    </div>
-
-                                                                                    {/* Right horizontal line */}
-                                                                                    <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
-
-                                                                                    {/* Right corner curve */}
-                                                                                    <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
-                                                                                        <path d="M0,12 C8,12 8,0 16,0" stroke="currentColor" strokeWidth="1.5" />
-                                                                                    </svg>
-                                                                                </div>
-                                                                            )}
+                                                                            
                                                                         </div>
                                                                     );
                                                                 });
                                                             })()}
+                                                                                            <div className="flex justify-center pt-2">
+                                                                                                <button
+                                                                                                    type="button"
+                                                                                                    onClick={() => handleAddOption(index)}
+                                                                                                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-sm font-medium"
+                                                                                                    title="Add option"
+                                                                                                >
+                                                                                                    <PlusCircle className="w-4 h-4 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
+                                                                                                    <span>Add option</span>
+                                                                                                </button>
+                                                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
