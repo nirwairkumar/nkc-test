@@ -2645,7 +2645,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                 );
                                                                                             });
                                                                                         })()}
-                                                                                        <div className="flex justify-center pt-2">
+                                                                                        <div className="flex justify-center -mt-1 pt-0">
                                                                                             <button
                                                                                                 type="button"
                                                                                                 onClick={() => handleAddOptionToSection(sIdx, qIdx)}
@@ -3151,7 +3151,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     );
                                                                 });
                                                             })()}
-                                                                                            <div className="flex justify-center pt-2">
+                                                                                            <div className="flex justify-center -mt-1 pt-0">
                                                                                                 <button
                                                                                                     type="button"
                                                                                                     onClick={() => handleAddOption(index)}
