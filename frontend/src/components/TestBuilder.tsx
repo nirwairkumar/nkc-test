@@ -2677,19 +2677,20 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     </div>
                                                                     {showDivider && (
                                                                         <div className={isSameGroup ? "border-l-2 border-r-2 border-indigo-300/80 bg-indigo-50/25 px-4 sm:px-5 py-1" : ""}>
-                                                                         <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
-                                                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
-                                                                            <div className="mx-2 shrink-0 pointer-events-auto">
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => handleAddQuestionToSection(sIdx, qIdx + 1)}
-                                                                                    className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 bg-white border border-slate-200 shadow-sm hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
-                                                                                    title="Insert Question Here"
-                                                                                >
-                                                                                    <Plus className="w-4 h-4 stroke-[2.5]" />
-                                                                                </button>
+                                                                            <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
+                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
+                                                                                <div className="mx-2 shrink-0 pointer-events-auto">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => handleAddQuestionToSection(sIdx, qIdx + 1)}
+                                                                                        className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 bg-white border border-slate-200 shadow-sm hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+                                                                                        title="Insert Question Here"
+                                                                                    >
+                                                                                        <Plus className="w-4 h-4 stroke-[2.5]" />
+                                                                                    </button>
+                                                                                </div>
+                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                                                             </div>
-                                                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                                                         </div>
                                                                     )}
                                                                 </React.Fragment>
