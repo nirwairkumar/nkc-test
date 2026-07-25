@@ -2676,7 +2676,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     )}
                                                                     </div>
                                                                     {showDivider && (
-                                                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-3 -mb-3">
+                                                                        <div className={`group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-2.5 -mb-2.5 ${isSameGroup ? "border-l-2 border-r-2 border-indigo-200 bg-indigo-50/5" : ""}`}>
                                                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                                                             <div className="mx-2 shrink-0 pointer-events-auto">
                                                                                 <button
@@ -3206,7 +3206,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         )}
                                     </div>
                                     {showDivider && (
-                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-3 -mb-3">
+                                        <div className={`group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-2.5 -mb-2.5 ${isSameGroup ? "border-l-2 border-r-2 border-indigo-200 bg-indigo-50/5" : ""}`}>
                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                             <div className="mx-2 shrink-0 pointer-events-auto">
                                                 <button
