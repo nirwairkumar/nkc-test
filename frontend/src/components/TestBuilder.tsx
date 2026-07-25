@@ -1,3 +1,4 @@
+import { TestBuilderMinimap } from './TestBuilderMinimap';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -2288,7 +2289,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                             return (
                                                                 <React.Fragment key={q.id}>
-                                                                    <div className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                                                    <div data-minimap-id={q.id} className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
                                                                         <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-6 space-y-3">
@@ -2766,7 +2767,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                 return (
                                     <React.Fragment key={q.id}>
-                                        <div className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                        <div data-minimap-id={q.id} className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
 
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
@@ -3438,6 +3439,13 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     onClose={() => setShowGuide(false)}
                 />
             </React.Suspense>
+
+            {/* VS Code Style Minimap Visualizer */}
+            <TestBuilderMinimap
+                mode={enableSectionMode ? 'section' : 'standard'}
+                sections={sections}
+                questions={questions}
+            />
         </div >
     );
 }
