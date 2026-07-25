@@ -2288,16 +2288,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                             return (
                                                                 <React.Fragment key={q.id}>
-                                                                    <div className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                                                    <div className={`${isInGroup ? "border-l-2 border-r-2 border-indigo-300/80 bg-indigo-50/25 px-4 sm:px-5 py-2" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
-                                                                        <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
-                                                                            <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
-                                                                                <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
+                                                                        <div className="rounded-t-2xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-4 space-y-3">
+                                                                            <div className="flex justify-between items-center px-1">
+                                                                                <h3 className="text-xs font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
                                                                                     <FileText className="w-4 h-4" /> Comprehension Passage
                                                                                 </h3>
                                                                             </div>
-                                                                            <div className="p-6">
+                                                                            <div className="p-1">
                                                                                 <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                                                     <IMEInput
                                                                                         as="textarea"
@@ -2676,7 +2676,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     )}
                                                                     </div>
                                                                     {showDivider && (
-                                                                        <div className={`group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-2.5 -mb-2.5 ${isSameGroup ? "border-l-2 border-r-2 border-indigo-200 bg-indigo-50/5" : ""}`}>
+                                                                        <div className={isSameGroup ? "border-l-2 border-r-2 border-indigo-300/80 bg-indigo-50/25 px-4 sm:px-5 py-1" : ""}>
+                                                                         <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
                                                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                                                             <div className="mx-2 shrink-0 pointer-events-auto">
                                                                                 <button
@@ -2771,12 +2772,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
                                             <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-6">
-                                                <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
-                                                    <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
-                                                        <FileText className="w-4 h-4" /> Comprehension Passage
-                                                    </h3>
-                                                </div>
-                                                <div className="p-6">
+                                                <div className="p-1">
                                                     <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                         <IMEInput
                                                             as="textarea"
@@ -3192,21 +3188,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                         {/* Add Sub-Question for Passage */}
                                         {isEndOfGroup && (
-                                            <div className="flex flex-col items-center my-2 -mt-4">
+                                            <div className="rounded-b-2xl border-2 border-t-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 pt-2 mb-6 flex flex-col items-center">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleAddSubQuestion(index)}
-                                                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 cursor-pointer bg-white px-3 py-1 rounded-full border border-indigo-200 shadow-2xs hover:bg-indigo-50/50 transition-colors z-10 mb-1"
+                                                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 cursor-pointer bg-white px-3.5 py-1.5 rounded-full border border-indigo-200/90 shadow-2xs hover:bg-indigo-50 transition-colors my-1"
                                                 >
                                                     <Plus className="w-3.5 h-3.5 text-indigo-600" />
                                                     <span>Add Question to Passage</span>
                                                 </button>
-                                                <div className="w-full h-[1px] bg-indigo-200"></div>
                                             </div>
                                         )}
                                     </div>
                                     {showDivider && (
-                                        <div className={`group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none -mt-2.5 -mb-2.5 ${isSameGroup ? "border-l-2 border-r-2 border-indigo-200 bg-indigo-50/5" : ""}`}>
+                                        <div className={isSameGroup ? "border-l-2 border-r-2 border-indigo-300/80 bg-indigo-50/25 px-4 sm:px-5 py-1" : ""}>
+                                                                         <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
                                             <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
                                             <div className="mx-2 shrink-0 pointer-events-auto">
                                                 <button
