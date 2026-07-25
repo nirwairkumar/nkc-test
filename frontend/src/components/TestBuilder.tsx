@@ -3192,17 +3192,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                         {/* Add Sub-Question for Passage */}
                                         {isEndOfGroup && (
-                                            <div className="flex items-center my-4">
-                                                <div className="flex-1 h-[1px] bg-indigo-200"></div>
+                                            <div className="flex flex-col items-center my-2 -mt-4">
                                                 <button
                                                     type="button"
                                                     onClick={() => handleAddSubQuestion(index)}
-                                                    className="mx-4 text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
+                                                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 cursor-pointer bg-white px-3 py-1 rounded-full border border-indigo-200 shadow-2xs hover:bg-indigo-50/50 transition-colors z-10 mb-1"
                                                 >
-                                                    <Plus className="w-4 h-4 text-indigo-600" />
+                                                    <Plus className="w-3.5 h-3.5 text-indigo-600" />
                                                     <span>Add Question to Passage</span>
                                                 </button>
-                                                <div className="flex-1 h-[1px] bg-indigo-200"></div>
+                                                <div className="w-full h-[1px] bg-indigo-200"></div>
                                             </div>
                                         )}
                                     </div>
