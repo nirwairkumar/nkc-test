@@ -33,11 +33,22 @@ declare global {
     }
 }
 
-export function useTurnstile() {
+export interface TurnstileOptions {
+    theme?: 'auto' | 'light' | 'dark';
+    size?: 'normal' | 'compact' | 'flexible';
+}
+
+export function useTurnstile(options?: TurnstileOptions) {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
     const tokenRef = useRef<string>('');
     const [isReady, setIsReady] = useState(false);
+
+    const requestedTheme = options?.theme || 'auto';
+    const theme = requestedTheme === 'auto' 
+        ? (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+        : requestedTheme;
+    const size = options?.size || 'normal';
 
     // Render the widget once the container and Turnstile script are both available
     useEffect(() => {
@@ -50,8 +61,8 @@ export function useTurnstile() {
             try {
                 widgetIdRef.current = window.turnstile.render(container, {
                     sitekey: TURNSTILE_SITE_KEY,
-                    theme: 'auto',
-                    size: 'flexible',
+                    theme: theme,
+                    size: size,
                     action: 'turnstile-spin-v2',
                     'data-action': 'turnstile-spin-v2',
                     callback: (token: string) => {

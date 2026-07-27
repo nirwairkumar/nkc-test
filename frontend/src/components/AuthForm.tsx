@@ -59,7 +59,7 @@ export default function AuthForm() {
     const location = useLocation();
 
     const { refreshSession } = useAuth();
-    const { turnstileRef, getToken, resetTurnstile } = useTurnstile();
+    const { turnstileRef, getToken, resetTurnstile } = useTurnstile({ theme: 'auto', size: 'normal' });
 
     useEffect(() => {
         // Eagerly warm up the auth endpoint — by the time the user types
@@ -374,7 +374,12 @@ export default function AuthForm() {
 
                                 {/* Cloudflare Turnstile bot check (invisible in managed mode for normal users) */}
                                 {(view === 'login' || view === 'signup') && (
-                                    <div ref={turnstileRef} className="flex justify-center my-2 min-h-[30px]" />
+                                    <div className="my-3 flex justify-center items-center w-full">
+                                        <div 
+                                            ref={turnstileRef} 
+                                            className="flex justify-center items-center min-h-[65px] w-full rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-1.5 shadow-sm transition-all duration-200" 
+                                        />
+                                    </div>
                                 )}
 
                                 <Button type="submit" className="w-full relative" disabled={isLoading}>
