@@ -111,7 +111,9 @@ export default function TestPage() {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('online');
 
   // Track delayed proctoring start state
-  const [isExamStarted, setIsExamStarted] = useState(false);
+  const [isExamStarted, setIsExamStarted] = useState(() => {
+    return !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
+  });
 
   // Reporting State
   const [reportReason, setReportReason] = useState<string>('');
