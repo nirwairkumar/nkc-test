@@ -30,6 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { signUpWithEmail, signInWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
+import { useTurnstile } from '@/hooks/useTurnstile';
 
 
 const formSchema = z.object({
@@ -58,6 +59,7 @@ export default function AuthForm() {
     const location = useLocation();
 
     const { refreshSession } = useAuth();
+    const { turnstileRef, getToken, resetTurnstile } = useTurnstile();
 
     useEffect(() => {
         // Eagerly warm up the auth endpoint — by the time the user types
@@ -95,6 +97,7 @@ export default function AuthForm() {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
+        const turnstileToken = getToken();
         try {
             if (view === 'login') {
                 if (!values.password) {
@@ -109,9 +112,10 @@ export default function AuthForm() {
                 }
 
                 try {
-                    const response = await signInWithEmail(values.email, values.password!);
+                    const response = await signInWithEmail(values.email, values.password!, turnstileToken);
 
                     if (response.error) {
+                        resetTurnstile();
                         toast.error(response.error.message || 'Login failed');
                         setIsLoading(false);
                         return;
@@ -127,9 +131,6 @@ export default function AuthForm() {
 
                     toast.success('Successfully logged in!');
 
-                    // Let the AuthContext update (it listens to onAuthStateChange)
-                    // We might need a small delay or just rely on the navigate
-
                     const intent = localStorage.getItem('auth_redirect_intent');
                     const stateFrom = location.state?.from;
                     const from = intent || (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname) || '/';
@@ -138,6 +139,7 @@ export default function AuthForm() {
                     navigate(from, { replace: true });
 
                 } catch (err: any) {
+                    resetTurnstile();
                     console.error("Login failed", err);
                     toast.error(err.response?.data?.detail || err.message || 'Login failed');
                     setIsLoading(false);
@@ -159,8 +161,9 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
-                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation);
+                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation, turnstileToken);
                 if (error) {
+                    resetTurnstile();
                     if (error.message.includes('already registered') || error.message.includes('already exists')) {
                         toast.error('Account already exists. Please login.');
                     } else {
@@ -169,16 +172,10 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
-                /* 
-                toast.success('Sign up successful!', {
-                    duration: 5000,
-                });
-                setView('login');
-                */
 
                 // Direct Login logic after signup
                 try {
-                    const response = await signInWithEmail(values.email, values.password!);
+                    const response = await signInWithEmail(values.email, values.password!, turnstileToken);
 
                     if (response.error) throw response.error;
 
@@ -374,6 +371,11 @@ export default function AuthForm() {
                                 />
                             )}
                             */}
+
+                                {/* Cloudflare Turnstile bot check (invisible in managed mode for normal users) */}
+                                {(view === 'login' || view === 'signup') && (
+                                    <div ref={turnstileRef} className="flex justify-center my-2 min-h-[30px]" />
+                                )}
 
                                 <Button type="submit" className="w-full relative" disabled={isLoading}>
                                     {isLoading ? (

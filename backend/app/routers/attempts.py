@@ -30,12 +30,34 @@ from app.services.attempt_service import (
 )
 from app.utils.attempt_control import apply_section_attempt_control, calculate_test_max_marks
 
+def _verify_auth_token_attempts(request: Request, db: Client) -> str:
+    """Verify JWT from Authorization header and return requesting user's ID."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    token = auth_header.replace("Bearer ", "")
+    try:
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_response.user.id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
 @router.post("/save")
 async def save_attempt(
     payload: SaveAttemptRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        # Security: Verify JWT and use authenticated user_id
+        authenticated_user_id = _verify_auth_token_attempts(request, db)
+        # Override client-supplied user_id with the authenticated one
+        effective_user_id = authenticated_user_id
+
         # Fetch test details for attempt control validation
         test_res = supabase.table("tests").select("id, enable_section_mode, sections, settings").eq("id", payload.test_id).single().execute()
         test_data = test_res.data
@@ -52,7 +74,7 @@ async def save_attempt(
             metadata["is_conducted_attempt"] = True
 
         response = supabase.table("user_tests").insert({
-            "user_id": payload.user_id,
+            "user_id": effective_user_id,
             "test_id": payload.test_id,
             "answers": payload.answers,
             "score": payload.score,
@@ -70,20 +92,21 @@ async def save_attempt(
                     "completion_percentage": pct,
                     "last_active_at": now
                 })\
-                .eq("user_id", payload.user_id)\
+                .eq("user_id", effective_user_id)\
                 .eq("test_id", payload.test_id)\
                 .neq("status", "submitted")\
                 .execute()
-        except Exception as reg_err:
-            print(f"Warning: Could not update registration status: {reg_err}")
+        except Exception:
+            pass  # Non-critical: don't block submission
         
         # In v2, insert returns APIResponse. .data contains array of inserted rows.
         if response.data:
             return {"data": response.data[0], "error": None}
         return {"data": None, "error": "Insert failed"}
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error saving attempt: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to save attempt")
 
 @router.get("/user/{user_id}")
 async def get_user_attempts(
@@ -566,27 +589,62 @@ async def get_test_attempts(
 @router.delete("/{attempt_id}")
 async def delete_attempt(
     attempt_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        # Security: Verify JWT
+        requesting_user_id = _verify_auth_token_attempts(request, db)
+
+        # Verify ownership: only the attempt owner or an admin can delete
+        attempt_res = supabase.table("user_tests").select("user_id").eq("id", attempt_id).execute()
+        if not attempt_res.data:
+            raise HTTPException(status_code=404, detail="Attempt not found")
+
+        attempt_owner = attempt_res.data[0].get("user_id")
+        if attempt_owner != requesting_user_id:
+            # Check admin
+            admin_res = supabase.table("admins").select("email").execute()
+            profile_res = supabase.table("profiles").select("email").eq("id", requesting_user_id).execute()
+            user_email = profile_res.data[0].get("email") if profile_res.data else None
+            is_admin = any(a.get("email") == user_email for a in (admin_res.data or []))
+            if not is_admin:
+                raise HTTPException(status_code=403, detail="Not authorized to delete this attempt")
+
         supabase.table("user_tests").delete().eq("id", attempt_id).execute()
         return {"success": True}
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error deleting attempt: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to delete attempt")
 
 @router.delete("/registration/{test_id}/{user_id}")
 async def delete_registration(
     test_id: str,
     user_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        # Security: Verify JWT and ownership
+        requesting_user_id = _verify_auth_token_attempts(request, db)
+        if requesting_user_id != user_id:
+            # Check admin
+            profile_res = supabase.table("profiles").select("email").eq("id", requesting_user_id).execute()
+            user_email = profile_res.data[0].get("email") if profile_res.data else None
+            if user_email:
+                admin_res = supabase.table("admins").select("email").eq("email", user_email).execute()
+                if not admin_res.data:
+                    raise HTTPException(status_code=403, detail="Not authorized")
+            else:
+                raise HTTPException(status_code=403, detail="Not authorized")
+
         db.table("test_registrations").delete().eq("test_id", test_id).eq("user_id", user_id).execute()
         return {"success": True}
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Error deleting registration: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to delete registration")
 
 
 # ─── Progress Tracking ─────────────────────────────────────────

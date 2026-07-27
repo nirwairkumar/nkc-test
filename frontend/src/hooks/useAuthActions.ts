@@ -3,11 +3,12 @@ import { authApi } from '@/lib/authApi';
 import { tokenStorage } from '@/utils/tokenStorage';
 
 
-export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string) {
+export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string, turnstileToken?: string) {
     try {
         const response = await authApi.register({
             email,
             password,
+            turnstile_token: turnstileToken,
             metadata: {
                 full_name: name,
                 designation: designation,
@@ -19,9 +20,9 @@ export async function signUpWithEmail(email: string, password: string, name?: st
     }
 }
 
-export async function signInWithEmail(email: string, password: string) {
+export async function signInWithEmail(email: string, password: string, turnstileToken?: string) {
     try {
-        const response = await authApi.login({ email, password });
+        const response = await authApi.login({ email, password, turnstile_token: turnstileToken });
 
         // After successful login, store tokens
         if (response.data?.session?.access_token) {

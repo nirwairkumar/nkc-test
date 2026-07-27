@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any
 from app.core.config import settings
 
 security = HTTPBearer()
+from app.utils.rate_limiter import check_login_rate_limit, check_register_rate_limit, check_password_reset_rate_limit
 
 router = APIRouter()
 
@@ -29,7 +30,7 @@ class PasswordUpdateRequest(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(check_login_rate_limit)])
 async def login(payload: LoginRequest):
     try:
         response = supabase.auth.sign_in_with_password({
@@ -55,9 +56,8 @@ async def login(payload: LoginRequest):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         raise HTTPException(status_code=400, detail=detail)
 
-@router.post("/register")
+@router.post("/register", dependencies=[Depends(check_register_rate_limit)])
 async def register(payload: RegisterRequest):
-    print("DEBUG: REGISTER ROUTE HIT! payload:", payload)
     try:
         signup_data = {
             "email": payload.email,
@@ -121,7 +121,7 @@ async def get_me(
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-@router.post("/password-reset")
+@router.post("/password-reset", dependencies=[Depends(check_password_reset_rate_limit)])
 async def password_reset(payload: PasswordResetRequest, request: Request):
     try:
         host = request.headers.get("origin") or "https://testoza.com"
@@ -196,8 +196,7 @@ async def update_user(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR in update-user: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Failed to update user")
 
 @router.get("/google")
 async def get_google_login_url(request: Request):
@@ -207,8 +206,7 @@ async def get_google_login_url(request: Request):
         if not frontend_url.startswith('http'):
             frontend_url = f"https://{frontend_url}"
             
-        print(f"DEBUG: Authenticating with redirect to: {frontend_url}/auth/callback")
-        
+
         response = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
@@ -222,9 +220,7 @@ async def get_google_login_url(request: Request):
             
         return {"data": response, "error": None}
     except Exception as e:
-        print(f"ERROR in Google Auth: {str(e)}")
-        # We return the error detail so the frontend toast shows the REAL problem
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Google authentication failed")
 
 @router.post("/callback")
 async def exchange_code_for_session(payload: Dict[str, Any]):
@@ -234,8 +230,7 @@ async def exchange_code_for_session(payload: Dict[str, Any]):
         if not code:
             raise HTTPException(status_code=400, detail="Missing authorization code")
         
-        print(f"DEBUG: Exchanging PKCE code for session")
-        
+
         response = supabase.auth.exchange_code_for_session({"auth_code": code})
         
         if hasattr(response, "session") and response.session:
@@ -250,6 +245,5 @@ async def exchange_code_for_session(payload: Dict[str, Any]):
             }
         return {"data": jsonable_encoder(response), "error": None}
     except Exception as e:
-        print(f"ERROR in code exchange: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Code exchange failed")
 
