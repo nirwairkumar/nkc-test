@@ -58,12 +58,16 @@ export async function resetPasswordForEmail(email: string) {
     }
 }
 
+import { getAppUrl } from '@/utils/subdomain';
+
 export async function signInWithGoogle() {
     try {
+        const redirectUrl = getAppUrl('/auth/callback');
+        console.log('[AuthActions] Initiating Google OAuth with redirectTo:', redirectUrl);
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`
+                redirectTo: redirectUrl
             }
         });
 
