@@ -1,3 +1,4 @@
+import { getApiUrl } from '@/lib/getApiUrl';
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -334,7 +335,7 @@ export default function TestPage() {
   // ─── Proactive token refresh: start when test loads, stop on unmount ────────
   useEffect(() => {
     if (!test || !user) return;
-    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '') + '/';
+    const apiBase = getApiUrl().replace(/\/$/, '') + '/';
     tokenRefreshCleanupRef.current = startProactiveTokenRefresh(apiBase);
     return () => { tokenRefreshCleanupRef.current?.(); };
   }, [test?.id, user?.id]);

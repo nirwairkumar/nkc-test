@@ -746,7 +746,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         setAbortController(abortCtrl);
 
         try {
-            const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+            const API_BASE_URL = getApiUrl();
             const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
             // Use ULTRA-FAST streaming endpoint
@@ -891,7 +891,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     : 'AI is analyzing content & generating questions...')
             );
 
-            const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+            const API_BASE_URL = getApiUrl();
             const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
             const response = await fetch(`${baseUrl}/ai/parse?mode=${selectedMode}`, {
