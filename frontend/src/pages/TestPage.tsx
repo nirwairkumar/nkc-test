@@ -1,5 +1,5 @@
 import { getApiUrl } from '@/lib/getApiUrl';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
 import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus, PlayCircle, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus, PlayCircle, BookOpen, Layers } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -2659,37 +2659,128 @@ export default function TestPage() {
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Submit Test?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-4 pt-2">
-                <p>Are you sure you want to finish the test? You cannot change your answers after submitting.</p>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="bg-slate-50 p-3 rounded-md border text-center">
-                    <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Total Questions</div>
-                    <div className="text-xl font-bold text-slate-800">{test.questions.length}</div>
-                  </div>
-                  <div className="bg-green-50 p-3 rounded-md border border-green-100 text-center">
-                    <div className="text-xs text-green-600 uppercase font-bold tracking-wider mb-1">Answered</div>
-                    <div className="text-xl font-bold text-green-700">{Object.keys(answers).length}</div>
-                  </div>
-                  <div className="bg-purple-50 p-3 rounded-md border border-purple-100 text-center">
-                    <div className="text-xs text-purple-600 uppercase font-bold tracking-wider mb-1">Marked for Review</div>
-                    <div className="text-xl font-bold text-purple-700">{markedForReview.size}</div>
-                  </div>
-                  <div className="bg-red-50 p-3 rounded-md border border-red-100 text-center">
-                    <div className="text-xs text-red-600 uppercase font-bold tracking-wider mb-1">Unanswered</div>
-                    <div className="text-xl font-bold text-red-700">{test.questions.length - Object.keys(answers).length}</div>
-                  </div>
-                </div>
-              </div>
+        <AlertDialogContent className="max-w-md sm:max-w-lg md:max-w-xl max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0">
+          <AlertDialogHeader className="p-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <AlertDialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <CheckCircle className="w-5 h-5 text-primary" /> Submit Test?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Are you sure you want to finish the test? You cannot change your answers after submitting.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSubmit} className="bg-primary">Yes, Submit</AlertDialogAction>
+
+          <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar max-h-[60vh]">
+            {/* Overall Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-sm">
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-200/80 dark:border-slate-700/80 text-center">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider mb-0.5">Total Questions</div>
+                <div className="text-xl font-extrabold text-slate-800 dark:text-slate-100">{test?.questions?.length || 0}</div>
+              </div>
+              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-3 rounded-lg border border-emerald-200/80 dark:border-emerald-800/50 text-center">
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase font-semibold tracking-wider mb-0.5">Answered</div>
+                <div className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">
+                  {Object.keys(answers).filter(qId => {
+                    const ans = answers[Number(qId)];
+                    if (ans === undefined || ans === null || ans === '') return false;
+                    if (Array.isArray(ans) && ans.length === 0) return false;
+                    return true;
+                  }).length}
+                </div>
+              </div>
+              <div className="bg-purple-50/80 dark:bg-purple-950/30 p-3 rounded-lg border border-purple-200/80 dark:border-purple-800/50 text-center">
+                <div className="text-[11px] text-purple-600 dark:text-purple-400 uppercase font-semibold tracking-wider mb-0.5">Marked for Review</div>
+                <div className="text-xl font-extrabold text-purple-700 dark:text-purple-400">{markedForReview.size}</div>
+              </div>
+              <div className="bg-rose-50/80 dark:bg-rose-950/30 p-3 rounded-lg border border-rose-200/80 dark:border-rose-800/50 text-center">
+                <div className="text-[11px] text-rose-600 dark:text-rose-400 uppercase font-semibold tracking-wider mb-0.5">Unanswered</div>
+                <div className="text-xl font-extrabold text-rose-700 dark:text-rose-400">
+                  {Math.max(0, (test?.questions?.length || 0) - Object.keys(answers).filter(qId => {
+                    const ans = answers[Number(qId)];
+                    if (ans === undefined || ans === null || ans === '') return false;
+                    if (Array.isArray(ans) && ans.length === 0) return false;
+                    return true;
+                  }).length)}
+                </div>
+              </div>
+            </div>
+
+            {/* Section-Wise Breakdown (if sections are present) */}
+            {test?.sections && test.sections.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-primary" /> Section Breakdown
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">{test.sections.length} Sections</span>
+                </div>
+
+                <div className="space-y-2.5 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+                  {test.sections.map((sec: any, idx: number) => {
+                    const secQuestions = sec.questions || [];
+                    const secTotal = secQuestions.length;
+                    let secAnswered = 0;
+                    let secMarked = 0;
+
+                    secQuestions.forEach((q: any) => {
+                      const ans = answers[q.id];
+                      const isAns = ans !== undefined && ans !== null && ans !== '' && (!Array.isArray(ans) || ans.length > 0);
+                      if (isAns) secAnswered++;
+                      if (markedForReview.has(q.id)) secMarked++;
+                    });
+
+                    const secUnanswered = Math.max(0, secTotal - secAnswered);
+
+                    return (
+                      <div 
+                        key={sec.id || `sec-${idx}`} 
+                        className="p-3 bg-slate-50/50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-lg space-y-2 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                            {sec.name || `Section ${idx + 1}`}
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400 font-medium text-xs">
+                            {secAnswered} / {secTotal} Attempted
+                          </span>
+                        </div>
+
+                        {/* Mini stats pills */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 font-medium">
+                            Answered: <strong>{secAnswered}</strong>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/40 font-medium">
+                            Review: <strong>{secMarked}</strong>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/40 font-medium">
+                            Unanswered: <strong>{secUnanswered}</strong>
+                          </span>
+                        </div>
+
+                        {/* Visual progress bar */}
+                        <div className="w-full bg-slate-200/70 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden flex">
+                          <div 
+                            className="bg-emerald-500 h-full transition-all duration-300" 
+                            style={{ width: `${secTotal > 0 ? (secAnswered / secTotal) * 100 : 0}%` }}
+                          />
+                          <div 
+                            className="bg-purple-500 h-full transition-all duration-300" 
+                            style={{ width: `${secTotal > 0 ? (secMarked / secTotal) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <AlertDialogFooter className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-row items-center justify-end gap-2">
+            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSubmit} className="bg-primary hover:bg-primary/90 text-white font-semibold">
+              Yes, Submit
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
