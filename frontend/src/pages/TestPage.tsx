@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { getApiUrl } from '@/lib/getApiUrl';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { fetchTestById, Test } from '@/lib/testsApi';
 import { saveAttempt, saveAttemptWithRetry } from '@/lib/attemptsApi';
 import { AnswerVault, startProactiveTokenRefresh } from '@/lib/testResilience';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus, PlayCircle, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Save, Flag, Menu, X, CheckCircle, Sun, Moon, Bookmark, Info, Eye, EyeOff, TriangleAlert, Calculator, MessageSquareWarning, Maximize, Maximize2, ScrollText, Loader2, Plus, Minus, PlayCircle, BookOpen, Layers } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,6 +56,20 @@ const parseMark = (value: string | number | undefined, defaultVal: number = 0): 
   }
 };
 
+// Helper to clear all local test persistence across route ID (slug/custom_id) and UUID keys
+const clearLocalTestSession = (userId: string, paramId?: string | null, testUuid?: string | null) => {
+  const keys = Array.from(new Set([paramId, testUuid].filter(Boolean) as string[]));
+  keys.forEach(k => {
+    localStorage.removeItem(`test_session_${userId}_${k}`);
+    localStorage.removeItem(`test_start_time_${userId}_${k}`);
+    localStorage.removeItem(`test_warnings_${userId}_${k}`);
+    localStorage.removeItem(`test_submitted_${userId}_${k}`);
+    sessionStorage.removeItem(`test_active_${userId}_${k}`);
+    sessionStorage.removeItem(`vault_emergency_${userId}_${k}`);
+    AnswerVault.clear(userId, k);
+  });
+};
+
 export default function TestPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -97,7 +112,9 @@ export default function TestPage() {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('online');
 
   // Track delayed proctoring start state
-  const [isExamStarted, setIsExamStarted] = useState(false);
+  const [isExamStarted, setIsExamStarted] = useState(() => {
+    return !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
+  });
 
   // Reporting State
   const [reportReason, setReportReason] = useState<string>('');
@@ -294,10 +311,13 @@ export default function TestPage() {
 
     try {
       localStorage.setItem(`test_session_${user.id}_${id}`, JSON.stringify(sessionData));
+      if (test?.id && test.id !== id) {
+        localStorage.setItem(`test_session_${user.id}_${test.id}`, JSON.stringify(sessionData));
+      }
     } catch (e) {
       console.warn("Storage quota exceeded, could not save session draft", e);
     }
-  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, isExamStarted]);
+  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, test?.id, isExamStarted]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
   useEffect(() => {
@@ -305,6 +325,9 @@ export default function TestPage() {
     if (vaultSaveTimerRef.current) clearTimeout(vaultSaveTimerRef.current);
     vaultSaveTimerRef.current = setTimeout(() => {
       AnswerVault.save(user.id, test.id, answers as Record<string, any>);
+      if (id && id !== test.id) {
+        AnswerVault.save(user.id, id, answers as Record<string, any>);
+      }
     }, 30_000); // save after 30s of inactivity
     return () => { if (vaultSaveTimerRef.current) clearTimeout(vaultSaveTimerRef.current); };
   }, [answers, user, test, id, isSubmitting]);
@@ -312,7 +335,7 @@ export default function TestPage() {
   // ─── Proactive token refresh: start when test loads, stop on unmount ────────
   useEffect(() => {
     if (!test || !user) return;
-    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '') + '/';
+    const apiBase = getApiUrl().replace(/\/$/, '') + '/';
     tokenRefreshCleanupRef.current = startProactiveTokenRefresh(apiBase);
     return () => { tokenRefreshCleanupRef.current?.(); };
   }, [test?.id, user?.id]);
@@ -418,48 +441,71 @@ export default function TestPage() {
   // ─── Guard: Redirect away if this test was already submitted ─────────────
   useEffect(() => {
     if (!id || !user) return;
-    const submittedKey = `test_submitted_${user.id}_${id}`;
-    const alreadySubmitted = localStorage.getItem(submittedKey) === 'true';
+    const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
+    if (isFromIntro) return; // Handled in session mount effect below
+
+    const submittedKeyParam = `test_submitted_${user.id}_${id}`;
+    const submittedKeyUuid = test?.id ? `test_submitted_${user.id}_${test.id}` : null;
+    const alreadySubmitted = localStorage.getItem(submittedKeyParam) === 'true' ||
+      (submittedKeyUuid && localStorage.getItem(submittedKeyUuid) === 'true');
+
     if (alreadySubmitted) {
-      // The session localStorage was cleared on submit, so no resume data exists.
-      // Redirect student away from the test page — they cannot go back.
       toast.error('This test has already been submitted. You cannot re-enter it.');
       navigate('/', { replace: true });
     }
-  }, [user, id]);
+  }, [user, id, test?.id, location.state]);
 
   // Check for saved session on mount
   useEffect(() => {
-    if (!id) return;
-    // Only check persistence if user is logged in
-    if (!user) return;
+    if (!id || !user) return;
 
-    // If the student arrived here with a fresh intro-page entry (combinedMode, or
-    // location.state has introEntry flag), clear any stale submitted marker so
-    // unlimited-attempt tests can start a new attempt.
-    const isFromIntro = !!(location.state as any)?.fromIntro;
+    const isFromIntro = !!(location.state as any)?.fromIntro || !!(location.state as any)?.combinedMode;
     if (isFromIntro) {
-      localStorage.removeItem(`test_submitted_${user.id}_${id}`);
+      // User explicitly started a FRESH attempt from TestIntroPage.
+      // Purge all stale session data and submission markers from previous attempts.
+      clearLocalTestSession(user.id, id, test?.id);
+      setShowResumeDialog(false);
+      setResumeData(null);
+      return;
     }
 
-    const saved = localStorage.getItem(`test_session_${user.id}_${id}`);
-    const activeSession = sessionStorage.getItem(`test_active_${user.id}_${id}`);
+    // Guard: If test was already submitted, clear local session and do NOT prompt for resume
+    const submittedKeyParam = `test_submitted_${user.id}_${id}`;
+    const submittedKeyUuid = test?.id ? `test_submitted_${user.id}_${test.id}` : null;
+    const isSubmitted = localStorage.getItem(submittedKeyParam) === 'true' ||
+      (submittedKeyUuid && localStorage.getItem(submittedKeyUuid) === 'true');
+
+    if (isSubmitted) {
+      clearLocalTestSession(user.id, id, test?.id);
+      setShowResumeDialog(false);
+      setResumeData(null);
+      return;
+    }
+
+    const savedParam = localStorage.getItem(`test_session_${user.id}_${id}`);
+    const savedUuid = test?.id ? localStorage.getItem(`test_session_${user.id}_${test.id}`) : null;
+    const saved = savedParam || savedUuid;
+
+    const activeSessionParam = sessionStorage.getItem(`test_active_${user.id}_${id}`);
+    const activeSessionUuid = test?.id ? sessionStorage.getItem(`test_active_${user.id}_${test.id}`) : null;
+    const activeSession = activeSessionParam || activeSessionUuid;
 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setResumeData(parsed);
 
-        // If session storage exists, it's a refresh. If not, it's a fresh tab/disconnect return.
         if (activeSession) {
           setIsRefresh(true);
         } else {
           setIsRefresh(false);
         }
 
-        // Mark tab as active
         try {
           sessionStorage.setItem(`test_active_${user.id}_${id}`, 'true');
+          if (test?.id && test.id !== id) {
+            sessionStorage.setItem(`test_active_${user.id}_${test.id}`, 'true');
+          }
         } catch (e) {
           console.warn("Storage quota exceeded, could not mark session active", e);
         }
@@ -468,7 +514,7 @@ export default function TestPage() {
         console.error("Failed to parse saved session", e);
       }
     }
-  }, [user, id]);
+  }, [user, id, test?.id, location.state]);
 
   const handleResumeTest = () => {
     if (!resumeData) return;
@@ -487,9 +533,9 @@ export default function TestPage() {
   const cancelResume = () => {
     if (!id) return;
     if (user) {
-      localStorage.removeItem(`test_session_${user.id}_${id}`);
-      sessionStorage.removeItem(`test_active_${user.id}_${id}`);
+      clearLocalTestSession(user.id, id, test?.id);
     }
+    setResumeData(null);
     setShowResumeDialog(false);
     toast.info("Starting fresh test session.");
   };
@@ -1219,16 +1265,15 @@ export default function TestPage() {
       setIsSubmitting(false);
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
-      localStorage.removeItem(`test_session_${user.id}_${test.id}`);
-      localStorage.removeItem(`test_start_time_${user.id}_${test.id}`);
-      sessionStorage.removeItem(`test_active_${user.id}_${test.id}`);
-      sessionStorage.removeItem(`vault_emergency_${user.id}_${test.id}`);
-      AnswerVault.clear(user.id, test.id); // clean IndexedDB vault
-      // Mark this test as submitted — prevents student going back to live test page
-      try {
-        localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
-      } catch (e) {
-        console.warn("Storage quota exceeded, could not save submission marker", e);
+      if (user) {
+        clearLocalTestSession(user.id, id, test.id);
+        // Mark both route ID (slug/custom_id) and test UUID as submitted
+        try {
+          localStorage.setItem(`test_submitted_${user.id}_${id}`, 'true');
+          localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
+        } catch (e) {
+          console.warn("Storage quota exceeded, could not save submission marker", e);
+        }
       }
 
       // Exit Full Screen if active
@@ -2614,37 +2659,128 @@ export default function TestPage() {
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Submit Test?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-4 pt-2">
-                <p>Are you sure you want to finish the test? You cannot change your answers after submitting.</p>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="bg-slate-50 p-3 rounded-md border text-center">
-                    <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Total Questions</div>
-                    <div className="text-xl font-bold text-slate-800">{test.questions.length}</div>
-                  </div>
-                  <div className="bg-green-50 p-3 rounded-md border border-green-100 text-center">
-                    <div className="text-xs text-green-600 uppercase font-bold tracking-wider mb-1">Answered</div>
-                    <div className="text-xl font-bold text-green-700">{Object.keys(answers).length}</div>
-                  </div>
-                  <div className="bg-purple-50 p-3 rounded-md border border-purple-100 text-center">
-                    <div className="text-xs text-purple-600 uppercase font-bold tracking-wider mb-1">Marked for Review</div>
-                    <div className="text-xl font-bold text-purple-700">{markedForReview.size}</div>
-                  </div>
-                  <div className="bg-red-50 p-3 rounded-md border border-red-100 text-center">
-                    <div className="text-xs text-red-600 uppercase font-bold tracking-wider mb-1">Unanswered</div>
-                    <div className="text-xl font-bold text-red-700">{test.questions.length - Object.keys(answers).length}</div>
-                  </div>
-                </div>
-              </div>
+        <AlertDialogContent className="max-w-md sm:max-w-lg md:max-w-xl max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0">
+          <AlertDialogHeader className="p-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <AlertDialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <CheckCircle className="w-5 h-5 text-primary" /> Submit Test?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Are you sure you want to finish the test? You cannot change your answers after submitting.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSubmit} className="bg-primary">Yes, Submit</AlertDialogAction>
+
+          <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar max-h-[60vh]">
+            {/* Overall Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-sm">
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-lg border border-slate-200/80 dark:border-slate-700/80 text-center">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-semibold tracking-wider mb-0.5">Total Questions</div>
+                <div className="text-xl font-extrabold text-slate-800 dark:text-slate-100">{test?.questions?.length || 0}</div>
+              </div>
+              <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-3 rounded-lg border border-emerald-200/80 dark:border-emerald-800/50 text-center">
+                <div className="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase font-semibold tracking-wider mb-0.5">Answered</div>
+                <div className="text-xl font-extrabold text-emerald-700 dark:text-emerald-400">
+                  {Object.keys(answers).filter(qId => {
+                    const ans = answers[Number(qId)];
+                    if (ans === undefined || ans === null || ans === '') return false;
+                    if (Array.isArray(ans) && ans.length === 0) return false;
+                    return true;
+                  }).length}
+                </div>
+              </div>
+              <div className="bg-purple-50/80 dark:bg-purple-950/30 p-3 rounded-lg border border-purple-200/80 dark:border-purple-800/50 text-center">
+                <div className="text-[11px] text-purple-600 dark:text-purple-400 uppercase font-semibold tracking-wider mb-0.5">Marked for Review</div>
+                <div className="text-xl font-extrabold text-purple-700 dark:text-purple-400">{markedForReview.size}</div>
+              </div>
+              <div className="bg-rose-50/80 dark:bg-rose-950/30 p-3 rounded-lg border border-rose-200/80 dark:border-rose-800/50 text-center">
+                <div className="text-[11px] text-rose-600 dark:text-rose-400 uppercase font-semibold tracking-wider mb-0.5">Unanswered</div>
+                <div className="text-xl font-extrabold text-rose-700 dark:text-rose-400">
+                  {Math.max(0, (test?.questions?.length || 0) - Object.keys(answers).filter(qId => {
+                    const ans = answers[Number(qId)];
+                    if (ans === undefined || ans === null || ans === '') return false;
+                    if (Array.isArray(ans) && ans.length === 0) return false;
+                    return true;
+                  }).length)}
+                </div>
+              </div>
+            </div>
+
+            {/* Section-Wise Breakdown (if sections are present) */}
+            {test?.sections && test.sections.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-primary" /> Section Breakdown
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">{test.sections.length} Sections</span>
+                </div>
+
+                <div className="space-y-2.5 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+                  {test.sections.map((sec: any, idx: number) => {
+                    const secQuestions = sec.questions || [];
+                    const secTotal = secQuestions.length;
+                    let secAnswered = 0;
+                    let secMarked = 0;
+
+                    secQuestions.forEach((q: any) => {
+                      const ans = answers[q.id];
+                      const isAns = ans !== undefined && ans !== null && ans !== '' && (!Array.isArray(ans) || ans.length > 0);
+                      if (isAns) secAnswered++;
+                      if (markedForReview.has(q.id)) secMarked++;
+                    });
+
+                    const secUnanswered = Math.max(0, secTotal - secAnswered);
+
+                    return (
+                      <div 
+                        key={sec.id || `sec-${idx}`} 
+                        className="p-3 bg-slate-50/50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-lg space-y-2 shadow-2xs"
+                      >
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                            {sec.name || `Section ${idx + 1}`}
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400 font-medium text-xs">
+                            {secAnswered} / {secTotal} Attempted
+                          </span>
+                        </div>
+
+                        {/* Mini stats pills */}
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 font-medium">
+                            Answered: <strong>{secAnswered}</strong>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/40 font-medium">
+                            Review: <strong>{secMarked}</strong>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/40 font-medium">
+                            Unanswered: <strong>{secUnanswered}</strong>
+                          </span>
+                        </div>
+
+                        {/* Visual progress bar */}
+                        <div className="w-full bg-slate-200/70 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden flex">
+                          <div 
+                            className="bg-emerald-500 h-full transition-all duration-300" 
+                            style={{ width: `${secTotal > 0 ? (secAnswered / secTotal) * 100 : 0}%` }}
+                          />
+                          <div 
+                            className="bg-purple-500 h-full transition-all duration-300" 
+                            style={{ width: `${secTotal > 0 ? (secMarked / secTotal) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <AlertDialogFooter className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-row items-center justify-end gap-2">
+            <AlertDialogCancel className="mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSubmit} className="bg-primary hover:bg-primary/90 text-white font-semibold">
+              Yes, Submit
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

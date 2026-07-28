@@ -13,6 +13,17 @@ export default function SubdomainGuard() {
     const isAppDomain = hostname === 'app.testoza.com';
 
     if (isMainDomain) {
+      // 1. If OAuth response (hash with access_token or query param code/error) lands on main domain, forward to app subdomain immediately
+      const hasAuthHash = window.location.hash.includes('access_token') || window.location.hash.includes('error');
+      const hasAuthCode = window.location.search.includes('code=') || window.location.search.includes('error=');
+      const isCallbackPath = location.pathname.startsWith('/auth/callback');
+
+      if (hasAuthHash || hasAuthCode || isCallbackPath) {
+        console.log("SubdomainGuard: Forwarding OAuth response from marketing domain to app subdomain...");
+        window.location.replace(`https://app.testoza.com/auth/callback${location.search}${location.hash}`);
+        return;
+      }
+
       // Marketing domain allowed paths
       const allowedMarketingPaths = [
         '/',

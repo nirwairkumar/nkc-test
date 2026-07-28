@@ -1,6 +1,6 @@
 import { generateFingerprint } from './fingerprint';
-// Use the appropriate API_URL based on the environment (similar to apiClient setups)
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { getApiUrl } from './getApiUrl';
+const API_BASE = getApiUrl();
 
 class AnalyticsTracker {
     private fingerprint: string | null = null;

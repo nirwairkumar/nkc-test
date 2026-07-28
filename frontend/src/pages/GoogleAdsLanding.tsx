@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
-import { getAppUrl } from '@/utils/subdomain';
 import { 
   Sparkles, 
   BookOpen, 
@@ -21,11 +20,11 @@ export default function GoogleAdsLanding() {
   const navigate = useNavigate();
 
   const handleStartFree = () => {
-    window.location.href = getAppUrl('/generate-with-ai');
+    navigate('/generate-with-ai');
   };
 
   const handleLogin = () => {
-    window.location.href = getAppUrl('/login');
+    navigate('/login');
   };
 
   // Dynamically configure content to avoid duplicate content flags

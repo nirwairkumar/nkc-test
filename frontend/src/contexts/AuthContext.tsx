@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initPromise = (async () => {
             setLoading(true);
             try {
-                // 1. Check for password recovery tokens in URL hash (from password reset links)
+                // 1. Check for password recovery or OAuth tokens in URL hash
                 const hash = window.location.hash;
                 if (hash) {
                     const params = new URLSearchParams(hash.substring(1));
@@ -142,12 +142,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const type = params.get('type');
 
                     if (accessToken) {
+                        const hostname = window.location.hostname;
+                        const isMainDomain = hostname === 'testoza.com' || hostname === 'www.testoza.com';
+
+                        if (isMainDomain) {
+                            console.log("[AuthContext] Forwarding OAuth hash to app subdomain...");
+                            window.location.replace(`https://app.testoza.com/auth/callback${hash}`);
+                            return;
+                        }
+
                         tokenStorage.setTokens(accessToken, refreshToken || undefined);
-                        window.history.replaceState(null, '', window.location.pathname);
                         
                         if (type === 'recovery') {
+                            window.history.replaceState(null, '', window.location.pathname);
                             window.location.href = '/update-password';
                             return;
+                        }
+
+                        // Do not strip hash prematurely if on /auth/callback so AuthCallback component processes it cleanly
+                        if (!window.location.pathname.startsWith('/auth/callback')) {
+                            window.history.replaceState(null, '', window.location.pathname);
                         }
                     }
                 }
