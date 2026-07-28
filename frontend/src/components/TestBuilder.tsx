@@ -1,4 +1,3 @@
-import { TestBuilderMinimap } from './TestBuilderMinimap';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -10,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, PlusCircle, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -151,7 +150,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     const [swapGlowSections, setSwapGlowSections] = useState<Set<string>>(new Set());
     const [deletingSections, setDeletingSections] = useState<Set<string>>(new Set());
     const [deletingQuestions, setDeletingQuestions] = useState<Set<string | number>>(new Set());
-    const [newlyAddedQuestionIds, setNewlyAddedQuestionIds] = useState<Set<string | number>>(new Set());
     const [showSupportedFormats, setShowSupportedFormats] = useState(false);
     const [showAdvancedFormats, setShowAdvancedFormats] = useState(false);
     const [showMathKeyboard, setShowMathKeyboard] = useState(false);
@@ -593,43 +591,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
     };
 
-    const handleAddQuestion = (insertAtIndex?: number | React.MouseEvent) => {
+    const handleAddQuestion = () => {
         const lastQ = questions.length > 0 ? questions[questions.length - 1] : null;
-        const newQ: QuestionState = {
-            ...DEFAULT_QUESTION,
-            id: questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1,
-            options: { ...DEFAULT_QUESTION.options },
-            typingMode: lastTypingMode,
-            marks: lastQ ? (lastQ.marks || '4') : '4',
-            negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1'
-        };
-
-        setNewlyAddedQuestionIds(prev => {
-            const next = new Set(prev);
-            next.add(newQ.id);
-            return next;
-        });
-        setTimeout(() => {
-            setNewlyAddedQuestionIds(prev => {
-                const next = new Set(prev);
-                next.delete(newQ.id);
-                return next;
-            });
-        }, 1500);
-
-        if (typeof insertAtIndex === 'number') {
-            const prevQ = questions[insertAtIndex - 1];
-            const nextQ = questions[insertAtIndex];
-            if (prevQ?.groupId && nextQ?.groupId && prevQ.groupId === nextQ.groupId) {
-                newQ.groupId = prevQ.groupId;
-                newQ.passageContent = prevQ.passageContent;
+        setQuestions([
+            ...questions,
+            {
+                ...DEFAULT_QUESTION,
+                id: questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1,
+                options: { ...DEFAULT_QUESTION.options },
+                typingMode: lastTypingMode,
+                marks: lastQ ? (lastQ.marks || '4') : '4',
+                negativeMarks: lastQ ? (lastQ.negativeMarks || '1') : '1'
             }
-            const newQuestions = [...questions];
-            newQuestions.splice(insertAtIndex, 0, newQ);
-            setQuestions(newQuestions);
-        } else {
-            setQuestions([...questions, newQ]);
-        }
+        ]);
     };
 
     const handleRemoveQuestion = (index: number) => {
@@ -1228,7 +1202,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         setSections(newSections);
     };
 
-    const handleAddQuestionToSection = (sectionIndex: number, insertAtIndex?: number | React.MouseEvent) => {
+    const handleAddQuestionToSection = (sectionIndex: number) => {
         const newSections = [...sections];
         const section = newSections[sectionIndex];
 
@@ -1246,31 +1220,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             marks: lastQuestion ? lastQuestion.marks : (section.marks_per_question?.toString() || '1'),
             negativeMarks: lastQuestion ? lastQuestion.negativeMarks : (section.negative_marks?.toString() || '0')
         };
-        
-        setNewlyAddedQuestionIds(prev => {
-            const next = new Set(prev);
-            next.add(newQ.id);
-            return next;
-        });
-        setTimeout(() => {
-            setNewlyAddedQuestionIds(prev => {
-                const next = new Set(prev);
-                next.delete(newQ.id);
-                return next;
-            });
-        }, 1500);
-
-        if (typeof insertAtIndex === 'number') {
-            const prevQ = section.questions[insertAtIndex - 1];
-            const nextQ = section.questions[insertAtIndex];
-            if (prevQ?.groupId && nextQ?.groupId && prevQ.groupId === nextQ.groupId) {
-                newQ.groupId = prevQ.groupId;
-                newQ.passageContent = prevQ.passageContent;
-            }
-            section.questions.splice(insertAtIndex, 0, newQ);
-        } else {
-            section.questions.push(newQ);
-        }
+        section.questions.push(newQ);
         setSections(newSections);
     };
 
@@ -2282,23 +2232,17 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             const isInGroup = !!currentGroupId;
 
                                                             const isDeleting = deletingQuestions.has(q.id);
-                                                            const isNew = newlyAddedQuestionIds.has(q.id);
-
-                                                            const isSameGroup = q.groupId && section.questions[qIdx + 1] && q.groupId === section.questions[qIdx + 1].groupId;
-                                                            const showDivider = qIdx < section.questions.length - 1;
-
                                                             return (
-                                                                <React.Fragment key={q.id}>
-                                                                    <div data-minimap-id={q.id} className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                                                <div key={q.id} className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
-                                                                        <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-6 space-y-3">
-                                                                            <div className="flex justify-between items-center px-1">
-                                                                                <h3 className="text-xs font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
+                                                                        <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-4">
+                                                                            <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
+                                                                                <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
                                                                                     <FileText className="w-4 h-4" /> Comprehension Passage
                                                                                 </h3>
                                                                             </div>
-                                                                            <div className="p-1">
+                                                                            <div className="p-6">
                                                                                 <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                                                     <IMEInput
                                                                                         as="textarea"
@@ -2324,7 +2268,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                                     <Card className={`
                                                                         w-full min-w-0 overflow-hidden group relative shadow-sm hover:shadow-md transition-all duration-300 bg-white
-                                                                        ${isInGroup ? `border-2 border-indigo-200 ${isStartOfGroup ? 'border-t-0' : ''} rounded-none shadow-none bg-indigo-50/5` : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
+                                                                        ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
                                                                         ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
                                                                     `}>
 
@@ -2543,7 +2487,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                         group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
                                                                                                         ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                                         focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                                        
+                                                                                                        ${isLastOption ? 'mb-6' : ''}
                                                                                                     `}>
                                                                                                         <button onClick={handleSelect} className={`
                                                                                                             mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
@@ -2641,22 +2585,52 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                             )}
                                                                                                         </div>
 
-                                                                                                        
+                                                                                                        {isLastOption && (
+                                                                                                            <div className="group/add-btn absolute left-0 right-0 -bottom-6 h-6 flex items-center pointer-events-none">
+                                                                                                                {/* Left corner curve */}
+                                                                                                                <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                                                    <path d="M0,0 C8,0 8,12 16,12" stroke="currentColor" strokeWidth="1.5" />
+                                                                                                                </svg>
+
+                                                                                                                {/* Left horizontal line */}
+                                                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
+
+                                                                                                                {/* Center U-pocket curve */}
+                                                                                                                <div className="relative w-14 h-6 shrink-0 pointer-events-auto">
+                                                                                                                    <svg 
+                                                                                                                        className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible"
+                                                                                                                        viewBox="0 0 56 24"
+                                                                                                                        fill="none"
+                                                                                                                    >
+                                                                                                                        <path 
+                                                                                                                            d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
+                                                                                                                            stroke="currentColor" 
+                                                                                                                            strokeWidth="1.5" 
+                                                                                                                        />
+                                                                                                                    </svg>
+                                                                                                                    <button
+                                                                                                                        type="button"
+                                                                                                                        onClick={() => handleAddOptionToSection(sIdx, qIdx)}
+                                                                                                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:scale-125 transition-all duration-200 cursor-pointer"
+                                                                                                                        title="Add Option"
+                                                                                                                    >
+                                                                                                                        <Plus className="w-4 h-4 stroke-[2.5]" />
+                                                                                                                    </button>
+                                                                                                                </div>
+
+                                                                                                                {/* Right horizontal line */}
+                                                                                                                <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
+
+                                                                                                                {/* Right corner curve */}
+                                                                                                                <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                                                    <path d="M0,12 C8,12 8,0 16,0" stroke="currentColor" strokeWidth="1.5" />
+                                                                                                                </svg>
+                                                                                                            </div>
+                                                                                                        )}
                                                                                                     </div>
                                                                                                 );
                                                                                             });
                                                                                         })()}
-                                                                                        <div className="flex justify-center -mt-2.5 pt-0">
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                onClick={() => handleAddOptionToSection(sIdx, qIdx)}
-                                                                                                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-sm font-medium"
-                                                                                                title="Add option"
-                                                                                            >
-                                                                                                <PlusCircle className="w-4 h-4 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
-                                                                                                <span>Add option</span>
-                                                                                            </button>
-                                                                                        </div>
                                                                                     </div>
                                                                                 )}
                                                                             </div>
@@ -2675,38 +2649,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             </Button>
                                                                         </div>
                                                                     )}
-                                                                    </div>
-                                                                    {showDivider && (
-                                                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
-                                                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
-                                                                            <div className="mx-2 shrink-0 pointer-events-auto">
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => handleAddQuestionToSection(sIdx, qIdx + 1)}
-                                                                                    className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 bg-white border border-slate-200 shadow-sm hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
-                                                                                    title="Insert Question Here"
-                                                                                >
-                                                                                    <Plus className="w-4 h-4 stroke-[2.5]" />
-                                                                                </button>
-                                                                            </div>
-                                                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
-                                                                        </div>
-                                                                    )}
-                                                                </React.Fragment>
+                                                                </div>
                                                             );
                                                         })}
-                                                        <div className="flex items-center my-6">
-                                                            <div className="flex-1 h-[1px] bg-slate-200"></div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleAddQuestionToSection(sIdx)}
-                                                                className="mx-4 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
-                                                            >
-                                                                <Plus className="w-4 h-4 text-blue-600" />
-                                                                <span>Add Question</span>
-                                                            </button>
-                                                            <div className="flex-1 h-[1px] bg-slate-200"></div>
-                                                        </div>
+                                                        <Button onClick={() => handleAddQuestionToSection(sIdx)} size="sm" variant="outline" className="w-full border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-4 h-4 mr-2" /> Add Question to {section.name}</Button>
                                                     </div>
                                                 
                                                     </CardContent>
@@ -2728,18 +2674,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         </div>
                                     );
                                 })}
-                                <div className="flex items-center my-8">
-                                    <div className="flex-1 h-[1px] bg-slate-200"></div>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleAddSection()}
-                                        className="mx-4 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
-                                    >
-                                        <Plus className="w-4 h-4 text-blue-600" />
-                                        <span>New Section</span>
-                                    </button>
-                                    <div className="flex-1 h-[1px] bg-slate-200"></div>
-                                </div>
+                                <Button onClick={() => handleAddSection()} variant="outline" className="w-full py-6 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 mt-4"><Plus className="w-5 h-5 mr-2" /> Add New Section</Button>
                             </div>
                         </>
                     ) : (
@@ -2760,19 +2695,18 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                 const isInGroup = !!currentGroupId;
 
                                 const isDeleting = deletingQuestions.has(q.id);
-                                const isNew = newlyAddedQuestionIds.has(q.id);
-
-                                const isSameGroup = q.groupId && questions[index + 1] && q.groupId === questions[index + 1].groupId;
-                                const showDivider = index < questions.length - 1;
-
                                 return (
-                                    <React.Fragment key={q.id}>
-                                        <div data-minimap-id={q.id} className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                    <div key={q.id} className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''}`}>
 
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
-                                            <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-6 space-y-3">
-                                                <div className="p-1">
+                                            <div className="rounded-t-xl border border-b-0 border-indigo-200 bg-indigo-50/50 overflow-hidden mt-6">
+                                                <div className="bg-indigo-100/50 px-6 py-4 border-b border-indigo-200 flex justify-between items-center">
+                                                    <h3 className="text-sm font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
+                                                        <FileText className="w-4 h-4" /> Comprehension Passage
+                                                    </h3>
+                                                </div>
+                                                <div className="p-6">
                                                     <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                         <IMEInput
                                                             as="textarea"
@@ -2801,7 +2735,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             data-question-card={index === 0 ? "true" : undefined}
                                             className={`
                                                 w-full min-w-0 group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
-                                                ${isInGroup ? `border-2 border-indigo-200 ${isStartOfGroup ? 'border-t-0' : ''} rounded-none shadow-none bg-indigo-50/5` : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
+                                                ${isInGroup ? 'border-2 border-indigo-200 border-t-0 rounded-none shadow-none bg-indigo-50/5' : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
                                                 ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
                                                 ${isDragging ? 'border-dashed border-primary/50 opacity-60' : ''}
                                             `}
@@ -3058,7 +2992,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
                                                                                 ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
-                                                                                
+                                                                                ${isLastOption ? 'mb-6' : ''}
                                                                              `}>
 
                                                                             {/* Option Label/Selector */}
@@ -3164,22 +3098,52 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 )}
                                                                             </div>
 
-                                                                            
+                                                                            {isLastOption && (
+                                                                                <div className="group/add-btn absolute left-0 right-0 -bottom-6 h-6 flex items-center pointer-events-none">
+                                                                                    {/* Left corner curve */}
+                                                                                    <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                        <path d="M0,0 C8,0 8,12 16,12" stroke="currentColor" strokeWidth="1.5" />
+                                                                                    </svg>
+
+                                                                                    {/* Left horizontal line */}
+                                                                                    <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
+
+                                                                                    {/* Center U-pocket curve */}
+                                                                                    <div className="relative w-14 h-6 shrink-0 pointer-events-auto">
+                                                                                        <svg 
+                                                                                            className="absolute inset-0 w-full h-full text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible"
+                                                                                            viewBox="0 0 56 24"
+                                                                                            fill="none"
+                                                                                        >
+                                                                                            <path 
+                                                                                                d="M0,12 L16,12 C22,12 22,23 28,23 C34,23 34,12 40,12 L56,12" 
+                                                                                                stroke="currentColor" 
+                                                                                                strokeWidth="1.5" 
+                                                                                            />
+                                                                                        </svg>
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => handleAddOption(index)}
+                                                                                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-2 w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:scale-125 transition-all duration-200 cursor-pointer"
+                                                                                            title="Add Option"
+                                                                                        >
+                                                                                            <Plus className="w-4 h-4 stroke-[2.5]" />
+                                                                                        </button>
+                                                                                    </div>
+
+                                                                                    {/* Right horizontal line */}
+                                                                                    <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-btn:bg-slate-400/80"></div>
+
+                                                                                    {/* Right corner curve */}
+                                                                                    <svg className="w-4 h-3 shrink-0 text-slate-200/80 transition-colors duration-200 group-hover/add-btn:text-slate-400/80 overflow-visible" viewBox="0 0 16 12" fill="none">
+                                                                                        <path d="M0,12 C8,12 8,0 16,0" stroke="currentColor" strokeWidth="1.5" />
+                                                                                    </svg>
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     );
                                                                 });
                                                             })()}
-                                                                                            <div className="flex justify-center -mt-2.5 pt-0">
-                                                                                                <button
-                                                                                                    type="button"
-                                                                                                    onClick={() => handleAddOption(index)}
-                                                                                                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-sm font-medium"
-                                                                                                    title="Add option"
-                                                                                                >
-                                                                                                    <PlusCircle className="w-4 h-4 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
-                                                                                                    <span>Add option</span>
-                                                                                                </button>
-                                                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -3188,50 +3152,30 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                         {/* Add Sub-Question for Passage */}
                                         {isEndOfGroup && (
-                                            <div className="rounded-b-2xl border-2 border-t-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 pt-2 mb-6 flex flex-col items-center">
-                                                <button
-                                                    type="button"
+                                            <div className="flex justify-center -mt-6 relative z-0">
+                                                <div className="h-6 w-px bg-indigo-200 absolute -top-6"></div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
                                                     onClick={() => handleAddSubQuestion(index)}
-                                                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 cursor-pointer bg-white px-3.5 py-1.5 rounded-full border border-indigo-200/90 shadow-2xs hover:bg-indigo-50 transition-colors my-1"
+                                                    className="gap-2 bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 shadow-sm rounded-full px-4 mt-2"
                                                 >
-                                                    <Plus className="w-3.5 h-3.5 text-indigo-600" />
-                                                    <span>Add Question to Passage</span>
-                                                </button>
+                                                    <Plus className="w-4 h-4" /> Add Question to Passage
+                                                </Button>
                                             </div>
                                         )}
                                     </div>
-                                    {showDivider && (
-                                        <div className="group/add-q-btn relative h-5 flex items-center justify-center my-0 z-20 pointer-events-none">
-                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
-                                            <div className="mx-2 shrink-0 pointer-events-auto">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleAddQuestion(index + 1)}
-                                                    className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-400 bg-white border border-slate-200 shadow-sm hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
-                                                    title="Insert Question Here"
-                                                >
-                                                    <Plus className="w-4 h-4 stroke-[2.5]" />
-                                                </button>
-                                            </div>
-                                            <div className="flex-1 h-[1px] bg-slate-200/80 transition-colors duration-200 group-hover/add-q-btn:bg-indigo-300"></div>
-                                        </div>
-                                    )}
-                                </React.Fragment>
-                            );
-                        })}
+                                );
+                            })}
 
-                            <div className="flex items-center my-8">
-                                <div className="flex-1 h-[1px] bg-slate-200"></div>
-                                <button
-                                    type="button"
-                                    onClick={handleAddQuestion}
-                                    className="mx-4 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
-                                >
-                                    <Plus className="w-4 h-4 text-blue-600" />
-                                    <span>Add Question</span>
-                                </button>
-                                <div className="flex-1 h-[1px] bg-slate-200"></div>
-                            </div>
+                            <Button
+                                onClick={handleAddQuestion}
+                                size="lg"
+                                variant="outline"
+                                className="w-full py-8 border-dashed border-2 border-slate-300 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/30 transition-all duration-300 text-base font-semibold"
+                            >
+                                <Plus className="w-6 h-6 mr-2" /> Add New Question
+                            </Button>
                         </>
                     )}
                 </div>
@@ -3439,13 +3383,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                     onClose={() => setShowGuide(false)}
                 />
             </React.Suspense>
-
-            {/* VS Code Style Minimap Visualizer */}
-            <TestBuilderMinimap
-                mode={enableSectionMode ? 'section' : 'standard'}
-                sections={sections}
-                questions={questions}
-            />
         </div >
     );
 }

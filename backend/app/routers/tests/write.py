@@ -44,9 +44,29 @@ def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
         raise HTTPException(status_code=403, detail="Unauthorized access")
     return requesting_user_id
 
+@router.get("/debug/schema")
+async def debug_schema(db: Client = Depends(get_db)):
+    try:
+        # Check connection and columns
+        response = db.table("tests").select("*").limit(1).execute()
+        columns = list(response.data[0].keys()) if response.data else []
+        
+        # Check User Profile (FK Constraint Check)
+        user_resp = db.auth.get_user()
+        user_id = user_resp.user.id
+        profile_resp = db.table("profiles").select("id").eq("id", user_id).execute()
+        has_profile = len(profile_resp.data) > 0
 
-# Note: /debug/schema endpoint was removed for security — it exposed DB schema without auth
-
+        return {
+            "status": "ok", 
+            "connected": True, 
+            "columns": columns,
+            "has_sections": "sections" in columns,
+            "has_profile": has_profile,
+            "user_id": user_id
+        }
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
 
 
 VALID_TEST_COLUMNS = {

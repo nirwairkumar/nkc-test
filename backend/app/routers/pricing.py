@@ -1,33 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import get_db, supabase
 from supabase import Client
 from typing import Optional, List, Any, Dict
 from pydantic import BaseModel
 
 router = APIRouter()
-
-def _verify_admin_for_pricing(request: Request, db: Client) -> str:
-    """Verify JWT from Authorization header and ensure the user is an admin."""
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-    token = auth_header.replace("Bearer ", "")
-    try:
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        user_id = user_response.user.id
-        user_email = user_response.user.email
-        
-        # Check admin status
-        admin_res = supabase.table("admins").select("email").eq("email", user_email).execute()
-        if not admin_res.data:
-            raise HTTPException(status_code=403, detail="Admin authorization required")
-        return user_id
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=401, detail="Authentication failed")
 
 # --- Schemas ---
 
@@ -62,42 +39,36 @@ async def get_plans(db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/plans")
-async def create_plan(payload: PlanCreate, request: Request, db: Client = Depends(get_db)):
+async def create_plan(payload: PlanCreate, db: Client = Depends(get_db)):
     try:
-        _verify_admin_for_pricing(request, db)
         data = payload.dict(exclude_unset=True)
         response = db.table("plans").insert(data).execute()
         if response.data:
             return response.data[0]
         return None
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to create plan")
+        print(f"Error creating plan: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/plans/{plan_id}")
-async def update_plan(plan_id: str, payload: Dict[str, Any], request: Request, db: Client = Depends(get_db)):
+async def update_plan(plan_id: str, payload: Dict[str, Any], db: Client = Depends(get_db)):
     try:
-        _verify_admin_for_pricing(request, db)
         response = db.table("plans").update(payload).eq("id", plan_id).execute()
         if response.data:
             return response.data[0]
         return None
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to update plan")
+        print(f"Error updating plan: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/plans/{plan_id}")
-async def delete_plan(plan_id: str, request: Request, db: Client = Depends(get_db)):
+async def delete_plan(plan_id: str, db: Client = Depends(get_db)):
     try:
-        _verify_admin_for_pricing(request, db)
         response = db.table("plans").delete().eq("id", plan_id).execute()
         return {"success": True}
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to delete plan")
+        print(f"Error deleting plan: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # --- Promo Codes Endpoints ---
 
@@ -111,42 +82,36 @@ async def get_promos(db: Client = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/promos")
-async def create_promo(payload: PromoCodeCreate, request: Request, db: Client = Depends(get_db)):
+async def create_promo(payload: PromoCodeCreate, db: Client = Depends(get_db)):
     try:
-        _verify_admin_for_pricing(request, db)
         data = payload.dict(exclude_unset=True)
         response = db.table("promo_codes").insert(data).execute()
         if response.data:
             return response.data[0]
         return None
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to create promo")
+        print(f"Error creating promo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/promos/{promo_id}")
-async def update_promo(promo_id: str, payload: Dict[str, Any], request: Request, db: Client = Depends(get_db)):
+async def update_promo(promo_id: str, payload: Dict[str, Any], db: Client = Depends(get_db)):
     try:
-        _verify_admin_for_pricing(request, db)
         response = db.table("promo_codes").update(payload).eq("id", promo_id).execute()
         if response.data:
             return response.data[0]
         return None
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to update promo")
+        print(f"Error updating promo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/promos/{promo_id}")
-async def delete_promo(promo_id: str, request: Request, db: Client = Depends(get_db)):
+async def delete_promo(promo_id: str, db: Client = Depends(get_db)):
     try:
-        _verify_admin_for_pricing(request, db)
         response = db.table("promo_codes").delete().eq("id", promo_id).execute()
         return {"success": True}
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to delete promo")
+        print(f"Error deleting promo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 class ApplyPromoRequest(BaseModel):
     code: str
@@ -232,10 +197,9 @@ class UpdateSettingsRequest(BaseModel):
     unlock_all_premium: bool
 
 @router.put("/settings")
-async def update_premium_settings(payload: UpdateSettingsRequest, request: Request, db: Client = Depends(get_db)):
+async def update_premium_settings(payload: UpdateSettingsRequest, db: Client = Depends(get_db)):
     """Update global premium unlock settings (admin only)"""
     try:
-        _verify_admin_for_pricing(request, db)
         # Get the first (and should be only) settings row
         settings_res = db.table("app_settings").select("id").limit(1).execute()
         
@@ -258,10 +222,9 @@ async def update_premium_settings(payload: UpdateSettingsRequest, request: Reque
                 return response.data[0]
         
         raise HTTPException(status_code=500, detail="Failed to update settings")
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to update settings")
+        print(f"Error updating premium settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/check-premium-access")
 async def check_premium_access(db: Client = Depends(get_db)):

@@ -1,4 +1,3 @@
-import { getApiUrl } from '@/lib/getApiUrl';
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, X, Send, Sparkles, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -144,7 +143,7 @@ export function AIChatBot({ testContext, isOpen, onOpenChange }: AIChatBotProps)
     setIsTyping(true);
 
     try {
-      const response = await fetch(`${getApiUrl()}/ai/chat`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

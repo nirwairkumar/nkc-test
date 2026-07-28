@@ -12,9 +12,11 @@ class Settings(BaseSettings):
     
     # Supabase Configuration
     SUPABASE_URL: str
-    SUPABASE_URL: str
     SUPABASE_KEY: str  # Anon Key
     SUPABASE_SERVICE_KEY: Optional[str] = None # Service Role Key for Admin Access
+    
+    # Cloudflare Turnstile
+    TURNSTILE_SECRET: Optional[str] = None
     
     # AI Config
     GEMINI_API_KEY: Optional[str] = None
@@ -27,5 +29,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 settings = Settings()

@@ -1,4 +1,3 @@
-import { getApiUrl } from '@/lib/getApiUrl';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -352,7 +351,7 @@ const ResultsPage = () => {
     setIsPredictingRank(true);
     setRankPrediction(null);
     try {
-      const response = await fetch(`${getApiUrl()}/ai/predict-rank`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/ai/predict-rank`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

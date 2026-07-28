@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield, AlertTriangle, Copy, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
@@ -719,8 +719,41 @@ export default function UserTestManager() {
                                                         <span>{questionCount} Qs</span>
                                                         <span>·</span>
                                                         <span>{test.duration || 0} min</span>
-                                                        <span className="hidden sm:inline">·</span>
-                                                        <span className="hidden sm:inline font-mono text-slate-300 truncate max-w-[140px]">/test/{conductSlug}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Direct Exam Link Line */}
+                                                <div className="flex items-center justify-between gap-2 text-[11px] py-1.5 border-y border-slate-100">
+                                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                                        <LinkIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                        <span className="text-slate-500 font-medium whitespace-nowrap text-[11px]">Share among candidates:</span>
+                                                        <span className="font-mono text-slate-600 truncate select-all text-[11px] font-normal" title={examUrl}>
+                                                            {examUrl}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <Button
+                                                            id={test.settings?.is_user_example ? "tour-copy-link-btn" : undefined}
+                                                            size="icon"
+                                                            variant="outline"
+                                                            className="h-7 w-7 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 cursor-pointer"
+                                                            title="Copy link"
+                                                            onClick={async () => {
+                                                                await navigator.clipboard.writeText(examUrl);
+                                                                toast.success("Exam link copied!");
+                                                            }}
+                                                        >
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="outline"
+                                                            className="h-7 w-7 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 cursor-pointer"
+                                                            title="Share link"
+                                                            onClick={() => handleShare(test)}
+                                                        >
+                                                            <Share2 className="w-3.5 h-3.5" />
+                                                        </Button>
                                                     </div>
                                                 </div>
 
@@ -758,19 +791,6 @@ export default function UserTestManager() {
                                                     >
                                                         <BarChart2 className="w-3.5 h-3.5 sm:mr-1.5" />
                                                         <span className="hidden sm:inline">Results</span>
-                                                    </Button>
-                                                    <Button
-                                                        id={test.settings?.is_user_example ? "tour-copy-link-btn" : undefined}
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-8 px-2 sm:px-3 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-colors duration-200 cursor-pointer"
-                                                        onClick={async () => {
-                                                            await navigator.clipboard.writeText(examUrl);
-                                                            toast.success("Exam link copied!");
-                                                        }}
-                                                    >
-                                                        <LinkIcon className="w-3.5 h-3.5 sm:mr-1.5" />
-                                                        <span className="hidden sm:inline">Copy Link</span>
                                                     </Button>
                                                     <Button
                                                         size="sm"

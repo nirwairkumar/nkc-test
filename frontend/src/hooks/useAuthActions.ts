@@ -3,12 +3,11 @@ import { authApi } from '@/lib/authApi';
 import { tokenStorage } from '@/utils/tokenStorage';
 
 
-export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string, turnstileToken?: string) {
+export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string) {
     try {
         const response = await authApi.register({
             email,
             password,
-            turnstile_token: turnstileToken,
             metadata: {
                 full_name: name,
                 designation: designation,
@@ -20,9 +19,9 @@ export async function signUpWithEmail(email: string, password: string, name?: st
     }
 }
 
-export async function signInWithEmail(email: string, password: string, turnstileToken?: string) {
+export async function signInWithEmail(email: string, password: string) {
     try {
-        const response = await authApi.login({ email, password, turnstile_token: turnstileToken });
+        const response = await authApi.login({ email, password });
 
         // After successful login, store tokens
         if (response.data?.session?.access_token) {
@@ -58,16 +57,12 @@ export async function resetPasswordForEmail(email: string) {
     }
 }
 
-import { getAppUrl } from '@/utils/subdomain';
-
 export async function signInWithGoogle() {
     try {
-        const redirectUrl = getAppUrl('/auth/callback');
-        console.log('[AuthActions] Initiating Google OAuth with redirectTo:', redirectUrl);
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: redirectUrl
+                redirectTo: `${window.location.origin}/auth/callback`
             }
         });
 

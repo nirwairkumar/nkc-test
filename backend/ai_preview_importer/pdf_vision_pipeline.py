@@ -139,8 +139,8 @@ DOCUMENT ANALYSIS STEPS (MANDATORY):
 
 8. FOR PASSAGE/COMPREHENSION QUESTIONS:
    - Extract the passage text ONCE.
-   - For EVERY question belonging to that passage, include a "passageContent" field containing the FULL passage text.
-   - Assign the EXACT SAME "groupId" string (e.g. "passage_grp_1") to all questions belonging to that passage. For non-passage questions, set "groupId" to null or omit it.
+   - For EVERY question belonging to that passage, include a "passageContent" field.
+   - Set "passageContent" to the FULL passage text for each question in the group.
 
 --------------------------------------------------
 
@@ -308,11 +308,8 @@ CHEMISTRY FORMATTING (mhchem) - CRITICAL:
 - Use standard newline characters (\n) for line breaks in questions, options, and passageContent.
 - DO NOT use <br> tags.
 - Ensure proper escaping of newlines as \n inside the JSON strings.
-- BOLD, ITALIC, AND UNDERLINE FORMATTING:
-  - If the original document has underlined text, you MUST wrap that text in LaTeX/KaTeX underline format inside inline math $...$: $\\\\underline{\\\\text{underlined text}}$ (e.g. $\\\\underline{\\\\text{recapture}}$).
-  - If the original document has bold text, you MUST wrap that text in LaTeX/KaTeX bold format inside inline math $...$: $\\\\textbf{bold text}$ (e.g. $\\\\textbf{कथन:}$).
-  - If the original document has italic text, you MUST wrap that text in LaTeX/KaTeX italic format inside inline math $...$: $\\\\textit{italic text}$.
-  - DO NOT use HTML tags (like <u>, <strong>, <em>, etc.) or markdown formatting (like ** or _ or *) under any circumstances.
+- Do NOT use other HTML tags.
+- Do NOT use markdown formatting.
 
 --------------------------------------------------
 
@@ -367,8 +364,7 @@ You MUST structure the output using the "sections" field instead of the top-leve
           "marks": 4,
           "negativeMarks": 1,
           "crossPage": false,
-          "passageContent": null,
-          "groupId": null
+          "passageContent": null
         }
       ]
     }
@@ -405,8 +401,7 @@ Otherwise, set "attempt_control" to {"enabled": false}.
       "marks": 4,
       "negativeMarks": 1,
       "crossPage": false,
-      "passageContent": null,
-      "groupId": null
+      "passageContent": null
     }
   ]
 }
@@ -600,36 +595,24 @@ You MUST structure the output using the "sections" field instead of a top-level 
 # ---------------------------------------------------------------------------
 
 def render_pages_as_images(pdf_bytes: bytes, dpi: int = 300) -> List[bytes]:
-    """Render each PDF page as a JPEG image with dynamic size capping to optimize memory and speed."""
+    """Render each PDF page as a PNG image at the specified DPI."""
     import fitz  # lazy-loaded: only used by OCR pipeline
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     page_images = []
 
-    # Map DPI to maximum pixel dimension for the page to prevent rendering massive pages
-    # e.g., standard letter page: 612x792 points. At 300 DPI, height is ~3300px.
-    # We cap max dimension at 2048px (high accuracy) or 1600px (fast/standard).
-    max_dim = 2048 if dpi >= 300 else 1600
+    zoom = dpi / 72  # 72 is the default DPI
+    mat = fitz.Matrix(zoom, zoom)
 
     for page_num in range(len(doc)):
         page = doc[page_num]
-        rect = page.rect
-        
-        # Calculate dynamic scale to keep maximum dimension within max_dim
-        scale = min(max_dim / rect.width, max_dim / rect.height)
-        
-        # Ensure we don't scale UP if the page is already smaller than target dimension
-        if scale > (dpi / 72):
-            scale = dpi / 72
-            
-        mat = fitz.Matrix(scale, scale)
         pix = page.get_pixmap(matrix=mat, alpha=False)
 
-        img_bytes = pix.tobytes("jpg")
+        img_bytes = pix.tobytes("png")
         page_images.append(img_bytes)
         logger.debug(f"Rendered page {page_num + 1}: {pix.width}x{pix.height} ({len(img_bytes)} bytes)")
 
     doc.close()
-    logger.info(f"Rendered {len(page_images)} pages as JPEG images capped at max {max_dim}px")
+    logger.info(f"Rendered {len(page_images)} pages as images at {dpi} DPI")
     return page_images
 
 
@@ -709,12 +692,7 @@ async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict]
                 def _render_page():
                     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
                     page = doc[page_in_pdf]
-                    rect = page.rect
-                    max_dim = 2048
-                    scale = min(max_dim / rect.width, max_dim / rect.height)
-                    if scale > (300/72):
-                        scale = 300/72
-                    mat = fitz.Matrix(scale, scale)
+                    mat = fitz.Matrix(300/72, 300/72) # 300 DPI
                     pix = page.get_pixmap(matrix=mat, alpha=False)
                     img_bytes = pix.tobytes("png")
                     doc.close()
@@ -1362,6 +1340,31 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         raise ValueError("No pages/images could be extracted from the provided files")
 
     logger.info(f"Total pages/images to process: {len(all_page_images)}")
+    
+    # 2.5: Upload all embedded images to Cloudinary in parallel
+    logger.info(f"Uploading {len(all_embedded_images)} extracted diagrams to Cloudinary...")
+    upload_tasks = []
+    
+    async def upload_and_update(img_info):
+        # We need the raw data for upload
+        import base64
+        try:
+            # Decode the base64 we created earlier
+            raw_bytes = base64.b64decode(img_info["data"])
+            cloudinary_url = await upload_image_to_cloudinary(raw_bytes)
+            if cloudinary_url:
+                img_info["cloudinary_url"] = cloudinary_url
+                # Switch the base64_uri to the much lighter Cloudinary URL
+                img_info["base64_uri"] = cloudinary_url
+        except Exception as e:
+            logger.error(f"Failed to upload diagram on page {img_info['page']} to Cloudinary: {e}")
+            
+    # Launch all uploads concurrently
+    upload_tasks = [upload_and_update(img) for img in all_embedded_images]
+    if upload_tasks:
+        await asyncio.gather(*upload_tasks)
+        logger.info("All diagram uploads completed.")
+
     # Step 3: Process pages (use single batch for smaller files, chunked for larger ones)
     SINGLE_BATCH_PAGE_LIMIT = 15
     prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
@@ -1373,7 +1376,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
         for idx, page_img in enumerate(all_page_images):
             content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
             content_parts.append(
-                types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
+                types.Part.from_bytes(data=page_img, mime_type="image/png")
             )
         append_extracted_images_to_content(content_parts, all_embedded_images)
             
@@ -1381,7 +1384,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
             logger.info(f"Single batch response received. Length: {len(raw_text)}")
             
-            batch_result = await _parse_response(raw_text, all_embedded_images)
+            batch_result = _parse_response(raw_text, all_embedded_images)
             unique_questions = batch_result.get("questions", [])
             
             await process_diagram_bboxes(unique_questions, page_sources)
@@ -1468,7 +1471,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             actual_page_num = batch_start_page + i + 1
             content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
             content_parts.append(
-                types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
+                types.Part.from_bytes(data=page_img, mime_type="image/png")
             )
 
         batch_embedded = [img for img in all_embedded_images if batch_start_page + 1 <= img["page"] <= batch_start_page + actual_batch_size]
@@ -1481,7 +1484,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
             
             logger.info(f"Batch {batch_num} response received. Length: {len(raw_text)}")
             
-            batch_result = await _parse_response(raw_text, all_embedded_images)
+            batch_result = _parse_response(raw_text, all_embedded_images)
             questions = batch_result.get("questions", [])
             
             if batch_num == 1:
@@ -1489,19 +1492,6 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
                 first_batch_desc = batch_result.get("description")
             
             if questions:
-                # Adjust relative page numbers to global ones
-                for q in questions:
-                    bbox = q.get("diagram_bbox")
-                    if bbox and isinstance(bbox, dict):
-                        p_num = bbox.get("page_number")
-                        if p_num is not None:
-                            try:
-                                p_num = int(p_num)
-                                if p_num <= actual_batch_size and batch_start_page > 0:
-                                    bbox["page_number"] = batch_start_page + p_num
-                                    logger.info(f"Adjusted relative page_number {p_num} to global {batch_start_page + p_num} for Q {q.get('id')}")
-                            except (ValueError, TypeError):
-                                pass
                 logger.info(f"Extracted {len(questions)} questions from batch {batch_num}")
                 all_questions.extend(questions)
             else:
@@ -1748,49 +1738,7 @@ def _extract_questions_regex(text: str) -> List[Dict]:
     return questions
 
 
-def group_passage_questions(questions: List[Dict]) -> List[Dict]:
-    """
-    Ensure consecutive questions that share the exact same non-empty passageContent
-    have the exact same groupId so the platform treats them as a comprehension group.
-    """
-    current_group_id = None
-    current_passage_content = None
-    current_section = None
-    group_counter = 0
-
-    for vq in questions:
-        if not isinstance(vq, dict):
-            continue
-        p_content = vq.get("passageContent")
-        p_content_stripped = p_content.strip() if isinstance(p_content, str) else ""
-        section_name = vq.get("section_name")
-        
-        if p_content_stripped:
-            existing_group_id = vq.get("groupId")
-            if existing_group_id:
-                current_group_id = existing_group_id
-                current_passage_content = p_content_stripped
-                current_section = section_name
-            else:
-                if (current_passage_content == p_content_stripped and 
-                    current_group_id and 
-                    current_section == section_name):
-                    vq["groupId"] = current_group_id
-                else:
-                    group_counter += 1
-                    current_group_id = f"passage_group_{group_counter}"
-                    current_passage_content = p_content_stripped
-                    current_section = section_name
-                    vq["groupId"] = current_group_id
-        else:
-            current_group_id = None
-            current_passage_content = None
-            current_section = None
-            
-    return questions
-
-
-async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
+def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
     """Parse Gemini response into our strict Question format"""
     
     # DEBUG: dump raw response to analyze
@@ -1827,7 +1775,7 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             questions_fallback = _extract_questions_regex(sanitized)
             if questions_fallback:
                 logger.info(f"Regex extracted {len(questions_fallback)} questions")
-                data = {"questions": questions_fallback, "is_regex_fallback": True}
+                data = {"questions": questions_fallback}
             else:
                 raise ValueError(f"AI returned invalid JSON: {e2}")
 
@@ -1860,40 +1808,6 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         logger.warning(f"AI returned 0 questions. Raw snippet: {clean[:500]}")
         # Don't raise error, just return empty so batch can fail gracefully without breaking pipeline
         return {"questions": []}
-
-    # Identify referenced image placeholders from the parsed questions
-    referenced_placeholders = set()
-    for q in questions:
-        if not isinstance(q, dict):
-            continue
-        
-        # Check in question text
-        question_text = q.get("question") or q.get("questionText") or ""
-        for match in re.findall(r'(image_\d+)', question_text):
-            referenced_placeholders.add(match)
-            
-        # Check in imagePlaceholder field
-        image_placeholder = q.get("imagePlaceholder")
-        if image_placeholder and isinstance(image_placeholder, str):
-            match = re.search(r'(image_\d+)', image_placeholder)
-            if match:
-                referenced_placeholders.add(match.group(1))
-
-    # Upload ONLY the referenced embedded images to Cloudinary
-    referenced_images = [img for img in embedded_images if img.get("id") in referenced_placeholders]
-    if referenced_images:
-        logger.info(f"Uploading {len(referenced_images)} referenced embedded images to Cloudinary...")
-        async def _upload(img_info):
-            try:
-                import base64
-                raw_bytes = base64.b64decode(img_info["data"])
-                url = await upload_image_to_cloudinary(raw_bytes)
-                if url:
-                    img_info["cloudinary_url"] = url
-                    img_info["base64_uri"] = url
-            except Exception as e:
-                logger.error(f"Referenced diagram upload failed: {e}")
-        await asyncio.gather(*[_upload(img) for img in referenced_images])
 
     # Build image lookup for placeholder replacement
     placeholder_map = {}
@@ -2024,9 +1938,6 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             if placeholder in placeholder_map:
                 vq["image"] = placeholder_map[placeholder]
     
-    # 3.5 Group consecutive passage questions sharing identical passageContent
-    validated = group_passage_questions(validated)
-    
     # 4. Sort by original ID (as extracted) and re-assign sequential IDs
     try:
         validated.sort(key=lambda x: int(x.get("id", 0)))
@@ -2047,7 +1958,6 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
         "questions": validated,
         "canConfirm": all(q.get("correctAnswer") is not None for q in validated),
         "unansweredCount": sum(1 for q in validated if q.get("correctAnswer") is None),
-        "is_regex_fallback": data.get("is_regex_fallback", False)
     }
 
     # Include revision notes for generate mode
@@ -2136,14 +2046,9 @@ async def process_files_stream(
                 doc = fitz.open(stream=file_info['content'], filetype="pdf")
                 if len(doc) > 0:
                     page = doc[0]
-                    rect = page.rect
-                    max_dim = 1600
-                    scale = min(max_dim / rect.width, max_dim / rect.height)
-                    if scale > (150/72):
-                        scale = 150/72
-                    mat = fitz.Matrix(scale, scale)
+                    mat = fitz.Matrix(150/72, 150/72)  # 150 DPI
                     pix = page.get_pixmap(matrix=mat, alpha=False)
-                    sample_pages.append(pix.tobytes("jpg"))
+                    sample_pages.append(pix.tobytes("png"))
                 doc.close()
             except Exception as e:
                 logger.warning(f"Failed to extract sample page: {e}")
@@ -2298,7 +2203,7 @@ async def process_files_stream(
         for idx, page_img in enumerate(all_page_images):
             content_parts.append(f"\n--- PAGE {idx + 1} of {total_pages} ---\n")
             content_parts.append(
-                types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
+                types.Part.from_bytes(data=page_img, mime_type="image/png")
             )
         append_extracted_images_to_content(content_parts, all_embedded_images)
             
@@ -2317,7 +2222,7 @@ async def process_files_stream(
                     }
                 })
                 
-            batch_result = await _parse_response(raw_text, all_embedded_images)
+            batch_result = _parse_response(raw_text, all_embedded_images)
             unique_questions = batch_result.get("questions", [])
             
             await process_diagram_bboxes(unique_questions, page_sources)
@@ -2569,9 +2474,6 @@ async def process_files_stream(
             if placeholder and placeholder in placeholder_map:
                 vq["image"] = placeholder_map[placeholder]
     
-    # Group consecutive passage questions sharing identical passageContent
-    unique_questions = group_passage_questions(unique_questions)
-    
     # Sort by original ID and re-assign sequential IDs
     try:
         unique_questions.sort(key=lambda x: int(x.get("id", 0)))
@@ -2653,17 +2555,13 @@ async def _render_pdf_pages(pdf_bytes: bytes, dpi: int) -> Tuple[List[bytes], Li
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         page_images = []
         
-        max_dim = 2048 if dpi >= 300 else 1600
+        zoom = dpi / 72
+        mat = fitz.Matrix(zoom, zoom)
         
         for page_num in range(len(doc)):
             page = doc[page_num]
-            rect = page.rect
-            scale = min(max_dim / rect.width, max_dim / rect.height)
-            if scale > (dpi / 72):
-                scale = dpi / 72
-            mat = fitz.Matrix(scale, scale)
             pix = page.get_pixmap(matrix=mat, alpha=False)
-            img_bytes = pix.tobytes("jpg")
+            img_bytes = pix.tobytes("png")
             page_images.append(img_bytes)
         
         # Also extract embedded images
@@ -2708,7 +2606,7 @@ async def _process_single_batch_stream(
         actual_page_num = start_page + i + 1
         content_parts.append(f"\n--- PAGE {actual_page_num} of {total_pages} ---\n")
         content_parts.append(
-            types.Part.from_bytes(data=page_img, mime_type="image/jpeg")
+            types.Part.from_bytes(data=page_img, mime_type="image/png")
         )
         
     batch_embedded = batch_data.get('batch_embedded', [])
@@ -2718,24 +2616,9 @@ async def _process_single_batch_stream(
     raw_text = await _call_gemini_with_retry(content_parts, batch_num)
     
     # Parse response
-    batch_result = await _parse_response(raw_text, embedded_images)
+    batch_result = _parse_response(raw_text, embedded_images)
     questions = batch_result.get("questions", [])
     
-    # Adjust relative page numbers to global ones
-    batch_size = len(images)
-    for q in questions:
-        bbox = q.get("diagram_bbox")
-        if bbox and isinstance(bbox, dict):
-            p_num = bbox.get("page_number")
-            if p_num is not None:
-                try:
-                    p_num = int(p_num)
-                    if p_num <= batch_size and start_page > 0:
-                        bbox["page_number"] = start_page + p_num
-                        logger.info(f"Adjusted relative page_number {p_num} to global {start_page + p_num} for Q {q.get('id')}")
-                except (ValueError, TypeError):
-                    pass
-                    
     # Stream questions immediately if callback provided
     if question_callback:
         for q in questions:

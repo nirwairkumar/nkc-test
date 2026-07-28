@@ -131,7 +131,7 @@ export default function AuthCallback() {
     const redirectToIntent = () => {
         const redirectIntent = localStorage.getItem('auth_redirect_intent');
         localStorage.removeItem('auth_redirect_intent');
-        const destination = redirectIntent && redirectIntent !== '/login' && redirectIntent !== '/' ? redirectIntent : '/dashboard';
+        const destination = redirectIntent || '/dashboard';
 
         setTimeout(() => {
             navigate(destination, { replace: true });

@@ -75,8 +75,6 @@ const AIImportRoute = () => {
   return <AITestImporter onImport={(data) => navigate('/create-test', { state: { importedData: data } })} />;
 };
 
-import ErrorBoundary from "@/components/ErrorBoundary";
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -85,12 +83,11 @@ const App = () => (
           <Toaster />
           <Sonner />
           <TestProvider>
-            <ErrorBoundary>
-              <BrowserRouter>
-                <SubdomainGuard />
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route element={<Layout />}>
+            <BrowserRouter>
+              <SubdomainGuard />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route element={<Layout />}>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/quiz-creator" element={<GoogleAdsLanding />} />
                     <Route path="/assessment-platform" element={<GoogleAdsLanding />} />
@@ -259,8 +256,7 @@ const App = () => (
                 </Routes>
               </Suspense>
             </BrowserRouter>
-          </ErrorBoundary>
-        </TestProvider>
+          </TestProvider>
         </HelmetProvider>
       </AuthProvider>
     </TooltipProvider>

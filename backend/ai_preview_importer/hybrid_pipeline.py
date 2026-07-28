@@ -44,7 +44,6 @@ from ai_preview_importer.pdf_vision_pipeline import (
     wrap_bare_latex,
     build_page_sources,
     process_diagram_bboxes,
-    group_passage_questions,
 )
 from ai_preview_importer.cloudinary_uploader import upload_image_to_cloudinary
 
@@ -347,7 +346,7 @@ async def stream_gemini_and_parse(
 
     # Final full parse for metadata (title, description, sections)
     try:
-        full_result = await _parse_response(token_buffer, embedded_images)
+        full_result = _parse_response(token_buffer, embedded_images)
     except Exception as e:
         logger.warning(f"Full parse failed ({e}), using streamed questions")
         full_result = {
@@ -357,20 +356,11 @@ async def stream_gemini_and_parse(
         }
 
     full_qs = full_result.get("questions", [])
-    is_fallback = full_result.get("is_regex_fallback", False)
-    
-    if is_fallback and questions_found:
-        logger.info(f"Full parse used regex fallback. Preferring {len(questions_found)} streamed questions with options over {len(full_qs)} fallback questions.")
-        full_result["questions"] = questions_found
-        full_result["canConfirm"] = all(q.get("correctAnswer") is not None for q in questions_found)
-        full_result["unansweredCount"] = sum(1 for q in questions_found if q.get("correctAnswer") is None)
-    elif len(full_qs) >= len(questions_found):
+    if len(full_qs) >= len(questions_found):
         logger.info(f"Using full parse ({len(full_qs)} qs vs {len(questions_found)} streamed)")
     else:
         logger.info(f"Using streamed ({len(questions_found)} qs vs {len(full_qs)} full parse)")
         full_result["questions"] = questions_found
-        full_result["canConfirm"] = all(q.get("correctAnswer") is not None for q in questions_found)
-        full_result["unansweredCount"] = sum(1 for q in questions_found if q.get("correctAnswer") is None)
 
     return full_result
 
@@ -470,21 +460,39 @@ async def process_files_hybrid_stream(
 
         for pdf_bytes in pdf_bytes_list:
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-            max_dim = 2048 if render_dpi >= 300 else 1600
+            zoom = render_dpi / 72
+            mat = fitz.Matrix(zoom, zoom)
             for page_num in range(len(doc)):
                 one_based = page_num + 1
                 if one_based in pages_needing_render:
                     page = doc[page_num]
-                    rect = page.rect
-                    scale = min(max_dim / rect.width, max_dim / rect.height)
-                    if scale > (render_dpi / 72):
-                        scale = render_dpi / 72
-                    mat = fitz.Matrix(scale, scale)
                     pix = page.get_pixmap(matrix=mat, alpha=False)
                     image_only_page_images[one_based] = pix.tobytes("jpg")
             doc.close()
 
         logger.info(f"Rendered {len(image_only_page_images)} pages at {render_dpi} DPI")
+
+    # Step 2.5: Upload embedded images to Cloudinary
+    if all_embedded_images:
+        if progress_callback:
+            await progress_callback({
+                'stage': 'processing',
+                'percent': 35,
+                'message': f'Uploading {len(all_embedded_images)} diagrams...',
+            })
+
+        async def _upload(img_info):
+            try:
+                raw_bytes = base64.b64decode(img_info["data"])
+                url = await upload_image_to_cloudinary(raw_bytes)
+                if url:
+                    img_info["cloudinary_url"] = url
+                    img_info["base64_uri"] = url
+            except Exception as e:
+                logger.error(f"Diagram upload failed: {e}")
+
+        await asyncio.gather(*[_upload(img) for img in all_embedded_images])
+
     # Step 3: Build content and call Gemini
     prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
     result_data = None
@@ -609,21 +617,9 @@ async def process_files_hybrid_stream(
                     })
                     
                 chunk_questions_found = []
-                batch_size = len(chunk_infos) if is_hybrid else len(chunk_images)
                 async def local_question_callback(q_event):
                     if q_event.get("type") == "question" and q_event.get("question"):
                         q = q_event["question"]
-                        # Adjust relative page numbers to global ones
-                        bbox = q.get("diagram_bbox")
-                        if bbox and isinstance(bbox, dict):
-                            p_num = bbox.get("page_number")
-                            if p_num is not None:
-                                try:
-                                    p_num = int(p_num)
-                                    if p_num <= batch_size and c_start > 0:
-                                        bbox["page_number"] = c_start + p_num
-                                except (ValueError, TypeError):
-                                    pass
                         chunk_questions_found.append(q)
                         if question_callback:
                             await question_callback({"type": "question", "question": q, "batch": step_num})
@@ -639,17 +635,8 @@ async def process_files_hybrid_stream(
                 for idx, q in enumerate(batch_questions):
                     q["batch_num"] = step_num
                     q["original_idx"] = idx
-                    # Adjust relative page numbers to global ones (failsafe)
-                    bbox = q.get("diagram_bbox")
-                    if bbox and isinstance(bbox, dict):
-                        p_num = bbox.get("page_number")
-                        if p_num is not None:
-                            try:
-                                p_num = int(p_num)
-                                if p_num <= batch_size and c_start > 0:
-                                    bbox["page_number"] = c_start + p_num
-                            except (ValueError, TypeError):
-                                pass
+                
+                if step_num == 1:
                     first_title = result.get("title")
                     first_desc = result.get("description")
                     
@@ -764,17 +751,6 @@ async def process_files_hybrid_stream(
                         async def local_question_callback(q_event):
                             if q_event.get("type") == "question" and q_event.get("question"):
                                 q = q_event["question"]
-                                # Adjust relative page numbers to global ones
-                                bbox = q.get("diagram_bbox")
-                                if bbox and isinstance(bbox, dict):
-                                    p_num = bbox.get("page_number")
-                                    if p_num is not None:
-                                        try:
-                                            p_num = int(p_num)
-                                            if p_num <= len(b_infos) and b_start > 0:
-                                                bbox["page_number"] = b_start + p_num
-                                        except (ValueError, TypeError):
-                                            pass
                                 batch_questions_found.append(q)
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
@@ -806,21 +782,9 @@ async def process_files_hybrid_stream(
                                 }
                             })
                             
-                        batch_size = len(b_infos)
                         for idx, q in enumerate(batch_questions):
                             q["batch_num"] = b_num
                             q["original_idx"] = idx
-                            # Adjust relative page numbers to global ones (failsafe)
-                            bbox = q.get("diagram_bbox")
-                            if bbox and isinstance(bbox, dict):
-                                p_num = bbox.get("page_number")
-                                if p_num is not None:
-                                    try:
-                                        p_num = int(p_num)
-                                        if p_num <= batch_size and b_start > 0:
-                                            bbox["page_number"] = b_start + p_num
-                                    except (ValueError, TypeError):
-                                        pass
                         return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
                     except Exception as e:
                         logger.error(f"Hybrid batch {b_num} failed: {e}")
@@ -900,7 +864,7 @@ async def process_files_hybrid_stream(
             except Exception as e:
                 logger.error(f"Vision streaming failed: {e}. Non-streaming fallback...")
                 raw_text = await _call_gemini_with_retry(content_parts, batch_num=1)
-                result_data = await _parse_response(raw_text, all_embedded_images)
+                result_data = _parse_response(raw_text, all_embedded_images)
         else:
             # Chunked/parallel mode
             MAX_PAGES_PER_BATCH = 5
@@ -974,17 +938,6 @@ async def process_files_hybrid_stream(
                         async def local_question_callback(q_event):
                             if q_event.get("type") == "question" and q_event.get("question"):
                                 q = q_event["question"]
-                                # Adjust relative page numbers to global ones
-                                bbox = q.get("diagram_bbox")
-                                if bbox and isinstance(bbox, dict):
-                                    p_num = bbox.get("page_number")
-                                    if p_num is not None:
-                                        try:
-                                            p_num = int(p_num)
-                                            if p_num <= len(b_imgs) and b_start > 0:
-                                                bbox["page_number"] = b_start + p_num
-                                        except (ValueError, TypeError):
-                                            pass
                                 batch_questions_found.append(q)
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
@@ -1016,21 +969,9 @@ async def process_files_hybrid_stream(
                                 }
                             })
                             
-                        batch_size = len(b_imgs)
                         for idx, q in enumerate(batch_questions):
                             q["batch_num"] = b_num
                             q["original_idx"] = idx
-                            # Adjust relative page numbers to global ones (failsafe)
-                            bbox = q.get("diagram_bbox")
-                            if bbox and isinstance(bbox, dict):
-                                p_num = bbox.get("page_number")
-                                if p_num is not None:
-                                    try:
-                                        p_num = int(p_num)
-                                        if p_num <= batch_size and b_start > 0:
-                                            bbox["page_number"] = b_start + p_num
-                                    except (ValueError, TypeError):
-                                        pass
                         return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
                     except Exception as e:
                         logger.error(f"Vision batch {b_num} failed: {e}")
@@ -1077,30 +1018,6 @@ async def process_files_hybrid_stream(
     option_prefix_re = re.compile(r'^\s*(?:[1-4]\)\s+|\([1-4]\)\s+|\([a-dA-D]\)\s+|[A-Da-d]\.\s+)')
     citation_re = re.compile(r'\[cite:\s*[^\]]*\]')
 
-    # Identify referenced image placeholders from the extracted questions
-    referenced_placeholders = set()
-    for vq in unique_questions:
-        ph = vq.get("imagePlaceholder", "")
-        if ph and isinstance(ph, str):
-            match = re.search(r'(image_\d+)', ph)
-            if match:
-                referenced_placeholders.add(match.group(1))
-
-    # Upload ONLY the referenced embedded images to Cloudinary
-    referenced_images = [img for img in all_embedded_images if img.get("id") in referenced_placeholders]
-    if referenced_images:
-        logger.info(f"Uploading {len(referenced_images)} referenced embedded images to Cloudinary...")
-        async def _upload(img_info):
-            try:
-                raw_bytes = base64.b64decode(img_info["data"])
-                url = await upload_image_to_cloudinary(raw_bytes)
-                if url:
-                    img_info["cloudinary_url"] = url
-                    img_info["base64_uri"] = url
-            except Exception as e:
-                logger.error(f"Referenced diagram upload failed: {e}")
-        await asyncio.gather(*[_upload(img) for img in referenced_images])
-
     placeholder_map = {}
     for img in all_embedded_images:
         placeholder_map[img.get("id", "")] = img.get("cloudinary_url", img.get("base64_uri", ""))
@@ -1128,9 +1045,6 @@ async def process_files_hybrid_stream(
 
     page_sources = build_page_sources(file_data)
     await process_diagram_bboxes(unique_questions, page_sources)
-
-    # Group consecutive passage questions sharing identical passageContent
-    unique_questions = group_passage_questions(unique_questions)
 
     try:
         unique_questions.sort(key=lambda x: int(x.get("id", 0)))
