@@ -196,6 +196,19 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         }
     }, [isCloudUploadOpen]);
 
+    useEffect(() => {
+        const handleToggleGuide = () => setShowGuide(prev => !prev);
+        const handleToggleSyPad = () => setShowMathKeyboard(prev => !prev);
+
+        window.addEventListener('toggle_ai_guide', handleToggleGuide);
+        window.addEventListener('toggle_sy_pad', handleToggleSyPad);
+
+        return () => {
+            window.removeEventListener('toggle_ai_guide', handleToggleGuide);
+            window.removeEventListener('toggle_sy_pad', handleToggleSyPad);
+        };
+    }, []);
+
     const openCloudUploadModal = (e: React.MouseEvent, refId: string) => {
         e.preventDefault();
         setCloudUploadTarget(refId);
@@ -2366,47 +2379,60 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
-
-                                                                                {/* Image Section */}
-                                                                                <div className="space-y-2">
-                                                                                    {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
-                                                                                        <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                                                                                            {q.image ? (
-                                                                                                <div className="relative group/img w-fit mt-2">
-                                                                                                    <img src={q.image} alt="Question" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
-                                                                                                    <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-4 w-4" /></Button>
-                                                                                                </div>
-                                                                                            ) : (
-                                                                                                <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
-                                                                                                    <div className="flex-1 flex gap-2 items-center px-2">
-                                                                                                        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                                                                                            <ImageIcon className="w-4 h-4 text-slate-500" />
-                                                                                                        </div>
-                                                                                                        <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm" />
+                                                                                
+                                                                                {/* Action Row below Question Text Area */}
+                                                                                <div className="flex items-center justify-between gap-2 mt-2 px-1 min-w-0">
+                                                                                    {/* Image Section */}
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
+                                                                                            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                                                {q.image ? (
+                                                                                                    <div className="relative group/img w-fit mt-2">
+                                                                                                        <img src={q.image} alt="Question" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                                                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-4 w-4" /></Button>
                                                                                                     </div>
-                                                                                                    <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                                                                                                    <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
-                                                                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
-                                                                                                        <Upload className="w-3.5 h-3.5 mr-1" />Upload
-                                                                                                    </label>
-                                                                                                    <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}`)}>
-                                                                                                        <Cloud className="w-4 h-4" />
-                                                                                                    </button>
-                                                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
-                                                                                                        <X className="w-4 h-4" />
-                                                                                                    </Button>
-                                                                                                </div>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    ) : (
-                                                                                        <button
-                                                                                            onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}
-                                                                                            className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
-                                                                                        >
-                                                                                            <ImageIcon className="w-3.5 h-3.5" />
-                                                                                            Add diagram / image (optional)
-                                                                                        </button>
-                                                                                    )}
+                                                                                                ) : (
+                                                                                                    <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                                                        <div className="flex-1 flex gap-2 items-center px-2">
+                                                                                                            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                                                <ImageIcon className="w-4 h-4 text-slate-500" />
+                                                                                                            </div>
+                                                                                                            <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm" />
+                                                                                                        </div>
+                                                                                                        <div className="h-6 w-px bg-slate-300 mx-2"></div>
+                                                                                                        <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
+                                                                                                            <Upload className="w-3.5 h-3.5 mr-1" />Upload
+                                                                                                        </label>
+                                                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                            <Cloud className="w-4 h-4" />
+                                                                                                        </button>
+                                                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                            <X className="w-4 h-4" />
+                                                                                                        </Button>
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            <button
+                                                                                                onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}
+                                                                                                className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
+                                                                                            >
+                                                                                                <ImageIcon className="w-3.5 h-3.5" />
+                                                                                                Add diagram / image (optional)
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+
+                                                                                    {/* Right side: Sy Pad button ∑ f(x) */}
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setShowMathKeyboard(true)}
+                                                                                        className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
+                                                                                        title="Open Math Sy Pad"
+                                                                                    >
+                                                                                        <span>∑ f(x)</span>
+                                                                                    </button>
                                                                                 </div>
                                                                             </div>
 
@@ -2853,62 +2879,75 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         </div>
                                                     </div>
 
-                                                    {/* Image Section - Collapsible */}
-                                                    <div>
-                                                        {(q.image || expandedImageInputs[`q-${index}`]) ? (
-                                                            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                                                                {q.image ? (
-                                                                    <div className="relative group/img w-fit mt-2">
-                                                                        <img src={q.image} alt="Question Diagram" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
-                                                                        <Button
-                                                                            variant="destructive"
-                                                                            size="icon"
-                                                                            className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100"
-                                                                            onClick={() => updateQuestion(index, 'image', '')}
-                                                                        >
-                                                                            <X className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
-                                                                        <div className="flex-1 flex gap-2 items-center px-2">
-                                                                            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                                                                <ImageIcon className="w-4 h-4 text-slate-500" />
-                                                                            </div>
-                                                                            <Input
-                                                                                placeholder="Paste image URL here..."
-                                                                                value={q.image || ''}
-                                                                                onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
-                                                                                className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm"
-                                                                            />
+                                                    {/* Action Row below Question Text Area */}
+                                                    <div className="flex items-center justify-between gap-2 mt-2 px-1 min-w-0">
+                                                        {/* Image Section */}
+                                                        <div className="flex-1 min-w-0">
+                                                            {(q.image || expandedImageInputs[`q-${index}`]) ? (
+                                                                <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                    {q.image ? (
+                                                                        <div className="relative group/img w-fit mt-2">
+                                                                            <img src={q.image} alt="Question Diagram" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                            <Button
+                                                                                variant="destructive"
+                                                                                size="icon"
+                                                                                className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100"
+                                                                                onClick={() => updateQuestion(index, 'image', '')}
+                                                                            >
+                                                                                <X className="h-4 w-4" />
+                                                                            </Button>
                                                                         </div>
-                                                                        <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                                                                        <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
-                                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
-                                                                            <Upload className="w-3.5 h-3.5" />
-                                                                            Upload
-                                                                        </label>
-                                                                        <Button variant="outline" size="icon" type="button" className="h-9 w-9 mr-1" onClick={() => openCaptureModal('question', index)} title="Capture Snip">
-                                                                            <Monitor className="w-4 h-4 text-blue-600" />
-                                                                        </Button>
-                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 shadow-sm outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}`)}>
-                                                                            <Cloud className="w-4 h-4" />
-                                                                        </button>
-                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`q-${index}`)}>
-                                                                            <X className="w-4 h-4" />
-                                                                        </Button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => toggleImageInput(`q-${index}`)}
-                                                                className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
-                                                            >
-                                                                <ImageIcon className="w-3.5 h-3.5" />
-                                                                Add diagram / image (optional)
-                                                            </button>
-                                                        )}
+                                                                    ) : (
+                                                                        <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                            <div className="flex-1 flex gap-2 items-center px-2">
+                                                                                <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                    <ImageIcon className="w-4 h-4 text-slate-500" />
+                                                                                </div>
+                                                                                <Input
+                                                                                    placeholder="Paste image URL here..."
+                                                                                    value={q.image || ''}
+                                                                                    onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
+                                                                                    className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm"
+                                                                                />
+                                                                            </div>
+                                                                            <div className="h-6 w-px bg-slate-300 mx-2"></div>
+                                                                            <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
+                                                                                <Upload className="w-3.5 h-3.5" />
+                                                                                Upload
+                                                                            </label>
+                                                                            <Button variant="outline" size="icon" type="button" className="h-9 w-9 mr-1" onClick={() => openCaptureModal('question', index)} title="Capture Snip">
+                                                                                <Monitor className="w-4 h-4 text-blue-600" />
+                                                                            </Button>
+                                                                            <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 shadow-sm outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}`)}>
+                                                                                <Cloud className="w-4 h-4" />
+                                                                            </button>
+                                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`q-${index}`)}>
+                                                                                <X className="w-4 h-4" />
+                                                                            </Button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => toggleImageInput(`q-${index}`)}
+                                                                    className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
+                                                                >
+                                                                    <ImageIcon className="w-3.5 h-3.5" />
+                                                                    Add diagram / image (optional)
+                                                                </button>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Right side: Sy Pad button ∑ f(x) */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowMathKeyboard(true)}
+                                                            className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
+                                                            title="Open Math Sy Pad"
+                                                        >
+                                                            <span>∑ f(x)</span>
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -3346,27 +3385,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 </div>
             )}
 
-            {/* Floating Triggers on Left Screen Edge */}
-            <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[9998] flex flex-col gap-2">
-                <button
-                    type="button"
-                    onClick={() => setShowGuide(v => !v)}
-                    className="ai-guide-trigger flex flex-col items-center justify-center gap-1.5 w-10 py-3 rounded-r-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg border border-l-0 border-indigo-400/30 transition-all group hover:w-11 animate-pulse"
-                    title="How to write complex questions (AI Guide)"
-                >
-                    <Sparkles className="w-5 h-5 transition-transform group-hover:scale-110" />
-                    <span className="text-[9px] font-bold tracking-wider uppercase [writing-mode:vertical-lr] select-none">AI Guide</span>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setShowMathKeyboard(v => !v)}
-                    className="sy-pad-trigger flex flex-col items-center justify-center gap-1.5 w-10 py-3 rounded-r-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg border border-l-0 border-blue-400/30 transition-all group hover:w-11"
-                    title="Open Virtual Sy Pad"
-                >
-                    <Calculator className="w-5 h-5 transition-transform group-hover:scale-110" />
-                    <span className="text-[9px] font-bold tracking-wider [writing-mode:vertical-lr] select-none">Sy Pad</span>
-                </button>
-            </div>
+
 
             {/* Virtual Math Keyboard Overlay */}
             <React.Suspense fallback={null}>

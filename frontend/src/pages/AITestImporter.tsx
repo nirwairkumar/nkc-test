@@ -1237,6 +1237,20 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
+    // Listen for AI history selection from sidebar
+    useEffect(() => {
+        const handleLoadHistoryItem = (e: Event) => {
+            const customEv = e as CustomEvent;
+            const item = customEv.detail;
+            if (item) {
+                handleSelectHistoryItem(item);
+            }
+        };
+
+        window.addEventListener('load_ai_history_item', handleLoadHistoryItem);
+        return () => window.removeEventListener('load_ai_history_item', handleLoadHistoryItem);
+    }, [handleSelectHistoryItem]);
+
     // Step 1: File Upload — unified Gemini-style drop zone + manual creation card
     if (!parsedData && files.length === 0 && !uploadType) {
         return (
@@ -1247,250 +1261,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     keywords={["ai test generator", "pdf to quiz", "image to quiz", "exam maker ai"]}
                 />
 
-                {/* Clear All History Confirmation Dialog */}
-                <AlertDialog open={showClearAllConfirm} onOpenChange={setShowClearAllConfirm}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Clear all AI history?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete all {historyItems.length} generation{historyItems.length !== 1 ? 's' : ''} from your history. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={clearingAllHistory}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleClearAllHistory}
-                                disabled={clearingAllHistory}
-                                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                            >
-                                {clearingAllHistory ? (
-                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Clearing...</>
-                                ) : (
-                                    'Clear all'
-                                )}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                {/* Desktop History Sidebar (ChatGPT style) */}
-                <div 
-                    className={`shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-all duration-300 flex flex-col ${
-                        sidebarOpen ? 'w-64' : 'w-0 overflow-hidden border-r-0'
-                    } hidden md:flex`}
-                >
-                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm min-w-0">
-                            <History className="w-4 h-4 text-indigo-500 shrink-0" />
-                            <span className="truncate">AI Import History</span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7 text-slate-400 hover:text-slate-600"
-                                onClick={() => setSidebarOpen(false)}
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
-                        {loadingHistory ? (
-                            <div className="flex items-center justify-center p-8">
-                                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                            </div>
-                        ) : historyItems.length === 0 ? (
-                            <div className="text-center p-6 text-xs text-slate-400 dark:text-slate-500 space-y-1">
-                                <History className="w-6 h-6 mx-auto mb-2 opacity-30" />
-                                <p>No past generations</p>
-                                <p className="text-[10px]">Your AI-generated tests will appear here</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-1">
-                                {historyItems.map((item, idx) => (
-                                    <div
-                                        key={item.id || idx}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => handleSelectHistoryItem(item)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                e.preventDefault();
-                                                handleSelectHistoryItem(item);
-                                            }
-                                        }}
-                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors cursor-pointer relative pr-9 overflow-hidden"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap overflow-hidden">
-                                                {item.title || 'AI Generated Test'}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                                                {item.question_count} Questions
-                                            </p>
-                                        </div>
-                                        <div className="absolute right-7 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-white group-hover:to-slate-100 dark:to-slate-950 dark:group-hover:from-slate-800/60 z-10 pointer-events-none" />
-                                        <div 
-                                            onClick={(e) => e.stopPropagation()} 
-                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center"
-                                        >
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors flex items-center justify-center cursor-pointer">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-40">
-                                                    <DropdownMenuItem 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteHistoryItem(e, item.id, idx);
-                                                        }}
-                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                        Delete Item
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShowClearAllConfirm(true);
-                                                        }}
-                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                        Clear All History
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Mobile Drawer (Sheet) Toggle / Sidebar closed Toggle */}
                 <div className="flex-1 flex flex-col min-w-0">
-                    <div className={`flex items-center gap-2 bg-white dark:bg-slate-950 md:bg-transparent ${
-                        sidebarOpen 
-                            ? 'p-2 md:p-0 md:h-0 md:overflow-hidden border-b border-slate-100 dark:border-slate-800 md:border-b-0' 
-                            : 'p-2 md:py-3 md:px-4 border-b border-slate-100 dark:border-slate-800 md:border-b-0'
-                    }`}>
-                        {/* Toggle sidebar button when closed */}
-                        {!sidebarOpen && (
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="hidden md:flex h-9 w-9 border-slate-200"
-                                onClick={() => setSidebarOpen(true)}
-                            >
-                                <History className="w-4 h-4 text-slate-500" />
-                            </Button>
-                        )}
-
-                        {/* Mobile Toggle Button using Sheet */}
-                        <div className="md:hidden w-full flex items-center justify-between">
-                            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Test Generator</h2>
-                            <Sheet>
-                                <SheetTrigger asChild>
-                                    <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-                                        <History className="w-3.5 h-3.5 text-slate-500" />
-                                        History
-                                    </Button>
-                                </SheetTrigger>
-                                <SheetContent side="left" className="w-72 p-0 flex flex-col bg-white dark:bg-slate-950">
-                                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
-                                        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 text-sm">
-                                            <History className="w-4 h-4 text-indigo-500" />
-                                            AI Import History
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
-                                        {loadingHistory ? (
-                                            <div className="flex items-center justify-center p-8">
-                                                <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                                            </div>
-                                        ) : historyItems.length === 0 ? (
-                                            <div className="text-center p-6 text-xs text-slate-400 dark:text-slate-500 space-y-1">
-                                                <History className="w-6 h-6 mx-auto mb-2 opacity-30" />
-                                                <p>No past generations</p>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-1">
-                                                {historyItems.map((item, idx) => (
-                                                    <div
-                                                        key={item.id || idx}
-                                                        className="w-full text-left p-2.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 group flex items-center justify-between gap-2 transition-colors relative pr-9 overflow-hidden"
-                                                    >
-                                                        <SheetClose asChild>
-                                                            <div
-                                                                role="button"
-                                                                tabIndex={0}
-                                                                onClick={() => handleSelectHistoryItem(item)}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter' || e.key === ' ') {
-                                                                        e.preventDefault();
-                                                                        handleSelectHistoryItem(item);
-                                                                    }
-                                                                }}
-                                                                className="min-w-0 flex-1 cursor-pointer"
-                                                            >
-                                                                <p className="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap overflow-hidden">
-                                                                    {item.title || 'AI Generated Test'}
-                                                                </p>
-                                                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                                                                    {item.question_count} Questions
-                                                                </p>
-                                                            </div>
-                                                        </SheetClose>
-                                                        
-                                                        <div className="absolute right-7 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-white group-hover:to-slate-100 dark:to-slate-950 dark:group-hover:from-slate-800/60 z-10 pointer-events-none" />
-                                                        <div 
-                                                            onClick={(e) => e.stopPropagation()} 
-                                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center"
-                                                        >
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-md transition-colors flex items-center justify-center cursor-pointer">
-                                                                    <MoreVertical className="w-4 h-4" />
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className="w-40">
-                                                                    <DropdownMenuItem 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            handleDeleteHistoryItem(e, item.id, idx);
-                                                                        }}
-                                                                        className="text-red-600 dark:text-red-400 focus:text-red-750 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                        Delete Item
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setShowClearAllConfirm(true);
-                                                                        }}
-                                                                        className="text-slate-700 dark:text-slate-355 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer gap-2"
-                                                                    >
-                                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                                                                        Clear All History
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </SheetContent>
-                            </Sheet>
-                        </div>
-                    </div>
-
                     {/* Main Upload Page Container */}
-                    <div className="container mx-auto px-4 max-w-2xl pt-1 md:pt-4 pb-12 flex-1 flex flex-col justify-start">
+                    <div className="container mx-auto px-4 max-w-2xl pt-4 pb-12 flex-1 flex flex-col justify-start">
                         {/* Header */}
                         <div className="text-center mt-2 mb-6 md:mb-8 space-y-1">
                             <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>

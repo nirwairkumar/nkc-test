@@ -20,7 +20,6 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 
 // Framer Motion Variants for Staggered Rows
 const containerVariants = {
@@ -205,24 +204,7 @@ export default function TestHistory() {
         }
     }
 
-    // Lazy Loading Logic
-    const allLazyItems = React.useMemo(() => [
-        ...combinedAttempts.map(a => ({ id: `desktop-combined-${a.id}` })),
-        ...attempts.map(a => ({ id: `desktop-regular-${a.id}` })),
-        ...combinedAttempts.map(a => ({ id: `mobile-combined-${a.id}` })),
-        ...attempts.map(a => ({ id: `mobile-regular-${a.id}` }))
-    ], [combinedAttempts, attempts]);
 
-    const {
-        registerSkeleton,
-        isItemRendered,
-        renderedCount,
-        totalCount,
-        isComplete
-    } = useYouTubeStyleRender(allLazyItems, loading, {
-        rootMargin: '100px',
-        threshold: 0.1
-    });
 
     const handleToggleExpand = async (id: string, testId: string, e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('button')) return;
@@ -353,80 +335,57 @@ export default function TestHistory() {
                                 ) : (
                                     <>
                                         {/* Combined Attempts */}
-                                        {combinedAttempts.map((attempt) => {
-                                            const lazyId = `desktop-combined-${attempt.id}`;
-                                            if (!isItemRendered(lazyId)) {
-                                                return (
-                                                    <TableRow key={lazyId} ref={(el) => registerSkeleton(lazyId, el)}>
-                                                        <TableCell colSpan={4} className="p-4">
-                                                            <div className="h-12 w-full bg-slate-100/50 animate-pulse rounded" />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            }
-                                            return (
-                                                <TableRow
-                                                    key={`combined-${attempt.id}`}
-                                                    className="bg-indigo-50/30 dark:bg-indigo-950/20 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 group transition-colors"
-                                                    {...({ as: motion.tr, variants: rowVariants, layout: true } as any)}
-                                                >
-                                                    <TableCell className="font-medium">
-                                                        <div className="flex items-center gap-2">
-                                                            <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0 text-[10px] font-black px-1.5 py-0">
-                                                                COMBINED
-                                                            </Badge>
-                                                            <span className="group-hover:text-violet-600 transition-colors font-bold">{attempt.session_title || 'Combined Test'}</span>
+                                        {combinedAttempts.map((attempt) => (
+                                            <TableRow
+                                                key={`combined-${attempt.id}`}
+                                                className="bg-indigo-50/30 dark:bg-indigo-950/20 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 group transition-colors"
+                                                {...({ as: motion.tr, variants: rowVariants, layout: true } as any)}
+                                            >
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-0 text-[10px] font-black px-1.5 py-0">
+                                                            COMBINED
+                                                        </Badge>
+                                                        <span className="group-hover:text-violet-600 transition-colors font-bold">{attempt.session_title || 'Combined Test'}</span>
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-tight flex items-center gap-1">
+                                                        <Layers className="w-3 h-3" />
+                                                        {attempt.paper1_label || 'P1'}: {attempt.paper1_data?.test_title || '—'} &nbsp;•&nbsp; {attempt.paper2_label || 'P2'}: {attempt.paper2_data?.test_title || '—'}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center text-slate-500 text-sm">
+                                                        <Calendar className="mr-2 h-4 w-4 opacity-70" />
+                                                        {format(new Date(attempt.created_at), 'MMM d, yyyy • p')}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <Badge className="w-fit bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-0 text-xs font-bold">
+                                                            {(attempt.total_score ?? 0).toFixed(1)} Total
+                                                        </Badge>
+                                                        <div className="flex gap-2 text-[9px] opacity-70 font-bold uppercase mt-0.5">
+                                                            <span className="text-violet-600">{attempt.paper1_label || 'P1'}: {attempt.paper1_data?.score ?? 0}</span>
+                                                            <span className="text-blue-600">{attempt.paper2_label || 'P2'}: {attempt.paper2_data?.score ?? 0}</span>
                                                         </div>
-                                                        <div className="text-[10px] text-slate-500 mt-1 uppercase tracking-tight flex items-center gap-1">
-                                                            <Layers className="w-3 h-3" />
-                                                            {attempt.paper1_label || 'P1'}: {attempt.paper1_data?.test_title || '—'} &nbsp;•&nbsp; {attempt.paper2_label || 'P2'}: {attempt.paper2_data?.test_title || '—'}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center text-slate-500 text-sm">
-                                                            <Calendar className="mr-2 h-4 w-4 opacity-70" />
-                                                            {format(new Date(attempt.created_at), 'MMM d, yyyy • p')}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <Badge className="w-fit bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-0 text-xs font-bold">
-                                                                {(attempt.total_score ?? 0).toFixed(1)} Total
-                                                            </Badge>
-                                                            <div className="flex gap-2 text-[9px] opacity-70 font-bold uppercase mt-0.5">
-                                                                <span className="text-violet-600">{attempt.paper1_label || 'P1'}: {attempt.paper1_data?.score ?? 0}</span>
-                                                                <span className="text-blue-600">{attempt.paper2_label || 'P2'}: {attempt.paper2_data?.score ?? 0}</span>
-                                                            </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <div className="flex items-center justify-end gap-1">
-                                                            <Button variant="ghost" size="sm" onClick={() => handleViewCombinedResult(attempt)} className="h-8 hover:bg-violet-100/50 hover:text-violet-700">
-                                                                <Target className="h-4 w-4 mr-1.5" /> Result
-                                                            </Button>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() => handleDeleteCombined(attempt.id)}>
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <Button variant="ghost" size="sm" onClick={() => handleViewCombinedResult(attempt)} className="h-8 hover:bg-violet-100/50 hover:text-violet-700">
+                                                            <Target className="h-4 w-4 mr-1.5" /> Result
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() => handleDeleteCombined(attempt.id)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
 
                                         {/* Regular Attempts */}
-                                        {attempts.map((attempt) => {
-                                            const lazyId = `desktop-regular-${attempt.id}`;
-                                            if (!isItemRendered(lazyId)) {
-                                                return (
-                                                    <TableRow key={lazyId} ref={(el) => registerSkeleton(lazyId, el)}>
-                                                        <TableCell colSpan={4} className="p-4">
-                                                            <div className="h-12 w-full bg-slate-100/50 animate-pulse rounded" />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            }
-                                            return (
-                                                <React.Fragment key={attempt.id}>
+                                        {attempts.map((attempt) => (
+                                            <React.Fragment key={attempt.id}>
                                                     <TableRow
                                                         className={`cursor-pointer group transition-colors ${expandedAttempt === attempt.id ? 'bg-slate-50 dark:bg-slate-900 border-b-0' : 'hover:bg-slate-50/80 dark:hover:bg-slate-900/80'}`}
                                                         onClick={(e) => handleToggleExpand(attempt.id, attempt.test_id, e)}
@@ -665,8 +624,7 @@ export default function TestHistory() {
                                                         )}
                                                     </AnimatePresence>
                                                 </React.Fragment>
-                                            );
-                                        })}
+                                        ))}
                                     </>
                                 )}
                             </AnimatePresence>
@@ -690,16 +648,7 @@ export default function TestHistory() {
                 ) : (
                     <div className="space-y-3">
                         {/* Combined Attempts Mobile */}
-                        {combinedAttempts.map((attempt) => {
-                            const lazyId = `mobile-combined-${attempt.id}`;
-                            if (!isItemRendered(lazyId)) {
-                                return (
-                                    <div key={lazyId} ref={(el) => registerSkeleton(lazyId, el)}>
-                                        <HistoryCardSkeleton />
-                                    </div>
-                                );
-                            }
-                            return (
+                        {combinedAttempts.map((attempt) => (
                                 <motion.div
                                     key={`combined-mob-${attempt.id}`}
                                     variants={rowVariants}
@@ -752,20 +701,10 @@ export default function TestHistory() {
                                         </Button>
                                     </div>
                                 </motion.div>
-                            );
-                        })}
+                        ))}
 
                         {/* Regular Attempts Mobile */}
-                        {attempts.map((attempt) => {
-                            const lazyId = `mobile-regular-${attempt.id}`;
-                            if (!isItemRendered(lazyId)) {
-                                return (
-                                    <div key={lazyId} ref={(el) => registerSkeleton(lazyId, el)}>
-                                        <HistoryCardSkeleton />
-                                    </div>
-                                );
-                            }
-                            return (
+                        {attempts.map((attempt) => (
                                 <motion.div
                                     key={`mob-${attempt.id}`}
                                     variants={rowVariants}
@@ -917,20 +856,10 @@ export default function TestHistory() {
                                         )}
                                     </AnimatePresence>
                                 </motion.div>
-                            );
-                        })}
+                        ))}
                     </div>
                 )}
             </div>
-
-            {/* Lazy Load Stats */}
-            {!loading && !isComplete && (allLazyItems.length > 5) && (
-                <div className="py-4 text-center">
-                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
-                        Scroll to load more • {renderedCount} of {totalCount}
-                    </p>
-                </div>
-            )}
         </div>
     );
 }

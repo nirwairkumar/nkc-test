@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import AppSidebar from './components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { analyticsTracker } from '@/lib/analyticsTracker';
 
@@ -9,6 +10,23 @@ export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, profile, loading } = useAuth();
+
+    // Sidebar collapsed state (persistent in localStorage)
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+        try {
+            return localStorage.getItem('app_sidebar_collapsed') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('app_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+        } catch {}
+    }, [isCollapsed]);
 
     // Track page views on route change
     React.useEffect(() => {
@@ -38,8 +56,8 @@ export default function Layout() {
             }
         }
     }, [user, profile, loading, navigate, location.pathname]);
-    // Hide navbar only on live test page (/test/:id)
-    // Also hiding on /test-intro/:id as requested
+
+    // Hide navbar & sidebar on live test pages
     const isResultsPage = location.pathname.startsWith('/results');
     const isLiveTestPage =
         location.pathname.startsWith('/test/') ||
@@ -50,17 +68,38 @@ export default function Layout() {
 
     const hideFooter = isLiveTestPage || isResultsPage;
 
+    const handleToggleSidebar = () => {
+        if (window.innerWidth < 768) {
+            setMobileOpen(!mobileOpen);
+        } else {
+            setIsCollapsed(!isCollapsed);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 dashboard-mesh-bg flex flex-col">
             {!isLiveTestPage && (
                 <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-                    <Navbar />
+                    <Navbar onToggleSidebar={handleToggleSidebar} />
                 </div>
             )}
-            <main className="flex-grow">
-                <Outlet />
-            </main>
+            
+            <div className="flex flex-1 relative min-h-[calc(100vh-4rem)]">
+                {user && !isLiveTestPage && location.pathname !== '/' && location.pathname !== '/dashboard' && location.pathname !== '/support' && (
+                    <AppSidebar
+                        isCollapsed={isCollapsed}
+                        setIsCollapsed={setIsCollapsed}
+                        mobileOpen={mobileOpen}
+                        setMobileOpen={setMobileOpen}
+                    />
+                )}
+                <main className="flex-grow min-w-0 transition-all duration-300">
+                    <Outlet />
+                </main>
+            </div>
+
             {!hideFooter && <Footer />}
         </div>
     );
 }
+

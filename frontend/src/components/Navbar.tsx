@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench, Sparkles } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench, Sparkles, PanelLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import TestoZaLogo from './TestoZaLogo';
 import { getAppUrl, getMarketingUrl } from '@/utils/subdomain';
@@ -21,15 +21,19 @@ import { getAppUrl, getMarketingUrl } from '@/utils/subdomain';
 const NotificationBox = React.lazy(() => import('./NotificationBox'));
 
 // Lazy Load Guides to keep them out of the main index bundle
-const TestUploadFormatGuide = React.lazy(() => 
+const TestUploadFormatGuide = React.lazy(() =>
     import('./TestUploadFormatGuide').then(module => ({ default: module.TestUploadFormatGuide }))
 );
-const SolutionUploadGuide = React.lazy(() => 
+const SolutionUploadGuide = React.lazy(() =>
     import('./SolutionUploadGuide').then(module => ({ default: module.SolutionUploadGuide }))
 );
 
 
-export default function Navbar() {
+interface NavbarProps {
+    onToggleSidebar?: () => void;
+}
+
+export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
     const { user, isAdmin, profile } = useAuth();
 
     // Feature Flag for News — read from cache synchronously, defer network call
@@ -40,7 +44,7 @@ export default function Navbar() {
                 const { data } = JSON.parse(cached);
                 return data?.enable_news_updates ?? true;
             }
-        } catch {}
+        } catch { }
         return true;
     });
 
@@ -52,7 +56,7 @@ export default function Navbar() {
             import('@/lib/featuresApi').then(({ fetchFeatureFlags }) => {
                 fetchFeatureFlags().then(data => {
                     setIsNewsEnabled(data.enable_news_updates ?? true);
-                }).catch(() => {});
+                }).catch(() => { });
             });
         };
         if ('requestIdleCallback' in window) {
@@ -62,11 +66,6 @@ export default function Navbar() {
         }
     }, [user]);
 
-    // If admin hide it no one can see except admin
-    // Before this change, the news link was only visible to verified creators and admins.
-    // Assuming we want students to see the news too when it's enabled, we'll allow it if enabled.
-    // If you only meant creators, keeping profile?.is_verified_creator would be needed.
-    // Based on standard platform logic: News should be visible to all logged-in users when enabled.
     const canSeeNews = isAdmin || isNewsEnabled;
     const navigate = useNavigate();
     const location = useLocation();
@@ -102,164 +101,42 @@ export default function Navbar() {
             .slice(0, 2);
     };
 
+    const isLandingPage = location.pathname === '/' || location.pathname === '/dashboard' || location.pathname === '/support';
+
     return (
-        <header className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-sm transition-all">
+        <header className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs transition-all">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-                <Link to="/" className="hover:opacity-90 transition-opacity">
-                    <TestoZaLogo size={36} />
-                </Link>
+                <div className="flex items-center gap-3">
+                    <Link to="/" className="hover:opacity-90 transition-opacity">
+                        <TestoZaLogo size={36} />
+                    </Link>
+                </div>
 
                 <div className="flex items-center gap-2 sm:gap-4">
-                    {/* Visible Navbar Buttons: Order depends on login state */}
-                    {user ? (
-                        <>
-                            {/* Logged In: Dashboard first, Create Test second, Your Tests in between, Support last */}
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/dashboard')}
-                                aria-label="Dashboard"
-                                className={`relative flex items-center h-10 ${
-                                    location.pathname === '/dashboard' 
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
-                            >
-                                <LayoutDashboard className="mr-0 sm:mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">Dashboard</span>
-                                {location.pathname === '/dashboard' && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
-                            </Button>
-
+                    {/* Logged Out Navigation */}
+                    {!user && (
+                        <div className="hidden md:flex items-center gap-2">
                             <Button
                                 variant="ghost"
                                 onClick={() => navigate('/create-test')}
-                                aria-label="Create Test"
-                                className={`relative flex items-center h-10 ${
-                                    location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai'
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
+                                className="text-slate-600 hover:text-slate-900 font-medium"
                             >
-                                <Plus className="mr-0 sm:mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">Create Test</span>
-                                {(location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai') && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
-                            </Button>
-
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate(isAdmin ? '/manage-tests' : '/my-tests')}
-                                aria-label={isAdmin ? 'Manage Tests' : 'Your Tests'}
-                                className={`relative flex items-center h-10 ${
-                                    location.pathname === '/my-tests' || location.pathname === '/manage-tests'
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
-                            >
-                                <FileText className="mr-0 sm:mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">{isAdmin ? 'Manage Tests' : 'Your Tests'}</span>
-                                {(location.pathname === '/my-tests' || location.pathname === '/manage-tests') && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
-                            </Button>
-
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/support')}
-                                className={`relative flex items-center h-10 hidden md:flex ${
-                                    location.pathname === '/support'
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
-                            >
-                                <HelpCircle className="mr-2 h-4 w-4" />
-                                <span>Support</span>
-                                {location.pathname === '/support' && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
-                            </Button>
-                        </>
-                    ) : (
-                        <>
-                            {/* Logged Out: Create Test visible */}
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/create-test')}
-                                className={`relative flex items-center h-10 ${
-                                    location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai'
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
-                            >
-                                <Plus className="mr-0 h-4 w-4" />
+                                <Plus className="mr-1.5 h-4 w-4" />
                                 <span>Create Test</span>
-                                {(location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/') || location.pathname === '/generate-with-ai') && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
                             </Button>
-
                             <Button
                                 variant="ghost"
-                                onClick={() => handleLoginNavigation(false, '/my-tests')}
-                                aria-label="Your Tests"
-                                className={`relative flex items-center h-10 ${
-                                    location.pathname === '/my-tests' || location.pathname === '/manage-tests'
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
+                                onClick={() => handleLoginNavigation(false, location.pathname)}
                             >
-                                <FileText className="mr-0 sm:mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">Your Tests</span>
-                                {(location.pathname === '/my-tests' || location.pathname === '/manage-tests') && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
+                                Login
                             </Button>
-                        </>
+                            <Button onClick={() => handleLoginNavigation(true, location.pathname)}>
+                                Sign Up
+                            </Button>
+                        </div>
                     )}
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center gap-2">
-                        {!user && (
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/dashboard')}
-                                className={`relative flex items-center h-10 ${
-                                    location.pathname === '/dashboard'
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
-                            >
-                                <LayoutDashboard className="mr-2 h-4 w-4" />
-                                <span>Dashboard</span>
-                                {location.pathname === '/dashboard' && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
-                            </Button>
-                        )}
-
-                        {/* Support is visible only when NOT logged in (since logged in Support is handled above) */}
-                        {!user && (
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/support')}
-                                className={`relative flex items-center h-10 ${
-                                    location.pathname === '/support'
-                                        ? 'text-primary bg-primary/5 hover:bg-primary/10 dark:text-primary dark:bg-primary/10 font-semibold' 
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-100 font-medium'
-                                }`}
-                            >
-                                <HelpCircle className="mr-2 h-4 w-4" />
-                                <span>Support</span>
-                                {location.pathname === '/support' && (
-                                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full animate-in fade-in zoom-in duration-300" />
-                                )}
-                            </Button>
-                        )}
-                    </div>
-
-                    {/* Mobile Menu (Hamburger) - Hide if user is logged in (content moved to Avatar dropdown), Show if guest */}
+                    {/* Guest Mobile Menu */}
                     {!user && (
                         <div className="md:hidden">
                             <DropdownMenu>
@@ -296,72 +173,113 @@ export default function Navbar() {
                         </div>
                     )}
 
-                    {/* Authenticated User Avatar (Visible on both) */}
-                    {user ? (
+                    {/* Authenticated User Actions */}
+                    {user && (
                         <>
-                            {/* Hide Bell on Mobile, Show on Desktop */}
-                            <div className="hidden md:block">
-                                <React.Suspense fallback={
-                                    <Button variant="ghost" size="icon" className="relative">
-                                        <Bell className="h-5 w-5" />
+                            {/* Landing Page Nav Links for Logged-In Users */}
+                            {isLandingPage && (
+                                <div className="hidden md:flex items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => navigate('/dashboard')}
+                                        className="text-slate-700 dark:text-slate-200 hover:text-slate-900 font-medium text-xs sm:text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-3"
+                                    >
+                                        <LayoutDashboard className="mr-1.5 h-4 w-4 text-slate-500" />
+                                        <span>Dashboard</span>
                                     </Button>
-                                }>
-                                    <NotificationBox />
-                                </React.Suspense>
-                            </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => navigate('/create-test')}
+                                        className="text-slate-700 dark:text-slate-200 hover:text-slate-900 font-medium text-xs sm:text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-3"
+                                    >
+                                        <Plus className="mr-1.5 h-4 w-4 text-emerald-600" />
+                                        <span>Create Test</span>
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => navigate('/my-tests')}
+                                        className="text-slate-700 dark:text-slate-200 hover:text-slate-900 font-medium text-xs sm:text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-3"
+                                    >
+                                        <FileText className="mr-1.5 h-4 w-4 text-indigo-600" />
+                                        <span>My Tests</span>
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => navigate('/support')}
+                                        className="text-slate-700 dark:text-slate-200 hover:text-slate-900 font-medium text-xs sm:text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-3"
+                                    >
+                                        <HelpCircle className="mr-1.5 h-4 w-4 text-amber-600" />
+                                        <span>Support</span>
+                                    </Button>
+                                </div>
+                            )}
 
+                            {/* Landing Page Mobile Menu for Logged-In Users */}
+                            {isLandingPage && (
+                                <div className="md:hidden">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" aria-label="Open navigation menu">
+                                                <Menu className="h-5 w-5" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-56 rounded-2xl p-1.5">
+                                            <DropdownMenuItem onClick={() => navigate('/dashboard')} className="rounded-xl cursor-pointer">
+                                                <LayoutDashboard className="mr-2 h-4 w-4 text-slate-500" />
+                                                <span>Dashboard</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => navigate('/create-test')} className="rounded-xl cursor-pointer">
+                                                <Plus className="mr-2 h-4 w-4 text-emerald-600" />
+                                                <span>Create Test</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => navigate('/my-tests')} className="rounded-xl cursor-pointer">
+                                                <FileText className="mr-2 h-4 w-4 text-indigo-600" />
+                                                <span>My Tests</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => navigate('/support')} className="rounded-xl cursor-pointer">
+                                                <HelpCircle className="mr-2 h-4 w-4 text-amber-600" />
+                                                <span>Support</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            )}
+
+                            {/* Notification Bell */}
+                            <React.Suspense fallback={
+                                <Button variant="ghost" size="icon" className="relative">
+                                    <Bell className="h-5 w-5" />
+                                </Button>
+                            }>
+                                <NotificationBox />
+                            </React.Suspense>
+
+                            {/* User Avatar Dropdown - ONLY Home, Profile, Settings, Log out */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="Open user account menu">
-                                        <Avatar className="h-8 w-8">
+                                    <Button variant="ghost" className="relative h-9 w-9 rounded-full ring-2 ring-slate-200/60 dark:ring-slate-800 hover:ring-primary/40 transition-all" aria-label="Open user account menu">
+                                        <Avatar className="h-9 w-9">
                                             <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name} />
-                                            <AvatarFallback>{getInitials(user.user_metadata?.full_name)}</AvatarFallback>
+                                            <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">{getInitials(user.user_metadata?.full_name)}</AvatarFallback>
                                         </Avatar>
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="end" forceMount>
-                                    <DropdownMenuLabel className="font-normal">
+                                <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border border-slate-200/80 dark:border-slate-800" align="end" forceMount>
+                                    <DropdownMenuLabel className="font-normal px-3 py-2">
                                         <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || 'User'}</p>
-                                            <p className="text-xs leading-none text-muted-foreground">
+                                            <p className="text-sm font-semibold leading-none text-slate-800 dark:text-slate-100">{user.user_metadata?.full_name || 'User'}</p>
+                                            <p className="text-xs leading-none text-slate-400 truncate">
                                                 {user.email}
                                             </p>
                                         </div>
                                     </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSeparator className="my-1" />
 
-                                    {/* Mobile Only Links moved here */}
-                                    <div className="md:hidden">
-                                        <DropdownMenuItem 
-                                            onClick={() => navigate('/notifications')} 
-                                            className={`flex justify-between items-center ${location.pathname === '/notifications' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}`}
-                                        >
-                                            <div className="flex items-center">
-                                                <Bell className="mr-2 h-4 w-4" />
-                                                <span>Notifications</span>
-                                            </div>
-                                        </DropdownMenuItem>
-
-                                        <DropdownMenuItem 
-                                            onClick={() => navigate('/support')}
-                                            className={location.pathname === '/support' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                        >
-                                            <HelpCircle className="mr-2 h-4 w-4" />
-                                            <span>Support</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        {canSeeNews && (
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/news')}
-                                                className={location.pathname === '/news' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <FileText className={`mr-2 h-4 w-4 ${location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400'}`} />
-                                                <span className={location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400 font-medium'}>News & Updates</span>
-                                            </DropdownMenuItem>
-                                        )}
-                                    </div>
-
-                                    <DropdownMenuItem 
+                                    <DropdownMenuItem
                                         onClick={() => {
                                             const url = getMarketingUrl('/');
                                             if (url.startsWith('http')) {
@@ -370,147 +288,39 @@ export default function Navbar() {
                                                 navigate('/');
                                             }
                                         }}
-                                        className={location.pathname === '/' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                        className={`rounded-xl px-3 py-2 cursor-pointer font-medium text-xs ${location.pathname === '/' ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-700 dark:text-slate-300'}`}
                                     >
-                                        <Home className="mr-2 h-4 w-4" />
+                                        <Home className="mr-2.5 h-4 w-4" />
                                         <span>Home</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                        onClick={() => navigate('/generate-with-ai')}
-                                        className={location.pathname === '/generate-with-ai' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                    >
-                                        <Sparkles className={`mr-2 h-4 w-4 ${location.pathname === '/generate-with-ai' ? '' : 'text-violet-600 dark:text-violet-400'}`} />
-                                        <span className={location.pathname === '/generate-with-ai' ? '' : 'text-violet-600 dark:text-violet-400 font-medium'}>Generate with AI</span>
-                                    </DropdownMenuItem>
-                                    {canSeeNews && (
-                                        <DropdownMenuItem 
-                                            onClick={() => navigate('/news')} 
-                                            className={`hidden md:flex ${location.pathname === '/news' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}`}
-                                        >
-                                            <FileText className={`mr-2 h-4 w-4 ${location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400'}`} />
-                                            <span className={location.pathname === '/news' ? '' : 'text-blue-600 dark:text-blue-400 font-medium'}>News & Updates</span>
-                                        </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem 
+
+                                    <DropdownMenuItem
                                         onClick={() => navigate('/profile')}
-                                        className={location.pathname === '/profile' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                        className={`rounded-xl px-3 py-2 cursor-pointer font-medium text-xs ${location.pathname === '/profile' ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-700 dark:text-slate-300'}`}
                                     >
-                                        <User className="mr-2 h-4 w-4" />
+                                        <User className="mr-2.5 h-4 w-4" />
                                         <span>Profile</span>
                                     </DropdownMenuItem>
 
-                                    <DropdownMenuItem 
+                                    <DropdownMenuItem
                                         onClick={() => navigate('/settings')}
-                                        className={location.pathname === '/settings' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                        className={`rounded-xl px-3 py-2 cursor-pointer font-medium text-xs ${location.pathname === '/settings' ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-700 dark:text-slate-300'}`}
                                     >
-                                        <Settings className="mr-2 h-4 w-4" />
+                                        <Settings className="mr-2.5 h-4 w-4" />
                                         <span>Settings</span>
                                     </DropdownMenuItem>
-                                    {isAdmin ? (
-                                        <>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/manage-tests')}
-                                                className={location.pathname === '/manage-tests' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <Shield className="mr-2 h-4 w-4" />
-                                                <span>Manage Tests</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/admin?tab=migration')}
-                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=migration')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <Shield className="mr-2 h-4 w-4" />
-                                                <span>Admin Data Migration</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/admin?tab=analytics')}
-                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=analytics')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <ChartSpline className={`mr-2 h-4 w-4 ${(location.pathname.startsWith('/admin') && location.search.includes('tab=analytics')) ? '' : 'text-orange-500'}`} />
-                                                <span>Visitor Analytics</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/admin?tab=pricing')}
-                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=pricing')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>Manage Pricing</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/admin?tab=features')}
-                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=features')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <Wrench className="mr-2 h-4 w-4" />
-                                                <span>Feature Control</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/admin?tab=promos')}
-                                                className={(location.pathname.startsWith('/admin') && location.search.includes('tab=promos')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <TicketPercent className="mr-2 h-4 w-4" />
-                                                <span>Manage Promo Codes</span>
-                                            </DropdownMenuItem>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/my-tests')}
-                                                className={location.pathname === '/my-tests' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <Shield className="mr-2 h-4 w-4" />
-                                                <span>Your Tests</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/materials')}
-                                                className={location.pathname === '/materials' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <FileText className="mr-2 h-4 w-4" />
-                                                <span>Materials</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                onClick={() => navigate('/history')}
-                                                className={location.pathname === '/history' ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                            >
-                                                <History className="mr-2 h-4 w-4" />
-                                                <span>Test History</span>
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
 
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
-                                        onClick={() => window.open('/user-guide', '_blank')}
-                                        className={location.pathname.startsWith('/user-guide') ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
+                                    <DropdownMenuSeparator className="my-1" />
+                                    <DropdownMenuItem
+                                        onClick={handleSignOut}
+                                        className="rounded-xl px-3 py-2 cursor-pointer font-medium text-xs text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/40"
                                     >
-                                        <Book className={`mr-2 h-4 w-4 ${location.pathname.startsWith('/user-guide') ? '' : 'text-indigo-600'}`} />
-                                        <span>User Guide</span>
-                                    </DropdownMenuItem>
-
-                                    <DropdownMenuItem 
-                                        onClick={() => navigate('/create-test')}
-                                        className={(location.pathname === '/create-test' || location.pathname.startsWith('/edit-test/')) ? 'bg-primary/10 text-primary font-semibold dark:bg-primary/20 focus:bg-primary/10 focus:text-primary' : ''}
-                                    >
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        <span>Create Test</span>
-                                    </DropdownMenuItem>
-
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={handleSignOut}>
-                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <LogOut className="mr-2.5 h-4 w-4" />
                                         <span>Log out</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </>
-                    ) : (
-                        <div className="hidden md:flex gap-2">
-                            <Button variant="ghost" onClick={() => handleLoginNavigation(false, location.pathname)}>
-                                Login
-                            </Button>
-                            <Button onClick={() => handleLoginNavigation(true, location.pathname)}>
-                                Sign Up
-                            </Button>
-                        </div>
                     )}
                 </div>
             </div>

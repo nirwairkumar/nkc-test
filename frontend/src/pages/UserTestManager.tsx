@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield, AlertTriangle, Copy, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
@@ -70,6 +70,24 @@ const isProctoringEnabled = (test: any) => {
 export default function UserTestManager() {
     const { user, profile, isAdmin, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Tab state synced with URL ?tab=reports
+    const [activeTab, setActiveTab] = useState<string>(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        return searchParams.get('tab') === 'reports' ? 'reports' : 'tests';
+    });
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const currentTab = searchParams.get('tab');
+        if (currentTab === 'reports') {
+            setActiveTab('reports');
+            loadReports();
+        } else {
+            setActiveTab('tests');
+        }
+    }, [location.search]);
 
     // Impersonation check
     const queryParams = new URLSearchParams(window.location.search);
@@ -629,11 +647,21 @@ export default function UserTestManager() {
                     </Button>
                 </div>
             )}
-            <Tabs defaultValue="tests" onValueChange={(v) => v === 'reports' && loadReports()}>
+            <Tabs value={activeTab} onValueChange={(v) => {
+                setActiveTab(v);
+                if (v === 'reports') {
+                    navigate('/my-tests?tab=reports', { replace: true });
+                    loadReports();
+                } else {
+                    navigate('/my-tests', { replace: true });
+                }
+            }}>
                 <div className="flex items-center justify-between mb-4 gap-4">
                     <div>
                         <p className="text-[12px] font-medium text-slate-400 uppercase tracking-widest leading-none mb-1">Creator</p>
-                        <p className="text-[27px] font-semibold text-slate-800 tracking-tight leading-tight">Dashboard</p>
+                        <p className="text-[27px] font-semibold text-slate-800 tracking-tight leading-tight">
+                            {activeTab === 'reports' ? 'Reports' : 'Dashboard'}
+                        </p>
                     </div>
 
                     {/* Note explaining "Conduct" mode for creators, visible on medium and larger screens only */}
@@ -643,19 +671,6 @@ export default function UserTestManager() {
                             Use <strong>"Conduct"</strong> mode on any test card to organize live exams, enable proctoring, and view submitted results.
                         </span>
                     </div>
-
-                    <TabsList className="h-8 shrink-0">
-                        <TabsTrigger value="tests" className="text-xs px-3 h-7">My Tests</TabsTrigger>
-                        <TabsTrigger value="reports" className="relative text-xs px-3 h-7">
-                            Reports
-                            {reports.filter(r => r.status === 'open').length > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                                </span>
-                            )}
-                        </TabsTrigger>
-                    </TabsList>
                 </div>
 
                 <TabsContent value="tests" className="space-y-3 m-0 border-0 p-0">
