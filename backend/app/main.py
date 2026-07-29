@@ -9,12 +9,17 @@ from pydantic import BaseModel
 
 # this is a test of branch change. I am editing in gcp-migration.
 
+import os
+
+# Disable API docs in production to prevent information disclosure
+_is_dev = os.getenv("ENVIRONMENT", "production").lower() in ("development", "dev", "local")
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
-    openapi_url="/api/openapi.json",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json" if _is_dev else None,
+    docs_url="/api/docs" if _is_dev else None,
+    redoc_url="/api/redoc" if _is_dev else None,
 )
 
 # GZip compression for all responses > 1KB (cuts test JSON payload by ~70%)
@@ -24,7 +29,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 def read_root():
     return {"message": "TestoZa Backend is running on Google Cloud Run!"}
 
-# CORS Middleware
+# CORS Middleware — explicit origins only, NO wildcard
 origins = [
     "https://testoza.com",
     "https://www.testoza.com",
@@ -32,7 +37,6 @@ origins = [
     "https://testing.testoza.com",
     "http://localhost:5173", # Local dev
     "http://localhost:8081", # Local dev
-    "*" # Re-enable wildcard temporarily for transition if needed, but per plan specify origins
 ]
 
 
@@ -49,6 +53,24 @@ from fastapi import Request
 @app.middleware("http")
 async def add_security_headers_middleware(request: Request, call_next):
     response = await call_next(request)
+
+    # ── Security Headers (all responses) ──────────────────────────
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: blob: https:; "
+        "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://apigcp.testoza.com; "
+        "frame-ancestors 'none'"
+    )
+
     # Secure API endpoints by default against CDN/Edge caching
     # If the response already has a Cache-Control header, respect it
     if request.url.path.startswith("/api") and "Cache-Control" not in response.headers:
