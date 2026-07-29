@@ -26,7 +26,7 @@ const formSchema = z.object({
 });
 
 interface AdminLoginPanelProps {
-    onLoginSuccess: () => void;
+    onLoginSuccess?: () => void;
 }
 
 export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps) {
@@ -62,7 +62,7 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
 
             await refreshSession();
             toast.success('Admin Login Successful');
-            onLoginSuccess();
+            onLoginSuccess?.();
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || 'Admin Authentication failed');
