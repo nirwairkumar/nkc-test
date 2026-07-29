@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
+import { getApiUrl } from '@/lib/getApiUrl';
 import { Input } from "@/components/ui/input";
 import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, Key, Zap, CheckCircle2, MoreVertical, PenLine, History, Trash2, ChevronLeft } from "lucide-react";
 import {
