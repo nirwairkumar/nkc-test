@@ -1,0 +1,8 @@
+# Proxy YouTube API to avoid CORS issues
+/api/yt/* https://www.youtube.com/:splat 200
+
+# Proxy Python Backend requests if needed (adjust base URL if backend is hosted elsewhere)
+# /api/* https://your-backend-url.com/api/:splat 200
+
+# Client-side routing fallback
+/* /index.html 200

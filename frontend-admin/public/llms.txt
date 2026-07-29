@@ -1,0 +1,41 @@
+# Testoza
+
+> **AI-powered online examination platform** that transforms how educators create, administer, and secure tests. Testoza combines intelligent test generation with strict proctoring security and institutional branding capabilities to deliver professional-grade assessments for schools, colleges, coaching institutes, and corporations.
+
+## Core Features
+
+- **AI-Powered Test Creation** – Generate comprehensive tests instantly from PDFs, images, text, and YouTube videos. Our AI analyzes content and creates relevant multiple-choice, multiple-select, fill-in-blank, and true/false questions with appropriate difficulty levels.
+
+- **PDF-to-Test Generation** – Upload any PDF document (notes, textbooks, articles) and automatically convert it into a structured test with AI-generated questions. Support for scanned documents and handwritten notes.
+
+- **Strict Proctoring Security** – Multi-layered anti-cheating system including:
+  - Tab switching detection and prevention
+  - Copy-paste blocking and right-click disable
+  - Full-screen enforcement with exit warnings
+  - Browser dev tools blocking (F12, Ctrl+Shift+I, Inspect Element)
+  - Print screen and screenshot prevention
+  - Browser console access blocking
+  - Real-time monitoring of suspicious activities
+  - Session termination on security violations
+
+- **Institutional Branding** – Complete white-label capabilities:
+  - Custom organization logos and colors
+  - Branded test interfaces
+  - Custom certificate generation with institute branding
+  - Dedicated test portals
+  - URL customization options
+
+- **Multiple Question Types** – Support for MCQ, Multiple Select, Fill in the Blanks, and True/False questions with rich media support.
+
+- **Detailed Analytics** – Comprehensive performance reports with time tracking, question-wise analysis, and comparison metrics.
+
+- **Flexible Test Sharing** – Share tests via public links, private access codes, or email invitations with customizable access permissions.
+
+## Quick Links
+
+- [Website](https://testoza.com)
+- [Create Test](https://testoza.com/create-test)
+- [Test Library](https://testoza.com/tests)
+- [Dashboard](https://testoza.com/dashboard)
+---
+*Testoza: Secure. Intelligent. Professional.*

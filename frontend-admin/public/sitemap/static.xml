@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url>
+        <loc>https://testoza.com/</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1</priority>
+    </url>
+
+
+    <url>
+        <loc>https://testoza.com/tests/general-knowledge-2</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/science</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/maths</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/history</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/jee</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/cat</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/gate</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/jee-mains</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/jee-advance</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/neet-ug</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/iit-jam</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/ntse</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+    <url>
+        <loc>https://testoza.com/tests/ssc</loc>
+        <lastmod>2026-02-12T06:11:30.875Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+</urlset>

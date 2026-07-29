@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NKC Loading Animation Preview</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #0d0f18;
+    }
+    .scene {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 0 1.5rem;
+      background: #0d0f18;
+      border-radius: 16px;
+    }
+    .flask-stage {
+      position: relative;
+      width: 260px;
+      height: 380px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .fog-p {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      animation: fogUp var(--fd,4s) ease-out var(--fdelay,0s) infinite;
+    }
+    @keyframes fogUp {
+      0%   { opacity:0; transform:translateY(0) translateX(0) scale(0.3); filter:blur(3px); }
+      10%  { opacity:0.3; }
+      50%  { opacity:0.15; transform:translateY(-50px) translateX(var(--fx,8px)) scale(1.6); filter:blur(7px); }
+      100% { opacity:0; transform:translateY(-110px) translateX(var(--fx2,16px)) scale(2.5); filter:blur(11px); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="flask-stage">
+    <!-- Colorful Fog / vapor particles (Origin lowered to start at flask neck) -->
+    <div class="fog-p" style="left:118px;top:44px;width:16px;height:16px;background:rgba(239,68,68,0.5);--fd:5.5s;--fdelay:0s;--fx:-8px;--fx2:-20px;"></div> <!-- Red -->
+    <div class="fog-p" style="left:126px;top:40px;width:12px;height:12px;background:rgba(244,114,182,0.5);--fd:6s;--fdelay:1s;--fx:12px;--fx2:24px;"></div> <!-- Pink -->
+    <div class="fog-p" style="left:110px;top:46px;width:20px;height:20px;background:rgba(31,41,55,0.7);--fd:7s;--fdelay:2s;--fx:-14px;--fx2:-28px;"></div> <!-- Dark/Black -->
+    <div class="fog-p" style="left:130px;top:42px;width:10px;height:10px;background:rgba(250,204,21,0.5);--fd:5s;--fdelay:3s;--fx:9px;--fx2:20px;"></div> <!-- Yellow -->
+    <div class="fog-p" style="left:114px;top:48px;width:14px;height:14px;background:rgba(168,85,247,0.5);--fd:6.5s;--fdelay:3.8s;--fx:-10px;--fx2:-22px;"></div> <!-- Purple -->
+    <div class="fog-p" style="left:122px;top:42px;width:18px;height:18px;background:rgba(6,182,212,0.5);--fd:5.8s;--fdelay:0.5s;--fx:15px;--fx2:30px;"></div> <!-- Cyan -->
+    <div class="fog-p" style="left:106px;top:40px;width:14px;height:14px;background:rgba(132,204,22,0.5);--fd:6.2s;--fdelay:1.5s;--fx:-18px;--fx2:-35px;"></div> <!-- Lime -->
+    <div class="fog-p" style="left:128px;top:46px;width:12px;height:12px;background:rgba(249,115,22,0.5);--fd:7.5s;--fdelay:2.5s;--fx:10px;--fx2:18px;"></div> <!-- Orange -->
+    <div class="fog-p" style="left:112px;top:44px;width:16px;height:16px;background:rgba(255,255,255,0.4);--fd:5.4s;--fdelay:3.5s;--fx:-12px;--fx2:-28px;"></div> <!-- White -->
+    <div class="fog-p" style="left:120px;top:42px;width:10px;height:10px;background:rgba(59,130,246,0.5);--fd:6.8s;--fdelay:4.5s;--fx:20px;--fx2:40px;"></div> <!-- Blue -->
+
+    <svg id="flaskSvg" viewBox="0 0 220 340" width="220" height="340" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="bodyClip">
+          <!-- Continuous glass clipping path -->
+          <path d="M 90 50 L 130 50 L 130 115 L 186 238 Q 192 255 174 268 L 46 268 Q 28 255 34 238 L 90 115 Z"/>
+        </clipPath>
+        <clipPath id="neckClip">
+          <rect x="90" y="52" width="40" height="56"/>
+        </clipPath>
+      </defs>
+
+      <g id="wholeFlask">
+
+        <!-- CONTINUOUS GLASS FLASK -->
+        <path d="M 90 50 L 130 50 L 130 115 L 186 238 Q 192 255 174 268 L 46 268 Q 28 255 34 238 L 90 115 Z"
+              fill="none" stroke="#cbd5e1" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+        <!-- Subtle shine along the glass side -->
+        <path d="M 93 54 L 93 115 L 40 232" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+        <!-- LIQUID inside body -->
+        <g clip-path="url(#bodyClip)">
+
+          <!-- Liquid base -->
+          <rect x="20" y="168" width="185" height="115" rx="0">
+            <animate attributeName="fill"
+              values="#3b82f6;#06b6d4;#10b981;#84cc16;#f59e0b;#ef4444;#8b5cf6;#3b82f6"
+              dur="14s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.55;0.6;0.55;0.65;0.58;0.6;0.55;0.55" dur="14s" repeatCount="indefinite"/>
+          </rect>
+
+          <!-- Swirling vortex ellipses (slower) -->
+          <g opacity="0.7">
+            <ellipse cx="110" cy="215" rx="45" ry="12">
+              <animate attributeName="rx" values="45;32;45;55;45" dur="4.5s" repeatCount="indefinite"/>
+              <animate attributeName="ry" values="12;18;12;8;12" dur="4.5s" repeatCount="indefinite"/>
+              <animate attributeName="cx" values="110;116;110;104;110" dur="4.5s" repeatCount="indefinite"/>
+              <animate attributeName="fill" values="#93c5fd;#67e8f9;#6ee7b7;#bef264;#93c5fd" dur="14s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0.8;0.5;0.8;0.5" dur="4.5s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="110" cy="228" rx="30" ry="8">
+              <animate attributeName="rx" values="30;42;30;22;30" dur="4.5s" begin="-1.1s" repeatCount="indefinite"/>
+              <animate attributeName="ry" values="8;5;8;13;8" dur="4.5s" begin="-1.1s" repeatCount="indefinite"/>
+              <animate attributeName="cx" values="110;103;110;117;110" dur="4.5s" begin="-1.1s" repeatCount="indefinite"/>
+              <animate attributeName="fill" values="#60a5fa;#22d3ee;#34d399;#a3e635;#60a5fa" dur="14s" begin="-1.1s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.6;0.35;0.6;0.35;0.6" dur="4.5s" begin="-1.1s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="110" cy="242" rx="50" ry="6">
+              <animate attributeName="rx" values="50;36;50;60;50" dur="4.5s" begin="-2.2s" repeatCount="indefinite"/>
+              <animate attributeName="ry" values="6;10;6;4;6" dur="4.5s" begin="-2.2s" repeatCount="indefinite"/>
+              <animate attributeName="fill" values="#bfdbfe;#a5f3fc;#6ee7b7;#fde68a;#bfdbfe" dur="14s" begin="-2.2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0.65;0.4;0.65;0.4" dur="4.5s" begin="-2.2s" repeatCount="indefinite"/>
+            </ellipse>
+          </g>
+
+          <!-- Wave surface (slower) -->
+          <path fill-opacity="0.4">
+            <animate attributeName="d"
+              values="
+                M 22 182 Q 55 175 110 182 Q 155 189 195 182 L 195 187 Q 155 194 110 187 Q 55 180 22 187 Z;
+                M 22 182 Q 55 189 110 182 Q 155 175 195 182 L 195 187 Q 155 180 110 187 Q 55 194 22 187 Z;
+                M 22 182 Q 55 175 110 182 Q 155 189 195 182 L 195 187 Q 155 194 110 187 Q 55 180 22 187 Z"
+              dur="4.5s" repeatCount="indefinite"/>
+            <animate attributeName="fill" values="#93c5fd;#67e8f9;#6ee7b7;#bef264;#93c5fd" dur="14s" repeatCount="indefinite"/>
+          </path>
+
+          <!-- Internal rising bubbles (slower) -->
+          <circle cx="92" cy="260" r="6" fill="rgba(255,255,255,0.5)">
+            <animate attributeName="cy" values="260;168;260" dur="4.5s" begin="0s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.7;0" dur="4.5s" begin="0s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="4;6;4" dur="4.5s" begin="0s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="125" cy="262" r="4" fill="rgba(255,255,255,0.45)">
+            <animate attributeName="cy" values="262;172;262" dur="5s" begin="-1.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.65;0" dur="5s" begin="-1.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="108" cy="256" r="5" fill="rgba(255,255,255,0.4)">
+            <animate attributeName="cy" values="256;170;256" dur="4.8s" begin="-3s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.6;0" dur="4.8s" begin="-3s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="142" cy="258" r="3" fill="rgba(255,255,255,0.5)">
+            <animate attributeName="cy" values="258;174;258" dur="4s" begin="-0.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.7;0" dur="4s" begin="-0.6s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="78" cy="264" r="4" fill="rgba(255,255,255,0.35)">
+            <animate attributeName="cy" values="264;176;264" dur="5.5s" begin="-2.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.55;0" dur="5.5s" begin="-2.5s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Boiling surface pops (slower) -->
+          <circle r="4" cx="80" cy="182">
+            <animate attributeName="cy" values="265;165;265" dur="2s" begin="-0.1s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.8;0" dur="2s" begin="-0.1s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="2;5;2" dur="2s" begin="-0.1s" repeatCount="indefinite"/>
+            <animate attributeName="fill" values="#bfdbfe;#a5f3fc;#6ee7b7;#bfdbfe" dur="14s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="3" cx="105" cy="182">
+            <animate attributeName="cy" values="258;168;258" dur="1.8s" begin="-0.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.85;0" dur="1.8s" begin="-0.6s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="2;4;2" dur="1.8s" begin="-0.6s" repeatCount="indefinite"/>
+            <animate attributeName="fill" values="#c4b5fd;#fde68a;#fca5a5;#c4b5fd" dur="14s" begin="-1s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="5" cx="130" cy="182">
+            <animate attributeName="cy" values="262;166;262" dur="2.4s" begin="-1s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.75;0" dur="2.4s" begin="-1s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="3;6;2" dur="2.4s" begin="-1s" repeatCount="indefinite"/>
+            <animate attributeName="fill" values="#6ee7b7;#93c5fd;#fde68a;#6ee7b7" dur="14s" begin="-2s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="3" cx="152" cy="182">
+            <animate attributeName="cy" values="255;169;255" dur="2s" begin="-1.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0;0.8;0" dur="2s" begin="-1.4s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="2;4;2" dur="2s" begin="-1.4s" repeatCount="indefinite"/>
+            <animate attributeName="fill" values="#fca5a5;#c4b5fd;#67e8f9;#fca5a5" dur="14s" begin="-3s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Dropping spheres from neck into liquid (slower) -->
+          <circle r="7" fill="rgba(250,204,21,0.85)">
+            <animate attributeName="cx" values="98;102;98" dur="4.5s" repeatCount="indefinite"/>
+            <animate attributeName="cy" values="108;252;108" dur="6s" begin="0s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+            <animate attributeName="opacity" values="0;0.9;0.9;0;0" dur="6s" begin="0s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="5;5;7;3;3" dur="6s" begin="0s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="6" fill="rgba(234,67,53,0.9)">
+            <animate attributeName="cx" values="120;116;120" dur="4.5s" repeatCount="indefinite"/>
+            <animate attributeName="cy" values="108;245;108" dur="6.6s" begin="-2s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+            <animate attributeName="opacity" values="0;0.9;0.9;0;0" dur="6.6s" begin="-2s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="4;4;6;3;3" dur="6.6s" begin="-2s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="5" fill="rgba(52,211,153,0.9)">
+            <animate attributeName="cx" values="110;107;110" dur="4.5s" repeatCount="indefinite"/>
+            <animate attributeName="cy" values="108;240;108" dur="7.2s" begin="-4s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+            <animate attributeName="opacity" values="0;0.85;0.85;0;0" dur="7.2s" begin="-4s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="3;3;5;2;2" dur="7.2s" begin="-4s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="8" fill="rgba(168,85,247,0.85)">
+            <animate attributeName="cx" values="105;112;105" dur="4.5s" repeatCount="indefinite"/>
+            <animate attributeName="cy" values="108;255;108" dur="5.4s" begin="-1s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+            <animate attributeName="opacity" values="0;0.9;0.9;0;0" dur="5.4s" begin="-1s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="5;5;8;3;3" dur="5.4s" begin="-1s" repeatCount="indefinite"/>
+          </circle>
+          <circle r="4" fill="rgba(14,165,233,0.9)">
+            <animate attributeName="cx" values="115;110;115" dur="4.5s" repeatCount="indefinite"/>
+            <animate attributeName="cy" values="108;248;108" dur="6.4s" begin="-3s" repeatCount="indefinite" calcMode="spline" keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1"/>
+            <animate attributeName="opacity" values="0;0.9;0.9;0;0" dur="6.4s" begin="-3s" repeatCount="indefinite"/>
+          </circle>
+
+          <!-- Refraction shine -->
+          <polygon points="88 118 54 230 66 230 96 128" fill="rgba(255,255,255,0.07)"/>
+        </g>
+
+        <!-- Liquid tint inside neck -->
+        <g clip-path="url(#neckClip)">
+          <rect x="90" y="50" width="40" height="58" fill="rgba(148,163,184,0.12)"/>
+        </g>
+
+      </g><!-- end wholeFlask -->
+    </svg>
+  </div>
+</div>
+
+<script>
+  const pivotX = 110, pivotY = 50;
+  const orbitR = 11;
+  const period = 5200;   // slower rotation (was 2800)
+  let t0 = null;
+
+  function tick(ts) {
+    if (!t0) t0 = ts;
+    const angle = ((ts - t0) / period) * 2 * Math.PI;
+
+    const dx = Math.sin(angle) * orbitR;
+    const dy = (1 - Math.cos(angle)) * orbitR * 0.4;
+    const tilt = Math.sin(angle) * 7;  // gentler tilt (was 12)
+
+    const g = document.getElementById('wholeFlask');
+    if (g) {
+      g.setAttribute('transform',
+        `rotate(${tilt}, ${pivotX}, ${pivotY}) translate(${dx * 0.3}, ${dy})`
+      );
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>
