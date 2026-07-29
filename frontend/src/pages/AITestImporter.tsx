@@ -48,6 +48,7 @@ interface Question {
     negativeMarks?: number;
     diagramPage?: number | null;
     passageContent?: string;
+    groupId?: string;
     page?: number;
 }
 
