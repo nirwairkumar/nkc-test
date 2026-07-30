@@ -280,7 +280,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
     };
 
     return (
-        <div className="fixed right-3 top-24 bottom-6 z-40 flex items-start pointer-events-none select-none">
+        <div className="fixed right-3 top-24 bottom-6 z-40 hidden lg:flex items-start pointer-events-none select-none">
             {/* Collapse / Expand Toggle Button */}
             <button
                 type="button"
@@ -295,7 +295,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
             {!collapsed && (
                 <div 
                     ref={minimapRef}
-                    className="pointer-events-auto w-44 min-w-[176px] max-w-[176px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
+                    className="pointer-events-auto w-40 min-w-[160px] max-w-[160px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
                 >
                     {/* Header Bar */}
                     <div className="px-2.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 w-full min-w-0 overflow-hidden">

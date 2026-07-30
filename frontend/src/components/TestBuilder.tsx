@@ -1445,7 +1445,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     }
 
     return (
-        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 w-full max-w-5xl" style={{ overflowAnchor: 'none' }}>
+        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 lg:pr-[180px] xl:pr-[180px] w-full max-w-5xl transition-all duration-300" style={{ overflowAnchor: 'none' }}>
             <style>{`
                 @keyframes iosInsert {
                     0% {
