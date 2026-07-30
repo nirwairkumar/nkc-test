@@ -2192,7 +2192,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                         checked={!!section.attempt_control}
                                                                         onCheckedChange={(checked) => {
                                                                             if (checked) {
-                                                                                updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: 1, mode: 'hard', soft_type: 'first_n' });
+                                                                                updateSection(sIdx, 'attempt_control', { enabled: true, max_attempts: section.questions.length || 1, mode: 'hard', soft_type: 'first_n' });
                                                                             } else {
                                                                                 updateSection(sIdx, 'attempt_control', undefined);
                                                                             }
@@ -2206,9 +2206,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             <Label className="text-xs font-bold text-slate-500 uppercase">Max Attempts</Label>
                                                                             <Input
                                                                                 type="number"
-                                                                                value={section.attempt_control?.max_attempts || 0}
-                                                                                onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) })}
-                                                                                placeholder="e.g. 5"
+                                                                                value={section.attempt_control?.max_attempts ?? (section.questions.length || 1)}
+                                                                                onChange={(e) => updateSection(sIdx, 'attempt_control', { ...section.attempt_control, max_attempts: parseInt(e.target.value) || 0 })}
+                                                                                placeholder={`e.g. ${section.questions.length || 1}`}
                                                                             />
                                                                         </div>
 
