@@ -59,6 +59,9 @@ export default function Layout() {
 
     // Hide navbar & sidebar on live test pages
     const isResultsPage = location.pathname.startsWith('/results');
+    const isCreateTestPage =
+        location.pathname.startsWith('/create-test') ||
+        location.pathname.startsWith('/edit-test');
     const isLiveTestPage =
         location.pathname.startsWith('/test/') ||
         location.pathname.startsWith('/test-intro/') ||
@@ -66,7 +69,7 @@ export default function Layout() {
         location.pathname.startsWith('/test-submitted') ||
         location.pathname.startsWith('/combined-');
 
-    const hideFooter = isLiveTestPage || isResultsPage;
+    const hideFooter = isLiveTestPage || isResultsPage || isCreateTestPage;
 
     const handleToggleSidebar = () => {
         if (window.innerWidth < 768) {
