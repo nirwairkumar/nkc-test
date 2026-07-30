@@ -4,6 +4,11 @@ import { authApi } from '@/lib/authApi';
 import { supabase } from '@/integrations/supabase/client';
 import { tokenStorage } from '@/utils/tokenStorage';
 
+// Immediate non-blocking eager ping to warm up Cloud Run container before React renders
+if (typeof window !== 'undefined') {
+    fetch('https://apigcp.testoza.com/api/health', { mode: 'no-cors' }).catch(() => {});
+}
+
 // Shared initialization promise to prevent duplicate concurrent runs
 let initPromise: Promise<void> | null = null;
 
@@ -166,25 +171,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                 }
 
-                // 2. Load from localStorage
-                const token = tokenStorage.getTokens().token;
+                // 2. Load from localStorage & cookies
+                let { token, refreshToken } = tokenStorage.getTokens();
                 if (token) {
                     try {
                         let userId: string | undefined;
+                        let isExpired = false;
                         try {
                             const payloadBase64 = token.split('.')[1];
                             const decodedPayload = JSON.parse(atob(payloadBase64));
                             userId = decodedPayload.sub;
+                            if (decodedPayload.exp && (Date.now() / 1000) >= (decodedPayload.exp - 10)) {
+                                isExpired = true;
+                            }
                         } catch (err) {
                             console.warn("Failed to parse JWT payload client-side:", err);
                         }
 
-                        if (userId) {
-                            // Parallelize: authApi.getMe(), profile details, and admin status
+                        // If client token is expired (e.g. user returning 3-4 hours later), try fast SDK refresh FIRST
+                        if (isExpired) {
+                            console.log("[AuthContext] Token expired client-side. Refreshing session...");
+                            try {
+                                const { data: refreshRes, error: refreshErr } = await supabase.auth.refreshSession();
+                                if (!refreshErr && refreshRes?.session?.access_token) {
+                                    token = refreshRes.session.access_token;
+                                    refreshToken = refreshRes.session.refresh_token || refreshToken;
+                                    tokenStorage.setTokens(token, refreshToken || undefined);
+                                    isExpired = false;
+
+                                    const payloadBase64 = token.split('.')[1];
+                                    const decodedPayload = JSON.parse(atob(payloadBase64));
+                                    userId = decodedPayload.sub;
+                                } else {
+                                    throw new Error("Refresh failed");
+                                }
+                            } catch (rfErr) {
+                                console.warn("[AuthContext] Expired token refresh failed, clearing session instantly:", rfErr);
+                                tokenStorage.clearTokens();
+                                setUser(null);
+                                setSession(null);
+                                setIsGlobalUnlock(false);
+                                setHasActivePlans(true);
+                                setIsPremium(false);
+                                setPremiumLoading(false);
+                                setLoading(false);
+                                initPromise = null;
+                                return;
+                            }
+                        }
+
+                        if (userId && !isExpired) {
+                            // Parallelize: authApi.getMe(), profile details, admin status, and premium check
                             const [meResponse, profileData] = await Promise.all([
                                 authApi.getMe(),
                                 fetchProfileData(userId),
-                                checkAdminStatus(userId)
+                                checkAdminStatus(userId),
+                                checkPremiumStatus(userId)
                             ]);
 
                             if (meResponse.data?.user) {
@@ -194,7 +236,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                                 // Sync back into Supabase client SDK so its internal session stays warm
                                 try {
-                                    const refreshToken = tokenStorage.getTokens().refreshToken;
                                     if (refreshToken) {
                                         await supabase.auth.setSession({
                                             access_token: token,
@@ -225,9 +266,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                         console.error("Failed to auto-provision profile from frontend:", provErr);
                                     }
                                 }
-
-                                // checkPremiumStatus uses the preloaded profileData to prevent a duplicate fetch
-                                await checkPremiumStatus(userData.id, activeProfile);
                             } else {
                                 throw new Error("No user in response");
                             }
@@ -239,9 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 setUser(userData);
                                 setSession({ user: userData, access_token: token });
 
-                                // Sync back into Supabase client SDK so its internal session stays warm
                                 try {
-                                    const refreshToken = tokenStorage.getTokens().refreshToken;
                                     if (refreshToken) {
                                         await supabase.auth.setSession({
                                             access_token: token,
@@ -254,7 +290,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                                 let profileData = await fetchProfileData(userData.id);
                                 
-                                // Frontend Auto-Provisioning fallback
                                 if (!profileData) {
                                     console.log("Profile not found. Auto-provisioning from frontend (sequential path)...");
                                     try {
@@ -267,7 +302,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                         if (provisionRes.data) {
                                             profileData = provisionRes.data;
                                             setProfile(profileData);
-                                            console.log("Profile auto-provisioned successfully:", profileData);
                                         }
                                     } catch (provErr) {
                                         console.error("Failed to auto-provision profile from frontend:", provErr);
@@ -283,7 +317,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             }
                         }
                     } catch (e: any) {
-                        // Only wipe token and logout on definitive auth error (401/403)
                         const isAuthError = e?.response?.status === 401 || e?.response?.status === 403 || e?.message === "No user in response";
                         if (isAuthError) {
                             console.warn("Authentication invalid, clearing session:", e);
@@ -313,14 +346,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        // Fire backend warmup FIRST — Cloud Run may be CPU-throttled and needs
-        // maximum head-start before the user interacts with login/dashboard.
-        // Using top-level imported apiClient (no dynamic import delay).
         const warmUpBackend = () => {
-            // Warm both the health endpoint AND the auth path (different route handlers)
             import('@/lib/apiClient').then(({ default: client }) => {
                 client.get('health').catch(() => {});
-                // Also warm the auth route so CORS preflight is cached by the browser
                 client.options('auth/login').catch(() => {});
             });
         };
