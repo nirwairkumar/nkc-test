@@ -1,6 +1,10 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { cleanupStorageQuota } from '@/utils/safeStorage'
+
+// Run storage cleanup to purge legacy transient items from localStorage
+cleanupStorageQuota();
 
 // WebMCP tool registration for Agentic Browsing (Lighthouse Audit compatibility)
 try {

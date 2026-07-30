@@ -1,3 +1,5 @@
+import { safeLocalStorage } from './safeStorage';
+
 const DOMAIN = '.testoza.com';
 
 const setCookie = (name: string, value: string, maxAgeDays = 30) => {
@@ -27,61 +29,34 @@ const deleteCookie = (name: string) => {
 
 export const tokenStorage = {
   setTokens: (accessToken: string, refreshToken?: string) => {
-    try {
-      localStorage.setItem('testoza_token', accessToken);
-    } catch (e) {
-      console.warn('localStorage quota exceeded while saving testoza_token, relying on cookies', e);
-    }
+    safeLocalStorage.setItem('testoza_token', accessToken);
     setCookie('testoza_token', accessToken);
     if (refreshToken) {
-      try {
-        localStorage.setItem('testoza_refresh_token', refreshToken);
-      } catch (e) {
-        console.warn('localStorage quota exceeded while saving testoza_refresh_token, relying on cookies', e);
-      }
+      safeLocalStorage.setItem('testoza_refresh_token', refreshToken);
       setCookie('testoza_refresh_token', refreshToken);
     }
   },
   clearTokens: () => {
-    try {
-      localStorage.removeItem('testoza_token');
-      localStorage.removeItem('testoza_refresh_token');
-    } catch (e) {
-      console.warn('Failed to clear tokens from localStorage', e);
-    }
+    safeLocalStorage.removeItem('testoza_token');
+    safeLocalStorage.removeItem('testoza_refresh_token');
     deleteCookie('testoza_token');
     deleteCookie('testoza_refresh_token');
   },
   getTokens: (): { token: string | null; refreshToken: string | null } => {
-    let token: string | null = null;
-    let refreshToken: string | null = null;
+    let token = safeLocalStorage.getItem('testoza_token');
+    let refreshToken = safeLocalStorage.getItem('testoza_refresh_token');
 
-    try {
-      token = localStorage.getItem('testoza_token');
-      refreshToken = localStorage.getItem('testoza_refresh_token');
-    } catch (e) {
-      console.warn('Failed to read tokens from localStorage', e);
-    }
-
-    // Sync from cookies if localStorage is empty (e.g. crossing subdomains or storage quota full)
+    // Sync from cookies if localStorage is empty (e.g. crossing subdomains or storage cleared)
     if (!token) {
       token = getCookie('testoza_token');
       if (token) {
-        try {
-          localStorage.setItem('testoza_token', token);
-        } catch (e) {
-          // ignore quota error
-        }
+        safeLocalStorage.setItem('testoza_token', token);
       }
     }
     if (!refreshToken) {
       refreshToken = getCookie('testoza_refresh_token');
       if (refreshToken) {
-        try {
-          localStorage.setItem('testoza_refresh_token', refreshToken);
-        } catch (e) {
-          // ignore quota error
-        }
+        safeLocalStorage.setItem('testoza_refresh_token', refreshToken);
       }
     }
 

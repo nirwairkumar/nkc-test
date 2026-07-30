@@ -1,4 +1,5 @@
 import apiClient from '@/lib/apiClient';
+import { safeSessionStorage, safeLocalStorage } from '@/utils/safeStorage';
 
 export interface TestSection {
     id: string;
@@ -439,11 +440,13 @@ const TEST_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
 
 function _getCachedTest(id: string, excludeQuestions: boolean = false): any | null {
     try {
-        const raw = localStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`);
+        const raw = safeSessionStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`) ||
+                    safeLocalStorage.getItem(`test_cache_${id}_eq_${excludeQuestions}`);
         if (!raw) return null;
         const { data, ts } = JSON.parse(raw);
         if (Date.now() - ts > TEST_CACHE_TTL) {
-            localStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
+            safeSessionStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
+            safeLocalStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
             return null;
         }
         return data;
@@ -451,9 +454,8 @@ function _getCachedTest(id: string, excludeQuestions: boolean = false): any | nu
 }
 
 function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false) {
-    try {
-        localStorage.setItem(`test_cache_${id}_eq_${excludeQuestions}`, JSON.stringify({ data, ts: Date.now() }));
-    } catch { /* storage full — ignore */ }
+    safeSessionStorage.setItem(`test_cache_${id}_eq_${excludeQuestions}`, JSON.stringify({ data, ts: Date.now() }));
+    safeLocalStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
 }
 
 export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
