@@ -2729,7 +2729,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                 className="mx-4 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 cursor-pointer bg-white px-2 py-1 transition-colors"
                                                             >
                                                                 <Plus className="w-4 h-4 text-blue-600" />
-                                                                <span>Add Question</span>
+                                                                <span>Add Question to {section.name?.trim() || `Section ${sIdx + 1}`}</span>
                                                             </button>
                                                             <div className="flex-1 h-[1px] bg-slate-200"></div>
                                                         </div>
