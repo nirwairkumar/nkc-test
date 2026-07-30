@@ -2302,16 +2302,16 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                                             return (
                                                                 <React.Fragment key={q.id}>
-                                                                    <div data-minimap-id={q.id} className={`${isInGroup ? "mb-0" : "mb-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                                                    <div data-minimap-id={q.id} className={`${isInGroup ? "mb-0" : "mb-3.5 sm:mb-4"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
                                                                     {/* Passage Header - Renders only at the start of a group inside section */}
                                                                     {isStartOfGroup && (
-                                                                        <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-6 space-y-3">
+                                                                        <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-3 sm:p-4 mt-4 space-y-2">
                                                                             <div className="flex justify-between items-center px-1">
                                                                                 <h3 className="text-xs font-bold text-indigo-700 flex items-center gap-2 uppercase tracking-wide">
                                                                                     <FileText className="w-4 h-4" /> Comprehension Passage
                                                                                 </h3>
                                                                             </div>
-                                                                            <div className="p-1">
+                                                                            <div className="p-0.5">
                                                                                 <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                                                     <IMEInput
                                                                                         as="textarea"
@@ -2319,7 +2319,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         value={q.passageContent || ''}
                                                                                         onChange={(val: string) => updatePassageContentInSection(sIdx, q.groupId!, val)}
                                                                                         placeholder="Write or paste the passage text here... (Markdown & MathJax/KaTeX supported)"
-                                                                                        className="text-base leading-relaxed min-h-[150px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
+                                                                                        className="text-sm sm:text-base leading-normal min-h-[90px] p-2.5 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
                                                                                     />
                                                                                     <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
                                                                                         <div className="group/info relative cursor-help">
@@ -2338,14 +2338,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     <Card className={`
                                                                         w-full min-w-0 overflow-hidden group relative shadow-sm hover:shadow-md transition-all duration-300 bg-white
                                                                         ${isInGroup ? `border-2 border-indigo-200 ${isStartOfGroup ? 'border-t-0' : ''} rounded-none shadow-none bg-indigo-50/5` : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
-                                                                        ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
+                                                                        ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-4' : ''}
                                                                     `}>
 
                                                                         {/* Header Bar */}
-                                                                        <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
+                                                                        <div className="bg-slate-50/40 border-b border-slate-100 px-3.5 py-1.5 sm:py-2 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-between items-center">
                                                                             <div className="flex items-center justify-between w-full sm:w-auto">
-                                                                                <div className="flex items-center gap-3">
-                                                                                    <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                                                                <div className="flex items-center gap-2.5">
+                                                                                    <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-0.5 rounded hover:bg-slate-200/50 transition-colors">
                                                                                         <GripVertical className="h-4 w-4" />
                                                                                     </div>
                                                                                     <span className="font-bold text-slate-400 text-sm">Q{qIdx + 1}</span>
@@ -2376,9 +2376,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 </Button>
                                                                             </div>
 
-                                                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                                                                                <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
-                                                                                    <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
+                                                                            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                                                                                <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 px-2.5 py-0.5 shadow-sm">
+                                                                                    <div className="flex items-center gap-1 border-r border-slate-100 pr-2">
                                                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
                                                                                         <Input
                                                                                             type="text"
@@ -2388,7 +2388,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                             placeholder="1"
                                                                                         />
                                                                                     </div>
-                                                                                    <div className="flex items-center gap-1.5 pl-1">
+                                                                                    <div className="flex items-center gap-1 pl-1">
                                                                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
                                                                                         <Input
                                                                                             type="text"
@@ -2400,9 +2400,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     </div>
                                                                                 </div>
 
-                                                                                <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                                                                                <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block"></div>
 
-                                                                                <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
+                                                                                <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-0.5 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
                                                                                     <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
                                                                                     <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => updateQuestionInSection(sIdx, qIdx, 'typingMode', val)}>
                                                                                         <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-semibold text-slate-600 w-auto gap-1">
@@ -2421,10 +2421,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             </div>
                                                                         </div>
 
-                                                                        <div className="p-6 space-y-6 min-w-0">
-                                                                            <div className="space-y-3 min-w-0">
+                                                                        <div className="p-3.5 sm:p-4 space-y-3.5 min-w-0">
+                                                                            <div className="space-y-2 min-w-0">
                                                                                 <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
-                                                                                    <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
+                                                                                    <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-base sm:text-lg leading-snug sm:leading-relaxed min-h-[64px] p-2.5 sm:p-3 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
                                                                                     <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
                                                                                         <div className="group/info relative cursor-help">
                                                                                             <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
@@ -2437,34 +2437,34 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 </div>
                                                                                 
                                                                                 {/* Action Row below Question Text Area */}
-                                                                                <div className="flex items-center justify-between gap-2 mt-2 px-1 min-w-0">
+                                                                                <div className="flex items-center justify-between gap-2 mt-1 px-1 min-w-0">
                                                                                     {/* Image Section */}
                                                                                     <div className="flex-1 min-w-0">
                                                                                         {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
                                                                                             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                                                                                                 {q.image ? (
-                                                                                                    <div className="relative group/img w-fit mt-2">
-                                                                                                        <img src={q.image} alt="Question" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
-                                                                                                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-4 w-4" /></Button>
+                                                                                                    <div className="relative group/img w-fit mt-1.5">
+                                                                                                        <img src={q.image} alt="Question" className="h-40 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                                                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100" onClick={() => updateQuestionInSection(sIdx, qIdx, 'image', '')}><X className="h-3.5 w-3.5" /></Button>
                                                                                                     </div>
                                                                                                 ) : (
-                                                                                                    <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                                                    <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-1.5 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
                                                                                                         <div className="flex-1 flex gap-2 items-center px-2">
-                                                                                                            <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                                                                                                <ImageIcon className="w-4 h-4 text-slate-500" />
+                                                                                                            <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                                                <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
                                                                                                             </div>
-                                                                                                            <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm" />
+                                                                                                            <Input placeholder="Paste Image URL or Upload" value={q.image || ''} onChange={(e) => updateQuestionInSection(sIdx, qIdx, 'image', processImageUrl(e.target.value))} className="border-none shadow-none bg-transparent focus-visible:ring-0 text-xs" />
                                                                                                         </div>
-                                                                                                        <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                                                                                                        <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                                                        <div className="h-5 w-px bg-slate-300 mx-1.5"></div>
+                                                                                                        <label className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
                                                                                                             <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestionInSection(sIdx, qIdx, 'image', base64))} />
-                                                                                                            <Upload className="w-3.5 h-3.5 mr-1" />Upload
+                                                                                                            <Upload className="w-3 h-3 mr-0.5" />Upload
                                                                                                         </label>
-                                                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}`)}>
-                                                                                                            <Cloud className="w-4 h-4" />
+                                                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-8 w-8 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                            <Cloud className="w-3.5 h-3.5" />
                                                                                                         </button>
-                                                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
-                                                                                                            <X className="w-4 h-4" />
+                                                                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 ml-0.5" onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}`)}>
+                                                                                                            <X className="w-3.5 h-3.5" />
                                                                                                         </Button>
                                                                                                     </div>
                                                                                                 )}
@@ -2484,7 +2484,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     <button
                                                                                         type="button"
                                                                                         onClick={() => setShowMathKeyboard(true)}
-                                                                                        className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
+                                                                                        className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
                                                                                         title="Open Math Sy Pad"
                                                                                     >
                                                                                         <span>∑ f(x)</span>
@@ -2492,63 +2492,63 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 </div>
                                                                             </div>
 
-                                                                            <div className="h-px bg-slate-100 w-full my-2"></div>
+                                                                            <div className="h-px bg-slate-100 w-full my-1.5"></div>
 
                                                                             {/* Answers */}
                                                                             <div>
-                                                                                <div className="flex items-center justify-between mb-3">
+                                                                                <div className="flex items-center justify-between mb-1.5">
                                                                                     <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Options</Label>
                                                                                     {q.type === 'multiple' && <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Select all correct options</span>}
                                                                                 </div>
 
                                                                                 {q.type === 'numerical' ? (
-                                                                                    <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
-                                                                                        <div className="flex bg-slate-200/50 p-1 rounded-full w-fit mx-auto mb-2">
+                                                                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-3">
+                                                                                        <div className="flex bg-slate-200/50 p-1 rounded-full w-fit mx-auto mb-1">
                                                                                             <button
                                                                                                 onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, exactMatch: false }); }}
-                                                                                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'text-slate-500 hover:text-slate-700' : 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200'}`}
+                                                                                                className={`px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'text-slate-500 hover:text-slate-700' : 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200'}`}
                                                                                             >
                                                                                                 Min-Max Range
                                                                                             </button>
                                                                                             <button
                                                                                                 onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, exactMatch: true }); }}
-                                                                                                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                                                                                className={`px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                                                                             >
                                                                                                 Exact Answers
                                                                                             </button>
                                                                                         </div>
 
                                                                                         {(q.correctAnswer as any)?.exactMatch ? (
-                                                                                            <div className="flex flex-col gap-2 items-center w-full max-w-sm mt-2">
+                                                                                            <div className="flex flex-col gap-1.5 items-center w-full max-w-sm mt-1">
                                                                                                 <Label className="text-xs text-slate-500">Correct Answers (comma separated)</Label>
                                                                                                 <Input
                                                                                                     type="text"
                                                                                                     placeholder="e.g. 100, 150, 200"
-                                                                                                    className="w-full text-center font-mono font-bold px-4"
+                                                                                                    className="w-full text-center font-mono font-bold px-3 h-8"
                                                                                                     value={(q.correctAnswer as any)?.exactAnswers || ''}
                                                                                                     onChange={(e) => {
                                                                                                         const current = (q.correctAnswer as any) || { min: 0, max: 0 };
                                                                                                         updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, exactAnswers: e.target.value });
                                                                                                     }}
                                                                                                 />
-                                                                                                <p className="text-[10px] text-slate-400 mt-1">If a student enters any of these values, it will be marked correct.</p>
+                                                                                                <p className="text-[10px] text-slate-400 mt-0.5">If a student enters any of these values, it will be marked correct.</p>
                                                                                             </div>
                                                                                         ) : (
-                                                                                            <div className="flex gap-4 items-center mt-2">
+                                                                                            <div className="flex gap-3 items-center mt-1">
                                                                                                 <div className="text-left">
                                                                                                     <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
-                                                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
+                                                                                                    <Input type="number" step="any" className="w-28 h-8 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
                                                                                                 </div>
-                                                                                                <div className="h-px w-8 bg-slate-300 mt-5"></div>
+                                                                                                <div className="h-px w-6 bg-slate-300 mt-4"></div>
                                                                                                 <div className="text-left">
                                                                                                     <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
-                                                                                                    <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
+                                                                                                    <Input type="number" step="any" className="w-28 h-8 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max ?? ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestionInSection(sIdx, qIdx, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
                                                                                                 </div>
                                                                                             </div>
                                                                                         )}
                                                                                     </div>
                                                                                 ) : (
-                                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                                    <div className="grid grid-cols-1 gap-2">
                                                                                         {(() => {
                                                                                             const sortedKeys = Object.keys(q.options).sort();
                                                                                             return sortedKeys.map((optKey, optIdx) => {
@@ -2566,17 +2566,17 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                 };
                                                                                                 return (
                                                                                                     <div key={optKey} className={`
-                                                                                                        group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
+                                                                                                        group/option relative flex gap-2.5 items-start p-2 sm:p-2.5 rounded-lg sm:rounded-xl border transition-all duration-200
                                                                                                         ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                                         focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
                                                                                                         
                                                                                                     `}>
                                                                                                         <button onClick={handleSelect} className={`
-                                                                                                            mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm rounded-md
+                                                                                                            mt-0.5 w-7 h-7 sm:w-7.5 sm:h-7.5 shrink-0 flex items-center justify-center font-bold text-xs sm:text-sm transition-all shadow-sm rounded-md
                                                                                                             ${isSelected ? 'bg-emerald-500 text-white shadow-emerald-200' : 'bg-white border border-slate-300 text-slate-400 hover:border-slate-400 hover:text-slate-600'}
                                                                                                         `}>
                                                                                                             {isSelected ? (
-                                                                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                                                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                                                                                                     <polyline points="20 6 9 17 4 12"></polyline>
                                                                                                                 </svg>
                                                                                                             ) : (
@@ -2584,7 +2584,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                             )}
                                                                                                         </button>
 
-                                                                                                        <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
+                                                                                                        <div className="flex-1 min-w-0 flex flex-col gap-1.5 relative group/input-container">
                                                                                                             <div className="relative">
                                                                                                                 <IMEInput
                                                                                                                     ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] = el}
@@ -2593,18 +2593,18 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                                     placeholder={`Option ${optKey}`}
                                                                                                                     value={q.options[optKey]}
                                                                                                                     onChange={(val: string) => { const newSections = [...sections]; newSections[sIdx].questions[qIdx].options[optKey] = val; setSections(newSections); }}
-                                                                                                                    className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-16 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                                                    className="min-h-[36px] text-sm sm:text-base leading-normal bg-transparent border-0 p-0 pr-14 focus:ring-0 w-full resize-none placeholder:text-slate-300 py-0.5"
                                                                                                                 />
 
                                                                                                                 {/* Right Side Actions - Overlay on Text Area */}
-                                                                                                                <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10">
-                                                                                                                    <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}>
+                                                                                                                <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-0.5 z-10">
+                                                                                                                    <button type="button" className="cursor-pointer flex items-center justify-center h-5.5 w-5.5 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}>
                                                                                                                         <Cloud className="w-3.5 h-3.5" />
                                                                                                                     </button>
                                                                                                                     <Button
                                                                                                                         variant="ghost"
                                                                                                                         size="icon"
-                                                                                                                        className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
+                                                                                                                        className={`h-5.5 w-5.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
                                                                                                                         onClick={() => toggleImageInput(`sec-${sIdx}-q-${qIdx}-opt-${optKey}`)}
                                                                                                                         title="Add Image"
                                                                                                                     >
@@ -2613,7 +2613,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                                     <Button
                                                                                                                         variant="ghost"
                                                                                                                         size="icon"
-                                                                                                                        className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
+                                                                                                                        className="h-5.5 w-5.5 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
                                                                                                                         onClick={() => handleRemoveOptionFromSection(sIdx, qIdx, optKey)}
                                                                                                                         title="Remove Option"
                                                                                                                     >
@@ -2627,7 +2627,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                                 <div className="relative group/optimg w-fit">
                                                                                                                     {q.optionImages?.[optKey] ? (
                                                                                                                         <div className="relative group/optimg w-fit">
-                                                                                                                            <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
+                                                                                                                            <img src={q.optionImages[optKey]} alt={`Option ${optKey}`} className="h-16 w-auto object-contain border rounded-md bg-white shadow-sm" />
                                                                                                                             <button
                                                                                                                                 onClick={() => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (q.optionImages) delete q.optionImages[optKey]; setSections(newSections); }}
                                                                                                                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
@@ -2639,10 +2639,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                                         <div className="flex items-center gap-1">
                                                                                                                             <Input
                                                                                                                                 placeholder="Image URL"
-                                                                                                                                className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
+                                                                                                                                className="h-6 text-[10px] w-28 border-slate-200 bg-slate-50"
                                                                                                                                 onChange={(e) => { const newSections = [...sections]; const q = newSections[sIdx].questions[qIdx]; if (!q.optionImages) q.optionImages = {}; q.optionImages[optKey] = processImageUrl(e.target.value); setSections(newSections); }}
                                                                                                                             />
-                                                                                                                            <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
+                                                                                                                            <label className="cursor-pointer p-1 bg-slate-100 rounded hover:bg-slate-200 relative">
                                                                                                                                 {uploadingImages[`sec-${sIdx}-q-${qIdx}-opt-${optKey}`] ? (
                                                                                                                                     <Loader2 className="w-3 h-3 animate-spin" />
                                                                                                                                 ) : (
@@ -2672,14 +2672,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                 );
                                                                                             });
                                                                                         })()}
-                                                                                        <div className="flex justify-center -mt-2.5 pt-0">
+                                                                                        <div className="flex justify-center mt-1 pt-0">
                                                                                             <button
                                                                                                 type="button"
                                                                                                 onClick={() => handleAddOptionToSection(sIdx, qIdx)}
-                                                                                                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-sm font-medium"
+                                                                                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-xs font-medium"
                                                                                                 title="Add option"
                                                                                             >
-                                                                                                <PlusCircle className="w-4 h-4 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
+                                                                                                <PlusCircle className="w-3.5 h-3.5 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
                                                                                                 <span>Add option</span>
                                                                                             </button>
                                                                                         </div>
@@ -2793,12 +2793,12 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                 return (
                                     <React.Fragment key={q.id}>
-                                        <div data-minimap-id={q.id} className={`${isInGroup ? "space-y-0" : "space-y-6"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
+                                        <div data-minimap-id={q.id} className={`${isInGroup ? "space-y-0" : "space-y-3.5 sm:space-y-4"} ${isDeleting ? 'animate-ios-delete' : ''} ${isNew ? 'animate-ios-insert' : ''}`}>
 
                                         {/* Passage Header */}
                                         {isStartOfGroup && (
-                                            <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-4 sm:p-5 mt-6 space-y-3">
-                                                <div className="p-1">
+                                            <div className="rounded-t-xl border-2 border-b-0 border-indigo-300/80 bg-indigo-50/25 p-3 sm:p-4 mt-4 space-y-2">
+                                                <div className="p-0.5">
                                                     <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor">
                                                         <IMEInput
                                                             as="textarea"
@@ -2806,7 +2806,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             value={q.passageContent || ''}
                                                             onChange={(val: string) => updatePassageContent(q.groupId!, val)}
                                                             placeholder="Write or paste the passage text here... (Markdown & MathJax/KaTeX supported)"
-                                                            className="text-base leading-relaxed min-h-[150px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
+                                                            className="text-sm sm:text-base leading-normal min-h-[90px] p-2.5 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
                                                         />
                                                         <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
                                                             <div className="group/info relative cursor-help">
@@ -2828,7 +2828,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                             className={`
                                                 w-full min-w-0 group relative shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 bg-white
                                                 ${isInGroup ? `border-2 border-indigo-200 ${isStartOfGroup ? 'border-t-0' : ''} rounded-none shadow-none bg-indigo-50/5` : 'rounded-none sm:rounded-xl border-x-0 border-y-2 sm:border-2 border-slate-300'}
-                                                ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-6' : ''}
+                                                ${isEndOfGroup ? 'rounded-b-none sm:rounded-b-xl border-b mb-4' : ''}
                                                 ${isDragging ? 'border-dashed border-primary/50 opacity-60' : ''}
                                             `}
                                             draggable
@@ -2838,10 +2838,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                         >
 
                                             {/* Header Bar: Metadata & Actions */}
-                                            <div className="bg-slate-50/40 border-b border-slate-100 px-4 py-3 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
+                                            <div className="bg-slate-50/40 border-b border-slate-100 px-3.5 py-1.5 sm:py-2 flex flex-col sm:flex-row gap-2 sm:gap-3 justify-between items-center">
                                                 <div className="flex items-center justify-between w-full sm:w-auto">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-1 rounded hover:bg-slate-200/50 transition-colors">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-0.5 rounded hover:bg-slate-200/50 transition-colors">
                                                             <GripVertical className="h-4 w-4" />
                                                         </div>
                                                         <span className="font-bold text-slate-400 text-sm">#{index + 1}</span>
@@ -2874,10 +2874,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                     </Button>
                                                 </div>
 
-                                                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                                                     {/* Quick Settings Pills */}
-                                                    <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-3 py-1 shadow-sm">
-                                                        <div className="flex items-center gap-1.5 border-r border-slate-100 pr-2">
+                                                    <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 px-2.5 py-0.5 shadow-sm">
+                                                        <div className="flex items-center gap-1 border-r border-slate-100 pr-2">
                                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marks</span>
                                                             <Input
                                                                 type="text"
@@ -2887,7 +2887,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                 placeholder="1"
                                                             />
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 pl-1">
+                                                        <div className="flex items-center gap-1 pl-1">
                                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neg</span>
                                                             <Input
                                                                 type="text"
@@ -2899,9 +2899,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         </div>
                                                     </div>
 
-                                                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                                                    <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block"></div>
 
-                                                    <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-1 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
+                                                    <div className="flex items-center gap-1.5 bg-white rounded-full border border-slate-200 pl-2 pr-1 py-0.5 shadow-sm hover:border-blue-300 transition-colors cursor-pointer group/lang">
                                                         <Languages className="w-3 h-3 text-slate-400 group-hover/lang:text-blue-500" />
                                                         <Select value={q.typingMode} onValueChange={(val: 'en' | 'hi') => toggleQuestionLanguage(index, val)}>
                                                             <SelectTrigger className="h-4 p-0 border-none bg-transparent focus:ring-0 text-xs font-semibold text-slate-600 w-auto gap-1">
@@ -2921,9 +2921,9 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                 </div>
                                             </div>
 
-                                            <div className="p-6 space-y-6 min-w-0">
+                                            <div className="p-3.5 sm:p-4 space-y-3.5 min-w-0">
                                                 {/* Question Input Area */}
-                                                <div className="space-y-3 min-w-0">
+                                                <div className="space-y-2 min-w-0">
                                                     <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
                                                         <IMEInput
                                                             ref={(el) => imeRefs.current[`std-q-${index}`] = el}
@@ -2932,7 +2932,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             placeholder="Type your question here..."
                                                             value={q.question}
                                                             onChange={(val: string) => updateQuestion(index, 'question', val)}
-                                                            className="text-lg leading-loose min-h-[120px] p-4 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
+                                                            className="text-base sm:text-lg leading-snug sm:leading-relaxed min-h-[64px] p-2.5 sm:p-3 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
                                                         />
                                                         <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
                                                             <div className="group/info relative cursor-help">
@@ -2946,50 +2946,50 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                     </div>
 
                                                     {/* Action Row below Question Text Area */}
-                                                    <div className="flex items-center justify-between gap-2 mt-2 px-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2 mt-1 px-1 min-w-0">
                                                         {/* Image Section */}
                                                         <div className="flex-1 min-w-0">
                                                             {(q.image || expandedImageInputs[`q-${index}`]) ? (
                                                                 <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                                                                     {q.image ? (
-                                                                        <div className="relative group/img w-fit mt-2">
-                                                                            <img src={q.image} alt="Question Diagram" className="h-48 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                        <div className="relative group/img w-fit mt-1.5">
+                                                                            <img src={q.image} alt="Question Diagram" className="h-40 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
                                                                             <Button
                                                                                 variant="destructive"
                                                                                 size="icon"
-                                                                                className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100"
+                                                                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100"
                                                                                 onClick={() => updateQuestion(index, 'image', '')}
                                                                             >
-                                                                                <X className="h-4 w-4" />
+                                                                                <X className="h-3.5 w-3.5" />
                                                                             </Button>
                                                                         </div>
                                                                     ) : (
-                                                                        <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-2 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                        <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-1.5 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
                                                                             <div className="flex-1 flex gap-2 items-center px-2">
-                                                                                <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                                                                    <ImageIcon className="w-4 h-4 text-slate-500" />
+                                                                                <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                    <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
                                                                                 </div>
                                                                                 <Input
                                                                                     placeholder="Paste image URL here..."
                                                                                     value={q.image || ''}
                                                                                     onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
-                                                                                    className="border-none shadow-none bg-transparent focus-visible:ring-0 text-sm"
+                                                                                    className="border-none shadow-none bg-transparent focus-visible:ring-0 text-xs"
                                                                                 />
                                                                             </div>
-                                                                            <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                                                                            <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                            <div className="h-5 w-px bg-slate-300 mx-1.5"></div>
+                                                                            <label className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
                                                                                 <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
-                                                                                <Upload className="w-3.5 h-3.5" />
+                                                                                <Upload className="w-3 h-3 mr-0.5" />
                                                                                 Upload
                                                                             </label>
-                                                                            <Button variant="outline" size="icon" type="button" className="h-9 w-9 mr-1" onClick={() => openCaptureModal('question', index)} title="Capture Snip">
-                                                                                <Monitor className="w-4 h-4 text-blue-600" />
+                                                                            <Button variant="outline" size="icon" type="button" className="h-8 w-8 mr-1" onClick={() => openCaptureModal('question', index)} title="Capture Snip">
+                                                                                <Monitor className="w-3.5 h-3.5 text-blue-600" />
                                                                             </Button>
-                                                                            <button type="button" className="cursor-pointer flex items-center justify-center h-9 w-9 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 shadow-sm outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}`)}>
-                                                                                <Cloud className="w-4 h-4" />
+                                                                            <button type="button" className="cursor-pointer flex items-center justify-center h-8 w-8 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 shadow-sm outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}`)}>
+                                                                                <Cloud className="w-3.5 h-3.5" />
                                                                             </button>
-                                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 ml-1" onClick={() => toggleImageInput(`q-${index}`)}>
-                                                                                <X className="w-4 h-4" />
+                                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 ml-0.5" onClick={() => toggleImageInput(`q-${index}`)}>
+                                                                                <X className="w-3.5 h-3.5" />
                                                                             </Button>
                                                                         </div>
                                                                     )}
@@ -3009,7 +3009,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowMathKeyboard(true)}
-                                                            className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
+                                                            className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
                                                             title="Open Math Sy Pad"
                                                         >
                                                             <span>∑ f(x)</span>
@@ -3018,57 +3018,57 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                 </div>
 
                                                 {/* Separator */}
-                                                <div className="h-px bg-slate-100 w-full my-2"></div>
+                                                <div className="h-px bg-slate-100 w-full my-1.5"></div>
 
                                                 {/* Options Area */}
                                                 <div>
-                                                    <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center justify-between mb-1.5">
                                                         <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Options</Label>
                                                         {q.type === 'multiple' && <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-medium">Select all correct options</span>}
                                                     </div>
 
                                                     {q.type === 'numerical' ? (
-                                                        <div className="p-6 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-4">
-                                                            <div className="flex bg-slate-200/50 p-1 rounded-full w-fit mx-auto mb-2">
+                                                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col items-center justify-center text-center gap-3">
+                                                            <div className="flex bg-slate-200/50 p-1 rounded-full w-fit mx-auto mb-1">
                                                                 <button
                                                                     onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestion(index, 'correctAnswer', { ...current, exactMatch: false }); }}
-                                                                    className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'text-slate-500 hover:text-slate-700' : 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200'}`}
+                                                                    className={`px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'text-slate-500 hover:text-slate-700' : 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200'}`}
                                                                 >
                                                                     Min-Max Range
                                                                 </button>
                                                                 <button
                                                                     onClick={() => { const current = (q.correctAnswer as any) || { min: 0, max: 0, exactAnswers: '' }; updateQuestion(index, 'correctAnswer', { ...current, exactMatch: true }); }}
-                                                                    className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                                                    className={`px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${(q.correctAnswer as any)?.exactMatch ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
                                                                 >
                                                                     Exact Answers
                                                                 </button>
                                                             </div>
 
                                                             {(q.correctAnswer as any)?.exactMatch ? (
-                                                                <div className="flex flex-col gap-2 items-center w-full max-w-sm mt-2">
+                                                                <div className="flex flex-col gap-1.5 items-center w-full max-w-sm mt-1">
                                                                     <Label className="text-xs text-slate-500">Correct Answers (comma separated)</Label>
                                                                     <Input
                                                                         type="text"
                                                                         placeholder="e.g. 100, 150, 200"
-                                                                        className="w-full text-center font-mono font-bold px-4"
+                                                                        className="w-full text-center font-mono font-bold px-3 h-8"
                                                                         value={(q.correctAnswer as any)?.exactAnswers || ''}
                                                                         onChange={(e) => {
                                                                             const current = (q.correctAnswer as any) || { min: 0, max: 0 };
                                                                             updateQuestion(index, 'correctAnswer', { ...current, exactAnswers: e.target.value });
                                                                         }}
                                                                     />
-                                                                    <p className="text-[10px] text-slate-400 mt-1">If a student enters any of these values, it will be marked correct.</p>
+                                                                    <p className="text-[10px] text-slate-400 mt-0.5">If a student enters any of these values, it will be marked correct.</p>
                                                                 </div>
                                                             ) : (
-                                                                <div className="flex gap-4 items-center mt-2">
+                                                                <div className="flex gap-3 items-center mt-1">
                                                                     <div className="text-left">
                                                                         <Label className="text-xs text-slate-500 ml-1">Minimum</Label>
-                                                                        <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
+                                                                        <Input type="number" step="any" className="w-28 h-8 text-center font-mono font-bold" value={(q.correctAnswer as any)?.min || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, min: isNaN(val) ? 0 : val }); }} />
                                                                     </div>
-                                                                    <div className="h-px w-8 bg-slate-300 mt-5"></div>
+                                                                    <div className="h-px w-6 bg-slate-300 mt-4"></div>
                                                                     <div className="text-left">
                                                                         <Label className="text-xs text-slate-500 ml-1">Maximum</Label>
-                                                                        <Input type="number" step="any" className="w-32 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
+                                                                        <Input type="number" step="any" className="w-28 h-8 text-center font-mono font-bold" value={(q.correctAnswer as any)?.max || ''} onChange={(e) => { const val = parseFloat(e.target.value); const current = (q.correctAnswer as any) || { min: 0, max: 0 }; updateQuestion(index, 'correctAnswer', { ...current, max: isNaN(val) ? 0 : val }); }} />
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -3094,7 +3094,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     return (
                                                                         <div key={optKey}
                                                                             className={`
-                                                                                group/option relative flex gap-3 items-start p-3 rounded-xl border transition-all duration-200
+                                                                                group/option relative flex gap-2.5 items-start p-2 sm:p-2.5 rounded-lg sm:rounded-xl border transition-all duration-200
                                                                                 ${isSelected ? 'bg-emerald-50/40 border-emerald-400 ring-1 ring-emerald-400/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm'}
                                                                                 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/20
                                                                                 
@@ -3104,17 +3104,17 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                             <button
                                                                                 onClick={handleSelect}
                                                                                 className={`
-                                                                                    mt-1 w-8 h-8 shrink-0 flex items-center justify-center font-bold text-sm transition-all shadow-sm
+                                                                                    mt-0.5 w-7 h-7 sm:w-7.5 sm:h-7.5 shrink-0 flex items-center justify-center font-bold text-xs sm:text-sm transition-all shadow-sm
                                                                                     ${q.type === 'single' ? 'rounded-full' : 'rounded-lg'}
                                                                                     ${isSelected
                                                                                         ? 'bg-emerald-500 text-white shadow-emerald-200'
                                                                                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'}
                                                                                 `}
                                                                             >
-                                                                                {q.type === 'multiple' && isSelected ? <Check className="w-5 h-5" /> : optKey}
+                                                                                {q.type === 'multiple' && isSelected ? <Check className="w-4 h-4" /> : optKey}
                                                                             </button>
 
-                                                                            <div className="flex-1 min-w-0 flex flex-col gap-2 relative group/input-container">
+                                                                            <div className="flex-1 min-w-0 flex flex-col gap-1.5 relative group/input-container">
                                                                                 {/* Option Text Input */}
                                                                                 <div className="relative">
                                                                                     <IMEInput
@@ -3124,21 +3124,21 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         placeholder={`Type option ${optKey}...`}
                                                                                         value={q.options[optKey]}
                                                                                         onChange={(val: string) => updateOption(index, optKey, val)}
-                                                                                        className="min-h-[56px] text-base leading-relaxed bg-transparent border-0 p-0 pr-8 focus:ring-0 w-full resize-none placeholder:text-slate-300"
+                                                                                        className="min-h-[36px] text-sm sm:text-base leading-normal bg-transparent border-0 p-0 pr-14 focus:ring-0 w-full resize-none placeholder:text-slate-300 py-0.5"
                                                                                         onKeyDown={(e: React.KeyboardEvent) => {
                                                                                             // Auto focus logic skipped for now
                                                                                         }}
                                                                                     />
 
                                                                                     {/* Right Side Actions - Overlay on Text Area */}
-                                                                                    <div className="absolute top-0 right-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-1 z-10 pointer-events-auto">
-                                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-6 w-6 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}-opt-${optKey}`)}>
+                                                                                    <div className="absolute top-0 right-0 flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/option:opacity-100 transition-opacity bg-white/80 backdrop-blur-[2px] rounded-lg pl-1 py-0.5 z-10 pointer-events-auto">
+                                                                                        <button type="button" className="cursor-pointer flex items-center justify-center h-5.5 w-5.5 text-indigo-500 hover:bg-indigo-50 transition-all rounded-md outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}-opt-${optKey}`)}>
                                                                                             <Cloud className="w-3.5 h-3.5" />
                                                                                         </button>
                                                                                         <Button
                                                                                             variant="ghost"
                                                                                             size="icon"
-                                                                                            className={`h-6 w-6 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`q-${index}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
+                                                                                            className={`h-5.5 w-5.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 transition-all rounded-md ${expandedImageInputs[`q-${index}-opt-${optKey}`] ? 'text-blue-500 bg-blue-50 opacity-100' : ''}`}
                                                                                             onClick={() => toggleImageInput(`q-${index}-opt-${optKey}`)}
                                                                                             title="Add Image"
                                                                                         >
@@ -3147,7 +3147,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         <Button
                                                                                             variant="ghost"
                                                                                             size="icon"
-                                                                                            className="h-6 w-6 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
+                                                                                            className="h-5.5 w-5.5 text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-md"
                                                                                             onClick={() => handleRemoveOption(index, optKey)}
                                                                                             title="Remove Option"
                                                                                         >
@@ -3161,7 +3161,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     <div className="relative group/optimg w-fit">
                                                                                         {q.optionImages?.[optKey] ? (
                                                                                             <>
-                                                                                                <img src={q.optionImages[optKey]} alt="" className="h-20 w-auto object-contain border rounded-md bg-white shadow-sm" />
+                                                                                                <img src={q.optionImages[optKey]} alt="" className="h-16 w-auto object-contain border rounded-md bg-white shadow-sm" />
                                                                                                 <button
                                                                                                     onClick={() => { const nq = [...questions]; if (nq[index].optionImages) delete nq[index].optionImages![optKey]; setQuestions(nq); }}
                                                                                                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover/optimg:opacity-100 transition-opacity scale-75 group-hover/optimg:scale-100"
@@ -3173,10 +3173,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                             <div className="flex items-center gap-1 mt-1">
                                                                                                 <Input
                                                                                                     placeholder="Image URL"
-                                                                                                    className="h-7 text-[10px] w-32 border-slate-200 bg-slate-50"
+                                                                                                    className="h-6 text-[10px] w-28 border-slate-200 bg-slate-50"
                                                                                                     onChange={(e) => { const nq = [...questions]; if (!nq[index].optionImages) nq[index].optionImages = {}; nq[index].optionImages![optKey] = processImageUrl(e.target.value); setQuestions(nq); }}
                                                                                                 />
-                                                                                                <label className="cursor-pointer p-1.5 bg-slate-100 rounded hover:bg-slate-200 relative">
+                                                                                                <label className="cursor-pointer p-1 bg-slate-100 rounded hover:bg-slate-200 relative">
                                                                                                     {uploadingImages[`q-${index}-opt-${optKey}`] ? (
                                                                                                         <Loader2 className="w-3 h-3 animate-spin" />
                                                                                                     ) : (
@@ -3194,7 +3194,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                                         });
                                                                                                     }} />
                                                                                                 </label>
-                                                                                                <button type="button" className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" onClick={() => openCaptureModal('option', index, optKey)} title="Capture Snip">
+                                                                                                <button type="button" className="p-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" onClick={() => openCaptureModal('option', index, optKey)} title="Capture Snip">
                                                                                                     <Monitor className="w-3 h-3" />
                                                                                                 </button>
                                                                                             </div>
@@ -3208,14 +3208,14 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                     );
                                                                 });
                                                             })()}
-                                                                                            <div className="flex justify-center -mt-2.5 pt-0">
+                                                                                            <div className="flex justify-center mt-1 pt-0">
                                                                                                 <button
                                                                                                     type="button"
                                                                                                     onClick={() => handleAddOption(index)}
-                                                                                                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-sm font-medium"
+                                                                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-200 cursor-pointer group/addopt text-xs font-medium"
                                                                                                     title="Add option"
                                                                                                 >
-                                                                                                    <PlusCircle className="w-4 h-4 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
+                                                                                                    <PlusCircle className="w-3.5 h-3.5 text-slate-400 group-hover/addopt:text-slate-600 transition-colors" />
                                                                                                     <span>Add option</span>
                                                                                                 </button>
                                                                                             </div>
