@@ -24,6 +24,22 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error caught by ErrorBoundary:', error, errorInfo);
+
+    const isChunkError =
+      error?.name === 'ChunkLoadError' ||
+      error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed') ||
+      error?.message?.includes('Loading chunk');
+
+    if (isChunkError) {
+      const storageKey = 'last_chunk_error_reload';
+      const now = Date.now();
+      const lastReload = Number(sessionStorage.getItem(storageKey) || 0);
+      if (now - lastReload > 10000) {
+        sessionStorage.setItem(storageKey, String(now));
+        window.location.reload();
+      }
+    }
   }
 
   private handleReload = () => {

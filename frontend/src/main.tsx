@@ -67,4 +67,16 @@ try {
   console.warn('WebMCP registration failed:', e);
 }
 
+// Automatically reload page when a Vite chunk fails to load due to a new deployment deployment update
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  const storageKey = 'last_vite_preload_reload';
+  const now = Date.now();
+  const lastReload = Number(sessionStorage.getItem(storageKey) || 0);
+  if (now - lastReload > 10000) {
+    sessionStorage.setItem(storageKey, String(now));
+    window.location.reload();
+  }
+});
+
 createRoot(document.getElementById("root")!).render(<App />);
