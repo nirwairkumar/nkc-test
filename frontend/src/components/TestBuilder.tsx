@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Question, createTest, fetchTestById, updateTest, TestSection } from '@/lib/testsApi';
 import { toast } from 'sonner';
-import { Plus, PlusCircle, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles } from 'lucide-react';
+import { Plus, PlusCircle, Trash2, Save, ArrowLeft, Loader2, Upload, CheckSquare, Square, Languages, X, Check, ChevronsUpDown, GripVertical, Cloud, CloudOff, FileText, Eraser, Info, ImageIcon, PenLine, MoreVertical, Settings, Monitor, ChevronDown, ChevronUp, Grip, Palette, Type, Smartphone, ExternalLink, Sparkles, Keyboard } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { IMEInput, IMEInputHandle } from '@/components/ui/IMEInput';
@@ -1445,7 +1445,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     }
 
     return (
-        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 lg:pr-[180px] xl:pr-[180px] w-full max-w-5xl transition-all duration-300" style={{ overflowAnchor: 'none' }}>
+        <div className="container mx-auto pt-2 pb-4 sm:py-4 px-0 sm:px-6 lg:pr-[145px] xl:pr-[145px] w-full max-w-5xl transition-all duration-300" style={{ overflowAnchor: 'none' }}>
             <style>{`
                 @keyframes iosInsert {
                     0% {
@@ -2484,9 +2484,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                     <button
                                                                                         type="button"
                                                                                         onClick={() => setShowMathKeyboard(true)}
-                                                                                        className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
+                                                                                        className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
                                                                                         title="Open Math Sy Pad"
                                                                                     >
+                                                                                        <Keyboard className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-600 shrink-0" />
                                                                                         <span>∑ f(x)</span>
                                                                                     </button>
                                                                                 </div>
@@ -3009,9 +3010,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowMathKeyboard(true)}
-                                                            className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
+                                                            className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
                                                             title="Open Math Sy Pad"
                                                         >
+                                                            <Keyboard className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-600 shrink-0" />
                                                             <span>∑ f(x)</span>
                                                         </button>
                                                     </div>

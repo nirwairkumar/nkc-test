@@ -167,20 +167,25 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                                             <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
                                         )}
 
-                                        <div className="flex items-center justify-between gap-1 mb-1 min-w-0 w-full">
-                                            <div className="flex items-center gap-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-0.5 mb-1 min-w-0 w-full">
+                                            <div className="flex items-center gap-0.5 min-w-0">
                                                 <span className={`text-[9px] font-extrabold ${isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-indigo-600'}`}>
                                                     #{totalQCounter}
                                                 </span>
                                                 {isPassage && (
-                                                    <span className={`text-[7px] font-bold px-1 rounded uppercase shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
+                                                    <span className={`text-[7px] font-bold px-0.5 rounded uppercase shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
                                                         PAS
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className={`text-[8px] font-semibold shrink-0 ${isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}`}>
-                                                {q.marks || 1}M
-                                            </span>
+                                            <div className="flex items-center gap-0.5 text-[8px] font-semibold shrink-0">
+                                                <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
+                                                    {q.marks || 1}M
+                                                </span>
+                                                <span className={isCurrentActive ? 'text-rose-200 font-extrabold' : 'text-rose-600 font-extrabold'}>
+                                                    {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {/* Miniature Lines Visual Effect */}
@@ -239,20 +244,25 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                                 <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
                             )}
 
-                            <div className="flex items-center justify-between gap-1 mb-1 min-w-0 w-full">
-                                <div className="flex items-center gap-1 min-w-0">
+                            <div className="flex items-center justify-between gap-0.5 mb-1 min-w-0 w-full">
+                                <div className="flex items-center gap-0.5 min-w-0">
                                     <span className={`text-[9px] font-extrabold ${isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-indigo-600'}`}>
                                         #{qIdx + 1}
                                     </span>
                                     {isPassage && (
-                                        <span className={`text-[7px] font-bold px-1 rounded uppercase shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
+                                        <span className={`text-[7px] font-bold px-0.5 rounded uppercase shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
                                             PAS
                                         </span>
                                     )}
                                 </div>
-                                <span className={`text-[8px] font-semibold shrink-0 ${isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}`}>
-                                    {q.marks || 1}M
-                                </span>
+                                <div className="flex items-center gap-0.5 text-[8px] font-semibold shrink-0">
+                                    <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
+                                        {q.marks || 1}M
+                                    </span>
+                                    <span className={isCurrentActive ? 'text-rose-200 font-extrabold' : 'text-rose-600 font-extrabold'}>
+                                        {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Miniature Lines Visual Effect */}
@@ -295,17 +305,16 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
             {!collapsed && (
                 <div 
                     ref={minimapRef}
-                    className="pointer-events-auto w-40 min-w-[160px] max-w-[160px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
+                    className="pointer-events-auto w-32 min-w-[128px] max-w-[128px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
                 >
                     {/* Header Bar */}
-                    <div className="px-2.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 w-full min-w-0 overflow-hidden">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <Sparkles className="w-3 h-3 text-indigo-600 shrink-0" />
+                    <div className="px-2 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 w-full min-w-0 overflow-hidden">
+                        <div className="flex items-center min-w-0">
                             <span className="text-[10px] font-bold text-slate-800 tracking-wider uppercase truncate">
                                 Minimap
                             </span>
                         </div>
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/80 shrink-0">
+                        <span className="text-[9px] font-mono font-bold px-1 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/80 shrink-0">
                             {totalQuestions} Qs
                         </span>
                     </div>
@@ -313,7 +322,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                     {/* Minimap Scrollable Body */}
                     <div 
                         ref={minimapScrollRef}
-                        className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden p-2 scrollbar-thin scrollbar-thumb-slate-300 relative space-y-1"
+                        className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden p-1.5 scrollbar-thin scrollbar-thumb-slate-300 relative space-y-1"
                     >
                         {renderItems()}
                     </div>
