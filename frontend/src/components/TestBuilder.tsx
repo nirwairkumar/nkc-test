@@ -2420,24 +2420,38 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                 </Button>
                                                                             </div>
                                                                         </div>
-
                                                                         <div className="p-3.5 sm:p-4 space-y-3.5 min-w-0">
-                                                                            <div className="space-y-2 min-w-0">
-                                                                                <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
-                                                                                    <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-base sm:text-lg leading-snug sm:leading-relaxed min-h-[64px] p-2.5 sm:p-3 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
-                                                                                    <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
-                                                                                        <div className="group/info relative cursor-help">
-                                                                                            <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
-                                                                                            <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                                                                                                Markdown and MathJax/KaTeX support
-                                                                                                <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                                            <div className="space-y-1.5 min-w-0">
+                                                                                <div className="relative min-w-0">
+                                                                                    <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
+                                                                                        <IMEInput as="textarea" ref={(el) => imeRefs.current[`sec-${sIdx}-q-${qIdx}`] = el} typingMode={q.typingMode} placeholder="Type question..." value={q.question} onChange={(val: string) => updateQuestionInSection(sIdx, qIdx, 'question', val)} className="text-base sm:text-lg leading-snug sm:leading-relaxed min-h-[64px] p-2.5 sm:p-3 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800" />
+                                                                                        <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
+                                                                                            <div className="group/info relative cursor-help">
+                                                                                                <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                                                                                                <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                                                                    Markdown and MathJax/KaTeX support
+                                                                                                    <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
+                                                                                    </div>
+
+                                                                                    {/* Integrated ISO Device UI Sy Pad Button */}
+                                                                                    <div className="flex justify-end pr-4">
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => setShowMathKeyboard(true)}
+                                                                                            className="-mt-px inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-b-md border border-t-0 border-slate-200/90 bg-slate-100/90 hover:bg-blue-50 hover:border-blue-300 text-slate-700 hover:text-blue-600 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-[0.98] cursor-pointer shrink-0 z-10"
+                                                                                            title="Open Math Sy Pad"
+                                                                                        >
+                                                                                            <Keyboard className="w-3.5 h-3.5 text-slate-500 hover:text-blue-600 shrink-0" />
+                                                                                            <span>∑ f(x)</span>
+                                                                                        </button>
                                                                                     </div>
                                                                                 </div>
                                                                                 
                                                                                 {/* Action Row below Question Text Area */}
-                                                                                <div className="flex items-center justify-between gap-2 mt-1 px-1 min-w-0">
+                                                                                <div className="flex items-center justify-between gap-2 px-1 min-w-0">
                                                                                     {/* Image Section */}
                                                                                     <div className="flex-1 min-w-0">
                                                                                         {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
@@ -2479,17 +2493,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                             </button>
                                                                                         )}
                                                                                     </div>
-
-                                                                                    {/* Right side: Sy Pad button ∑ f(x) */}
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => setShowMathKeyboard(true)}
-                                                                                        className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
-                                                                                        title="Open Math Sy Pad"
-                                                                                    >
-                                                                                        <Keyboard className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-600 shrink-0" />
-                                                                                        <span>∑ f(x)</span>
-                                                                                    </button>
                                                                                 </div>
                                                                             </div>
 
@@ -2924,30 +2927,45 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
                                             <div className="p-3.5 sm:p-4 space-y-3.5 min-w-0">
                                                 {/* Question Input Area */}
-                                                <div className="space-y-2 min-w-0">
-                                                    <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
-                                                        <IMEInput
-                                                            ref={(el) => imeRefs.current[`std-q-${index}`] = el}
-                                                            as="textarea"
-                                                            typingMode={q.typingMode}
-                                                            placeholder="Type your question here..."
-                                                            value={q.question}
-                                                            onChange={(val: string) => updateQuestion(index, 'question', val)}
-                                                            className="text-base sm:text-lg leading-snug sm:leading-relaxed min-h-[64px] p-2.5 sm:p-3 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
-                                                        />
-                                                        <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
-                                                            <div className="group/info relative cursor-help">
-                                                                <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
-                                                                <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                                                                    Markdown and MathJax/KaTeX support
-                                                                    <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                <div className="space-y-1.5 min-w-0">
+                                                    <div className="relative min-w-0">
+                                                        <div className="relative p-1 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-blue-300 focus-within:bg-white focus-within:shadow-sm transition-all duration-300 group/editor min-w-0">
+                                                            <IMEInput
+                                                                ref={(el) => imeRefs.current[`std-q-${index}`] = el}
+                                                                as="textarea"
+                                                                typingMode={q.typingMode}
+                                                                placeholder="Type your question here..."
+                                                                value={q.question}
+                                                                onChange={(val: string) => updateQuestion(index, 'question', val)}
+                                                                className="text-base sm:text-lg leading-snug sm:leading-relaxed min-h-[64px] p-2.5 sm:p-3 bg-transparent border-0 focus:ring-0 placeholder:text-slate-300 font-medium w-full resize-none text-slate-800"
+                                                            />
+                                                            <div className="absolute bottom-2 right-2 opacity-0 group-hover/editor:opacity-100 group-focus-within/editor:opacity-100 transition-opacity z-20">
+                                                                <div className="group/info relative cursor-help">
+                                                                    <Info className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors" />
+                                                                    <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover/info:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                                                                        Markdown and MathJax/KaTeX support
+                                                                        <div className="absolute top-full right-1.5 border-4 border-transparent border-t-slate-800"></div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
+                                                        </div>
+
+                                                        {/* Integrated ISO Device UI Sy Pad Button */}
+                                                        <div className="flex justify-end pr-4">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowMathKeyboard(true)}
+                                                                className="-mt-px inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-b-md border border-t-0 border-slate-200/90 bg-slate-100/90 hover:bg-blue-50 hover:border-blue-300 text-slate-700 hover:text-blue-600 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-[0.98] cursor-pointer shrink-0 z-10"
+                                                                title="Open Math Sy Pad"
+                                                            >
+                                                                <Keyboard className="w-3.5 h-3.5 text-slate-500 hover:text-blue-600 shrink-0" />
+                                                                <span>∑ f(x)</span>
+                                                            </button>
                                                         </div>
                                                     </div>
 
                                                     {/* Action Row below Question Text Area */}
-                                                    <div className="flex items-center justify-between gap-2 mt-1 px-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2 px-1 min-w-0">
                                                         {/* Image Section */}
                                                         <div className="flex-1 min-w-0">
                                                             {(q.image || expandedImageInputs[`q-${index}`]) ? (
@@ -3005,17 +3023,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                 </button>
                                                             )}
                                                         </div>
-
-                                                        {/* Right side: Sy Pad button ∑ f(x) */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowMathKeyboard(true)}
-                                                            className="inline-flex items-center justify-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100/90 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 hover:border-blue-300 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-95 cursor-pointer shrink-0 ml-auto"
-                                                            title="Open Math Sy Pad"
-                                                        >
-                                                            <Keyboard className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-600 shrink-0" />
-                                                            <span>∑ f(x)</span>
-                                                        </button>
                                                     </div>
                                                 </div>
 

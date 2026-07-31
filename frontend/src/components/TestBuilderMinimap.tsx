@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TestSection, Question } from '@/lib/testsApi';
-import { 
-    Layers, 
-    ChevronRight, 
-    ChevronLeft, 
+import {
+    Layers,
+    ChevronRight,
+    ChevronLeft,
     Sparkles
 } from 'lucide-react';
 
@@ -153,13 +153,12 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                                         key={q.id}
                                         data-minimap-item-id={q.id}
                                         onClick={() => scrollToTarget(q.id)}
-                                        className={`group/qitem relative cursor-pointer p-1.5 rounded-lg border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${
-                                            isCurrentActive
-                                                ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-2 ring-indigo-400/40'
-                                                : isPassage
+                                        className={`group/qitem relative cursor-pointer p-1.5 rounded-lg border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${isCurrentActive
+                                            ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-2 ring-indigo-400/40'
+                                            : isPassage
                                                 ? 'bg-indigo-50/40 border-indigo-200/80 hover:bg-indigo-50 hover:border-indigo-300 text-slate-800'
                                                 : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
-                                        }`}
+                                            }`}
                                         title={`Q${totalQCounter}: ${qText || 'Question'}`}
                                     >
                                         {/* Passage Indicator vertical accent */}
@@ -178,11 +177,11 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-0.5 text-[8px] font-semibold shrink-0">
+                                            <div className="inline-flex items-center gap-0.5 text-[9px] font-bold font-mono slashed-zero shrink-0 tracking-tighter">
                                                 <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
                                                     {q.marks || 1}M
                                                 </span>
-                                                <span className={isCurrentActive ? 'text-rose-200 font-extrabold' : 'text-rose-600 font-extrabold'}>
+                                                <span className={isCurrentActive ? 'text-rose-200' : 'text-rose-600'}>
                                                     {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
                                                 </span>
                                             </div>
@@ -230,13 +229,12 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                             key={q.id}
                             data-minimap-item-id={q.id}
                             onClick={() => scrollToTarget(q.id)}
-                            className={`group/qitem relative cursor-pointer p-1.5 rounded-lg border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${
-                                isCurrentActive
-                                    ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-2 ring-indigo-400/40'
-                                    : isPassage
+                            className={`group/qitem relative cursor-pointer p-1.5 rounded-lg border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${isCurrentActive
+                                ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-2 ring-indigo-400/40'
+                                : isPassage
                                     ? 'bg-indigo-50/40 border-indigo-200/80 hover:bg-indigo-50 hover:border-indigo-300 text-slate-800'
                                     : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
-                            }`}
+                                }`}
                             title={`Q${qIdx + 1}: ${qText || 'Question'}`}
                         >
                             {/* Passage Indicator vertical accent */}
@@ -255,11 +253,11 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-0.5 text-[8px] font-semibold shrink-0">
+                                <div className="inline-flex items-center gap-0.5 text-[9px] font-bold font-mono slashed-zero shrink-0 tracking-tighter">
                                     <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
                                         {q.marks || 1}M
                                     </span>
-                                    <span className={isCurrentActive ? 'text-rose-200 font-extrabold' : 'text-rose-600 font-extrabold'}>
+                                    <span className={isCurrentActive ? 'text-rose-200' : 'text-rose-600'}>
                                         {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
                                     </span>
                                 </div>
@@ -303,7 +301,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
 
             {/* Minimap Drawer Container (Light Mode theme matching page UI) */}
             {!collapsed && (
-                <div 
+                <div
                     ref={minimapRef}
                     className="pointer-events-auto w-32 min-w-[128px] max-w-[128px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
                 >
@@ -320,7 +318,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                     </div>
 
                     {/* Minimap Scrollable Body */}
-                    <div 
+                    <div
                         ref={minimapScrollRef}
                         className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden p-1.5 scrollbar-thin scrollbar-thumb-slate-300 relative space-y-1"
                     >
