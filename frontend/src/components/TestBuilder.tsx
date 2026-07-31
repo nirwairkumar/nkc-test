@@ -2436,24 +2436,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                         </div>
                                                                                     </div>
 
-                                                                                    {/* Integrated ISO Device UI Sy Pad Button */}
-                                                                                    <div className="flex justify-end pr-4">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => setShowMathKeyboard(true)}
-                                                                                            className="-mt-px inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-b-md border border-t-0 border-slate-200/90 bg-slate-100/90 hover:bg-blue-50 hover:border-blue-300 text-slate-700 hover:text-blue-600 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-[0.98] cursor-pointer shrink-0 z-10"
-                                                                                            title="Open Math Sy Pad"
-                                                                                        >
-                                                                                            <Keyboard className="w-3.5 h-3.5 text-slate-500 hover:text-blue-600 shrink-0" />
-                                                                                            <span>∑ f(x)</span>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </div>
-                                                                                
-                                                                                {/* Action Row below Question Text Area */}
-                                                                                <div className="flex items-center justify-between gap-2 px-1 min-w-0">
+                                                                                    {/* Unified Action Row directly under Question Text Area */}
+                                                                                    <div className="flex items-start justify-between gap-2 px-1 -mt-px relative z-10 min-w-0">
                                                                                     {/* Image Section */}
-                                                                                    <div className="flex-1 min-w-0">
+                                                                                    <div className="flex-1 min-w-0 pt-2">
                                                                                         {(q.image || expandedImageInputs[`sec-${sIdx}-q-${qIdx}`]) ? (
                                                                                             <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                                                                                                 {q.image ? (
@@ -2493,10 +2479,24 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                                                             </button>
                                                                                         )}
                                                                                     </div>
+
+                                                                                    {/* Right: Integrated ISO Device UI Sy Pad Button */}
+                                                                                    <div className="flex justify-end shrink-0 self-start pr-3">
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => setShowMathKeyboard(true)}
+                                                                                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-b-md border border-t-0 border-slate-200/90 bg-slate-100/90 hover:bg-blue-50 hover:border-blue-300 text-slate-700 hover:text-blue-600 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-[0.98] cursor-pointer shrink-0 z-10"
+                                                                                            title="Open Math Sy Pad"
+                                                                                        >
+                                                                                            <Keyboard className="w-3.5 h-3.5 text-slate-500 hover:text-blue-600 shrink-0" />
+                                                                                            <span>∑ f(x)</span>
+                                                                                        </button>
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
+                                                                        </div>
 
-                                                                            <div className="h-px bg-slate-100 w-full my-1.5"></div>
+                                                                        <div className="h-px bg-slate-100 w-full my-1.5"></div>
 
                                                                             {/* Answers */}
                                                                             <div>
@@ -2738,7 +2738,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             <div className="flex-1 h-[1px] bg-slate-200"></div>
                                                         </div>
                                                     </div>
-                                                
                                                     </CardContent>
                                                 </div>
                                             </div>
@@ -2950,83 +2949,82 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                                                             </div>
                                                         </div>
 
-                                                        {/* Integrated ISO Device UI Sy Pad Button */}
-                                                        <div className="flex justify-end pr-4">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setShowMathKeyboard(true)}
-                                                                className="-mt-px inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-b-md border border-t-0 border-slate-200/90 bg-slate-100/90 hover:bg-blue-50 hover:border-blue-300 text-slate-700 hover:text-blue-600 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-[0.98] cursor-pointer shrink-0 z-10"
-                                                                title="Open Math Sy Pad"
-                                                            >
-                                                                <Keyboard className="w-3.5 h-3.5 text-slate-500 hover:text-blue-600 shrink-0" />
-                                                                <span>∑ f(x)</span>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Action Row below Question Text Area */}
-                                                    <div className="flex items-center justify-between gap-2 px-1 min-w-0">
-                                                        {/* Image Section */}
-                                                        <div className="flex-1 min-w-0">
-                                                            {(q.image || expandedImageInputs[`q-${index}`]) ? (
-                                                                <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                                                                    {q.image ? (
-                                                                        <div className="relative group/img w-fit mt-1.5">
-                                                                            <img src={q.image} alt="Question Diagram" className="h-40 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
-                                                                            <Button
-                                                                                variant="destructive"
-                                                                                size="icon"
-                                                                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100"
-                                                                                onClick={() => updateQuestion(index, 'image', '')}
-                                                                            >
-                                                                                <X className="h-3.5 w-3.5" />
-                                                                            </Button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-1.5 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
-                                                                            <div className="flex-1 flex gap-2 items-center px-2">
-                                                                                <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                                                                    <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
-                                                                                </div>
-                                                                                <Input
-                                                                                    placeholder="Paste image URL here..."
-                                                                                    value={q.image || ''}
-                                                                                    onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
-                                                                                    className="border-none shadow-none bg-transparent focus-visible:ring-0 text-xs"
-                                                                                />
+                                                        {/* Unified Action Row directly under Question Text Area */}
+                                                        <div className="flex items-start justify-between gap-2 px-1 -mt-px relative z-10 min-w-0">
+                                                            {/* Image Section */}
+                                                            <div className="flex-1 min-w-0 pt-2">
+                                                                {(q.image || expandedImageInputs[`q-${index}`]) ? (
+                                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                                        {q.image ? (
+                                                                            <div className="relative group/img w-fit mt-1.5">
+                                                                                <img src={q.image} alt="Question Diagram" className="h-40 w-auto object-contain border rounded-lg bg-slate-50 p-2 shadow-sm" />
+                                                                                <Button
+                                                                                    variant="destructive"
+                                                                                    size="icon"
+                                                                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-md opacity-0 group-hover/img:opacity-100 transition-all scale-90 group-hover/img:scale-100"
+                                                                                    onClick={() => updateQuestion(index, 'image', '')}
+                                                                                >
+                                                                                    <X className="h-3.5 w-3.5" />
+                                                                                </Button>
                                                                             </div>
-                                                                            <div className="h-5 w-px bg-slate-300 mx-1.5"></div>
-                                                                            <label className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
-                                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
-                                                                                <Upload className="w-3 h-3 mr-0.5" />
-                                                                                Upload
-                                                                            </label>
-                                                                            <Button variant="outline" size="icon" type="button" className="h-8 w-8 mr-1" onClick={() => openCaptureModal('question', index)} title="Capture Snip">
-                                                                                <Monitor className="w-3.5 h-3.5 text-blue-600" />
-                                                                            </Button>
-                                                                            <button type="button" className="cursor-pointer flex items-center justify-center h-8 w-8 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 shadow-sm outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}`)}>
-                                                                                <Cloud className="w-3.5 h-3.5" />
-                                                                            </button>
-                                                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 ml-0.5" onClick={() => toggleImageInput(`q-${index}`)}>
-                                                                                <X className="w-3.5 h-3.5" />
-                                                                            </Button>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
+                                                                        ) : (
+                                                                            <div className="flex flex-wrap items-center border border-dashed border-slate-300 rounded-lg bg-slate-50/50 p-1 mt-1.5 group/upload hover:bg-slate-50 hover:border-slate-400 transition-colors">
+                                                                                <div className="flex-1 flex gap-2 items-center px-2">
+                                                                                    <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                                                                        <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
+                                                                                    </div>
+                                                                                    <Input
+                                                                                        placeholder="Paste image URL here..."
+                                                                                        value={q.image || ''}
+                                                                                        onChange={(e) => updateQuestion(index, 'image', processImageUrl(e.target.value))}
+                                                                                        className="border-none shadow-none bg-transparent focus-visible:ring-0 text-xs"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="h-5 w-px bg-slate-300 mx-1.5"></div>
+                                                                                <label className="cursor-pointer flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border shadow-sm hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 mr-1">
+                                                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, (base64) => updateQuestion(index, 'image', base64))} />
+                                                                                    <Upload className="w-3 h-3 mr-0.5" />
+                                                                                    Upload
+                                                                                </label>
+                                                                                <Button variant="outline" size="icon" type="button" className="h-8 w-8 mr-1" onClick={() => openCaptureModal('question', index)} title="Capture Snip">
+                                                                                    <Monitor className="w-3.5 h-3.5 text-blue-600" />
+                                                                                </Button>
+                                                                                <button type="button" className="cursor-pointer flex items-center justify-center h-8 w-8 mr-1 rounded-md border bg-white hover:bg-slate-50 text-indigo-600 shadow-sm outline-none" title="Cloudinary Inline Upload" onClick={(e) => openCloudUploadModal(e, `std-q-${index}`)}>
+                                                                                    <Cloud className="w-3.5 h-3.5" />
+                                                                                </button>
+                                                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600 ml-0.5" onClick={() => toggleImageInput(`q-${index}`)}>
+                                                                                    <X className="w-3.5 h-3.5" />
+                                                                                </Button>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => toggleImageInput(`q-${index}`)}
+                                                                        className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
+                                                                    >
+                                                                        <ImageIcon className="w-3.5 h-3.5" />
+                                                                        Add diagram / image (optional)
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Right: Integrated ISO Device UI Sy Pad Button */}
+                                                            <div className="flex justify-end shrink-0 self-start pr-3">
                                                                 <button
-                                                                    onClick={() => toggleImageInput(`q-${index}`)}
-                                                                    className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-blue-600 transition-colors px-1 py-0.5 rounded focus:outline-none focus:ring-0"
+                                                                    type="button"
+                                                                    onClick={() => setShowMathKeyboard(true)}
+                                                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-b-md border border-t-0 border-slate-200/90 bg-slate-100/90 hover:bg-blue-50 hover:border-blue-300 text-slate-700 hover:text-blue-600 shadow-2xs transition-all duration-200 text-xs font-bold active:scale-[0.98] cursor-pointer shrink-0 z-10"
+                                                                    title="Open Math Sy Pad"
                                                                 >
-                                                                    <ImageIcon className="w-3.5 h-3.5" />
-                                                                    Add diagram / image (optional)
+                                                                    <Keyboard className="w-3.5 h-3.5 text-slate-500 hover:text-blue-600 shrink-0" />
+                                                                    <span>∑ f(x)</span>
                                                                 </button>
-                                                            )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                {/* Separator */}
                                                 <div className="h-px bg-slate-100 w-full my-1.5"></div>
 
                                                 {/* Options Area */}
