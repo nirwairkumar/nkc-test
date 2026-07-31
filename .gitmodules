@@ -1,3 +1,0 @@
-[submodule "mcp-servers/google_ads_mcp"]
-	path = mcp-servers/google_ads_mcp
-	url = https://github.com/google-marketing-solutions/google_ads_mcp.git
