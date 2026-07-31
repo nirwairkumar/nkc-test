@@ -9,15 +9,15 @@ import {
 
 function StatCard({ title, value, subtitle, icon: Icon, color = 'text-primary', bgColor = 'bg-primary/10' }: any) {
     return (
-        <div className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-medium text-muted-foreground">{title}</p>
+                <p className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-400">{title}</p>
                 <div className={`${bgColor} rounded-lg p-2`}>
                     <Icon className={`h-4 w-4 ${color}`} />
                 </div>
             </div>
-            <p className="text-3xl font-bold tracking-tight">{value}</p>
-            {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+            <p className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100">{value}</p>
+            {subtitle && <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{subtitle}</p>}
         </div>
     );
 }
@@ -174,25 +174,25 @@ export default function AdminAnalyticsPanel() {
             {/* Header / Subheader controls */}
             <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-                    <p className="text-muted-foreground">Platform insights and test performance metrics.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100">Analytics Dashboard</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Platform insights and test performance metrics.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline font-medium">
                         {isRefreshing ? 'Refreshing...' : `Updated ${lastRefreshed.toLocaleTimeString()}`}
                     </span>
                     <button
                         onClick={() => fetchActiveTabData(activeTab, days, true)}
                         disabled={isRefreshing}
                         title="Refresh analytics"
-                        className="p-2 rounded-lg border bg-card hover:bg-muted transition-colors disabled:opacity-50"
+                        className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
                     >
                         <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                     </button>
                     <select
                         value={days}
                         onChange={(e) => setDays(Number(e.target.value))}
-                        className="rounded-lg border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         <option value={1}>Today (1 day)</option>
                         <option value={7}>Last 7 days</option>
@@ -205,15 +205,15 @@ export default function AdminAnalyticsPanel() {
             </div>
 
             {/* Inner Tab bar selector */}
-            <div className="flex flex-wrap gap-2 border-b pb-4">
+            <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-4">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all
+                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all
                             ${activeTab === tab.id
-                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
                             }`}
                     >
                         <tab.icon className="h-4 w-4" />
@@ -224,10 +224,10 @@ export default function AdminAnalyticsPanel() {
 
             <div className="w-full min-w-0">
                 {tabLoading ? (
-                    <div className="flex h-[400px] w-full items-center justify-center rounded-xl border bg-card p-8 shadow-sm">
+                    <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm">
                         <div className="flex flex-col items-center gap-3">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                            <p className="text-sm text-muted-foreground animate-pulse">Fetching latest data...</p>
+                            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 animate-pulse">Fetching latest data...</p>
                         </div>
                     </div>
                 ) : (
@@ -244,21 +244,21 @@ export default function AdminAnalyticsPanel() {
                                     <StatCard title="Avg Completion" value={`${funnel?.avg_completion_percentage || 0}%`} icon={BarChart3} color="text-purple-500" bgColor="bg-purple-500/10" />
                                 </div>
 
-                                <div className="rounded-xl border-2 border-dashed border-orange-400/40 bg-orange-500/5 p-5">
+                                <div className="rounded-xl border-2 border-dashed border-amber-400/50 bg-amber-50/50 dark:bg-amber-950/20 p-5">
                                     <div className="flex items-center gap-2 mb-4">
-                                        <UserX className="h-5 w-5 text-orange-500" />
-                                        <h3 className="text-base font-semibold">Anonymous Traffic (Guest Users)</h3>
-                                        <span className="ml-auto text-xs text-muted-foreground">Tracked separately</span>
+                                        <UserX className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Anonymous Traffic (Guest Users)</h3>
+                                        <span className="ml-auto text-xs font-semibold text-slate-500 dark:text-slate-400">Tracked separately</span>
                                     </div>
                                     {anonStats ? (
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                            <StatCard title="Anon Started" value={anonStats.total ?? 0} icon={Users} color="text-orange-500" bgColor="bg-orange-500/10" />
+                                            <StatCard title="Anon Started" value={anonStats.total ?? 0} icon={Users} color="text-amber-500" bgColor="bg-amber-500/10" />
                                             <StatCard title="Anon Submitted" value={anonStats.submitted ?? 0} icon={CheckCircle2} color="text-green-500" bgColor="bg-green-500/10" />
                                             <StatCard title="Anon In Progress" value={anonStats.in_progress ?? 0} icon={Clock} color="text-yellow-500" bgColor="bg-yellow-500/10" />
                                             <StatCard title="Anon Abandoned" value={anonStats.abandoned ?? 0} icon={AlertTriangle} color="text-red-500" bgColor="bg-red-500/10" />
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-muted-foreground">No anonymous attempts yet in this period.</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No anonymous attempts yet in this period.</p>
                                     )}
                                 </div>
 
