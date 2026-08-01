@@ -286,6 +286,12 @@ async def get_user_details(
                         return create_result.data[0]
             except Exception as create_error:
                 print(f"Error auto-creating profile in get_user_details: {create_error}")
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching user details: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
             
 @router.delete("/{user_id}")
 async def delete_user_permanently(
