@@ -24,7 +24,13 @@ cd backend && git checkout gcp-migration && git add . && git commit -m "{{messag
 cd frontend && git checkout gcp-migration && git add . && git commit -m "{{message}}" && git push origin gcp-migration
 ```
 
-4. **Pushing Root (GCP Branch)**
+4. **Pushing Frontend Admin (GCP Branch)**
+// turbo
+```bash
+cd frontend-admin && git checkout gcp-migration && git add . && git commit -m "{{message}}" && git push origin gcp-migration
+```
+
+5. **Pushing Root (GCP Branch)**
 // turbo
 ```bash
 git checkout gcp-migration && git add . && git commit -m "{{message}}" && git push origin gcp-migration

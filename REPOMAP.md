@@ -17,13 +17,19 @@ This document serves as the "Source of Truth" for the multi-repository structure
 - **Remote (origin)**: `https://github.com/nirwairkumar/nkc-test-2.0-backend.git`
 - **Purpose**: Dedicated repository for the FastAPI backend and database migrations.
 
+## 4. Frontend Admin Repository
+- **Local Path**: `d:\Yuga Yatra\nkc-Test-platform\frontend-admin`
+- **Remote (origin)**: `https://github.com/nirwairkumar/nkc-test-admin.git`
+- **Purpose**: Dedicated repository for the React/Vite-based admin dashboard application.
+
 ---
 
 ## Sync Instructions
 When making global changes:
 1.  **Backend**: Push from `backend/` to `nkc-test-2.0-backend`.
 2.  **Frontend**: Push from `frontend/` to `nkc-test-2.0-frontend`.
-3.  **Root**: Push from the root directory to `nkc-test`.
+3.  **Frontend Admin**: Push from `frontend-admin/` to `nkc-test-admin`.
+4.  **Root**: Push from the root directory to `nkc-test`.
 
 > [!TIP]
 > Use the `/push-all` workflow to automate this process in one command.

@@ -1,5 +1,5 @@
 ---
-description: Push all changes to the three project repositories (Root, Frontend, and Backend)
+description: Push all changes to the four project repositories (Root, Frontend, Backend, and Frontend Admin)
 ---
 
 # Sync and Push All Repositories
@@ -24,7 +24,13 @@ cd backend && git add . && git commit -m "{{message}}" && git push origin main
 cd frontend && git add . && git commit -m "{{message}}" && git push origin main
 ```
 
-4. **Pushing Root**
+4. **Pushing Frontend Admin**
+// turbo
+```bash
+cd frontend-admin && git add . && git commit -m "{{message}}" && git push origin main
+```
+
+5. **Pushing Root**
 // turbo
 ```bash
 git add . && git commit -m "{{message}}" && git push origin main
