@@ -287,10 +287,56 @@ async def get_user_details(
             except Exception as create_error:
                 print(f"Error auto-creating profile in get_user_details: {create_error}")
             
-            raise HTTPException(status_code=404, detail="User not found")
-        return response.data[0]
+@router.delete("/{user_id}")
+async def delete_user_permanently(
+    user_id: str,
+    request: Request,
+    db: Client = Depends(get_db)
+):
+    try:
+        _verify_is_admin(request, db)
+        
+        # Delete profile using global service role client to bypass RLS
+        supabase.table("profiles").delete().eq("id", user_id).execute()
+        
+        # Delete user from auth.users via admin SDK
+        try:
+            supabase.auth.admin.delete_user(user_id)
+        except Exception as auth_err:
+            print(f"Warning: could not delete auth user {user_id}: {auth_err}")
+            
+        return {"success": True, "message": f"User {user_id} deleted permanently"}
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching user details: {e}")
-        raise HTTPException(status_code=404, detail="User not found")
+        print(f"Error deleting user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/admin/ai-history-all")
+async def get_all_ai_history(
+    request: Request,
+    db: Client = Depends(get_db)
+):
+    try:
+        _verify_is_admin(request, db)
+        history_res = supabase.table("ai_generation_history").select("*").order("created_at", desc=True).execute()
+        items = history_res.data or []
+        
+        user_ids = list(set([item["user_id"] for item in items if item.get("user_id")]))
+        profiles_map = {}
+        if user_ids:
+            profiles_res = supabase.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
+            for p in (profiles_res.data or []):
+                profiles_map[p["id"]] = p
+                
+        for item in items:
+            uid = item.get("user_id")
+            item["user_profile"] = profiles_map.get(uid, {"email": "Anonymous/Unknown"})
+            
+        return items
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching all AI history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

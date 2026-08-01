@@ -94,3 +94,21 @@ export async function updatePassword(password: string) {
         return { error };
     }
 }
+
+export async function deleteUserPermanently(userId: string) {
+    try {
+        const response = await apiClient.delete(`/users/${userId}`);
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
+
+export async function fetchAllAiHistory() {
+    try {
+        const response = await apiClient.get('/users/admin/ai-history-all');
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}

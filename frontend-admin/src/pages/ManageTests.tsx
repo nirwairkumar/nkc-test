@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { fetchAllTests, createTest, deleteTest, updateTest, fetchTestsByCreator, adminCloneTest, fetchConductModeTests } from '@/lib/testsApi';
 import { fetchAdminUsersReportStats, fetchAdminUserReports, Report } from '@/lib/reportsApi';
-import { fetchUsers, fetchUserDetails, verifyCreator, revokeVerification } from '@/lib/usersApi';
+import { fetchUsers, fetchUserDetails, verifyCreator, revokeVerification, updateProfile, deleteUserPermanently } from '@/lib/usersApi';
 import { fetchCategories, assignCategoriesToTest, fetchTestCategories, updateCategory, deleteCategory, createCategory, Category, SubCategory, fetchSubCategories, fetchAllSubCategories, createSubCategory, updateSubCategory, deleteSubCategory, assignSubCategoryToTest } from '@/lib/categoriesApi';
 import { fetchUserAttempts } from '@/lib/attemptsApi';
 import { fetchAllClasses } from '@/lib/classesApi';
@@ -641,6 +641,35 @@ export default function ManageTests() {
         } catch (error: any) {
             console.error("Error revoking verification:", error);
             toast.error("Failed to revoke verification: " + error.message);
+        }
+    };
+
+    const handleDesignationChange = async (userToUpdate: any, newDesignation: string) => {
+        try {
+            const { error } = await updateProfile(userToUpdate.id, { designation: newDesignation });
+            if (error) throw error;
+            toast.success(`Updated role for ${userToUpdate.full_name || userToUpdate.email} to ${newDesignation}`);
+            setAllUsers(prev => prev.map(u => u.id === userToUpdate.id ? { ...u, designation: newDesignation } : u));
+        } catch (error: any) {
+            console.error("Error updating user designation:", error);
+            toast.error("Failed to update user role: " + (error.message || String(error)));
+        }
+    };
+
+    const handleDeleteUserPermanently = async (userToDelete: any) => {
+        const userName = userToDelete.full_name || userToDelete.email || 'this user';
+        if (!confirm(`DANGER: Are you sure you want to PERMANENTLY DELETE "${userName}"?\n\nThis will remove their profile and authentication credentials completely. This action CANNOT be undone.`)) {
+            return;
+        }
+
+        try {
+            const { error } = await deleteUserPermanently(userToDelete.id);
+            if (error) throw error;
+            toast.success(`User ${userName} deleted permanently.`);
+            setAllUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+        } catch (error: any) {
+            console.error("Error deleting user:", error);
+            toast.error("Failed to delete user: " + (error.message || String(error)));
         }
     };
 
@@ -1432,7 +1461,7 @@ export default function ManageTests() {
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <CardTitle>Registered Users</CardTitle>
-                                    <CardDescription>View and manage all users on the platform.</CardDescription>
+                                    <CardDescription>View, modify roles, and manage all users on the platform.</CardDescription>
                                 </div>
                                 <div className="relative w-full md:w-64">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -1452,6 +1481,7 @@ export default function ManageTests() {
                                         <TableHead className="w-[50px]"></TableHead>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Email</TableHead>
+                                        <TableHead>Role / Designation</TableHead>
                                         <TableHead>Joined</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -1459,11 +1489,11 @@ export default function ManageTests() {
                                 <TableBody>
                                     {usersLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8">Loading users...</TableCell>
+                                            <TableCell colSpan={6} className="text-center py-8">Loading users...</TableCell>
                                         </TableRow>
                                     ) : filteredUsers.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                                 No users found.
                                             </TableCell>
                                         </TableRow>
@@ -1478,12 +1508,34 @@ export default function ManageTests() {
                                                 </TableCell>
                                                 <TableCell className="font-medium">{user.full_name || 'N/A'}</TableCell>
                                                 <TableCell>{user.email}</TableCell>
+                                                <TableCell>
+                                                    <select
+                                                        value={user.designation || 'Student'}
+                                                        onChange={(e) => handleDesignationChange(user, e.target.value)}
+                                                        className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    >
+                                                        <option value="Student">Student</option>
+                                                        <option value="Teacher">Teacher</option>
+                                                        <option value="Institution">Institution</option>
+                                                        <option value="Guest">Guest</option>
+                                                        <option value="Admin">Admin</option>
+                                                    </select>
+                                                </TableCell>
                                                 <TableCell className="text-muted-foreground text-xs">
                                                     {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right">
+                                                <TableCell className="text-right space-x-2">
                                                     <Button variant="ghost" size="sm" onClick={() => handleViewUserDetails(user)}>
                                                         View Profile
+                                                    </Button>
+                                                    <Button 
+                                                        variant="destructive" 
+                                                        size="sm" 
+                                                        onClick={() => handleDeleteUserPermanently(user)}
+                                                        className="h-8 text-xs"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                                        Delete User
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -1502,7 +1554,7 @@ export default function ManageTests() {
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div>
                                     <CardTitle>Manage Verified Creators</CardTitle>
-                                    <CardDescription>Grant or revoke "Authorized Partner" status.</CardDescription>
+                                    <CardDescription>Grant or revoke "Authorized Partner" status and edit designations.</CardDescription>
                                 </div>
                                 <div className="relative w-full md:w-64">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -1522,7 +1574,7 @@ export default function ManageTests() {
                                         <TableHead className="w-[50px]"></TableHead>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Email</TableHead>
-                                        <TableHead>Role</TableHead>
+                                        <TableHead>Role / Designation</TableHead>
                                         <TableHead>Verified Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -1553,7 +1605,17 @@ export default function ManageTests() {
                                                 </TableCell>
                                                 <TableCell>{user.email}</TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline">{user.designation || 'Student'}</Badge>
+                                                    <select
+                                                        value={user.designation || 'Student'}
+                                                        onChange={(e) => handleDesignationChange(user, e.target.value)}
+                                                        className="px-2 py-1 border rounded text-xs bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                    >
+                                                        <option value="Student">Student</option>
+                                                        <option value="Teacher">Teacher</option>
+                                                        <option value="Institution">Institution</option>
+                                                        <option value="Guest">Guest</option>
+                                                        <option value="Admin">Admin</option>
+                                                    </select>
                                                 </TableCell>
                                                 <TableCell>
                                                     {user.is_verified_creator ? (
@@ -1564,7 +1626,7 @@ export default function ManageTests() {
                                                         <span className="text-muted-foreground text-xs">No</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="text-right">
+                                                <TableCell className="text-right space-x-2">
                                                     {user.is_verified_creator ? (
                                                         <Button
                                                             variant="destructive"
@@ -1584,6 +1646,15 @@ export default function ManageTests() {
                                                             Make Verified Creator
                                                         </Button>
                                                     )}
+                                                    <Button 
+                                                        variant="destructive" 
+                                                        size="sm" 
+                                                        onClick={() => handleDeleteUserPermanently(user)}
+                                                        className="h-7 text-xs"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                                        Delete
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))

@@ -19,10 +19,11 @@ import AdminFeatureControlPanel from './AdminFeatureControlPanel';
 import AdminPricingPanel from './AdminPricingPanel';
 import AdminPromoCodesPanel from './AdminPromoCodesPanel';
 import AdminMigrationPanel from './AdminMigrationPanel';
+import AdminAiAuditPanel from './AdminAiAuditPanel';
 import { authApi } from '@/lib/authApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'tests' | 'builder' | 'importer' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
+type TabId = 'analytics' | 'tests' | 'builder' | 'importer' | 'ai_audit' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession } = useAuth();
@@ -59,6 +60,7 @@ export default function AdminDashboard() {
                 { id: 'tests' as const, label: 'Manage Tests', icon: FolderKanban },
                 { id: 'builder' as const, label: 'Test Builder', icon: PlusCircle },
                 { id: 'importer' as const, label: 'AI Test Importer', icon: Sparkles },
+                { id: 'ai_audit' as const, label: 'AI Audit & Logs', icon: Sparkles },
             ]
         },
         {
@@ -135,6 +137,7 @@ export default function AdminDashboard() {
                     {activeTab === 'tests' && <ManageTests />}
                     {activeTab === 'builder' && <CreateTestPage />}
                     {activeTab === 'importer' && <AITestImporter />}
+                    {activeTab === 'ai_audit' && <AdminAiAuditPanel />}
                     {activeTab === 'materials' && <MaterialsManager />}
                     {activeTab === 'posts' && <NewsFeed />}
                     {activeTab === 'features' && <AdminFeatureControlPanel />}
