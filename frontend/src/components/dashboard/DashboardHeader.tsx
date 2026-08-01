@@ -1,0 +1,98 @@
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Search, Bell, Sparkles, Building2, UserCheck, Shield, Plus, Command } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useNavigate } from 'react-router-dom';
+
+interface DashboardHeaderProps {
+    user: any;
+    profile: any;
+    isAdmin: boolean;
+    role: string;
+    onOpenSearch: () => void;
+    onOpenNotifications: () => void;
+}
+
+export default function DashboardHeader({
+    user,
+    profile,
+    isAdmin,
+    role,
+    onOpenSearch,
+    onOpenNotifications
+}: DashboardHeaderProps) {
+    const navigate = useNavigate();
+    const isInstitution = role === 'Institution';
+
+    const getInitials = (name?: string) => {
+        if (!name) return 'U';
+        return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+    };
+
+    const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Teacher';
+
+    return (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-200/70">
+            {/* Left Workspace / Title */}
+            <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm ${
+                    isInstitution ? 'bg-gradient-to-br from-amber-500 to-orange-600' : 'bg-gradient-to-br from-indigo-600 to-blue-700'
+                }`}>
+                    {isInstitution ? <Building2 className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />}
+                </div>
+                <div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-base font-bold text-slate-900 tracking-tight">
+                            {isInstitution ? (profile?.institution_name || 'Institution Workspace') : `${displayName}'s Workspace`}
+                        </span>
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            isInstitution ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                        }`}>
+                            {role}
+                        </span>
+                    </div>
+                    <p className="text-[12px] text-slate-400 font-medium">
+                        Assessment & Examination Control Center
+                    </p>
+                </div>
+            </div>
+
+            {/* Right Tools & Actions */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                {/* Search Trigger Button */}
+                <button
+                    onClick={onOpenSearch}
+                    className="flex items-center gap-2.5 bg-slate-100 hover:bg-slate-200/80 text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-xl border border-slate-200/60 text-xs font-medium transition-all cursor-pointer"
+                >
+                    <Search className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Search tests, tools...</span>
+                    <span className="md:hidden">Search</span>
+                    <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-mono bg-white px-1.5 py-0.5 rounded text-slate-400 border border-slate-200">
+                        <Command className="w-2.5 h-2.5" />K
+                    </kbd>
+                </button>
+
+                {/* Notifications Drawer Button */}
+                <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={onOpenNotifications}
+                    className="relative h-9 w-9 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer"
+                    title="Notifications"
+                >
+                    <Bell className="w-4 h-4" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-white" />
+                </Button>
+
+                {/* Primary CTA */}
+                <Button
+                    onClick={() => navigate('/create-test')}
+                    className="h-9 px-3.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create Test</span>
+                </Button>
+            </div>
+        </div>
+    );
+}

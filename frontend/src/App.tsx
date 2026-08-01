@@ -68,6 +68,30 @@ const MyPosts = lazy(() => import("./pages/MyPosts"));
 
 
 
+const TeacherDashboard = lazy(() => import("./components/dashboard/TeacherDashboard"));
+
+import { useAuth } from "@/contexts/AuthContext";
+
+const DashboardRoute = () => {
+  const { user, profile, loading, isAdmin } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);
+  const isTeacherOrInstitution = (designation === 'Teacher' || designation === 'Institution') || (isAdmin && designation !== 'Student');
+
+  if (user && isTeacherOrInstitution) {
+    return <TeacherDashboard />;
+  }
+  return <TestList />;
+};
+
 const queryClient = new QueryClient();
 
 const AIImportRoute = () => {
@@ -94,7 +118,7 @@ const App = () => (
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/quiz-creator" element={<GoogleAdsLanding />} />
                     <Route path="/assessment-platform" element={<GoogleAdsLanding />} />
-                    <Route path="/dashboard" element={<TestList />} />
+                    <Route path="/dashboard" element={<DashboardRoute />} />
                     <Route path="/more-tests" element={<MoreTestsPage />} />
 
                     {/* News & Posts Routes */}

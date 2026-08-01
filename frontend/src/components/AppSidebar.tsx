@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
+    LayoutDashboard,
     FileText,
     Sparkles,
     PlusCircle,
@@ -178,11 +179,18 @@ Item 2 & Value B & 200 \\\\
     // Filter nav items: hide Reports and Materials when on /generate-with-ai page
     const navItems = [
         {
+            title: 'Dashboard',
+            path: '/dashboard',
+            icon: LayoutDashboard,
+            exact: true,
+            matchPaths: ['/dashboard']
+        },
+        {
             title: 'My Tests',
             path: '/my-tests',
             icon: FileText,
             exact: false,
-            matchPaths: ['/my-tests', '/manage-tests', '/dashboard']
+            matchPaths: ['/my-tests', '/manage-tests']
         },
         {
             title: 'Generate with AI',
@@ -237,11 +245,14 @@ Item 2 & Value B & 200 \\\\
     }
 
     const isActive = (item: typeof navItems[0]) => {
+        if (item.path === '/dashboard') {
+            return location.pathname === '/dashboard';
+        }
         if (item.title === 'Reports') {
             return location.pathname === '/my-tests' && location.search.includes('tab=reports');
         }
         if (item.title === 'My Tests') {
-            return (location.pathname === '/my-tests' || location.pathname === '/manage-tests' || location.pathname === '/dashboard') && !location.search.includes('tab=reports');
+            return (location.pathname === '/my-tests' || location.pathname === '/manage-tests') && !location.search.includes('tab=reports');
         }
         if (item.matchPaths) {
             return item.matchPaths.some(p => location.pathname.startsWith(p));

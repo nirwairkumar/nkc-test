@@ -17,12 +17,12 @@ interface TourProps {
 }
 
 export default function CreatorDashboardTour({
-  tests,
+  tests = [],
   configuringTest,
   conductExamTest,
-  onSkip,
+  onSkip = () => {},
   userId
-}: TourProps) {
+}: Partial<TourProps>) {
   const getUserKey = (key: string) => userId ? `${key}_${userId}` : key;
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -47,8 +47,8 @@ export default function CreatorDashboardTour({
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
-  // Find the example test
-  const exampleTest = tests.find(t => t.settings?.is_user_example === true);
+  // Find the example test safely
+  const exampleTest = tests?.find(t => t?.settings?.is_user_example === true);
 
   // Helper to check if proctoring is enabled in local settings
   const getActiveTab = () => {

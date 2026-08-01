@@ -22,6 +22,13 @@ export default function Layout() {
 
     const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
+    // Minimize sidebar by default when navigating to /dashboard
+    useEffect(() => {
+        if (location.pathname === '/dashboard') {
+            setIsCollapsed(true);
+        }
+    }, [location.pathname]);
+
     useEffect(() => {
         try {
             localStorage.setItem('app_sidebar_collapsed', isCollapsed ? 'true' : 'false');
@@ -57,6 +64,10 @@ export default function Layout() {
         }
     }, [user, profile, loading, navigate, location.pathname]);
 
+    // Check if logged in user is Teacher or Institution
+    const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);
+    const isTeacherOrInstitution = (designation === 'Teacher' || designation === 'Institution') || (user?.app_metadata?.role === 'admin' && designation !== 'Student');
+
     // Hide navbar & sidebar on live test pages
     const isResultsPage = location.pathname.startsWith('/results');
     const isCreateTestPage =
@@ -70,6 +81,13 @@ export default function Layout() {
         location.pathname.startsWith('/combined-');
 
     const hideFooter = isLiveTestPage || isResultsPage || isCreateTestPage;
+
+    // Sidebar is hidden on /dashboard for Student role (non-educators) to preserve legacy student view
+    const isSidebarHidden =
+        isLiveTestPage ||
+        location.pathname === '/' ||
+        location.pathname === '/support' ||
+        (location.pathname === '/dashboard' && !isTeacherOrInstitution);
 
     const handleToggleSidebar = () => {
         if (window.innerWidth < 768) {
@@ -88,7 +106,7 @@ export default function Layout() {
             )}
             
             <div className="flex flex-1 relative min-h-[calc(100vh-4rem)]">
-                {user && !isLiveTestPage && location.pathname !== '/' && location.pathname !== '/dashboard' && location.pathname !== '/support' && (
+                {user && !isSidebarHidden && (
                     <AppSidebar
                         isCollapsed={isCollapsed}
                         setIsCollapsed={setIsCollapsed}
