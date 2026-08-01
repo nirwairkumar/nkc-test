@@ -190,7 +190,7 @@ Item 2 & Value B & 200 \\\\
             path: '/my-tests',
             icon: FileText,
             exact: false,
-            matchPaths: ['/my-tests', '/manage-tests']
+            matchPaths: ['/my-tests']
         },
         {
             title: 'Generate with AI',
@@ -233,17 +233,6 @@ Item 2 & Value B & 200 \\\\
         },
     ];
 
-    if (isAdmin) {
-        navItems.push({
-            title: 'Admin Portal',
-            path: '/admin',
-            icon: Shield,
-            badge: 'Admin',
-            badgeColor: 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-            iconColor: 'text-amber-600 dark:text-amber-400'
-        });
-    }
-
     const isActive = (item: typeof navItems[0]) => {
         if (item.path === '/dashboard') {
             return location.pathname === '/dashboard';
@@ -252,7 +241,7 @@ Item 2 & Value B & 200 \\\\
             return location.pathname === '/my-tests' && location.search.includes('tab=reports');
         }
         if (item.title === 'My Tests') {
-            return (location.pathname === '/my-tests' || location.pathname === '/manage-tests') && !location.search.includes('tab=reports');
+            return location.pathname === '/my-tests' && !location.search.includes('tab=reports');
         }
         if (item.matchPaths) {
             return item.matchPaths.some(p => location.pathname.startsWith(p));

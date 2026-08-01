@@ -20,25 +20,16 @@ interface Plan {
 }
 
 // Empty State Component
-const EmptyState = ({ isAdmin }: { isAdmin: boolean }) => {
-    const navigate = useNavigate();
-
+const EmptyState = () => {
     return (
         <div className="flex flex-col items-center justify-center py-20 px-4">
             <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 rounded-full p-8 mb-6">
                 <Package className="w-12 h-12 text-indigo-500" />
             </div>
             <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-3">No Plans Available</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md mb-6">
-                There are currently no pricing plans available.{' '}
-                {isAdmin ? 'Create your first plan to get started!' : 'Please check back later or contact support.'}
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md">
+                There are currently no pricing plans available. Please check back later or contact support.
             </p>
-            {isAdmin && (
-                <Button onClick={() => navigate('/admin/pricing')} size="lg" className="gap-2">
-                    <Settings className="w-4 h-4" />
-                    Go to Admin Panel
-                </Button>
-            )}
         </div>
     );
 };
@@ -333,7 +324,7 @@ export default function PricingPage() {
             <div className="px-4 -mt-6 pb-12 max-w-5xl mx-auto">
                 {plans.length === 0 ? (
                     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-                        <EmptyState isAdmin={isAdmin} />
+                        <EmptyState />
                     </div>
                 ) : (
                     <div className={`grid gap-4 sm:gap-6 ${plans.length === 1 ? 'max-w-sm mx-auto' : plans.length === 2 ? 'sm:grid-cols-2 max-w-2xl mx-auto' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>

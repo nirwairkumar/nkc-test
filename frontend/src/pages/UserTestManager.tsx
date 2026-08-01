@@ -642,9 +642,6 @@ export default function UserTestManager() {
                             Impersonating creator dashboard for <strong>{targetUserProfile.full_name || targetUserProfile.email}</strong>
                         </span>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-amber-800 hover:bg-amber-100" onClick={() => navigate('/manage-tests?tab=users')}>
-                        Back to Admin Dashboard
-                    </Button>
                 </div>
             )}
             <Tabs value={activeTab} onValueChange={(v) => {

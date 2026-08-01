@@ -7,7 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
 import PageLoader from "@/components/ui/PageLoader";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 
@@ -33,10 +33,8 @@ const AuthForm = lazy(() => import("@/components/AuthForm"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const AuthError = lazy(() => import("./pages/AuthError"));
 const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const PremiumPage = lazy(() => import("./pages/PremiumPage"));
-const ManageTests = lazy(() => import("./pages/ManageTests"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const UserTestManager = lazy(() => import("./pages/UserTestManager"));
@@ -146,16 +144,8 @@ const App = () => (
                     <Route path="/onboarding" element={<OnboardingPage />} />
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/update-password" element={<UpdatePassword />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/admin-migration" element={<Navigate to="/admin?tab=migration" replace />} />
-                    <Route path="/admin-login" element={<Navigate to="/admin" replace />} />
-                    <Route path="/admin-pricing" element={<Navigate to="/admin?tab=pricing" replace />} />
-                    <Route path="/admin-promo-codes" element={<Navigate to="/admin?tab=promos" replace />} />
-                    <Route path="/admin-features" element={<Navigate to="/admin?tab=features" replace />} />
-                    <Route path="/admin/analytics" element={<Navigate to="/admin?tab=analytics" replace />} />
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/premium" element={<PremiumPage />} />
-                    <Route path="/manage-tests" element={<ManageTests />} />
                     <Route path="/support" element={<SupportPage />} />
                     <Route path="/user-guide" element={<UserGuidePage />} />
                     <Route path="/user-guide/:slug" element={<UserGuidePage />} />
