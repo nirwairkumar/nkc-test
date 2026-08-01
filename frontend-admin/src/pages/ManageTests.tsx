@@ -649,7 +649,7 @@ export default function ManageTests() {
             const { error } = await updateProfile(userToUpdate.id, { designation: newDesignation });
             if (error) throw error;
             toast.success(`Updated role for ${userToUpdate.full_name || userToUpdate.email} to ${newDesignation}`);
-            setAllUsers(prev => prev.map(u => u.id === userToUpdate.id ? { ...u, designation: newDesignation } : u));
+            setUsers(prev => prev.map(u => u.id === userToUpdate.id ? { ...u, designation: newDesignation } : u));
         } catch (error: any) {
             console.error("Error updating user designation:", error);
             toast.error("Failed to update user role: " + (error.message || String(error)));
@@ -666,7 +666,7 @@ export default function ManageTests() {
             const { error } = await deleteUserPermanently(userToDelete.id);
             if (error) throw error;
             toast.success(`User ${userName} deleted permanently.`);
-            setAllUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+            setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
         } catch (error: any) {
             console.error("Error deleting user:", error);
             toast.error("Failed to delete user: " + (error.message || String(error)));
