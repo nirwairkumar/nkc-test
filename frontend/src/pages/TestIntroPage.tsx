@@ -549,6 +549,33 @@ export default function TestIntroPage() {
                 url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
             />
 
+            {/* Structured Quiz Schema for Googlebot & Google Ads Review Bots */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Quiz",
+                        "name": test.title,
+                        "description": test.description || `${test.title} - Educational online practice test with ${questionCount} questions.`,
+                        "educationalUse": "Assessment",
+                        "learningResourceType": "Quiz",
+                        "timeRequired": `PT${test.duration || 60}M`,
+                        "provider": {
+                            "@type": "Organization",
+                            "name": "TestoZa Educational Systems",
+                            "url": "https://testoza.com"
+                        },
+                        "isAccessibleForFree": true,
+                        "hasPart": (test.questions || []).slice(0, 3).map((q: any, i: number) => ({
+                            "@type": "Question",
+                            "name": `Question ${i + 1}`,
+                            "text": typeof q.question_text === 'string' ? q.question_text.replace(/<[^>]*>?/gm, '') : `Practice Question ${i + 1}`
+                        }))
+                    })
+                }}
+            />
+
             <Button
                 variant="ghost"
                 className="fixed top-20 left-0 h-10 w-12 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-none rounded-r-lg shadow-md z-50 transition-transform hover:translate-x-1"
