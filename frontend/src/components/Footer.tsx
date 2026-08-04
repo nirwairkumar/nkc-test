@@ -60,6 +60,17 @@ export default function Footer() {
                                 <span className="font-medium text-slate-700 dark:text-slate-300">Location:</span>
                                 <span className="text-slate-500 dark:text-slate-400">India</span>
                             </div>
+                            <div className="flex items-center gap-1 mt-1">
+                                <span className="font-medium text-slate-700 dark:text-slate-300">LinkedIn:</span>
+                                <a
+                                    href="https://www.linkedin.com/company/testoza"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-indigo-600 dark:text-indigo-400 hover:underline transition-colors font-medium text-xs"
+                                >
+                                    linkedin.com/company/testoza
+                                </a>
+                            </div>
                         </div>
                     </div>
 
