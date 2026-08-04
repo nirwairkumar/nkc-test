@@ -154,7 +154,7 @@ export default function LandingPage() {
         <>
             <SEO
                 title="Free Online Test Maker – Conduct Online Tests & Exams with AI"
-                description="Create and conduct online tests in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Conduct online exams, mock tests, CBT platform & secure proctoring tools."
+                description="Create and conduct online tests in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Conduct online exams, mock tests, CBT platform & exam integrity tools."
                 canonicalUrl="https://testoza.com/"
                 keywords={[
                     "conduct online test",
@@ -173,7 +173,7 @@ export default function LandingPage() {
                     "computer-based test platform",
                     "online examination platform",
                     "ai quiz generator",
-                    "secure online proctoring software",
+                    "secure online exam software",
                     "how to create a test online",
                     "online mock test platform",
                     "conduct exams online securely",

@@ -39,12 +39,12 @@ export default function Footer() {
                         </nav>
                     </div>
 
-                    {/* Support Section */}
+                    {/* Support & Contact Section */}
                     <div className="flex flex-col gap-2">
-                        <h3 className="text-base font-semibold">Support</h3>
+                        <h3 className="text-base font-semibold">Support & Contact</h3>
                         <div className="flex flex-col gap-1 text-sm text-muted-foreground text-left">
                             <div className="flex items-center gap-1">
-                                <span>Email:</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-300">Email:</span>
                                 <a
                                     href="mailto:support@testoza.com"
                                     className="hover:text-primary transition-colors"
@@ -52,16 +52,13 @@ export default function Footer() {
                                     support@testoza.com
                                 </a>
                             </div>
-                            <div className="flex items-center gap-1">
-                                <span>Web:</span>
-                                <a
-                                    href="https://testoza.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:text-primary transition-colors"
-                                >
-                                    https://testoza.com
-                                </a>
+                            <div className="flex items-start gap-1">
+                                <span className="font-medium text-slate-700 dark:text-slate-300">Platform:</span>
+                                <span className="text-slate-500 dark:text-slate-400">TestoZa Educational Systems</span>
+                            </div>
+                            <div className="flex items-start gap-1">
+                                <span className="font-medium text-slate-700 dark:text-slate-300">Location:</span>
+                                <span className="text-slate-500 dark:text-slate-400">India</span>
                             </div>
                         </div>
                     </div>
@@ -82,13 +79,19 @@ export default function Footer() {
                             >
                                 LaTeX Converter
                             </Link>
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
+                                ✓ SSL Encrypted & Privacy Protected
+                            </span>
                         </nav>
                     </div>
                 </div>
 
-                {/* Copyright */}
-                <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-                    © {currentYear} <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span>. All rights reserved.
+                {/* Copyright & Trust Disclaimer */}
+                <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground space-y-2">
+                    <p>© {currentYear} <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span>. All rights reserved. Built for educators, schools, and competitive exam preparation.</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 max-w-2xl mx-auto">
+                        TestoZa is a privacy-compliant digital assessment and exam preparation software designed for learning, mock test practice, and institutional evaluation.
+                    </p>
                 </div>
             </div>
         </footer>
