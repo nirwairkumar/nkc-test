@@ -57,8 +57,8 @@ export default function Footer() {
                                 <span className="text-slate-500 dark:text-slate-400">TestoZa Educational Systems</span>
                             </div>
                             <div className="flex items-start gap-1">
-                                <span className="font-medium text-slate-700 dark:text-slate-300">Location:</span>
-                                <span className="text-slate-500 dark:text-slate-400">India</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-300 shrink-0">Address:</span>
+                                <span className="text-slate-500 dark:text-slate-400 text-xs">1st Floor, Nirmaan, Sudha & Shankar Inv Hub, IIT Madras, Chennai, Tamil Nadu 600036, India</span>
                             </div>
                             <div className="flex items-center gap-1 mt-1">
                                 <span className="font-medium text-slate-700 dark:text-slate-300">LinkedIn:</span>
