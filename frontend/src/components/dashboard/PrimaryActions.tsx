@@ -20,21 +20,9 @@ export default function PrimaryActions() {
             buttonStyle: 'bg-blue-600 hover:bg-blue-700 text-white',
         },
         {
-            id: 'import-pdf',
-            title: 'Import PDF / Paper',
-            description: 'Extract questions, options, diagrams, and answer keys directly from PDF files.',
-            icon: FileUp,
-            badge: 'PDF OCR',
-            actionText: 'Upload PDF',
-            onClick: () => navigate('/generate-with-ai?tab=pdf'),
-            borderHover: 'hover:border-emerald-300 hover:shadow-emerald-500/5',
-            iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-100',
-            buttonStyle: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-        },
-        {
             id: 'ai-studio',
             title: 'AI Test Generator',
-            description: 'Generate full question papers instantly from topics, prompts, or YouTube links.',
+            description: 'Generate full question papers instantly from topics, prompts, or PDF documents.',
             icon: Sparkles,
             badge: 'Pro AI',
             actionText: 'Generate with AI',
@@ -65,7 +53,7 @@ export default function PrimaryActions() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 {actions.map((act) => {
                     const Icon = act.icon;
                     return (

@@ -4,49 +4,82 @@ import { Globe, Copy, Eye, Users, Building2, Sparkles, Flame, Clock, Heart, Load
 import { fetchTests, cloneTest } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface CommunityLibrarySectionProps {
-    currentUserId: string;
-}
+const resolveExamCategory = (test: any): string => {
+    // 1. Check categories array if returned by API
+    if (test.categories && Array.isArray(test.categories) && test.categories.length > 0) {
+        const catName = test.categories[0]?.name || test.categories[0]?.title;
+        if (catName && typeof catName === 'string' && catName.trim()) return catName.trim();
+    }
 
-export default function CommunityLibrarySection({ currentUserId }: CommunityLibrarySectionProps) {
+    // 2. Check custom_category or other explicit category fields
+    const directCat = test.custom_category || test.exam_category || test.category_name || test.subject || (typeof test.category === 'string' ? test.category : '');
+    if (directCat && typeof directCat === 'string' && directCat.trim() && directCat.toLowerCase() !== 'general' && directCat.toLowerCase() !== 'practice paper') {
+        return directCat.trim();
+    }
+
+    // 3. Extract exam type from title / content (e.g. SSC, NEET, JEE, UPSC, GATE, Banking, etc.)
+    const title = (test.title || '').toUpperCase();
+    if (title.includes('SSC CGL') || title.includes('SSC-CGL')) return 'SSC CGL';
+    if (title.includes('SSC')) return 'SSC EXAM';
+    if (title.includes('NEET')) return 'NEET (UG)';
+    if (title.includes('JEE MAIN') || title.includes('JEE-MAIN')) return 'JEE MAIN';
+    if (title.includes('JEE ADVANCED') || title.includes('JEE-ADV')) return 'JEE ADV';
+    if (title.includes('JEE')) return 'JEE';
+    if (title.includes('UPSC') || title.includes('CIVIL SERVICES')) return 'UPSC CSE';
+    if (title.includes('GATE')) return 'GATE';
+    if (title.includes('CUET')) return 'CUET';
+    if (title.includes('BANK') || title.includes('IBPS') || title.includes('SBI')) return 'BANKING';
+    if (title.includes('SOLAR') || title.includes('PASSIVE')) return 'SOLAR & ENERGY';
+
+    // 4. Default clean badge if unclassified
+    return 'MOCK EXAM';
+};
+
+export default function CommunityLibrarySection() {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+
     const [communityTests, setCommunityTests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'trending' | 'cloned' | 'newest'>('trending');
     const [cloningId, setCloningId] = useState<string | null>(null);
-    const navigate = useNavigate();
+    const [filter, setFilter] = useState<'trending' | 'cloned' | 'newest'>('trending');
 
     useEffect(() => {
-        loadCommunityTests();
-    }, [activeTab]);
+        loadCommunityFeed();
+    }, []);
 
-    const loadCommunityTests = async () => {
+    const loadCommunityFeed = async () => {
         setLoading(true);
         try {
-            const { data } = await fetchTests({ page: 1, limit: 6 });
+            const { data } = await fetchTests({ page: 1, limit: 12 });
             setCommunityTests(data || []);
-        } catch (e) {
-            console.error('Failed to load community tests:', e);
+        } catch (err) {
+            console.error("Failed to load community tests", err);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleClone = async (testId: string, title: string) => {
-        if (!currentUserId) {
-            toast.error('Please login to clone tests');
+    const handleClone = async (testId: string) => {
+        if (!user) {
+            toast.error("Please login to clone tests to your workspace");
+            navigate('/auth');
             return;
         }
+
         setCloningId(testId);
         try {
-            const { data, error } = await cloneTest(testId, currentUserId);
-            if (error) throw new Error(typeof error === 'string' ? error : 'Failed to clone test');
-            toast.success(`"${title}" cloned into your workspace!`);
-            if (data?.id) {
-                navigate(`/edit-test/${data.id}`);
+            const { data, error } = await cloneTest(testId, user.id);
+            if (error) {
+                toast.error(typeof error === 'string' ? error : "Failed to clone test to your library");
+                return;
             }
+            toast.success("Test cloned successfully to your workspace!");
+            navigate('/my-tests');
         } catch (err: any) {
-            toast.error(err.message || 'Could not clone test');
+            toast.error(err.message || "Failed to clone test");
         } finally {
             setCloningId(null);
         }
@@ -54,10 +87,9 @@ export default function CommunityLibrarySection({ currentUserId }: CommunityLibr
 
     return (
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs mb-6">
-            {/* Header & Tabs */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
                         <Globe className="w-4 h-4" />
                     </div>
                     <div>
@@ -66,27 +98,28 @@ export default function CommunityLibrarySection({ currentUserId }: CommunityLibr
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shrink-0">
+                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl text-xs">
                     <button
-                        onClick={() => setActiveTab('trending')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 ${
-                            activeTab === 'trending' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                        onClick={() => setFilter('trending')}
+                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                            filter === 'trending' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
-                        <Flame className="w-3 h-3 text-amber-500" /> Trending
+                        <Sparkles className="w-3 h-3 text-amber-500" />
+                        <span>Trending</span>
                     </button>
                     <button
-                        onClick={() => setActiveTab('cloned')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            activeTab === 'cloned' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                        onClick={() => setFilter('cloned')}
+                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                            filter === 'cloned' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
                         Most Cloned
                     </button>
                     <button
-                        onClick={() => setActiveTab('newest')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            activeTab === 'newest' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                        onClick={() => setFilter('newest')}
+                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                            filter === 'newest' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
                         Newest
@@ -94,7 +127,7 @@ export default function CommunityLibrarySection({ currentUserId }: CommunityLibr
                 </div>
             </div>
 
-            {/* Test Cards Grid */}
+            {/* Test Grid */}
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[1, 2, 3].map((i) => (
@@ -108,6 +141,7 @@ export default function CommunityLibrarySection({ currentUserId }: CommunityLibr
                     {communityTests.slice(0, 6).map((test) => {
                         const questionCount = test.total_questions || test.questions?.length || 0;
                         const isCloningThis = cloningId === test.id;
+                        const displayCategory = resolveExamCategory(test);
 
                         return (
                             <div
@@ -116,8 +150,8 @@ export default function CommunityLibrarySection({ currentUserId }: CommunityLibr
                             >
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[10px] font-bold text-violet-700 bg-violet-100 px-2 py-0.5 rounded-md border border-violet-200">
-                                            {test.custom_category || 'General'}
+                                        <span className="text-[10px] font-bold text-violet-700 bg-violet-100 px-2 py-0.5 rounded-md border border-violet-200 uppercase tracking-wider">
+                                            {displayCategory}
                                         </span>
                                         <span className="text-[10px] text-slate-400 flex items-center gap-1">
                                             <Users className="w-3 h-3" /> By {test.creator_name || 'Verified Author'}

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Copy, Layers, Youtube, FileUp, Upload, Database, PlusCircle, ArrowUpRight } from 'lucide-react';
+import { Copy, Layers, Youtube, FileUp, Upload, Database, PlusCircle, ArrowUpRight, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function QuickActionsSection() {
     const navigate = useNavigate();
@@ -8,23 +9,26 @@ export default function QuickActionsSection() {
     const tools = [
         {
             title: 'Create Combined Test',
-            subtitle: 'Merge multiple tests into multi-section exam',
+            subtitle: 'Merge tests from your library into Paper I & II',
             icon: Layers,
-            action: () => navigate('/create-test?mode=combined'),
+            action: () => navigate('/create-combined-test'),
+            disabled: false,
             color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
         },
         {
             title: 'Generate from YouTube',
-            subtitle: 'AI video lecture to question paper',
+            subtitle: 'AI video lecture to paper (Coming Soon)',
             icon: Youtube,
-            action: () => navigate('/generate-with-ai?tab=youtube'),
-            color: 'text-red-600 bg-red-50 border-red-100',
+            action: () => toast.info('Generate from YouTube feature is currently disabled and coming soon!'),
+            disabled: true,
+            color: 'text-red-400 bg-red-50/50 border-red-100 opacity-60',
         },
         {
             title: 'Import Word (DOCX)',
             subtitle: 'Upload MS Word paper with tables & equations',
             icon: FileUp,
             action: () => navigate('/generate-with-ai?tab=docx'),
+            disabled: false,
             color: 'text-blue-600 bg-blue-50 border-blue-100',
         },
         {
@@ -32,6 +36,7 @@ export default function QuickActionsSection() {
             subtitle: 'Bulk upload standard TestoZa JSON schema',
             icon: Upload,
             action: () => navigate('/generate-with-ai?tab=json'),
+            disabled: false,
             color: 'text-emerald-600 bg-emerald-50 border-emerald-100',
         },
     ];
@@ -52,7 +57,12 @@ export default function QuickActionsSection() {
                         <button
                             key={idx}
                             onClick={t.action}
-                            className="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/70 hover:border-slate-300 hover:bg-slate-50/70 transition-all text-left group cursor-pointer"
+                            disabled={t.disabled}
+                            className={`flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/70 transition-all text-left group ${
+                                t.disabled
+                                    ? 'opacity-60 cursor-not-allowed bg-slate-50/50'
+                                    : 'hover:border-slate-300 hover:bg-slate-50/70 cursor-pointer'
+                            }`}
                         >
                             <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${t.color}`}>
                                 <Icon className="w-4 h-4" />
@@ -60,7 +70,11 @@ export default function QuickActionsSection() {
                             <div className="flex-1 min-w-0">
                                 <h3 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 flex items-center justify-between">
                                     <span>{t.title}</span>
-                                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    {t.disabled ? (
+                                        <Lock className="w-3 h-3 text-slate-400" />
+                                    ) : (
+                                        <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    )}
                                 </h3>
                                 <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{t.subtitle}</p>
                             </div>

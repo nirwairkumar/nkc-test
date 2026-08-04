@@ -28,15 +28,10 @@ export default function WelcomeSection({
                         <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-indigo-300">
                             {role} Workspace
                         </span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-[11px] text-slate-300">System Ready</span>
                     </div>
                     <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
                         Welcome back, {displayName}
                     </h1>
-                    <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl leading-relaxed">
-                        Here is your immediate exam state. {liveCount > 0 ? `${liveCount} exam${liveCount > 1 ? 's are' : ' is'} live today.` : 'No live exams running right now.'} {submissionsCount} submission{submissionsCount !== 1 ? 's' : ''} waiting for review.
-                    </p>
                 </div>
 
                 {/* Productivity Pill Highlights */}

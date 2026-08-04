@@ -35,7 +35,7 @@ export default function AnalyticsSection() {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate('/results/analytics')}
+                    onClick={() => navigate('/analytics/full')}
                     className="h-8 px-3 text-xs border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center gap-1"
                 >
                     <span>Full Analytics</span>

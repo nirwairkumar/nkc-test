@@ -51,9 +51,11 @@ const AboutPage = lazy(() => import("./pages/AboutPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
 const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
+const FullTestAnalysisPage = lazy(() => import("./pages/FullTestAnalysisPage"));
 
 const CombinedIntroPage = lazy(() => import("./pages/CombinedIntroPage"));
 const CombinedBreakScreen = lazy(() => import("./pages/CombinedBreakScreen"));
+const CreateCombinedTestPage = lazy(() => import("./pages/CreateCombinedTestPage"));
 const MoreTestsPage = lazy(() => import("./pages/MoreTestsPage"));
 const ConvertPage = lazy(() => import("./pages/ConvertPage"));
 const SurveyPage = lazy(() => import("./pages/SurveyPage"));
@@ -204,6 +206,7 @@ const App = () => (
                     />
 
                     {/* Combined Session Routes */}
+                    <Route path="/create-combined-test" element={<PrivateRoute><CreateCombinedTestPage /></PrivateRoute>} />
                     <Route path="/combined-intro/:combinedId" element={<CombinedIntroPage />} />
                     <Route path="/combined-break/:combinedId" element={<CombinedBreakScreen />} />
 
@@ -230,16 +233,20 @@ const App = () => (
                       element={<TestSubmissionSuccess />}
                     />
 
-                    {/* Unified Results Layout */}
+                    {/* Unified Results Layout (Student Facing) */}
                     <Route path="/results" element={<ResultsLayout />}>
                       <Route index element={<ResultsPage />} />
                       <Route path="solutions/:testId" element={<SolutionsViewPage />} />
-                      <Route path="analytics" element={<AdvancedAnalysis />} />
                       <Route path="feedback/:testId" element={<FeedbackViewPage />} />
                     </Route>
 
+                    {/* Dedicated Teacher/Institution Full Test Analysis routes */}
+                    <Route path="/results/analytics" element={<PrivateRoute><FullTestAnalysisPage /></PrivateRoute>} />
+                    <Route path="/test-analysis/:testId" element={<PrivateRoute><FullTestAnalysisPage /></PrivateRoute>} />
+                    <Route path="/analytics/full" element={<PrivateRoute><FullTestAnalysisPage /></PrivateRoute>} />
+
                     {/* Redirects from old paths to new paths */}
-                    <Route path="/analysis" element={<Navigate to="/results/analytics" replace />} />
+                    <Route path="/analysis" element={<Navigate to="/analytics/full" replace />} />
                     <Route path="/solutions/:testId" element={<Navigate to="/results" replace />} />
 
                     <Route
