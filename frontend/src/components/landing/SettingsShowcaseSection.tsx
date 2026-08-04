@@ -23,7 +23,7 @@ export default function SettingsShowcaseSection() {
                         Configure & <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Experience</span> Every Detail
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-                        From proctoring controls to a fully responsive live test environment — built for creators and students.
+                        From exam integrity controls to a fully responsive live test environment — built for creators and students.
                     </p>
                 </div>
 
@@ -34,7 +34,7 @@ export default function SettingsShowcaseSection() {
                     <div className="w-full lg:w-1/2 flex flex-col items-center gap-4">
                         <div className="text-center">
                             <div className="text-xs font-bold uppercase tracking-widest text-blue-500 mb-1">⚙ Test Configuration</div>
-                            <div className="text-lg font-bold text-slate-800 dark:text-white">Proctoring &amp; Settings Panel</div>
+                            <div className="text-lg font-bold text-slate-800 dark:text-white">Exam Integrity &amp; Settings Panel</div>
                             <div className="text-sm text-slate-500 dark:text-slate-400">Configure your test environment with granular controls</div>
                         </div>
                         <SettingsShowcase />
