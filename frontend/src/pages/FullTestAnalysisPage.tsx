@@ -15,8 +15,10 @@ import {
     XAxis, YAxis, Tooltip, CartesianGrid, Legend
 } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchTestById, fetchAllTests } from '@/lib/testsApi';
+import { fetchTestById, fetchAllTests, fetchTestsByUserId } from '@/lib/testsApi';
 import { fetchAttemptsForTest } from '@/lib/attemptsApi';
+import { isSampleUser } from '@/lib/teacherDashboardApi';
+import { supabase } from '@/integrations/supabase/client';
 
 // --- MOCK / FALLBACK DATASETS ---
 const MOCK_TEST_DETAILS = {
