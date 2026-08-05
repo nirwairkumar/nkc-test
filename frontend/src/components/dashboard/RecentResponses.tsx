@@ -1,12 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle2, Eye, Award, ChevronRight, FileCheck2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CheckCircle2, Eye, Award, ChevronRight, FileCheck2, Inbox } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

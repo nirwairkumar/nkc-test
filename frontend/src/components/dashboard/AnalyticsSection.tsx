@@ -3,11 +3,6 @@ import { BarChart2, TrendingUp, CheckCircle2, Award, ArrowUpRight } from 'lucide
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
-import React from 'react';
-import { BarChart2, TrendingUp, CheckCircle2, Award, ArrowUpRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-
 interface AnalyticsSectionProps {
     totalSubmissions?: number;
     weeklyData?: { day: string; count: number }[];
