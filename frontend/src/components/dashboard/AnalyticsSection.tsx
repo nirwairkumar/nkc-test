@@ -3,11 +3,20 @@ import { BarChart2, TrendingUp, CheckCircle2, Award, ArrowUpRight } from 'lucide
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
-export default function AnalyticsSection() {
-    const navigate = useNavigate();
+import React from 'react';
+import { BarChart2, TrendingUp, CheckCircle2, Award, ArrowUpRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
-    // Data for weekly trend SVG
-    const weeklyData = [
+interface AnalyticsSectionProps {
+    totalSubmissions?: number;
+    weeklyData?: { day: string; count: number }[];
+    scoreDistribution?: { topTierPct: number; avgTierPct: number; needsSupportPct: number };
+}
+
+export default function AnalyticsSection({
+    totalSubmissions = 384,
+    weeklyData = [
         { day: 'Mon', count: 24 },
         { day: 'Tue', count: 42 },
         { day: 'Wed', count: 35 },
@@ -15,9 +24,12 @@ export default function AnalyticsSection() {
         { day: 'Fri', count: 54 },
         { day: 'Sat', count: 89 },
         { day: 'Sun', count: 72 },
-    ];
+    ],
+    scoreDistribution = { topTierPct: 42, avgTierPct: 45, needsSupportPct: 13 },
+}: AnalyticsSectionProps) {
+    const navigate = useNavigate();
 
-    const maxCount = Math.max(...weeklyData.map(d => d.count));
+    const maxCount = Math.max(...weeklyData.map(d => d.count), 1);
 
     return (
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs mb-6">
@@ -49,25 +61,27 @@ export default function AnalyticsSection() {
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Weekly Submissions</span>
-                            <p className="text-lg font-bold text-slate-900 leading-none mt-0.5">384 Submissions</p>
+                            <p className="text-lg font-bold text-slate-900 leading-none mt-0.5">{totalSubmissions} Submissions</p>
                         </div>
-                        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3" /> +18.4% this week
-                        </span>
+                        {totalSubmissions > 0 && (
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                                <TrendingUp className="w-3 h-3" /> Active Response Rate
+                            </span>
+                        )}
                     </div>
 
                     {/* SVG Bar Chart */}
                     <div className="h-40 flex items-end justify-between gap-3 pt-6 px-2">
                         {weeklyData.map((d, idx) => {
-                            const heightPct = Math.round((d.count / maxCount) * 100);
+                            const heightPct = maxCount > 0 ? Math.round((d.count / maxCount) * 100) : 0;
                             return (
                                 <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                                     <span className="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
                                         {d.count}
                                     </span>
                                     <div
-                                        style={{ height: `${heightPct}%` }}
-                                        className="w-full bg-indigo-500 group-hover:bg-indigo-600 rounded-t-md transition-all duration-300 relative"
+                                        style={{ height: `${Math.max(heightPct, d.count > 0 ? 8 : 4)}%` }}
+                                        className={`w-full ${d.count > 0 ? 'bg-indigo-500 group-hover:bg-indigo-600' : 'bg-slate-200'} rounded-t-md transition-all duration-300 relative`}
                                     />
                                     <span className="text-[10px] font-bold text-slate-500 uppercase">{d.day}</span>
                                 </div>
@@ -86,37 +100,37 @@ export default function AnalyticsSection() {
                             <div>
                                 <div className="flex justify-between text-xs font-medium mb-1">
                                     <span className="text-slate-600">Top Tier (&gt;80%)</span>
-                                    <span className="font-bold text-emerald-600">42%</span>
+                                    <span className="font-bold text-emerald-600">{scoreDistribution.topTierPct}%</span>
                                 </div>
                                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '42%' }} />
+                                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${scoreDistribution.topTierPct}%` }} />
                                 </div>
                             </div>
 
                             <div>
                                 <div className="flex justify-between text-xs font-medium mb-1">
                                     <span className="text-slate-600">Average Tier (50% - 80%)</span>
-                                    <span className="font-bold text-blue-600">45%</span>
+                                    <span className="font-bold text-blue-600">{scoreDistribution.avgTierPct}%</span>
                                 </div>
                                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                    <div className="bg-blue-500 h-full rounded-full" style={{ width: '45%' }} />
+                                    <div className="bg-blue-500 h-full rounded-full" style={{ width: `${scoreDistribution.avgTierPct}%` }} />
                                 </div>
                             </div>
 
                             <div>
                                 <div className="flex justify-between text-xs font-medium mb-1">
                                     <span className="text-slate-600">Needs Support (&lt;50%)</span>
-                                    <span className="font-bold text-amber-600">13%</span>
+                                    <span className="font-bold text-amber-600">{scoreDistribution.needsSupportPct}%</span>
                                 </div>
                                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                    <div className="bg-amber-500 h-full rounded-full" style={{ width: '13%' }} />
+                                    <div className="bg-amber-500 h-full rounded-full" style={{ width: `${scoreDistribution.needsSupportPct}%` }} />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <p className="text-[10px] text-slate-400 mt-4 pt-3 border-t border-slate-200/60">
-                        Based on 384 recent student test attempts.
+                        Based on {totalSubmissions} recent student test attempts.
                     </p>
                 </div>
             </div>

@@ -463,7 +463,6 @@ const TIME_DISTRIBUTION_DATA = [
     { range: '2 - 2.5 hrs', students: 124 },
     { range: '2.5 - 3 hrs', students: 43 },
 ];
-
 const DIFFICULTY_DONUT_DATA = [
     { name: 'Easy (Acc > 75%)', value: 25, color: '#10b981' },
     { name: 'Medium (50-75%)', value: 30, color: '#3b82f6' },
@@ -477,11 +476,14 @@ export default function FullTestAnalysisPage() {
     const [searchParams] = useSearchParams();
     const { user } = useAuth();
 
+    const userEmail = user?.email;
+    const isDemoUser = isSampleUser(userEmail);
+
     // Data States
-    const [testInfo, setTestInfo] = useState<any>(MOCK_TEST_DETAILS);
-    const [students, setStudents] = useState<any[]>(INITIAL_STUDENTS);
-    const [questions, setQuestions] = useState<any[]>(MOCK_QUESTIONS);
-    const [loading, setLoading] = useState<boolean>(false);
+    const [testInfo, setTestInfo] = useState<any>(isDemoUser ? MOCK_TEST_DETAILS : null);
+    const [students, setStudents] = useState<any[]>(isDemoUser ? INITIAL_STUDENTS : []);
+    const [questions, setQuestions] = useState<any[]>(isDemoUser ? MOCK_QUESTIONS : []);
+    const [loading, setLoading] = useState<boolean>(true);
 
     // Active Navigation Tab
     const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'questions' | 'toppers' | 'insights'>('overview');
@@ -502,46 +504,69 @@ export default function FullTestAnalysisPage() {
     const [drawerStudent, setDrawerStudent] = useState<any | null>(null);
     const [selectedQuestionModal, setSelectedQuestionModal] = useState<any | null>(null);
 
-    // Load Test Data if ID exists
+    // Load Test Data if ID exists or load teacher's tests
     useEffect(() => {
-        if (testId) {
-            fetchTestById(testId)
-                .then(({ data }) => {
-                    if (data) {
-                        setTestInfo({
-                            id: data.id,
-                            title: data.title || "Physics Mock Test 12",
-                            category: data.custom_category || data.subject || "JEE Main & Advanced",
-                            created_at: data.created_at || new Date().toISOString(),
-                            duration: data.duration || 180,
-                            total_questions: data.total_questions || data.questions?.length || 75,
-                            total_max_marks: data.total_max_marks || 300,
-                            creator_name: data.creator_name || "Dr. Alok Verma",
-                            creator_avatar: data.creator_avatar || MOCK_TEST_DETAILS.creator_avatar,
-                            visibility: data.is_public ? "Public" : "Private",
-                            institution_name: data.institution_name || "Apex Physics Academy"
-                        });
-                    }
-                })
-                .catch(err => console.error("Error loading test details for analysis:", err));
+        let isMounted = true;
+        setLoading(true);
 
-            // Load live attempt data
-            fetchTestAttempts(testId)
-                .then(res => {
-                    if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
-                        // Enrich real attempts
-                        const mapped = res.data.map((att: any, idx: number) => ({
+        const loadData = async () => {
+            try {
+                let targetTestId = testId;
+                if (!targetTestId && user?.id) {
+                    const { data: userTests } = await fetchTestsByUserId(user.id);
+                    if (userTests && userTests.length > 0) {
+                        targetTestId = userTests[0].id;
+                    }
+                }
+
+                if (targetTestId) {
+                    const { data: fetchedTest } = await fetchTestById(targetTestId);
+                    if (fetchedTest && isMounted) {
+                        setTestInfo({
+                            id: fetchedTest.id,
+                            title: fetchedTest.title || "Untitled Test",
+                            category: fetchedTest.custom_category || fetchedTest.subject || "General Assessment",
+                            created_at: fetchedTest.created_at || new Date().toISOString(),
+                            duration: fetchedTest.duration || 180,
+                            total_questions: fetchedTest.total_questions || fetchedTest.questions?.length || 0,
+                            total_max_marks: fetchedTest.total_max_marks || 300,
+                            creator_name: fetchedTest.creator_name || user?.user_metadata?.full_name || "Educator",
+                            creator_avatar: fetchedTest.creator_avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=creator",
+                            visibility: fetchedTest.is_public ? "Public" : "Private",
+                            institution_name: fetchedTest.institution_name || "Partner Institution"
+                        });
+                        if (fetchedTest.questions && Array.isArray(fetchedTest.questions)) {
+                            setQuestions(fetchedTest.questions);
+                        }
+                    }
+
+                    // Load live attempt data
+                    const res = await fetchAttemptsForTest(targetTestId);
+                    let attemptList = res?.data;
+
+                    if (!attemptList || !Array.isArray(attemptList) || attemptList.length === 0) {
+                        const { data: sbData } = await (supabase as any)
+                            .from('user_tests')
+                            .select('*, profiles(full_name, avatar_url, email), tests(title, total_max_marks)')
+                            .eq('test_id', targetTestId);
+                        if (sbData && Array.isArray(sbData)) {
+                            attemptList = sbData;
+                        }
+                    }
+
+                    if (attemptList && Array.isArray(attemptList) && attemptList.length > 0 && isMounted) {
+                        const mapped = attemptList.map((att: any, idx: number) => ({
                             id: att.id || `att-${idx}`,
                             name: att.profiles?.full_name || att.user_id?.substring(0, 8) || `Student ${idx + 1}`,
                             avatar: att.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${idx}`,
                             rollNo: att.metadata?.roll_number || `REG-2026-0${idx + 1}`,
                             email: att.profiles?.email || `student${idx + 1}@institution.edu`,
-                            batch: att.metadata?.batch || "Batch A (Target 2026)",
-                            institution: att.metadata?.institution || "Apex Academy",
-                            status: att.status === 'submitted' ? "Completed" : "Live",
+                            batch: att.metadata?.batch || "Batch A",
+                            institution: att.metadata?.institution || "Academy",
+                            status: "Completed",
                             score: att.score || 0,
-                            totalMarks: att.total_max_marks || 300,
-                            percentage: Math.round(((att.score || 0) / (att.total_max_marks || 300)) * 1000) / 10,
+                            totalMarks: att.total_max_marks || att.tests?.total_max_marks || 300,
+                            percentage: Math.round(((att.score || 0) / (att.total_max_marks || att.tests?.total_max_marks || 300)) * 1000) / 10,
                             rank: idx + 1,
                             timeTaken: att.duration_seconds ? `${Math.floor(att.duration_seconds / 60)}m` : "1h 40m",
                             positiveMarks: att.score ? att.score + 8 : 0,
@@ -563,11 +588,30 @@ export default function FullTestAnalysisPage() {
                             teacherNotes: "Live attempt submitted via platform."
                         }));
                         setStudents(mapped);
+                    } else if (isMounted) {
+                        setStudents(isDemoUser ? INITIAL_STUDENTS : []);
                     }
-                })
-                .catch(err => console.error("Error loading attempt data:", err));
-        }
-    }, [testId]);
+                } else if (isMounted) {
+                    if (isDemoUser) {
+                        setTestInfo(MOCK_TEST_DETAILS);
+                        setStudents(INITIAL_STUDENTS);
+                        setQuestions(MOCK_QUESTIONS);
+                    } else {
+                        setTestInfo(null);
+                        setStudents([]);
+                        setQuestions([]);
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading test details for analysis:", err);
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+
+        loadData();
+        return () => { isMounted = false; };
+    }, [testId, user?.id, isDemoUser]);
 
     // Computed Filtered & Sorted Students
     const filteredStudents = useMemo(() => {
@@ -598,17 +642,17 @@ export default function FullTestAnalysisPage() {
         });
     }, [students, searchQuery, batchFilter, statusFilter, scoreRangeFilter, resultFilter, sortField, sortOrder]);
 
-    // Derived Statistics
+    // Derived Statistics (safe against empty arrays)
     const totalStudentsCount = students.length;
     const completedCount = students.filter(s => s.status === 'Completed').length;
     const liveCount = students.filter(s => s.status === 'Live').length;
-    const avgScore = Math.round(students.reduce((acc, s) => acc + s.score, 0) / (students.length || 1));
-    const highestScore = Math.max(...students.map(s => s.score));
-    const lowestScore = Math.min(...students.map(s => s.score));
+    const avgScore = totalStudentsCount > 0 ? Math.round(students.reduce((acc, s) => acc + s.score, 0) / totalStudentsCount) : 0;
+    const highestScore = totalStudentsCount > 0 ? Math.max(...students.map(s => s.score)) : 0;
+    const lowestScore = totalStudentsCount > 0 ? Math.min(...students.map(s => s.score)) : 0;
     const scoresSorted = [...students.map(s => s.score)].sort((a, b) => a - b);
-    const medianScore = scoresSorted[Math.floor(scoresSorted.length / 2)] || 0;
-    const avgAccuracy = (students.reduce((acc, s) => acc + s.accuracyPct, 0) / (students.length || 1)).toFixed(1);
-    const completionRate = ((completedCount / (totalStudentsCount || 1)) * 100).toFixed(1);
+    const medianScore = scoresSorted.length > 0 ? (scoresSorted[Math.floor(scoresSorted.length / 2)] || 0) : 0;
+    const avgAccuracy = totalStudentsCount > 0 ? (students.reduce((acc, s) => acc + s.accuracyPct, 0) / totalStudentsCount).toFixed(1) : "0.0";
+    const completionRate = totalStudentsCount > 0 ? ((completedCount / totalStudentsCount) * 100).toFixed(1) : "0.0";
 
     // Helpers
     const getPercentageBadgeColor = (pct: number) => {
@@ -670,6 +714,60 @@ export default function FullTestAnalysisPage() {
     const handlePublishResults = () => {
         toast.success("Results published to student portals successfully!");
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                    <p className="text-sm font-bold text-slate-700">Loading Analysis Data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!testInfo) {
+        return (
+            <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-24 font-sans">
+                <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3 shadow-xs">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate('/dashboard')}
+                            className="h-9 px-3 text-slate-800 bg-slate-100 hover:bg-slate-200 cursor-pointer rounded-xl font-bold flex items-center gap-2"
+                        >
+                            <ArrowLeft className="w-4 h-4 text-indigo-600" /> Back to Dashboard
+                        </Button>
+                    </div>
+                </div>
+                <div className="max-w-3xl mx-auto px-4 py-20 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-4 border border-indigo-100 shadow-xs">
+                        <BarChart2 className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900">No Test Selected for Analysis</h2>
+                    <p className="text-sm text-slate-500 max-w-md mx-auto mt-2 leading-relaxed">
+                        Please select a test from your dashboard or create a new test to view student performance analytics.
+                    </p>
+                    <div className="mt-6 flex justify-center gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={() => navigate('/dashboard')}
+                            className="border-slate-300 text-slate-700 font-bold px-5 py-2 rounded-xl text-sm"
+                        >
+                            Go to Dashboard
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/create-test')}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2 rounded-xl text-sm shadow-md"
+                        >
+                            Create a Test
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-24 font-sans selection:bg-indigo-100 selection:text-indigo-900">

@@ -41,6 +41,7 @@ import InstitutionPanel from './InstitutionPanel';
 import AnalyticsSection from './AnalyticsSection';
 import GlobalSearchModal from './GlobalSearchModal';
 import NotificationCenter from './NotificationCenter';
+import { isSampleUser, fetchTeacherAnalytics, SAMPLE_TEACHER_ANALYTICS, TeacherDashboardAnalytics } from '@/lib/teacherDashboardApi';
 
 export default function TeacherDashboard() {
     const { user, profile, isAdmin, loading: authLoading } = useAuth();
@@ -58,6 +59,7 @@ export default function TeacherDashboard() {
     const [targetUserProfile, setTargetUserProfile] = useState<any>(null);
     const [classes, setClasses] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
+    const [analytics, setAnalytics] = useState<TeacherDashboardAnalytics | null>(null);
 
     // Modals & Panels
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -84,6 +86,10 @@ export default function TeacherDashboard() {
 
     // Check if creator status is active
     const isCreator = targetUserProfile?.is_creator || profile?.is_creator || isAdmin;
+
+    // Sample User Determination
+    const userEmail = targetUserProfile?.email || user?.email;
+    const isDemoUser = isSampleUser(userEmail);
 
     // Fetch Target User Profile if impersonated
     useEffect(() => {
@@ -120,6 +126,18 @@ export default function TeacherDashboard() {
             fetchCategories().then(res => setCategories(res?.data || [])).catch(() => setCategories([]));
         }
     }, [targetUserId, loadTests]);
+
+    // Load Analytics data (Real for real users, Sample for sample users)
+    useEffect(() => {
+        if (isDemoUser) {
+            setAnalytics(SAMPLE_TEACHER_ANALYTICS);
+        } else if (targetUserId) {
+            const safeTests = Array.isArray(tests) ? tests : [];
+            fetchTeacherAnalytics(targetUserId, safeTests).then(res => {
+                setAnalytics(res);
+            });
+        }
+    }, [isDemoUser, targetUserId, tests]);
 
     // Test Action Handlers
     const handleEditTest = (test: any) => {
@@ -291,7 +309,7 @@ export default function TeacherDashboard() {
                     displayName={displayName}
                     liveCount={liveCount}
                     draftCount={draftCount}
-                    submissionsCount={18}
+                    submissionsCount={analytics?.totalSubmissions ?? (isDemoUser ? 18 : 0)}
                     role={roleLabel}
                 />
 
@@ -307,8 +325,8 @@ export default function TeacherDashboard() {
                     liveCount={liveCount}
                     draftCount={draftCount}
                     scheduledCount={scheduledCount}
-                    submissionsToday={24}
-                    avgScorePct={78}
+                    submissionsToday={analytics?.submissionsToday ?? (isDemoUser ? 24 : 0)}
+                    avgScorePct={analytics?.avgScorePct ?? (isDemoUser ? 78 : 0)}
                     isInstitution={isInstitutionRole}
                 />
 
@@ -327,8 +345,8 @@ export default function TeacherDashboard() {
 
                 {/* Live Activity & Recent Responses (2 Column Grid) */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <LiveActivity />
-                    <RecentResponses />
+                    <LiveActivity activities={isDemoUser ? undefined : (analytics?.liveActivities || [])} />
+                    <RecentResponses responses={isDemoUser ? undefined : (analytics?.recentResponses || [])} />
                 </div>
 
                 {/* Quick Tools & AI Studio Highlights */}
@@ -336,7 +354,11 @@ export default function TeacherDashboard() {
                 <AIStudioSection />
 
                 {/* Performance Analytics Charts */}
-                <AnalyticsSection />
+                <AnalyticsSection
+                    totalSubmissions={analytics?.totalSubmissions ?? (isDemoUser ? 384 : 0)}
+                    weeklyData={isDemoUser ? undefined : analytics?.weeklySubmissions}
+                    scoreDistribution={isDemoUser ? undefined : analytics?.scoreDistribution}
+                />
 
                 {/* Community Repository Library (Below Personal Work) */}
                 <CommunityLibrarySection currentUserId={targetUserId || ''} />
