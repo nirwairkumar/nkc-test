@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchTestById, fetchAllTests, fetchTestsByUserId } from '@/lib/testsApi';
 import { fetchAttemptsForTest } from '@/lib/attemptsApi';
+import { fetchUsersByIds } from '@/lib/usersApi';
 import { isSampleUser } from '@/lib/teacherDashboardApi';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -472,6 +473,16 @@ const DIFFICULTY_DONUT_DATA = [
     { name: 'Tricky (<25%)', value: 5, color: '#ef4444' }
 ];
 
+const formatDuration = (seconds?: number) => {
+    if (!seconds || seconds <= 0) return "-";
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    if (mins > 0) return `${mins}m ${secs}s`;
+    return `${secs}s`;
+};
+
 export default function FullTestAnalysisPage() {
     const navigate = useNavigate();
     const { testId } = useParams<{ testId: string }>();
@@ -492,10 +503,10 @@ export default function FullTestAnalysisPage() {
 
     // Search & Filter States
     const [searchQuery, setSearchQuery] = useState('');
-    const [batchFilter, setBatchFilter] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
     const [scoreRangeFilter, setScoreRangeFilter] = useState('All');
     const [resultFilter, setResultFilter] = useState('All');
+    const [passingMarks, setPassingMarks] = useState<number | null>(null);
 
     // Table Sorting
     const [sortField, setSortField] = useState<string>('rank');
@@ -523,6 +534,7 @@ export default function FullTestAnalysisPage() {
 
                 if (targetTestId) {
                     const { data: fetchedTest } = await fetchTestById(targetTestId);
+                    let rawQuestions: any[] = [];
                     if (fetchedTest && isMounted) {
                         setTestInfo({
                             id: fetchedTest.id,
@@ -537,24 +549,97 @@ export default function FullTestAnalysisPage() {
                             visibility: fetchedTest.is_public ? "Public" : "Private",
                             institution_name: fetchedTest.institution_name || "Partner Institution"
                         });
-                        if (fetchedTest.questions && Array.isArray(fetchedTest.questions)) {
-                            const normalized = fetchedTest.questions.map((q: any, idx: number) => ({
-                                ...q,
-                                qNum: q.qNum || q.question_number || (idx + 1),
-                                topic: q.topic || q.subject || "General Assessment",
-                                text: q.text || q.question_text || q.question || `Question #${idx + 1}`,
-                                difficulty: q.difficulty || "Medium",
-                                accuracyPct: q.accuracyPct ?? 72,
-                                avgTimeSeconds: q.avgTimeSeconds ?? 105,
-                                correctPct: q.correctPct ?? 72,
-                                wrongPct: q.wrongPct ?? 20,
-                                skippedPct: q.skippedPct ?? 8,
-                                discriminationIndex: q.discriminationIndex ?? 0.68,
-                                bloomLevel: q.bloomLevel || "Application"
-                            }));
-                            setQuestions(normalized);
+                        if (fetchedTest.passing_marks || fetchedTest.passing_score) {
+                            setPassingMarks(fetchedTest.passing_marks || fetchedTest.passing_score);
+                        }
+                        if (fetchedTest.enable_section_mode && fetchedTest.sections && Array.isArray(fetchedTest.sections)) {
+                            rawQuestions = fetchedTest.sections.flatMap((sec: any) => sec.questions || []);
+                        } else if (fetchedTest.questions && Array.isArray(fetchedTest.questions)) {
+                            rawQuestions = fetchedTest.questions;
                         }
                     }
+
+                    // Helper to extract user answer for a question across various key formats
+                    const extractUserAnswer = (answers: any, q: any, idx: number) => {
+                        if (!answers || typeof answers !== 'object') return undefined;
+                        const keysToTry = [
+                            q.id,
+                            String(q.id),
+                            Number(q.id),
+                            idx + 1,
+                            String(idx + 1),
+                            idx,
+                            String(idx)
+                        ];
+                        for (const key of keysToTry) {
+                            if (key !== undefined && key !== null && answers[key] !== undefined) {
+                                return answers[key];
+                            }
+                        }
+                        return undefined;
+                    };
+
+                    // Helper to evaluate a question answer with high precision
+                    const evalQuestionResult = (q: any, userAns: any) => {
+                        if (userAns === undefined || userAns === null || userAns === '' || (Array.isArray(userAns) && userAns.length === 0)) {
+                            return { isCorrect: false, isWrong: false, isSkipped: true, isPartial: false, score: 0 };
+                        }
+
+                        const qMarks = q.marks !== undefined ? parseFloat(q.marks) : 4;
+                        const qNeg = q.negativeMarks !== undefined ? parseFloat(q.negativeMarks) : 0;
+                        const qType = q.type || 'single';
+
+                        if (qType === 'numerical') {
+                            const numAns = parseFloat(userAns);
+                            const ca = q.correctAnswer !== undefined ? q.correctAnswer : q.correct_answer;
+                            if (isNaN(numAns) || !ca) {
+                                return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+                            }
+                            if (typeof ca === 'object') {
+                                if (ca.exactMatch && ca.exactAnswers) {
+                                    const exacts = String(ca.exactAnswers).split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+                                    if (exacts.includes(numAns)) {
+                                        return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+                                    }
+                                } else if (ca.min !== undefined && ca.max !== undefined) {
+                                    if (numAns >= parseFloat(ca.min) && numAns <= parseFloat(ca.max)) {
+                                        return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+                                    }
+                                }
+                            } else if (parseFloat(ca) === numAns) {
+                                return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+                            }
+                            return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+                        }
+
+                        if (qType === 'multiple') {
+                            const caVal = q.correctAnswer !== undefined ? q.correctAnswer : q.correct_answer;
+                            const caArr = Array.isArray(caVal) ? caVal.map(String).sort() : [String(caVal)];
+                            const uArr = Array.isArray(userAns) ? userAns.map(String).sort() : [String(userAns)];
+                            
+                            const hasWrong = uArr.some(a => !caArr.includes(a));
+                            if (hasWrong) {
+                                return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+                            }
+                            if (uArr.length === caArr.length && caArr.length > 0) {
+                                return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+                            }
+                            if (uArr.length > 0) {
+                                const frac = uArr.length / caArr.length;
+                                return { isCorrect: false, isWrong: false, isSkipped: false, isPartial: true, score: frac * qMarks };
+                            }
+                            return { isCorrect: false, isWrong: false, isSkipped: true, isPartial: false, score: 0 };
+                        }
+
+                        // Single choice / Default
+                        const caVal = q.correctAnswer !== undefined ? q.correctAnswer : (q.correct_answer !== undefined ? q.correct_answer : q.answer);
+                        const ca = String(caVal !== undefined ? caVal : '').trim();
+                        const u = String(userAns).trim();
+                        if (u === ca && ca !== '') {
+                            return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+                        }
+                        return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+                    };
 
                     // Load live attempt data
                     const res = await fetchAttemptsForTest(targetTestId);
@@ -571,41 +656,225 @@ export default function FullTestAnalysisPage() {
                     }
 
                     if (attemptList && Array.isArray(attemptList) && attemptList.length > 0 && isMounted) {
-                        const mapped = attemptList.map((att: any, idx: number) => ({
-                            id: att.id || `att-${idx}`,
-                            name: att.profiles?.full_name || att.user_id?.substring(0, 8) || `Student ${idx + 1}`,
-                            avatar: att.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${idx}`,
-                            rollNo: att.metadata?.roll_number || `REG-2026-0${idx + 1}`,
-                            email: att.profiles?.email || `student${idx + 1}@institution.edu`,
-                            batch: att.metadata?.batch || "Batch A",
-                            institution: att.metadata?.institution || "Academy",
-                            status: "Completed",
-                            score: att.score || 0,
-                            totalMarks: att.total_max_marks || att.tests?.total_max_marks || 300,
-                            percentage: Math.round(((att.score || 0) / (att.total_max_marks || att.tests?.total_max_marks || 300)) * 1000) / 10,
-                            rank: idx + 1,
-                            timeTaken: att.duration_seconds ? `${Math.floor(att.duration_seconds / 60)}m` : "1h 40m",
-                            positiveMarks: att.score ? att.score + 8 : 0,
-                            negativeMarks: 8,
-                            netScore: att.score || 0,
-                            attemptedCount: att.completion_percentage ? Math.round((att.completion_percentage / 100) * 75) : 60,
-                            correctCount: Math.round(((att.score || 0) / 4)),
-                            wrongCount: 8,
-                            skippedCount: 10,
-                            partialCount: 0,
-                            reviewCount: 3,
-                            accuracyPct: 86.4,
-                            startedAt: "10:00 AM",
-                            completedAt: new Date(att.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                            submissionTime: new Date(att.created_at || Date.now()).toLocaleString(),
-                            result: ((att.score || 0) >= 120) ? "Pass" : "Fail",
-                            strongTopics: ["Physics Core", "Problem Solving"],
-                            weakTopics: ["Speed & Accuracy"],
-                            teacherNotes: "Live attempt submitted via platform."
-                        }));
+                        // Fetch missing user profile details if user_ids exist
+                        const userIds = Array.from(new Set(attemptList.map((d: any) => d.user_id).filter(Boolean))) as string[];
+                        let userMap = new Map();
+                        if (userIds.length > 0) {
+                            try {
+                                const { data: usersData } = await fetchUsersByIds(userIds);
+                                if (usersData && Array.isArray(usersData)) {
+                                    userMap = new Map(usersData.map((u: any) => [u.id, u]));
+                                }
+                            } catch (uErr) {
+                                console.error("Could not fetch user profiles for attempts:", uErr);
+                            }
+                        }
+
+                        const mapped = attemptList.map((att: any, idx: number) => {
+                            const userProfile = userMap.get(att.user_id) || att.user || att.profiles;
+
+                            // 1. Check form inputs saved in startFormData or registrationData
+                            let formName = "";
+                            const formDataSources = [
+                                att.metadata?.startFormData,
+                                att.metadata?.start_form_data,
+                                att.metadata?.registrationData,
+                                att.metadata?.registration_data,
+                                att.metadata?.form_data,
+                                att.metadata?.custom_fields,
+                                att.registration_form_data
+                            ];
+                            for (const fd of formDataSources) {
+                                if (fd && typeof fd === 'object') {
+                                    const keys = Object.keys(fd);
+                                    const nameKey = keys.find(k => k.toLowerCase().includes('name'));
+                                    if (nameKey && fd[nameKey] && String(fd[nameKey]).trim()) {
+                                        formName = String(fd[nameKey]).trim();
+                                        break;
+                                    }
+                                    for (const k of keys) {
+                                        if (fd[k] && typeof fd[k] === 'string' && fd[k].trim() && !k.toLowerCase().includes('email') && !k.toLowerCase().includes('phone') && !k.toLowerCase().includes('roll')) {
+                                            formName = String(fd[k]).trim();
+                                            break;
+                                        }
+                                    }
+                                    if (formName) break;
+                                }
+                            }
+
+                            // 2. Direct string fields
+                            const directName = att.candidate_name || att.full_name || att.name || att.student_name || att.user_name || att.metadata?.name || att.metadata?.full_name || att.metadata?.candidate_name;
+
+                            // 3. User account profile name
+                            const profileName = userProfile?.full_name || userProfile?.name || userProfile?.user_metadata?.full_name || (userProfile?.email ? userProfile.email.split('@')[0] : null);
+
+                            // 4. Email fallback
+                            const email = att.email || att.metadata?.email || userProfile?.email || "";
+                            const emailFallbackName = email ? email.split('@')[0] : null;
+
+                            const name = formName || directName || profileName || emailFallbackName || `Candidate #${idx + 1}`;
+                            const avatar = att.profiles?.avatar_url || userProfile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || idx)}`;
+
+                            const totalMarks = att.total_max_marks || att.tests?.total_max_marks || fetchedTest?.total_max_marks || 300;
+                            const score = att.score ?? 0;
+                            const percentage = totalMarks > 0 ? Math.round((score / totalMarks) * 1000) / 10 : 0;
+                            
+                            let durSec = att.duration_seconds || att.time_taken_seconds || att.metadata?.duration_seconds || att.metadata?.time_taken_seconds || att.metadata?.time_taken || 0;
+                            if (!durSec && att.created_at && (att.started_at || att.metadata?.startedAt)) {
+                                const startTs = new Date(att.started_at || att.metadata.startedAt).getTime();
+                                const endTs = new Date(att.created_at).getTime();
+                                if (endTs > startTs) {
+                                    durSec = Math.round((endTs - startTs) / 1000);
+                                }
+                            }
+                            const timeTaken = formatDuration(durSec);
+
+                            const answers = att.answers || att.user_answers || att.metadata?.answers;
+                            let correctCount = att.correct_count ?? att.metadata?.stats?.correctCount ?? att.metadata?.correct_count;
+                            let wrongCount = att.wrong_count ?? att.metadata?.stats?.wrongCount ?? att.metadata?.wrong_count;
+                            let skippedCount = att.skipped_count ?? att.metadata?.stats?.unattemptedCount ?? att.metadata?.skipped_count;
+                            let positiveMarks = att.positive_marks ?? att.metadata?.stats?.positiveMarks;
+                            let negativeMarks = att.negative_marks ?? att.metadata?.stats?.negativeMarks;
+
+                            if ((correctCount === undefined || wrongCount === undefined) && answers && rawQuestions.length > 0) {
+                                let c = 0, w = 0, s = 0, pos = 0, neg = 0;
+                                rawQuestions.forEach((q: any, qIdx: number) => {
+                                    const uAns = extractUserAnswer(answers, q, qIdx);
+                                    const res = evalQuestionResult(q, uAns);
+                                    if (res.isCorrect) { c++; pos += (res.score || 4); }
+                                    else if (res.isWrong) { w++; neg += Math.abs(res.score || 0); }
+                                    else if (res.isPartial) { pos += (res.score || 0); }
+                                    else { s++; }
+                                });
+                                correctCount = c;
+                                wrongCount = w;
+                                skippedCount = s;
+                                positiveMarks = pos;
+                                negativeMarks = neg;
+                            }
+
+                            correctCount = correctCount ?? 0;
+                            wrongCount = wrongCount ?? 0;
+                            const attemptedCount = correctCount + wrongCount;
+                            const totalQs = fetchedTest?.total_questions || rawQuestions.length || 0;
+                            skippedCount = skippedCount ?? Math.max(0, totalQs - attemptedCount);
+                            const accuracyPct = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
+
+                            positiveMarks = positiveMarks ?? (correctCount * 4);
+                            negativeMarks = negativeMarks ?? (wrongCount * 1);
+
+                            return {
+                                id: att.id || `att-${idx}`,
+                                user_id: att.user_id,
+                                name,
+                                avatar,
+                                email,
+                                status: att.status || "Completed",
+                                score,
+                                totalMarks,
+                                percentage,
+                                rank: idx + 1,
+                                durationSeconds: durSec,
+                                timeTaken,
+                                positiveMarks,
+                                negativeMarks,
+                                correctCount,
+                                wrongCount,
+                                skippedCount,
+                                accuracyPct,
+                                startedAt: (att.started_at || att.metadata?.startedAt) ? new Date(att.started_at || att.metadata.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-",
+                                completedAt: att.created_at ? new Date(att.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-",
+                                submissionTime: att.created_at ? new Date(att.created_at).toLocaleString() : "-",
+                                strongTopics: att.metadata?.strong_topics || [],
+                                weakTopics: att.metadata?.weak_topics || [],
+                                teacherNotes: att.teacher_notes || "",
+                                answers
+                            };
+                        });
                         setStudents(mapped);
                     } else if (isMounted) {
                         setStudents(isDemoUser ? INITIAL_STUDENTS : []);
+                    }
+
+                    if (rawQuestions.length > 0 && isMounted) {
+                        const questionsWithRealStats = rawQuestions.map((q: any, idx: number) => {
+                            const qId = q.id || `q-${idx + 1}`;
+                            let correctCount = 0;
+                            let wrongCount = 0;
+                            let skippedCount = 0;
+                            let totalTimeSec = 0;
+                            let attemptedTimeCount = 0;
+
+                            if (attemptList && attemptList.length > 0) {
+                                attemptList.forEach((att: any) => {
+                                    const answers = att.answers || att.user_answers || att.metadata?.answers || {};
+                                    const timings = att.question_timings || att.metadata?.question_timings || {};
+                                    const uAns = extractUserAnswer(answers, q, idx);
+
+                                    const res = evalQuestionResult(q, uAns);
+                                    if (res.isSkipped) skippedCount++;
+                                    else if (res.isCorrect) correctCount++;
+                                    else wrongCount++;
+
+                                    const tKey = q.id !== undefined ? q.id : (idx + 1);
+                                    const t = timings[tKey] ?? timings[String(tKey)] ?? timings[idx + 1] ?? timings[idx];
+                                    if (t && !isNaN(Number(t))) {
+                                        totalTimeSec += Number(t);
+                                        attemptedTimeCount++;
+                                    }
+                                });
+                            }
+
+                            const totalAttempts = attemptList ? attemptList.length : 0;
+                            const accuracyPct = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
+                            const correctPct = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
+                            const wrongPct = totalAttempts > 0 ? Math.round((wrongCount / totalAttempts) * 100) : 0;
+                            const skippedPct = totalAttempts > 0 ? (100 - correctPct - wrongPct) : 100;
+                            const avgTimeSeconds = attemptedTimeCount > 0 ? Math.round(totalTimeSec / attemptedTimeCount) : 0;
+
+                            let discriminationIndex: number | string = "-";
+                            if (attemptList && attemptList.length > 0) {
+                                const sortedAttempts = [...attemptList].sort((a, b) => (b.score || 0) - (a.score || 0));
+                                const groupSize = Math.max(1, Math.floor(sortedAttempts.length * 0.27));
+                                const upperGroup = sortedAttempts.slice(0, groupSize);
+                                const lowerGroup = sortedAttempts.slice(-groupSize);
+
+                                const isQCorrect = (att: any) => {
+                                    const answers = att.answers || att.user_answers || att.metadata?.answers || {};
+                                    const uAns = extractUserAnswer(answers, q, idx);
+                                    return evalQuestionResult(q, uAns).isCorrect;
+                                };
+
+                                const RU = upperGroup.filter(isQCorrect).length;
+                                const RL = lowerGroup.filter(isQCorrect).length;
+                                const dVal = (RU - RL) / groupSize;
+                                discriminationIndex = parseFloat(dVal.toFixed(2));
+                            }
+
+                            let difficulty = q.difficulty;
+                            if (!difficulty || difficulty === "Medium") {
+                                if (totalAttempts > 0) {
+                                    difficulty = accuracyPct >= 75 ? "Easy" : accuracyPct >= 40 ? "Medium" : "Hard";
+                                } else {
+                                    difficulty = q.difficulty || "Medium";
+                                }
+                            }
+
+                            return {
+                                ...q,
+                                qNum: q.qNum || q.question_number || (idx + 1),
+                                topic: q.topic || q.subject || "General Assessment",
+                                text: q.text || q.question_text || q.question || `Question #${idx + 1}`,
+                                difficulty,
+                                accuracyPct,
+                                avgTimeSeconds,
+                                correctPct,
+                                wrongPct,
+                                skippedPct,
+                                discriminationIndex
+                            };
+                        });
+                        setQuestions(questionsWithRealStats);
                     }
                 } else if (isMounted) {
                     if (isDemoUser) {
@@ -634,20 +903,22 @@ export default function FullTestAnalysisPage() {
         return students.filter(student => {
             const matchesSearch = searchQuery === '' ||
                 student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                student.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                student.batch.toLowerCase().includes(searchQuery.toLowerCase());
+                (student.email && student.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
-            const matchesBatch = batchFilter === 'All' || student.batch.includes(batchFilter);
             const matchesStatus = statusFilter === 'All' || student.status === statusFilter;
-            const matchesResult = resultFilter === 'All' || student.result === resultFilter;
+
+            let matchesResult = true;
+            if (passingMarks !== null && passingMarks !== undefined && passingMarks > 0) {
+                const res = student.score >= passingMarks ? 'Pass' : 'Fail';
+                matchesResult = resultFilter === 'All' || res === resultFilter;
+            }
 
             let matchesScore = true;
             if (scoreRangeFilter === '80%+') matchesScore = student.percentage >= 80;
             else if (scoreRangeFilter === '50-79%') matchesScore = student.percentage >= 50 && student.percentage < 80;
             else if (scoreRangeFilter === '<50%') matchesScore = student.percentage < 50;
 
-            return matchesSearch && matchesBatch && matchesStatus && matchesResult && matchesScore;
+            return matchesSearch && matchesStatus && matchesResult && matchesScore;
         }).sort((a, b) => {
             let valA = a[sortField];
             let valB = b[sortField];
@@ -656,9 +927,9 @@ export default function FullTestAnalysisPage() {
             }
             return sortOrder === 'asc' ? (valA - valB) : (valB - valA);
         });
-    }, [students, searchQuery, batchFilter, statusFilter, scoreRangeFilter, resultFilter, sortField, sortOrder]);
+    }, [students, searchQuery, statusFilter, scoreRangeFilter, resultFilter, passingMarks, sortField, sortOrder]);
 
-    // Derived Statistics (safe against empty arrays)
+    // Derived Statistics & Charts (real data computed)
     const totalStudentsCount = students.length;
     const completedCount = students.filter(s => s.status === 'Completed').length;
     const liveCount = students.filter(s => s.status === 'Live').length;
@@ -669,6 +940,55 @@ export default function FullTestAnalysisPage() {
     const medianScore = scoresSorted.length > 0 ? (scoresSorted[Math.floor(scoresSorted.length / 2)] || 0) : 0;
     const avgAccuracy = totalStudentsCount > 0 ? (students.reduce((acc, s) => acc + s.accuracyPct, 0) / totalStudentsCount).toFixed(1) : "0.0";
     const completionRate = totalStudentsCount > 0 ? ((completedCount / totalStudentsCount) * 100).toFixed(1) : "0.0";
+
+    const totalSecondsDuration = students.reduce((acc, s) => acc + (s.durationSeconds || 0), 0);
+    const avgSecondsDuration = totalStudentsCount > 0 ? Math.round(totalSecondsDuration / totalStudentsCount) : 0;
+    const avgTimeDisplay = formatDuration(avgSecondsDuration);
+
+    // Dynamic Score Distribution Bins (Real Data Only)
+    const scoreDistributionData = useMemo(() => {
+        if (!students || students.length === 0) return [];
+        const bins = [
+            { range: '0 - 20%', count: 0, label: '0-20%' },
+            { range: '21 - 40%', count: 0, label: '21-40%' },
+            { range: '41 - 60%', count: 0, label: '41-60%' },
+            { range: '61 - 80%', count: 0, label: '61-80%' },
+            { range: '81 - 100%', count: 0, label: '81-100%' }
+        ];
+        students.forEach(s => {
+            const pct = s.percentage;
+            if (pct <= 20) bins[0].count++;
+            else if (pct <= 40) bins[1].count++;
+            else if (pct <= 60) bins[2].count++;
+            else if (pct <= 80) bins[3].count++;
+            else bins[4].count++;
+        });
+        return bins;
+    }, [students]);
+
+    // Dynamic Difficulty Donut Data (Real Data Only)
+    const difficultyDonutData = useMemo(() => {
+        if (!questions || questions.length === 0) return [];
+        const counts: Record<string, number> = { Easy: 0, Medium: 0, Hard: 0, Tricky: 0 };
+        questions.forEach(q => {
+            const d = q.difficulty || 'Medium';
+            if (d in counts) counts[d]++;
+            else counts.Medium++;
+        });
+        const colors: Record<string, string> = {
+            Easy: '#10b981',
+            Medium: '#3b82f6',
+            Hard: '#f59e0b',
+            Tricky: '#ef4444'
+        };
+        return Object.keys(counts)
+            .filter(key => counts[key] > 0)
+            .map(key => ({
+                name: `${key} (${counts[key]} Qs)`,
+                value: counts[key],
+                color: colors[key] || '#64748b'
+            }));
+    }, [questions]);
 
     // Helpers
     const getPercentageBadgeColor = (pct: number) => {
@@ -1005,7 +1325,7 @@ export default function FullTestAnalysisPage() {
                             <Clock className="w-5 h-5 text-violet-600" />
                         </div>
                         <div>
-                            <p className="text-3xl font-black text-slate-900 tracking-tight">2h 18m</p>
+                            <p className="text-3xl font-black text-slate-900 tracking-tight">{avgTimeDisplay}</p>
                             <p className="text-xs font-medium text-slate-600 mt-1">
                                 Completion Rate: <strong>{completionRate}%</strong>
                             </p>
@@ -1020,7 +1340,7 @@ export default function FullTestAnalysisPage() {
                         <div>
                             <p className="text-3xl font-black text-emerald-600 tracking-tight">{avgAccuracy}%</p>
                             <p className="text-xs font-medium text-slate-600 mt-1">
-                                Pos/Neg Ratio: <strong>4.8</strong>
+                                Total Attempts: <strong>{totalStudentsCount}</strong>
                             </p>
                         </div>
                     </div>
@@ -1041,18 +1361,24 @@ export default function FullTestAnalysisPage() {
                                 </span>
                             </div>
                             <div className="h-64 w-full pt-4">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={SCORE_DISTRIBUTION_DATA} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                                        <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
-                                            cursor={{ fill: '#f1f5f9' }}
-                                        />
-                                        <Bar dataKey="count" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={42} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                                {scoreDistributionData.length === 0 || totalStudentsCount === 0 ? (
+                                    <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">
+                                        Insufficient submission data to compute distribution.
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={scoreDistributionData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="range" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                                            <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '12px' }}
+                                                cursor={{ fill: '#f1f5f9' }}
+                                            />
+                                            <Bar dataKey="count" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={42} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
                             </div>
                         </div>
 
@@ -1060,34 +1386,40 @@ export default function FullTestAnalysisPage() {
                         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 flex flex-col justify-between">
                             <div className="border-b border-slate-100 pb-3">
                                 <h3 className="text-base font-bold text-slate-900 tracking-tight">Question Difficulty Split</h3>
-                                <p className="text-xs text-slate-400">Accuracy rate by question tier</p>
+                                <p className="text-xs text-slate-400">Distribution by question difficulty tier</p>
                             </div>
 
                             <div className="h-48 w-full relative flex items-center justify-center">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={DIFFICULTY_DONUT_DATA}
-                                            innerRadius={55}
-                                            outerRadius={75}
-                                            paddingAngle={4}
-                                            dataKey="value"
-                                        >
-                                            {DIFFICULTY_DONUT_DATA.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', color: '#fff', fontSize: '12px' }} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="absolute flex flex-col items-center">
-                                    <span className="text-2xl font-bold text-slate-900">75</span>
-                                    <span className="text-[10px] text-slate-400 font-semibold uppercase">Questions</span>
-                                </div>
+                                {difficultyDonutData.length === 0 ? (
+                                    <div className="text-xs text-slate-400 font-medium">No question data available</div>
+                                ) : (
+                                    <>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={difficultyDonutData}
+                                                    innerRadius={55}
+                                                    outerRadius={75}
+                                                    paddingAngle={4}
+                                                    dataKey="value"
+                                                >
+                                                    {difficultyDonutData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', color: '#fff', fontSize: '12px' }} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="absolute flex flex-col items-center">
+                                            <span className="text-2xl font-bold text-slate-900">{questions.length}</span>
+                                            <span className="text-[10px] text-slate-400 font-semibold uppercase">Questions</span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <div className="space-y-2 pt-2 border-t border-slate-100">
-                                {DIFFICULTY_DONUT_DATA.map((d, i) => (
+                                {difficultyDonutData.map((d, i) => (
                                     <div key={i} className="flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
@@ -1113,56 +1445,52 @@ export default function FullTestAnalysisPage() {
                                 <p className="text-xs text-slate-400">Automated insights based on item response theory & statistical analysis</p>
                             </div>
                         </div>
-                        <span className="text-xs font-semibold bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30">
-                            5 Action Points
-                        </span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60 space-y-2 hover:border-slate-600 transition-all">
-                            <div className="flex items-center gap-2 text-rose-400 text-xs font-bold uppercase tracking-wider">
-                                <AlertTriangle className="w-4 h-4" /> Ambiguity Warning
+                        {totalStudentsCount === 0 ? (
+                            <div className="col-span-3 text-center py-6 text-slate-400 text-xs font-medium">
+                                Waiting for candidate submissions to generate real-time AI diagnostic insights.
                             </div>
-                            <p className="text-sm font-semibold text-slate-100 leading-snug">
-                                Question 18 had only 14.2% accuracy.
-                            </p>
-                            <p className="text-xs text-slate-400">
-                                68% of toppers chose Option C instead of the key answer D. Recommended: Verify answer key for Q18.
-                            </p>
-                            <Button size="sm" variant="outline" onClick={() => setActiveTab('questions')} className="h-7 text-[11px] border-slate-700 text-slate-300 hover:bg-slate-700 cursor-pointer">
-                                Audit Q18 Key
-                            </Button>
-                        </div>
+                        ) : (
+                            <>
+                                <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60 space-y-2 hover:border-slate-600 transition-all">
+                                    <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+                                        <CheckCircle2 className="w-4 h-4" /> Participation Summary
+                                    </div>
+                                    <p className="text-sm font-semibold text-slate-100 leading-snug">
+                                        {totalStudentsCount} candidate{totalStudentsCount > 1 ? 's' : ''} submitted attempts.
+                                    </p>
+                                    <p className="text-xs text-slate-400">
+                                        Average score recorded is {avgScore} marks with {avgAccuracy}% overall accuracy.
+                                    </p>
+                                </div>
 
-                        <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60 space-y-2 hover:border-slate-600 transition-all">
-                            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-                                <Clock className="w-4 h-4" /> Time Sink Detected
-                            </div>
-                            <p className="text-sm font-semibold text-slate-100 leading-snug">
-                                43 students spent over 3.5 mins on Q12.
-                            </p>
-                            <p className="text-xs text-slate-400">
-                                Students lost time in calculation heavy questions in Section B, reducing overall attempt rate.
-                            </p>
-                            <Button size="sm" variant="outline" onClick={() => setActiveTab('questions')} className="h-7 text-[11px] border-slate-700 text-slate-300 hover:bg-slate-700 cursor-pointer">
-                                View Q12 Time Stats
-                            </Button>
-                        </div>
+                                <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60 space-y-2 hover:border-slate-600 transition-all">
+                                    <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                                        <Clock className="w-4 h-4" /> Time Efficiency
+                                    </div>
+                                    <p className="text-sm font-semibold text-slate-100 leading-snug">
+                                        Average duration per attempt is {avgTimeDisplay}.
+                                    </p>
+                                    <p className="text-xs text-slate-400">
+                                        Test completion rate stands at {completionRate}% across all candidates.
+                                    </p>
+                                </div>
 
-                        <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60 space-y-2 hover:border-slate-600 transition-all">
-                            <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                                <TrendingUp className="w-4 h-4" /> Batch Comparison
-                            </div>
-                            <p className="text-sm font-semibold text-slate-100 leading-snug">
-                                Batch A outperformed Batch B by +14.6%.
-                            </p>
-                            <p className="text-xs text-slate-400">
-                                Batch A scored higher in Rotational Dynamics & Optics questions. Schedule revision for Batch B.
-                            </p>
-                            <Button size="sm" variant="outline" onClick={() => { setBatchFilter('Batch B'); setActiveTab('students'); }} className="h-7 text-[11px] border-slate-700 text-slate-300 hover:bg-slate-700 cursor-pointer">
-                                Filter Batch B
-                            </Button>
-                        </div>
+                                <div className="bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60 space-y-2 hover:border-slate-600 transition-all">
+                                    <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                                        <TrendingUp className="w-4 h-4" /> Performance Range
+                                    </div>
+                                    <p className="text-sm font-semibold text-slate-100 leading-snug">
+                                        Highest score: {highestScore} | Lowest: {lowestScore}
+                                    </p>
+                                    <p className="text-xs text-slate-400">
+                                        Median score across candidates is {medianScore} marks out of {testInfo.total_max_marks}.
+                                    </p>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -1181,7 +1509,7 @@ export default function FullTestAnalysisPage() {
                                 <div className="relative w-full sm:w-64">
                                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <Input
-                                        placeholder="Search student, roll no, batch..."
+                                        placeholder="Search candidate name or email..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="pl-9 h-9 text-xs rounded-xl border-slate-200 focus:ring-indigo-500 bg-slate-50/50"
@@ -1204,18 +1532,6 @@ export default function FullTestAnalysisPage() {
                             <span className="text-slate-400 font-medium flex items-center gap-1 mr-1">
                                 <Filter className="w-3.5 h-3.5" /> Filters:
                             </span>
-
-                            {/* Batch Filter */}
-                            <select
-                                value={batchFilter}
-                                onChange={(e) => setBatchFilter(e.target.value)}
-                                className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            >
-                                <option value="All">All Batches</option>
-                                <option value="Batch A">Batch A (Target 2026)</option>
-                                <option value="Batch B">Batch B (Morning)</option>
-                                <option value="Batch C">Batch C (Evening)</option>
-                            </select>
 
                             {/* Status Filter */}
                             <select
@@ -1241,25 +1557,39 @@ export default function FullTestAnalysisPage() {
                                 <option value="<50%">Needs Support (&lt;50%)</option>
                             </select>
 
-                            {/* Result Filter */}
-                            <select
-                                value={resultFilter}
-                                onChange={(e) => setResultFilter(e.target.value)}
-                                className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            >
-                                <option value="All">All Results</option>
-                                <option value="Pass">Pass Only</option>
-                                <option value="Fail">Fail Only</option>
-                            </select>
+                            {/* Optional Passing Marks Threshold Input */}
+                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-slate-700 font-medium">
+                                <span className="text-[11px] text-slate-500 font-semibold">Min Pass Marks:</span>
+                                <input
+                                    type="number"
+                                    placeholder="Optional"
+                                    value={passingMarks ?? ''}
+                                    onChange={(e) => setPassingMarks(e.target.value === '' ? null : Number(e.target.value))}
+                                    className="w-16 h-6 px-1.5 text-xs bg-white border border-slate-200 rounded text-slate-900 font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                            </div>
 
-                            {(batchFilter !== 'All' || statusFilter !== 'All' || scoreRangeFilter !== 'All' || resultFilter !== 'All' || searchQuery) && (
+                            {/* Result Filter (Only if passing marks set) */}
+                            {passingMarks !== null && passingMarks !== undefined && passingMarks > 0 && (
+                                <select
+                                    value={resultFilter}
+                                    onChange={(e) => setResultFilter(e.target.value)}
+                                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                >
+                                    <option value="All">All Results</option>
+                                    <option value="Pass">Pass Only</option>
+                                    <option value="Fail">Fail Only</option>
+                                </select>
+                            )}
+
+                            {(statusFilter !== 'All' || scoreRangeFilter !== 'All' || resultFilter !== 'All' || searchQuery || passingMarks !== null) && (
                                 <button
                                     onClick={() => {
-                                        setBatchFilter('All');
                                         setStatusFilter('All');
                                         setScoreRangeFilter('All');
                                         setResultFilter('All');
                                         setSearchQuery('');
+                                        setPassingMarks(null);
                                     }}
                                     className="text-xs text-indigo-600 font-bold hover:underline ml-2 cursor-pointer"
                                 >
@@ -1286,7 +1616,7 @@ export default function FullTestAnalysisPage() {
                                         Rank {sortField === 'rank' && (sortOrder === 'asc' ? '↑' : '↓')}
                                     </th>
                                     <th className="p-3 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => handleSort('name')}>
-                                        Student Candidate {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
+                                        Candidate {sortField === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}
                                     </th>
                                     <th className="p-3">Status</th>
                                     <th className="p-3 cursor-pointer hover:text-slate-900 transition-colors text-right" onClick={() => handleSort('score')}>
@@ -1298,7 +1628,9 @@ export default function FullTestAnalysisPage() {
                                     <th className="p-3 text-right">Pos / Neg</th>
                                     <th className="p-3 text-center">Correct / Wrong</th>
                                     <th className="p-3 text-right">Time Taken</th>
-                                    <th className="p-3 text-center">Result</th>
+                                    {passingMarks !== null && passingMarks !== undefined && passingMarks > 0 && (
+                                        <th className="p-3 text-center">Result</th>
+                                    )}
                                     <th className="p-3 text-center">Action</th>
                                 </tr>
                             </thead>
@@ -1306,12 +1638,15 @@ export default function FullTestAnalysisPage() {
                                 {filteredStudents.length === 0 ? (
                                     <tr>
                                         <td colSpan={11} className="py-12 text-center text-slate-400">
-                                            No students match the current filters.
+                                            No candidates match the current filters.
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredStudents.map((student) => {
                                         const isSelected = selectedStudentIds.includes(student.id);
+                                        const isPassed = passingMarks !== null && passingMarks !== undefined && passingMarks > 0
+                                            ? student.score >= passingMarks
+                                            : null;
 
                                         return (
                                             <tr
@@ -1343,9 +1678,11 @@ export default function FullTestAnalysisPage() {
                                                             <p className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
                                                                 {student.name}
                                                             </p>
-                                                            <p className="text-[10px] text-slate-400">
-                                                                {student.rollNo} • {student.batch}
-                                                            </p>
+                                                            {student.email && (
+                                                                <p className="text-[10px] text-slate-400">
+                                                                    {student.email}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -1375,9 +1712,15 @@ export default function FullTestAnalysisPage() {
                                                     </span>
                                                 </td>
                                                 <td className="p-3 text-right font-medium">
-                                                    <span className="text-emerald-600 font-bold">+{student.positiveMarks}</span>
-                                                    <span className="text-slate-300 mx-1">/</span>
-                                                    <span className="text-rose-500 font-bold">-{student.negativeMarks}</span>
+                                                    {student.positiveMarks > 0 || student.negativeMarks > 0 ? (
+                                                        <>
+                                                            <span className="text-emerald-600 font-bold">+{student.positiveMarks}</span>
+                                                            <span className="text-slate-300 mx-1">/</span>
+                                                            <span className="text-rose-500 font-bold">-{student.negativeMarks}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-slate-400">-</span>
+                                                    )}
                                                 </td>
                                                 <td className="p-3 text-center font-medium">
                                                     <span className="text-emerald-700 font-bold">{student.correctCount}</span>
@@ -1388,17 +1731,19 @@ export default function FullTestAnalysisPage() {
                                                 <td className="p-3 text-right text-slate-600 font-medium">
                                                     {student.timeTaken}
                                                 </td>
-                                                <td className="p-3 text-center">
-                                                    {student.result === 'Pass' ? (
-                                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                                            PASS
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                                                            FAIL
-                                                        </span>
-                                                    )}
-                                                </td>
+                                                {passingMarks !== null && passingMarks !== undefined && passingMarks > 0 && (
+                                                    <td className="p-3 text-center">
+                                                        {isPassed ? (
+                                                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                                PASS
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                                                FAIL
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                )}
                                                 <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                                                     <Button
                                                         size="sm"
@@ -1439,15 +1784,15 @@ export default function FullTestAnalysisPage() {
                             ) : (
                                 questions.map((q, idx) => {
                                     const qNum = q.qNum || q.question_number || (idx + 1);
-                                    const topic = q.topic || q.subject || "General Topic";
+                                    const topic = q.topic || q.subject || "General";
                                     const text = q.text || q.question_text || q.question || `Question #${qNum}`;
                                     const difficulty = q.difficulty || "Medium";
-                                    const accuracyPct = q.accuracyPct ?? 72;
-                                    const correctPct = q.correctPct ?? 72;
-                                    const wrongPct = q.wrongPct ?? 20;
-                                    const skippedPct = q.skippedPct ?? 8;
-                                    const avgTimeSeconds = q.avgTimeSeconds ?? 105;
-                                    const discriminationIndex = q.discriminationIndex ?? 0.68;
+                                    const accuracyPct = q.accuracyPct ?? 0;
+                                    const correctPct = q.correctPct ?? 0;
+                                    const wrongPct = q.wrongPct ?? 0;
+                                    const skippedPct = q.skippedPct ?? 0;
+                                    const avgTimeSeconds = q.avgTimeSeconds ?? 0;
+                                    const discriminationIndex = q.discriminationIndex ?? "-";
 
                                     return (
                                         <div key={q.id || qNum || idx} className="bg-slate-50/70 rounded-2xl p-5 border border-slate-200/70 hover:border-slate-300 transition-all flex flex-col justify-between space-y-4 group">
@@ -1477,7 +1822,7 @@ export default function FullTestAnalysisPage() {
                                             <div className="space-y-1.5 pt-3 border-t border-slate-200/60">
                                                 <div className="flex justify-between text-xs font-semibold">
                                                     <span className="text-slate-500">Accuracy Rate</span>
-                                                    <span className={accuracyPct < 30 ? "text-rose-600 font-bold" : "text-emerald-600 font-bold"}>
+                                                    <span className={accuracyPct < 30 && accuracyPct > 0 ? "text-rose-600 font-bold" : "text-emerald-600 font-bold"}>
                                                         {accuracyPct}%
                                                     </span>
                                                 </div>
@@ -1487,8 +1832,8 @@ export default function FullTestAnalysisPage() {
                                                     <div className="bg-slate-300 h-full" style={{ width: `${skippedPct}%` }} title="Skipped" />
                                                 </div>
                                                 <div className="flex justify-between text-[10px] text-slate-400 pt-1 font-medium">
-                                                    <span>Avg Time: {avgTimeSeconds}s</span>
-                                                    <span>Discrim. Index: {discriminationIndex}</span>
+                                                    <span>Avg Time: {avgTimeSeconds > 0 ? `${avgTimeSeconds}s` : '-'}</span>
+                                                    <span>Discrim. Index: {discriminationIndex !== null && discriminationIndex !== undefined ? discriminationIndex : '-'}</span>
                                                 </div>
                                             </div>
 
@@ -1528,50 +1873,56 @@ export default function FullTestAnalysisPage() {
                             </span>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {students.slice(0, 3).map((stu, i) => (
-                                <div
-                                    key={stu.id}
-                                    className={`rounded-2xl p-5 border transition-all flex flex-col justify-between space-y-4 relative overflow-hidden ${
-                                        i === 0 ? 'bg-gradient-to-br from-amber-500/10 via-amber-50/40 to-white border-amber-200/90 shadow-xs' :
-                                        i === 1 ? 'bg-gradient-to-br from-slate-200/30 to-white border-slate-300/80' :
-                                        'bg-gradient-to-br from-amber-700/5 to-white border-amber-700/20'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-extrabold text-sm ${
-                                            i === 0 ? 'bg-amber-400 text-slate-950 shadow-xs' :
-                                            i === 1 ? 'bg-slate-300 text-slate-900' :
-                                            'bg-amber-700/20 text-amber-900'
-                                        }`}>
-                                            #{i + 1}
-                                        </span>
-                                        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                            {stu.percentage}% Score
-                                        </span>
-                                    </div>
+                        {students.length === 0 ? (
+                            <div className="py-8 text-center text-slate-400 text-xs font-medium">
+                                No leaderboard entries recorded yet.
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {students.slice(0, 3).map((stu, i) => (
+                                    <div
+                                        key={stu.id}
+                                        className={`rounded-2xl p-5 border transition-all flex flex-col justify-between space-y-4 relative overflow-hidden ${
+                                            i === 0 ? 'bg-gradient-to-br from-amber-500/10 via-amber-50/40 to-white border-amber-200/90 shadow-xs' :
+                                            i === 1 ? 'bg-gradient-to-br from-slate-200/30 to-white border-slate-300/80' :
+                                            'bg-gradient-to-br from-amber-700/5 to-white border-amber-700/20'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className={`w-8 h-8 rounded-full flex items-center justify-center font-extrabold text-sm ${
+                                                i === 0 ? 'bg-amber-400 text-slate-950 shadow-xs' :
+                                                i === 1 ? 'bg-slate-300 text-slate-900' :
+                                                'bg-amber-700/20 text-amber-900'
+                                            }`}>
+                                                #{i + 1}
+                                            </span>
+                                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                                {stu.percentage}% Score
+                                            </span>
+                                        </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <img src={stu.avatar} alt={stu.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs" />
-                                        <div>
-                                            <h4 className="font-bold text-slate-900 text-sm">{stu.name}</h4>
-                                            <p className="text-xs text-slate-400">{stu.batch}</p>
+                                        <div className="flex items-center gap-3">
+                                            <img src={stu.avatar} alt={stu.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs" />
+                                            <div>
+                                                <h4 className="font-bold text-slate-900 text-sm">{stu.name}</h4>
+                                                {stu.email && <p className="text-xs text-slate-400">{stu.email}</p>}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200/60 text-xs">
-                                        <div>
-                                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Net Score</span>
-                                            <p className="font-extrabold text-slate-900">{stu.score} / {stu.totalMarks}</p>
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] text-slate-400 uppercase font-semibold">Time Spent</span>
-                                            <p className="font-semibold text-slate-700">{stu.timeTaken}</p>
+                                        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200/60 text-xs">
+                                            <div>
+                                                <span className="text-[10px] text-slate-400 uppercase font-semibold">Net Score</span>
+                                                <p className="font-extrabold text-slate-900">{stu.score} / {stu.totalMarks}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-slate-400 uppercase font-semibold">Time Spent</span>
+                                                <p className="font-semibold text-slate-700">{stu.timeTaken}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -1592,7 +1943,7 @@ export default function FullTestAnalysisPage() {
                                         </span>
                                     </div>
                                     <p className="text-xs text-slate-400">
-                                        Roll No: {drawerStudent.rollNo} • Rank #{drawerStudent.rank} • {drawerStudent.batch}
+                                        Rank #{drawerStudent.rank} {drawerStudent.email ? `• ${drawerStudent.email}` : ''}
                                     </p>
                                 </div>
                             </div>
