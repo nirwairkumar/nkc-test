@@ -33,14 +33,7 @@ function LazySection({
     className?: string; 
 }) {
     const ref = useRef<HTMLDivElement>(null);
-    const [isIntersected, setIsIntersected] = useState(() => {
-        if (typeof window === 'undefined') return false;
-        // Eager load for search indexers to preserve sitemap and SEO visibility
-        const ua = navigator.userAgent.toLowerCase();
-        const isCrawler = /bot|googlebot|crawler|spider|robot|crawling/i.test(ua);
-        // Exclude Lighthouse/PageSpeed to allow performance test measurement optimization
-        return isCrawler && !/lighthouse|pagespeed/i.test(ua);
-    });
+    const [isIntersected, setIsIntersected] = useState(false);
 
     useEffect(() => {
         if (isIntersected) return;

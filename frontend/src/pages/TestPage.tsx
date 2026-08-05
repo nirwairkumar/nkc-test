@@ -611,7 +611,7 @@ export default function TestPage() {
     if (!test || isSubmitting || isTimeUp) return;
 
     // Safety guard: Never intercept or disrupt interactions for search engine crawlers or Google Ad review bots
-    const isBot = /bot|googlebot|adsbot|crawler|spider|robot|lighthouse|pagespeed/i.test(navigator.userAgent || '');
+    const isBot = /googlebot|adsbot|bingbot|crawler|spider/i.test(navigator.userAgent || '');
     if (isBot) return;
 
     const settings = test.settings;

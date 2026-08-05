@@ -67,37 +67,14 @@
 
 
 
-  <!-- Google Analytics + Google Ads — lazily injected post-load to prevent blocking critical rendering -->
+  <!-- Google Analytics + Google Ads Tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H9VZL1VTKL"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });   // Google Analytics 4
-    gtag('config', 'AW-18082120928'); // Google Ads Conversion Tracking
-
-    function initAnalytics() {
-      // Skip loading third-party scripts during audits to avoid main-thread blocking time
-      var ua = navigator.userAgent.toLowerCase();
-      if (/lighthouse|pagespeed|speedinsights/i.test(ua)) {
-        return;
-      }
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = "https://www.googletagmanager.com/gtag/js?id=G-H9VZL1VTKL";
-      document.head.appendChild(script);
-    }
-
-    if (window.addEventListener) {
-      window.addEventListener('load', function () {
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(initAnalytics);
-        } else {
-          setTimeout(initAnalytics, 2000);
-        }
-      });
-    } else {
-      setTimeout(initAnalytics, 2000);
-    }
+    gtag('config', 'G-H9VZL1VTKL', { 'page_path': window.location.pathname });
+    gtag('config', 'AW-18082120928');
   </script>
 
   <!-- Cloudflare Turnstile — free bot protection for login/register forms -->
