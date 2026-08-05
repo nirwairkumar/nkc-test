@@ -10,6 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import LatexRenderer from '@/components/ui/LatexRenderer';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer,
     XAxis, YAxis, Tooltip, CartesianGrid, Legend
@@ -483,6 +486,88 @@ const formatDuration = (seconds?: number) => {
     return `${secs}s`;
 };
 
+// Helper to extract user answer for a question across various key formats
+const extractUserAnswer = (answers: any, q: any, idx: number) => {
+    if (!answers || typeof answers !== 'object') return undefined;
+    const keysToTry = [
+        q.id,
+        String(q.id),
+        Number(q.id),
+        idx + 1,
+        String(idx + 1),
+        idx,
+        String(idx)
+    ];
+    for (const key of keysToTry) {
+        if (key !== undefined && key !== null && answers[key] !== undefined) {
+            return answers[key];
+        }
+    }
+    return undefined;
+};
+
+// Helper to evaluate a question answer with high precision
+const evalQuestionResult = (q: any, userAns: any) => {
+    if (userAns === undefined || userAns === null || userAns === '' || (Array.isArray(userAns) && userAns.length === 0)) {
+        return { isCorrect: false, isWrong: false, isSkipped: true, isPartial: false, score: 0 };
+    }
+
+    const qMarks = q.marks !== undefined ? parseFloat(q.marks) : 4;
+    const qNeg = q.negativeMarks !== undefined ? parseFloat(q.negativeMarks) : 0;
+    const qType = q.type || 'single';
+
+    if (qType === 'numerical') {
+        const numAns = parseFloat(userAns);
+        const ca = q.correctAnswer !== undefined ? q.correctAnswer : q.correct_answer;
+        if (isNaN(numAns) || !ca) {
+            return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+        }
+        if (typeof ca === 'object') {
+            if (ca.exactMatch && ca.exactAnswers) {
+                const exacts = String(ca.exactAnswers).split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
+                if (exacts.includes(numAns)) {
+                    return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+                }
+            } else if (ca.min !== undefined && ca.max !== undefined) {
+                if (numAns >= parseFloat(ca.min) && numAns <= parseFloat(ca.max)) {
+                    return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+                }
+            }
+        } else if (parseFloat(ca) === numAns) {
+            return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+        }
+        return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+    }
+
+    if (qType === 'multiple') {
+        const caVal = q.correctAnswer !== undefined ? q.correctAnswer : q.correct_answer;
+        const caArr = Array.isArray(caVal) ? caVal.map(String).sort() : [String(caVal)];
+        const uArr = Array.isArray(userAns) ? userAns.map(String).sort() : [String(userAns)];
+        
+        const hasWrong = uArr.some(a => !caArr.includes(a));
+        if (hasWrong) {
+            return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+        }
+        if (uArr.length === caArr.length && caArr.length > 0) {
+            return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+        }
+        if (uArr.length > 0) {
+            const frac = uArr.length / caArr.length;
+            return { isCorrect: false, isWrong: false, isSkipped: false, isPartial: true, score: frac * qMarks };
+        }
+        return { isCorrect: false, isWrong: false, isSkipped: true, isPartial: false, score: 0 };
+    }
+
+    // Single choice / Default
+    const caVal = q.correctAnswer !== undefined ? q.correctAnswer : (q.correct_answer !== undefined ? q.correct_answer : q.answer);
+    const ca = String(caVal !== undefined ? caVal : '').trim();
+    const u = String(userAns).trim();
+    if (u === ca && ca !== '') {
+        return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
+    }
+    return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
+};
+
 export default function FullTestAnalysisPage() {
     const navigate = useNavigate();
     const { testId } = useParams<{ testId: string }>();
@@ -516,6 +601,83 @@ export default function FullTestAnalysisPage() {
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
     const [drawerStudent, setDrawerStudent] = useState<any | null>(null);
     const [selectedQuestionModal, setSelectedQuestionModal] = useState<any | null>(null);
+
+    // Detailed Student Drawer States
+    const [drawerTab, setDrawerTab] = useState<'overview' | 'topics' | 'questions'>('overview');
+    const [drawerQFilter, setDrawerQFilter] = useState<'all' | 'correct' | 'wrong' | 'skipped'>('all');
+    const [drawerQSearch, setDrawerQSearch] = useState('');
+    const [drawerTeacherNotes, setDrawerTeacherNotes] = useState('');
+
+    const openStudentDrawer = (student: any) => {
+        setDrawerStudent(student);
+        setDrawerTab('overview');
+        setDrawerQFilter('all');
+        setDrawerQSearch('');
+        setDrawerTeacherNotes(student.teacherNotes || '');
+    };
+
+    const drawerEvaluatedQuestions = useMemo(() => {
+        if (!drawerStudent || !questions || questions.length === 0) return [];
+        return questions.map((q: any, idx: number) => {
+            const uAns = extractUserAnswer(drawerStudent.answers, q, idx);
+            const evalRes = evalQuestionResult(q, uAns);
+            return {
+                q,
+                idx,
+                qNum: q.qNum || (idx + 1),
+                uAns,
+                evalRes
+            };
+        });
+    }, [drawerStudent, questions]);
+
+    const drawerFilteredQuestions = useMemo(() => {
+        return drawerEvaluatedQuestions.filter(({ q, qNum, evalRes }) => {
+            if (drawerQFilter === 'correct' && !evalRes.isCorrect) return false;
+            if (drawerQFilter === 'wrong' && !evalRes.isWrong) return false;
+            if (drawerQFilter === 'skipped' && !evalRes.isSkipped) return false;
+            if (drawerQSearch.trim()) {
+                const qStr = (q.text || q.question_text || q.question || '').toLowerCase();
+                const numStr = String(qNum);
+                const searchLower = drawerQSearch.toLowerCase();
+                return qStr.includes(searchLower) || numStr.includes(searchLower);
+            }
+            return true;
+        });
+    }, [drawerEvaluatedQuestions, drawerQFilter, drawerQSearch]);
+
+    const drawerTopicData = useMemo(() => {
+        if (!drawerStudent || !questions || questions.length === 0) return [];
+        const topicMap: Record<string, { name: string; totalQ: number; maxScore: number; score: number; correct: number; wrong: number; skipped: number }> = {};
+
+        drawerEvaluatedQuestions.forEach(({ q, evalRes }) => {
+            const tName = q.topic || q.subject || "General Assessment";
+            if (!topicMap[tName]) {
+                topicMap[tName] = { name: tName, totalQ: 0, maxScore: 0, score: 0, correct: 0, wrong: 0, skipped: 0 };
+            }
+            const qMarks = q.marks !== undefined ? parseFloat(q.marks) : 4;
+            topicMap[tName].totalQ += 1;
+            topicMap[tName].maxScore += qMarks;
+            topicMap[tName].score += (evalRes.score || 0);
+
+            if (evalRes.isCorrect) topicMap[tName].correct += 1;
+            else if (evalRes.isWrong) topicMap[tName].wrong += 1;
+            else topicMap[tName].skipped += 1;
+        });
+
+        return Object.values(topicMap).map(t => {
+            const pct = t.maxScore > 0 ? Math.max(0, Math.round((t.score / t.maxScore) * 100)) : 0;
+            const performance = pct >= 70 ? 'Strong' : pct >= 40 ? 'Moderate' : 'Weak';
+            return { ...t, percentage: pct, performance };
+        });
+    }, [drawerStudent, questions, drawerEvaluatedQuestions]);
+
+    const handleSaveTeacherNotes = () => {
+        if (!drawerStudent) return;
+        setStudents(prev => prev.map(s => s.id === drawerStudent.id ? { ...s, teacherNotes: drawerTeacherNotes } : s));
+        setDrawerStudent(prev => prev ? { ...prev, teacherNotes: drawerTeacherNotes } : null);
+        toast.success("Teacher remarks updated.");
+    };
 
     // Load Test Data if ID exists or load teacher's tests
     useEffect(() => {
@@ -558,88 +720,6 @@ export default function FullTestAnalysisPage() {
                             rawQuestions = fetchedTest.questions;
                         }
                     }
-
-                    // Helper to extract user answer for a question across various key formats
-                    const extractUserAnswer = (answers: any, q: any, idx: number) => {
-                        if (!answers || typeof answers !== 'object') return undefined;
-                        const keysToTry = [
-                            q.id,
-                            String(q.id),
-                            Number(q.id),
-                            idx + 1,
-                            String(idx + 1),
-                            idx,
-                            String(idx)
-                        ];
-                        for (const key of keysToTry) {
-                            if (key !== undefined && key !== null && answers[key] !== undefined) {
-                                return answers[key];
-                            }
-                        }
-                        return undefined;
-                    };
-
-                    // Helper to evaluate a question answer with high precision
-                    const evalQuestionResult = (q: any, userAns: any) => {
-                        if (userAns === undefined || userAns === null || userAns === '' || (Array.isArray(userAns) && userAns.length === 0)) {
-                            return { isCorrect: false, isWrong: false, isSkipped: true, isPartial: false, score: 0 };
-                        }
-
-                        const qMarks = q.marks !== undefined ? parseFloat(q.marks) : 4;
-                        const qNeg = q.negativeMarks !== undefined ? parseFloat(q.negativeMarks) : 0;
-                        const qType = q.type || 'single';
-
-                        if (qType === 'numerical') {
-                            const numAns = parseFloat(userAns);
-                            const ca = q.correctAnswer !== undefined ? q.correctAnswer : q.correct_answer;
-                            if (isNaN(numAns) || !ca) {
-                                return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
-                            }
-                            if (typeof ca === 'object') {
-                                if (ca.exactMatch && ca.exactAnswers) {
-                                    const exacts = String(ca.exactAnswers).split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
-                                    if (exacts.includes(numAns)) {
-                                        return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
-                                    }
-                                } else if (ca.min !== undefined && ca.max !== undefined) {
-                                    if (numAns >= parseFloat(ca.min) && numAns <= parseFloat(ca.max)) {
-                                        return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
-                                    }
-                                }
-                            } else if (parseFloat(ca) === numAns) {
-                                return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
-                            }
-                            return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
-                        }
-
-                        if (qType === 'multiple') {
-                            const caVal = q.correctAnswer !== undefined ? q.correctAnswer : q.correct_answer;
-                            const caArr = Array.isArray(caVal) ? caVal.map(String).sort() : [String(caVal)];
-                            const uArr = Array.isArray(userAns) ? userAns.map(String).sort() : [String(userAns)];
-                            
-                            const hasWrong = uArr.some(a => !caArr.includes(a));
-                            if (hasWrong) {
-                                return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
-                            }
-                            if (uArr.length === caArr.length && caArr.length > 0) {
-                                return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
-                            }
-                            if (uArr.length > 0) {
-                                const frac = uArr.length / caArr.length;
-                                return { isCorrect: false, isWrong: false, isSkipped: false, isPartial: true, score: frac * qMarks };
-                            }
-                            return { isCorrect: false, isWrong: false, isSkipped: true, isPartial: false, score: 0 };
-                        }
-
-                        // Single choice / Default
-                        const caVal = q.correctAnswer !== undefined ? q.correctAnswer : (q.correct_answer !== undefined ? q.correct_answer : q.answer);
-                        const ca = String(caVal !== undefined ? caVal : '').trim();
-                        const u = String(userAns).trim();
-                        if (u === ca && ca !== '') {
-                            return { isCorrect: true, isWrong: false, isSkipped: false, isPartial: false, score: qMarks };
-                        }
-                        return { isCorrect: false, isWrong: true, isSkipped: false, isPartial: false, score: -qNeg };
-                    };
 
                     // Load live attempt data
                     const res = await fetchAttemptsForTest(targetTestId);
@@ -1654,7 +1734,7 @@ export default function FullTestAnalysisPage() {
                                                 className={`hover:bg-slate-50/80 transition-colors group cursor-pointer ${
                                                     isSelected ? 'bg-indigo-50/40' : ''
                                                 }`}
-                                                onClick={() => setDrawerStudent(student)}
+                                                onClick={() => openStudentDrawer(student)}
                                             >
                                                 <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                                                     <input
@@ -1748,7 +1828,7 @@ export default function FullTestAnalysisPage() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        onClick={() => setDrawerStudent(student)}
+                                                        onClick={() => openStudentDrawer(student)}
                                                         className="h-7 px-2 text-xs text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 font-semibold cursor-pointer rounded-lg"
                                                     >
                                                         View <ChevronRight className="w-3 h-3 ml-0.5" />
@@ -1925,95 +2005,420 @@ export default function FullTestAnalysisPage() {
                         )}
                     </div>
                 )}
-            </div>
 
-            {/* EXPANDABLE ROW SLIDE-OVER DRAWER (iOS Style Student Deep-Dive) */}
+                {/* EXPANDABLE ROW SLIDE-OVER DRAWER (Detailed Candidate Result Audit) */}
             {drawerStudent && (
                 <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs animate-fade-in">
-                    <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto animate-slide-left">
+                    <div className="w-full max-w-3xl bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto animate-slide-left">
                         {/* Drawer Header */}
-                        <div className="p-6 border-b border-slate-200 bg-slate-50/50 sticky top-0 z-10 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <img src={drawerStudent.avatar} alt={drawerStudent.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs" />
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-lg font-bold text-slate-900">{drawerStudent.name}</h3>
-                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getPercentageBadgeColor(drawerStudent.percentage)}`}>
-                                            {drawerStudent.percentage}%
-                                        </span>
+                        <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50/80 sticky top-0 z-20 backdrop-blur-md space-y-4">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <img src={drawerStudent.avatar} alt={drawerStudent.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs" />
+                                    <div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h3 className="text-lg font-bold text-slate-900">{drawerStudent.name}</h3>
+                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getPercentageBadgeColor(drawerStudent.percentage)}`}>
+                                                {drawerStudent.percentage}% Score
+                                            </span>
+                                            <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-xs font-bold">
+                                                Rank #{drawerStudent.rank}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            {drawerStudent.email ? drawerStudent.email : 'Registered Student'}
+                                            {drawerStudent.submissionTime && ` • Submitted: ${drawerStudent.submissionTime}`}
+                                        </p>
                                     </div>
-                                    <p className="text-xs text-slate-400">
-                                        Rank #{drawerStudent.rank} {drawerStudent.email ? `• ${drawerStudent.email}` : ''}
-                                    </p>
                                 </div>
+                                <Button variant="ghost" size="sm" onClick={() => setDrawerStudent(null)} className="h-8 w-8 p-0 rounded-full hover:bg-slate-200 shrink-0">
+                                    <X className="w-4 h-4 text-slate-600" />
+                                </Button>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => setDrawerStudent(null)} className="h-8 w-8 p-0 rounded-full hover:bg-slate-200">
-                                <X className="w-4 h-4 text-slate-600" />
-                            </Button>
+
+                            {/* Start Form / Custom Student Details Badges */}
+                            {(drawerStudent.rollNo || drawerStudent.batch || drawerStudent.institution) && (
+                                <div className="flex flex-wrap gap-2 text-xs pt-1">
+                                    {drawerStudent.rollNo && (
+                                        <span className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-600">
+                                            Roll: <span className="font-bold text-slate-800">{drawerStudent.rollNo}</span>
+                                        </span>
+                                    )}
+                                    {drawerStudent.batch && (
+                                        <span className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-600">
+                                            Batch: <span className="font-bold text-slate-800">{drawerStudent.batch}</span>
+                                        </span>
+                                    )}
+                                    {drawerStudent.institution && (
+                                        <span className="bg-white border border-slate-200 px-2.5 py-0.5 rounded-md font-medium text-slate-600">
+                                            Institute: <span className="font-bold text-slate-800">{drawerStudent.institution}</span>
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Sub-Navigation Tabs */}
+                            <div className="flex border-b border-slate-200 -mb-5 pt-2">
+                                <button
+                                    onClick={() => setDrawerTab('overview')}
+                                    className={`py-2 px-4 text-xs font-bold border-b-2 transition-colors ${
+                                        drawerTab === 'overview'
+                                            ? 'border-indigo-600 text-indigo-600'
+                                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    Overview & Scorecard
+                                </button>
+                                <button
+                                    onClick={() => setDrawerTab('topics')}
+                                    className={`py-2 px-4 text-xs font-bold border-b-2 transition-colors ${
+                                        drawerTab === 'topics'
+                                            ? 'border-indigo-600 text-indigo-600'
+                                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    Topic Performance ({drawerTopicData.length})
+                                </button>
+                                <button
+                                    onClick={() => setDrawerTab('questions')}
+                                    className={`py-2 px-4 text-xs font-bold border-b-2 transition-colors ${
+                                        drawerTab === 'questions'
+                                            ? 'border-indigo-600 text-indigo-600'
+                                            : 'border-transparent text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    Questions Audit ({drawerEvaluatedQuestions.length})
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Drawer Body */}
-                        <div className="p-6 space-y-6 flex-1">
-                            {/* Score Breakup */}
-                            <div className="grid grid-cols-4 gap-3 text-center">
-                                <div className="bg-emerald-50/60 rounded-xl p-3 border border-emerald-100">
-                                    <span className="text-[10px] font-bold uppercase text-emerald-600">Net Marks</span>
-                                    <p className="text-lg font-extrabold text-emerald-700">{drawerStudent.score}</p>
-                                </div>
-                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/60">
-                                    <span className="text-[10px] font-bold uppercase text-slate-500">Correct</span>
-                                    <p className="text-lg font-extrabold text-slate-900">{drawerStudent.correctCount}</p>
-                                </div>
-                                <div className="bg-rose-50/60 rounded-xl p-3 border border-rose-100">
-                                    <span className="text-[10px] font-bold uppercase text-rose-600">Wrong</span>
-                                    <p className="text-lg font-extrabold text-rose-700">{drawerStudent.wrongCount}</p>
-                                </div>
-                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/60">
-                                    <span className="text-[10px] font-bold uppercase text-slate-500">Time</span>
-                                    <p className="text-lg font-extrabold text-slate-900">{drawerStudent.timeTaken}</p>
-                                </div>
-                            </div>
-
-                            {/* Strong & Weak Topics */}
-                            <div className="space-y-3">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Topic Proficiency Analysis</h4>
-                                <div className="space-y-2">
-                                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                                        <span className="text-slate-500 font-semibold">Strong:</span>
-                                        {drawerStudent.strongTopics?.map((tp: string, idx: number) => (
-                                            <span key={idx} className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md font-medium">
-                                                ✓ {tp}
+                        {/* Drawer Body Content */}
+                        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                            {/* TAB 1: OVERVIEW */}
+                            {drawerTab === 'overview' && (
+                                <div className="space-y-6">
+                                    {/* Net Marks Card */}
+                                    <div className="bg-gradient-to-r from-indigo-900 to-indigo-800 rounded-2xl p-5 text-white flex items-center justify-between shadow-lg">
+                                        <div>
+                                            <span className="text-xs font-medium text-indigo-200 uppercase tracking-wider">Total Marks Obtained</span>
+                                            <div className="text-3xl font-extrabold text-white mt-1">
+                                                {drawerStudent.score} <span className="text-lg font-normal text-indigo-300">/ {drawerStudent.totalMarks}</span>
+                                            </div>
+                                            <p className="text-xs text-indigo-200 mt-1">
+                                                Accuracy Rate: <span className="font-bold text-white">{drawerStudent.accuracyPct || Math.round((drawerStudent.correctCount / Math.max(1, drawerStudent.correctCount + drawerStudent.wrongCount)) * 100)}%</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-xl text-sm font-bold text-white border border-white/20">
+                                                {drawerStudent.percentage}% Score
                                             </span>
-                                        ))}
+                                            <p className="text-xs text-indigo-200 mt-2">Time Spent: {drawerStudent.timeTaken}</p>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                                        <span className="text-slate-500 font-semibold">Weak:</span>
-                                        {drawerStudent.weakTopics?.map((tp: string, idx: number) => (
-                                            <span key={idx} className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-md font-medium">
-                                                ! {tp}
-                                            </span>
-                                        ))}
+
+                                    {/* 4 Stat Cards */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                                        <div className="bg-emerald-50/80 rounded-2xl p-3.5 border border-emerald-200/60 shadow-2xs">
+                                            <div className="flex items-center justify-center gap-1 text-emerald-700 font-bold text-xs">
+                                                <CheckCircle2 className="w-3.5 h-3.5" /> Correct
+                                            </div>
+                                            <p className="text-xl font-extrabold text-emerald-800 mt-1">{drawerStudent.correctCount}</p>
+                                        </div>
+                                        <div className="bg-rose-50/80 rounded-2xl p-3.5 border border-rose-200/60 shadow-2xs">
+                                            <div className="flex items-center justify-center gap-1 text-rose-700 font-bold text-xs">
+                                                <X className="w-3.5 h-3.5" /> Wrong
+                                            </div>
+                                            <p className="text-xl font-extrabold text-rose-800 mt-1">{drawerStudent.wrongCount}</p>
+                                        </div>
+                                        <div className="bg-blue-50/80 rounded-2xl p-3.5 border border-blue-200/60 shadow-2xs">
+                                            <div className="flex items-center justify-center gap-1 text-blue-700 font-bold text-xs">
+                                                <Zap className="w-3.5 h-3.5" /> Partial
+                                            </div>
+                                            <p className="text-xl font-extrabold text-blue-800 mt-1">{drawerStudent.partialCount || 0}</p>
+                                        </div>
+                                        <div className="bg-slate-100/80 rounded-2xl p-3.5 border border-slate-200 shadow-2xs">
+                                            <div className="flex items-center justify-center gap-1 text-slate-600 font-bold text-xs">
+                                                <HelpCircle className="w-3.5 h-3.5" /> Skipped
+                                            </div>
+                                            <p className="text-xl font-extrabold text-slate-700 mt-1">{drawerStudent.skippedCount}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Pos / Neg Marks & Timing Stats */}
+                                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Score & Timing Breakdown</h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                                            <div className="bg-white p-3 rounded-xl border border-slate-200">
+                                                <span className="text-slate-400 block text-[10px] font-semibold">POSITIVE MARKS</span>
+                                                <span className="text-base font-bold text-emerald-600">+{drawerStudent.positiveMarks}</span>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-xl border border-slate-200">
+                                                <span className="text-slate-400 block text-[10px] font-semibold">NEGATIVE MARKS</span>
+                                                <span className="text-base font-bold text-rose-600">-{drawerStudent.negativeMarks}</span>
+                                            </div>
+                                            <div className="bg-white p-3 rounded-xl border border-slate-200 col-span-2 sm:col-span-1">
+                                                <span className="text-slate-400 block text-[10px] font-semibold">TOTAL TIME SPENT</span>
+                                                <span className="text-base font-bold text-slate-800">{drawerStudent.timeTaken}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Topic Proficiency Analysis */}
+                                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Topic Proficiency Analysis</h4>
+                                        <div className="space-y-2 text-xs">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-slate-500 font-semibold w-16">Strong:</span>
+                                                {drawerStudent.strongTopics && drawerStudent.strongTopics.length > 0 ? (
+                                                    drawerStudent.strongTopics.map((tp: string, idx: number) => (
+                                                        <span key={idx} className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">
+                                                            ✓ {tp}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-slate-400 font-normal">None identified</span>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-slate-500 font-semibold w-16">Weak:</span>
+                                                {drawerStudent.weakTopics && drawerStudent.weakTopics.length > 0 ? (
+                                                    drawerStudent.weakTopics.map((tp: string, idx: number) => (
+                                                        <span key={idx} className="bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-medium">
+                                                            ! {tp}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-slate-400 font-normal">None identified</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Teacher Notes & Feedback */}
+                                    <div className="space-y-2 bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Teacher Remarks & Notes</h4>
+                                            <Button size="sm" onClick={handleSaveTeacherNotes} className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                Save Remarks
+                                            </Button>
+                                        </div>
+                                        <textarea
+                                            value={drawerTeacherNotes}
+                                            onChange={(e) => setDrawerTeacherNotes(e.target.value)}
+                                            placeholder="Write feedback for candidate scorecard report..."
+                                            className="w-full h-24 text-xs rounded-xl border border-slate-200 p-3 focus:ring-indigo-500 focus:outline-none bg-white"
+                                        />
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Teacher Notes Editor */}
-                            <div className="space-y-2 pt-4 border-t border-slate-100">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Teacher Remarks & Notes</h4>
-                                <textarea
-                                    defaultValue={drawerStudent.teacherNotes}
-                                    placeholder="Add feedback for student report card..."
-                                    className="w-full h-24 text-xs rounded-xl border border-slate-200 p-3 focus:ring-indigo-500 focus:outline-none bg-slate-50/50"
-                                />
-                            </div>
+                            {/* TAB 2: TOPIC PERFORMANCE */}
+                            {drawerTab === 'topics' && (
+                                <div className="space-y-4">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Detailed Topic Performance</h4>
+                                    {drawerTopicData.length === 0 ? (
+                                        <div className="py-12 text-center text-slate-400 text-xs">
+                                            No topic data available for this assessment.
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {drawerTopicData.map((tp, idx) => (
+                                                <div key={idx} className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-bold text-xs text-slate-800">{tp.name}</span>
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                                            tp.performance === 'Strong' ? 'bg-emerald-100 text-emerald-800' :
+                                                            tp.performance === 'Moderate' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                                                        }`}>
+                                                            {tp.performance} ({tp.percentage}%)
+                                                        </span>
+                                                    </div>
+                                                    {/* Progress bar */}
+                                                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full ${
+                                                                tp.percentage >= 70 ? 'bg-emerald-500' : tp.percentage >= 40 ? 'bg-amber-500' : 'bg-rose-500'
+                                                            }`}
+                                                            style={{ width: `${tp.percentage}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium pt-1">
+                                                        <span>Questions: {tp.totalQ}</span>
+                                                        <span>Score: <strong className="text-slate-800">{tp.score}</strong> / {tp.maxScore}</span>
+                                                        <span>Hits: <strong className="text-emerald-600">{tp.correct}✓</strong> | Misses: <strong className="text-rose-500">{tp.wrong}✗</strong></span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* TAB 3: QUESTIONS AUDIT */}
+                            {drawerTab === 'questions' && (
+                                <div className="space-y-4">
+                                    {/* Search & Filter Toolbar */}
+                                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                                        <div className="relative flex-1 w-full">
+                                            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <Input
+                                                placeholder="Search question text or number..."
+                                                value={drawerQSearch}
+                                                onChange={(e) => setDrawerQSearch(e.target.value)}
+                                                className="pl-8 text-xs h-9 bg-slate-50"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1 border border-slate-200 rounded-xl p-1 bg-slate-50 text-xs w-full sm:w-auto justify-center">
+                                            <button
+                                                onClick={() => setDrawerQFilter('all')}
+                                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                                                    drawerQFilter === 'all' ? 'bg-white shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-800'
+                                                }`}
+                                            >
+                                                All
+                                            </button>
+                                            <button
+                                                onClick={() => setDrawerQFilter('correct')}
+                                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                                                    drawerQFilter === 'correct' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'text-slate-500 hover:text-slate-800'
+                                                }`}
+                                            >
+                                                Correct
+                                            </button>
+                                            <button
+                                                onClick={() => setDrawerQFilter('wrong')}
+                                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                                                    drawerQFilter === 'wrong' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'text-slate-500 hover:text-slate-800'
+                                                }`}
+                                            >
+                                                Wrong
+                                            </button>
+                                            <button
+                                                onClick={() => setDrawerQFilter('skipped')}
+                                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                                                    drawerQFilter === 'skipped' ? 'bg-slate-200 text-slate-700' : 'text-slate-500 hover:text-slate-800'
+                                                }`}
+                                            >
+                                                Skipped
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Question Accordion List */}
+                                    {drawerFilteredQuestions.length === 0 ? (
+                                        <div className="py-12 text-center text-slate-400 text-xs">
+                                            No questions match the current filter.
+                                        </div>
+                                    ) : (
+                                        <Accordion type="single" collapsible className="space-y-3">
+                                            {drawerFilteredQuestions.map(({ q, idx, qNum, uAns, evalRes }) => {
+                                                const qText = q.text || q.question_text || q.question || `Question ${qNum}`;
+                                                const maxMarks = q.marks !== undefined ? parseFloat(q.marks) : 4;
+                                                const scoreObtained = evalRes.score || 0;
+
+                                                return (
+                                                    <AccordionItem
+                                                        key={q.id || idx}
+                                                        value={`item-${idx}`}
+                                                        className="border border-slate-200 rounded-2xl px-4 py-1 bg-slate-50/40 hover:bg-slate-50 transition-colors overflow-hidden"
+                                                    >
+                                                        <AccordionTrigger className="hover:no-underline py-3">
+                                                            <div className="flex items-center gap-3 text-left w-full pr-2">
+                                                                <span className="font-bold text-slate-800 shrink-0 text-xs bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                                                                    Q{qNum}
+                                                                </span>
+
+                                                                {/* Status Pill */}
+                                                                {evalRes.isCorrect && (
+                                                                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] shrink-0 font-bold">
+                                                                        ✓ Correct (+{scoreObtained})
+                                                                    </Badge>
+                                                                )}
+                                                                {evalRes.isWrong && (
+                                                                    <Badge className="bg-rose-100 text-rose-800 border-rose-200 text-[10px] shrink-0 font-bold">
+                                                                        ✗ Wrong ({scoreObtained})
+                                                                    </Badge>
+                                                                )}
+                                                                {evalRes.isSkipped && (
+                                                                    <Badge variant="outline" className="text-slate-500 border-slate-300 text-[10px] shrink-0 font-bold">
+                                                                        Skipped (0)
+                                                                    </Badge>
+                                                                )}
+
+                                                                {/* LaTeX snippet in trigger */}
+                                                                <div className="line-clamp-1 text-xs text-slate-700 font-medium flex-1">
+                                                                    <LatexRenderer>{qText}</LatexRenderer>
+                                                                </div>
+
+                                                                <span className="text-[10px] font-bold text-slate-400 shrink-0">
+                                                                    Marks: {maxMarks}
+                                                                </span>
+                                                            </div>
+                                                        </AccordionTrigger>
+
+                                                        <AccordionContent className="pt-2 pb-4 space-y-4 text-xs border-t border-slate-100">
+                                                            {/* Question Body */}
+                                                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Question Text</span>
+                                                                <div className="text-slate-900 leading-relaxed font-medium">
+                                                                    <LatexRenderer>{qText}</LatexRenderer>
+                                                                </div>
+                                                                {(q.image || q.question_image) && (
+                                                                    <img
+                                                                        src={q.image || q.question_image}
+                                                                        alt="Question Diagram"
+                                                                        className="max-h-48 rounded-lg border border-slate-200 object-contain mt-2"
+                                                                    />
+                                                                )}
+                                                            </div>
+
+                                                            {/* Options / Answers Breakdown */}
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                {/* Student Answer */}
+                                                                <div className={`p-3.5 rounded-xl border space-y-1.5 ${
+                                                                    evalRes.isCorrect ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' :
+                                                                    evalRes.isWrong ? 'bg-rose-50/70 border-rose-200 text-rose-900' : 'bg-slate-100 border-slate-200 text-slate-700'
+                                                                }`}>
+                                                                    <span className="text-[10px] font-bold uppercase tracking-wider block">Candidate Answer</span>
+                                                                    <div className="font-bold text-xs">
+                                                                        {uAns !== undefined && uAns !== null && uAns !== '' ? (
+                                                                            <LatexRenderer>
+                                                                                {typeof uAns === 'object' ? JSON.stringify(uAns) : String(uAns)}
+                                                                            </LatexRenderer>
+                                                                        ) : (
+                                                                            <span className="text-slate-400 italic">Not Answered</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Correct Answer */}
+                                                                <div className="p-3.5 rounded-xl border bg-indigo-50/70 border-indigo-200 text-indigo-900 space-y-1.5">
+                                                                    <span className="text-[10px] font-bold uppercase tracking-wider block text-indigo-700">Correct Answer</span>
+                                                                    <div className="font-bold text-xs text-indigo-900">
+                                                                        <LatexRenderer>
+                                                                            {q.correctAnswer !== undefined && q.correctAnswer !== null
+                                                                                ? (typeof q.correctAnswer === 'object' ? JSON.stringify(q.correctAnswer) : String(q.correctAnswer))
+                                                                                : (q.correct_answer !== undefined ? String(q.correct_answer) : 'N/A')}
+                                                                        </LatexRenderer>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </AccordionContent>
+                                                    </AccordionItem>
+                                                );
+                                            })}
+                                        </Accordion>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Drawer Footer */}
-                        <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                            <Button variant="outline" size="sm" onClick={() => toast.success(`Emailed scorecard to ${drawerStudent.email}`)} className="text-xs">
+                        <div className="p-4 border-t border-slate-200 bg-slate-50/80 flex items-center justify-between backdrop-blur-md">
+                            <Button variant="outline" size="sm" onClick={() => toast.success(`Scorecard emailed to ${drawerStudent.email || drawerStudent.name}`)} className="text-xs">
                                 <Send className="w-3.5 h-3.5 mr-1" /> Email Scorecard
                             </Button>
-                            <Button size="sm" onClick={() => toast.success(`Triggered re-evaluation for ${drawerStudent.name}`)} className="bg-indigo-600 text-white text-xs">
+                            <Button size="sm" onClick={() => toast.success(`Re-evaluating attempt for ${drawerStudent.name}...`)} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs">
                                 Re-evaluate Attempt
                             </Button>
                         </div>
@@ -2047,5 +2452,6 @@ export default function FullTestAnalysisPage() {
                 </div>
             )}
         </div>
-    );
+    </div>
+);
 }
