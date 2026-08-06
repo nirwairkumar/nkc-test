@@ -21,10 +21,9 @@ client = None
 try:
     if settings.GEMINI_API_KEY:
         client = genai.Client(
-            vertexai=True,
             api_key=settings.GEMINI_API_KEY
         )
-        print("Initialized google-genai client with Vertex AI using API key (Express Mode).")
+        print("Initialized google-genai client using Gemini API key.")
     else:
         gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
         client = genai.Client(
@@ -34,7 +33,7 @@ try:
         )
         print(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
 except Exception as e:
-    print(f"Error initializing Vertex AI client: {e}")
+    print(f"Error initializing Gemini client: {e}")
 
 
 @router.get("/test-key")
@@ -48,7 +47,7 @@ async def test_ai_key():
         
         response = await asyncio.to_thread(
             client.models.generate_content,
-            model="gemini-2.5-flash",
+            model="gemini-2.0-flash",
             contents="Say 'OK' if you are operational."
         )
         elapsed = round((time.time() - start) * 1000, 2)
@@ -56,8 +55,8 @@ async def test_ai_key():
         
         return {
             "status": "healthy",
-            "provider": "Google Gemini (Vertex AI)",
-            "model": "gemini-2.5-flash",
+            "provider": "Google Gemini",
+            "model": "gemini-2.0-flash",
             "response_time_ms": elapsed,
             "message": "AI Engine API Key is active and functioning properly.",
             "test_response": response_text

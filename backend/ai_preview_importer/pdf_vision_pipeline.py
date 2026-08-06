@@ -42,10 +42,9 @@ client = None
 try:
     if settings.GEMINI_API_KEY:
         client = genai.Client(
-            vertexai=True,
             api_key=settings.GEMINI_API_KEY
         )
-        logger.info("Initialized google-genai client with Vertex AI using API key (Express Mode).")
+        logger.info("Initialized google-genai client using Gemini API key.")
     else:
         gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
         client = genai.Client(
@@ -55,7 +54,7 @@ try:
         )
         logger.info(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
 except Exception as e:
-    logger.error(f"Failed to initialize Vertex AI client: {e}")
+    logger.error(f"Failed to initialize Gemini client: {e}")
 
 
 
