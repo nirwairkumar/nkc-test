@@ -37,7 +37,11 @@ const resolveExamCategory = (test: any): string => {
     return 'MOCK EXAM';
 };
 
-export default function CommunityLibrarySection() {
+interface CommunityLibrarySectionProps {
+    currentUserId?: string;
+}
+
+export default function CommunityLibrarySection({ currentUserId }: CommunityLibrarySectionProps = {}) {
     const navigate = useNavigate();
     const { user } = useAuth();
 
@@ -62,8 +66,9 @@ export default function CommunityLibrarySection() {
         }
     };
 
-    const handleClone = async (testId: string) => {
-        if (!user) {
+    const handleClone = async (testId: string, testTitle?: string) => {
+        const targetUserId = currentUserId || user?.id;
+        if (!targetUserId) {
             toast.error("Please login to clone tests to your workspace");
             navigate('/auth');
             return;
@@ -71,12 +76,12 @@ export default function CommunityLibrarySection() {
 
         setCloningId(testId);
         try {
-            const { data, error } = await cloneTest(testId, user.id);
+            const { data, error } = await cloneTest(testId, targetUserId);
             if (error) {
                 toast.error(typeof error === 'string' ? error : "Failed to clone test to your library");
                 return;
             }
-            toast.success("Test cloned successfully to your workspace!");
+            toast.success(`"${testTitle || 'Test'}" cloned successfully to your workspace!`);
             navigate('/my-tests');
         } catch (err: any) {
             toast.error(err.message || "Failed to clone test");
