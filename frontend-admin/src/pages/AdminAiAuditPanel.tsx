@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAllAiHistory } from '@/lib/usersApi';
+import { getApiUrl } from '@/lib/getApiUrl';
+import LatexRenderer from '@/components/ui/LatexRenderer';
 import { 
     Sparkles, FileText, User, Search, RefreshCw, CheckCircle2, 
     FileUp, Layers, Eye, HelpCircle, AlertCircle, ArrowUpDown,
     Youtube, Tag, Clock, Zap, ExternalLink, ChevronRight, File,
-    Activity, Cpu, ShieldCheck
+    Activity, Cpu, ShieldCheck, Download, Check, X, Terminal
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,6 +29,11 @@ export default function AdminAiAuditPanel() {
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+    // AI Health Test Modal State
+    const [isHealthCheckOpen, setIsHealthCheckOpen] = useState(false);
+    const [healthTesting, setHealthTesting] = useState(false);
+    const [healthResult, setHealthResult] = useState<any | null>(null);
+
     const loadHistory = async () => {
         setLoading(true);
         const { data, error } = await fetchAllAiHistory();
@@ -41,6 +48,34 @@ export default function AdminAiAuditPanel() {
     useEffect(() => {
         loadHistory();
     }, []);
+
+    const handleRunAiTest = async () => {
+        setIsHealthCheckOpen(true);
+        setHealthTesting(true);
+        setHealthResult(null);
+
+        try {
+            const API_BASE = getApiUrl();
+            const url = API_BASE.endsWith('/') ? `${API_BASE}ai/test-key` : `${API_BASE}/ai/test-key`;
+            const res = await fetch(url, { method: 'POST' });
+            const data = await res.json();
+            setHealthResult(data);
+            if (data.status === 'healthy') {
+                toast.success(`AI Health Check Passed (${data.response_time_ms}ms)`);
+            } else {
+                toast.error(`AI Health Check Failed: ${data.message || 'Unknown error'}`);
+            }
+        } catch (e: any) {
+            setHealthResult({
+                status: 'error',
+                message: 'Failed to reach AI Backend: ' + (e.message || String(e)),
+                provider: 'Google Gemini (Vertex AI)'
+            });
+            toast.error("Network or API Error during AI test");
+        } finally {
+            setHealthTesting(false);
+        }
+    };
 
     // Categorize tool items safely
     const getItemToolType = (item: any): AiSubSection => {
@@ -115,18 +150,29 @@ export default function AdminAiAuditPanel() {
                             AI Audit & Analysis Panel
                         </h1>
                         <p className="text-xs md:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                            Monitor real-time prompt extractions, YouTube video test creations, AI topic classifications, execution step timings, and complete user inputs.
+                            Monitor real-time prompt extractions, YouTube video test creations, AI topic classifications, step-by-step latencies, and KaTeX mathematical formulas.
                         </p>
                     </div>
 
-                    <Button 
-                        onClick={loadHistory} 
-                        disabled={loading} 
-                        className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md rounded-2xl px-5 py-2.5 text-xs font-semibold shadow-lg transition-all"
-                    >
-                        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh Engine Logs
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-3">
+                        {/* Test AI Health Button */}
+                        <Button 
+                            onClick={handleRunAiTest} 
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-400/30 rounded-2xl px-4 py-2.5 text-xs font-extrabold shadow-lg transition-all flex items-center gap-2"
+                        >
+                            <Activity className="w-4 h-4 text-emerald-200 animate-pulse" />
+                            Test AI API Key
+                        </Button>
+
+                        <Button 
+                            onClick={loadHistory} 
+                            disabled={loading} 
+                            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md rounded-2xl px-4 py-2.5 text-xs font-semibold shadow-lg transition-all"
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh Engine Logs
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -148,24 +194,24 @@ export default function AdminAiAuditPanel() {
                 <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all">
                     <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Questions Built</span>
-                        <div className="w-8 h-8 rounded-2xl bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                        <div className="w-8 h-8 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                             <Layers className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-2 tracking-tight">{totalQuestions}</h3>
-                    <p className="text-[10px] text-slate-500 mt-1 font-medium">AI generated questions</p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{totalQuestions}</h3>
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Total questions extracted</p>
                 </div>
 
                 {/* Metric 3 */}
                 <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Gen With AI</span>
-                        <div className="w-8 h-8 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Gen / Extract AI</span>
+                        <div className="w-8 h-8 rounded-2xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400">
                             <FileUp className="w-4 h-4" />
                         </div>
                     </div>
                     <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{generateAiCount}</h3>
-                    <p className="text-[10px] text-slate-500 mt-1 font-medium">PDF/Image & Prompts</p>
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Paper & Prompt requests</p>
                 </div>
 
                 {/* Metric 4 */}
@@ -176,77 +222,77 @@ export default function AdminAiAuditPanel() {
                             <Youtube className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-2 tracking-tight">{youtubeCount}</h3>
-                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Video URL extractions</p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{youtubeCount}</h3>
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Video test generations</p>
                 </div>
 
                 {/* Metric 5 */}
-                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all col-span-2 lg:col-span-1">
+                <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-3xl shadow-sm hover:shadow-md transition-all">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Step Time</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Step Speed</span>
                         <div className="w-8 h-8 rounded-2xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400">
                             <Zap className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-2 tracking-tight">{avgExecutionTime}s</h3>
-                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Processing speed avg</p>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{avgExecutionTime}s</h3>
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Mean AI processing time</p>
                 </div>
             </div>
 
-            {/* iOS Sub-section Segmented Navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-                {/* iOS Segmented Pill Group */}
-                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-2xl w-full sm:w-auto overflow-x-auto">
+            {/* iOS Segmented Sub-section Navigation & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Segmented Controls */}
+                <div className="bg-slate-200/70 dark:bg-slate-800/70 p-1 rounded-2xl flex items-center w-full sm:w-auto shadow-inner backdrop-blur-md">
                     <button
                         onClick={() => setActiveSubSection('all')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                        className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 ${
                             activeSubSection === 'all'
-                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-200/50 dark:shadow-none'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                     >
-                        <Layers className="w-3.5 h-3.5" />
-                        All AI Tools ({history.length})
+                        <Activity className="w-3.5 h-3.5" />
+                        All Tools
                     </button>
 
                     <button
                         onClick={() => setActiveSubSection('generate_with_ai')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                        className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 ${
                             activeSubSection === 'generate_with_ai'
-                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-md shadow-slate-200/50 dark:shadow-none'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                     >
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                        Generate-with-AI ({generateAiCount})
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Generate with AI ({generateAiCount})
                     </button>
 
                     <button
                         onClick={() => setActiveSubSection('youtube')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                        className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 ${
                             activeSubSection === 'youtube'
-                                ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-md shadow-slate-200/50 dark:shadow-none'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                     >
-                        <Youtube className="w-3.5 h-3.5 text-rose-500" />
-                        YouTube Generation ({youtubeCount})
+                        <Youtube className="w-3.5 h-3.5" />
+                        YouTube Tests ({youtubeCount})
                     </button>
 
                     <button
                         onClick={() => setActiveSubSection('topics')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                        className={`flex-1 sm:flex-initial px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 flex items-center justify-center gap-1.5 ${
                             activeSubSection === 'topics'
-                                ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-md shadow-slate-200/50 dark:shadow-none'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                     >
-                        <Tag className="w-3.5 h-3.5 text-purple-500" />
-                        Topic Generation ({topicsCount})
+                        <Tag className="w-3.5 h-3.5" />
+                        Topic Tagging ({topicsCount})
                     </button>
                 </div>
 
-                {/* Search Box */}
+                {/* Search Bar */}
                 <div className="relative w-full sm:w-72">
                     <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
                     <Input
@@ -270,7 +316,7 @@ export default function AdminAiAuditPanel() {
                                 {activeSubSection === 'topics' && 'Topic Classification Audit Logs'}
                             </CardTitle>
                             <CardDescription className="text-xs text-slate-500 mt-0.5">
-                                Real-time inspectable logs capturing user prompts, file attachments, system generated questions, and execution step latencies.
+                                Real-time inspectable logs capturing user prompts, file attachments, system generated questions, step latencies, and KaTeX rendering.
                             </CardDescription>
                         </div>
                         <Badge variant="outline" className="text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800">
@@ -406,7 +452,7 @@ export default function AdminAiAuditPanel() {
                                                             </Badge>
                                                             {timingSteps && (
                                                                 <span className="text-[9px] text-slate-400 mt-1 font-mono">
-                                                                    Ex: {timingSteps.extracting || 0}s | AI: {timingSteps.finalizing || 0}s
+                                                                    OCR: {timingSteps.analyzing || timingSteps.ocr || 0}s | AI: {timingSteps.extracting || timingSteps.extraction || 0}s
                                                                 </span>
                                                             )}
                                                         </div>
@@ -448,6 +494,96 @@ export default function AdminAiAuditPanel() {
                 </CardContent>
             </Card>
 
+            {/* AI Health Check Diagnostic Modal */}
+            <Dialog open={isHealthCheckOpen} onOpenChange={setIsHealthCheckOpen}>
+                <DialogContent className="max-w-lg rounded-3xl p-6 bg-slate-900 text-white border border-slate-800 shadow-2xl font-sans">
+                    <DialogHeader className="pb-3 border-b border-slate-800">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                                <Cpu className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-base font-extrabold text-white">
+                                    AI Engine Connectivity Diagnostic
+                                </DialogTitle>
+                                <DialogDescription className="text-xs text-slate-400">
+                                    Testing Vertex AI & Gemini API key latency and authorization.
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="py-4 space-y-4">
+                        {healthTesting ? (
+                            <div className="py-10 text-center space-y-3">
+                                <RefreshCw className="w-8 h-8 animate-spin mx-auto text-emerald-400" />
+                                <p className="text-xs font-bold text-slate-300">Sending test ping to Gemini 2.5 Flash model...</p>
+                            </div>
+                        ) : healthResult ? (
+                            <div className="space-y-3">
+                                <div className={`p-4 rounded-2xl border flex items-start gap-3 ${
+                                    healthResult.status === 'healthy' 
+                                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
+                                        : 'bg-rose-950/40 border-rose-500/40 text-rose-200'
+                                }`}>
+                                    {healthResult.status === 'healthy' ? (
+                                        <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" />
+                                    ) : (
+                                        <AlertCircle className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
+                                    )}
+                                    <div>
+                                        <h4 className="font-extrabold text-sm">
+                                            {healthResult.status === 'healthy' ? 'System Operational' : 'API Health Check Issue'}
+                                        </h4>
+                                        <p className="text-xs mt-1 leading-relaxed">{healthResult.message}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                                        <span className="text-slate-400">Provider</span>
+                                        <span className="font-bold text-indigo-400">{healthResult.provider || 'Google Gemini'}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                                        <span className="text-slate-400">Model</span>
+                                        <span className="font-bold text-slate-200">{healthResult.model || 'gemini-2.5-flash'}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-slate-800/60 pb-1.5">
+                                        <span className="text-slate-400">Response Latency</span>
+                                        <span className="font-bold text-amber-400">{healthResult.response_time_ms} ms</span>
+                                    </div>
+                                    {healthResult.test_response && (
+                                        <div className="pt-1">
+                                            <span className="text-slate-400 block mb-1">Model Output:</span>
+                                            <span className="bg-slate-900 p-2 rounded block text-emerald-300 text-[11px] truncate">
+                                                "{healthResult.test_response}"
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                        <Button 
+                            variant="outline"
+                            onClick={() => setIsHealthCheckOpen(false)}
+                            className="bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 text-xs rounded-xl"
+                        >
+                            Close
+                        </Button>
+                        <Button 
+                            onClick={handleRunAiTest}
+                            disabled={healthTesting}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl"
+                        >
+                            Re-run Test
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* iOS Inspection Drawer / Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-w-4xl max-h-[88vh] overflow-y-auto rounded-3xl p-6 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 shadow-2xl font-sans">
@@ -462,7 +598,7 @@ export default function AdminAiAuditPanel() {
                                         AI Generation Inspector
                                     </DialogTitle>
                                     <DialogDescription className="text-xs text-slate-500">
-                                        Full system audit breakdown of user request, execution timings, and platform generated outputs.
+                                        Full system audit breakdown of user request, step timings, and rendered mathematical outputs.
                                     </DialogDescription>
                                 </div>
                             </div>
@@ -516,21 +652,27 @@ export default function AdminAiAuditPanel() {
                                         {selectedItem.parsed_data?.timing_steps && (
                                             <>
                                                 <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
-                                                    <span className="text-slate-500">1. Document Upload</span>
+                                                    <span className="text-slate-500">1. Document Upload & File Reading</span>
                                                     <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                        {selectedItem.parsed_data.timing_steps.uploading || 0}s
+                                                        {selectedItem.parsed_data.timing_steps.uploading || selectedItem.parsed_data.timing_steps.file_upload || 0}s
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
-                                                    <span className="text-slate-500">2. Vision & OCR Analysis</span>
+                                                    <span className="text-slate-500">2. Vision & OCR Page Classification</span>
                                                     <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                        {selectedItem.parsed_data.timing_steps.analyzing || 0}s
+                                                        {selectedItem.parsed_data.timing_steps.analyzing || selectedItem.parsed_data.timing_steps.ocr || 0}s
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
                                                     <span className="text-slate-500">3. AI Question Extraction</span>
                                                     <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                        {selectedItem.parsed_data.timing_steps.extracting || 0}s
+                                                        {selectedItem.parsed_data.timing_steps.extracting || selectedItem.parsed_data.timing_steps.extraction || 0}s
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
+                                                    <span className="text-slate-500">4. Structure Finalization</span>
+                                                    <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                        {selectedItem.parsed_data.timing_steps.finalizing || selectedItem.parsed_data.timing_steps.structuring || 0}s
                                                     </span>
                                                 </div>
                                             </>
@@ -538,7 +680,7 @@ export default function AdminAiAuditPanel() {
 
                                         {selectedItem.parsed_data?.used_method && (
                                             <div className="flex items-center justify-between text-xs py-1">
-                                                <span className="text-slate-500">Extraction Method</span>
+                                                <span className="text-slate-500">Extraction Engine</span>
                                                 <span className="font-semibold text-indigo-600 dark:text-indigo-400 uppercase text-[10px]">
                                                     {selectedItem.parsed_data.used_method}
                                                 </span>
@@ -556,15 +698,25 @@ export default function AdminAiAuditPanel() {
 
                                     <div className="space-y-2 text-xs">
                                         {selectedItem.file_name && (
-                                            <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-2">
                                                 <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                                     <File className="w-4 h-4 text-indigo-500" />
                                                     {selectedItem.file_name}
                                                 </p>
                                                 {selectedItem.parsed_data?.files_details?.[0] && (
-                                                    <p className="text-[10px] text-slate-500 mt-1 font-mono">
+                                                    <p className="text-[10px] text-slate-500 font-mono">
                                                         Size: {formatBytes(selectedItem.parsed_data.files_details[0].size_bytes)} | Type: {selectedItem.parsed_data.files_details[0].type}
                                                     </p>
+                                                )}
+                                                {selectedItem.parsed_data?.files_details?.[0]?.url && (
+                                                    <a
+                                                        href={selectedItem.parsed_data.files_details[0].url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 underline pt-1"
+                                                    >
+                                                        <ExternalLink className="w-3.5 h-3.5" /> View Uploaded Original File
+                                                    </a>
                                                 )}
                                             </div>
                                         )}
@@ -607,68 +759,93 @@ export default function AdminAiAuditPanel() {
                                         <p className="text-xs text-slate-500 italic">No structured question JSON found for this log entry.</p>
                                     </div>
                                 ) : (
-                                    selectedItem.parsed_data.questions.map((q: any, idx: number) => (
-                                        <div key={idx} className="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl space-y-3 shadow-sm">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex items-start gap-3">
-                                                    <span className="w-7 h-7 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 border border-indigo-200 dark:border-indigo-800">
-                                                        {idx + 1}
-                                                    </span>
-                                                    <div className="space-y-1.5">
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">
-                                                            {q.question_text || q.question || q.stem || 'Question Stem'}
-                                                        </p>
-                                                        {q.diagram_url && (
-                                                            <img src={q.diagram_url} alt="Question Diagram" className="max-h-44 rounded-xl border border-slate-200 dark:border-slate-700 my-2" />
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <Badge variant="outline" className="text-[10px] font-mono font-bold uppercase shrink-0 bg-slate-50 dark:bg-slate-800">
-                                                    {q.question_type || q.type || 'MCQ'}
-                                                </Badge>
-                                            </div>
+                                    selectedItem.parsed_data.questions.map((q: any, idx: number) => {
+                                        const stem = q.question_text || q.question || q.stem || 'Question Stem';
+                                        
+                                        // Standardize options array/object
+                                        let optionsList: { key: string; text: string; isCorrect: boolean }[] = [];
+                                        if (q.options) {
+                                            if (Array.isArray(q.options)) {
+                                                optionsList = q.options.map((opt: any, optIdx: number) => {
+                                                    const text = typeof opt === 'string' ? opt : (opt.text || opt.option || '');
+                                                    const isCorrect = typeof opt === 'object' && opt.is_correct || (q.correct_option === optIdx || q.correct_answer === text);
+                                                    return {
+                                                        key: String.fromCharCode(65 + optIdx),
+                                                        text,
+                                                        isCorrect
+                                                    };
+                                                });
+                                            } else if (typeof q.options === 'object') {
+                                                optionsList = Object.entries(q.options).map(([k, val]: [string, any]) => {
+                                                    const text = typeof val === 'object' && val !== null ? (val.text || '') : String(val || '');
+                                                    const isCorrect = q.correctAnswer === k || (Array.isArray(q.correctAnswer) && q.correctAnswer.includes(k));
+                                                    return { key: k, text, isCorrect };
+                                                });
+                                            }
+                                        }
 
-                                            {/* Options Grid */}
-                                            {q.options && Array.isArray(q.options) && (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-10">
-                                                    {q.options.map((opt: any, optIdx: number) => {
-                                                        const optText = typeof opt === 'string' ? opt : opt.text || opt.option || '';
-                                                        const isCorrect = typeof opt === 'object' && opt.is_correct || (q.correct_option === optIdx || q.correct_answer === optText);
-                                                        return (
+                                        return (
+                                            <div key={idx} className="p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl space-y-3 shadow-sm">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="flex items-start gap-3">
+                                                        <span className="w-7 h-7 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 border border-indigo-200 dark:border-indigo-800">
+                                                            {idx + 1}
+                                                        </span>
+                                                        <div className="space-y-1.5 flex-1">
+                                                            <LatexRenderer className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">
+                                                                {stem}
+                                                            </LatexRenderer>
+                                                            {q.diagram_url && (
+                                                                <img src={q.diagram_url} alt="Question Diagram" className="max-h-44 rounded-xl border border-slate-200 dark:border-slate-700 my-2" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <Badge variant="outline" className="text-[10px] font-mono font-bold uppercase shrink-0 bg-slate-50 dark:bg-slate-800">
+                                                        {q.question_type || q.type || 'MCQ'}
+                                                    </Badge>
+                                                </div>
+
+                                                {/* Options Grid with KaTeX */}
+                                                {optionsList.length > 0 && (
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-10">
+                                                        {optionsList.map((opt, optIdx) => (
                                                             <div 
                                                                 key={optIdx} 
                                                                 className={`p-2.5 rounded-xl border text-xs flex items-center justify-between transition-colors ${
-                                                                    isCorrect 
+                                                                    opt.isCorrect 
                                                                         ? 'bg-emerald-50/80 border-emerald-300 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200 font-bold' 
                                                                         : 'bg-slate-50/60 border-slate-200/80 text-slate-700 dark:bg-slate-800/40 dark:text-slate-300'
                                                                 }`}
                                                             >
-                                                                <span>{String.fromCharCode(65 + optIdx)}. {optText}</span>
-                                                                {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 ml-2" />}
+                                                                <div className="flex gap-1.5 items-start">
+                                                                    <span className="font-bold shrink-0">{opt.key}:</span>
+                                                                    <LatexRenderer>{opt.text}</LatexRenderer>
+                                                                </div>
+                                                                {opt.isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 ml-2" />}
                                                             </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
+                                                        ))}
+                                                    </div>
+                                                )}
 
-                                            {/* Topic or Solution Explanation */}
-                                            {(q.explanation || q.solution || q.topic) && (
-                                                <div className="pl-10 pt-1 space-y-2">
-                                                    {q.topic && (
-                                                        <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 text-[10px] font-bold">
-                                                            Topic: {q.topic}
-                                                        </Badge>
-                                                    )}
-                                                    {(q.explanation || q.solution) && (
-                                                        <div className="p-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-xl text-xs text-indigo-900 dark:text-indigo-200">
-                                                            <span className="font-bold block mb-1">Detailed Explanation:</span>
-                                                            {q.explanation || q.solution}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
+                                                {/* Topic or Solution Explanation */}
+                                                {(q.explanation || q.solution || q.topic) && (
+                                                    <div className="pl-10 pt-1 space-y-2">
+                                                        {q.topic && (
+                                                            <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 text-[10px] font-bold">
+                                                                Topic: {q.topic}
+                                                            </Badge>
+                                                        )}
+                                                        {(q.explanation || q.solution) && (
+                                                            <div className="p-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-xl text-xs text-indigo-900 dark:text-indigo-200">
+                                                                <span className="font-bold block mb-1">Detailed Explanation:</span>
+                                                                <LatexRenderer>{q.explanation || q.solution}</LatexRenderer>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

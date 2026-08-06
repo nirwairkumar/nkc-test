@@ -2041,7 +2041,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                                                                 className="text-xs text-muted-foreground bg-muted p-2 rounded border border-slate-100 dark:border-slate-800 flex gap-1.5 items-start"
                                                                             >
                                                                                 <span className="font-bold text-slate-500 dark:text-slate-400 shrink-0">{key}:</span>
-                                                                                <span className="line-clamp-2">{optionText}</span>
+                                                                                <div className="line-clamp-2 text-xs overflow-hidden">
+                                                                                    <MarkdownPreview content={optionText} />
+                                                                                </div>
                                                                             </div>
                                                                         );
                                                                     })}

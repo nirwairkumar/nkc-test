@@ -37,6 +37,42 @@ except Exception as e:
     print(f"Error initializing Vertex AI client: {e}")
 
 
+@router.get("/test-key")
+@router.post("/test-key")
+async def test_ai_key():
+    import time
+    start = time.time()
+    try:
+        if not client:
+            raise HTTPException(status_code=500, detail="Gemini client is not initialized.")
+        
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model="gemini-2.5-flash",
+            contents="Say 'OK' if you are operational."
+        )
+        elapsed = round((time.time() - start) * 1000, 2)
+        response_text = response.text.strip() if response and response.text else "No text returned"
+        
+        return {
+            "status": "healthy",
+            "provider": "Google Gemini (Vertex AI)",
+            "model": "gemini-2.5-flash",
+            "response_time_ms": elapsed,
+            "message": "AI Engine API Key is active and functioning properly.",
+            "test_response": response_text
+        }
+    except Exception as e:
+        elapsed = round((time.time() - start) * 1000, 2)
+        return {
+            "status": "error",
+            "provider": "Google Gemini (Vertex AI)",
+            "response_time_ms": elapsed,
+            "message": f"AI Key Test Failed: {str(e)}",
+            "detail": str(e)
+        }
+
+
 class GenerateYoutubeRequest(BaseModel):
     url: str
     language: str = "English"
