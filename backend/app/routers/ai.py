@@ -200,7 +200,7 @@ async def generate_youtube_test(
                - Highlight common mistakes or traps if mentioned
                - Keep language simple and exam-oriented
             4. **Generate as many MCQs as possible** (minimum 10) based strictly on the content.
-            5. You can use LaTeX for mathematical equations (e.g., \\( E = mc^2 \\)). Markdown formatting is also supported to help you create the best test experience.
+            5. You can use LaTeX for mathematical equations (e.g., \\( E = mc^2 \\)). For tables, matrices, and two-column lists, ALWAYS use KaTeX \\\\begin{{array}} format. NEVER output Markdown tables.
 
             IMPORTANT: Output **ONLY** valid raw JSON.
             
@@ -242,13 +242,13 @@ async def generate_youtube_test(
             Analyze the visual video content efficiently from the content.
             1. Create a short description (Subject/Topic).
             2. **IMPORTANT**: Generate ALL content (Description, Revision Notes, Questions, Options) in **{payload.language}**.
-            3. Create **structured revision notes** (Markdown supported) that help a student revise before exams.
+            3. Create **structured revision notes** that help a student revise before exams.
                - Use clear bullet points
                - Include formulas, keywords, shortcuts, and step-by-step logic where applicable
                - Highlight common mistakes or traps if mentioned
                - Keep language simple and exam-oriented
             3. **Extract(if questions present in the video)** or **Generate as many MCQs as possible** (minimum 10) based strictly on the content.
-            4. You can use LaTeX for mathematical equations (e.g., \\( E = mc^2 \\)). Markdown formatting is also supported to help you create the best test experience.
+            4. You can use LaTeX for mathematical equations (e.g., \\( E = mc^2 \\)). For tables, matrices, and two-column lists, ALWAYS use KaTeX \\\\begin{{array}} format. NEVER output Markdown tables.
 
 
 

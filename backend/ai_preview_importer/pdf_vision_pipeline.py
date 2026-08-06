@@ -238,24 +238,16 @@ When processing multiple pages, you MUST handle questions that span across pages
 
 --------------------------------------------------
 
-TABLE DETECTION RULE (CRITICAL):
+TABLE & LIST DETECTION RULE (CRITICAL):
 
-If a question contains a table (rows/columns/grid structure):
+If a question contains a table (rows/columns/grid structure) or match-the-following:
 
-- Convert the table into KaTeX array format.
-- NEVER output HTML table.
-- NEVER output markdown table.
-- Embed the LaTeX array inside the "question" field.
-
-Example conversion:
-
-Original:
-| A | B |
-|---|---|
-| 1 | 2 |
-
-Convert to:
-$$\\\\begin{array}{|c|c|} \\\\hline A & B \\\\\\\\ \\\\hline 1 & 2 \\\\\\\\ \\\\hline \\\\end{array}$$
+- NEVER output a Markdown table (e.g. | Header 1 | Header 2 |). Markdown tables are FORBIDDEN as they break rendering.
+- ALWAYS convert tables into KaTeX \begin{array} format embedded in the "question" field.
+- \begin{array} MUST be at the root of a math block: $$\begin{array}{|c|c|c|} ... \end{array}$$.
+- NEVER wrap \begin{array} inside \text{...}.
+- The column specifier in \begin{array}{|c|c|...|} MUST EXACTLY match the number of columns in the table (e.g., 6 columns -> {|c|c|c|c|c|c|}).
+- Wrap individual cell text in \text{...} INSIDE cells (e.g., \text{गणित} & \text{भौतिकी}). Never wrap \text{...} across row or array boundaries.
 
 --------------------------------------------------
 
@@ -263,7 +255,7 @@ MATCH-THE-FOLLOWING RULE (CRITICAL):
 
 If question is "Match the Following" OR contains two-column pairing:
 
-- Convert the two columns into structured LaTeX array format.
+- Convert the two columns into structured LaTeX array format ($$\begin{array}{ll} ... \end{array}$$). NEVER use Markdown tables.
 - Keep original numbering/labels.
 - Embed inside the "question" field.
 
@@ -294,15 +286,15 @@ Determinant: $$\\\\begin{vmatrix} a & b \\\\\\\\ c & d \\\\end{vmatrix}$$
 - CRITICAL: Apply these mathematical and formatting rules to BOTH the question text AND all option values. Ensure NO options are missing or omitted.
 
 CHEMISTRY FORMATTING (mhchem) - CRITICAL:
-- Use \\\\ce{} for ALL chemical formulas: $\\\\ce{H2O}$, $\\\\ce{NaCl}$, $\\\\ce{CO2}$
-- Chemical equations MUST be in \\\\ce: $\\\\ce{2H2 + O2 -> 2H2O}$
+- ALWAYS put a backslash '\\' before 'ce', i.e., \\\\ce{CsOH}, \\\\ce{KOH}, \\\\ce{NaOH}, \\\\ce{LiOH}. NEVER write 'ceCsOH' or 'ceNaOH' without '\\\\ce{}'.
+- Wrap ALL chemical formulas and equations in \\\\ce{...} inside $...$ or $$...$$: $\\\\ce{H2O}$, $\\\\ce{2H2 + O2 -> 2H2O}$
 - Reversible reactions: $\\\\ce{N2 + 3H2 <=> 2NH3}$
 - Ions: $\\\\ce{Na+}$, $\\\\ce{SO4^{2-}}$, $\\\\ce{Fe^{3+}}$
 - Organic: $\\\\ce{CH3-CH2-OH}$, $\\\\ce{C6H12O6}$
 - State symbols: $\\\\ce{H2O (l)}$, $\\\\ce{CO2 (g)}$, $\\\\ce{NaCl (aq)}$
 - Isotopes: $\\\\ce{^{14}C}$, $\\\\ce{^{235}U}$
 - IMPORTANT: Always wrap \\\\ce{...} inside $...$
-- CRITICAL: Apply chemistry formatting strictly to options as well.
+- CRITICAL: Apply chemistry formatting strictly to option values as well (e.g. $\\\\ce{CsOH > KOH > NaOH > LiOH}$).
 
 --------------------------------TEXT & LINE-BREAK RULES:
 - Use standard newline characters (\n) for line breaks in questions, options, and passageContent.
@@ -505,6 +497,10 @@ Analyze the content thoroughly and **generate new, original MCQ questions** base
    - Block equations: $$...$$ 
    - NEVER use align environments, use \\\\begin{aligned} ... \\\\end{aligned} instead.
    - Apply these rules to both questions and options. Never omit options or choices.
+
+5.5. **TABLES AND LIST STRUCTURES (CRITICAL)**:
+   - NEVER output Markdown tables (e.g. | Col 1 | Col 2 |). They break rendering.
+   - ALWAYS format tables, matrices, and two-column pairings using LaTeX \\\\begin{array} format (e.g., $$\\begin{array}{|c|c|} ... \\end{array}$$).
 
 6. **CHEMISTRY FORMATTING (mhchem) - CRITICAL**:
    - Use \\\\ce{} for ALL chemical formulas: \\\\ce{H2O}, \\\\ce{NaCl}, \\\\ce{CO2}
@@ -778,21 +774,61 @@ async def process_diagram_bboxes(questions: List[Dict], page_sources: List[Dict]
         await asyncio.gather(*crop_tasks)
 
 
-def wrap_bare_latex(text: str) -> str:
-    """
-    Ensures that bare LaTeX math expressions in options/choices are wrapped in $...$.
-    Scans for LaTeX commands or sub/superscripts and wraps the entire string if no '$' is present.
+def sanitize_latex_and_mhchem(text: str) -> str:
+    r"""
+    Sanitizes LaTeX and mhchem expressions in questions and options:
+    1. Fixes unescaped 'ce' formulas (e.g. ceCsOH -> \ce{CsOH}, ce{H2O} -> \ce{H2O}).
+    2. Fixes malformed \text{\begin{array}...} nesting.
+    3. Fixes \begin{array}{c} column specifier mismatches for multi-column tables.
+    4. Wraps bare LaTeX/mhchem in $...$.
     """
     if not isinstance(text, str) or not text.strip():
         return text
-    if '$' in text:
-        return text
-    cmds = re.findall(r'\\([a-zA-Z]+)', text)
-    has_latex_cmd = any(cmd not in ('n', 't', 'r') for cmd in cmds)
-    has_sub_super = bool(re.search(r'[\^_]', text))
-    if has_latex_cmd or has_sub_super:
-        return f"${text.strip()}$"
+
+    # 1. Fix unescaped ce{...} -> \ce{...}
+    text = re.sub(r'(?<!\\)\bce\{', r'\\ce{', text)
+
+    # 2. Fix bare unescaped ce with chemical formula: e.g. ceCsOH > ceKOH -> \ce{CsOH} > \ce{KOH}
+    def fix_bare_ce(match):
+        formula = match.group(1)
+        return f"\\ce{{{formula}}}"
+    
+    text = re.sub(r'(?<!\\)\bce([A-Z][a-zA-Z0-9\(\)]*(?:\s*[\>\<\=\+\-\-\>]+\s*[A-Za-z0-9\(\)]+)*)', fix_bare_ce, text)
+
+    # 3. Fix \text{... \begin{array}...} nesting bug
+    text = re.sub(r'\\text\s*\{\s*(\\begin\{array\}[\s\S]*?\\end\{array\})\s*\}', r'\1', text)
+    
+    # 4. Fix \begin{array}{c} column specifier mismatch for multi-column tables
+    def fix_array_columns(match):
+        spec = match.group(1)
+        body = match.group(2)
+        rows = body.split(r'\\')
+        max_ampersands = 0
+        for row in rows:
+            amps = len(re.findall(r'(?<!\\)&', row))
+            if amps > max_ampersands:
+                max_ampersands = amps
+        
+        num_cols = max_ampersands + 1
+        spec_cols = len(re.findall(r'[lcr]', spec))
+        if num_cols > 1 and spec_cols < num_cols:
+            new_spec = '|' + '|'.join(['c'] * num_cols) + '|'
+            return f"\\begin{{array}}{{{new_spec}}}{body}\\end{{array}}"
+        return match.group(0)
+
+    text = re.sub(r'\\begin\{array\}\s*\{([^}]*)\}\s*([\s\S]*?)\\end\{array\}', fix_array_columns, text)
+
+    # 5. Wrap bare LaTeX / mhchem in $...$ if no $ present
+    if '$' not in text and ('\\' in text or '\\ce{' in text):
+        cmds = re.findall(r'\\([a-zA-Z]+)', text)
+        has_latex_cmd = any(cmd not in ('n', 't', 'r') for cmd in cmds)
+        has_sub_super = bool(re.search(r'[\^_]', text))
+        if has_latex_cmd or has_sub_super:
+            text = f"${text.strip()}$"
+
     return text
+
+wrap_bare_latex = sanitize_latex_and_mhchem
 
 
 def extract_embedded_images(pdf_bytes: bytes) -> List[Dict]:
@@ -1919,7 +1955,7 @@ async def _parse_response(raw_text: str, embedded_images: List[Dict]) -> Dict:
             logger.warning(f"Question {i + 1} has no text, skipping")
             continue
 
-        question_text = replace_placeholders(question_text)
+        question_text = sanitize_latex_and_mhchem(replace_placeholders(question_text))
 
         # Match main question image placeholder
         q_image = q.get("image")

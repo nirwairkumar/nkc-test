@@ -31,6 +31,14 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
 
         try {
             let result = children;
+            // Pre-process & sanitize LaTeX/mhchem input
+            // 1. Fix unescaped ce{...} -> \ce{...}
+            result = result.replace(/(?<!\\)\bce\{/g, '\\ce{');
+            // 2. Fix bare unescaped ce (e.g. ceCsOH > ceKOH -> \ce{CsOH} > \ce{KOH})
+            result = result.replace(/(?<!\\)\bce([A-Z][a-zA-Z0-9\(\)]*(?:\s*[\>\<\=\+\-\-\>]+\s*[A-Za-z0-9\(\)]+)*)/g, (_m, p1) => `\\ce{${p1}}`);
+            // 3. Fix \text{\begin{array}...} nesting bug
+            result = result.replace(/\\text\s*\{\s*(\\begin\{array\}[\s\S]*?\\end\{array\})\s*\}/g, '$1');
+
             tableDataRef.current = {}; // Clear previous table data
 
             // Image map for placeholders
@@ -95,11 +103,26 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 const match = matchStr.match(arrayRegex);
                 if (!match) return matchStr;
 
-                const [, format, content] = match;
+                let [, format, content] = match;
 
                 // Split into rows using brace-aware splitting on \\
                 // This preserves \\ inside nested braces (e.g. \substack{a \\ b})
                 const rows = splitAtDepthZero(content, '\\\\');
+
+                // Determine actual max columns based on '&' cell splits
+                let maxAmpersands = 0;
+                rows.forEach(r => {
+                    const clean = r.replace(/\\hline/g, '').trim();
+                    if (clean) {
+                        const cells = splitAtDepthZero(clean, '&');
+                        if (cells.length - 1 > maxAmpersands) maxAmpersands = cells.length - 1;
+                    }
+                });
+                const actualCols = maxAmpersands + 1;
+                const specCols = (format.match(/[lcr]/g) || []).length;
+                if (actualCols > 1 && specCols < actualCols) {
+                    format = '|' + Array(actualCols).fill('c').join('|') + '|';
+                }
 
                 // Determine alignments and borders from format string (e.g., |l|c|r|)
                 const alignments: string[] = [];
