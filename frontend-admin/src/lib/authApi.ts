@@ -25,6 +25,9 @@ export const authApi = {
         await apiClient.post('/auth/logout');
         localStorage.removeItem('testoza_token');
         localStorage.removeItem('testoza_refresh_token');
+        localStorage.removeItem('testoza_is_admin');
+        localStorage.removeItem('testoza_user');
+        localStorage.removeItem('testoza_profile');
         localStorage.removeItem('user_designation');
     },
     refreshToken: async (refresh_token: string) => {

@@ -69,13 +69,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAdminStatus = async (user_id: string | undefined) => {
         if (!user_id) {
             setIsAdmin(false);
-            return;
+            localStorage.removeItem('testoza_is_admin');
+            return false;
         }
         try {
             const response = await import('@/lib/apiClient').then(m => m.default.get('/users/check-admin', { params: { user_id } }));
-            setIsAdmin(!!response.data);
+            const isAdm = !!response.data;
+            setIsAdmin(isAdm);
+            if (isAdm) {
+                localStorage.setItem('testoza_is_admin', 'true');
+            } else {
+                localStorage.removeItem('testoza_is_admin');
+            }
+            return isAdm;
         } catch (error) {
-            setIsAdmin(false);
+            // Keep cached status on temporary network glitch
+            const cached = localStorage.getItem('testoza_is_admin') === 'true';
+            setIsAdmin(cached);
+            return cached;
         }
     };
 
@@ -131,9 +142,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         initPromise = (async () => {
-            setLoading(true);
+            // 1. Instant Optimistic Auth from localStorage
+            const storedToken = tokenStorage.getTokens().token;
+            const cachedIsAdmin = localStorage.getItem('testoza_is_admin') === 'true';
+            const cachedUserRaw = localStorage.getItem('testoza_user');
+            const cachedProfileRaw = localStorage.getItem('testoza_profile');
+
+            let hasValidCache = false;
+            if (storedToken && cachedIsAdmin && cachedUserRaw) {
+                try {
+                    const parsedUser = JSON.parse(cachedUserRaw);
+                    setUser(parsedUser);
+                    setSession({ user: parsedUser, access_token: storedToken });
+                    setIsAdmin(true);
+                    if (cachedProfileRaw) {
+                        setProfile(JSON.parse(cachedProfileRaw));
+                    }
+                    setLoading(false); // Instant load!
+                    hasValidCache = true;
+                } catch {
+                    // ignore JSON parse error and continue to network fetch
+                }
+            }
+
+            if (!hasValidCache) {
+                setLoading(true);
+            }
+
             try {
-                // 1. Check for password recovery or OAuth tokens in URL hash
+                // 2. Check for password recovery or OAuth tokens in URL hash
                 const hash = window.location.hash;
                 if (hash) {
                     const params = new URLSearchParams(hash.substring(1));
@@ -166,7 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                 }
 
-                // 2. Load from localStorage
+                // 3. Load from localStorage & background revalidate
                 const token = tokenStorage.getTokens().token;
                 if (token) {
                     try {
@@ -180,8 +217,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         }
 
                         if (userId) {
-                            // Parallelize: authApi.getMe(), profile details, and admin status
-                            const [meResponse, profileData] = await Promise.all([
+                            // Parallelize auth check and profile fetch
+                            const [meResponse, profileData, isAdm] = await Promise.all([
                                 authApi.getMe(),
                                 fetchProfileData(userId),
                                 checkAdminStatus(userId)
@@ -191,6 +228,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 const userData = meResponse.data.user;
                                 setUser(userData);
                                 setSession({ user: userData, access_token: token });
+                                localStorage.setItem('testoza_user', JSON.stringify(userData));
+                                if (profileData) {
+                                    localStorage.setItem('testoza_profile', JSON.stringify(profileData));
+                                }
 
                                 // Sync back into Supabase client SDK so its internal session stays warm
                                 try {
@@ -205,29 +246,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                     console.warn("Failed to sync session to Supabase SDK:", sdkErr);
                                 }
 
-                                // Frontend Auto-Provisioning: if profile is missing (404), create it using JWT metadata
-                                let activeProfile = profileData;
-                                if (!activeProfile) {
-                                    console.log("Profile not found in database. Auto-provisioning from frontend...");
-                                    try {
-                                        const { updateProfile } = await import('@/lib/usersApi');
-                                        const provisionRes = await updateProfile(userData.id, {
-                                            email: userData.email,
-                                            full_name: userData.user_metadata?.full_name || userData.user_metadata?.name || '',
-                                            avatar_url: userData.user_metadata?.avatar_url || userData.user_metadata?.picture || ''
-                                        });
-                                        if (provisionRes.data) {
-                                            activeProfile = provisionRes.data;
-                                            setProfile(activeProfile);
-                                            console.log("Profile auto-provisioned successfully:", activeProfile);
-                                        }
-                                    } catch (provErr) {
-                                        console.error("Failed to auto-provision profile from frontend:", provErr);
-                                    }
-                                }
-
-                                // checkPremiumStatus uses the preloaded profileData to prevent a duplicate fetch
-                                await checkPremiumStatus(userData.id, activeProfile);
+                                // Non-blocking premium status check
+                                checkPremiumStatus(userData.id, profileData);
                             } else {
                                 throw new Error("No user in response");
                             }
@@ -238,8 +258,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 const userData = response.data.user;
                                 setUser(userData);
                                 setSession({ user: userData, access_token: token });
+                                localStorage.setItem('testoza_user', JSON.stringify(userData));
 
-                                // Sync back into Supabase client SDK so its internal session stays warm
                                 try {
                                     const refreshToken = tokenStorage.getTokens().refreshToken;
                                     if (refreshToken) {
@@ -252,32 +272,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                     console.warn("Failed to sync session to Supabase SDK:", sdkErr);
                                 }
 
-                                let profileData = await fetchProfileData(userData.id);
-                                
-                                // Frontend Auto-Provisioning fallback
-                                if (!profileData) {
-                                    console.log("Profile not found. Auto-provisioning from frontend (sequential path)...");
-                                    try {
-                                        const { updateProfile } = await import('@/lib/usersApi');
-                                        const provisionRes = await updateProfile(userData.id, {
-                                            email: userData.email,
-                                            full_name: userData.user_metadata?.full_name || userData.user_metadata?.name || '',
-                                            avatar_url: userData.user_metadata?.avatar_url || userData.user_metadata?.picture || ''
-                                        });
-                                        if (provisionRes.data) {
-                                            profileData = provisionRes.data;
-                                            setProfile(profileData);
-                                            console.log("Profile auto-provisioned successfully:", profileData);
-                                        }
-                                    } catch (provErr) {
-                                        console.error("Failed to auto-provision profile from frontend:", provErr);
-                                    }
+                                const profileData = await fetchProfileData(userData.id);
+                                if (profileData) {
+                                    localStorage.setItem('testoza_profile', JSON.stringify(profileData));
                                 }
-
-                                await Promise.all([
-                                    checkAdminStatus(userData.id),
-                                    checkPremiumStatus(userData.id, profileData)
-                                ]);
+                                await checkAdminStatus(userData.id);
+                                checkPremiumStatus(userData.id, profileData);
                             } else {
                                 throw new Error("No user in response");
                             }
@@ -288,18 +288,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         if (isAuthError) {
                             console.warn("Authentication invalid, clearing session:", e);
                             tokenStorage.clearTokens();
+                            localStorage.removeItem('testoza_is_admin');
+                            localStorage.removeItem('testoza_user');
+                            localStorage.removeItem('testoza_profile');
                             setUser(null);
                             setSession(null);
-                            await checkPremiumStatus(undefined);
+                            setIsAdmin(false);
+                            checkPremiumStatus(undefined);
                         } else {
                             console.error("Auth initialization failed due to server/network error:", e);
                         }
                     }
 
                 } else {
+                    tokenStorage.clearTokens();
+                    localStorage.removeItem('testoza_is_admin');
+                    localStorage.removeItem('testoza_user');
+                    localStorage.removeItem('testoza_profile');
                     setUser(null);
                     setSession(null);
-                    await checkPremiumStatus(undefined);
+                    setIsAdmin(false);
+                    checkPremiumStatus(undefined);
                 }
             } catch (error) {
                 console.error('Auth initialization error:', error);

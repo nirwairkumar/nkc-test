@@ -1,9 +1,14 @@
+import base64
+import json
+import time
 from fastapi import APIRouter, HTTPException, Depends, Request
 from app.core.database import get_db, supabase # Import global supabase client
 from supabase import Client
 from typing import Optional, List, Dict, Any
+from cachetools import TTLCache
 
 router = APIRouter()
+admin_cache = TTLCache(maxsize=1000, ttl=300) # 5 minutes in-memory cache for admin email checks
 
 def _verify_auth_token(request: Request, db: Client) -> str:
     """Verify JWT from Authorization header and return requesting user's ID."""
@@ -13,6 +18,21 @@ def _verify_auth_token(request: Request, db: Client) -> str:
     if not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
     token = auth_header.replace("Bearer ", "")
+
+    # Fast path: decode JWT payload locally to eliminate 300ms network roundtrip to Supabase Auth API
+    try:
+        parts = token.split(".")
+        if len(parts) == 3:
+            payload_b64 = parts[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            payload = json.loads(base64.b64decode(payload_b64).decode("utf-8"))
+            user_id = payload.get("sub")
+            exp = payload.get("exp")
+            if user_id and exp and time.time() < exp:
+                return user_id
+    except Exception:
+        pass
+
     try:
         user_response = db.auth.get_user(token)
         if not user_response or not user_response.user:
@@ -30,8 +50,12 @@ def _verify_is_admin(request: Request, db: Client) -> str:
     if profile_res.data:
         email = profile_res.data[0].get("email")
         if email:
-            admin_res = db.table("admins").select("email").eq("email", email).execute()
-            is_admin = bool(admin_res.data)
+            if email in admin_cache:
+                is_admin = admin_cache[email]
+            else:
+                admin_res = db.table("admins").select("email").eq("email", email).execute()
+                is_admin = bool(admin_res.data)
+                admin_cache[email] = is_admin
             
     if not is_admin:
         raise HTTPException(status_code=403, detail="Admin authorization required")
@@ -48,8 +72,12 @@ def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
     if profile_res.data:
         email = profile_res.data[0].get("email")
         if email:
-            admin_res = db.table("admins").select("email").eq("email", email).execute()
-            is_admin = bool(admin_res.data)
+            if email in admin_cache:
+                is_admin = admin_cache[email]
+            else:
+                admin_res = db.table("admins").select("email").eq("email", email).execute()
+                is_admin = bool(admin_res.data)
+                admin_cache[email] = is_admin
             
     if not is_admin:
         raise HTTPException(status_code=403, detail="Unauthorized access")
@@ -176,9 +204,15 @@ async def check_admin(
         if not user_email:
             return False
 
+        # Check in-memory cache first
+        if user_email in admin_cache:
+            return admin_cache[user_email]
+
         # 2. Check if email exists in admins table
         response = supabase.table("admins").select("email").eq("email", user_email).execute()
-        return bool(response.data)
+        is_admin = bool(response.data)
+        admin_cache[user_email] = is_admin
+        return is_admin
     except Exception as e:
         print(f"Error checking admin: {e}")
         return False
