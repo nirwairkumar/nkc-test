@@ -21,9 +21,10 @@ client = None
 try:
     if settings.GEMINI_API_KEY:
         client = genai.Client(
+            vertexai=True,
             api_key=settings.GEMINI_API_KEY
         )
-        print("Initialized google-genai client using Gemini API key.")
+        print("Initialized google-genai client with Vertex AI Express Mode.")
     else:
         gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
         client = genai.Client(
