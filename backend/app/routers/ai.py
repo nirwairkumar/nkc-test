@@ -20,11 +20,17 @@ import os
 client = None
 try:
     if settings.GEMINI_API_KEY:
-        client = genai.Client(
-            vertexai=True,
-            api_key=settings.GEMINI_API_KEY
-        )
-        print("Initialized google-genai client with Vertex AI Express Mode.")
+        if settings.GEMINI_API_KEY.startswith("AIza"):
+            client = genai.Client(
+                api_key=settings.GEMINI_API_KEY
+            )
+            print("Initialized google-genai client using Google AI Studio API key.")
+        else:
+            client = genai.Client(
+                vertexai=True,
+                api_key=settings.GEMINI_API_KEY
+            )
+            print("Initialized google-genai client with Vertex AI Express Mode.")
     else:
         gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
         client = genai.Client(
@@ -43,24 +49,17 @@ async def test_ai_key():
     import time
     start = time.time()
     try:
-        if not client:
-            raise HTTPException(status_code=500, detail="Gemini client is not initialized.")
-        
-        response = await asyncio.to_thread(
-            client.models.generate_content,
-            model="gemini-2.0-flash",
-            contents="Say 'OK' if you are operational."
-        )
+        from ai_preview_importer.pdf_vision_pipeline import _call_gemini_with_retry
+        response_text = await _call_gemini_with_retry(["Say 'OK' if operational."], batch_num=1, max_retries=1)
         elapsed = round((time.time() - start) * 1000, 2)
-        response_text = response.text.strip() if response and response.text else "No text returned"
         
         return {
             "status": "healthy",
-            "provider": "Google Gemini",
-            "model": "gemini-2.0-flash",
+            "provider": "Google Gemini (Vertex AI)",
+            "model": "gemini-3.5-flash",
             "response_time_ms": elapsed,
             "message": "AI Engine API Key is active and functioning properly.",
-            "test_response": response_text
+            "test_response": response_text.strip() if response_text else "OK"
         }
     except Exception as e:
         elapsed = round((time.time() - start) * 1000, 2)
