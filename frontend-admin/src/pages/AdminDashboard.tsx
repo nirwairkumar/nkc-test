@@ -23,7 +23,7 @@ import AdminAiAuditPanel from './AdminAiAuditPanel';
 import { authApi } from '@/lib/authApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'tests' | 'builder' | 'importer' | 'ai_audit' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
+type TabId = 'analytics' | 'tests' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession } = useAuth();
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
                 { id: 'tests' as const, label: 'Manage Tests', icon: FolderKanban },
                 { id: 'builder' as const, label: 'Test Builder', icon: PlusCircle },
                 { id: 'importer' as const, label: 'AI Test Importer', icon: Sparkles },
-                { id: 'ai_audit' as const, label: 'AI Audit & Logs', icon: Sparkles },
+                { id: 'ai_analysis' as const, label: 'AI Analysis & Audit', icon: Sparkles },
             ]
         },
         {
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                                     key={item.id}
                                     onClick={() => handleTabChange(item.id)}
                                     className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                                        activeTab === item.id
+                                        (activeTab === item.id || (item.id === 'ai_analysis' && activeTab === 'ai_audit'))
                                             ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                                             : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                                     }`}
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                     {activeTab === 'tests' && <ManageTests />}
                     {activeTab === 'builder' && <CreateTestPage />}
                     {activeTab === 'importer' && <AITestImporter />}
-                    {activeTab === 'ai_audit' && <AdminAiAuditPanel />}
+                    {(activeTab === 'ai_analysis' || activeTab === 'ai_audit') && <AdminAiAuditPanel />}
                     {activeTab === 'materials' && <MaterialsManager />}
                     {activeTab === 'posts' && <NewsFeed />}
                     {activeTab === 'features' && <AdminFeatureControlPanel />}

@@ -50,6 +50,8 @@ class QuestionItem(BaseModel):
 
 class GenerateTopicsRequest(BaseModel):
     questions: List[QuestionItem]
+    user_id: Optional[str] = None
+    file_name: Optional[str] = None
 
 def extract_video_id(url: str) -> Optional[str]:
     """
@@ -256,6 +258,8 @@ async def generate_youtube_test(
         }
     
     # 3. Call Gemini with timeout
+    import time
+    start_time = time.time()
     try:
         print(f"Starting Gemini content generation for video: {payload.url}")
         print(f"Using method: {used_method}")
@@ -280,10 +284,9 @@ async def generate_youtube_test(
         # 3. Parse JSON
         cleaned = clean_json(text)
         data = json.loads(cleaned)
+        total_time = time.time() - start_time
         
         # 4. Generate Custom ID (Simple logic for now, or match frontend logic)
-        # We need a unique ID.
-        # Let's fetch latest ID
         last_test = db.table("tests").select("custom_id").order("created_at", desc=True).limit(1).execute()
         next_id = "YT001"
         if last_test.data:
@@ -311,7 +314,37 @@ async def generate_youtube_test(
         }
         
         res = db.table("tests").insert(test_insert).execute()
-        
+
+        # 6. Log into AI generation history for Admin AI Analysis panel
+        try:
+            ai_log = {
+                "user_id": payload.user_id,
+                "mode": "youtube",
+                "title": data.get("title", "YouTube AI Test"),
+                "description": f"YouTube Link: {payload.url}",
+                "file_name": f"YouTube Video ({video_id})",
+                "question_count": len(data.get("questions", [])),
+                "parsed_data": {
+                    "tool_type": "youtube",
+                    "youtube_url": payload.url,
+                    "video_id": video_id,
+                    "used_method": used_method,
+                    "language": payload.language,
+                    "execution_time_seconds": round(total_time, 2),
+                    "questions": data.get("questions", []),
+                    "revision_notes": data.get("revision_notes", ""),
+                    "creator_name": payload.creator_name
+                }
+            }
+            db.table("ai_generation_history").insert(ai_log).execute()
+        except Exception as log_err:
+            # Fallback to 'generate' mode if check constraint limits mode value
+            try:
+                ai_log["mode"] = "generate"
+                db.table("ai_generation_history").insert(ai_log).execute()
+            except Exception as e2:
+                print(f"Failed to log YouTube generation history: {e2}")
+
         if res.data:
             return res.data[0]
             
@@ -586,7 +619,8 @@ async def parse_document_stream(
 
 @router.post("/generate/topics")
 async def generate_topics(
-    payload: GenerateTopicsRequest
+    payload: GenerateTopicsRequest,
+    db: Client = Depends(get_db)
 ):
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
@@ -594,6 +628,8 @@ async def generate_topics(
     if not payload.questions:
         return {"topics": {}}
 
+    import time
+    start_time = time.time()
     try:
         # Prepare the questions text for the prompt
         questions_text = "\n".join([f"ID: {q.id} | Question: {q.text}" for q in payload.questions])
@@ -626,6 +662,34 @@ async def generate_topics(
             raise HTTPException(status_code=500, detail="Gemini failed to generate content")
 
         topics_map = json.loads(clean_json(response.text))
+        exec_time = time.time() - start_time
+
+        # Log into AI generation history for Admin AI Analysis
+        if payload.user_id:
+            try:
+                ai_log = {
+                    "user_id": payload.user_id,
+                    "mode": "topics",
+                    "title": f"Topic Tagging ({len(payload.questions)} Qs)",
+                    "description": f"AI Topic Classification for {len(payload.questions)} questions",
+                    "file_name": payload.file_name or "Questions Batch",
+                    "question_count": len(payload.questions),
+                    "parsed_data": {
+                        "tool_type": "topics",
+                        "questions_count": len(payload.questions),
+                        "questions_input": [q.model_dump() if hasattr(q, 'model_dump') else q.dict() for q in payload.questions],
+                        "generated_topics": topics_map,
+                        "execution_time_seconds": round(exec_time, 2)
+                    }
+                }
+                db.table("ai_generation_history").insert(ai_log).execute()
+            except Exception as log_err:
+                try:
+                    ai_log["mode"] = "generate"
+                    db.table("ai_generation_history").insert(ai_log).execute()
+                except Exception as e2:
+                    print(f"Failed to log Topic AI generation: {e2}")
+
         return {"topics": topics_map}
 
     except Exception as e:

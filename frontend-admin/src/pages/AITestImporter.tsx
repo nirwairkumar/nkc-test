@@ -558,13 +558,29 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         const qCount = data.questions?.length || 0;
         if (qCount === 0) return;
 
+        const totalExecTime = Math.round((timers.uploading + timers.analyzing + timers.extracting + timers.finalizing) * 10) / 10;
+        const filesList = files.map(f => ({
+            name: f.file.name,
+            size_bytes: f.file.size,
+            type: f.type
+        }));
+
+        const enrichedParsedData = {
+            ...data,
+            tool_type: 'generate_with_ai',
+            timing_steps: timers,
+            execution_time_seconds: totalExecTime > 0 ? totalExecTime : undefined,
+            files_details: filesList.length > 0 ? filesList : undefined,
+            upload_type: uploadType
+        };
+
         const historyPayload = {
             mode: mode || 'extract',
             title: data.title || (mode === 'extract' ? 'Extracted Questions' : 'Generated Questions'),
             description: data.description || '',
-            file_name: files?.[0]?.file?.name || null,
+            file_name: filesList.map(f => f.name).join(', ') || null,
             question_count: qCount,
-            parsed_data: data
+            parsed_data: enrichedParsedData
         };
 
         if (user) {
