@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { getApiUrl } from '@/lib/getApiUrl';
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, Key, Zap, CheckCircle2, MoreVertical, PenLine, History, Trash2, ChevronLeft } from "lucide-react";
+import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, Key, Zap, CheckCircle2, MoreVertical, PenLine, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -182,7 +182,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         data?: any;
     } | null>(null);
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
-    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('parallel');
+    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // AI Generation History State
@@ -191,6 +191,43 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
     const [clearingAllHistory, setClearingAllHistory] = useState(false);
+
+    // Apple HIG UI & Drag State
+    const [isDragging, setIsDragging] = useState(false);
+    const [showHelpDialog, setShowHelpDialog] = useState(false);
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const droppedFiles = Array.from(e.dataTransfer.files || []);
+        if (!droppedFiles.length) return;
+
+        const newFiles: SelectedFile[] = [];
+        for (const file of droppedFiles) {
+            const preview = await createPreview(file);
+            newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
+        }
+        const hasImages = newFiles.some(f => f.type === 'image');
+        setFiles(newFiles);
+        setUploadType(hasImages ? 'image' : 'document');
+        setError(null);
+        setParsedData(null);
+        setMode(null);
+    };
 
     // Fetch feature flags
     useEffect(() => {
@@ -1273,208 +1310,197 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         return () => window.removeEventListener('load_ai_history_item', handleLoadHistoryItem);
     }, [handleSelectHistoryItem]);
 
-    // Step 1: File Upload — unified Gemini-style drop zone + manual creation card
+    // Step 1: File Upload — Apple HIG 2-choice layout with dominant CTA
     if (!parsedData && files.length === 0 && !uploadType) {
         return (
-            <div className="flex min-h-[calc(100vh-4rem)] w-full bg-slate-50 dark:bg-slate-900/50">
+            <div className="min-h-[calc(100vh-4rem)] w-full bg-[#FBFBFD] dark:bg-[#0D0E12] py-8 md:py-12 px-4 md:px-8 flex flex-col justify-start items-center">
                 <SEO
-                    title="AI Test Generator - TestoZa"
-                    description="Generate tests from PDF documents and images using AI. Extract exact questions or generate new ones."
-                    keywords={["ai test generator", "pdf to quiz", "image to quiz", "exam maker ai"]}
+                    title="Create Online Test - TestoZa"
+                    description="Upload your question paper PDF or photo and let AI turn it into an online test automatically."
+                    keywords={["ai test generator", "pdf to quiz", "question paper parser", "exam maker for teachers"]}
                 />
 
-                <div className="flex-1 flex flex-col min-w-0">
-                    {/* Main Upload Page Container */}
-                    <div className="container mx-auto px-4 max-w-2xl pt-4 pb-12 flex-1 flex flex-col justify-start">
-                        {/* Header */}
-                        <div className="text-center mt-2 mb-6 md:mb-8 space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">AI Powered</p>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
-                                Create a Test in Minutes
-                            </h1>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Upload any file — AI reads it and builds your test automatically
-                            </p>
-                        </div>
+                {/* Single OS-native File Input */}
+                <input
+                    ref={documentInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
+                    multiple
+                    onChange={async (e) => {
+                        const selectedFiles = Array.from(e.target.files || []);
+                        if (!selectedFiles.length) return;
+                        const newFiles: SelectedFile[] = [];
+                        for (const file of selectedFiles) {
+                            const preview = await createPreview(file);
+                            newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
+                        }
+                        const hasImages = newFiles.some(f => f.type === 'image');
+                        setFiles(newFiles);
+                        setUploadType(hasImages ? 'image' : 'document');
+                        setError(null);
+                        setParsedData(null);
+                        setMode(null);
+                    }}
+                    className="hidden"
+                />
 
-                        {/* ── Unified Upload Drop Zone ── */}
+                <div className="max-w-2xl w-full space-y-8">
+                    {/* Header: Golden Spiral Peak */}
+                    <div className="text-center space-y-2">
+                        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                            Create Your Online Test
+                        </h1>
+                        <p className="text-base text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
+                            Turn your exam paper into an interactive online test in seconds.
+                        </p>
+                    </div>
+
+                    {/* TWO CHOICE LAYOUT */}
+                    <div className="space-y-6">
+                        {/* CHOICE 1: PRIMARY UPLOAD CARD (Single Dominant CTA) */}
                         <div
-                            className="relative bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-200 cursor-pointer group shadow-sm mb-4"
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
                             onClick={() => documentInputRef.current?.click()}
+                            className={`group relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-[32px] p-8 sm:p-10 border-2 transition-all duration-300 cursor-pointer shadow-[0_20px_50px_rgba(59,130,246,0.07)] hover:shadow-[0_25px_60px_rgba(59,130,246,0.15)] hover:-translate-y-0.5 ${
+                                isDragging
+                                    ? 'border-[#007AFF] bg-blue-50/50 dark:bg-blue-950/40 scale-[1.01]'
+                                    : 'border-blue-100 dark:border-blue-900/40 hover:border-[#007AFF]/60'
+                            }`}
                         >
-                            {/* Hidden file inputs */}
-                            <Input
-                                ref={documentInputRef}
-                                type="file"
-                                accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp"
-                                multiple
-                                onChange={async (e) => {
-                                    const selectedFiles = Array.from(e.target.files || []);
-                                    if (!selectedFiles.length) return;
-                                    const newFiles: SelectedFile[] = [];
-                                    for (const file of selectedFiles) {
-                                        const preview = await createPreview(file);
-                                        newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
-                                    }
-                                    const hasImages = newFiles.some(f => f.type === 'image');
-                                    setFiles(newFiles);
-                                    setUploadType(hasImages ? 'image' : 'document');
-                                    setError(null);
-                                    setParsedData(null);
-                                    setMode(null);
-                                }}
-                                className="hidden"
-                            />
-                            <Input
-                                ref={imageInputRef}
-                                type="file"
-                                accept=".png,.jpg,.jpeg,.webp"
-                                multiple
-                                onChange={handleImageChange}
-                                className="hidden"
-                            />
+                            {/* Recommended Badge */}
+                            <div className="absolute top-6 right-6">
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 text-xs font-bold shadow-sm">
+                                    ⭐ Recommended
+                                </span>
+                            </div>
 
-                            {/* Drop zone body */}
-                            <div className="p-8 sm:p-10 flex flex-col items-center gap-4">
-                                {/* Animated icon */}
-                                <div className="w-16 h-16 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                                    <Sparkles className="w-8 h-8 text-indigo-500" />
+                            <div className="flex flex-col items-center text-center space-y-5">
+                                {/* Large SF Circular Icon */}
+                                <div className="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#007AFF] dark:text-blue-400 flex items-center justify-center group-hover:scale-105 group-hover:bg-[#007AFF] group-hover:text-white transition-all duration-300 shadow-inner">
+                                    <FileUp className="w-10 h-10 stroke-[1.75]" />
                                 </div>
 
-                                <div className="text-center space-y-1">
-                                    <p className="font-semibold text-slate-700 dark:text-slate-200">
-                                        Drop your file here, or <span className="text-indigo-600 dark:text-indigo-400 underline underline-offset-2">browse</span>
-                                    </p>
-                                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                                        PDF · DOC · PPT · JPG · PNG · and more
+                                {/* Text content */}
+                                <div className="space-y-2 max-w-md">
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                        Upload Question Paper
+                                    </h2>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        Select a PDF, Word document, or photo of your exam paper. We'll automatically convert it into an online test.
                                     </p>
                                 </div>
 
-                                {/* Upload type chips */}
-                                <div className="flex flex-wrap justify-center gap-2 pt-1">
-                                    {/* PDF / Document */}
+                                {/* Dominant Button */}
+                                <div className="pt-2">
                                     <button
                                         type="button"
-                                        onClick={(e) => { e.stopPropagation(); documentInputRef.current?.click(); }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
+                                        className="inline-flex items-center justify-center gap-2.5 bg-[#007AFF] hover:bg-[#0062CC] active:bg-[#0051B3] text-white font-semibold text-base px-8 py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 transition-all duration-200 group-hover:scale-[1.02]"
                                     >
-                                        <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                                        PDF / DOC / PPT
+                                        <Upload className="w-5 h-5" />
+                                        <span>Choose File</span>
                                     </button>
+                                </div>
 
-                                    {/* Image */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                                    >
-                                        <ImageIcon className="w-3.5 h-3.5 text-green-500" />
-                                        Photo / Image
-                                    </button>
-
-                                    {/* Camera */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); openCamera(); }}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all text-xs font-medium text-slate-600 dark:text-slate-300"
-                                    >
-                                        <Camera className="w-3.5 h-3.5 text-rose-500" />
-                                        Camera
-                                    </button>
+                                {/* File Specs & Time Info */}
+                                <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs text-slate-400 dark:text-slate-500">
+                                    <span>Supported: PDF, Word (.docx), or Photos (JPG, PNG)</span>
+                                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+                                    <span className="font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                                        ⚡ Ready in ~2–3 minutes
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Helper note */}
-                        <p className="text-center text-xs text-slate-400 dark:text-slate-500 mb-8">
-                            AI will read your file and extract or generate questions automatically ✨
-                        </p>
+                        {/* CHOICE 2: SECONDARY MANUAL CREATION CARD */}
+                        <div
+                            onClick={() => { window.location.href = '/create-test'; }}
+                            className="group bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg rounded-[28px] p-6 sm:p-7 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between gap-4"
+                        >
+                            <div className="flex items-center gap-4 min-w-0">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                                    <PencilLine className="w-6 h-6 stroke-[1.75]" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#007AFF] transition-colors">
+                                        Create Test Manually
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                                        Type or paste questions manually with full control over marks, options, and sections.
+                                    </p>
+                                </div>
+                            </div>
 
-                        {/* ── Divider ── */}
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-700" />
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">or</span>
-                            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-700" />
+                            <div className="flex items-center gap-1 text-xs font-semibold text-[#007AFF] shrink-0 group-hover:translate-x-1 transition-transform">
+                                <span>Start Manually</span>
+                                <ChevronRight className="w-4 h-4" />
+                            </div>
                         </div>
+                    </div>
 
-                        {/* ── Manual Creation Card ── */}
+                    {/* NEED HELP FOOTER SECTION */}
+                    <div className="pt-4 flex flex-col items-center">
                         <button
                             type="button"
-                            onClick={() => { window.location.href = '/create-test'; }}
-                            className="w-full text-left bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-2xl overflow-hidden flex items-stretch hover:shadow-xl hover:shadow-indigo-200 dark:hover:shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 group min-h-[140px] sm:min-h-[175px] max-h-[220px]"
+                            onClick={() => setShowHelpDialog(true)}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs font-medium transition-colors"
                         >
-                            {/* Left: scaled-down showcase preview (centered, organized, and larger) */}
-                            <div
-                                className="relative shrink-0 overflow-hidden bg-indigo-950/25 border-r border-white/10 hidden sm:block w-[140px] md:w-[200px]"
-                                aria-hidden="true"
-                            >
-                                {/* semi-transparent overlay so it blends with card */}
-                                <div className="absolute inset-0 bg-indigo-600/10 z-10 pointer-events-none" />
-                                {/* Showcase centered & scaled to fit nicely with padding */}
-                                <div
-                                    className="absolute top-1/2 left-1/2"
-                                    style={{
-                                        transform: 'translate(-50%, -50%) scale(0.29)',
-                                        width: '640px',   /* original max-width */
-                                        height: '580px',  /* original height */
-                                        pointerEvents: 'none',
-                                        userSelect: 'none',
-                                    }}
-                                >
-                                    <ManualEditorShowcase />
-                                </div>
-                            </div>
-
-                            {/* Right: text + arrow */}
-                            <div className="flex flex-1 items-center justify-between gap-3 px-5 py-5">
-                                <div className="min-w-0">
-                                    <p className="font-bold text-white text-sm sm:text-base leading-snug">
-                                        ✏️ Build Your Own Test
-                                    </p>
-                                    <p className="text-xs text-indigo-100 mt-1 leading-relaxed">
-                                        Write questions yourself — set marks, sections &amp; rules. Full control, no AI needed.
-                                    </p>
-                                </div>
-                                <ArrowLeft className="w-5 h-5 text-white/70 rotate-180 shrink-0 group-hover:translate-x-1 transition-transform" />
-                            </div>
+                            <HelpCircle className="w-4 h-4 text-blue-500" />
+                            <span>Need Help? How it works</span>
                         </button>
-
-                        {/* Camera Dialog */}
-                        <Dialog open={showCamera} onOpenChange={setShowCamera}>
-                            <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                    <DialogTitle>Capture Image</DialogTitle>
-                                    <DialogDescription>
-                                        Position your document in the camera view and click capture
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="relative">
-                                    <video
-                                        ref={videoRef}
-                                        autoPlay
-                                        playsInline
-                                        className="w-full rounded-lg"
-                                    />
-                                    <canvas ref={canvasRef} className="hidden" />
-                                </div>
-                                <div className="flex justify-center gap-2">
-                                    <Button variant="outline" onClick={closeCamera}>
-                                        Cancel
-                                    </Button>
-                                    <Button onClick={captureImage} className="gap-2">
-                                        <Camera className="w-4 h-4" />
-                                        Capture
-                                    </Button>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
                     </div>
+
+                    {/* HELP TUTORIAL DIALOG */}
+                    <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
+                        <DialogContent className="max-w-md rounded-[28px] p-6">
+                            <DialogHeader>
+                                <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                                    <HelpCircle className="w-5 h-5 text-[#007AFF]" />
+                                    How to Create a Test
+                                </DialogTitle>
+                                <DialogDescription className="text-sm text-slate-500 pt-1">
+                                    Follow these 3 simple steps to generate an online test for your students.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 font-bold text-xs flex items-center justify-center shrink-0">1</div>
+                                    <div>
+                                        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Select Question Paper</p>
+                                        <p className="text-xs text-slate-500">Click "Choose File" and upload your exam paper in PDF, Word, or photo format.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 font-bold text-xs flex items-center justify-center shrink-0">2</div>
+                                    <div>
+                                        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Automatic Question Reading</p>
+                                        <p className="text-xs text-slate-500">The system automatically extracts all questions, multiple choice options, and diagrams.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-600 font-bold text-xs flex items-center justify-center shrink-0">3</div>
+                                    <div>
+                                        <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">Review &amp; Share with Students</p>
+                                        <p className="text-xs text-slate-500">Review the extracted questions, make any quick adjustments, and publish your test!</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <Button className="bg-[#007AFF] hover:bg-[#0062CC] rounded-xl px-5 text-xs font-semibold" onClick={() => setShowHelpDialog(false)}>
+                                    Got It!
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
         );
     }
 
-    // Step 2: Mode Selection (after files are selected, before processing)
+
+// Step 2: Mode Selection (after files are selected, before processing)
     if (!loading && !generatingMore && !parsedData) {
         const hasPDF = files.some(f => f.type === 'pdf');
         const hasImages = files.some(f => f.type === 'image');

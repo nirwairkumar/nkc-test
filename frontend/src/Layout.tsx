@@ -22,10 +22,12 @@ export default function Layout() {
 
     const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
-    // Minimize sidebar by default when navigating to /dashboard
+    // Expand sidebar on AI page, minimize on dashboard
     useEffect(() => {
         if (location.pathname === '/dashboard') {
             setIsCollapsed(true);
+        } else if (location.pathname === '/generate-with-ai') {
+            setIsCollapsed(false);
         }
     }, [location.pathname]);
 
@@ -66,7 +68,7 @@ export default function Layout() {
 
     // Check if logged in user is Teacher or Institution
     const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);
-    const isTeacherOrInstitution = (designation === 'Teacher' || designation === 'Institution') || (user?.app_metadata?.role === 'admin' && designation !== 'Student');
+    const isTeacherOrInstitution = (designation === 'Teacher' || designation === 'Institution' || designation === 'Other' || designation === 'Guest') || (user?.app_metadata?.role === 'admin' && designation !== 'Student');
 
     // Hide navbar & sidebar on live test pages
     const isResultsPage = location.pathname.startsWith('/results');
@@ -106,7 +108,7 @@ export default function Layout() {
             )}
             
             <div className="flex flex-1 relative min-h-[calc(100vh-4rem)]">
-                {user && !isSidebarHidden && (
+                {!isSidebarHidden && (
                     <AppSidebar
                         isCollapsed={isCollapsed}
                         setIsCollapsed={setIsCollapsed}

@@ -38,7 +38,7 @@ const formSchema = z.object({
     password: z.string().optional(), // Validation handled manually or via refinement to allow empty for "forgot" view
     confirmPassword: z.string().optional(),
     name: z.string().optional(),
-    designation: z.enum(["Student", "Teacher", "Institution", "Guest"]).optional(),
+    designation: z.enum(["Teacher", "Institution", "Other"]).optional(),
 }).refine((data) => {
     // Signup passwords match check
     /* 
@@ -312,10 +312,9 @@ export default function AuthForm() {
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="Student">Student</SelectItem>
                                                         <SelectItem value="Teacher">Teacher</SelectItem>
                                                         <SelectItem value="Institution">Institution</SelectItem>
-                                                        <SelectItem value="Guest">Guest</SelectItem>
+                                                        <SelectItem value="Other">Other</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
