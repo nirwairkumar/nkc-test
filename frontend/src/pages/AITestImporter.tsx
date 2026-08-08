@@ -436,7 +436,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         });
     };
 
-    const compressImageFile = async (file: File, maxDim = 1400, quality = 0.8): Promise<File> => {
+    const compressImageFile = async (file: File, maxDim = 1024, quality = 0.75): Promise<File> => {
         if (!file.type.startsWith('image/')) return file;
         return new Promise((resolve) => {
             const img = new Image();
@@ -464,7 +464,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 ctx.drawImage(img, 0, 0, width, height);
                 canvas.toBlob(
                     (blob) => {
-                        if (!blob || blob.size >= file.size) {
+                        if (!blob) {
                             resolve(file);
                         } else {
                             const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
@@ -874,10 +874,19 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
         const formData = new FormData();
 
-        // Add all files with failsafe client compression (reduces 40MB payload to ~1MB)
+        // Add all files with client compression (ChatGPT/Gemini 1024px standard: 40MB -> ~600KB)
+        let processedCount = 0;
         for (const fileObj of files) {
+            processedCount++;
+            if (files.length > 2) {
+                setStreamProgress({
+                    stage: 'uploading',
+                    percent: Math.min(5 + Math.round((processedCount / files.length) * 15), 20),
+                    message: `Optimizing image ${processedCount} of ${files.length} for fast AI extraction...`
+                });
+            }
             const fileToSend = fileObj.file.type.startsWith('image/')
-                ? await compressImageFile(fileObj.file, 1400, 0.8)
+                ? await compressImageFile(fileObj.file, 1024, 0.75)
                 : fileObj.file;
             formData.append('files', fileToSend);
         }

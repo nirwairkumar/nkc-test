@@ -912,7 +912,7 @@ async def process_files_hybrid_stream(
         else:
             # Chunked/parallel mode
             MAX_PAGES_PER_BATCH = 3
-            OVERLAP_PAGES = 1
+            OVERLAP_PAGES = 0 if not has_pdfs else 1
             
             batches = []
             start_idx = 0
@@ -997,11 +997,24 @@ async def process_files_hybrid_stream(
                                 if question_callback:
                                     await question_callback({"type": "question", "question": q, "batch": b_num})
                                     
-                        result = await stream_gemini_and_parse(
-                            content_parts, batch_embedded,
-                            progress_callback=None,
-                            question_callback=local_question_callback
-                        )
+                        result = None
+                        for attempt in range(2):
+                            try:
+                                result = await stream_gemini_and_parse(
+                                    content_parts, batch_embedded,
+                                    progress_callback=None,
+                                    question_callback=local_question_callback
+                                )
+                                if result and (result.get("questions") or batch_questions_found):
+                                    break
+                            except Exception as b_err:
+                                logger.warning(f"Vision batch {b_num} attempt {attempt + 1} failed: {b_err}")
+                                if attempt == 1:
+                                    raise b_err
+                                await asyncio.sleep(1)
+                        
+                        if not result:
+                            result = {"questions": batch_questions_found, "title": None, "description": None}
                         
                         batch_questions = result.get("questions") or batch_questions_found
                         
