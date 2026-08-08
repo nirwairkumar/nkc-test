@@ -7,9 +7,9 @@ import {
     Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2,
     Radio, BarChart2
 } from 'lucide-react';
-const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide').then(module => ({ default: module.SolutionUploadGuide })));
-const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide').then(module => ({ default: module.TestUploadFormatGuide })));
-const ScientificNotationGuide = React.lazy(() => import('@/components/ScientificNotationGuide').then(module => ({ default: module.ScientificNotationGuide })));
+const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide').then(module => ({ default: module.default || module.SolutionUploadGuide })));
+const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide').then(module => ({ default: module.default || module.TestUploadFormatGuide })));
+const ScientificNotationGuide = React.lazy(() => import('@/components/ScientificNotationGuide').then(module => ({ default: module.default || module.ScientificNotationGuide })));
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';

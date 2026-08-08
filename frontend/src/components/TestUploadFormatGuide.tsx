@@ -1547,3 +1547,5 @@ Check every section's header or overall syllabus instructions to determine if at
     </Dialog>
   );
 }
+
+export default TestUploadFormatGuide;

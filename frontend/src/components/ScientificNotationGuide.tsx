@@ -371,3 +371,5 @@ export function ScientificNotationGuide({ isInline = false }: { isInline?: boole
         </div>
     );
 }
+
+export default ScientificNotationGuide;

@@ -214,3 +214,5 @@ export function SolutionUploadGuide({ open: controlledOpen, onOpenChange, trigge
         </Dialog>
     );
 }
+
+export default SolutionUploadGuide;
