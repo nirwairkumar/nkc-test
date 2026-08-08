@@ -182,7 +182,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         data?: any;
     } | null>(null);
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
-    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
+    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('parallel');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // AI Generation Custom Parameters State
@@ -606,12 +606,24 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const video = videoRef.current;
             const canvas = canvasRef.current;
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            let { videoWidth: width, videoHeight: height } = video;
+            const maxDim = 1600;
+            if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                } else {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
 
             const ctx = canvas.getContext('2d');
             if (ctx) {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, width, height);
 
                 canvas.toBlob((blob) => {
                     if (blob) {
@@ -628,7 +640,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         };
                         reader.readAsDataURL(file);
                     }
-                }, 'image/jpeg', 0.9);
+                }, 'image/jpeg', 0.85);
             }
         }
         closeCamera();

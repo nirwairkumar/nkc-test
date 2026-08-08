@@ -493,6 +493,10 @@ async def process_files_hybrid_stream(
     prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
     result_data = None
 
+    if not has_pdfs and image_files:
+        logger.info("Pure image upload detected: forcing PARALLEL mode for instant extraction")
+        algorithm = "parallel"
+
     if algorithm == "stateful":
         # --- STATEFUL SEQUENTIAL CHAT PIPELINE ---
         logger.info("Using STATEFUL sequential chat pipeline")
