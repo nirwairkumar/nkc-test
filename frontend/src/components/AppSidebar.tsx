@@ -259,7 +259,7 @@ Item 2 & Value B & 200 \\\\
             {/* Mobile Backdrop Overlay */}
             {mobileOpen && (
                 <div 
-                    className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs md:hidden transition-opacity animate-in fade-in duration-200"
+                    className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs md:hidden transition-opacity animate-in fade-in duration-200"
                     onClick={() => setMobileOpen(false)}
                 />
             )}
@@ -267,11 +267,11 @@ Item 2 & Value B & 200 \\\\
             {/* Sidebar Container */}
             <aside
                 className={`
-                    fixed md:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)]
-                    bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-md
+                    fixed md:sticky top-0 md:top-16 left-0 z-50 md:z-40 h-full md:h-[calc(100vh-4rem)]
+                    bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl md:backdrop-blur-md
                     border-r border-slate-200/80 dark:border-slate-800/80
                     transition-all duration-300 ease-in-out flex flex-col justify-between
-                    ${mobileOpen ? 'translate-x-0 w-64 shadow-2xl' : '-translate-x-full md:translate-x-0'}
+                    ${mobileOpen ? 'translate-x-0 w-72 sm:w-80 shadow-2xl' : '-translate-x-full md:translate-x-0'}
                     ${!mobileOpen && isCollapsed ? 'md:w-16' : 'md:w-64'}
                 `}
             >

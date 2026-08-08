@@ -4,7 +4,7 @@ import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
-    FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper
+    FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -81,20 +81,60 @@ export default function AdminDashboard() {
         }
     ];
 
+    const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+
     return (
         <div className="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row font-sans">
             <SEO title="Admin Workspace - TestoZa" noindex={true} />
 
+            {/* Top Bar for Mobile Phone Screen */}
+            <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#1e293b] text-white border-b border-slate-700/60 shrink-0 z-30">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setMobileOpen(true)}
+                        className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                        aria-label="Open Navigation Menu"
+                    >
+                        <PanelLeft className="h-5 w-5" />
+                    </button>
+                    <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <h2 className="text-sm font-bold tracking-tight text-white">TestoZa Admin</h2>
+                    </div>
+                </div>
+                <span className="text-[10px] bg-indigo-600/80 text-white font-mono font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                    {activeTab}
+                </span>
+            </div>
+
+            {/* Mobile Backdrop Overlay */}
+            {mobileOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs md:hidden transition-opacity animate-in fade-in duration-200"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-full md:w-64 h-auto md:h-full bg-[#1e293b] text-slate-100 border-r border-slate-700/60 flex flex-col shrink-0 shadow-lg">
-                <div className="p-5 border-b border-slate-700/60 flex items-center justify-between shrink-0">
+            <aside className={`
+                fixed md:sticky top-0 left-0 z-50 md:z-40 h-full md:h-full w-72 md:w-64 bg-[#1e293b] text-slate-100 border-r border-slate-700/60 flex flex-col shrink-0 shadow-2xl transition-transform duration-300 ease-in-out
+                ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
+                <div className="p-4 md:p-5 border-b border-slate-700/60 flex items-center justify-between shrink-0">
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                            <h2 className="text-lg font-bold tracking-tight text-white">TestoZa Admin</h2>
+                            <h2 className="text-base md:text-lg font-bold tracking-tight text-white">TestoZa Admin</h2>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-1 truncate max-w-[200px]" title={user.email}>{user.email}</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[200px]" title={user.email}>{user.email}</p>
                     </div>
+                    <button
+                        onClick={() => setMobileOpen(false)}
+                        className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                        aria-label="Close menu"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
                 </div>
 
                 <nav className="flex-1 p-3 space-y-6 overflow-y-auto min-h-0">
@@ -104,7 +144,10 @@ export default function AdminDashboard() {
                             {group.items.map((item) => (
                                 <button
                                     key={item.id}
-                                    onClick={() => handleTabChange(item.id)}
+                                    onClick={() => {
+                                        handleTabChange(item.id);
+                                        setMobileOpen(false);
+                                    }}
                                     className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                                         (activeTab === item.id || (item.id === 'ai_analysis' && activeTab === 'ai_audit'))
                                             ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
@@ -121,7 +164,10 @@ export default function AdminDashboard() {
 
                 <div className="p-3 border-t border-slate-700/60 bg-slate-900/40 shrink-0">
                     <button
-                        onClick={handleLogout}
+                        onClick={() => {
+                            setMobileOpen(false);
+                            handleLogout();
+                        }}
                         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-950/30 transition-colors"
                     >
                         <LogOut className="h-4 w-4" />
