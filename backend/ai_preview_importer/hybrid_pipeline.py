@@ -881,7 +881,7 @@ async def process_files_hybrid_stream(
         if total_pages == 0:
             raise ValueError("No pages could be processed")
 
-        if total_pages <= 15:
+        if total_pages <= 3:
             if progress_callback:
                 await progress_callback({
                     'stage': 'processing',
@@ -907,7 +907,7 @@ async def process_files_hybrid_stream(
                 result_data = await _parse_response(raw_text, all_embedded_images)
         else:
             # Chunked/parallel mode
-            MAX_PAGES_PER_BATCH = 5
+            MAX_PAGES_PER_BATCH = 3
             OVERLAP_PAGES = 1
             
             batches = []

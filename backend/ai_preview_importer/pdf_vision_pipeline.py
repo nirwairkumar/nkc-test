@@ -1123,17 +1123,27 @@ def append_extracted_images_to_content(content_parts: List, embedded_images: Lis
             logger.error(f"Failed to append image {img_id} to content: {e}")
 
 
-def convert_image_to_bytes(image_bytes: bytes, target_format: str = "png") -> bytes:
-    """Convert any image format to standardized bytes."""
+def convert_image_to_bytes(image_bytes: bytes, target_format: str = "jpeg", max_dim: int = 1600, quality: int = 85) -> bytes:
+    """Convert and optimize any image format to standardized, downscaled JPEG bytes for fast AI vision processing."""
     try:
-        from PIL import Image  # lazy-loaded: only used by OCR pipeline
+        from PIL import Image, ImageOps  # lazy-loaded: only used by OCR pipeline
         img = Image.open(io.BytesIO(image_bytes))
-        # Convert to RGB if necessary (for PNG compatibility)
-        if img.mode in ('RGBA', 'P'):
+        img = ImageOps.exif_transpose(img)
+
+        if img.mode in ('RGBA', 'P', 'LA'):
             img = img.convert('RGB')
-        
+
+        # Downscale oversized camera photos (e.g., 4000x3000) to max_dim (1600px)
+        w, h = img.size
+        if max(w, h) > max_dim:
+            scale = max_dim / float(max(w, h))
+            new_w = max(1, int(w * scale))
+            new_h = max(1, int(h * scale))
+            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
         output = io.BytesIO()
-        img.save(output, format=target_format.upper())
+        fmt = "JPEG" if target_format.lower() in ["jpg", "jpeg"] else target_format.upper()
+        img.save(output, format=fmt, quality=quality, optimize=True)
         return output.getvalue()
     except Exception as e:
         logger.warning(f"Failed to convert image: {e}, returning original")
@@ -1486,7 +1496,7 @@ async def process_files(
 
     logger.info(f"Total pages/images to process: {len(all_page_images)}")
     # Step 3: Process pages (use single batch for smaller files, chunked for larger ones)
-    SINGLE_BATCH_PAGE_LIMIT = 15
+    SINGLE_BATCH_PAGE_LIMIT = 3
     prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
     total_pages = len(all_page_images)
     
@@ -1560,7 +1570,7 @@ async def process_files(
             logger.error(f"Error in single batch processing: {e}. Falling back to chunked processing...")
 
     # Fallback to chunked/parallel processing for larger files
-    MAX_PAGES_PER_BATCH = 5
+    MAX_PAGES_PER_BATCH = 3
     OVERLAP_PAGES = 1  # Include last page of previous batch in next batch
     all_questions = []
     
@@ -2341,7 +2351,7 @@ async def process_files_stream(
     prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
     
     # Step 5: Process pages
-    SINGLE_BATCH_PAGE_LIMIT = 15
+    SINGLE_BATCH_PAGE_LIMIT = 3
     first_batch_title = None
     first_batch_desc = None
     
@@ -2467,7 +2477,7 @@ async def process_files_stream(
             logger.error(f"Error in single batch streaming: {e}. Falling back to chunked processing...")
 
     # Fallback/chunked mode for larger files
-    MAX_PAGES_PER_BATCH = 5
+    MAX_PAGES_PER_BATCH = 3
     OVERLAP_PAGES = 1
     
     batches = []
