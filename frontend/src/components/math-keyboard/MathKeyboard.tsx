@@ -23,7 +23,7 @@ function isIndexInsideTextCommand(expr: string, targetIdx: number): boolean {
         cmdName += expr[i];
         i++;
       }
-      
+
       if (cmdName === 'text') {
         // Find opening '{'
         while (i < expr.length && expr[i] !== '{') {
@@ -60,7 +60,7 @@ function parseTextCommand(
 ): { result: string; newIndex: number } {
   let result = '';
   let i = startIndex;
-  
+
   const insertCursorIfNeeded = (idx: number) => {
     if (caretIndex !== null && idx === caretIndex) {
       result += '\\htmlClass{math-cursor}{}';
@@ -73,7 +73,7 @@ function parseTextCommand(
     result += expr[i];
     i++;
   }
-  
+
   if (i < expr.length && expr[i] === '{') {
     i++;
     let braceCount = 1;
@@ -82,7 +82,7 @@ function parseTextCommand(
       const charAt = expr[i];
       if (charAt === '{') braceCount++;
       if (charAt === '}') braceCount--;
-      
+
       if (braceCount > 0) {
         if (charAt === ' ') {
           result += `\\htmlClass{math-token token-idx-${i}}{\\text{\\ }}`;
@@ -103,31 +103,31 @@ function parseTextCommand(
       i++;
     }
   }
-  
+
   return { result, newIndex: i };
 }
 
 function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): string {
   let result = '';
   let i = 0;
-  
+
   const insertCursorIfNeeded = (idx: number) => {
     if (caretIndex !== null && idx === caretIndex) {
       result += '\\htmlClass{math-cursor}{}';
     }
   };
-  
+
   while (i < expr.length) {
     // Insert cursor before processing the character at index i
     insertCursorIfNeeded(i);
-    
+
     const char = expr[i];
-    
+
     // 1. Handle escape sequences (control words like \frac, \alpha, \begin, etc.)
     if (char === '\\') {
       const commandStartIdx = i;
       i++;
-      
+
       // Consume command name
       let cmdName = '';
       while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
@@ -156,13 +156,13 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
           }
         }
       }
-      
+
       if (cmdName === '') {
         // Escaped symbol like \\, \&, \{, \}, \_, \%, \#, \$
         const nextChar = expr[i] || '';
         result += '\\' + nextChar;
         i++;
-        
+
         // If it is \\ followed by [, consume the entire [...] bracket to prevent wrapping its contents
         if (nextChar === '\\' && i < expr.length && expr[i] === '[') {
           while (i < expr.length && expr[i] !== ']') {
@@ -176,7 +176,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
         }
         continue;
       }
-      
+
       if (cmdName === 'text') {
         const parsed = parseTextCommand(expr, i, caretIndex);
         result += parsed.result;
@@ -186,7 +186,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
 
       if (cmdName === 'ce') {
         let ceContent = '\\ce';
-        
+
         // Consume environment/ce braces
         while (i < expr.length && expr[i] !== '{') {
           if (caretIndex !== null && i === caretIndex) {
@@ -213,7 +213,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
             i++;
           }
         }
-        
+
         result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{${ceContent}}`;
         continue;
       }
@@ -221,7 +221,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
       // If it's a begin/end/hline/cline command, skip wrapping
       if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'hline' || cmdName === 'cline') {
         result += '\\' + cmdName;
-        
+
         if (cmdName === 'begin' || cmdName === 'end') {
           let envName = '';
           // Consume environment/ce braces
@@ -244,7 +244,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
               i++;
             }
           }
-          
+
           // If the environment is 'array', we must skip the column specification brace (e.g. {c|c}) too
           if (envName.includes('array')) {
             while (i < expr.length && expr[i] !== '{') {
@@ -298,7 +298,7 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
         if (temp < expr.length && (expr[temp] === '{' || expr[temp] === '[')) {
           hasBraces = true;
         }
-        
+
         if (hasBraces) {
           // Output structural command normally
           result += '\\' + cmdName;
@@ -313,17 +313,17 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
       }
       continue;
     }
-    
+
     // 2. Handle syntax chars (curly braces, caret, subscript, ampersand, brackets, spaces)
     if (char === '^' || char === '_') {
       result += char;
       i++;
-      
+
       const nextChar = expr[i];
       if (nextChar && nextChar !== '{') {
         result += '{';
         insertCursorIfNeeded(i);
-        
+
         // Inline parse the next token inside the braces
         if (nextChar === '\\') {
           const commandStartIdx = i;
@@ -429,20 +429,20 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
       }
       continue;
     }
-    
+
     if (['{', '}', '&', '[', ']', ' ', '\n', '\t'].includes(char)) {
       result += char;
       i++;
       continue;
     }
-    
+
     // 3. Handle placeholders (question marks)
     if (char === '?') {
       result += `\\htmlClass{math-placeholder token-idx-${i}}{\\color{#1e40af}{?}}`;
       i++;
       continue;
     }
-    
+
     // 4. Handle visible literal content (numbers, letters, operators, variables)
     if (/[0-9a-zA-Z+\-*/=<>!.,()]/.test(char)) {
       result += `\\htmlClass{math-token token-idx-${i}}{${char}}`;
@@ -452,10 +452,10 @@ function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): str
       i++;
     }
   }
-  
+
   // Insert cursor at the very end of expression if caretIndex is at expr.length
   insertCursorIfNeeded(expr.length);
-  
+
   return result;
 }
 
@@ -606,7 +606,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     status: 'idle' | 'typing' | 'converted';
     text: string;
   }>({ status: 'idle', text: '' });
-  
+
   const lastTextareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const expressionInputRef = useRef<HTMLInputElement>(null);
@@ -625,7 +625,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     if (ceAnim.status === 'typing') {
       const fullText = "2H2 + O2 -> 2H2O";
       let index = 0;
-      
+
       const interval = setInterval(() => {
         index++;
         setCeAnim(prev => {
@@ -729,25 +729,25 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       }
       return;
     }
-    
+
     if (latex === '__CLEAR__') {
       setExpression('');
       setCaretIndex(0);
       return;
     }
-    
+
     const inputEl = expressionInputRef.current;
     let newExpr = expression;
     let nextSelectionStart = expression.length;
     let nextSelectionEnd = expression.length;
-    
+
     if (inputEl) {
       const start = inputEl.selectionStart ?? inputEl.value.length;
       const end = inputEl.selectionEnd ?? start;
       const before = expression.slice(0, start);
       const after = expression.slice(end);
       newExpr = before + latex + after;
-      
+
       const placeholderOffset = latex.indexOf('?');
       if (placeholderOffset !== -1) {
         nextSelectionStart = start + placeholderOffset;
@@ -756,10 +756,10 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         nextSelectionStart = start + latex.length;
         nextSelectionEnd = nextSelectionStart;
       }
-      
+
       setExpression(newExpr);
       setCaretIndex(nextSelectionStart);
-      
+
       setTimeout(() => {
         inputEl.focus();
         inputEl.setSelectionRange(nextSelectionStart, nextSelectionEnd);
@@ -781,14 +781,14 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       const val = activeEl.value;
       const text = '\\text{?}';
       const newVal = val.slice(0, start) + text + val.slice(end);
-      
+
       const setter = Object.getOwnPropertyDescriptor(
         activeEl instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
         'value'
       )?.set;
       setter?.call(activeEl, newVal);
       activeEl.dispatchEvent(new Event('input', { bubbles: true }));
-      
+
       const nextCursor = start + 6;
       setTimeout(() => {
         activeEl.focus();
@@ -805,31 +805,31 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     const rect = container.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
-    
+
     const elements = Array.from(container.querySelectorAll('.math-placeholder, .math-token'));
     if (elements.length === 0) {
       setCaretIndex(0);
       return;
     }
-    
+
     let closestEl: Element | null = null;
     let minDistance = Infinity;
-    
+
     for (const el of elements) {
       const elRect = el.getBoundingClientRect();
       const elX = elRect.left - rect.left + elRect.width / 2;
       const elY = elRect.top - rect.top + elRect.height / 2;
-      
+
       const dist = Math.pow(clickX - elX, 2) + Math.pow(clickY - elY, 2);
       if (dist < minDistance) {
         minDistance = dist;
         closestEl = el;
       }
     }
-    
+
     const firstRect = elements[0].getBoundingClientRect();
     const lastRect = elements[elements.length - 1].getBoundingClientRect();
-    
+
     if (e.clientX < firstRect.left - 10) {
       setCaretIndex(0);
       const inputEl = expressionInputRef.current;
@@ -839,7 +839,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       }
       return;
     }
-    
+
     if (e.clientX > lastRect.right + 10) {
       const endIdx = expression.length;
       setCaretIndex(endIdx);
@@ -850,15 +850,15 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       }
       return;
     }
-    
+
     if (closestEl) {
       const classList = Array.from(closestEl.classList);
       const idxClass = classList.find(c => c.startsWith('placeholder-idx-') || c.startsWith('token-idx-'));
-      
+
       if (idxClass) {
         const rawIdx = parseInt(idxClass.replace(/^(placeholder|token)-idx-/, ''), 10);
         const isPlaceholder = closestEl.classList.contains('math-placeholder');
-        
+
         const inputEl = expressionInputRef.current;
         if (inputEl) {
           inputEl.focus();
@@ -896,14 +896,14 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     const end = ta.selectionEnd ?? start;
     const before = ta.value.slice(0, start);
     const after = ta.value.slice(end);
-    
+
     const setter = Object.getOwnPropertyDescriptor(
       ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
       'value'
     )?.set;
     setter?.call(ta, before + textToInsert + after);
     ta.dispatchEvent(new Event('input', { bubbles: true }));
-    
+
     const pos = start + textToInsert.length;
     setTimeout(() => {
       ta.focus();
@@ -1002,7 +1002,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             </div>
           )}
         </div>
-        
+
         {/* Raw LaTeX Input */}
         <div className="flex items-center gap-2">
           <input
@@ -1022,12 +1022,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                   const end = inputEl.selectionEnd ?? start;
                   const before = expression.slice(0, start);
                   const after = expression.slice(end);
-                  
+
                   const isInsideText = isIndexInsideTextCommand(expression, start);
                   const spaceStr = isInsideText ? ' ' : '\\,';
                   const newExpr = before + spaceStr + after;
                   setExpression(newExpr);
-                  
+
                   const nextPos = start + spaceStr.length;
                   setCaretIndex(nextPos);
                   setTimeout(() => {
@@ -1096,11 +1096,10 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             <button
               key={t.id}
               onClick={() => { setTopic(t.id); setAbcMode(false); }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all ${
-                topic === t.id
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all ${topic === t.id
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-blue-700 hover:bg-blue-100'
-              }`}
+                }`}
             >
               {t.label}
             </button>
@@ -1170,13 +1169,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
               <button
                 type="button"
                 onClick={() => setShiftOn(s => !s)}
-                className={`w-12 h-10 rounded-lg text-lg font-bold flex items-center justify-center transition-all ${
-                  shiftOn ? 'bg-blue-600 text-white border border-blue-700 shadow-inner' : 'bg-blue-100 border border-blue-200 text-blue-800 hover:bg-blue-200'
-                }`}
+                className={`w-12 h-10 rounded-lg text-lg font-bold flex items-center justify-center transition-all ${shiftOn ? 'bg-blue-600 text-white border border-blue-700 shadow-inner' : 'bg-blue-100 border border-blue-200 text-blue-800 hover:bg-blue-200'
+                  }`}
               >
                 ⇧
               </button>
-              
+
               {["z", "x", "c", "v", "b", "n", "m", ","].map(ch => (
                 <button
                   key={ch}
@@ -1185,7 +1183,7 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                   className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
                 >{shiftOn ? ch.toUpperCase() : ch}</button>
               ))}
-              
+
               <button
                 type="button"
                 onClick={() => handleInsert('__BACK__')}
@@ -1257,17 +1255,16 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                         else if (k.className !== 'empty') handleInsert(k.latex);
                       }}
                       disabled={k.className === 'empty'}
-                      className={`h-10 rounded-lg text-sm transition-all ${
-                        k.className === 'space-key'
+                      className={`h-10 rounded-lg text-sm transition-all ${k.className === 'space-key'
                           ? 'flex-[2] bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
                           : k.className === 'action'
-                          ? 'flex-grow flex-1 bg-blue-200 text-blue-800 font-bold text-xs hover:bg-blue-300'
-                          : k.className === 'empty'
-                          ? 'bg-transparent cursor-default flex-1'
-                          : k.className === 'italic'
-                          ? 'flex-1 bg-white border border-blue-200 text-blue-900 italic font-serif hover:bg-blue-50 active:bg-blue-100'
-                          : 'flex-1 bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
-                      }`}
+                            ? 'flex-grow flex-1 bg-blue-200 text-blue-800 font-bold text-xs hover:bg-blue-300'
+                            : k.className === 'empty'
+                              ? 'bg-transparent cursor-default flex-1'
+                              : k.className === 'italic'
+                                ? 'flex-1 bg-white border border-blue-200 text-blue-900 italic font-serif hover:bg-blue-50 active:bg-blue-100'
+                                : 'flex-1 bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
+                        }`}
                     >
                       {k.latex === '\\frac{?}{?}' ? (
                         <div className="flex flex-col items-center justify-center gap-[2px] w-4 h-5 mx-auto">
@@ -1293,13 +1290,12 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
                       key={ki}
                       type="button"
                       onClick={() => handleInsert(k.latex)}
-                      className={`flex-1 h-10 rounded-lg text-xs transition-all font-semibold ${
-                        k.className === 'highlight'
+                      className={`flex-1 h-10 rounded-lg text-xs transition-all font-semibold ${k.className === 'highlight'
                           ? 'bg-indigo-600 border border-indigo-700 text-white hover:bg-indigo-700 active:bg-indigo-800 shadow-sm'
                           : k.className === 'italic'
-                          ? 'bg-blue-50 border border-blue-200 text-blue-800 italic font-serif text-sm hover:bg-blue-100 active:bg-blue-200'
-                          : 'bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100 active:bg-blue-200'
-                      }`}
+                            ? 'bg-blue-50 border border-blue-200 text-blue-800 italic font-serif text-sm hover:bg-blue-100 active:bg-blue-200'
+                            : 'bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100 active:bg-blue-200'
+                        }`}
                       title={k.latex}
                     >
                       {renderKeyLabel(k.label, k.display, k.latex)}

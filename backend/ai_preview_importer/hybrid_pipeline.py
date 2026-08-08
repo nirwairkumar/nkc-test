@@ -30,6 +30,7 @@ from ai_preview_importer.pdf_vision_pipeline import (
     client,
     EXTRACT_PROMPT,
     GENERATE_PROMPT,
+    build_prompt,
     is_pdf,
     is_image,
     convert_image_to_bytes,
@@ -387,6 +388,9 @@ async def process_files_hybrid_stream(
     question_callback: Optional[Callable] = None,
     max_concurrent: int = 15,
     algorithm: str = "parallel",
+    languages: Optional[str] = None,
+    difficulty: Optional[str] = "Tough",
+    user_instructions: Optional[str] = None,
 ) -> Dict:
     """
     HYBRID OCR + Vision streaming pipeline.
@@ -486,7 +490,7 @@ async def process_files_hybrid_stream(
 
         logger.info(f"Rendered {len(image_only_page_images)} pages at {render_dpi} DPI")
     # Step 3: Build content and call Gemini
-    prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
+    prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
     result_data = None
 
     if algorithm == "stateful":

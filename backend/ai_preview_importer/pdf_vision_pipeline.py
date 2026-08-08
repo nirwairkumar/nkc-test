@@ -486,70 +486,62 @@ Return ONLY valid JSON. No markdown, no explanations.
 """
 
 GENERATE_PROMPT = """
-You are an expert educator and exam setter. You will receive images of document pages (textbook, notes, exam paper, etc.).
+ROLE:
+You are an expert educational content author, exam setter, and test creator.
 
-## YOUR TASK
-Analyze the content thoroughly and **generate new, original MCQ questions** based on the topics and concepts covered.
+GOAL:
+Analyze the PROVIDED document pages/images (textbook, study notes, question bank, or exam paper) and GENERATE high-quality original multiple choice questions (MCQs), numerical questions, or comprehension questions based on the concepts, formulas, and topics covered in the document.
 
-## RULES
-1. **Generate as many questions as reasonable** (minimum 10, aim for 15-25 depending on content density).
-2. **Questions must be original** — do not copy questions verbatim if they exist in the document.
-3. **Cover all topics** in the document proportionally.
-4. **Vary difficulty**: mix easy, medium, and hard questions.
-5. **CRITICAL - Mathematical content**:
-   - Use LaTeX for ALL math: \\\\frac, \\\\sqrt, \\\\int, x^2, etc.
-   - Escape ALL backslashes for JSON: use \\\\ instead of \\.
-   - Inline math: $...$
-   - Block equations: $$...$$ 
-   - NEVER use align environments, use \\\\begin{aligned} ... \\\\end{aligned} instead.
-   - Apply these rules to both questions and options. Never omit options or choices.
+--------------------------------------------------
 
-5.5. **TABLES AND LIST STRUCTURES (CRITICAL)**:
-   - NEVER output Markdown tables (e.g. | Col 1 | Col 2 |). They break rendering.
-   - ALWAYS format tables, matrices, and two-column pairings using LaTeX \\\\begin{array} format (e.g., $$\\begin{array}{|c|c|} ... \\end{array}$$).
+ABSOLUTE OUTPUT RULES
 
-6. **CHEMISTRY FORMATTING (mhchem) - CRITICAL**:
-   - Use \\\\ce{} for ALL chemical formulas: \\\\ce{H2O}, \\\\ce{NaCl}, \\\\ce{CO2}
-   - Chemical equations MUST be in \\\\ce: \\\\ce{2H2 + O2 -> 2H2O}
-   - Reversible reactions: \\\\ce{N2 + 3H2 <=> 2NH3}
-   - Ions: \\\\ce{Na+}, \\\\ce{SO4^{2-}}, \\\\ce{Fe^{3+}}
-   - Organic: \\\\ce{CH3-CH2-OH}, \\\\ce{C6H12O6}
-   - State symbols: \\\\ce{H2O (l)}, \\\\ce{CO2 (g)}, \\\\ce{NaCl (aq)}
-   - Isotopes: \\\\ce{^{14}C}, \\\\ce{^{235}U}
-   - Wrap all chemical equations/formulas in $...$. Apply chemistry formatting to options too.
+1. RETURN ONLY RAW JSON
+2. NO explanation
+3. NO markdown formatting code blocks (no ```json ... ```)
+4. NO text before or after JSON
+5. JSON must be syntactically valid
+6. Question IDs must be sequential integers (1,2,3,...)
+7. Deeply scan mathematical syntax before finalizing
+8. CRITICAL: Use DOUBLE BACKSLASHES (\\\\) for all LaTeX commands (e.g., use \\\\frac instead of \\frac).
+9. ALL mathematical expressions MUST be wrapped in $...$ (inline) or $$...$$ (block). Never output bare LaTeX commands.
+10. DO NOT include any citation markers like [cite: ...] in the output. Strip them completely.
 
-7. **All questions must have exactly one correct answer** specified.
-8. **Create plausible distractors** — wrong options should be reasonable, not obviously wrong.
+--------------------------------------------------
 
-9. **IMAGE INSERTION RULE & COORDINATES**:
-   - If a generated question requires a diagram/structure from the page, map it to the corresponding "image_X" identifier (which matches the appended reference diagram images).
-   - If a diagram is a large standalone figure for a question, set "imagePlaceholder": "image_X".
-   - If a diagram/chemical structure is located inline within the question text or option text, insert a markdown image tag: ![image](image_X) at the exact place inside the text.
-   - Exclude page headers, footers, and logos. For deeply inline insertions or option diagrams, use ![image](image_X).
-   - **CRITICAL**: If the generated question is based on or refers to any visual diagram, graph, table, or chemical structure from the page, you MUST identify its exact 2D bounding box on the source page. Include a "diagram_bbox" object in the question JSON in the format:
-     "diagram_bbox": {
-       "page_number": <1-based page number where the diagram is located>,
-       "box_2d": [ymin, xmin, ymax, xmax]
-     }
-     where coordinates are normalized integers (0-1000) relative to page dimensions. If no diagram/figure is used for the question, set "diagram_bbox": null.
+QUESTION GENERATION RULES:
+1. Generate as many original questions as reasonable (aim for 15-25 high-quality questions depending on content density).
+2. Questions must be original — do not copy questions verbatim if they exist in the document.
+3. Cover all key topics present in the uploaded document proportionally.
+4. Distractors (wrong options) must be realistic and represent common student misconceptions.
+5. Provide exactly one correct answer for single choice questions, or array for multiple choice.
 
-## CROSS-PAGE HANDLING:
-- Questions may span multiple pages - combine them into complete questions
-- Never split a single question into multiple entries
+--------------------------------------------------
 
-## Return ONLY valid JSON (no markdown fences, no explanation):
+TABLE & LIST DETECTION RULE (CRITICAL):
+- NEVER output Markdown tables (e.g. | Header 1 | Header 2 |).
+- ALWAYS convert tables, matrices, and two-column pairings into KaTeX \\begin{array} format embedded in the "question" field.
+- \\begin{array} MUST be at the root of a math block: $$\\begin{array}{|c|c|} ... \\end{array}$$.
 
-First, analyze the document layout and content to decide if the exam should be structured section-wise (e.g., divided into Subject sections like Physics, Chemistry, Math, or Section A, Section B, Section C, etc.).
-- IF it should be section-wise: Use format 1 (structured section-wise JSON with "sections" field and "enable_section_mode": true).
-- IF it should be a flat list of questions: Use format 2 (flat JSON with "questions" array at the top level).
-- Always auto-generate a descriptive, relevant test title and description based on the document text (e.g. "Practice Test: Electrostatics and Chemical Bonding"). DO NOT use generic placeholders if a better title can be inferred from the document headers.
+--------------------------------------------------
 
-1. IF the generated exam is structured by subject or section (e.g. Physics, Chemistry, Math, Section A, etc.):
-You MUST structure the output using the "sections" field instead of a top-level "questions" field. The top-level structure MUST be:
+CHEMISTRY FORMATTING (mhchem) - CRITICAL:
+- ALWAYS put a backslash '\\' before 'ce', i.e., \\\\ce{CsOH}, \\\\ce{KOH}, \\\\ce{NaOH}.
+- Wrap ALL chemical formulas and equations in \\\\ce{...} inside $...$ or $$...$$: $\\\\ce{H2O}$, $\\\\ce{2H2 + O2 -> 2H2O}$
+- Reversible reactions: $\\\\ce{N2 + 3H2 <=> 2NH3}$
+- Ions: $\\\\ce{Na+}$, $\\\\ce{SO4^{2-}}$
+
+--------------------------------------------------
+
+STRICT JSON OUTPUT FORMAT (DO NOT CHANGE):
+
+Analyze the content density and decide if the exam should be structured section-wise (e.g. Subject sections like Physics, Chemistry, Math or Section A, Section B) or flat.
+
+1. IF section-wise:
 {
   "title": "Descriptive test title auto-generated from topics",
   "description": "AI-generated questions based on document content",
-  "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2\\n...",
+  "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2",
   "enable_section_mode": true,
   "sections": [
     {
@@ -562,39 +554,121 @@ You MUST structure the output using the "sections" field instead of a top-level 
         {
           "id": 1,
           "type": "single",
-          "question": "Original question text here",
+          "question": "Generated question text with LaTeX",
           "diagram_bbox": null,
-          "options": { "A": "Option A", "B": "Option B", "C": "Option C", "D": "Option D" },
-          "correctAnswer": "C",
+          "options": {
+            "A": "Option A",
+            "B": "Option B",
+            "C": "Option C",
+            "D": "Option D"
+          },
+          "correctAnswer": "A",
           "marks": 4,
           "negativeMarks": 1,
-          "crossPage": false
+          "passageContent": null,
+          "groupId": null
         }
       ]
     }
   ]
 }
 
-2. Otherwise, if the generated exam is flat (no sections), use the top-level "questions" array:
+2. IF flat list of questions:
 {
   "title": "Generated: [Topic/Subject]",
-  "description": "AI-generated questions based on [content summary]",
-  "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2\\n...",
+  "description": "AI-generated questions based on content",
+  "revision_notes": "# Key Concepts\\n* Point 1\\n* Point 2",
   "questions": [
     {
       "id": 1,
       "type": "single",
-      "question": "Original question text here",
+      "question": "Generated question text with LaTeX",
       "diagram_bbox": null,
-      "options": { "A": "Option A", "B": "Option B", "C": "Option C", "D": "Option D" },
-      "correctAnswer": "C",
+      "options": {
+        "A": "Option A",
+        "B": "Option B",
+        "C": "Option C",
+        "D": "Option D"
+      },
+      "correctAnswer": "A",
       "marks": 1,
       "negativeMarks": 0,
-      "crossPage": false
+      "passageContent": null,
+      "groupId": null
     }
   ]
 }
 """
+
+
+def build_prompt(
+    mode: str = "extract",
+    languages: Optional[str] = None,
+    difficulty: Optional[str] = "Tough",
+    user_instructions: Optional[str] = None
+) -> str:
+    base_prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
+
+    prompt_additions = []
+
+    # 1. Difficulty Level Instruction
+    if difficulty:
+        diff_str = difficulty.strip().capitalize()
+        if diff_str in ["Easy", "Moderate", "Tough"]:
+            prompt_additions.append(
+                f"--------------------------------------------------\n"
+                f"DIFFICULTY LEVEL REQUIREMENT:\n"
+                f"The target difficulty level for the test is **{diff_str}**.\n"
+                f"- Easy: Direct concept checks, simple calculations, and straightforward options.\n"
+                f"- Moderate: Standard application-level questions requiring multi-step problem solving.\n"
+                f"- Tough: Advanced conceptual rigor, deep problem-solving steps, challenging distractors, and high-level analytical questions.\n"
+                f"Strictly tailor question complexity, distractors, and difficulty to match '{diff_str}'."
+            )
+
+    # 2. Language Requirement
+    if languages:
+        lang_list = [l.strip() for l in languages.split(',') if l.strip()]
+        has_default = any(l.lower() in ['default', 'auto'] for l in lang_list)
+        specific_langs = [l for l in lang_list if l.lower() not in ['default', 'auto']]
+
+        if has_default and not specific_langs:
+            prompt_additions.append(
+                "--------------------------------------------------\n"
+                "LANGUAGE REQUIREMENT:\n"
+                "Maintain the same language as present in the uploaded source document material."
+            )
+        elif len(specific_langs) == 1:
+            target_lang = specific_langs[0].capitalize()
+            prompt_additions.append(
+                f"--------------------------------------------------\n"
+                f"LANGUAGE REQUIREMENT:\n"
+                f"Generate/extract ALL content (questions, options, explanations, titles, notes) strictly in **{target_lang}**, regardless of the language of the uploaded material."
+            )
+        elif len(specific_langs) >= 2:
+            formatted_langs = " & ".join([l.capitalize() for l in specific_langs])
+            prompt_additions.append(
+                f"--------------------------------------------------\n"
+                f"LANGUAGE REQUIREMENT (BILINGUAL / MULTI-LANGUAGE DUAL OPTION):\n"
+                f"The user selected multiple languages: **{formatted_langs}**.\n"
+                f"You MUST provide each question text, option text, and passage content in BOTH selected languages so students of both mediums can take the test comfortably.\n"
+                f"Format for question text and option string values:\n"
+                f"Provide Language 1 text followed by Language 2 text separated by a newline '\\n' (e.g. 'What is the SI unit of force?\\nबल की SI इकाई क्या है?').\n"
+                f"Apply this dual-language formatting to both question stems and all option values (A, B, C, D)."
+            )
+
+    # 3. User Specific Custom Instructions
+    if user_instructions and user_instructions.strip():
+        prompt_additions.append(
+            f"--------------------------------------------------\n"
+            f"USER SPECIFIC INSTRUCTIONS (STRICT COMPLIANCE REQUIRED):\n"
+            f"The user has provided the following custom instructions:\n"
+            f"\"\"\"\n{user_instructions.strip()}\n\"\"\"\n"
+            f"STRICTLY honor all specified rules regarding marks per question, negative marking values, question counts, or topic focus provided in the user instructions above."
+        )
+
+    if prompt_additions:
+        return base_prompt + "\n\n" + "\n\n".join(prompt_additions)
+    return base_prompt
 
 
 # ---------------------------------------------------------------------------
@@ -1348,7 +1422,14 @@ def merge_question_parts(parts: List[Dict]) -> Dict:
     return merged
 
 
-async def process_files(file_data: List[Dict], mode: str = "extract", answer_key: Optional[Dict] = None) -> Dict:
+async def process_files(
+    file_data: List[Dict],
+    mode: str = "extract",
+    answer_key: Optional[Dict] = None,
+    languages: Optional[str] = None,
+    difficulty: Optional[str] = "Tough",
+    user_instructions: Optional[str] = None
+) -> Dict:
     """
     Main pipeline entry point for processing multiple files (PDFs and/or images).
     
@@ -1406,7 +1487,7 @@ async def process_files(file_data: List[Dict], mode: str = "extract", answer_key
     logger.info(f"Total pages/images to process: {len(all_page_images)}")
     # Step 3: Process pages (use single batch for smaller files, chunked for larger ones)
     SINGLE_BATCH_PAGE_LIMIT = 15
-    prompt = EXTRACT_PROMPT if mode == "extract" else GENERATE_PROMPT
+    prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
     total_pages = len(all_page_images)
     
     if total_pages <= SINGLE_BATCH_PAGE_LIMIT:
@@ -2109,7 +2190,10 @@ async def process_files_stream(
     answer_key: Optional[Dict] = None,
     progress_callback: Optional[Callable] = None,
     question_callback: Optional[Callable] = None,
-    max_concurrent: int = 15
+    max_concurrent: int = 15,
+    languages: Optional[str] = None,
+    difficulty: Optional[str] = "Tough",
+    user_instructions: Optional[str] = None
 ) -> Dict:
     """
     ULTRA-FAST Stream-enabled file processing with:
@@ -2162,80 +2246,53 @@ async def process_files_stream(
             'message': 'Analyzing image quality...'
         })
     
-    from ai_preview_importer.quality_analyzer import QualityAnalyzer
-    
-    # Analyze quality of sample pages to determine optimal settings
-    quality_results = []
-    sample_pages = []
-    
     # Extract sample pages for quality analysis
-    for file_info in all_files_info[:3]:  # Check first 3 files max
+    sample_pages = []
+    for file_info in all_files_info[:3]:
         if file_info['type'] == 'image':
             sample_pages.append(file_info['content'])
         elif file_info['type'] == 'pdf':
-            # Render first page at 150 DPI for quick analysis
             try:
                 doc = fitz.open(stream=file_info['content'], filetype="pdf")
                 if len(doc) > 0:
                     page = doc[0]
-                    rect = page.rect
-                    max_dim = 1600
-                    scale = min(max_dim / rect.width, max_dim / rect.height)
-                    if scale > (150/72):
-                        scale = 150/72
-                    mat = fitz.Matrix(scale, scale)
+                    mat = fitz.Matrix(1, 1)
                     pix = page.get_pixmap(matrix=mat, alpha=False)
                     sample_pages.append(pix.tobytes("jpg"))
                 doc.close()
             except Exception as e:
-                logger.warning(f"Failed to extract sample page: {e}")
-        
-        if len(sample_pages) >= 3:
-            break
+                logger.error(f"Failed to render sample page for analysis: {e}")
     
-    # Analyze sample pages
-    for page_bytes in sample_pages:
-        try:
-            quality = QualityAnalyzer.analyze_page(page_bytes)
-            quality_results.append(quality)
-        except Exception as e:
-            logger.warning(f"Quality analysis failed for sample: {e}")
-    
-    # Determine final settings based on quality
-    if quality_results:
-        avg_score = sum(q['score'] for q in quality_results) / len(quality_results)
+    # Determine DPI based on quality
+    quality_results = []
+    if sample_pages:
+        for page_img in sample_pages:
+            try:
+                from PIL import Image
+                import io
+                img = Image.open(io.BytesIO(page_img))
+                w, h = img.size
+                if w * h > 2000000:
+                    quality_score = 0.8
+                elif w * h > 1000000:
+                    quality_score = 0.6
+                else:
+                    quality_score = 0.3
+                quality_results.append(quality_score)
+            except Exception:
+                quality_results.append(0.5)
         
-        # Check minimum quality
-        is_acceptable, warning_msg = QualityAnalyzer.check_minimum_quality(avg_score)
-        if not is_acceptable:
-            raise ValueError(warning_msg)
-        
-        # Determine DPI based on quality
-        if avg_score >= 0.8:
+        avg_score = sum(quality_results) / len(quality_results)
+        if avg_score >= 0.7:
             selected_dpi = 150
             quality_tier = 'high'
-        elif avg_score >= 0.5:
+        elif avg_score >= 0.4:
             selected_dpi = 200
             quality_tier = 'medium'
         else:
             selected_dpi = 300
             quality_tier = 'low'
-        
-        # Show warning for low quality
-        if warning_msg and progress_callback:
-            await progress_callback({
-                'stage': 'analyzing',
-                'percent': 30,
-                'message': warning_msg,
-                'data': {
-                    'quality_tier': quality_tier,
-                    'dpi': selected_dpi,
-                    'quality_score': avg_score,
-                    'warning': True
-                }
-            })
     else:
-        # Default to medium if analysis fails
         selected_dpi = 200
         quality_tier = 'medium'
         avg_score = 0.5
@@ -2244,80 +2301,46 @@ async def process_files_stream(
         await progress_callback({
             'stage': 'analyzing',
             'percent': 30,
-            'message': f'Quality: {quality_tier} tier, using {selected_dpi} DPI for optimal speed',
-            'data': {
-                'quality_tier': quality_tier,
-                'dpi': selected_dpi,
-                'quality_score': avg_score
-            }
+            'message': f'Quality: {quality_tier} tier, using {selected_dpi} DPI',
+            'data': {'quality_tier': quality_tier, 'dpi': selected_dpi}
         })
     
     # Step 4: ULTRA-FAST Parallel Page Rendering
     if progress_callback:
-        await progress_callback({
-            'stage': 'processing',
-            'percent': 35,
-            'message': f'Rendering pages at {selected_dpi} DPI...'
-        })
+        await progress_callback({'stage': 'processing', 'percent': 35, 'message': 'Rendering pages...'})
     
-    # Render all pages in parallel
-    render_tasks = []
-    for file_info in all_files_info:
-        if file_info['type'] == 'pdf':
-            task = asyncio.create_task(_render_pdf_pages(file_info['content'], selected_dpi))
-            render_tasks.append(task)
-        else:  # image
-            render_tasks.append(asyncio.create_task(_process_image(file_info['content'])))
-    
-    # Wait for all renders to complete
+    render_tasks = [asyncio.create_task(_render_pdf_pages(f['content'], selected_dpi)) if f['type'] == 'pdf' else asyncio.create_task(_process_image(f['content'])) for f in all_files_info]
     render_results = await asyncio.gather(*render_tasks)
     
-    # Flatten results
     all_page_images = []
-    all_embedded_images = []
-    
-    for result in render_results:
-        if isinstance(result, tuple):  # PDF result
-            pages, embedded = result
-            all_page_images.extend(pages)
-            all_embedded_images.extend(embedded)
-        else:  # Single image
-            all_page_images.append(result)
+    for pages in render_results:
+        all_page_images.extend(pages)
     
     total_pages = len(all_page_images)
+    logger.info(f"Rendered {total_pages} total pages across all files")
     
-    if total_pages == 0:
-        raise ValueError("No pages could be rendered from the provided files")
-    
-    logger.info(f"✅ Rendered {total_pages} pages at {selected_dpi} DPI")
-    
-    # 4.5 Upload all embedded images to Cloudinary concurrently
-    if progress_callback:
-        await progress_callback({
-            'stage': 'processing',
-            'percent': 35,
-            'message': f'Uploading {len(all_embedded_images)} diagrams to Cloudinary...'
-        })
-        
-    upload_tasks = []
-    async def upload_and_update(img_info):
-        try:
-            # Decode the base64 we created earlier
-            raw_bytes = base64.b64decode(img_info["data"])
-            cloudinary_url = await upload_image_to_cloudinary(raw_bytes)
-            if cloudinary_url:
-                img_info["cloudinary_url"] = cloudinary_url
-                img_info["base64_uri"] = cloudinary_url
-        except Exception as e:
-            logger.error(f"Failed to upload diagram on page {img_info['page']}: {e}")
+    all_embedded_images = []
+    for file_info in all_files_info:
+        if file_info['type'] == 'pdf':
+            embedded = extract_embedded_images(file_info['content'])
+            all_embedded_images.extend(embedded)
             
-    upload_tasks = [upload_and_update(img) for img in all_embedded_images]
-    if upload_tasks:
-        await asyncio.gather(*upload_tasks)
+    async def upload_and_update(img_info):
+        if not img_info.get("data"): return
+        try:
+            raw_bytes = base64.b64decode(img_info["data"])
+            url = await upload_image_to_cloudinary(raw_bytes)
+            if url:
+                img_info["cloudinary_url"] = url
+                img_info["base64_uri"] = url
+        except Exception as e:
+            logger.error(f"Failed to upload diagram: {e}")
+            
+    await asyncio.gather(*[upload_and_update(img) for img in all_embedded_images])
     
-    prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
+    prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
     
-    # Step 5: Process pages (use single batch for smaller files, chunked for larger ones)
+    # Step 5: Process pages
     SINGLE_BATCH_PAGE_LIMIT = 15
     first_batch_title = None
     first_batch_desc = None
@@ -2471,6 +2494,9 @@ async def process_files_stream(
             'start_page': batch_start_page,
             'images': batch_images,
             'mode': mode,
+            'languages': languages,
+            'difficulty': difficulty,
+            'user_instructions': user_instructions,
             'embedded_images': all_embedded_images,
             'batch_embedded': batch_embedded,
             'total_pages': total_pages
@@ -2741,7 +2767,12 @@ async def _process_single_batch_stream(
     embedded_images = batch_data['embedded_images']
     total_pages = batch_data['total_pages']
     
-    prompt = EXTRACT_PROMPT if mode == 'extract' else GENERATE_PROMPT
+    prompt = build_prompt(
+        mode=mode,
+        languages=batch_data.get('languages'),
+        difficulty=batch_data.get('difficulty'),
+        user_instructions=batch_data.get('user_instructions')
+    )
     
     # Build content parts
     content_parts = [prompt]

@@ -403,7 +403,10 @@ logger = get_logger("ai_router")
 async def parse_document(
     files: List[UploadFile] = File(..., description="Upload PDF or image files"),
     answer_key: Optional[UploadFile] = File(None, description="Optional answer key file (PDF or image)"),
-    mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones")
+    mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones"),
+    languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
+    difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
+    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions")
 ):
     """
     Parses uploaded PDF/image files and returns structured questions.
@@ -413,7 +416,7 @@ async def parse_document(
     - extract: Extract exact questions from the exam paper as-is
     - generate: Create new original MCQs based on the content
     """
-    logger.info(f"Received {len(files)} file(s) for AI processing (mode: {mode})")
+    logger.info(f"Received {len(files)} file(s) for AI processing (mode: {mode}, langs: {languages}, diff: {difficulty})")
     
     if answer_key:
         logger.info(f"Answer key file received: {answer_key.filename}")
@@ -453,7 +456,14 @@ async def parse_document(
 
         # 3. Run Vision Pipeline
         from ai_preview_importer.pdf_vision_pipeline import process_files  # lazy import
-        result = await process_files(file_data, mode=mode, answer_key=answer_key_data)
+        result = await process_files(
+            file_data,
+            mode=mode,
+            answer_key=answer_key_data,
+            languages=languages,
+            difficulty=difficulty,
+            user_instructions=user_instructions
+        )
         
         # 4. Return Result
         logger.info(f"Parsing complete ({mode} mode). Returning {len(result.get('questions', []))} questions.")
@@ -477,7 +487,10 @@ async def parse_document_stream(
     files: List[UploadFile] = File(..., description="Upload PDF or image files"),
     answer_key: Optional[UploadFile] = File(None, description="Optional answer key file (PDF or image)"),
     mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones"),
-    algorithm: str = Query("parallel", pattern="^(parallel|stateful)$", description="Parsing pipeline: 'parallel' for fast chunked mode, 'stateful' for high-accuracy single stream")
+    algorithm: str = Query("parallel", pattern="^(parallel|stateful)$", description="Parsing pipeline: 'parallel' for fast chunked mode, 'stateful' for high-accuracy single stream"),
+    languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
+    difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
+    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions")
 ):
     """
     ULTRA-FAST streaming document parsing with real-time progress updates.
@@ -496,7 +509,7 @@ async def parse_document_stream(
     - complete: { final result }
     - error: { message }
     """
-    logger.info(f"🚀 Starting ULTRA-FAST stream processing for {len(files)} file(s)")
+    logger.info(f"🚀 Starting ULTRA-FAST stream processing for {len(files)} file(s) (mode: {mode}, langs: {languages}, diff: {difficulty})")
     
     # IMPORTANT: Read ALL file content BEFORE starting the stream
     # FastAPI closes file handles after request handler returns
@@ -507,7 +520,7 @@ async def parse_document_stream(
     try:
         for file in files:
             if not file.filename or not file.filename.lower().endswith(valid_extensions):
-                raise ValueError(f"Invalid file type: {file.filename}. Only PDF, PNG, JPG, JPEG, WEBP allowed.")
+                raise HTTPException(status_code=400, detail=f"Invalid file type: {file.filename}. Only PDF, PNG, JPG, JPEG, WEBP allowed.")
             
             content = await file.read()
             file_data.append({
@@ -520,7 +533,7 @@ async def parse_document_stream(
         # Process answer key if provided
         if answer_key:
             if not answer_key.filename.lower().endswith(valid_extensions):
-                raise ValueError("Invalid answer key file type. Only PDF and Images allowed.")
+                raise HTTPException(status_code=400, detail="Invalid answer key file type. Only PDF and Images allowed.")
             
             answer_key_content = await answer_key.read()
             answer_key_data = {
@@ -572,7 +585,10 @@ async def parse_document_stream(
                     progress_callback=progress_callback,
                     question_callback=question_callback,
                     max_concurrent=15,
-                    algorithm=algorithm
+                    algorithm=algorithm,
+                    languages=languages,
+                    difficulty=difficulty,
+                    user_instructions=user_instructions
                 )
                 
                 final_result = result

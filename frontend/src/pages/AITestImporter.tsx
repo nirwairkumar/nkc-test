@@ -185,6 +185,28 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
+    // AI Generation Custom Parameters State
+    const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['default']);
+    const [difficulty, setDifficulty] = useState<'Easy' | 'Moderate' | 'Tough'>('Tough');
+    const [customInstructions, setCustomInstructions] = useState<string>('');
+
+    const handleLanguageToggle = (lang: string) => {
+        if (lang === 'default') {
+            setSelectedLanguages(['default']);
+            return;
+        }
+
+        setSelectedLanguages(prev => {
+            const withoutDefault = prev.filter(l => l !== 'default');
+            if (withoutDefault.includes(lang)) {
+                const next = withoutDefault.filter(l => l !== lang);
+                return next.length === 0 ? ['default'] : next;
+            } else {
+                return [...withoutDefault, lang];
+            }
+        });
+    };
+
     // AI Generation History State
     const [historyItems, setHistoryItems] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
@@ -804,8 +826,17 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const API_BASE_URL = getApiUrl();
             const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
+            const langParam = selectedLanguages.join(',');
+            const diffParam = difficulty;
+            const customInstParam = customInstructions.trim();
+
+            let queryParams = `mode=${selectedMode}&algorithm=${algorithm}&languages=${encodeURIComponent(langParam)}&difficulty=${encodeURIComponent(diffParam)}`;
+            if (customInstParam) {
+                queryParams += `&user_instructions=${encodeURIComponent(customInstParam)}`;
+            }
+
             // Use ULTRA-FAST streaming endpoint
-            const response = await fetch(`${baseUrl}/ai/parse-stream?mode=${selectedMode}&algorithm=${algorithm}`, {
+            const response = await fetch(`${baseUrl}/ai/parse-stream?${queryParams}`, {
                 method: 'POST',
                 body: formData,
                 signal: abortCtrl.signal,
@@ -949,7 +980,16 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             const API_BASE_URL = getApiUrl();
             const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
-            const response = await fetch(`${baseUrl}/ai/parse?mode=${selectedMode}`, {
+            const langParam = selectedLanguages.join(',');
+            const diffParam = difficulty;
+            const customInstParam = customInstructions.trim();
+
+            let queryParams = `mode=${selectedMode}&languages=${encodeURIComponent(langParam)}&difficulty=${encodeURIComponent(diffParam)}`;
+            if (customInstParam) {
+                queryParams += `&user_instructions=${encodeURIComponent(customInstParam)}`;
+            }
+
+            const response = await fetch(`${baseUrl}/ai/parse?${queryParams}`, {
                 method: 'POST',
                 body: formData,
             });
@@ -1744,7 +1784,116 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         </div>
                     ) : (
                         <>
-                            <div className="text-center space-y-2 mt-8">
+                            {/* ── AI Advanced Settings Card ── */}
+                            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 space-y-4 shadow-sm">
+                                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800/80">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-indigo-500" />
+                                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                                            AI Settings &amp; Constraints
+                                        </h3>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400">Customizable</span>
+                                </div>
+
+                                {/* Row 1: Language & Difficulty */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {/* Language Selection */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-slate-650 dark:text-slate-300 flex items-center gap-1.5">
+                                            <span>🌐 Language Output</span>
+                                            {selectedLanguages.length > 1 && (
+                                                <Badge className="text-[9px] h-4 px-1.5 bg-indigo-500 text-white font-medium">Bilingual</Badge>
+                                            )}
+                                        </label>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleLanguageToggle('default')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                                                    selectedLanguages.includes('default')
+                                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                }`}
+                                            >
+                                                Same as Material
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleLanguageToggle('English')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                                                    selectedLanguages.includes('English')
+                                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                }`}
+                                            >
+                                                English
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleLanguageToggle('Hindi')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                                                    selectedLanguages.includes('Hindi')
+                                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                }`}
+                                            >
+                                                Hindi
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 leading-tight">
+                                            Select multiple (e.g. English + Hindi) for bilingual questions.
+                                        </p>
+                                    </div>
+
+                                    {/* Difficulty Level */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-slate-650 dark:text-slate-300">
+                                            🎯 Target Difficulty
+                                        </label>
+                                        <div className="flex items-center gap-1.5">
+                                            {(['Easy', 'Moderate', 'Tough'] as const).map((lvl) => (
+                                                <button
+                                                    key={lvl}
+                                                    type="button"
+                                                    onClick={() => setDifficulty(lvl)}
+                                                    className={`flex-1 py-1 rounded-lg text-xs font-medium transition-all ${
+                                                        difficulty === lvl
+                                                            ? lvl === 'Easy'
+                                                                ? 'bg-emerald-600 text-white shadow-sm'
+                                                                : lvl === 'Moderate'
+                                                                ? 'bg-amber-600 text-white shadow-sm'
+                                                                : 'bg-rose-600 text-white shadow-sm'
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                    }`}
+                                                >
+                                                    {lvl === 'Easy' ? '🟢 Easy' : lvl === 'Moderate' ? '🟡 Moderate' : '🔴 Tough'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 leading-tight">
+                                            Controls question complexity &amp; reasoning depth.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Custom Instructions Textarea */}
+                                <div className="space-y-1.5 pt-1">
+                                    <label className="text-xs font-semibold text-slate-650 dark:text-slate-300 flex items-center justify-between">
+                                        <span>📝 Custom Instructions (Optional)</span>
+                                        <span className="text-[10px] text-slate-400 font-normal">e.g. Marks, Negative marking, Count</span>
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        value={customInstructions}
+                                        onChange={(e) => setCustomInstructions(e.target.value)}
+                                        placeholder="e.g. Each question 2 marks, 0.5 negative. Generate minimum 30 questions with top conceptual focus..."
+                                        className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-950 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all resize-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="text-center space-y-2 mt-6">
                                 <h1 className="text-2xl font-bold">How do you want to process {hasImages && hasPDF ? 'these files' : 'this file'}?</h1>
                                 <p className="text-muted-foreground">Choose a mode based on your goal</p>
                             </div>
