@@ -359,24 +359,78 @@ async def get_all_ai_history(
 ):
     try:
         _verify_is_admin(request, db)
+
+        # 1. Fetch direct AI generation history
         history_res = supabase.table("ai_generation_history").select("*").order("created_at", desc=True).execute()
         items = history_res.data or []
-        
+
+        # Track existing test titles/IDs from history to avoid duplicates
+        existing_titles = set(item.get("title") for item in items if item.get("title"))
+
+        # 2. Fetch all tests created across the platform by all users
+        tests_res = supabase.table("tests").select("id, title, description, custom_id, total_questions, created_by, created_at, creator_name, creator_avatar, settings").order("created_at", desc=True).execute()
+        platform_tests = tests_res.data or []
+
+        for test in platform_tests:
+            title = test.get("title")
+            # If this test isn't already logged in ai_generation_history, synthesise an audit log item
+            if title and title not in existing_titles:
+                q_count = test.get("total_questions") or 0
+                created_by = test.get("created_by")
+                
+                # Check settings to infer tool_type or mode
+                settings = test.get("settings") or {}
+                mode = "generate"
+                if "extract" in str(settings).lower():
+                    mode = "extract"
+                elif "youtube" in str(settings).lower():
+                    mode = "youtube"
+
+                synth_item = {
+                    "id": test.get("id"),
+                    "user_id": created_by,
+                    "mode": mode,
+                    "title": title,
+                    "description": test.get("description") or f"Created Test ({test.get('custom_id', 'Test')})",
+                    "file_name": test.get("custom_id") or "Platform Created Test",
+                    "question_count": q_count,
+                    "created_at": test.get("created_at"),
+                    "parsed_data": {
+                        "tool_type": "generate_with_ai",
+                        "used_method": "Platform Test Creator",
+                        "questions": [],
+                        "execution_time_seconds": 1.0
+                    }
+                }
+                items.append(synth_item)
+
+        # Re-sort all items by created_at descending
+        items.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+
+        # 3. Collect all user_ids and fetch full profiles
         user_ids = list(set([item["user_id"] for item in items if item.get("user_id")]))
         profiles_map = {}
         if user_ids:
             profiles_res = supabase.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
             for p in (profiles_res.data or []):
                 profiles_map[p["id"]] = p
-                
+
         for item in items:
             uid = item.get("user_id")
-            item["user_profile"] = profiles_map.get(uid, {"email": "Anonymous/Unknown"})
-            
+            if uid and uid in profiles_map:
+                item["user_profile"] = profiles_map[uid]
+            else:
+                item["user_profile"] = {
+                    "email": "Registered User",
+                    "full_name": "Platform User",
+                    "designation": "Creator"
+                }
+
         return items
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error fetching all AI history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 

@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import AppSidebar from './components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { analyticsTracker } from '@/lib/analyticsTracker';
+import { PanelLeft } from 'lucide-react';
 
 export default function Layout() {
     const location = useLocation();
@@ -107,6 +108,18 @@ export default function Layout() {
                 </div>
             )}
             
+            {/* Floating Mobile Sidebar Expand Button (Below Navbar) */}
+            {!isSidebarHidden && !mobileOpen && (
+                <button
+                    onClick={() => setMobileOpen(true)}
+                    className="fixed top-20 left-4 z-40 md:hidden flex items-center gap-2 px-3 py-2 bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-800/90 shadow-md backdrop-blur-md rounded-2xl text-xs font-semibold hover:bg-slate-100 active:scale-95 transition-all"
+                    aria-label="Open Sidebar Menu"
+                >
+                    <PanelLeft className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <span>Menu</span>
+                </button>
+            )}
+
             <div className="flex flex-1 relative min-h-[calc(100vh-4rem)]">
                 {!isSidebarHidden && (
                     <AppSidebar
