@@ -1,6 +1,7 @@
 // src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authApi } from '@/lib/authApi';
+import apiClient from '@/lib/apiClient';
 import { supabase } from '@/integrations/supabase/client';
 import { tokenStorage } from '@/utils/tokenStorage';
 
@@ -72,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
         }
         try {
-            const response = await import('@/lib/apiClient').then(m => m.default.get('/users/check-admin', { params: { user_id } }));
+            const response = await apiClient.get('/users/check-admin', { params: { user_id } });
             setIsAdmin(!!response.data);
         } catch (error) {
             setIsAdmin(false);
@@ -318,11 +319,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Using top-level imported apiClient (no dynamic import delay).
         const warmUpBackend = () => {
             // Warm both the health endpoint AND the auth path (different route handlers)
-            import('@/lib/apiClient').then(({ default: client }) => {
-                client.get('health').catch(() => { });
-                // Also warm the auth route so CORS preflight is cached by the browser
-                client.options('auth/login').catch(() => { });
-            });
+            apiClient.get('health').catch(() => { });
+            apiClient.options('auth/login').catch(() => { });
         };
         warmUpBackend();
 
