@@ -239,7 +239,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         if (!droppedFiles.length) return;
 
         const newFiles: SelectedFile[] = [];
-        for (const file of droppedFiles) {
+        for (const rawFile of droppedFiles) {
+            const file = rawFile.type.startsWith('image/') ? await compressImageFile(rawFile, 1400, 0.8) : rawFile;
             const preview = await createPreview(file);
             newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
         }
@@ -435,7 +436,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         });
     };
 
-    const compressImageFile = async (file: File, maxDim = 1600, quality = 0.85): Promise<File> => {
+    const compressImageFile = async (file: File, maxDim = 1400, quality = 0.8): Promise<File> => {
         if (!file.type.startsWith('image/')) return file;
         return new Promise((resolve) => {
             const img = new Image();
@@ -873,10 +874,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
         const formData = new FormData();
 
-        // Add all files
-        files.forEach((fileObj) => {
-            formData.append('files', fileObj.file);
-        });
+        // Add all files with failsafe client compression (reduces 40MB payload to ~1MB)
+        for (const fileObj of files) {
+            const fileToSend = fileObj.file.type.startsWith('image/')
+                ? await compressImageFile(fileObj.file, 1400, 0.8)
+                : fileObj.file;
+            formData.append('files', fileToSend);
+        }
 
         // Add answer key if provided
         if (answerKeyFile) {
@@ -1434,7 +1438,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         const selectedFiles = Array.from(e.target.files || []);
                         if (!selectedFiles.length) return;
                         const newFiles: SelectedFile[] = [];
-                        for (const file of selectedFiles) {
+                        for (const rawFile of selectedFiles) {
+                            const file = rawFile.type.startsWith('image/') ? await compressImageFile(rawFile, 1400, 0.8) : rawFile;
                             const preview = await createPreview(file);
                             newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
                         }
@@ -1627,7 +1632,8 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         const selectedFiles = Array.from(e.target.files || []);
                         if (!selectedFiles.length) return;
                         const newFiles: SelectedFile[] = [];
-                        for (const file of selectedFiles) {
+                        for (const rawFile of selectedFiles) {
+                            const file = rawFile.type.startsWith('image/') ? await compressImageFile(rawFile, 1400, 0.8) : rawFile;
                             const preview = await createPreview(file);
                             newFiles.push({ file, id: generateId(), type: getFileType(file.name), preview });
                         }
