@@ -302,3 +302,5 @@ Follow these exact formatting rules to keep the structure compact, tightly packe
     </div>
   );
 }
+
+export default AiPromptGuide;

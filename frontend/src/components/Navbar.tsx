@@ -21,12 +21,8 @@ import { getAppUrl, getMarketingUrl } from '@/utils/subdomain';
 const NotificationBox = React.lazy(() => import('./NotificationBox'));
 
 // Lazy Load Guides to keep them out of the main index bundle
-const TestUploadFormatGuide = React.lazy(() =>
-    import('./TestUploadFormatGuide').then(module => ({ default: module.default || module.TestUploadFormatGuide }))
-);
-const SolutionUploadGuide = React.lazy(() =>
-    import('./SolutionUploadGuide').then(module => ({ default: module.default || module.SolutionUploadGuide }))
-);
+const TestUploadFormatGuide = React.lazy(() => import('./TestUploadFormatGuide'));
+const SolutionUploadGuide = React.lazy(() => import('./SolutionUploadGuide'));
 
 
 interface NavbarProps {

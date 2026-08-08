@@ -197,3 +197,5 @@ export function JsonImporter({
         </div>
     );
 }
+
+export default JsonImporter;

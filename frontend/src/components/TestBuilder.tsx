@@ -46,10 +46,10 @@ import slugify from 'slugify';
 
 import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import PremiumGuard from '@/components/premium/PremiumGuard';
-const JsonImporter = React.lazy(() => import('@/components/test-builder/JsonImporter').then(m => ({ default: m.default || m.JsonImporter })));
-const ScreenshotCaptureModal = React.lazy(() => import('@/components/test-builder/ScreenshotCaptureModal').then(m => ({ default: m.default || m.ScreenshotCaptureModal })));
-const MathKeyboard = React.lazy(() => import('./math-keyboard').then(m => ({ default: m.default || m.MathKeyboard })));
-const AiPromptGuide = React.lazy(() => import('./AiPromptGuide').then(m => ({ default: m.default || m.AiPromptGuide })));
+const JsonImporter = React.lazy(() => import('@/components/test-builder/JsonImporter'));
+const ScreenshotCaptureModal = React.lazy(() => import('@/components/test-builder/ScreenshotCaptureModal'));
+const MathKeyboard = React.lazy(() => import('./math-keyboard/MathKeyboard'));
+const AiPromptGuide = React.lazy(() => import('./AiPromptGuide'));
 
 interface QuestionState extends Omit<Question, 'correctAnswer' | 'options'> {
     options: { [key: string]: string };
