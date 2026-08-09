@@ -1427,10 +1427,10 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         return () => window.removeEventListener('load_ai_history_item', handleLoadHistoryItem);
     }, [handleSelectHistoryItem]);
 
-    // Step 1: File Upload — Apple HIG 2-choice layout with dominant CTA
+    // Step 1: File Upload — iOS-inspired card layout matching Profile/Support pages
     if (!parsedData && files.length === 0 && !uploadType) {
         return (
-            <div className="min-h-[calc(100vh-4rem)] w-full bg-[#FBFBFD] dark:bg-[#0D0E12] py-4 sm:py-8 md:py-12 px-3.5 sm:px-6 md:px-8 flex flex-col justify-start items-center">
+            <div className="min-h-[calc(100vh-4rem)] w-full bg-slate-50 dark:bg-slate-950">
                 <SEO
                     title="Create Online Test - TestoZa"
                     description="Upload your question paper PDF or photo and let AI turn it into an online test automatically."
@@ -1462,113 +1462,95 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     className="hidden"
                 />
 
-                <div className="max-w-2xl w-full space-y-4 sm:space-y-6 md:space-y-8">
-                    {/* Header: Golden Spiral Peak */}
-                    <div className="text-center space-y-1 sm:space-y-2">
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                            Create Your Online Test
-                        </h1>
-                        <p className="text-xs sm:text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-sm sm:max-w-lg mx-auto leading-relaxed">
-                            Turn your exam paper into an interactive online test in seconds.
-                        </p>
+                {/* Hero Header — matching Profile/Support pages */}
+                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-6 sm:pt-8 pb-14 sm:pb-16">
+                    <div className="max-w-2xl mx-auto">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">AI-Powered</p>
+                        <p className="text-xl sm:text-2xl font-bold text-white">Create Your Online Test</p>
+                        <p className="text-sm text-slate-400 mt-1">Turn your exam paper into an interactive online test in seconds.</p>
                     </div>
+                </div>
 
-                    {/* TWO CHOICE LAYOUT */}
-                    <div className="space-y-3 sm:space-y-5">
-                        {/* CHOICE 1: PRIMARY UPLOAD CARD (Single Dominant CTA) */}
-                        <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => documentInputRef.current?.click()}
-                            className={`group relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl sm:rounded-[32px] p-5 sm:p-8 md:p-10 border sm:border-2 transition-all duration-300 cursor-pointer shadow-xs sm:shadow-[0_20px_50px_rgba(59,130,246,0.07)] hover:shadow-md sm:hover:shadow-[0_25px_60px_rgba(59,130,246,0.15)] hover:-translate-y-0.5 ${
-                                isDragging
-                                    ? 'border-[#007AFF] bg-blue-50/50 dark:bg-blue-950/40 scale-[1.01]'
-                                    : 'border-blue-100 dark:border-blue-900/40 hover:border-[#007AFF]/60'
-                            }`}
-                        >
-                            {/* Recommended Badge */}
-                            <div className="absolute top-3.5 right-3.5 sm:top-6 sm:right-6">
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 text-[10px] sm:text-xs font-semibold shadow-2xs">
-                                    ⭐ Recommended
-                                </span>
-                            </div>
+                {/* Overlapping card stack */}
+                <div className="px-4 -mt-8 sm:-mt-10 pb-8 max-w-2xl mx-auto space-y-3 sm:space-y-4">
 
-                            <div className="flex flex-col items-center text-center space-y-3.5 sm:space-y-5">
-                                {/* Large SF Circular Icon */}
-                                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#007AFF] dark:text-blue-400 flex items-center justify-center group-hover:scale-105 group-hover:bg-[#007AFF] group-hover:text-white transition-all duration-300 shadow-inner">
-                                    <FileUp className="w-7 h-7 sm:w-10 sm:h-10 stroke-[1.75]" />
+                    {/* CARD 1: Primary Upload */}
+                    <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => documentInputRef.current?.click()}
+                        className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border overflow-hidden cursor-pointer transition-all duration-200 active:scale-[0.99] ${
+                            isDragging
+                                ? 'border-indigo-400 ring-2 ring-indigo-100 dark:ring-indigo-900'
+                                : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
+                        }`}
+                    >
+                        {/* Card header row */}
+                        <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl flex items-center justify-center shrink-0">
+                                    <FileUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                                 </div>
-
-                                {/* Text content */}
-                                <div className="space-y-1 sm:space-y-2 max-w-md px-1">
-                                    <h2 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                                        Upload Question Paper
-                                    </h2>
-                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                                        Select a PDF, Word document, or photo of your exam paper. We'll automatically convert it into an online test.
-                                    </p>
-                                </div>
-
-                                {/* Dominant Button */}
-                                <div className="pt-1 sm:pt-2 w-full sm:w-auto">
-                                    <button
-                                        type="button"
-                                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#007AFF] hover:bg-[#0062CC] active:bg-[#0051B3] text-white font-semibold text-sm sm:text-base px-6 py-3 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-200 group-hover:scale-[1.01]"
-                                    >
-                                        <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
-                                        <span>Choose File</span>
-                                    </button>
-                                </div>
-
-                                {/* File Specs & Time Info */}
-                                <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 pt-1 text-[11px] sm:text-xs text-slate-400 dark:text-slate-500">
-                                    <span className="text-center">Supported: PDF, Word (.docx), or Photos (JPG, PNG)</span>
-                                    <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                                    <span className="font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                                        ⚡ Ready in ~2–3 minutes
-                                    </span>
+                                <div>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Upload Question Paper</p>
+                                    <p className="text-[11px] text-slate-400">PDF, Word, or Photos</p>
                                 </div>
                             </div>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60">⭐ Recommended</span>
                         </div>
 
-                        {/* CHOICE 2: SECONDARY MANUAL CREATION CARD */}
-                        <div
-                            onClick={() => { window.location.href = '/create-test'; }}
-                            className="group bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg rounded-xl sm:rounded-[28px] p-3.5 sm:p-6 md:p-7 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 sm:gap-4"
-                        >
-                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                                <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
-                                    <PencilLine className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[1.75]" />
-                                </div>
-                                <div className="min-w-0">
-                                    <h3 className="text-xs sm:text-base font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#007AFF] transition-colors">
-                                        Create Test Manually
-                                    </h3>
-                                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
-                                        Type or paste questions manually with full control over marks, options, and sections.
-                                    </p>
-                                </div>
-                            </div>
+                        {/* Card body */}
+                        <div className="p-4 space-y-3.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                Select a PDF, Word document, or photo of your exam paper. We'll automatically extract questions and convert it into an online test.
+                            </p>
 
-                            <div className="flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-[#007AFF] shrink-0 group-hover:translate-x-0.5 transition-transform">
-                                <span>Start Manually</span>
-                                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            {/* Primary CTA */}
+                            <button
+                                type="button"
+                                className="w-full inline-flex items-center justify-center gap-2 bg-[#007AFF] hover:bg-[#0062CC] active:bg-[#0051B3] text-white font-semibold text-sm h-11 rounded-xl shadow-sm transition-colors"
+                            >
+                                <Upload className="w-4 h-4" />
+                                <span>Choose File</span>
+                            </button>
+
+                            {/* Meta info */}
+                            <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
+                                <span>⚡ Ready in ~2–3 minutes</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* NEED HELP FOOTER SECTION */}
-                    <div className="pt-2 sm:pt-4 flex flex-col items-center">
+                    {/* CARD 2: Manual Creation — iOS list row style */}
+                    <div
+                        onClick={() => { window.location.href = '/create-test'; }}
+                        className="group bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:scale-[0.99]"
+                    >
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center shrink-0">
+                                <PencilLine className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Create Test Manually</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">Type or paste questions with full control.</p>
+                            </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 group-hover:text-[#007AFF] transition-colors" />
+                    </div>
+
+                    {/* Help link */}
+                    <div className="pt-1 flex justify-center">
                         <button
                             type="button"
                             onClick={() => setShowHelpDialog(true)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-[11px] sm:text-xs font-medium transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                         >
-                            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
-                            <span>Need Help? How it works</span>
+                            <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
+                            <span>How it works</span>
                         </button>
                     </div>
+                </div>
 
                     {/* HELP TUTORIAL DIALOG */}
                     <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
