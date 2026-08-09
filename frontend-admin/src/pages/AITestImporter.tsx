@@ -1453,69 +1453,69 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     className="hidden"
                 />
 
-                <div className="max-w-2xl w-full space-y-8">
+                <div className="max-w-2xl w-full space-y-4 sm:space-y-6 md:space-y-8">
                     {/* Header */}
-                    <div className="text-center space-y-2">
-                        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    <div className="text-center space-y-1 sm:space-y-2">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                             Create Online Test (Admin)
                         </h1>
-                        <p className="text-base text-slate-600 dark:text-slate-400 max-w-lg mx-auto">
+                        <p className="text-xs sm:text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-sm sm:max-w-lg mx-auto leading-relaxed">
                             Turn any question paper into an interactive online test in seconds.
                         </p>
                     </div>
 
                     {/* TWO CHOICE LAYOUT */}
-                    <div className="space-y-6">
+                    <div className="space-y-3 sm:space-y-5">
                         {/* CHOICE 1: PRIMARY UPLOAD CARD (Single Dominant CTA) */}
                         <div
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             onClick={() => documentInputRef.current?.click()}
-                            className={`group relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-[32px] p-8 sm:p-10 border-2 transition-all duration-300 cursor-pointer shadow-[0_20px_50px_rgba(59,130,246,0.07)] hover:shadow-[0_25px_60px_rgba(59,130,246,0.15)] hover:-translate-y-0.5 ${
+                            className={`group relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl sm:rounded-[32px] p-5 sm:p-8 md:p-10 border sm:border-2 transition-all duration-300 cursor-pointer shadow-xs sm:shadow-[0_20px_50px_rgba(59,130,246,0.07)] hover:shadow-md sm:hover:shadow-[0_25px_60px_rgba(59,130,246,0.15)] hover:-translate-y-0.5 ${
                                 isDragging
                                     ? 'border-[#007AFF] bg-blue-50/50 dark:bg-blue-950/40 scale-[1.01]'
                                     : 'border-blue-100 dark:border-blue-900/40 hover:border-[#007AFF]/60'
                             }`}
                         >
                             {/* Recommended Badge */}
-                            <div className="absolute top-6 right-6">
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 text-xs font-bold shadow-sm">
+                            <div className="absolute top-3.5 right-3.5 sm:top-6 sm:right-6">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 text-[10px] sm:text-xs font-semibold shadow-2xs">
                                     ⭐ Recommended
                                 </span>
                             </div>
 
-                            <div className="flex flex-col items-center text-center space-y-5">
+                            <div className="flex flex-col items-center text-center space-y-3.5 sm:space-y-5">
                                 {/* Large SF Circular Icon */}
-                                <div className="w-20 h-20 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#007AFF] dark:text-blue-400 flex items-center justify-center group-hover:scale-105 group-hover:bg-[#007AFF] group-hover:text-white transition-all duration-300 shadow-inner">
-                                    <FileUp className="w-10 h-10 stroke-[1.75]" />
+                                <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-blue-50 dark:bg-blue-950/60 text-[#007AFF] dark:text-blue-400 flex items-center justify-center group-hover:scale-105 group-hover:bg-[#007AFF] group-hover:text-white transition-all duration-300 shadow-inner">
+                                    <FileUp className="w-7 h-7 sm:w-10 sm:h-10 stroke-[1.75]" />
                                 </div>
 
                                 {/* Text content */}
-                                <div className="space-y-2 max-w-md">
-                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                                <div className="space-y-1 sm:space-y-2 max-w-md px-1">
+                                    <h2 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                                         Upload Question Paper
                                     </h2>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                                         Select a PDF, Word document, or photo of an exam paper. We'll automatically convert it into an online test.
                                     </p>
                                 </div>
 
                                 {/* Dominant Button */}
-                                <div className="pt-2">
+                                <div className="pt-1 sm:pt-2 w-full sm:w-auto">
                                     <button
                                         type="button"
-                                        className="inline-flex items-center justify-center gap-2.5 bg-[#007AFF] hover:bg-[#0062CC] active:bg-[#0051B3] text-white font-semibold text-base px-8 py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/35 transition-all duration-200 group-hover:scale-[1.02]"
+                                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#007AFF] hover:bg-[#0062CC] active:bg-[#0051B3] text-white font-semibold text-sm sm:text-base px-6 py-3 sm:px-8 sm:py-3.5 rounded-xl sm:rounded-2xl shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all duration-200 group-hover:scale-[1.01]"
                                     >
-                                        <Upload className="w-5 h-5" />
+                                        <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
                                         <span>Choose File</span>
                                     </button>
                                 </div>
 
                                 {/* File Specs & Time Info */}
-                                <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs text-slate-400 dark:text-slate-500">
-                                    <span>Supported: PDF, Word (.docx), or Photos (JPG, PNG)</span>
-                                    <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3 pt-1 text-[11px] sm:text-xs text-slate-400 dark:text-slate-500">
+                                    <span className="text-center">Supported: PDF, Word (.docx), or Photos (JPG, PNG)</span>
+                                    <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
                                     <span className="font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
                                         ⚡ Ready in ~2–3 minutes
                                     </span>
@@ -1526,37 +1526,37 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                         {/* CHOICE 2: SECONDARY MANUAL CREATION CARD */}
                         <div
                             onClick={() => { navigate('/admin?tab=builder'); }}
-                            className="group bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg rounded-[28px] p-6 sm:p-7 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md flex items-center justify-between gap-4"
+                            className="group bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg rounded-xl sm:rounded-[28px] p-3.5 sm:p-6 md:p-7 border border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs flex items-center justify-between gap-3 sm:gap-4"
                         >
-                            <div className="flex items-center gap-4 min-w-0">
-                                <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
-                                    <PencilLine className="w-6 h-6 stroke-[1.75]" />
+                            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                                <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-200 dark:group-hover:bg-slate-700 transition-colors">
+                                    <PencilLine className="w-4.5 h-4.5 sm:w-6 sm:h-6 stroke-[1.75]" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#007AFF] transition-colors">
+                                    <h3 className="text-xs sm:text-base font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#007AFF] transition-colors">
                                         Create Test Manually
                                     </h3>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
                                         Type or paste questions manually with full control over marks, options, and sections.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-1 text-xs font-semibold text-[#007AFF] shrink-0 group-hover:translate-x-1 transition-transform">
+                            <div className="flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-[#007AFF] shrink-0 group-hover:translate-x-0.5 transition-transform">
                                 <span>Start Manually</span>
-                                <ChevronRight className="w-4 h-4" />
+                                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </div>
                         </div>
                     </div>
 
                     {/* NEED HELP FOOTER SECTION */}
-                    <div className="pt-4 flex flex-col items-center">
+                    <div className="pt-2 sm:pt-4 flex flex-col items-center">
                         <button
                             type="button"
                             onClick={() => setShowHelpDialog(true)}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs font-medium transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-[11px] sm:text-xs font-medium transition-colors"
                         >
-                            <HelpCircle className="w-4 h-4 text-blue-500" />
+                            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
                             <span>Need Help? How it works</span>
                         </button>
                     </div>
