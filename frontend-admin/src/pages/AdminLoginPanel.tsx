@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,8 +33,15 @@ interface AdminLoginPanelProps {
 
 export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const { refreshSession } = useAuth();
+    const { user, isAdmin, refreshSession } = useAuth();
+    const navigate = useNavigate();
     const { turnstileRef, getToken, resetTurnstile } = useTurnstile({ theme: 'auto', size: 'normal' });
+
+    useEffect(() => {
+        if (user && isAdmin) {
+            navigate('/admin?tab=analytics', { replace: true });
+        }
+    }, [user, isAdmin, navigate]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -73,6 +81,7 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
             await refreshSession();
             toast.success('Admin Login Successful');
             onLoginSuccess?.();
+            navigate('/admin?tab=analytics', { replace: true });
         } catch (error: any) {
             console.error(error);
             resetTurnstile();

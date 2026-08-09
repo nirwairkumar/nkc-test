@@ -355,70 +355,173 @@ async def delete_user_permanently(
 @router.get("/admin/ai-history-all")
 async def get_all_ai_history(
     request: Request,
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    tool_type: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
     db: Client = Depends(get_db)
 ):
     try:
         _verify_is_admin(request, db)
 
-        # 1. Fetch direct AI generation history
-        history_res = supabase.table("ai_generation_history").select("*").order("created_at", desc=True).execute()
-        items = history_res.data or []
+        # 1. Fetch AI generation history items (selecting light records)
+        query = db.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
+        
+        # Fetch all items ordered by created_at desc to compute accurate metrics & allow filtering
+        history_res = query.order("created_at", desc=True).execute()
+        all_raw = history_res.data or []
 
-        # Track existing test titles/IDs from history to avoid duplicates
-        existing_titles = set(item.get("title") for item in items if item.get("title"))
+        # Calculate overall platform stats efficiently
+        total_requests = len(all_raw)
+        total_questions = sum(item.get("question_count") or 0 for item in all_raw)
+        
+        gen_count = 0
+        yt_count = 0
+        top_count = 0
+        exec_times = []
 
-        # 2. Fetch all tests created across the platform by all users
-        tests_res = supabase.table("tests").select("id, title, description, custom_id, total_questions, created_by, created_at, creator_name, creator_avatar, settings").order("created_at", desc=True).execute()
-        platform_tests = tests_res.data or []
+        for item in all_raw:
+            parsed = item.get("parsed_data") or {}
+            m = item.get("mode") or ""
+            fn = (item.get("file_name") or "").lower()
+            tt = parsed.get("tool_type") or m
+            
+            if tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
+                yt_count += 1
+            elif tt == 'topics' or m == 'topics' or 'topic' in (item.get("title") or "").lower():
+                top_count += 1
+            else:
+                gen_count += 1
 
-        for test in platform_tests:
-            title = test.get("title")
-            # If this test isn't already logged in ai_generation_history, synthesise an audit log item
-            if title and title not in existing_titles:
-                q_count = test.get("total_questions") or 0
-                created_by = test.get("created_by")
-                
-                # Check settings to infer tool_type or mode
-                settings = test.get("settings") or {}
-                mode = "generate"
-                if "extract" in str(settings).lower():
-                    mode = "extract"
-                elif "youtube" in str(settings).lower():
-                    mode = "youtube"
+            etime = parsed.get("execution_time_seconds") or item.get("execution_time_seconds")
+            if isinstance(etime, (int, float)) and etime > 0:
+                exec_times.append(etime)
 
-                synth_item = {
+        avg_time = round(sum(exec_times) / len(exec_times), 1) if exec_times else 2.4
+
+        # Gather distinct user_ids
+        user_ids = list(set([item["user_id"] for item in all_raw if item.get("user_id")]))
+        profiles_map = {}
+        if user_ids:
+            profiles_res = db.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
+            for p in (profiles_res.data or []):
+                profiles_map[p["id"]] = p
+
+        filtered_items = []
+        search_lower = (search or "").strip().lower()
+        active_tool = (tool_type or "all").lower()
+
+        for item in all_raw:
+            parsed = item.get("parsed_data") or {}
+            m = item.get("mode") or ""
+            fn = (item.get("file_name") or "").lower()
+            tt = parsed.get("tool_type") or m
+            
+            # Determine actual tool category
+            item_tool = 'generate_with_ai'
+            if tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
+                item_tool = 'youtube'
+            elif tt == 'topics' or m == 'topics' or 'topic' in (item.get("title") or "").lower():
+                item_tool = 'topics'
+
+            # Filter by tool_type
+            if active_tool != 'all' and item_tool != active_tool:
+                continue
+
+            # Attach user profile
+            uid = item.get("user_id")
+            user_prof = profiles_map.get(uid, {
+                "email": "Registered User",
+                "full_name": "Platform User",
+                "designation": "Creator"
+            })
+            item["user_profile"] = user_prof
+
+            # Filter by search
+            if search_lower:
+                user_str = f"{user_prof.get('full_name', '')} {user_prof.get('email', '')}".lower()
+                title_str = f"{item.get('title', '')} {item.get('description', '')} {item.get('file_name', '')}".lower()
+                if search_lower not in user_str and search_lower not in title_str:
+                    continue
+
+            # LIGHTWEIGHT PAYLOAD: Strip heavy questions & full text arrays from list endpoint
+            light_parsed = dict(parsed)
+            light_parsed.pop("questions", None)
+            light_parsed.pop("questions_input", None)
+            light_parsed.pop("generated_topics", None)
+            light_parsed.pop("full_text", None)
+            item["parsed_data"] = light_parsed
+
+            filtered_items.append(item)
+
+        total_filtered = len(filtered_items)
+        paged_items = filtered_items[offset : offset + limit]
+
+        return {
+            "items": paged_items,
+            "total": total_filtered,
+            "limit": limit,
+            "offset": offset,
+            "stats": {
+                "total_requests": total_requests,
+                "total_questions": total_questions,
+                "generate_ai_count": gen_count,
+                "youtube_count": yt_count,
+                "topics_count": top_count,
+                "avg_execution_time": avg_time
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching all AI history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/admin/ai-history-detail/{history_id}")
+async def get_ai_history_detail(
+    history_id: str,
+    request: Request,
+    db: Client = Depends(get_db)
+):
+    try:
+        _verify_is_admin(request, db)
+
+        # 1. Fetch full record including questions array from ai_generation_history
+        res = db.table("ai_generation_history").select("*").eq("id", history_id).execute()
+        item = None
+        if res.data and len(res.data) > 0:
+            item = res.data[0]
+        else:
+            # Fallback check in tests table
+            test_res = db.table("tests").select("*").eq("id", history_id).execute()
+            if test_res.data and len(test_res.data) > 0:
+                test = test_res.data[0]
+                item = {
                     "id": test.get("id"),
-                    "user_id": created_by,
-                    "mode": mode,
-                    "title": title,
-                    "description": test.get("description") or f"Created Test ({test.get('custom_id', 'Test')})",
+                    "user_id": test.get("created_by"),
+                    "mode": "generate",
+                    "title": test.get("title"),
+                    "description": test.get("description"),
                     "file_name": test.get("custom_id") or "Platform Created Test",
-                    "question_count": q_count,
+                    "question_count": test.get("total_questions") or len(test.get("questions") or []),
                     "created_at": test.get("created_at"),
                     "parsed_data": {
                         "tool_type": "generate_with_ai",
                         "used_method": "Platform Test Creator",
-                        "questions": [],
+                        "questions": test.get("questions") or [],
                         "execution_time_seconds": 1.0
                     }
                 }
-                items.append(synth_item)
 
-        # Re-sort all items by created_at descending
-        items.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+        if not item:
+            raise HTTPException(status_code=404, detail="AI generation log record not found")
 
-        # 3. Collect all user_ids and fetch full profiles
-        user_ids = list(set([item["user_id"] for item in items if item.get("user_id")]))
-        profiles_map = {}
-        if user_ids:
-            profiles_res = supabase.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
-            for p in (profiles_res.data or []):
-                profiles_map[p["id"]] = p
-
-        for item in items:
-            uid = item.get("user_id")
-            if uid and uid in profiles_map:
-                item["user_profile"] = profiles_map[uid]
+        # 2. Attach full user profile
+        uid = item.get("user_id")
+        if uid:
+            prof_res = db.table("profiles").select("id, full_name, email, avatar_url, designation").eq("id", uid).execute()
+            if prof_res.data and len(prof_res.data) > 0:
+                item["user_profile"] = prof_res.data[0]
             else:
                 item["user_profile"] = {
                     "email": "Registered User",
@@ -426,11 +529,11 @@ async def get_all_ai_history(
                     "designation": "Creator"
                 }
 
-        return items
+        return item
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching all AI history: {e}")
+        print(f"Error fetching AI history detail: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

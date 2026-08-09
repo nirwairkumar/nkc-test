@@ -104,9 +104,23 @@ export async function deleteUserPermanently(userId: string) {
     }
 }
 
-export async function fetchAllAiHistory() {
+export async function fetchAllAiHistory(page: number = 1, limit: number = 10, toolType?: string, search?: string) {
     try {
-        const response = await apiClient.get('/users/admin/ai-history-all');
+        const offset = (page - 1) * limit;
+        const params: any = { limit, offset };
+        if (toolType && toolType !== 'all') params.tool_type = toolType;
+        if (search && search.trim()) params.search = search.trim();
+
+        const response = await apiClient.get('/users/admin/ai-history-all', { params });
+        return { data: response.data, error: null };
+    } catch (error: any) {
+        return { data: null, error };
+    }
+}
+
+export async function fetchAiHistoryDetail(historyId: string) {
+    try {
+        const response = await apiClient.get(`/users/admin/ai-history-detail/${historyId}`);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };

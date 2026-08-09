@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { fetchAllAiHistory } from '@/lib/usersApi';
+import { fetchAllAiHistory, fetchAiHistoryDetail } from '@/lib/usersApi';
 import { getApiUrl } from '@/lib/getApiUrl';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { 
     Sparkles, FileText, User, Search, RefreshCw, CheckCircle2, 
     FileUp, Layers, Eye, HelpCircle, AlertCircle, ArrowUpDown,
-    Youtube, Tag, Clock, Zap, ExternalLink, ChevronRight, File,
+    Youtube, Tag, Clock, Zap, ExternalLink, ChevronRight, ChevronLeft, File,
     Activity, Cpu, ShieldCheck, Download, Check, X, Terminal
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,29 +25,65 @@ export default function AdminAiAuditPanel() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSubSection, setActiveSubSection] = useState<AiSubSection>('all');
     
+    // Server-Side Pagination & Stats State
+    const [page, setPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [stats, setStats] = useState({
+        total_requests: 0,
+        total_questions: 0,
+        generate_ai_count: 0,
+        youtube_count: 0,
+        topics_count: 0,
+        avg_execution_time: 2.4
+    });
+
     // Inspection Drawer/Modal State
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [inspectLoading, setInspectLoading] = useState(false);
 
     // AI Health Test Modal State
     const [isHealthCheckOpen, setIsHealthCheckOpen] = useState(false);
     const [healthTesting, setHealthTesting] = useState(false);
     const [healthResult, setHealthResult] = useState<any | null>(null);
 
-    const loadHistory = async () => {
+    const loadHistory = async (targetPage: number = page, targetSubSection: AiSubSection = activeSubSection, targetSearch: string = searchQuery) => {
         setLoading(true);
-        const { data, error } = await fetchAllAiHistory();
+        const { data, error } = await fetchAllAiHistory(targetPage, 10, targetSubSection, targetSearch);
         if (error) {
             toast.error("Failed to load AI generation history: " + (error.message || String(error)));
-        } else {
-            setHistory(data || []);
+        } else if (data) {
+            if (Array.isArray(data)) {
+                setHistory(data);
+                setTotal(data.length);
+            } else {
+                setHistory(data.items || []);
+                setTotal(data.total || 0);
+                if (data.stats) {
+                    setStats(data.stats);
+                }
+            }
         }
         setLoading(false);
     };
 
     useEffect(() => {
-        loadHistory();
-    }, []);
+        setPage(1);
+        loadHistory(1, activeSubSection, searchQuery);
+    }, [activeSubSection]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setPage(1);
+            loadHistory(1, activeSubSection, searchQuery);
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
+        loadHistory(newPage, activeSubSection, searchQuery);
+    };
 
     const handleRunAiTest = async () => {
         setIsHealthCheckOpen(true);
@@ -90,38 +126,20 @@ export default function AdminAiAuditPanel() {
         return 'generate_with_ai';
     };
 
-    const filteredHistory = history.filter(item => {
-        const userStr = `${item.user_profile?.full_name || ''} ${item.user_profile?.email || ''}`.toLowerCase();
-        const titleStr = `${item.title || ''} ${item.description || ''} ${item.file_name || ''}`.toLowerCase();
-        const matchesSearch = userStr.includes(searchQuery.toLowerCase()) || titleStr.includes(searchQuery.toLowerCase());
-        
-        if (!matchesSearch) return false;
-        if (activeSubSection === 'all') return true;
-        
-        const itemType = getItemToolType(item);
-        return itemType === activeSubSection;
-    });
-
-    // Global Statistics
-    const totalRequests = history.length;
-    const totalQuestions = history.reduce((sum, item) => sum + (item.question_count || 0), 0);
-    
-    const generateAiCount = history.filter(item => getItemToolType(item) === 'generate_with_ai').length;
-    const youtubeCount = history.filter(item => getItemToolType(item) === 'youtube').length;
-    const topicsCount = history.filter(item => getItemToolType(item) === 'topics').length;
-
-    // Average timing metric
-    const itemsWithTiming = history.filter(item => {
-        const time = item.parsed_data?.execution_time_seconds || item.execution_time_seconds;
-        return typeof time === 'number' && time > 0;
-    });
-    const avgExecutionTime = itemsWithTiming.length > 0
-        ? (itemsWithTiming.reduce((acc, item) => acc + (item.parsed_data?.execution_time_seconds || item.execution_time_seconds), 0) / itemsWithTiming.length).toFixed(1)
-        : '2.4';
-
-    const handleViewDetails = (item: any) => {
-        setSelectedItem(item);
+    // On-Demand Targeted Fetch for Inspecting Details
+    const handleViewDetails = async (item: any) => {
         setIsDialogOpen(true);
+        setInspectLoading(true);
+        setSelectedItem(null);
+
+        const { data, error } = await fetchAiHistoryDetail(item.id);
+        if (error || !data) {
+            toast.error("Could not fetch full inspection logs. Displaying summary metadata.");
+            setSelectedItem(item);
+        } else {
+            setSelectedItem(data);
+        }
+        setInspectLoading(false);
     };
 
     const formatBytes = (bytes?: number) => {
@@ -186,7 +204,7 @@ export default function AdminAiAuditPanel() {
                             <Activity className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{totalRequests}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{stats.total_requests}</h3>
                     <p className="text-[10px] text-slate-500 mt-1 font-medium">Logged across all tools</p>
                 </div>
 
@@ -198,7 +216,7 @@ export default function AdminAiAuditPanel() {
                             <Layers className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{totalQuestions}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{stats.total_questions}</h3>
                     <p className="text-[10px] text-slate-500 mt-1 font-medium">Total questions extracted</p>
                 </div>
 
@@ -210,7 +228,7 @@ export default function AdminAiAuditPanel() {
                             <FileUp className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{generateAiCount}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{stats.generate_ai_count}</h3>
                     <p className="text-[10px] text-slate-500 mt-1 font-medium">Paper & Prompt requests</p>
                 </div>
 
@@ -222,7 +240,7 @@ export default function AdminAiAuditPanel() {
                             <Youtube className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{youtubeCount}</h3>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{stats.youtube_count}</h3>
                     <p className="text-[10px] text-slate-500 mt-1 font-medium">Video test generations</p>
                 </div>
 
@@ -234,7 +252,7 @@ export default function AdminAiAuditPanel() {
                             <Zap className="w-4 h-4" />
                         </div>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{avgExecutionTime}s</h3>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight">{stats.avg_execution_time}s</h3>
                     <p className="text-[10px] text-slate-500 mt-1 font-medium">Mean AI processing time</p>
                 </div>
             </div>
@@ -264,7 +282,7 @@ export default function AdminAiAuditPanel() {
                         }`}
                     >
                         <Sparkles className="w-3.5 h-3.5" />
-                        Generate with AI ({generateAiCount})
+                        Generate with AI ({stats.generate_ai_count})
                     </button>
 
                     <button
@@ -276,7 +294,7 @@ export default function AdminAiAuditPanel() {
                         }`}
                     >
                         <Youtube className="w-3.5 h-3.5" />
-                        YouTube Tests ({youtubeCount})
+                        YouTube Tests ({stats.youtube_count})
                     </button>
 
                     <button
@@ -288,7 +306,7 @@ export default function AdminAiAuditPanel() {
                         }`}
                     >
                         <Tag className="w-3.5 h-3.5" />
-                        Topic Tagging ({topicsCount})
+                        Topic Tagging ({stats.topics_count})
                     </button>
                 </div>
 
@@ -320,7 +338,7 @@ export default function AdminAiAuditPanel() {
                             </CardDescription>
                         </div>
                         <Badge variant="outline" className="text-[11px] font-mono font-bold bg-slate-100 dark:bg-slate-800">
-                            {filteredHistory.length} Entries
+                            {total} Entries Total
                         </Badge>
                     </div>
                 </CardHeader>
@@ -347,7 +365,7 @@ export default function AdminAiAuditPanel() {
                                             <p className="text-xs font-semibold">Loading AI analytics snapshot...</p>
                                         </TableCell>
                                     </TableRow>
-                                ) : filteredHistory.length === 0 ? (
+                                ) : history.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-16 text-slate-500">
                                             <Sparkles className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-700 mb-2" />
@@ -356,7 +374,7 @@ export default function AdminAiAuditPanel() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredHistory.map((item) => {
+                                    history.map((item) => {
                                         const userProfile = item.user_profile || {};
                                         const itemTool = getItemToolType(item);
                                         const parsed = item.parsed_data || {};
@@ -492,6 +510,41 @@ export default function AdminAiAuditPanel() {
                         </Table>
                     </div>
                 </CardContent>
+
+                {/* iOS Pagination Controls Footer */}
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <p className="text-slate-500 font-medium">
+                        Showing <span className="font-bold text-slate-800 dark:text-slate-200">{total > 0 ? (page - 1) * 10 + 1 : 0}</span> to <span className="font-bold text-slate-800 dark:text-slate-200">{Math.min(page * 10, total)}</span> of <span className="font-bold text-slate-800 dark:text-slate-200">{total}</span> entries
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page === 1 || loading}
+                            onClick={() => handlePageChange(page - 1)}
+                            className="h-8 rounded-xl px-3 text-xs font-bold border-slate-200 dark:border-slate-800 flex items-center gap-1"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Previous
+                        </Button>
+
+                        <span className="text-xs font-semibold px-2 text-slate-600 dark:text-slate-400">
+                            Page <strong className="text-slate-900 dark:text-white">{page}</strong> of <strong className="text-slate-900 dark:text-white">{Math.ceil(total / 10) || 1}</strong>
+                        </span>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={page >= (Math.ceil(total / 10) || 1) || loading}
+                            onClick={() => handlePageChange(page + 1)}
+                            className="h-8 rounded-xl px-3 text-xs font-bold border-slate-200 dark:border-slate-800 flex items-center gap-1"
+                        >
+                            Next
+                            <ChevronRight className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
             </Card>
 
             {/* AI Health Check Diagnostic Modal */}
@@ -605,7 +658,12 @@ export default function AdminAiAuditPanel() {
                         </div>
                     </DialogHeader>
 
-                    {selectedItem && (
+                    {inspectLoading ? (
+                        <div className="py-20 text-center space-y-3">
+                            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-indigo-500" />
+                            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Fetching inspection logs & generated questions...</p>
+                        </div>
+                    ) : selectedItem ? (
                         <div className="space-y-6 py-3">
                             {/* User Profile Card */}
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between shadow-sm">
@@ -849,7 +907,7 @@ export default function AdminAiAuditPanel() {
                                 )}
                             </div>
                         </div>
-                    )}
+                    ) : null}
                 </DialogContent>
             </Dialog>
         </div>
