@@ -112,10 +112,10 @@ export default function Layout() {
             {!isSidebarHidden && !mobileOpen && (
                 <button
                     onClick={() => setMobileOpen(true)}
-                    className="fixed top-20 left-0 z-40 md:hidden flex items-center justify-center p-2.5 bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 border border-l-0 border-slate-200/90 dark:border-slate-800/90 shadow-md backdrop-blur-md rounded-r-xl hover:bg-slate-100 active:scale-95 transition-all"
+                    className="fixed top-20 left-0 z-40 md:hidden flex items-center justify-center p-1.5 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 border border-l-0 border-slate-200 dark:border-slate-800 shadow-xs backdrop-blur-xs rounded-r-md hover:bg-slate-100 active:scale-95 transition-all"
                     aria-label="Open Sidebar Menu"
                 >
-                    <PanelLeft className="h-4.5 w-4.5 text-indigo-600 dark:text-indigo-400" />
+                    <PanelLeft className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                 </button>
             )}
 
