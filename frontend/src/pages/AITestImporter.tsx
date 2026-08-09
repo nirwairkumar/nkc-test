@@ -182,7 +182,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         data?: any;
     } | null>(null);
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
-    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('parallel');
+    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // AI Generation Custom Parameters State
