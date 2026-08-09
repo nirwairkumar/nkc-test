@@ -1594,7 +1594,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                             </div>
                         </DialogContent>
                     </Dialog>
-                </div>
             </div>
         );
     }
