@@ -1967,9 +1967,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                                 </div>
                             </div>
 
-                            <div className="text-center space-y-1.5 sm:space-y-2 mt-4 sm:mt-6">
-                                <h1 className="text-base sm:text-2xl font-bold">How do you want to process {hasImages && hasPDF ? 'these files' : 'this file'}?</h1>
-                                <p className="text-xs sm:text-sm text-muted-foreground">Choose a mode based on your goal</p>
+                            <div className="text-center space-y-1 mt-3 sm:mt-5 px-2">
+                                <h2 className="text-xs sm:text-base md:text-lg font-bold text-slate-800 dark:text-slate-100 leading-snug tracking-tight">
+                                    How do you want to process {hasImages && hasPDF ? 'these files' : 'this file'}?
+                                </h2>
+                                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                                    Choose a mode based on your goal
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mt-4">
