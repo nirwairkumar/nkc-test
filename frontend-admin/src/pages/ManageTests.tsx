@@ -1071,12 +1071,12 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                                         {!test.sub_category_id && <Check className="h-4 w-4 ml-2 text-primary" />}
                                                                     </DropdownMenuItem>
                                                                     {(() => {
-                                                                        const filteredSubs = allSubCategories.filter(sc =>
-                                                                            test.categories?.some((c: any) => c.id === sc.category_id)
-                                                                        );
+                                                                        const filteredSubs = (test.categories && test.categories.length > 0)
+                                                                            ? allSubCategories.filter(sc => test.categories?.some((c: any) => c.id === sc.category_id))
+                                                                            : allSubCategories;
 
                                                                         if (filteredSubs.length === 0) {
-                                                                            return <DropdownMenuItem disabled>No categories assigned / No matching sub-categories</DropdownMenuItem>;
+                                                                            return <DropdownMenuItem disabled>No sub-categories available</DropdownMenuItem>;
                                                                         }
 
                                                                         return filteredSubs.map(sc => {

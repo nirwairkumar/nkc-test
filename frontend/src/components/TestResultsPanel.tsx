@@ -78,19 +78,19 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const fetchResultsAndTestDetails = async () => {
         setLoading(true);
         try {
-            // Fetch attempts excluding answers to save egress
-            const { data: attemptsData, error: attemptsError } = await fetchAttemptsForTest(test.id, true);
-            if (attemptsError) throw attemptsError;
+            // Fetch attempts and test details in parallel to eliminate waterfall latency
+            const [attemptsRes, testRes] = await Promise.all([
+                fetchAttemptsForTest(test.id, true),
+                fetchTestById(test.id, undefined, true)
+            ]);
 
-            // Fetch test details excluding questions first to save egress
-            const { data: testData, error: testError } = await fetchTestById(test.id, undefined, true);
-            if (testError) throw testError;
-            if (testData) {
-                setFullTest(testData);
+            if (attemptsRes.error) throw attemptsRes.error;
+            if (testRes.data) {
+                setFullTest(testRes.data);
             }
 
-            const attempts = attemptsData || [];
-            const userIds = Array.from(new Set(attempts.map((d: any) => d.user_id))) as string[];
+            const attempts = attemptsRes.data || [];
+            const userIds = Array.from(new Set(attempts.map((d: any) => d.user_id))).filter(Boolean) as string[];
             if (userIds.length > 0) {
                 const { data: users } = await fetchUsersByIds(userIds);
                 if (users) {
@@ -109,30 +109,29 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     const handleOpenAnalysis = async (attempt: any) => {
         setLoading(true);
         try {
-            // 1. Fetch full test details if they are missing
-            if (!fullTest || (!fullTest.questions && (!fullTest.sections || fullTest.sections.length === 0 || !fullTest.sections[0].questions))) {
-                const { data: testData } = await fetchTestById(test.id, undefined, false);
-                if (testData) {
-                    setFullTest(testData);
-                }
+            const needsQuestions = !fullTest || (!fullTest.questions && (!fullTest.sections || fullTest.sections.length === 0 || !fullTest.sections[0].questions));
+            const needsAnswers = !attempt.answers;
+
+            const [testRes, attemptRes] = await Promise.all([
+                needsQuestions ? fetchTestById(test.id, undefined, false) : Promise.resolve({ data: null, error: null }),
+                needsAnswers ? fetchAttemptById(attempt.id) : Promise.resolve({ data: null, error: null })
+            ]);
+
+            if (testRes.data) {
+                setFullTest(testRes.data);
             }
 
-            // 2. Fetch full attempt with answers if they are missing
             let fullAttempt = attempt;
-            if (!attempt.answers) {
-                const { data: attemptData, error } = await fetchAttemptById(attempt.id);
-                if (attemptData) {
-                    fullAttempt = {
-                        ...attempt,
-                        ...attemptData
-                    };
-                    
-                    // Update this specific attempt in results list state so we have it cached
-                    setResults(prev => prev.map(r => r.id === attempt.id ? fullAttempt : r));
-                } else if (error) {
-                    toast.error("Failed to load detailed candidate answers");
-                }
+            if (attemptRes.data) {
+                fullAttempt = {
+                    ...attempt,
+                    ...attemptRes.data
+                };
+                setResults(prev => prev.map(r => r.id === attempt.id ? fullAttempt : r));
+            } else if (needsAnswers && attemptRes.error) {
+                toast.error("Failed to load detailed candidate answers");
             }
+
             setSelectedAttemptForAnalysis(fullAttempt);
         } catch (err) {
             console.error("Error fetching detailed result data", err);
@@ -144,6 +143,21 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
 
     // Use fullTest if loaded, otherwise fall back to test prop
     const currentTest = fullTest || test;
+
+    const getSubmissionModeBadge = (attempt: any) => {
+        const visibility = attempt.metadata?.visibility || attempt.metadata?.test_visibility || (attempt.metadata?.conduct_exam ? 'conduct' : (currentTest?.visibility || (currentTest?.is_public ? 'public' : 'private')));
+        
+        if (visibility === 'conduct' || attempt.metadata?.conduct_exam) {
+            return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 text-[10px] py-0.5 px-1.5 font-bold uppercase tracking-wider">Conduct</Badge>;
+        }
+        if (visibility === 'public') {
+            return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 text-[10px] py-0.5 px-1.5 font-bold uppercase tracking-wider">Public</Badge>;
+        }
+        if (visibility === 'unlisted') {
+            return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-300 text-[10px] py-0.5 px-1.5 font-bold uppercase tracking-wider">Unlisted</Badge>;
+        }
+        return <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 text-[10px] py-0.5 px-1.5 font-bold uppercase tracking-wider">Private</Badge>;
+    };
 
     // Only show conduct-exam results if this test has conduct settings
     const isConductTest = !!(currentTest?.settings?.conduct_exam);
@@ -947,6 +961,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                             <TableHead className="font-bold text-xs">Stats</TableHead>
                                             <TableHead className="font-bold text-xs">Time Taken</TableHead>
                                             <TableHead className="font-bold text-xs">Date</TableHead>
+                                            <TableHead className="font-bold text-xs">Mode</TableHead>
                                             <TableHead className="w-[44px]" />
                                         </TableRow>
                                     </TableHeader>
@@ -1017,6 +1032,9 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                                                         {format(new Date(attempt.created_at), 'MMM d, p')}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {getSubmissionModeBadge(attempt)}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-1">

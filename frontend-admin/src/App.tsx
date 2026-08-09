@@ -9,6 +9,8 @@ import SplashLoader from '@/components/ui/SplashLoader';
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminLoginPanel = lazy(() => import('./pages/AdminLoginPanel'));
+const SolutionEditorPage = lazy(() => import('./pages/SolutionEditorPage'));
+const CreateTestPage = lazy(() => import('./pages/CreateTestPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +34,8 @@ const App: React.FC = () => {
                 <Route path="/" element={<AdminDashboard />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/login" element={<AdminLoginPanel />} />
+                <Route path="/solutions-editor/:testId" element={<SolutionEditorPage />} />
+                <Route path="/edit-test/:id" element={<CreateTestPage />} />
                 <Route path="/analytics" element={<Navigate to="/admin?tab=analytics" replace />} />
                 <Route path="/manage-tests" element={<Navigate to="/admin?tab=tests" replace />} />
                 <Route path="/create-test" element={<Navigate to="/admin?tab=builder" replace />} />

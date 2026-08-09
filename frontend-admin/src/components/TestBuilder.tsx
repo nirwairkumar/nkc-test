@@ -2,7 +2,7 @@ import { TestBuilderMinimap } from './TestBuilderMinimap';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -85,7 +85,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
 
     // Fallback to URL params if no initialData provided (for direct route access)
     const { id: paramId } = useParams();
-    const testId = initialData?.id || paramId;
+    const [searchParams] = useSearchParams();
+    const testId = initialData?.id || paramId || searchParams.get('testId');
     const isEditMode = !!testId;
 
     const { isPremium, loading: premiumLoading } = usePremiumStatus();
