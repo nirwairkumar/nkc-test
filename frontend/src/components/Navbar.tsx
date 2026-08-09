@@ -254,7 +254,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
                                 <NotificationBox />
                             </React.Suspense>
 
-                            {/* User Avatar Dropdown - ONLY Home, Profile, Settings, Log out */}
+                            {/* User Avatar Dropdown - Home, Profile, Settings, Support, Log out */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-9 w-9 rounded-full ring-2 ring-slate-200/60 dark:ring-slate-800 hover:ring-primary/40 transition-all" aria-label="Open user account menu">
@@ -304,6 +304,14 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
                                     >
                                         <Settings className="mr-2.5 h-4 w-4" />
                                         <span>Settings</span>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
+                                        onClick={() => navigate('/support')}
+                                        className={`rounded-xl px-3 py-2 cursor-pointer font-medium text-xs ${location.pathname === '/support' ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-700 dark:text-slate-300'}`}
+                                    >
+                                        <HelpCircle className="mr-2.5 h-4 w-4" />
+                                        <span>Support</span>
                                     </DropdownMenuItem>
 
                                     <DropdownMenuSeparator className="my-1" />
