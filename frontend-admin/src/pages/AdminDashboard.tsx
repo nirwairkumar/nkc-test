@@ -4,7 +4,8 @@ import { SEO } from '@/components/SEO';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
-    FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X
+    FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
+    FileText, BookOpen, Users, Layers, Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,14 +22,32 @@ import AdminPromoCodesPanel from './AdminPromoCodesPanel';
 import AdminMigrationPanel from './AdminMigrationPanel';
 import AdminAiAuditPanel from './AdminAiAuditPanel';
 import { authApi } from '@/lib/authApi';
+import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'tests' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
+type TabId = 'analytics' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = (searchParams.get('tab') as TabId) || 'analytics';
+    const [conductCount, setConductCount] = useState<number>(0);
+
+    useEffect(() => {
+        const loadInitialConductCount = async () => {
+            try {
+                const { data, error } = await fetchConductModeTests();
+                if (!error && data) {
+                    setConductCount(data.length);
+                }
+            } catch (err) {
+                console.error("Failed to load conduct mode tests count:", err);
+            }
+        };
+        if (user && isAdmin) {
+            loadInitialConductCount();
+        }
+    }, [user, isAdmin]);
 
     const handleTabChange = (tabId: TabId) => {
         setSearchParams({ tab: tabId });
@@ -57,7 +76,12 @@ export default function AdminDashboard() {
             title: "Core Platform",
             items: [
                 { id: 'analytics' as const, label: 'Analytics & Matrix', icon: BarChart3 },
-                { id: 'tests' as const, label: 'Manage Tests', icon: FolderKanban },
+                { id: 'tests' as const, label: 'Manage Tests', icon: FileText },
+                { id: 'categories' as const, label: 'Categories', icon: BookOpen },
+                { id: 'users' as const, label: 'Users', icon: Users },
+                { id: 'verified_creators' as const, label: 'Verified Creators', icon: GraduationCap },
+                { id: 'combined' as const, label: 'Combined Sessions', icon: Layers },
+                { id: 'activity' as const, label: 'Live Activity', icon: Radio },
                 { id: 'builder' as const, label: 'Test Builder', icon: PlusCircle },
                 { id: 'importer' as const, label: 'AI Test Importer', icon: Sparkles },
                 { id: 'ai_analysis' as const, label: 'AI Analysis & Audit', icon: Sparkles },
@@ -154,8 +178,26 @@ export default function AdminDashboard() {
                                             : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                                     }`}
                                 >
-                                    <item.icon className="h-4 w-4 shrink-0" />
-                                    <span className="truncate">{item.label}</span>
+                                    {item.id === 'activity' && conductCount > 0 ? (
+                                        <span className="relative flex h-2 w-2 mr-0.5 shrink-0">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                        </span>
+                                    ) : (
+                                        <item.icon className="h-4 w-4 shrink-0" />
+                                    )}
+                                    <span className="truncate flex-1 text-left">{item.label}</span>
+                                    {item.id === 'activity' && (
+                                        <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
+                                            activeTab === 'activity'
+                                                ? 'bg-white/20 text-white border-white/30'
+                                                : conductCount > 0
+                                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                                        }`}>
+                                            {conductCount}
+                                        </span>
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -180,7 +222,9 @@ export default function AdminDashboard() {
             <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 overflow-x-hidden">
                 <div className="max-w-7xl mx-auto">
                     {activeTab === 'analytics' && <AdminAnalyticsPanel />}
-                    {activeTab === 'tests' && <ManageTests />}
+                    {['tests', 'categories', 'users', 'verified_creators', 'combined', 'activity'].includes(activeTab) && (
+                        <ManageTests activeTab={activeTab} />
+                    )}
                     {activeTab === 'builder' && <CreateTestPage />}
                     {activeTab === 'importer' && <AITestImporter />}
                     {(activeTab === 'ai_analysis' || activeTab === 'ai_audit') && <AdminAiAuditPanel />}
