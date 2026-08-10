@@ -357,7 +357,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
                 if (data) {
                     if (data.created_by !== user.id && !isAdmin) {
                         toast.error("You can only edit your own tests");
-                        navigate('/my-tests');
+                        navigate('/manage-tests');
                         return;
                     }
                     populateData(data);
@@ -1037,7 +1037,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             localStorage.removeItem('create_test_draft');
             toast.success(isEditMode ? "Test updated successfully!" : "Test created successfully!");
             if (onSuccess) onSuccess();
-            else navigate('/my-tests');
+            else navigate('/manage-tests');
         } catch (error: any) {
             console.error("Error saving test:", error);
             toast.error("Failed to save test: " + error.message);

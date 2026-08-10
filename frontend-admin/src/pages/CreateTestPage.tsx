@@ -6,10 +6,11 @@ const AITestImporter = lazy(() => import('./AITestImporter'));
 import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
 
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function CreateTestPage() {
     const location = useLocation();
+    const navigate = useNavigate();
     const [showImporter, setShowImporter] = useState(false);
     const [importedData, setImportedData] = useState<any>(null);
 
@@ -70,6 +71,8 @@ export default function CreateTestPage() {
             <TestBuilder
                 key={importedData ? 'imported-test' : 'new-test'}
                 initialData={importedData}
+                onSuccess={() => navigate('/manage-tests')}
+                onCancel={() => navigate('/manage-tests')}
                 onAiImport={() => setShowImporter(true)}
             />
         </div>

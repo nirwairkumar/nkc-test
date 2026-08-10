@@ -1,7 +1,7 @@
 import base64
 import json
 import time
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from app.core.database import get_db, supabase # Import global supabase client
 from supabase import Client
 from typing import Optional, List, Dict, Any

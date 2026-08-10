@@ -238,6 +238,28 @@ async def get_tests_feed(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _get_request_user_and_admin(request: Request, db: Client) -> tuple[Optional[str], bool]:
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None, False
+    try:
+        token = auth_header[7:]
+        user_res = db.auth.get_user(token)
+        if not user_res or not user_res.user:
+            return None, False
+        user_id = user_res.user.id
+        profile_res = db.table("profiles").select("email").eq("id", user_id).execute()
+        if profile_res.data:
+            email = profile_res.data[0].get("email")
+            if email:
+                admin_res = db.table("admins").select("email").eq("email", email).execute()
+                if admin_res.data:
+                    return user_id, True
+        return user_id, False
+    except Exception:
+        return None, False
+
+
 @router.get("/user/{user_id}")
 async def get_user_tests(
     user_id: str,
@@ -256,25 +278,7 @@ async def get_user_tests(
             set_public_cache(response, 60, 60)
             
         # 1. Authenticate / Identify the requester
-        requesting_user_id: str | None = None
-        is_admin = False
-        
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            try:
-                token = auth_header[7:]
-                user_res = db.auth.get_user(token)
-                if user_res and user_res.user:
-                    requesting_user_id = user_res.user.id
-                    # Check if admin
-                    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
-                    if profile_res.data:
-                        email = profile_res.data[0].get("email")
-                        if email:
-                            admin_res = db.table("admins").select("email").eq("email", email).execute()
-                            is_admin = bool(admin_res.data)
-            except Exception:
-                pass
+        requesting_user_id, is_admin = _get_request_user_and_admin(request, db)
 
         # 2. Authorization Enforcement
         is_owner = (requesting_user_id == user_id)
@@ -471,16 +475,7 @@ async def get_test_by_id(
 ):
     try:
         # ─ Optionally extract requester identity (for owner bypass)
-        requesting_user_id: str | None = None
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            try:
-                token = auth_header[7:]
-                user_res = db.auth.get_user(token)
-                if user_res and user_res.user:
-                    requesting_user_id = user_res.user.id
-            except Exception:
-                pass  # Invalid token — treat as anonymous
+        requesting_user_id, is_admin = _get_request_user_and_admin(request, db)
 
         # ─ Cache check (5 min TTL for individual tests, separated by exclude_questions flag)
         cache_key = f"test:{test_id}:eq{exclude_questions}"
@@ -496,9 +491,9 @@ async def get_test_by_id(
                 pass
             is_slug_lookup = not is_uuid_lookup and test_id == cached.get("slug")
 
-            # Owner bypass: creator can always see their own test
+            # Owner / Admin bypass: creator or admin can always see their test
             is_owner = requesting_user_id and cached.get("created_by") == requesting_user_id
-            if not is_owner:
+            if not is_owner and not is_admin:
                 # Private: never public
                 if vis == "private":
                     raise HTTPException(status_code=404, detail="Test not found")
@@ -577,10 +572,10 @@ async def get_test_by_id(
         # ─ Visibility Enforcement
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")
 
-        # Owner bypass: test creator can always access their own test via UUID
+        # Owner / Admin bypass: test creator or admin can always access their test via UUID
         is_owner = requesting_user_id and test.get("created_by") == requesting_user_id
 
-        if not is_owner:
+        if not is_owner and not is_admin:
             # Private tests: never accessible via public link
             if visibility == "private":
                 raise HTTPException(status_code=404, detail="Test not found")
@@ -646,16 +641,8 @@ async def get_test_by_slug(
 ):
     try:
         # ─ Optionally extract requester identity (for owner bypass)
-        requesting_user_id: str | None = None
-        auth_header = request.headers.get("Authorization", "")
-        if auth_header.startswith("Bearer "):
-            try:
-                token = auth_header[7:]
-                user_res = db.auth.get_user(token)
-                if user_res and user_res.user:
-                    requesting_user_id = user_res.user.id
-            except Exception:
-                pass  # Invalid token — treat as anonymous
+        requesting_user_id, is_admin = _get_request_user_and_admin(request, db)
+
         # ─ Cache check
         slug_cache_key = f"test:slug:{slug}:eq{exclude_questions}"
         cached = cache_get(test_cache, slug_cache_key)
@@ -664,7 +651,7 @@ async def get_test_by_slug(
             cached_vis = cached.get("visibility", "public" if cached.get("is_public") else "private")
             is_cached_owner = requesting_user_id and cached.get("created_by") == requesting_user_id
             
-            if cached_vis == "private" and not is_cached_owner:
+            if cached_vis == "private" and not is_cached_owner and not is_admin:
                 raise HTTPException(status_code=404, detail="Test not found")
             if response:
                 if cached_vis == "public":
@@ -718,8 +705,8 @@ async def get_test_by_slug(
         visibility = test.get("visibility", "public" if test.get("is_public") else "private")
         is_owner = requesting_user_id and test.get("created_by") == requesting_user_id
 
-        # Private tests: never accessible via any slug (even old public slugs) unless owner
-        if visibility == "private" and not is_owner:
+        # Private tests: never accessible via any slug (even old public slugs) unless owner or admin
+        if visibility == "private" and not is_owner and not is_admin:
             raise HTTPException(status_code=404, detail="Test not found")
 
         # Unlisted (conduct-exam): accessible ONLY via the exact conduct slug.
