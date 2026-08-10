@@ -1,11 +1,13 @@
+import { getUserAppUrl } from '@/utils/subdomain';
+
 export const shareTest = async (test: any) => {
     const isConducted = !!test.settings?.conduct_exam?.enabled;
     const conductSlug = isConducted ? (test.settings?.conduct_exam?.conduct_slug || test.slug) : null;
     const slugUrl = isConducted 
-        ? (conductSlug ? `${window.location.origin}/test/${conductSlug}` : null)
-        : (test.slug ? `${window.location.origin}/test/${test.slug}` : null);
+        ? (conductSlug ? getUserAppUrl(`/test/${conductSlug}`) : null)
+        : (test.slug ? getUserAppUrl(`/test/${test.slug}`) : null);
     
-    const idUrl = `${window.location.origin}/test-intro/${test.id}`;
+    const idUrl = getUserAppUrl(`/test-intro/${test.id}`);
     const primaryUrl = slugUrl || idUrl;
 
     let message = `Try this test "${test.title}" on Testoza 🚀
