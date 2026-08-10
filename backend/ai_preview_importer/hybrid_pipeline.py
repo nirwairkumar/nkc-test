@@ -698,7 +698,10 @@ async def process_files_hybrid_stream(
                     chat_history = chat_history[-MAX_HISTORY_ENTRIES:]
                 
             except Exception as e:
-                logger.error(f"Stateful step {step_num} failed: {e}")
+                err_str = str(e)
+                logger.error(f"Stateful step {step_num} failed: {err_str}")
+                if "PERMISSION_DENIED" in err_str or "BILLING_DISABLED" in err_str or "API_KEY" in err_str:
+                    raise RuntimeError(f"Gemini API Error (403 Permission Denied / Billing Disabled): {err_str}")
                 chat_history.append(compact_user_content)
                 chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text="{}")]))
                 
@@ -863,7 +866,10 @@ async def process_files_hybrid_stream(
                                         pass
                         return {'success': True, 'questions': batch_questions, 'title': result.get("title"), 'description': result.get("description")}
                     except Exception as e:
-                        logger.error(f"Hybrid batch {b_num} failed: {e}")
+                        err_str = str(e)
+                        logger.error(f"Hybrid batch {b_num} failed: {err_str}")
+                        if "PERMISSION_DENIED" in err_str or "BILLING_DISABLED" in err_str or "API_KEY" in err_str:
+                            raise RuntimeError(f"Gemini API Error (403 Permission Denied / Billing Disabled): {err_str}")
                         completed_batches += 1
                         if progress_callback:
                             await progress_callback({
@@ -876,7 +882,7 @@ async def process_files_hybrid_stream(
                                     'questions_found': total_questions_found
                                 }
                             })
-                        return {'success': False, 'error': str(e)}
+                        return {'success': False, 'error': err_str}
                         
             batch_tasks = [process_hybrid_batch(b) for b in batches]
             batch_results = await asyncio.gather(*batch_tasks)
