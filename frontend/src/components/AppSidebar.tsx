@@ -50,6 +50,10 @@ export default function AppSidebar({
     const isAiPage = location.pathname === '/generate-with-ai';
     const isCreateTestPage = location.pathname.startsWith('/create-test') || location.pathname.startsWith('/edit-test');
 
+    // Hover auto-expand state when sidebar is collapsed
+    const [isHovered, setIsHovered] = useState<boolean>(false);
+    const isVisiblyCollapsed = isCollapsed && !isHovered;
+
     // AI History Dropdown state (defaults to open on /generate-with-ai page)
     const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(true);
     const [historyItems, setHistoryItems] = useState<any[]>([]);
@@ -268,7 +272,12 @@ Item 2 & Value B & 200 \\\\
             <aside
                 onMouseEnter={() => {
                     if (window.innerWidth >= 768 && isCollapsed) {
-                        setIsCollapsed(false);
+                        setIsHovered(true);
+                    }
+                }}
+                onMouseLeave={() => {
+                    if (window.innerWidth >= 768) {
+                        setIsHovered(false);
                     }
                 }}
                 className={`
@@ -277,13 +286,13 @@ Item 2 & Value B & 200 \\\\
                     border-r border-slate-200/80 dark:border-slate-800/80
                     transition-all duration-300 ease-in-out flex flex-col justify-between
                     ${mobileOpen ? 'translate-x-0 w-72 sm:w-80 shadow-2xl' : '-translate-x-full md:translate-x-0'}
-                    ${!mobileOpen && isCollapsed ? 'md:w-16' : 'md:w-64'}
+                    ${!mobileOpen && isVisiblyCollapsed ? 'md:w-16' : 'md:w-64'}
                 `}
             >
                 {/* Top Sidebar Header */}
                 <div>
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-slate-800/60">
-                        {(!isCollapsed || mobileOpen) && (
+                        {(!isVisiblyCollapsed || mobileOpen) && (
                             <div className="flex items-center gap-2 px-1">
                                 <span className="font-bold text-slate-800 dark:text-slate-200 text-base tracking-tight">
                                     Menu
@@ -307,7 +316,10 @@ Item 2 & Value B & 200 \\\\
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hidden md:flex"
-                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                onClick={() => {
+                                    setIsHovered(false);
+                                    setIsCollapsed(!isCollapsed);
+                                }}
                                 title={isCollapsed ? "Expand menu" : "Collapse menu"}
                             >
                                 {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -333,7 +345,7 @@ Item 2 & Value B & 200 \\\\
                                                 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-md shadow-slate-900/10 dark:shadow-slate-100/10 font-semibold'
                                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60'
                                             }
-                                            ${(isCollapsed && !mobileOpen) ? 'justify-center px-0 h-10 w-10 mx-auto' : ''}
+                                            ${(isVisiblyCollapsed && !mobileOpen) ? 'justify-center px-0 h-10 w-10 mx-auto' : ''}
                                         `}
                                     >
                                         <Icon className={`
@@ -344,7 +356,7 @@ Item 2 & Value B & 200 \\\\
                                             }
                                         `} />
 
-                                        {(!isCollapsed || mobileOpen) && (
+                                        {(!isVisiblyCollapsed || mobileOpen) && (
                                             <div className="flex items-center justify-between flex-1 min-w-0">
                                                 <span className="truncate">{item.title}</span>
                                                 {item.badge && (
@@ -357,7 +369,7 @@ Item 2 & Value B & 200 \\\\
                                     </button>
 
                                     {/* AI Import History Dropdown nested directly under Generate with AI - ONLY visible on Generate with AI page */}
-                                    {isAiItem && isAiPage && (!isCollapsed || mobileOpen) && (
+                                    {isAiItem && isAiPage && (!isVisiblyCollapsed || mobileOpen) && (
                                         <div className="pl-3 py-1 space-y-1">
                                             <button
                                                 onClick={() => setIsHistoryOpen(!isHistoryOpen)}
@@ -415,7 +427,7 @@ Item 2 & Value B & 200 \\\\
                                     )}
 
                                     {/* AI Guide & Sy Pad Option under Create Test - ONLY on create test page */}
-                                    {item.path === '/create-test' && isCreateTestPage && (!isCollapsed || mobileOpen) && (
+                                    {item.path === '/create-test' && isCreateTestPage && (!isVisiblyCollapsed || mobileOpen) && (
                                         <div className="pl-3 py-1 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
                                             <button
                                                 onClick={() => window.dispatchEvent(new CustomEvent('toggle_ai_guide'))}
@@ -442,7 +454,7 @@ Item 2 & Value B & 200 \\\\
                                 </div>
                             );
 
-                            if (isCollapsed && !mobileOpen) {
+                            if (isVisiblyCollapsed && !mobileOpen) {
                                 return (
                                     <Tooltip key={item.title}>
                                         <TooltipTrigger asChild>
