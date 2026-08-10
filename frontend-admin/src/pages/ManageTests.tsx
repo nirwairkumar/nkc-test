@@ -35,6 +35,7 @@ import {
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import SplashLoader from '@/components/ui/SplashLoader';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -1348,7 +1349,12 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                         <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
                                                 </TableCell>
-                                                <TableCell className="font-medium">{user.full_name || 'N/A'}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>{user.full_name || 'N/A'}</span>
+                                                        {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>{user.email}</TableCell>
                                                 <TableCell>
                                                     <select
@@ -1446,9 +1452,11 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                         <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
                                                 </TableCell>
-                                                <TableCell className="font-medium flex items-center gap-2">
-                                                    {user.full_name || 'N/A'}
-                                                    {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>{user.full_name || 'N/A'}</span>
+                                                        {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>{user.email}</TableCell>
                                                 <TableCell>
