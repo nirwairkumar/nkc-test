@@ -35,6 +35,7 @@ import {
 import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import SplashLoader from '@/components/ui/SplashLoader';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -48,8 +49,8 @@ import {
 } from "@/components/ui/table";
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
-import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { shareTest } from '@/utils/shareUtils';
+import { getUserAppUrl } from '@/utils/subdomain';
 interface ManageTestsProps {
     activeTab?: string;
 }
@@ -110,6 +111,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
     const [userSearchQuery, setUserSearchQuery] = useState("");
     const [viewingUser, setViewingUser] = useState<any>(null); // For User Details Dialog
     const [userDetails, setUserDetails] = useState<any>({ createdTests: [], attempts: [], reports: [] });
+    const [loadingUserDetails, setLoadingUserDetails] = useState<boolean>(false);
 
     // Reports Stats State
     const [reportStats, setReportStats] = useState<Record<string, { total: number; open: number; solved: number }>>({});
@@ -473,6 +475,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
     const handleViewUserDetails = async (user: any) => {
         setViewingUser(user);
         setUserDetails({ createdTests: [], attempts: [], reports: [] }); // Reset
+        setLoadingUserDetails(true);
 
         try {
             // 1. Fetch Created Tests
@@ -493,6 +496,8 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         } catch (error) {
             console.error("Error fetching user details", error);
             toast.error("Could not load full user details");
+        } finally {
+            setLoadingUserDetails(false);
         }
     };
 
@@ -1158,7 +1163,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                 <Button
                                                     size="sm"
                                                     className="h-8 text-xs font-medium px-5 bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-colors duration-300 rounded-md"
-                                                    onClick={() => navigate(`/test-intro/${test.id}`)}
+                                                    onClick={() => window.open(getUserAppUrl(`/test-intro/${test.id}`), '_blank')}
                                                 >
                                                     View
                                                 </Button>
@@ -1223,7 +1228,12 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 <TableBody>
                                     {categoriesLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={2} className="text-center">Loading...</TableCell>
+                                            <TableCell colSpan={2} className="text-center py-12 text-slate-500 font-medium">
+                                                <div className="flex flex-col items-center justify-center gap-2">
+                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                    <span className="text-xs font-semibold">Loading categories...</span>
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     ) : categories.length === 0 ? (
                                         <TableRow>
@@ -1317,7 +1327,12 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 <TableBody>
                                     {usersLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8">Loading users...</TableCell>
+                                            <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
+                                                <div className="flex flex-col items-center justify-center gap-2">
+                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                    <span className="text-xs font-semibold">Loading registered users...</span>
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     ) : filteredUsers.length === 0 ? (
                                         <TableRow>
@@ -1334,7 +1349,12 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                         <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
                                                 </TableCell>
-                                                <TableCell className="font-medium">{user.full_name || 'N/A'}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>{user.full_name || 'N/A'}</span>
+                                                        {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>{user.email}</TableCell>
                                                 <TableCell>
                                                     <select
@@ -1410,7 +1430,12 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 <TableBody>
                                     {usersLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8">Loading users...</TableCell>
+                                            <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
+                                                <div className="flex flex-col items-center justify-center gap-2">
+                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                    <span className="text-xs font-semibold">Loading verified creators...</span>
+                                                </div>
+                                            </TableCell>
                                         </TableRow>
                                     ) : filteredUsers.length === 0 ? (
                                         <TableRow>
@@ -1427,9 +1452,11 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                         <AvatarFallback>{(user.full_name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
                                                     </Avatar>
                                                 </TableCell>
-                                                <TableCell className="font-medium flex items-center gap-2">
-                                                    {user.full_name || 'N/A'}
-                                                    {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>{user.full_name || 'N/A'}</span>
+                                                        {user.is_verified_creator && <VerifiedBadge size={14} />}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>{user.email}</TableCell>
                                                 <TableCell>
@@ -1645,8 +1672,11 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 <TableBody>
                                     {combinedLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-8">
-                                                <RefreshCw className="w-5 h-5 animate-spin mx-auto text-indigo-500" />
+                                            <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
+                                                <div className="flex flex-col items-center justify-center gap-2">
+                                                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                                    <span className="text-xs font-semibold">Loading combined sessions...</span>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ) : combinedSessions.length === 0 ? (
@@ -2000,7 +2030,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                             className="h-8 text-[11px] flex items-center gap-1 bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950 dark:border-indigo-900 dark:text-indigo-300"
                                             onClick={() => {
                                                 setViewingUser(null);
-                                                window.open(`/my-tests?userId=${viewingUser.id}`, '_blank');
+                                                window.open(getUserAppUrl(`/my-tests?userId=${viewingUser.id}`), '_blank');
                                             }}
                                         >
                                             <Edit className="w-3 h-3" /> Dashboard
@@ -2011,7 +2041,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                             className="h-8 text-[11px] flex items-center gap-1 bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:border-purple-900 dark:text-purple-300"
                                             onClick={() => {
                                                 setViewingUser(null);
-                                                window.open(`/materials?userId=${viewingUser.id}`, '_blank');
+                                                window.open(getUserAppUrl(`/materials?userId=${viewingUser.id}`), '_blank');
                                             }}
                                         >
                                             <Layers className="w-3 h-3" /> Materials
@@ -2030,16 +2060,20 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 </div>
                                 <div className="flex gap-4">
                                     <div className="text-center p-2 bg-white dark:bg-black rounded border min-w-[80px]">
-                                        <div className="text-2xl font-bold">{userDetails.createdTests?.length || 0}</div>
+                                        <div className="text-2xl font-bold flex justify-center items-center h-8">
+                                            {loadingUserDetails ? <Loader2 className="w-5 h-5 animate-spin text-indigo-500" /> : (userDetails.createdTests?.length || 0)}
+                                        </div>
                                         <div className="text-[10px] uppercase text-muted-foreground font-semibold">Tests Created</div>
                                     </div>
                                     <div className="text-center p-2 bg-white dark:bg-black rounded border min-w-[80px]">
-                                        <div className="text-2xl font-bold">{userDetails.attempts?.length || 0}</div>
+                                        <div className="text-2xl font-bold flex justify-center items-center h-8">
+                                            {loadingUserDetails ? <Loader2 className="w-5 h-5 animate-spin text-indigo-500" /> : (userDetails.attempts?.length || 0)}
+                                        </div>
                                         <div className="text-[10px] uppercase text-muted-foreground font-semibold">Tests Taken</div>
                                     </div>
                                     <div className="text-center p-2 bg-white dark:bg-black rounded border min-w-[80px]">
-                                        <div className={`text-2xl font-bold ${reportStats[viewingUser.id]?.open > 0 ? 'text-red-500' : ''}`}>
-                                            {reportStats[viewingUser.id]?.total || 0}
+                                        <div className={`text-2xl font-bold flex justify-center items-center h-8 ${reportStats[viewingUser.id]?.open > 0 ? 'text-red-500' : ''}`}>
+                                            {loadingUserDetails ? <Loader2 className="w-5 h-5 animate-spin text-indigo-500" /> : (reportStats[viewingUser.id]?.total || 0)}
                                         </div>
                                         <div className="text-[10px] uppercase text-muted-foreground font-semibold">Total Reports</div>
                                     </div>
@@ -2062,8 +2096,13 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     </TabsTrigger>
                                 </TabsList>
 
-                                <TabsContent value="created" className="mt-4 border rounded-md p-0 overflow-hidden">
-                                    {userDetails.createdTests.length === 0 ? (
+                                <TabsContent value="created" className="mt-4 border rounded-md p-0 overflow-hidden min-h-[140px] flex flex-col justify-center">
+                                    {loadingUserDetails ? (
+                                        <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-slate-500">
+                                            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                            <span className="text-xs font-semibold">Loading created tests...</span>
+                                        </div>
+                                    ) : userDetails.createdTests.length === 0 ? (
                                         <div className="p-8 text-center text-muted-foreground">No tests created by this user.</div>
                                     ) : (
                                         <Table>
@@ -2087,8 +2126,13 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     )}
                                 </TabsContent>
 
-                                <TabsContent value="history" className="mt-4 border rounded-md p-0 overflow-hidden">
-                                    {userDetails.attempts.length === 0 ? (
+                                <TabsContent value="history" className="mt-4 border rounded-md p-0 overflow-hidden min-h-[140px] flex flex-col justify-center">
+                                    {loadingUserDetails ? (
+                                        <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-slate-500">
+                                            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                            <span className="text-xs font-semibold">Loading attempt history...</span>
+                                        </div>
+                                    ) : userDetails.attempts.length === 0 ? (
                                         <div className="p-8 text-center text-muted-foreground">No tests taken by this user.</div>
                                     ) : (
                                         <Table>
@@ -2112,8 +2156,13 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     )}
                                 </TabsContent>
 
-                                <TabsContent value="reports" className="mt-4 border rounded-md p-0 overflow-hidden">
-                                    {!userDetails.reports || userDetails.reports.length === 0 ? (
+                                <TabsContent value="reports" className="mt-4 border rounded-md p-0 overflow-hidden min-h-[140px] flex flex-col justify-center">
+                                    {loadingUserDetails ? (
+                                        <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-slate-500">
+                                            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                                            <span className="text-xs font-semibold">Loading reports...</span>
+                                        </div>
+                                    ) : !userDetails.reports || userDetails.reports.length === 0 ? (
                                         <div className="p-8 text-center text-muted-foreground">No reports filed against tests created by this user.</div>
                                     ) : (
                                         <Table>
