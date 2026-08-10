@@ -299,27 +299,29 @@ async def get_user_details(
     try:
         _verify_auth_token(request, db)
         response = db.table("profiles").select("*").eq("id", user_id).execute()
-        if not response.data:
-            print(f"Profile check in get_user_details: profile does not exist for {user_id}. Attempting auto-provisioning...")
-            try:
-                auth_user = supabase.auth.admin.get_user_by_id(user_id)
-                if auth_user and auth_user.user:
-                    email = auth_user.user.email
-                    full_name = None
-                    if auth_user.user.user_metadata:
-                        full_name = auth_user.user.user_metadata.get("full_name")
-                    
-                    profile_data = {
-                        "id": user_id,
-                        "email": email,
-                        "full_name": full_name,
-                    }
-                    print(f"Auto-creating profile in get_user_details: {profile_data}")
-                    create_result = db.table("profiles").insert(profile_data).execute()
-                    if create_result.data:
-                        return create_result.data[0]
-            except Exception as create_error:
-                print(f"Error auto-creating profile in get_user_details: {create_error}")
+        if response.data and len(response.data) > 0:
+            return response.data[0]
+            
+        print(f"Profile check in get_user_details: profile does not exist for {user_id}. Attempting auto-provisioning...")
+        try:
+            auth_user = supabase.auth.admin.get_user_by_id(user_id)
+            if auth_user and auth_user.user:
+                email = auth_user.user.email
+                full_name = None
+                if auth_user.user.user_metadata:
+                    full_name = auth_user.user.user_metadata.get("full_name")
+                
+                profile_data = {
+                    "id": user_id,
+                    "email": email,
+                    "full_name": full_name,
+                }
+                print(f"Auto-creating profile in get_user_details: {profile_data}")
+                create_result = db.table("profiles").insert(profile_data).execute()
+                if create_result.data:
+                    return create_result.data[0]
+        except Exception as create_error:
+            print(f"Error auto-creating profile in get_user_details: {create_error}")
         return None
     except HTTPException:
         raise

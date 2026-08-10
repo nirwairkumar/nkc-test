@@ -328,13 +328,19 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         }
 
         try {
-            const { data, error } = await fetchUserDetails(creatorId);
+            const [{ data, error }, creatorTestsRes] = await Promise.all([
+                fetchUserDetails(creatorId),
+                fetchTestsByCreator(creatorId, { idsOnly: true }).catch(() => ({ data: null, meta: null }))
+            ]);
 
             if (error) throw error;
+            if (!data) throw new Error("Creator profile not found");
+
+            const count = creatorTestsRes?.meta?.total ?? (creatorTestsRes?.data ? (Array.isArray(creatorTestsRes.data) ? creatorTestsRes.data.length : 0) : getCreatorTestCount(creatorId));
 
             setViewingCreator({
-                ...data, // Profile data
-                testCount: getCreatorTestCount(creatorId)
+                ...data,
+                testCount: count
             });
         } catch (error) {
             console.error("Error fetching creator:", error);
@@ -1935,12 +1941,14 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                         <div className="flex flex-col items-center gap-4 py-4">
                             <Avatar className="h-20 w-20 border-2 border-slate-200">
                                 <AvatarImage src={viewingCreator.avatar_url} />
-                                <AvatarFallback className="text-xl bg-slate-100">{viewingCreator.full_name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                <AvatarFallback className="text-xl bg-slate-100 font-bold">
+                                    {(viewingCreator.full_name || viewingCreator.email || 'User').slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
                             </Avatar>
                             <div className="text-center space-y-1">
-                                <h3 className="font-bold text-xl">{viewingCreator.full_name}</h3>
+                                <h3 className="font-bold text-xl">{viewingCreator.full_name || viewingCreator.email || 'Unknown User'}</h3>
                                 <Badge variant="secondary">{viewingCreator.designation || 'Member'}</Badge>
-                                <p className="text-sm text-muted-foreground">{viewingCreator.email}</p>
+                                <p className="text-sm text-muted-foreground">{viewingCreator.email || 'No email registered'}</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 w-full mt-2">
