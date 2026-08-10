@@ -249,6 +249,8 @@ async def stream_gemini_and_parse(
         return None
 
     try:
+        import time as _time
+        _stream_start = _time.monotonic()
         logger.info("Starting Gemini streaming call...")
 
         def _stream_call():
@@ -263,7 +265,9 @@ async def stream_gemini_and_parse(
                 ),
             )
 
-        stream = await asyncio.to_thread(_stream_call)
+        stream = await asyncio.wait_for(asyncio.to_thread(_stream_call), timeout=45.0)
+        _ttft = _time.monotonic() - _stream_start
+        logger.info(f"Gemini stream opened in {_ttft:.1f}s (time-to-first-token)")
 
         chunk_count = 0
         queue = asyncio.Queue()
@@ -283,7 +287,14 @@ async def stream_gemini_and_parse(
         asyncio.create_task(asyncio.to_thread(_consume_stream))
 
         while True:
-            item = await queue.get()
+            try:
+                item = await asyncio.wait_for(queue.get(), timeout=45.0)
+            except asyncio.TimeoutError:
+                logger.warning(f"Stream chunk timeout after 45s! {len(questions_found)} questions recovered so far.")
+                if questions_found:
+                    break
+                else:
+                    raise TimeoutError("Gemini stream timed out waiting for next token.")
             if item is None:
                 break
             if isinstance(item, Exception):
@@ -336,8 +347,9 @@ async def stream_gemini_and_parse(
                                 })
                         current_object_start = -1
 
+        _total_stream_time = _time.monotonic() - _stream_start
         logger.info(
-            f"Streaming complete. {chunk_count} chunks, "
+            f"Streaming complete in {_total_stream_time:.1f}s. {chunk_count} chunks, "
             f"{len(questions_found)} questions extracted incrementally."
         )
 
@@ -493,8 +505,8 @@ async def process_files_hybrid_stream(
     prompt = build_prompt(mode=mode, languages=languages, difficulty=difficulty, user_instructions=user_instructions)
     result_data = None
 
-    if not has_pdfs and image_files:
-        logger.info("Pure image upload detected: forcing PARALLEL mode for instant extraction")
+    if algorithm == "stateful" and total_pdf_pages > 15:
+        logger.warning(f"Stateful mode requested for large document ({total_pdf_pages} pages). Auto-optimizing to fast PARALLEL hybrid mode for ChatGPT-like extraction speed.")
         algorithm = "parallel"
 
     if algorithm == "stateful":
@@ -502,7 +514,9 @@ async def process_files_hybrid_stream(
         logger.info("Using STATEFUL sequential chat pipeline")
         
         is_hybrid = (has_pdfs and text_rich_count > 0)
-        CHUNK_SIZE = 8 if is_hybrid else 5
+        # Text-rich pages are much cheaper in tokens than image pages
+        # so we can process more per batch — 15 text vs 5 image pages
+        CHUNK_SIZE = 15 if is_hybrid else 5
         
         if is_hybrid:
             total_pages = total_pdf_pages
@@ -559,13 +573,15 @@ async def process_files_hybrid_stream(
                 content_parts.append(prompt)
                 content_parts.append(f"\n--- START OF DOCUMENT. Extract questions from page {c_start + 1} to {c_end} sequentially. ---\n")
             else:
+                # Include compact context so Gemini knows where to resume
+                last_q_id = all_questions[-1].get("id", len(all_questions)) if all_questions else 0
                 msg = (
                     f"\n--- CONTINUATION OF DOCUMENT. Extract questions from page {c_start + 1} to {c_end} sequentially. ---\n"
+                    f"CONTEXT: You have already extracted {len(all_questions)} questions so far (last question ID: {last_q_id}).\n"
                     "IMPORTANT RULES:\n"
-                    "1. Continue extracting the next questions sequentially.\n"
-                    "2. Resume numbering question IDs exactly from where you left off in the previous turn (do NOT start from 1 again).\n"
-                    "3. Do NOT repeat or duplicate any questions that you have already generated/extracted in previous turns.\n"
-                    "4. If a question was split across the page boundary of the previous turn, merge and complete it here."
+                    f"1. Continue extracting the next questions sequentially, starting from ID {last_q_id + 1}.\n"
+                    "2. Do NOT repeat or duplicate any questions from previous pages.\n"
+                    "3. If a question was split across the page boundary, merge and complete it here."
                 )
                 content_parts.append(msg)
                 
@@ -663,9 +679,23 @@ async def process_files_hybrid_stream(
                     
                 all_questions.extend(batch_questions)
                 
-                serialized_response = json.dumps(result)
+                # OPTIMIZATION: Store only a compact summary in chat history
+                # instead of the full JSON response (which bloats context by ~20K tokens per batch).
+                # This prevents exponential slowdown on subsequent batches.
+                last_q_id = batch_questions[-1].get("id", len(all_questions)) if batch_questions else len(all_questions)
+                compact_summary = json.dumps({
+                    "questions_extracted": len(batch_questions),
+                    "last_question_id": last_q_id,
+                    "total_so_far": len(all_questions)
+                })
                 chat_history.append(compact_user_content)
-                chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text=serialized_response)]))
+                chat_history.append(types.Content(role="model", parts=[types.Part.from_text(text=compact_summary)]))
+                
+                # OPTIMIZATION: Sliding window — keep only last 2 turns (4 entries)
+                # to prevent context from growing unbounded on very large documents.
+                MAX_HISTORY_ENTRIES = 4  # 2 turns × 2 (user + model)
+                if len(chat_history) > MAX_HISTORY_ENTRIES:
+                    chat_history = chat_history[-MAX_HISTORY_ENTRIES:]
                 
             except Exception as e:
                 logger.error(f"Stateful step {step_num} failed: {e}")
@@ -683,7 +713,9 @@ async def process_files_hybrid_stream(
         # --- HYBRID MODE ---
         logger.info(f"Using HYBRID pipeline: {text_rich_count} text + {len(image_only_page_images)} image pages")
 
-        if total_pdf_pages <= 15:
+        # For text-rich PDFs, we can handle up to 25 pages in a single batch
+        # because text tokens are ~4x cheaper than image tokens
+        if total_pdf_pages <= 25:
             if progress_callback:
                 await progress_callback({
                     'stage': 'processing',
@@ -705,8 +737,8 @@ async def process_files_hybrid_stream(
                 logger.error(f"Hybrid streaming failed: {e}. Falling back to vision...")
                 result_data = None
         else:
-            # Chunked/parallel mode
-            MAX_PAGES_PER_BATCH = 5
+            # Chunked/parallel mode — use larger batches for text-rich pages
+            MAX_PAGES_PER_BATCH = 10
             OVERLAP_PAGES = 1
             
             batches = []
