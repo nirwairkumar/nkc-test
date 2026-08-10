@@ -266,6 +266,11 @@ Item 2 & Value B & 200 \\\\
 
             {/* Sidebar Container */}
             <aside
+                onMouseEnter={() => {
+                    if (window.innerWidth >= 768 && isCollapsed) {
+                        setIsCollapsed(false);
+                    }
+                }}
                 className={`
                     fixed md:sticky top-0 md:top-16 left-0 z-50 md:z-40 h-full md:h-[calc(100vh-4rem)]
                     bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl md:backdrop-blur-md
