@@ -71,7 +71,7 @@ export const CurrentGoalWidget: React.FC<CurrentGoalWidgetProps> = ({ stats, loa
                             <div className="space-y-0.5 pt-0.5">
                                 <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold">
                                     <span className="text-slate-300 truncate">
-                                        {stats.quality_tests_count} / {nextLvl.requiredQualityTests} Quality Tests
+                                        {stats.quality_tests_count} / {nextLvl.requiredQualityTests} Conducted Tests
                                     </span>
                                     <span className="text-amber-400 font-mono font-bold ml-1.5 shrink-0">{stats.progressPercentage}%</span>
                                 </div>
@@ -86,14 +86,14 @@ export const CurrentGoalWidget: React.FC<CurrentGoalWidgetProps> = ({ stats, loa
                                 <p className="text-[9px] sm:text-[10px] text-slate-400 flex items-center gap-1 truncate">
                                     <Shield className="w-2.5 h-2.5 text-amber-400 shrink-0" />
                                     <span className="truncate">
-                                        Need <strong>{stats.qualityTestsNeededForNext}</strong> more test{stats.qualityTestsNeededForNext > 1 ? 's' : ''} (min 20 subs each)
+                                        Need <strong>{stats.qualityTestsNeededForNext}</strong> more conducted test{stats.qualityTestsNeededForNext > 1 ? 's' : ''} (min 20 subs each)
                                     </span>
                                 </p>
                             </div>
                         ) : (
                             <p className="text-[10px] sm:text-[11px] text-slate-300 flex items-center gap-1 truncate">
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                <span className="truncate">Mastered {stats.quality_tests_count} quality tests!</span>
+                                <span className="truncate">Mastered {stats.quality_tests_count} conducted tests!</span>
                             </p>
                         )}
                     </div>
