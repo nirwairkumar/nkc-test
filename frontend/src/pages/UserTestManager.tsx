@@ -670,9 +670,9 @@ export default function UserTestManager() {
                 }
             }}>
                 <div className="flex items-center justify-between mb-4 gap-4">
-                    <div>
-                        <p className="text-[12px] font-medium text-slate-400 uppercase tracking-widest leading-none mb-1">Creator</p>
-                        <p className="text-[27px] font-semibold text-slate-800 tracking-tight leading-tight">
+                    <div className="pl-7 sm:pl-0">
+                        <p className="text-[11px] sm:text-[12px] font-medium text-slate-400 uppercase tracking-widest leading-none mb-1">Creator</p>
+                        <p className="text-xl sm:text-[27px] font-semibold text-slate-800 tracking-tight leading-tight">
                             {activeTab === 'reports' ? 'Reports' : 'Dashboard'}
                         </p>
                     </div>
