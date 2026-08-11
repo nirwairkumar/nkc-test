@@ -160,22 +160,22 @@ export default function AllSubmissionsPage() {
     }
 
     return (
-        <div className="container mx-auto max-w-6xl py-4 px-3 sm:py-6 sm:px-4 space-y-5">
+        <div className="container mx-auto max-w-6xl py-3 px-3 sm:py-6 sm:px-4 space-y-4 sm:space-y-5">
             <Helmet>
                 <title>All Submissions & Test Reports | TestoZa</title>
                 <meta name="description" content="View all student submissions and inspect full test analytics for your conducted exams." />
             </Helmet>
 
-            {/* iOS-Inspired Title Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-4">
+            {/* iOS-Inspired Title Header with Mobile Offset */}
+            <div className="pl-8 sm:pl-0 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 dark:border-slate-800 pb-3 sm:pb-4">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                            <ClipboardList className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                            <ClipboardList className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600 dark:text-indigo-400" />
                             Creator Analytics Portal
                         </span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                         All Student Submissions
                     </h1>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -186,71 +186,72 @@ export default function AllSubmissionsPage() {
                 <Button
                     onClick={() => navigate('/my-tests')}
                     variant="outline"
-                    className="self-start md:self-auto gap-2 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium"
+                    size="sm"
+                    className="self-start md:self-auto gap-1.5 text-xs text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl h-8 sm:h-9"
                 >
-                    <FileText className="w-4 h-4 text-slate-500" />
+                    <FileText className="w-3.5 h-3.5 text-slate-500" />
                     <span>Manage Tests</span>
                 </Button>
             </div>
 
-            {/* Quick Metrics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                <Card className="p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex items-center gap-3.5 rounded-2xl shadow-xs">
-                    <div className="w-11 h-11 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-                        <Users className="w-5.5 h-5.5" />
+            {/* Quick Metrics Cards - 3 Column Grid on Mobile for Maximum Space Efficiency */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <Card className="p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs">
+                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                        <Users className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
                     </div>
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Submissions</p>
-                        <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Total Submissions</p>
+                        <p className="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 font-mono leading-tight">
                             {totalSubmissionsSum}
                         </p>
-                        <p className="text-[10px] text-slate-400">Across all tests</p>
+                        <p className="text-[9px] text-slate-400 hidden sm:block">Across all tests</p>
                     </div>
                 </Card>
 
-                <Card className="p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex items-center gap-3.5 rounded-2xl shadow-xs">
-                    <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                        <Radio className="w-5.5 h-5.5" />
+                <Card className="p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs">
+                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <Radio className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
                     </div>
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Active Live Exams</p>
-                        <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Live Exams</p>
+                        <p className="text-base sm:text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono leading-tight">
                             {liveExamsCount}
                         </p>
-                        <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Currently receiving responses</p>
+                        <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium hidden sm:block">Active responses</p>
                     </div>
                 </Card>
 
-                <Card className="p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex items-center gap-3.5 rounded-2xl shadow-xs">
-                    <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                        <BarChart2 className="w-5.5 h-5.5" />
+                <Card className="p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs">
+                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <BarChart2 className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
                     </div>
-                    <div>
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Conducted Tests</p>
-                        <p className="text-xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Conducted Tests</p>
+                        <p className="text-base sm:text-xl font-black text-slate-900 dark:text-slate-100 font-mono leading-tight">
                             {tests.length}
                         </p>
-                        <p className="text-[10px] text-slate-400">Available for inspection</p>
+                        <p className="text-[9px] text-slate-400 hidden sm:block">Total tests</p>
                     </div>
                 </Card>
             </div>
 
-            {/* Search & Filter Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            {/* Search & Filter Bar - Horizontally Scrollable Pills on Mobile */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
                 <div className="relative flex-1">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <Input
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search test title or ID..."
-                        className="pl-9 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 h-9 text-xs sm:text-sm rounded-xl"
+                        className="pl-8 sm:pl-9 bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 h-8.5 sm:h-9 text-xs sm:text-sm rounded-xl"
                     />
                 </div>
 
-                <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
                     <button
                         onClick={() => setFilterTab('all')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                             filterTab === 'all'
                                 ? 'bg-indigo-600 text-white shadow-xs'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -260,7 +261,7 @@ export default function AllSubmissionsPage() {
                     </button>
                     <button
                         onClick={() => setFilterTab('submitted')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                             filterTab === 'submitted'
                                 ? 'bg-indigo-600 text-white shadow-xs'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -270,7 +271,7 @@ export default function AllSubmissionsPage() {
                     </button>
                     <button
                         onClick={() => setFilterTab('live')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                             filterTab === 'live'
                                 ? 'bg-indigo-600 text-white shadow-xs'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -283,91 +284,91 @@ export default function AllSubmissionsPage() {
 
             {/* Test Submissions Cards List */}
             {filteredTests.length === 0 ? (
-                <Card className="p-8 text-center bg-white dark:bg-slate-900 border-dashed border-2 border-slate-200 dark:border-slate-800 rounded-3xl space-y-3">
-                    <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto">
-                        <Inbox className="w-7 h-7" />
+                <Card className="p-6 sm:p-8 text-center bg-white dark:bg-slate-900 border-dashed border-2 border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl space-y-3">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto">
+                        <Inbox className="w-6 h-6 sm:w-7 sm:h-7" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">No Tests Found</h3>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">No Tests Found</h3>
                     <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
                         {searchQuery ? `No test matches "${searchQuery}". Try clearing your search.` : 'You have not conducted any tests yet. Once students submit their answers, their response data will appear here for 1-click analysis.'}
                     </p>
                     <Button
                         onClick={() => navigate('/my-tests')}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 font-medium"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 font-semibold text-xs sm:text-sm"
                     >
                         Go to My Tests
                     </Button>
                 </Card>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4">
                     {filteredTests.map((test) => {
                         return (
                             <Card
                                 key={test.id}
-                                className="group relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                className="group relative overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 sm:p-5 shadow-2xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4"
                             >
-                                <div className="space-y-2 flex-1 min-w-0">
+                                <div className="space-y-1.5 flex-1 min-w-0">
                                     {/* Badges row */}
-                                    <div className="flex items-center gap-2 flex-wrap">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
                                         {test.is_live ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-pulse">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 animate-pulse">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
                                                 LIVE EXAM
                                             </span>
                                         ) : test.has_conduct_enabled ? (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
                                                 <CheckCircle2 className="w-3 h-3 text-indigo-500" />
                                                 Conducted
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                                                 Standard Test
                                             </span>
                                         )}
 
-                                        <span className="px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-[150px]">
                                             {test.category}
                                         </span>
 
                                         {test.custom_id && (
-                                            <span className="text-[11px] font-mono text-slate-400">
+                                            <span className="text-[10px] sm:text-[11px] font-mono text-slate-400">
                                                 ID: {test.custom_id}
                                             </span>
                                         )}
                                     </div>
 
                                     {/* Title */}
-                                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                    <h3 className="text-sm sm:text-lg font-extrabold text-slate-900 dark:text-slate-100 leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                         {test.title}
                                     </h3>
 
                                     {/* Test Info Metadata */}
-                                    <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+                                    <div className="flex items-center gap-3 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex-wrap">
                                         <span className="flex items-center gap-1">
-                                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
                                             {test.duration} mins
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <FileText className="w-3.5 h-3.5 text-slate-400" />
+                                            <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
                                             {test.total_questions} Questions ({test.total_max_marks} Marks)
                                         </span>
                                         {test.created_at && (
                                             <span className="flex items-center gap-1">
-                                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                                <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
                                                 {new Date(test.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </span>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Right Side Action Block */}
-                                <div className="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+                                {/* Right Side Action Block - Responsive Layout for Mobile */}
+                                <div className="flex items-center justify-between gap-2.5 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800 w-full md:w-auto">
                                     {/* Submissions count pill */}
-                                    <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center min-w-[100px]">
-                                        <p className="text-lg font-extrabold text-indigo-600 dark:text-indigo-400 font-mono leading-none">
+                                    <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-indigo-50/70 dark:bg-slate-800/80 border border-indigo-100 dark:border-slate-700 text-center flex flex-col items-center justify-center min-w-[80px] sm:min-w-[100px]">
+                                        <p className="text-base sm:text-lg font-extrabold text-indigo-600 dark:text-indigo-400 font-mono leading-none">
                                             {test.submissions_count}
                                         </p>
-                                        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider">
+                                        <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 uppercase tracking-wider">
                                             Submissions
                                         </p>
                                     </div>
@@ -375,11 +376,10 @@ export default function AllSubmissionsPage() {
                                     {/* Primary Redirect Button */}
                                     <Button
                                         onClick={() => navigate(`/analytics/full?testId=${test.id}`)}
-                                        size="lg"
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 font-semibold shadow-xs hover:shadow-sm transition-all rounded-xl cursor-pointer"
+                                        className="flex-1 md:flex-initial bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 font-bold h-10 sm:h-11 text-xs sm:text-sm rounded-xl cursor-pointer shadow-xs active:scale-[0.98] transition-all"
                                     >
                                         <span>View Full Analysis</span>
-                                        <ArrowRight className="w-4 h-4" />
+                                        <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </Button>
                                 </div>
                             </Card>
