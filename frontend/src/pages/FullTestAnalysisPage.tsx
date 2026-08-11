@@ -686,7 +686,7 @@ export default function FullTestAnalysisPage() {
 
         const loadData = async () => {
             try {
-                let targetTestId = testId;
+                let targetTestId = testId || searchParams.get('testId') || searchParams.get('id');
                 if (!targetTestId && user?.id) {
                     const { data: userTests } = await fetchTestsByUserId(user.id);
                     if (userTests && userTests.length > 0) {
@@ -976,7 +976,7 @@ export default function FullTestAnalysisPage() {
 
         loadData();
         return () => { isMounted = false; };
-    }, [testId, user?.id, isDemoUser]);
+    }, [testId, searchParams, user?.id, isDemoUser]);
 
     // Computed Filtered & Sorted Students
     const filteredStudents = useMemo(() => {
@@ -1194,10 +1194,10 @@ export default function FullTestAnalysisPage() {
                         <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => navigate('/all-submissions')}
                             className="h-9 px-3 text-slate-800 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 cursor-pointer rounded-xl font-bold flex items-center gap-2 border border-slate-200/80 shadow-2xs"
                         >
-                            <ArrowLeft className="w-4 h-4 text-indigo-600" /> Back to Dashboard
+                            <ArrowLeft className="w-4 h-4 text-indigo-600" /> All Submissions
                         </Button>
                         <div className="h-5 w-px bg-slate-200" />
                         <div className="flex items-center gap-2">
