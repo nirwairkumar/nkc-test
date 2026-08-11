@@ -58,16 +58,6 @@ export const CurrentGoalWidget: React.FC<CurrentGoalWidgetProps> = ({ stats, loa
                     </div>
 
                     <div className="flex-1 min-w-0 space-y-0.5">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                <Sparkles className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                                Goal
-                            </span>
-                            <span className="text-[10px] sm:text-xs text-slate-400 truncate">
-                                {currentLvl ? `Rank: ${currentLvl.title}` : 'Starter Creator'}
-                            </span>
-                        </div>
-
                         <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">
                             {isMaxLevel ? (
                                 <span className="text-amber-300">Legend Creator — Max Level!</span>
