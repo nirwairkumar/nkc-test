@@ -107,17 +107,6 @@ export default function Layout() {
                     <Navbar onToggleSidebar={handleToggleSidebar} />
                 </div>
             )}
-            
-            {/* Floating Mobile Sidebar Expand Button (Below Navbar) */}
-            {!isSidebarHidden && !mobileOpen && (
-                <button
-                    onClick={() => setMobileOpen(true)}
-                    className="fixed top-20 left-0 z-40 md:hidden flex items-center justify-center p-1.5 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 border border-l-0 border-slate-200 dark:border-slate-800 shadow-xs backdrop-blur-xs rounded-r-md hover:bg-slate-100 active:scale-95 transition-all"
-                    aria-label="Open Sidebar Menu"
-                >
-                    <PanelLeft className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                </button>
-            )}
 
             <div className="flex flex-1 relative min-h-[calc(100vh-4rem)]">
                 {!isSidebarHidden && (

@@ -166,8 +166,8 @@ export default function AllSubmissionsPage() {
                 <meta name="description" content="View all student submissions and inspect full test analytics for your conducted exams." />
             </Helmet>
 
-            {/* iOS-Inspired Title Header with Mobile Offset */}
-            <div className="pl-8 sm:pl-0 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 dark:border-slate-800 pb-3 sm:pb-4">
+            {/* iOS-Inspired Title Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 dark:border-slate-800 pb-3 sm:pb-4">
                 <div>
                     <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                         All Student Submissions
