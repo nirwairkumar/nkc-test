@@ -318,9 +318,9 @@ export default function CreatorDashboardTour({
         };
       case 5:
         return {
-          title: "🚫 Block Tab Switching",
-          desc: "Tab Switch Detection detects if a candidate switches tabs to search answers. Let's toggle it ON.",
-          inst: "Toggle Tab Switch Detection to ON",
+          title: "🚫 Block Tab/App Switching",
+          desc: "Tab/App Switch Detection detects if a candidate switches tabs/apps to search answers. Let's toggle it ON.",
+          inst: "Toggle Tab/App Switch Detection to ON",
           num: 5,
           max: 11
         };

@@ -251,8 +251,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     {/* Tab Switch Detection Toggle */}
                     <div className="flex items-center justify-between" id={mode === 'desktop' ? "tour-tab-switch-container" : undefined}>
                         <div className="space-y-0.5">
-                            <Label className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Tab Switch Detection</Label>
-                            <p className="text-sm text-muted-foreground">Detect if user switches tabs or minimizes browser.</p>
+                            <Label className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Tab/App Switch Detection</Label>
+                            <p className="text-sm text-muted-foreground">Detect if user switches tabs/apps or minimizes browser.</p>
                         </div>
                         <Switch
                             id={mode === 'desktop' ? "tour-tab-switch" : undefined}
@@ -321,7 +321,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground italic">
-                                    Both fullscreen exits and tab switches count toward this limit.
+                                    Both fullscreen exits and tab/app switches count toward this limit.
                                 </p>
                             </div>
                         </>
@@ -830,7 +830,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <AlertDialogHeader>
                         <AlertDialogTitle>Conduct Exam Required</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Strict environment monitoring features (Full Screen, Tab Switching Detection, etc.) can only be applied when an exam is in <strong>Conduct Mode</strong>.
+                            Strict environment monitoring features (Full Screen, Tab/App Switching Detection, etc.) can only be applied when an exam is in <strong>Conduct Mode</strong>.
                             <br /><br />
                             Do you want to move this test to Conduct Exam mode now?
                         </AlertDialogDescription>

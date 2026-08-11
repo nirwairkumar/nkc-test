@@ -1188,73 +1188,72 @@ export default function FullTestAnalysisPage() {
     return (
         <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-24 font-sans selection:bg-indigo-100 selection:text-indigo-900">
             {/* Top Navigation Sticky Bar */}
-            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3 transition-all shadow-xs">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 px-3 sm:px-8 py-2.5 transition-all shadow-xs">
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                    <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto shrink-0">
                         <Button
                             variant="secondary"
                             size="sm"
                             onClick={() => navigate('/all-submissions')}
-                            className="h-9 px-3 text-slate-800 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 cursor-pointer rounded-xl font-bold flex items-center gap-2 border border-slate-200/80 shadow-2xs"
+                            className="h-8.5 px-3 text-slate-800 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 cursor-pointer rounded-xl font-bold flex items-center gap-1.5 border border-slate-200/80 shadow-2xs text-xs shrink-0"
                         >
                             <ArrowLeft className="w-4 h-4 text-indigo-600" /> All Submissions
                         </Button>
-                        <div className="h-5 w-px bg-slate-200" />
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider">
+                        {testInfo.category && testInfo.category.toLowerCase() !== 'general assessment' && (
+                            <span className="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-wider truncate max-w-[140px]">
                                 {testInfo.category}
                             </span>
-                            <span className="text-xs text-slate-500 font-semibold hidden md:inline">
-                                {testInfo.institution_name}
-                            </span>
-                        </div>
+                        )}
+                        <span className="text-xs text-slate-500 font-semibold hidden md:inline">
+                            {testInfo.institution_name}
+                        </span>
                     </div>
 
-                    {/* Navigation Pills (Senior Teacher Friendly) */}
-                    <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl text-xs font-semibold border border-slate-200/70 w-full sm:w-auto overflow-x-auto">
+                    {/* Navigation Pills (Senior Teacher Friendly - Horizontally Scrollable on Mobile) */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl text-xs font-semibold border border-slate-200/70 w-full sm:w-auto overflow-x-auto scrollbar-none shrink-0">
                         <button
                             onClick={() => setActiveTab('overview')}
-                            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                                 activeTab === 'overview' ? 'bg-white text-slate-900 shadow-xs font-bold ring-1 ring-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                             }`}
                         >
-                            <BarChart2 className="w-4 h-4 text-indigo-600" />
+                            <BarChart2 className="w-3.5 h-3.5 text-indigo-600" />
                             <span>Overview</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('students')}
-                            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                                 activeTab === 'students' ? 'bg-white text-slate-900 shadow-xs font-bold ring-1 ring-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                             }`}
                         >
-                            <Users className="w-4 h-4 text-emerald-600" />
+                            <Users className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Student Marks ({filteredStudents.length})</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('questions')}
-                            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                                 activeTab === 'questions' ? 'bg-white text-slate-900 shadow-xs font-bold ring-1 ring-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                             }`}
                         >
-                            <HelpCircle className="w-4 h-4 text-amber-600" />
+                            <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
                             <span>Question Audit</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('toppers')}
-                            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                                 activeTab === 'toppers' ? 'bg-white text-slate-900 shadow-xs font-bold ring-1 ring-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                             }`}
                         >
-                            <Award className="w-4 h-4 text-violet-600" />
+                            <Award className="w-3.5 h-3.5 text-violet-600" />
                             <span>Leaderboard</span>
                         </button>
                         <button
                             onClick={() => setActiveTab('insights')}
-                            className={`px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                                 activeTab === 'insights' ? 'bg-white text-slate-900 shadow-xs font-bold ring-1 ring-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
                             }`}
                         >
-                            <Sparkles className="w-4 h-4 text-amber-500" />
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                             <span>AI Insights</span>
                         </button>
                     </div>
@@ -1280,74 +1279,78 @@ export default function FullTestAnalysisPage() {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 space-y-8">
+            <div className="max-w-7xl mx-auto px-3 sm:px-8 pt-4 sm:pt-6 space-y-6 sm:space-y-8">
                 {/* SECTION 1: HEADER */}
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200 shadow-xs space-y-4 sm:space-y-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
                         <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium flex-wrap">
                                 <span className="font-semibold text-slate-700">Teacher Report</span>
                                 <span>•</span>
                                 <span className="text-slate-600">{new Date(testInfo.created_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}</span>
                                 <span>•</span>
-                                <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                                <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 text-[11px]">
                                     ● {testInfo.visibility}
                                 </span>
                             </div>
-                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                            <h1 className="text-lg sm:text-3xl font-black text-slate-900 tracking-tight leading-snug sm:leading-tight">
                                 {testInfo.title}
                             </h1>
-                            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 pt-1">
-                                <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/80 font-semibold text-slate-700">
-                                    <Clock className="w-4 h-4 text-slate-500" />
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-600 pt-1">
+                                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                     <span>Duration: <strong>{testInfo.duration} Mins</strong></span>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/80 font-semibold text-slate-700">
-                                    <HelpCircle className="w-4 h-4 text-slate-500" />
-                                    <span>Total Questions: <strong>{testInfo.total_questions} Qs</strong></span>
+                                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    <HelpCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <span>Questions: <strong>{testInfo.total_questions} Qs</strong></span>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/80 font-semibold text-slate-700">
-                                    <Target className="w-4 h-4 text-slate-500" />
+                                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    <Target className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                     <span>Max Marks: <strong>{testInfo.total_max_marks} Marks</strong></span>
                                 </div>
-                                <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-                                    <img src={testInfo.creator_avatar} alt="Creator" className="w-6 h-6 rounded-full object-cover border border-slate-200" />
-                                    <span className="text-slate-800 font-bold">{testInfo.creator_name}</span>
-                                </div>
+                                {testInfo.creator_name && (
+                                    <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/80 text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                        {testInfo.creator_avatar && (
+                                            <img src={testInfo.creator_avatar} alt="Creator" className="w-4 h-4 rounded-full object-cover shrink-0" />
+                                        )}
+                                        <span className="text-slate-800 dark:text-slate-200 font-bold">{testInfo.creator_name}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Actions Toolbar */}
-                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {/* Actions Toolbar - Scrollable track on mobile */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none shrink-0 w-full sm:w-auto">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleExportCSV}
-                                className="h-9 px-3.5 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl"
+                                className="h-8.5 px-3 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl shrink-0"
                             >
-                                <FileSpreadsheet className="w-4 h-4 mr-1.5 text-emerald-600" /> Excel Sheet
+                                <FileSpreadsheet className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Excel Sheet
                             </Button>
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handlePrint}
-                                className="h-9 px-3.5 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl"
+                                className="h-8.5 px-3 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl shrink-0"
                             >
-                                <Printer className="w-4 h-4 mr-1.5 text-slate-600" /> Print Report
+                                <Printer className="w-3.5 h-3.5 mr-1 text-slate-600" /> Print
                             </Button>
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleShare}
-                                className="h-9 px-3.5 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl"
+                                className="h-8.5 px-3 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl shrink-0"
                             >
-                                <Share2 className="w-4 h-4 mr-1.5 text-indigo-600" /> Copy Link
+                                <Share2 className="w-3.5 h-3.5 mr-1 text-indigo-600" /> Copy Link
                             </Button>
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => navigate(`/edit-test/${testInfo.id}`)}
-                                className="h-9 px-3.5 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl"
+                                className="h-8.5 px-3 text-xs border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer font-semibold rounded-xl shrink-0"
                             >
                                 Edit Test
                             </Button>
@@ -1356,70 +1359,70 @@ export default function FullTestAnalysisPage() {
                 </div>
 
                 {/* SECTION 2: OVERVIEW STAT CARDS (Teacher High-Visibility Metrics) */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-indigo-200 transition-all">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                    <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-indigo-200 transition-all">
                         <div className="flex items-center justify-between text-slate-600 mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Total Students</span>
-                            <Users className="w-5 h-5 text-indigo-600" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600">Total Students</span>
+                            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 shrink-0" />
                         </div>
                         <div>
-                            <p className="text-3xl font-black text-slate-900 tracking-tight">{totalStudentsCount}</p>
-                            <p className="text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> {completedCount} Completed
+                            <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{totalStudentsCount}</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-emerald-700 mt-1 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> {completedCount} Completed
                             </p>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-blue-200 transition-all">
+                    <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-blue-200 transition-all">
                         <div className="flex items-center justify-between text-slate-600 mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Average Score</span>
-                            <BarChart2 className="w-5 h-5 text-blue-600" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600">Average Score</span>
+                            <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0" />
                         </div>
                         <div>
-                            <p className="text-3xl font-black text-slate-900 tracking-tight">{avgScore} <span className="text-xs font-bold text-slate-400">/ {testInfo.total_max_marks}</span></p>
-                            <p className="text-xs font-medium text-slate-600 mt-1">
+                            <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{avgScore} <span className="text-xs font-bold text-slate-400">/ {testInfo.total_max_marks}</span></p>
+                            <p className="text-[10px] sm:text-xs font-medium text-slate-600 mt-1">
                                 Median: <strong>{medianScore} marks</strong>
                             </p>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-amber-200 transition-all">
+                    <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-amber-200 transition-all">
                         <div className="flex items-center justify-between text-slate-600 mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Highest / Lowest</span>
-                            <Award className="w-5 h-5 text-amber-600" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600">Highest / Lowest</span>
+                            <Award className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 shrink-0" />
                         </div>
                         <div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-emerald-600 tracking-tight">{highestScore}</span>
-                                <span className="text-xs font-bold text-slate-500">/ Low {lowestScore}</span>
+                            <div className="flex items-baseline gap-1 sm:gap-2">
+                                <span className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight">{highestScore}</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-slate-500">/ Low {lowestScore}</span>
                             </div>
-                            <p className="text-xs font-medium text-slate-600 mt-1">
-                                Max achievable: <strong>{testInfo.total_max_marks}</strong>
+                            <p className="text-[10px] sm:text-xs font-medium text-slate-600 mt-1">
+                                Max: <strong>{testInfo.total_max_marks}</strong>
                             </p>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-violet-200 transition-all">
+                    <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between hover:border-violet-200 transition-all">
                         <div className="flex items-center justify-between text-slate-600 mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Average Time</span>
-                            <Clock className="w-5 h-5 text-violet-600" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600">Average Time</span>
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600 shrink-0" />
                         </div>
                         <div>
-                            <p className="text-3xl font-black text-slate-900 tracking-tight">{avgTimeDisplay}</p>
-                            <p className="text-xs font-medium text-slate-600 mt-1">
-                                Completion Rate: <strong>{completionRate}%</strong>
+                            <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{avgTimeDisplay}</p>
+                            <p className="text-[10px] sm:text-xs font-medium text-slate-600 mt-1">
+                                Completion: <strong>{completionRate}%</strong>
                             </p>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-emerald-200 transition-all">
+                    <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200 shadow-xs flex flex-col justify-between col-span-2 sm:col-span-1 hover:border-emerald-200 transition-all">
                         <div className="flex items-center justify-between text-slate-600 mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Accuracy Rate</span>
-                            <Target className="w-5 h-5 text-emerald-600" />
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-600">Accuracy Rate</span>
+                            <Target className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 shrink-0" />
                         </div>
                         <div>
-                            <p className="text-3xl font-black text-emerald-600 tracking-tight">{avgAccuracy}%</p>
-                            <p className="text-xs font-medium text-slate-600 mt-1">
+                            <p className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight">{avgAccuracy}%</p>
+                            <p className="text-[10px] sm:text-xs font-medium text-slate-600 mt-1">
                                 Total Attempts: <strong>{totalStudentsCount}</strong>
                             </p>
                         </div>
@@ -1575,12 +1578,12 @@ export default function FullTestAnalysisPage() {
                 </div>
 
                 {/* SECTION 4: STUDENT ANALYSIS TABLE (Centerpiece) */}
-                <div id="students-section" className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+                <div id="students-section" className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs space-y-4 sm:space-y-6">
                     {/* Controls & Filter Panel */}
                     <div className="space-y-4">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Student Attempt Analysis</h2>
+                                <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Student Attempt Analysis</h2>
                                 <p className="text-xs text-slate-400">Detailed scorecard, response breakdown, ranks and question timings</p>
                             </div>
 
@@ -1608,8 +1611,8 @@ export default function FullTestAnalysisPage() {
                         </div>
 
                         {/* Filter Dropdowns */}
-                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
-                            <span className="text-slate-400 font-medium flex items-center gap-1 mr-1">
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none text-xs">
+                            <span className="text-slate-400 font-medium flex items-center gap-1 mr-1 shrink-0">
                                 <Filter className="w-3.5 h-3.5" /> Filters:
                             </span>
 
@@ -1617,7 +1620,7 @@ export default function FullTestAnalysisPage() {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500 shrink-0"
                             >
                                 <option value="All">All Statuses</option>
                                 <option value="Completed">Completed</option>
@@ -1629,7 +1632,7 @@ export default function FullTestAnalysisPage() {
                             <select
                                 value={scoreRangeFilter}
                                 onChange={(e) => setScoreRangeFilter(e.target.value)}
-                                className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500 shrink-0"
                             >
                                 <option value="All">All Score Ranges</option>
                                 <option value="80%+">Top Tier (80%+)</option>
@@ -1638,7 +1641,7 @@ export default function FullTestAnalysisPage() {
                             </select>
 
                             {/* Optional Passing Marks Threshold Input */}
-                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-slate-700 font-medium">
+                            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-slate-700 font-medium shrink-0">
                                 <span className="text-[11px] text-slate-500 font-semibold">Min Pass Marks:</span>
                                 <input
                                     type="number"
@@ -1654,7 +1657,7 @@ export default function FullTestAnalysisPage() {
                                 <select
                                     value={resultFilter}
                                     onChange={(e) => setResultFilter(e.target.value)}
-                                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500 shrink-0"
                                 >
                                     <option value="All">All Results</option>
                                     <option value="Pass">Pass Only</option>
@@ -1671,7 +1674,7 @@ export default function FullTestAnalysisPage() {
                                         setSearchQuery('');
                                         setPassingMarks(null);
                                     }}
-                                    className="text-xs text-indigo-600 font-bold hover:underline ml-2 cursor-pointer"
+                                    className="text-xs text-indigo-600 font-bold hover:underline ml-2 cursor-pointer shrink-0"
                                 >
                                     Reset Filters
                                 </button>
@@ -1681,7 +1684,7 @@ export default function FullTestAnalysisPage() {
 
                     {/* Apple Style Table Container */}
                     <div className="overflow-x-auto rounded-2xl border border-slate-200/80 shadow-2xs bg-white">
-                        <table className="w-full text-left border-collapse text-xs">
+                        <table className="w-full min-w-[700px] text-left border-collapse text-xs">
                             <thead>
                                 <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[11px] sticky top-0 backdrop-blur-md">
                                     <th className="p-3 w-10 text-center">
@@ -1845,13 +1848,13 @@ export default function FullTestAnalysisPage() {
 
                 {/* SECTION 5: QUESTION ANALYSIS */}
                 {(activeTab === 'overview' || activeTab === 'questions') && (
-                    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs space-y-4 sm:space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                             <div>
-                                <h2 className="text-xl font-bold text-slate-900 tracking-tight">Item Response & Question Difficulty Audit</h2>
+                                <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Item Response & Question Difficulty Audit</h2>
                                 <p className="text-xs text-slate-400">Statistical breakdown per question to identify key ambiguity or revision points</p>
                             </div>
-                            <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl">
+                            <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl shrink-0 self-start sm:self-auto">
                                 {questions.length} Audit Items
                             </span>
                         </div>
@@ -1875,7 +1878,7 @@ export default function FullTestAnalysisPage() {
                                     const discriminationIndex = q.discriminationIndex ?? "-";
 
                                     return (
-                                        <div key={q.id || qNum || idx} className="bg-slate-50/70 rounded-2xl p-5 border border-slate-200/70 hover:border-slate-300 transition-all flex flex-col justify-between space-y-4 group">
+                                        <div key={q.id || qNum || idx} className="bg-slate-50/70 rounded-2xl p-4 sm:p-5 border border-slate-200/70 hover:border-slate-300 transition-all flex flex-col justify-between space-y-4 group">
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-xs font-bold text-slate-900 bg-white px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-2xs">
@@ -1937,19 +1940,19 @@ export default function FullTestAnalysisPage() {
 
                 {/* SECTION 6: TOPPER BOARD */}
                 {(activeTab === 'overview' || activeTab === 'toppers') && (
-                    <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs space-y-4 sm:space-y-6">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
                                     <Award className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Leaderboard & Top Performers</h2>
-                                    <p className="text-xs text-slate-400">Top 5 student scorecards in this examination</p>
+                                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Leaderboard & Top Performers</h2>
+                                    <p className="text-xs text-slate-400">Top candidate scorecards in this examination</p>
                                 </div>
                             </div>
-                            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-xl border border-amber-200">
-                                Gold Standard
+                            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200 shrink-0">
+                                Top Performers
                             </span>
                         </div>
 
@@ -1962,7 +1965,7 @@ export default function FullTestAnalysisPage() {
                                 {students.slice(0, 3).map((stu, i) => (
                                     <div
                                         key={stu.id}
-                                        className={`rounded-2xl p-5 border transition-all flex flex-col justify-between space-y-4 relative overflow-hidden ${
+                                        className={`rounded-2xl p-4 sm:p-5 border transition-all flex flex-col justify-between space-y-4 relative overflow-hidden ${
                                             i === 0 ? 'bg-gradient-to-br from-amber-500/10 via-amber-50/40 to-white border-amber-200/90 shadow-xs' :
                                             i === 1 ? 'bg-gradient-to-br from-slate-200/30 to-white border-slate-300/80' :
                                             'bg-gradient-to-br from-amber-700/5 to-white border-amber-700/20'
@@ -1982,10 +1985,10 @@ export default function FullTestAnalysisPage() {
                                         </div>
 
                                         <div className="flex items-center gap-3">
-                                            <img src={stu.avatar} alt={stu.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs" />
-                                            <div>
-                                                <h4 className="font-bold text-slate-900 text-sm">{stu.name}</h4>
-                                                {stu.email && <p className="text-xs text-slate-400">{stu.email}</p>}
+                                            <img src={stu.avatar} alt={stu.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white shadow-xs shrink-0" />
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className="font-bold text-slate-900 text-sm truncate">{stu.name}</h4>
+                                                {stu.email && <p className="text-xs text-slate-400 truncate">{stu.email}</p>}
                                             </div>
                                         </div>
 
@@ -2011,21 +2014,21 @@ export default function FullTestAnalysisPage() {
                 <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs animate-fade-in">
                     <div className="w-full max-w-3xl bg-white h-full shadow-2xl flex flex-col justify-between overflow-y-auto animate-slide-left">
                         {/* Drawer Header */}
-                        <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50/80 sticky top-0 z-20 backdrop-blur-md space-y-4">
+                        <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50/80 sticky top-0 z-20 backdrop-blur-md space-y-3 sm:space-y-4">
                             <div className="flex items-start justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <img src={drawerStudent.avatar} alt={drawerStudent.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs" />
-                                    <div>
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <img src={drawerStudent.avatar} alt={drawerStudent.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white shadow-xs shrink-0" />
+                                    <div className="min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <h3 className="text-lg font-bold text-slate-900">{drawerStudent.name}</h3>
-                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getPercentageBadgeColor(drawerStudent.percentage)}`}>
+                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">{drawerStudent.name}</h3>
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getPercentageBadgeColor(drawerStudent.percentage)}`}>
                                                 {drawerStudent.percentage}% Score
                                             </span>
                                             <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-xs font-bold">
                                                 Rank #{drawerStudent.rank}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-0.5">
+                                        <p className="text-xs text-slate-500 mt-0.5 truncate">
                                             {drawerStudent.email ? drawerStudent.email : 'Registered Student'}
                                             {drawerStudent.submissionTime && ` • Submitted: ${drawerStudent.submissionTime}`}
                                         </p>
@@ -2058,10 +2061,10 @@ export default function FullTestAnalysisPage() {
                             )}
 
                             {/* Sub-Navigation Tabs */}
-                            <div className="flex border-b border-slate-200 -mb-5 pt-2">
+                            <div className="flex border-b border-slate-200 -mb-4 sm:-mb-5 pt-1 sm:pt-2 overflow-x-auto scrollbar-none">
                                 <button
                                     onClick={() => setDrawerTab('overview')}
-                                    className={`py-2 px-4 text-xs font-bold border-b-2 transition-colors ${
+                                    className={`py-2 px-3 sm:px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                                         drawerTab === 'overview'
                                             ? 'border-indigo-600 text-indigo-600'
                                             : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -2071,7 +2074,7 @@ export default function FullTestAnalysisPage() {
                                 </button>
                                 <button
                                     onClick={() => setDrawerTab('topics')}
-                                    className={`py-2 px-4 text-xs font-bold border-b-2 transition-colors ${
+                                    className={`py-2 px-3 sm:px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                                         drawerTab === 'topics'
                                             ? 'border-indigo-600 text-indigo-600'
                                             : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -2081,7 +2084,7 @@ export default function FullTestAnalysisPage() {
                                 </button>
                                 <button
                                     onClick={() => setDrawerTab('questions')}
-                                    className={`py-2 px-4 text-xs font-bold border-b-2 transition-colors ${
+                                    className={`py-2 px-3 sm:px-4 text-xs font-bold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                                         drawerTab === 'questions'
                                             ? 'border-indigo-600 text-indigo-600'
                                             : 'border-transparent text-slate-500 hover:text-slate-800'
