@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench, Sparkles, PanelLeft } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench, Sparkles, PanelLeft, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CreatorBadgeIcon } from '@/components/CreatorBadgeIcon';
 import TestoZaLogo from './TestoZaLogo';
 import { getAppUrl, getMarketingUrl } from '@/utils/subdomain';
 
@@ -31,6 +32,18 @@ interface NavbarProps {
 
 export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
     const { user, isAdmin, profile } = useAuth();
+    const userBatch = user?.user_metadata?.batch || (profile as any)?.batch;
+    const [rewardsStats, setRewardsStats] = React.useState<any>(null);
+
+    React.useEffect(() => {
+        if (user?.id) {
+            import('@/lib/rewardsApi').then(({ fetchCreatorRewards }) => {
+                fetchCreatorRewards(user.id).then(({ data }) => {
+                    if (data) setRewardsStats(data);
+                }).catch(() => {});
+            });
+        }
+    }, [user?.id]);
 
     // Feature Flag for News — read from cache synchronously, defer network call
     const [isNewsEnabled, setIsNewsEnabled] = React.useState(() => {
@@ -277,8 +290,22 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border border-slate-200/80 dark:border-slate-800" align="end" forceMount>
                                     <DropdownMenuLabel className="font-normal px-3 py-2">
-                                        <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-semibold leading-none text-slate-800 dark:text-slate-100">{user.user_metadata?.full_name || 'User'}</p>
+                                        <div className="flex flex-col space-y-1.5">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <p className="text-sm font-semibold leading-none text-slate-800 dark:text-slate-100">{user.user_metadata?.full_name || 'User'}</p>
+                                                {isAdmin ? (
+                                                    <Shield className="w-5 h-5 text-red-500 shrink-0" />
+                                                ) : rewardsStats?.currentLevel ? (
+                                                    <CreatorBadgeIcon level={rewardsStats.currentLevel.level} size={20} className="w-5 h-5 shrink-0" />
+                                                ) : (
+                                                    <Award className="w-5 h-5 text-amber-500 shrink-0" />
+                                                )}
+                                                {userBatch && (
+                                                    <span className="text-xs font-semibold text-slate-400 leading-none">
+                                                        ({userBatch})
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-xs leading-none text-slate-400 truncate">
                                                 {user.email}
                                             </p>
