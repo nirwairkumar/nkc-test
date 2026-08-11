@@ -59,7 +59,7 @@ export default function AuthForm() {
     const location = useLocation();
 
     const { refreshSession } = useAuth();
-    const { turnstileRef, getToken, resetTurnstile } = useTurnstile({ theme: 'auto', size: 'normal' });
+    const { turnstileRef, getToken, resetTurnstile, isReady } = useTurnstile({ theme: 'auto', size: 'normal' });
 
     useEffect(() => {
         // Eagerly warm up the auth endpoint — by the time the user types
@@ -381,7 +381,7 @@ export default function AuthForm() {
                                     </div>
                                 )}
 
-                                <Button type="submit" className="w-full relative" disabled={isLoading}>
+                                <Button type="submit" className="w-full relative" disabled={isLoading || (view !== 'forgot' && !isReady)}>
                                     {isLoading ? (
                                         <>
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />

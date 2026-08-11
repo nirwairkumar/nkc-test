@@ -35,7 +35,7 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
     const [isLoading, setIsLoading] = useState(false);
     const { user, isAdmin, refreshSession } = useAuth();
     const navigate = useNavigate();
-    const { turnstileRef, getToken, resetTurnstile } = useTurnstile({ theme: 'auto', size: 'normal' });
+    const { turnstileRef, getToken, resetTurnstile, isReady } = useTurnstile({ theme: 'auto', size: 'normal' });
 
     useEffect(() => {
         if (user && isAdmin) {
@@ -137,7 +137,7 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
                                 <div ref={turnstileRef} />
                             </div>
 
-                            <Button type="submit" className="w-full bg-red-900 hover:bg-red-800" disabled={isLoading}>
+                            <Button type="submit" className="w-full bg-red-900 hover:bg-red-800" disabled={isLoading || !isReady}>
                                 {isLoading ? 'Authenticating...' : 'Access Admin Panel'}
                             </Button>
                         </form>
