@@ -293,7 +293,7 @@ export default function TeacherDashboard() {
             />
 
             {/* Main Workspace Container */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
                 {/* Header Bar */}
                 <DashboardHeader
                     user={user}

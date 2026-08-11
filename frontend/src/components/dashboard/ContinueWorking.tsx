@@ -70,25 +70,25 @@ export default function ContinueWorking({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3">
                 <div className="flex items-center justify-between w-full sm:w-auto">
                     <div>
-                        <h2 className="text-base font-bold text-slate-900 tracking-tight">Continue Working</h2>
-                        <p className="text-xs text-slate-400">Manage ongoing drafts, live exams, and scheduled tests</p>
+                        <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight">Continue Working</h2>
+                        <p className="text-[11px] sm:text-xs text-slate-400">Manage ongoing drafts, live exams, and scheduled tests</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 flex-wrap">
-                    {/* Tabs */}
-                    <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shrink-0">
+                <div className="flex items-center justify-between sm:justify-end gap-2 flex-wrap w-full sm:w-auto min-w-0">
+                    {/* Tabs with Horizontal Scroll for Mobile */}
+                    <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl overflow-x-auto max-w-full scrollbar-hide shrink-0">
                         <button
                             onClick={() => setActiveTab('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                                 activeTab === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                             }`}
                         >
-                            All Tests ({safeTests.length})
+                            All ({safeTests.length})
                         </button>
                         <button
                             onClick={() => setActiveTab('live')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                                 activeTab === 'live' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                             }`}
                         >
@@ -97,7 +97,7 @@ export default function ContinueWorking({
                         </button>
                         <button
                             onClick={() => setActiveTab('drafts')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                                 activeTab === 'drafts' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                             }`}
                         >
@@ -105,7 +105,7 @@ export default function ContinueWorking({
                         </button>
                         <button
                             onClick={() => setActiveTab('scheduled')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                                 activeTab === 'scheduled' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                             }`}
                         >
@@ -118,7 +118,7 @@ export default function ContinueWorking({
                         size="sm"
                         variant="ghost"
                         onClick={() => navigate('/my-tests')}
-                        className="text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold flex items-center gap-1 cursor-pointer"
+                        className="text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-bold flex items-center gap-1 cursor-pointer shrink-0"
                     >
                         <span>View All My Tests</span>
                         <ArrowRight className="w-3.5 h-3.5" />

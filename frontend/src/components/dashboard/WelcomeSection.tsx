@@ -25,38 +25,38 @@ export default function WelcomeSection({
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-indigo-300">
+                        <span className="text-[10px] sm:text-[11px] font-mono font-bold uppercase tracking-widest text-indigo-300">
                             {role} Workspace
                         </span>
                     </div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                    <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">
                         Welcome back, {displayName}
                     </h1>
                 </div>
 
                 {/* Productivity Pill Highlights */}
-                <div className="flex items-center gap-2 flex-wrap shrink-0">
-                    <div className="bg-white/10 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl flex items-center gap-2 text-xs">
-                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <div>
-                            <p className="text-[10px] text-slate-300 leading-none">Live Exams</p>
-                            <p className="text-sm font-bold text-white leading-none mt-0.5">{liveCount}</p>
+                <div className="grid grid-cols-3 sm:flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/15 px-2.5 sm:px-3 py-2 rounded-xl flex items-center gap-2 text-xs">
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                        <div className="min-w-0">
+                            <p className="text-[9px] sm:text-[10px] text-slate-300 leading-none truncate">Live Exams</p>
+                            <p className="text-xs sm:text-sm font-bold text-white leading-none mt-1">{liveCount}</p>
                         </div>
                     </div>
 
-                    <div className="bg-white/10 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl flex items-center gap-2 text-xs">
-                        <Clock className="w-3.5 h-3.5 text-amber-300" />
-                        <div>
-                            <p className="text-[10px] text-slate-300 leading-none">Drafts</p>
-                            <p className="text-sm font-bold text-white leading-none mt-0.5">{draftCount}</p>
+                    <div className="bg-white/10 backdrop-blur-md border border-white/15 px-2.5 sm:px-3 py-2 rounded-xl flex items-center gap-2 text-xs">
+                        <Clock className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                        <div className="min-w-0">
+                            <p className="text-[9px] sm:text-[10px] text-slate-300 leading-none truncate">Drafts</p>
+                            <p className="text-xs sm:text-sm font-bold text-white leading-none mt-1">{draftCount}</p>
                         </div>
                     </div>
 
-                    <div className="bg-white/10 backdrop-blur-md border border-white/15 px-3 py-2 rounded-xl flex items-center gap-2 text-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-300" />
-                        <div>
-                            <p className="text-[10px] text-slate-300 leading-none">Submissions</p>
-                            <p className="text-sm font-bold text-white leading-none mt-0.5">{submissionsCount}</p>
+                    <div className="bg-white/10 backdrop-blur-md border border-white/15 px-2.5 sm:px-3 py-2 rounded-xl flex items-center gap-2 text-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-300 shrink-0" />
+                        <div className="min-w-0">
+                            <p className="text-[9px] sm:text-[10px] text-slate-300 leading-none truncate">Submissions</p>
+                            <p className="text-xs sm:text-sm font-bold text-white leading-none mt-1">{submissionsCount}</p>
                         </div>
                     </div>
                 </div>

@@ -71,22 +71,22 @@ export default function RecentResponses({ responses }: RecentResponsesProps) {
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs h-full flex flex-col justify-between">
             <div>
                 <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                             <FileCheck2 className="w-4 h-4" />
                         </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-slate-900 tracking-tight">Recent Submissions</h2>
-                            <p className="text-[11px] text-slate-400">Candidate test attempts & scores</p>
+                        <div className="min-w-0">
+                            <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight leading-tight truncate">Recent Submissions</h2>
+                            <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Candidate test attempts & scores</p>
                         </div>
                     </div>
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate('/my-tests?tab=reports')}
-                        className="text-xs text-indigo-600 hover:text-indigo-700 h-7 px-2"
+                        className="text-xs text-indigo-600 hover:text-indigo-700 h-7 px-2 shrink-0"
                     >
-                        View All Reports
+                        View All
                     </Button>
                 </div>
 

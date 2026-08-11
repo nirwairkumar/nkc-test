@@ -42,14 +42,14 @@ export default function AIStudioSection() {
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 mb-6">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-200 border border-purple-400/30 uppercase tracking-widest">
                             <Sparkles className="w-3 h-3 text-purple-300" /> TestoZa AI Studio
                         </span>
                     </div>
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                    <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">
                         AI-Powered Question Paper Generation
                     </h2>
                     <p className="text-xs sm:text-sm text-purple-200/80 mt-1 max-w-xl leading-relaxed">
@@ -59,7 +59,7 @@ export default function AIStudioSection() {
 
                 <Button
                     onClick={() => navigate('/generate-with-ai')}
-                    className="h-10 px-5 bg-white hover:bg-purple-50 text-purple-950 font-bold text-xs rounded-xl shadow-lg transition-all shrink-0 cursor-pointer flex items-center gap-2"
+                    className="h-9 sm:h-10 px-4 sm:px-5 bg-white hover:bg-purple-50 text-purple-950 font-bold text-xs rounded-xl shadow-lg transition-all shrink-0 cursor-pointer flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                     <span>Launch Full AI Studio</span>
                     <ArrowRight className="w-4 h-4" />

@@ -196,13 +196,13 @@
   transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
 
-/* Responsive text sizing */
+/* Responsive text sizing for Landing Page hero */
 @media (max-width: 768px) {
-  h1 {
+  .landing-hero-h1 {
     font-size: 2.5rem !important;
   }
 
-  h2 {
+  .landing-hero-h2 {
     font-size: 2rem !important;
   }
 }

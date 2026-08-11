@@ -70,16 +70,16 @@ export default function LiveActivity({ activities }: LiveActivityProps) {
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs h-full flex flex-col justify-between">
             <div>
                 <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                             <Activity className="w-4 h-4" />
                         </div>
-                        <div>
-                            <h2 className="text-sm font-bold text-slate-900 tracking-tight">Live Activity Feed</h2>
-                            <p className="text-[11px] text-slate-400">Real-time candidate submissions & events</p>
+                        <div className="min-w-0">
+                            <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight leading-tight truncate">Live Activity Feed</h2>
+                            <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">Real-time candidate submissions & events</p>
                         </div>
                     </div>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 </div>
 
                 {displayActivities.length === 0 ? (
