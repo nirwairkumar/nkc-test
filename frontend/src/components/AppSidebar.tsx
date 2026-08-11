@@ -198,15 +198,6 @@ Item 2 & Value B & 200 \\\\
             matchPaths: ['/my-tests']
         },
         {
-            title: 'Rewards',
-            path: '/rewards',
-            icon: Award,
-            badge: 'NEW',
-            badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-            iconColor: 'text-amber-500 dark:text-amber-400',
-            matchPaths: ['/rewards']
-        },
-        {
             title: 'Generate with AI',
             path: '/generate-with-ai',
             icon: Sparkles,
@@ -226,6 +217,15 @@ Item 2 & Value B & 200 \\\\
                 path: '/my-tests?tab=reports',
                 icon: BarChart2,
                 matchPaths: ['/results', '/results/analytics']
+            },
+            {
+                title: 'Rewards',
+                path: '/rewards',
+                icon: Award,
+                badge: 'NEW',
+                badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+                iconColor: 'text-amber-500 dark:text-amber-400',
+                matchPaths: ['/rewards']
             },
             {
                 title: 'Materials',
