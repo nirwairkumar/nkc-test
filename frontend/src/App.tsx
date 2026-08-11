@@ -38,6 +38,7 @@ const PremiumPage = lazy(() => import("./pages/PremiumPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const UserTestManager = lazy(() => import("./pages/UserTestManager"));
+const RewardsPage = lazy(() => import("./pages/RewardsPage"));
 const MaterialsManager = lazy(() => import("./pages/MaterialsManager"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const UserGuidePage = lazy(() => import("./pages/UserGuidePage"));
@@ -171,6 +172,14 @@ const App = () => (
                       element={
                         <PrivateRoute>
                           <UserTestManager />
+                        </PrivateRoute>
+                      }
+                    />
+                    <Route
+                      path="/rewards"
+                      element={
+                        <PrivateRoute>
+                          <RewardsPage />
                         </PrivateRoute>
                       }
                     />

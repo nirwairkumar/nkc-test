@@ -53,6 +53,8 @@ import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import CreatorDashboardTour from '@/components/CreatorDashboardTour';
 import SplashLoader from '@/components/ui/SplashLoader';
+import { CurrentGoalWidget } from '@/components/CurrentGoalWidget';
+import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
 
 const isProctoringEnabled = (test: any) => {
     const s = test?.settings;
@@ -177,6 +179,20 @@ export default function UserTestManager() {
     });
 
     const [classes, setClasses] = useState<any[]>([]);
+
+    // Creator Rewards State
+    const [rewardsStats, setRewardsStats] = useState<CreatorRewardsStats | null>(null);
+    const [rewardsLoading, setRewardsLoading] = useState(true);
+
+    useEffect(() => {
+        if (targetUserId) {
+            setRewardsLoading(true);
+            fetchCreatorRewards(targetUserId).then(({ data }) => {
+                setRewardsStats(data);
+                setRewardsLoading(false);
+            });
+        }
+    }, [targetUserId]);
 
     // Reports State
     const [reports, setReports] = useState<Report[]>([]);
@@ -669,6 +685,13 @@ export default function UserTestManager() {
                         </span>
                     </div>
                 </div>
+
+                {/* Creator Rewards Current Goal Banner */}
+                {activeTab === 'tests' && (
+                    <div className="mb-5">
+                        <CurrentGoalWidget stats={rewardsStats} loading={rewardsLoading} />
+                    </div>
+                )}
 
                 <TabsContent value="tests" className="space-y-3 m-0 border-0 p-0">
 
