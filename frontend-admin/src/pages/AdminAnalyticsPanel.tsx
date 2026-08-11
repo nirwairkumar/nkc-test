@@ -1,11 +1,102 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { analyticsApi } from '@/lib/analyticsApi';
-import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, ArrowUp, ArrowDown, Search, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+    Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, 
+    CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, 
+    ArrowUp, ArrowDown, Search, Upload, ChevronDown, ChevronUp, Laptop, 
+    Smartphone, Tablet, Bot, Cpu, UserCheck, Globe, MapPin 
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell, Legend, AreaChart, Area
 } from 'recharts';
+
+function formatRelativeTime(dateString?: string) {
+    if (!dateString) return '—';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '—';
+    
+    const now = new Date();
+    const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffSecs < 30) return 'Just now';
+    if (diffSecs < 60) return `${diffSecs}s ago`;
+    
+    const diffMins = Math.floor(diffSecs / 60);
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderDeviceBadge(deviceType?: string, browser?: string, os?: string) {
+    const dev = (deviceType || 'unknown').toLowerCase();
+    let Icon = Laptop;
+    let label = 'Desktop';
+
+    if (dev === 'mobile') {
+        Icon = Smartphone;
+        label = 'Mobile';
+    } else if (dev === 'tablet') {
+        Icon = Tablet;
+        label = 'Tablet';
+    }
+
+    const detailText = [browser, os].filter(Boolean).join(' · ') || 'Browser Unknown';
+
+    return (
+        <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                <Icon className="h-4 w-4" />
+            </div>
+            <div className="flex flex-col text-xs min-w-0">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">{label}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[150px]" title={detailText}>{detailText}</span>
+            </div>
+        </div>
+    );
+}
+
+function renderTrafficBadge(visitor: any) {
+    if (visitor.is_bot || (visitor.traffic_category && visitor.traffic_category !== 'human')) {
+        const cat = visitor.traffic_category;
+        if (cat === 'ai_bot') {
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    <Bot className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>{visitor.traffic_label || 'AI Bot'}</span>
+                </span>
+            );
+        }
+        if (cat === 'search_bot') {
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    <Globe className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>{visitor.traffic_label || 'Search Crawler'}</span>
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                <Cpu className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                <span>{visitor.traffic_label || 'Automated Bot'}</span>
+            </span>
+        );
+    }
+
+    return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            <span>Human</span>
+        </span>
+    );
+}
 
 function StatCard({ title, value, subtitle, icon: Icon, color = 'text-primary', bgColor = 'bg-primary/10' }: any) {
     return (
@@ -59,6 +150,7 @@ export default function AdminAnalyticsPanel() {
     const [expandedVisitorId, setExpandedVisitorId] = useState<string | null>(null);
     const [visitorSearch, setVisitorSearch] = useState('');
     const [visitorTypeFilter, setVisitorTypeFilter] = useState<'all' | 'registered' | 'repeat_guest' | 'guest'>('all');
+    const [botFilter, setBotFilter] = useState<'all' | 'human' | 'bot'>('all');
 
     const handleFetchVisitorPages = async (visitorId: string) => {
         if (visitorPages[visitorId]) {
@@ -533,40 +625,77 @@ export default function AdminAnalyticsPanel() {
                             <div className="space-y-6">
                                 <div className="grid gap-4 md:grid-cols-4">
                                     <StatCard title="Total Visitors" value={detailedVisitors.length} icon={Users} color="text-indigo-500" bgColor="bg-indigo-500/10" />
-                                    <StatCard title="Registered Users" value={detailedVisitors.filter((v: any) => v.visitor_type === 'registered').length} icon={CheckCircle2} color="text-emerald-500" bgColor="bg-emerald-500/10" />
-                                    <StatCard title="Repeat Guests" value={detailedVisitors.filter((v: any) => v.visitor_type === 'repeat_guest').length} icon={RefreshCw} color="text-blue-500" bgColor="bg-blue-500/10" />
-                                    <StatCard title="One-Time Guests" value={detailedVisitors.filter((v: any) => v.visitor_type === 'guest').length} icon={UserX} color="text-amber-500" bgColor="bg-amber-500/10" />
+                                    <StatCard 
+                                        title="Real Humans" 
+                                        value={detailedVisitors.filter((v: any) => !v.is_bot && v.traffic_category === 'human').length} 
+                                        icon={UserCheck} 
+                                        color="text-emerald-500" 
+                                        bgColor="bg-emerald-500/10" 
+                                        subtitle={`${Math.round((detailedVisitors.filter((v: any) => !v.is_bot && v.traffic_category === 'human').length / (detailedVisitors.length || 1)) * 100)}% human traffic`}
+                                    />
+                                    <StatCard 
+                                        title="AI Bots & Crawlers" 
+                                        value={detailedVisitors.filter((v: any) => v.is_bot || v.traffic_category !== 'human').length} 
+                                        icon={Bot} 
+                                        color="text-purple-500" 
+                                        bgColor="bg-purple-500/10" 
+                                        subtitle="Crawlers, scrapers & LLM bots"
+                                    />
+                                    <StatCard 
+                                        title="Mobile Visitors" 
+                                        value={detailedVisitors.filter((v: any) => (v.device_type || '').toLowerCase() === 'mobile').length} 
+                                        icon={Smartphone} 
+                                        color="text-blue-500" 
+                                        bgColor="bg-blue-500/10" 
+                                        subtitle={`${detailedVisitors.filter((v: any) => (v.device_type || '').toLowerCase() === 'desktop').length} Desktop`}
+                                    />
                                 </div>
 
                                 <div className="rounded-xl border bg-card p-5 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-                                    <input
-                                        type="text"
-                                        placeholder="Search location/fingerprint..."
-                                        value={visitorSearch}
-                                        onChange={(e) => setVisitorSearch(e.target.value)}
-                                        className="w-full sm:max-w-xs rounded-lg border bg-background px-3 py-2 text-sm outline-none"
-                                    />
-                                    <select
-                                        value={visitorTypeFilter}
-                                        onChange={(e: any) => setVisitorTypeFilter(e.target.value)}
-                                        className="w-full sm:w-auto rounded-lg border bg-background px-3 py-2 text-sm"
-                                    >
-                                        <option value="all">All Visitors</option>
-                                        <option value="registered">Registered</option>
-                                        <option value="repeat_guest">Repeat Guest</option>
-                                        <option value="guest">Guest</option>
-                                    </select>
+                                    <div className="relative w-full sm:max-w-xs">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search location/fingerprint/name..."
+                                            value={visitorSearch}
+                                            onChange={(e) => setVisitorSearch(e.target.value)}
+                                            className="w-full rounded-lg border bg-background pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                                        <select
+                                            value={botFilter}
+                                            onChange={(e: any) => setBotFilter(e.target.value)}
+                                            className="rounded-lg border bg-background px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="all">🤖 All Traffic (Human + Bots)</option>
+                                            <option value="human">👤 Real Humans Only</option>
+                                            <option value="bot">🤖 AI Bots & Crawlers Only</option>
+                                        </select>
+                                        <select
+                                            value={visitorTypeFilter}
+                                            onChange={(e: any) => setVisitorTypeFilter(e.target.value)}
+                                            className="rounded-lg border bg-background px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="all">All User Types</option>
+                                            <option value="registered">Registered</option>
+                                            <option value="repeat_guest">Repeat Guest</option>
+                                            <option value="guest">One-time Guest</option>
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                                <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b bg-muted/30">
-                                                <th className="px-6 py-3.5 text-left font-semibold">Identity</th>
-                                                <th className="px-6 py-3.5 text-left font-semibold">Type</th>
-                                                <th className="px-6 py-3.5 text-left font-semibold">Location</th>
-                                                <th className="px-6 py-3.5 text-center font-semibold">Visits</th>
-                                                <th className="px-6 py-3.5 text-center font-semibold">Actions</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Identity</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Traffic Class</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Device & OS</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Location</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Last Visit</th>
+                                                <th className="px-5 py-3.5 text-center font-semibold">Visits</th>
+                                                <th className="px-5 py-3.5 text-center font-semibold">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
@@ -575,42 +704,81 @@ export default function AdminAnalyticsPanel() {
                                                     const matchesSearch = 
                                                         v.fingerprint?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
                                                         v.full_name?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                        v.email?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
                                                         v.country?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
                                                         v.city?.toLowerCase().includes(visitorSearch.toLowerCase());
                                                     if (!matchesSearch) return false;
+                                                    
+                                                    if (botFilter === 'human' && (v.is_bot || v.traffic_category !== 'human')) return false;
+                                                    if (botFilter === 'bot' && (!v.is_bot && v.traffic_category === 'human')) return false;
+
                                                     return visitorTypeFilter === 'all' || v.visitor_type === visitorTypeFilter;
                                                 })
                                                 .map((v: any) => {
                                                     const isExpanded = expandedVisitorId === v.id;
                                                     return (
                                                         <React.Fragment key={v.id}>
-                                                            <tr className="hover:bg-muted/10">
-                                                                <td className="px-6 py-4">
-                                                                    {v.visitor_type === 'registered' ? v.full_name : `${v.fingerprint?.substring(0, 8)}...`}
+                                                            <tr className="hover:bg-muted/10 transition-colors">
+                                                                <td className="px-5 py-4">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                                                            {v.visitor_type === 'registered' && v.full_name ? v.full_name : `${v.fingerprint?.substring(0, 10)}...`}
+                                                                        </span>
+                                                                        {v.email && <span className="text-xs text-slate-500 dark:text-slate-400">{v.email}</span>}
+                                                                        <span className="text-[11px] text-slate-400 capitalize">{v.visitor_type.replace('_', ' ')}</span>
+                                                                    </div>
                                                                 </td>
-                                                                <td className="px-6 py-4">{v.visitor_type}</td>
-                                                                <td className="px-6 py-4">{v.city}, {v.country}</td>
-                                                                <td className="px-6 py-4 text-center">{v.total_visits}</td>
-                                                                <td className="px-6 py-4 text-center">
+                                                                <td className="px-5 py-4">
+                                                                    {renderTrafficBadge(v)}
+                                                                </td>
+                                                                <td className="px-5 py-4">
+                                                                    {renderDeviceBadge(v.device_type, v.browser, v.os)}
+                                                                </td>
+                                                                <td className="px-5 py-4">
+                                                                    <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                                                                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                                        <span>{v.city || 'Unknown'}, {v.country || 'Unknown'}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-5 py-4 whitespace-nowrap">
+                                                                    <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300" title={v.last_seen_at ? new Date(v.last_seen_at).toLocaleString() : ''}>
+                                                                        <Clock className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                                                                        <span className="font-medium">{formatRelativeTime(v.last_seen_at)}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-5 py-4 text-center font-mono font-semibold">{v.total_visits}</td>
+                                                                <td className="px-5 py-4 text-center">
                                                                     <button
                                                                         onClick={() => isExpanded ? setExpandedVisitorId(null) : handleFetchVisitorPages(v.id)}
-                                                                        className="text-xs text-indigo-600 hover:underline"
+                                                                        className="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 transition-colors"
                                                                     >
-                                                                        {isExpanded ? 'Hide' : 'View Pages'}
+                                                                        {isExpanded ? 'Close' : 'View Pages'}
                                                                     </button>
                                                                 </td>
                                                             </tr>
                                                             {isExpanded && (
-                                                                <tr className="bg-muted/5">
-                                                                    <td colSpan={5} className="px-8 py-4 border-l-4 border-indigo-500">
+                                                                <tr className="bg-slate-50/70 dark:bg-slate-900/50">
+                                                                    <td colSpan={7} className="px-8 py-4 border-l-4 border-indigo-500">
                                                                         <div className="space-y-2">
-                                                                            <h4 className="font-semibold text-xs text-muted-foreground uppercase">Page Views</h4>
-                                                                            {visitorPages[v.id]?.map((pv: any, idx: number) => (
-                                                                                <div key={idx} className="flex justify-between text-xs py-1 border-b">
-                                                                                    <span>{pv.title || 'Untitled'} - {pv.path}</span>
-                                                                                    <span>{new Date(pv.time).toLocaleTimeString()}</span>
+                                                                            <div className="flex items-center justify-between">
+                                                                                <h4 className="font-semibold text-xs text-slate-500 uppercase tracking-wider">Page View Journey</h4>
+                                                                                <span className="text-xs text-slate-400 font-mono">Visitor ID: {v.id}</span>
+                                                                            </div>
+                                                                            {fetchingPagesId === v.id ? (
+                                                                                <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                                                                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-600" />
+                                                                                    <span>Loading page views...</span>
                                                                                 </div>
-                                                                            ))}
+                                                                            ) : (visitorPages[v.id] || []).length === 0 ? (
+                                                                                <p className="text-xs text-slate-400 italic py-1">No detailed page views recorded.</p>
+                                                                            ) : (
+                                                                                (visitorPages[v.id] || []).map((pv: any, idx: number) => (
+                                                                                    <div key={idx} className="flex justify-between text-xs py-1.5 border-b border-slate-200/60 dark:border-slate-800">
+                                                                                        <span className="font-medium text-slate-800 dark:text-slate-200">{pv.title || 'Untitled'} <span className="text-slate-400 font-normal">({pv.path})</span></span>
+                                                                                        <span className="text-slate-500 font-mono">{new Date(pv.time).toLocaleTimeString()}</span>
+                                                                                    </div>
+                                                                                ))
+                                                                            )}
                                                                         </div>
                                                                     </td>
                                                                 </tr>

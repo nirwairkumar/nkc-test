@@ -3,6 +3,7 @@ from app.core.database import get_db, supabase
 from supabase import Client
 from datetime import datetime, timedelta
 from typing import Optional
+from .track import classify_user_agent
 
 router = APIRouter()
 
@@ -798,14 +799,19 @@ async def get_detailed_visitors(
             elif v.get("total_visits", 1) > 1:
                 v_type = "repeat_guest"
                 
+            browser_str = v.get("browser") or ""
+            os_str = v.get("os") or ""
+            full_ua = f"{browser_str} {os_str}".strip()
+            traffic_info = classify_user_agent(full_ua)
+                
             result.append({
                 "id": vid,
                 "fingerprint": v.get("fingerprint"),
-                "device_type": v.get("device_type"),
-                "browser": v.get("browser"),
-                "os": v.get("os"),
-                "country": v.get("country"),
-                "city": v.get("city"),
+                "device_type": v.get("device_type") or "unknown",
+                "browser": browser_str or "Unknown Browser",
+                "os": os_str or "Unknown OS",
+                "country": v.get("country") or "Unknown",
+                "city": v.get("city") or "Unknown",
                 "total_visits": v.get("total_visits", 1),
                 "total_page_views": v.get("total_page_views", 0),
                 "last_seen_at": v.get("last_seen_at") or v.get("created_at"),
@@ -813,6 +819,9 @@ async def get_detailed_visitors(
                 "full_name": profile.get("full_name"),
                 "email": profile.get("email"),
                 "visitor_type": v_type,
+                "is_bot": traffic_info["is_bot"],
+                "traffic_category": traffic_info["category"],
+                "traffic_label": traffic_info["label"],
                 "page_views": []  # Lazy loaded on demand
             })
             

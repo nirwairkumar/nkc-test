@@ -17,16 +17,59 @@ _geo_client = httpx.AsyncClient(
 )
 
 
+AI_BOT_KEYWORDS = [
+    'gptbot', 'chatgpt-user', 'claudebot', 'perplexitybot', 'anthropic-ai',
+    'bytespider', 'ccbot', 'diffbot', 'cohere-ai', 'img2dataset',
+    'applebot-extended', 'meta-externalagent', 'google-extended'
+]
+
+SEARCH_BOT_KEYWORDS = [
+    'googlebot', 'bingbot', 'yandexbot', 'yandex', 'baiduspider',
+    'duckduckbot', 'slurp', 'sogou', 'facebookexternalhit', 'twitterbot',
+    'linkedinbot', 'slackbot', 'ahrefsbot', 'semrushbot'
+]
+
+SCRIPT_KEYWORDS = [
+    'python-requests', 'httpx', 'aiohttp', 'curl', 'wget', 'headlesschrome',
+    'puppeteer', 'playwright', 'selenium', 'phantomjs', 'cypress', 'postman',
+    'go-http-client', 'java/', 'apache-httpclient', 'libwww-perl', 'scrapy'
+]
+
+def classify_user_agent(ua_string: str, parsed_ua=None):
+    ua_lower = (ua_string or "").lower()
+    
+    # 1. AI Bots
+    for k in AI_BOT_KEYWORDS:
+        if k in ua_lower:
+            return {"is_bot": True, "category": "ai_bot", "label": f"AI Bot ({k})"}
+        
+    # 2. Search & Social Crawlers
+    for k in SEARCH_BOT_KEYWORDS:
+        if k in ua_lower:
+            return {"is_bot": True, "category": "search_bot", "label": f"Search Crawler ({k})"}
+
+    # 3. Scripts / Automation Tools
+    for k in SCRIPT_KEYWORDS:
+        if k in ua_lower:
+            return {"is_bot": True, "category": "automated_script", "label": f"Automated Script ({k})"}
+
+    # 4. Standard bot check via user_agents library
+    if parsed_ua and getattr(parsed_ua, 'is_bot', False):
+        bot_family = parsed_ua.browser.family or "Crawler"
+        return {"is_bot": True, "category": "bot", "label": f"Bot/Crawler ({bot_family})"}
+
+    if "bot" in ua_lower or "crawler" in ua_lower or "spider" in ua_lower:
+        return {"is_bot": True, "category": "bot", "label": "Web Crawler"}
+
+    return {"is_bot": False, "category": "human", "label": "Real Human"}
+
+
 async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Client):
     try:
-        # 0. Skip known bots — keeps analytics data clean
+        # 1. Parse User Agent & Classify Traffic
         ua_string = event.user_agent or ""
         user_agent = parse(ua_string)
-        if user_agent.is_bot:
-            logger.debug(f"Skipping bot traffic: {user_agent}")
-            return
-
-        # 1. Parse User Agent
+        traffic_info = classify_user_agent(ua_string, user_agent)
         
         device_type = "desktop"
         if user_agent.is_mobile:
@@ -35,6 +78,9 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
             device_type = "tablet"
             
         browser = f"{user_agent.browser.family} {user_agent.browser.version_string}"
+        if traffic_info["is_bot"]:
+            browser = f"{traffic_info['label']}"
+            
         os = f"{user_agent.os.family} {user_agent.os.version_string}"
         
         # 2. Extract Geo via free IP geolocation API (ip-api.com, no key needed)
