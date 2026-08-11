@@ -169,12 +169,6 @@ export default function AllSubmissionsPage() {
             {/* iOS-Inspired Title Header with Mobile Offset */}
             <div className="pl-8 sm:pl-0 flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 dark:border-slate-800 pb-3 sm:pb-4">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                            <ClipboardList className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600 dark:text-indigo-400" />
-                            Creator Analytics Portal
-                        </span>
-                    </div>
                     <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
                         All Student Submissions
                     </h1>
@@ -320,19 +314,11 @@ export default function AllSubmissionsPage() {
                                                 <CheckCircle2 className="w-3 h-3 text-indigo-500" />
                                                 Conducted
                                             </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                                                Standard Test
-                                            </span>
-                                        )}
+                                        ) : null}
 
-                                        <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-[150px]">
-                                            {test.category}
-                                        </span>
-
-                                        {test.custom_id && (
-                                            <span className="text-[10px] sm:text-[11px] font-mono text-slate-400">
-                                                ID: {test.custom_id}
+                                        {test.category && test.category.toLowerCase() !== 'general assessment' && (
+                                            <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 truncate max-w-[150px]">
+                                                {test.category}
                                             </span>
                                         )}
                                     </div>
@@ -355,7 +341,12 @@ export default function AllSubmissionsPage() {
                                         {test.created_at && (
                                             <span className="flex items-center gap-1">
                                                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
-                                                {new Date(test.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                Conducted: {new Date(test.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </span>
+                                        )}
+                                        {test.custom_id && (
+                                            <span className="font-mono text-slate-400">
+                                                ID: {test.custom_id}
                                             </span>
                                         )}
                                     </div>
