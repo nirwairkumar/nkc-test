@@ -146,6 +146,13 @@ export default function AdminAiAuditPanel() {
         setInspectLoading(false);
     };
 
+    const formatBytes = (bytes?: number) => {
+        if (!bytes) return null;
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    };
+
     const formatTimestamp = (dateStr?: string) => {
         if (!dateStr) return 'N/A';
         let isoStr = dateStr;
@@ -717,166 +724,175 @@ export default function AdminAiAuditPanel() {
                             <RefreshCw className="w-8 h-8 animate-spin mx-auto text-indigo-500" />
                             <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Fetching inspection logs & generated questions...</p>
                         </div>
-                    ) : selectedItem ? (
-                        <div className="space-y-6 py-3">
-                            {/* User Profile Card */}
-                            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-11 w-11 border border-slate-200 dark:border-slate-700">
-                                        <AvatarImage src={selectedItem.user_profile?.avatar_url} />
-                                        <AvatarFallback className="bg-indigo-600 text-white font-bold text-sm">
-                                            {(selectedItem.user_profile?.full_name || selectedItem.user_profile?.email || 'U').slice(0, 2).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                                            {selectedItem.user_profile?.full_name || 'Anonymous User'}
-                                        </h4>
-                                        <p className="text-xs text-slate-500">{selectedItem.user_profile?.email || 'No Email'}</p>
+                    ) : selectedItem ? (() => {
+                        const modalParsed = typeof selectedItem.parsed_data === 'string'
+                            ? (() => { try { return JSON.parse(selectedItem.parsed_data); } catch { return {}; } })()
+                            : (selectedItem.parsed_data || {});
+                        
+                        const fileDetailsList = Array.isArray(modalParsed.files_details) ? modalParsed.files_details : [];
+                        const firstFile = fileDetailsList[0];
+                        const questionsList = Array.isArray(modalParsed.questions) ? modalParsed.questions : [];
+
+                        return (
+                            <div className="space-y-6 py-3">
+                                {/* User Profile Card */}
+                                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between shadow-sm">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-11 w-11 border border-slate-200 dark:border-slate-700">
+                                            <AvatarImage src={selectedItem.user_profile?.avatar_url} />
+                                            <AvatarFallback className="bg-indigo-600 text-white font-bold text-sm">
+                                                {(selectedItem.user_profile?.full_name || selectedItem.user_profile?.email || 'U').slice(0, 2).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                                {selectedItem.user_profile?.full_name || 'Anonymous User'}
+                                            </h4>
+                                            <p className="text-xs text-slate-500">{selectedItem.user_profile?.email || 'No Email'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">User Role</span>
+                                        <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 text-xs font-bold capitalize mt-0.5">
+                                            {selectedItem.user_profile?.designation || 'Student / Teacher'}
+                                        </Badge>
                                     </div>
                                 </div>
 
-                                <div className="text-right">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">User Role</span>
-                                    <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 text-xs font-bold capitalize mt-0.5">
-                                        {selectedItem.user_profile?.designation || 'Student / Teacher'}
-                                    </Badge>
-                                </div>
-                            </div>
+                                {/* iOS Grouped Details: Step Timings & Input Files */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Execution Timing Details */}
+                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-3 shadow-sm">
+                                        <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+                                            Execution Latency & Step Timings
+                                        </h4>
 
-                            {/* iOS Grouped Details: Step Timings & Input Files */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Execution Timing Details */}
-                                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-3 shadow-sm">
-                                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                                        <Clock className="w-3.5 h-3.5 text-amber-500" />
-                                        Execution Latency & Step Timings
-                                    </h4>
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 dark:border-slate-800/60">
-                                            <span className="text-slate-600 dark:text-slate-400 font-medium">Total Duration</span>
-                                            <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
-                                                {selectedItem.parsed_data?.execution_time_seconds || selectedItem.execution_time_seconds || '1.8'}s
-                                            </span>
-                                        </div>
-
-                                        {selectedItem.parsed_data?.timing_steps && (
-                                            <>
-                                                <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
-                                                    <span className="text-slate-500">1. Document Upload & File Reading</span>
-                                                    <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                        {selectedItem.parsed_data.timing_steps.uploading || selectedItem.parsed_data.timing_steps.file_upload || 0}s
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
-                                                    <span className="text-slate-500">2. Vision & OCR Page Classification</span>
-                                                    <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                        {selectedItem.parsed_data.timing_steps.analyzing || selectedItem.parsed_data.timing_steps.ocr || 0}s
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
-                                                    <span className="text-slate-500">3. AI Question Extraction</span>
-                                                    <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                        {selectedItem.parsed_data.timing_steps.extracting || selectedItem.parsed_data.timing_steps.extraction || 0}s
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
-                                                    <span className="text-slate-500">4. Structure Finalization</span>
-                                                    <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                        {selectedItem.parsed_data.timing_steps.finalizing || selectedItem.parsed_data.timing_steps.structuring || 0}s
-                                                    </span>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {selectedItem.parsed_data?.used_method && (
-                                            <div className="flex items-center justify-between text-xs py-1">
-                                                <span className="text-slate-500">Extraction Engine</span>
-                                                <span className="font-semibold text-indigo-600 dark:text-indigo-400 uppercase text-[10px]">
-                                                    {selectedItem.parsed_data.used_method}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                                                <span className="text-slate-600 dark:text-slate-400 font-medium">Total Duration</span>
+                                                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">
+                                                    {modalParsed.execution_time_seconds || selectedItem.execution_time_seconds || '1.8'}s
                                                 </span>
                                             </div>
-                                        )}
+
+                                            {modalParsed.timing_steps && (
+                                                <>
+                                                    <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
+                                                        <span className="text-slate-500">1. Document Upload & File Reading</span>
+                                                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                            {modalParsed.timing_steps.uploading || modalParsed.timing_steps.file_upload || 0}s
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
+                                                        <span className="text-slate-500">2. Vision & OCR Page Classification</span>
+                                                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                            {modalParsed.timing_steps.analyzing || modalParsed.timing_steps.ocr || 0}s
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
+                                                        <span className="text-slate-500">3. AI Question Extraction</span>
+                                                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                            {modalParsed.timing_steps.extracting || modalParsed.timing_steps.extraction || 0}s
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/60">
+                                                        <span className="text-slate-500">4. Structure Finalization</span>
+                                                        <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                            {modalParsed.timing_steps.finalizing || modalParsed.timing_steps.structuring || 0}s
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {modalParsed.used_method && (
+                                                <div className="flex items-center justify-between text-xs py-1">
+                                                    <span className="text-slate-500">Extraction Engine</span>
+                                                    <span className="font-semibold text-indigo-600 dark:text-indigo-400 uppercase text-[10px]">
+                                                        {modalParsed.used_method}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* User Input & File Details */}
+                                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-3 shadow-sm">
+                                        <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                            <FileUp className="w-3.5 h-3.5 text-indigo-500" />
+                                            User Input & Attached Files
+                                        </h4>
+
+                                        <div className="space-y-2 text-xs">
+                                            {selectedItem.file_name && (
+                                                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-2">
+                                                    <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                        <File className="w-4 h-4 text-indigo-500" />
+                                                        {selectedItem.file_name}
+                                                    </p>
+                                                    {firstFile && (
+                                                        <>
+                                                            {(firstFile.size_bytes || firstFile.type) && (
+                                                                <p className="text-[10px] text-slate-500 font-mono">
+                                                                    {firstFile.size_bytes ? `Size: ${formatBytes(firstFile.size_bytes)}` : ''}
+                                                                    {firstFile.type ? `${firstFile.size_bytes ? ' | ' : ''}Type: ${firstFile.type}` : ''}
+                                                                </p>
+                                                            )}
+                                                            {firstFile.url && (
+                                                                <a
+                                                                    href={firstFile.url}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 underline pt-1"
+                                                                >
+                                                                    <ExternalLink className="w-3.5 h-3.5" /> View Uploaded Original File
+                                                                </a>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {modalParsed.youtube_url && (
+                                                <div className="p-2.5 bg-rose-50/60 dark:bg-rose-950/20 rounded-xl border border-rose-200/60 dark:border-rose-900/40">
+                                                    <span className="text-[10px] font-bold text-rose-600 uppercase block mb-1">YouTube Link</span>
+                                                    <a href={modalParsed.youtube_url} target="_blank" rel="noreferrer" className="text-rose-700 dark:text-rose-300 font-semibold underline flex items-center gap-1 truncate">
+                                                        {modalParsed.youtube_url}
+                                                        <ExternalLink className="w-3 h-3 shrink-0" />
+                                                    </a>
+                                                </div>
+                                            )}
+
+                                            {selectedItem.description && (
+                                                <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Prompt / Instructions</span>
+                                                    <p className="text-slate-700 dark:text-slate-300 italic">{selectedItem.description}</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* User Input & File Details */}
-                                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-3 shadow-sm">
-                                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                                        <FileUp className="w-3.5 h-3.5 text-indigo-500" />
-                                        User Input & Attached Files
-                                    </h4>
-
-                                    <div className="space-y-2 text-xs">
-                                        {selectedItem.file_name && (
-                                            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-2">
-                                                <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                    <File className="w-4 h-4 text-indigo-500" />
-                                                    {selectedItem.file_name}
-                                                </p>
-                                                {Array.isArray(selectedItem.parsed_data?.files_details) && selectedItem.parsed_data.files_details.length > 0 && selectedItem.parsed_data.files_details[0] && (
-                                                    <>
-                                                        {(selectedItem.parsed_data.files_details[0].size_bytes || selectedItem.parsed_data.files_details[0].type) && (
-                                                            <p className="text-[10px] text-slate-500 font-mono">
-                                                                {selectedItem.parsed_data.files_details[0].size_bytes ? `Size: ${formatBytes(selectedItem.parsed_data.files_details[0].size_bytes)}` : ''}
-                                                                {selectedItem.parsed_data.files_details[0].type ? `${selectedItem.parsed_data.files_details[0].size_bytes ? ' | ' : ''}Type: ${selectedItem.parsed_data.files_details[0].type}` : ''}
-                                                            </p>
-                                                        )}
-                                                        {selectedItem.parsed_data.files_details[0].url && (
-                                                            <a
-                                                                href={selectedItem.parsed_data.files_details[0].url}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 underline pt-1"
-                                                            >
-                                                                <ExternalLink className="w-3.5 h-3.5" /> View Uploaded Original File
-                                                            </a>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {selectedItem.parsed_data?.youtube_url && (
-                                            <div className="p-2.5 bg-rose-50/60 dark:bg-rose-950/20 rounded-xl border border-rose-200/60 dark:border-rose-900/40">
-                                                <span className="text-[10px] font-bold text-rose-600 uppercase block mb-1">YouTube Link</span>
-                                                <a href={selectedItem.parsed_data.youtube_url} target="_blank" rel="noreferrer" className="text-rose-700 dark:text-rose-300 font-semibold underline flex items-center gap-1 truncate">
-                                                    {selectedItem.parsed_data.youtube_url}
-                                                    <ExternalLink className="w-3 h-3 shrink-0" />
-                                                </a>
-                                            </div>
-                                        )}
-
-                                        {selectedItem.description && (
-                                            <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Prompt / Instructions</span>
-                                                <p className="text-slate-700 dark:text-slate-300 italic">{selectedItem.description}</p>
-                                            </div>
-                                        )}
+                                {/* Generated Output Questions Listing */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between border-b pb-2">
+                                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                            <Layers className="w-4 h-4 text-indigo-500" />
+                                            Platform Generated Output Questions ({questionsList.length})
+                                        </h3>
+                                        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono font-bold text-xs">
+                                            {selectedItem.question_count || 0} Questions Total
+                                        </Badge>
                                     </div>
-                                </div>
-                            </div>
 
-                            {/* Generated Output Questions Listing */}
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between border-b pb-2">
-                                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                                        <Layers className="w-4 h-4 text-indigo-500" />
-                                        Platform Generated Output Questions ({selectedItem.parsed_data?.questions?.length || 0})
-                                    </h3>
-                                    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono font-bold text-xs">
-                                        {selectedItem.question_count || 0} Questions Total
-                                    </Badge>
-                                </div>
-
-                                {(!selectedItem.parsed_data?.questions || selectedItem.parsed_data.questions.length === 0) ? (
-                                    <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800/80">
-                                        <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                        <p className="text-xs text-slate-500 italic">No structured question JSON found for this log entry.</p>
-                                    </div>
-                                ) : (
-                                    selectedItem.parsed_data.questions.map((q: any, idx: number) => {
+                                    {questionsList.length === 0 ? (
+                                        <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800/80">
+                                            <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                            <p className="text-xs text-slate-500 italic">No structured question JSON found for this log entry.</p>
+                                        </div>
+                                    ) : (
+                                        questionsList.map((q: any, idx: number) => {
                                         const stem = q.question_text || q.question || q.stem || 'Question Stem';
                                         
                                         // Standardize options array/object
@@ -966,7 +982,8 @@ export default function AdminAiAuditPanel() {
                                 )}
                             </div>
                         </div>
-                    ) : null}
+                    );
+                })() : null}
                 </DialogContent>
             </Dialog>
         </div>
