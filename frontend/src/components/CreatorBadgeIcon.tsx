@@ -68,159 +68,39 @@ export const CreatorBadgeIcon: React.FC<CreatorBadgeIconProps> = ({
 
     switch (level) {
         case 1:
-            // LEVEL 1: VERIFIED CREATOR - Bronze Rosette, Midnight Blue Center, Shield Accent, Serif 'T'
+            // LEVEL 1: VERIFIED CREATOR - Exact 1st Award Badge Asset
             return (
-                <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className} ${opacityClass}`}>
-                    <defs>
-                        <linearGradient id="bronze_metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#E29567" />
-                            <stop offset="35%" stopColor="#C06C38" />
-                            <stop offset="70%" stopColor="#8A4219" />
-                            <stop offset="100%" stopColor="#5C2B0E" />
-                        </linearGradient>
-                        <linearGradient id="bronze_gold" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#FDE68A" />
-                            <stop offset="50%" stopColor="#D97706" />
-                            <stop offset="100%" stopColor="#92400E" />
-                        </linearGradient>
-                    </defs>
-
-                    {/* Folded Hanging Ribbon Tails */}
-                    <g id="ribbon_tails_v">
-                        <path d="M60 120 L40 178 L65 163 L88 178 L78 120 Z" fill="url(#bronze_metal)" />
-                        <path d="M140 120 L112 178 L135 163 L160 178 L122 120 Z" fill="#6A2E10" />
-                    </g>
-
-                    {/* 12-Scallop Rosette Frame */}
-                    {renderScallopedRosette('bronze_metal')}
-
-                    {/* Concentric Metallic Ring & Dark Blue Center */}
-                    <circle cx="100" cy="78" r="56" fill="url(#bronze_metal)" stroke="#FDE68A" strokeWidth="1.5" />
-                    <circle cx="100" cy="78" r="50" fill="#0A1128" stroke="#8A4219" strokeWidth="2" />
-
-                    {/* Laurels */}
-                    {renderLaurels('bronze_gold')}
-
-                    {/* Top Accent: Shield with Star */}
-                    <g transform="translate(100, 36) scale(0.9)">
-                        <path d="M0 -8 L8 -4 L8 4 Q0 10 0 10 Q0 10 -8 4 L-8 -4 Z" fill="url(#bronze_gold)" stroke="#FFF" strokeWidth="0.8" />
-                        {renderStar(0, 0, 3.5, 'bronze_gold')}
-                    </g>
-
-                    {/* Center Serif 'T' Emblem */}
-                    <text x="100" y="100" fontSize="56" fontWeight="900" fontFamily="Georgia, 'Times New Roman', Times, serif" fill="url(#bronze_gold)" textAnchor="middle" style={{ filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.8))' }}>
-                        T
-                    </text>
-
-                    {/* Level Banner Pill */}
-                    <rect x="52" y="136" width="96" height="24" rx="6" fill="#0A1128" stroke="#1E293B" strokeWidth="1.5" />
-                    <text x="100" y="152" fontSize="12" fontWeight="900" fontFamily="Inter, sans-serif" fill="#FFFFFF" textAnchor="middle" letterSpacing="1.5">
-                        LEVEL 1
-                    </text>
-                </svg>
+                <img
+                    src="/reward-icons/testoza_verified_creator_badge_exact(1st).svg"
+                    width={size}
+                    height={size}
+                    alt="Level 1 Verified Creator Badge"
+                    className={`${className} ${opacityClass}`}
+                />
             );
 
         case 2:
-            // LEVEL 2: TRUSTED CREATOR - Copper Rosette, 2 Stars Top, Serif 'T', Vertical Ribbon Tails
+            // LEVEL 2: TRUSTED CREATOR - Exact 2nd Award Badge Asset
             return (
-                <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className} ${opacityClass}`}>
-                    <defs>
-                        <linearGradient id="copper_metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#ED9B6E" />
-                            <stop offset="40%" stopColor="#C86A39" />
-                            <stop offset="80%" stopColor="#8C3F1B" />
-                            <stop offset="100%" stopColor="#5E260D" />
-                        </linearGradient>
-                        <linearGradient id="copper_gold" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#FFEDD5" />
-                            <stop offset="50%" stopColor="#F97316" />
-                            <stop offset="100%" stopColor="#9A3412" />
-                        </linearGradient>
-                    </defs>
-
-                    {/* Folded Hanging Ribbon Tails */}
-                    <g id="ribbon_tails_v">
-                        <path d="M60 120 L40 178 L65 163 L88 178 L78 120 Z" fill="url(#copper_metal)" />
-                        <path d="M140 120 L112 178 L135 163 L160 178 L122 120 Z" fill="#6E2B0D" />
-                    </g>
-
-                    {/* 12-Scallop Rosette Frame */}
-                    {renderScallopedRosette('copper_metal')}
-
-                    {/* Concentric Metallic Ring & Dark Blue Center */}
-                    <circle cx="100" cy="78" r="56" fill="url(#copper_metal)" stroke="#FFEDD5" strokeWidth="1.5" />
-                    <circle cx="100" cy="78" r="50" fill="#0A1128" stroke="#8C3F1B" strokeWidth="2" />
-
-                    {/* Laurels */}
-                    {renderLaurels('copper_gold')}
-
-                    {/* Top Accent: 2 Stars Side-by-Side */}
-                    {renderStar(91, 38, 5, 'copper_gold')}
-                    {renderStar(109, 38, 5, 'copper_gold')}
-
-                    {/* Center Serif 'T' Emblem */}
-                    <text x="100" y="100" fontSize="56" fontWeight="900" fontFamily="Georgia, 'Times New Roman', Times, serif" fill="url(#copper_gold)" textAnchor="middle" style={{ filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.8))' }}>
-                        T
-                    </text>
-
-                    {/* Level Banner Pill */}
-                    <rect x="52" y="136" width="96" height="24" rx="6" fill="#0A1128" stroke="#1E293B" strokeWidth="1.5" />
-                    <text x="100" y="152" fontSize="12" fontWeight="900" fontFamily="Inter, sans-serif" fill="#FFFFFF" textAnchor="middle" letterSpacing="1.5">
-                        LEVEL 2
-                    </text>
-                </svg>
+                <img
+                    src="/reward-icons/testoza_trusted_creator_badge_exact(2nd).svg"
+                    width={size}
+                    height={size}
+                    alt="Level 2 Trusted Creator Badge"
+                    className={`${className} ${opacityClass}`}
+                />
             );
 
         case 3:
-            // LEVEL 3: EXPERT CREATOR - Silver Rosette, 3 Stars Top, Silver Serif 'T', Vertical Ribbon Tails
+            // LEVEL 3: EXPERT CREATOR - Exact 3rd Award Badge Asset
             return (
-                <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className} ${opacityClass}`}>
-                    <defs>
-                        <linearGradient id="silver_metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#FFFFFF" />
-                            <stop offset="35%" stopColor="#CBD5E1" />
-                            <stop offset="70%" stopColor="#94A3B8" />
-                            <stop offset="100%" stopColor="#475569" />
-                        </linearGradient>
-                        <linearGradient id="silver_bright" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#FFFFFF" />
-                            <stop offset="50%" stopColor="#E2E8F0" />
-                            <stop offset="100%" stopColor="#94A3B8" />
-                        </linearGradient>
-                    </defs>
-
-                    {/* Folded Hanging Ribbon Tails */}
-                    <g id="ribbon_tails_v">
-                        <path d="M60 120 L40 178 L65 163 L88 178 L78 120 Z" fill="url(#silver_metal)" />
-                        <path d="M140 120 L112 178 L135 163 L160 178 L122 120 Z" fill="#475569" />
-                    </g>
-
-                    {/* 12-Scallop Rosette Frame */}
-                    {renderScallopedRosette('silver_metal')}
-
-                    {/* Concentric Metallic Ring & Dark Blue Center */}
-                    <circle cx="100" cy="78" r="56" fill="url(#silver_metal)" stroke="#FFFFFF" strokeWidth="1.5" />
-                    <circle cx="100" cy="78" r="50" fill="#0A1128" stroke="#64748B" strokeWidth="2" />
-
-                    {/* Laurels */}
-                    {renderLaurels('silver_bright')}
-
-                    {/* Top Accent: 3 Stars Arched */}
-                    {renderStar(82, 40, 4.5, 'silver_bright')}
-                    {renderStar(100, 36, 5.5, 'silver_bright')}
-                    {renderStar(118, 40, 4.5, 'silver_bright')}
-
-                    {/* Center Serif 'T' Emblem */}
-                    <text x="100" y="100" fontSize="56" fontWeight="900" fontFamily="Georgia, 'Times New Roman', Times, serif" fill="url(#silver_bright)" textAnchor="middle" style={{ filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.8))' }}>
-                        T
-                    </text>
-
-                    {/* Level Banner Pill */}
-                    <rect x="52" y="136" width="96" height="24" rx="6" fill="#0A1128" stroke="#1E293B" strokeWidth="1.5" />
-                    <text x="100" y="152" fontSize="12" fontWeight="900" fontFamily="Inter, sans-serif" fill="#FFFFFF" textAnchor="middle" letterSpacing="1.5">
-                        LEVEL 3
-                    </text>
-                </svg>
+                <img
+                    src="/reward-icons/testoza_expert_creator_badge_exact(3rd).svg"
+                    width={size}
+                    height={size}
+                    alt="Level 3 Expert Creator Badge"
+                    className={`${className} ${opacityClass}`}
+                />
             );
 
         case 4:
