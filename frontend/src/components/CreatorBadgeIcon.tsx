@@ -104,131 +104,27 @@ export const CreatorBadgeIcon: React.FC<CreatorBadgeIconProps> = ({
             );
 
         case 4:
-            // LEVEL 4: ELITE CREATOR - Gold Rosette, Bottom Shield, Serif 'T', Wide Outward Flaring Gold Ribbons
+            // LEVEL 4: ELITE CREATOR - Exact 4th Award Badge Asset
             return (
-                <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className} ${opacityClass}`}>
-                    <defs>
-                        <linearGradient id="gold_metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#FEF08A" />
-                            <stop offset="35%" stopColor="#FACC15" />
-                            <stop offset="70%" stopColor="#CA8A04" />
-                            <stop offset="100%" stopColor="#854D0E" />
-                        </linearGradient>
-                        <linearGradient id="gold_bright" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#FFFBEB" />
-                            <stop offset="50%" stopColor="#FDE047" />
-                            <stop offset="100%" stopColor="#CA8A04" />
-                        </linearGradient>
-                    </defs>
-
-                    {/* Wide Outward Flaring Gold Ribbons */}
-                    <g id="flaring_gold_ribbons">
-                        {/* Left Ribbon */}
-                        <path d="M62 110 L12 145 L22 170 L72 135 Z" fill="url(#gold_metal)" />
-                        <path d="M62 110 L12 145 L22 170 L72 135 Z" stroke="#FEF08A" strokeWidth="1" fill="none" />
-                        
-                        {/* Right Ribbon */}
-                        <path d="M138 110 L188 145 L178 170 L128 135 Z" fill="#854D0E" />
-                        <path d="M138 110 L188 145 L178 170 L128 135 Z" stroke="#FEF08A" strokeWidth="1" fill="none" />
-                    </g>
-
-                    {/* 12-Scallop Rosette Frame */}
-                    {renderScallopedRosette('gold_metal')}
-
-                    {/* Concentric Metallic Ring & Dark Blue Center */}
-                    <circle cx="100" cy="78" r="56" fill="url(#gold_metal)" stroke="#FEF08A" strokeWidth="1.5" />
-                    <circle cx="100" cy="78" r="50" fill="#0A1128" stroke="#CA8A04" strokeWidth="2" />
-
-                    {/* Laurels */}
-                    {renderLaurels('gold_bright')}
-
-                    {/* Bottom Accent: Shield with Star */}
-                    <g transform="translate(100, 114) scale(0.9)">
-                        <path d="M0 -8 L8 -4 L8 4 Q0 10 0 10 Q0 10 -8 4 L-8 -4 Z" fill="url(#gold_bright)" stroke="#FFF" strokeWidth="0.8" />
-                        {renderStar(0, 0, 3.5, 'gold_bright')}
-                    </g>
-
-                    {/* Center Serif 'T' Emblem */}
-                    <text x="100" y="98" fontSize="56" fontWeight="900" fontFamily="Georgia, 'Times New Roman', Times, serif" fill="url(#gold_bright)" textAnchor="middle" style={{ filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.8))' }}>
-                        T
-                    </text>
-
-                    {/* Level Banner Pill */}
-                    <rect x="52" y="136" width="96" height="24" rx="6" fill="#0A1128" stroke="#1E293B" strokeWidth="1.5" />
-                    <text x="100" y="152" fontSize="12" fontWeight="900" fontFamily="Inter, sans-serif" fill="#FFFFFF" textAnchor="middle" letterSpacing="1.5">
-                        LEVEL 4
-                    </text>
-                </svg>
+                <img
+                    src="/reward-icons/testoza_elite_creator_badge_exact(4th).svg"
+                    width={size}
+                    height={size}
+                    alt="Level 4 Elite Creator Badge"
+                    className={`${className} ${opacityClass}`}
+                />
             );
 
         case 5:
-            // LEVEL 5: MASTER CREATOR - Gold Rosette + Blue Ring, 5 Stars Top, Bottom Shield, Serif 'TZ', Wide Outward Flaring Blue Ribbons with Gold Trim
+            // LEVEL 5: MASTER CREATOR - Exact 5th Award Badge Asset
             return (
-                <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className} ${opacityClass}`}>
-                    <defs>
-                        <linearGradient id="gold_metal" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#FEF08A" />
-                            <stop offset="35%" stopColor="#FACC15" />
-                            <stop offset="70%" stopColor="#CA8A04" />
-                            <stop offset="100%" stopColor="#854D0E" />
-                        </linearGradient>
-                        <linearGradient id="gold_bright" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#FFFBEB" />
-                            <stop offset="50%" stopColor="#FDE047" />
-                            <stop offset="100%" stopColor="#CA8A04" />
-                        </linearGradient>
-                        <linearGradient id="blue_ribbon" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#2563EB" />
-                            <stop offset="50%" stopColor="#1E40AF" />
-                            <stop offset="100%" stopColor="#1E3A8A" />
-                        </linearGradient>
-                    </defs>
-
-                    {/* Wide Outward Flaring Blue Ribbons with Double Gold Trim */}
-                    <g id="flaring_blue_ribbons">
-                        {/* Left Ribbon */}
-                        <path d="M62 110 L12 145 L22 170 L72 135 Z" fill="url(#blue_ribbon)" stroke="#FACC15" strokeWidth="2" />
-                        <path d="M58 116 L18 147 L24 162 L65 136 Z" stroke="#FEF08A" strokeWidth="1" fill="none" />
-                        
-                        {/* Right Ribbon */}
-                        <path d="M138 110 L188 145 L178 170 L128 135 Z" fill="#1E3A8A" stroke="#FACC15" strokeWidth="2" />
-                        <path d="M142 116 L182 147 L176 162 L135 136 Z" stroke="#FEF08A" strokeWidth="1" fill="none" />
-                    </g>
-
-                    {/* 12-Scallop Rosette Frame */}
-                    {renderScallopedRosette('gold_metal')}
-
-                    {/* Concentric Metallic Ring & Royal Blue Ring & Dark Blue Center */}
-                    <circle cx="100" cy="78" r="58" fill="url(#blue_ribbon)" stroke="#FEF08A" strokeWidth="2" />
-                    <circle cx="100" cy="78" r="50" fill="#0A1128" stroke="#CA8A04" strokeWidth="2" />
-
-                    {/* Laurels */}
-                    {renderLaurels('gold_bright')}
-
-                    {/* Top Accent: 5 Stars Arched */}
-                    {renderStar(70, 48, 3.5, 'gold_bright')}
-                    {renderStar(84, 38, 4.2, 'gold_bright')}
-                    {renderStar(100, 34, 5.0, 'gold_bright')}
-                    {renderStar(116, 38, 4.2, 'gold_bright')}
-                    {renderStar(130, 48, 3.5, 'gold_bright')}
-
-                    {/* Bottom Accent: Shield with Star */}
-                    <g transform="translate(100, 115) scale(0.85)">
-                        <path d="M0 -8 L8 -4 L8 4 Q0 10 0 10 Q0 10 -8 4 L-8 -4 Z" fill="url(#gold_bright)" stroke="#FFF" strokeWidth="0.8" />
-                        {renderStar(0, 0, 3.5, 'gold_bright')}
-                    </g>
-
-                    {/* Center Serif 'TZ' Emblem */}
-                    <text x="100" y="96" fontSize="44" fontWeight="900" fontFamily="Georgia, 'Times New Roman', Times, serif" fill="url(#gold_bright)" textAnchor="middle" letterSpacing="-2" style={{ filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.8))' }}>
-                        TZ
-                    </text>
-
-                    {/* Level Banner Pill */}
-                    <rect x="52" y="136" width="96" height="24" rx="6" fill="#0A1128" stroke="#1E293B" strokeWidth="1.5" />
-                    <text x="100" y="152" fontSize="12" fontWeight="900" fontFamily="Inter, sans-serif" fill="#FFFFFF" textAnchor="middle" letterSpacing="1.5">
-                        LEVEL 5
-                    </text>
-                </svg>
+                <img
+                    src="/reward-icons/testoza_badge_transparent(5th).svg"
+                    width={size}
+                    height={size}
+                    alt="Level 5 Master Creator Badge"
+                    className={`${className} ${opacityClass}`}
+                />
             );
 
         case 6:
