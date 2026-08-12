@@ -146,11 +146,23 @@ export default function AdminAiAuditPanel() {
         setInspectLoading(false);
     };
 
-    const formatBytes = (bytes?: number) => {
-        if (!bytes) return null;
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    const formatTimestamp = (dateStr?: string) => {
+        if (!dateStr) return 'N/A';
+        let isoStr = dateStr;
+        if (!isoStr.endsWith('Z') && !isoStr.includes('+') && !isoStr.includes('-')) {
+            isoStr += 'Z';
+        }
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return dateStr;
+
+        return d.toLocaleString('en-US', {
+            timeZone: 'Asia/Kolkata',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
     return (
@@ -523,7 +535,14 @@ export default function AdminAiAuditPanel() {
 
                                                 {/* Created Date */}
                                                 <TableCell className="py-4 text-xs text-slate-500 font-medium whitespace-nowrap">
-                                                    {item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                                    <div className="flex flex-col">
+                                                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                                            {formatTimestamp(item.created_at)}
+                                                        </span>
+                                                        <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
+                                                            IST (Indian Standard Time)
+                                                        </span>
+                                                    </div>
                                                 </TableCell>
 
                                                 {/* Action Button */}
