@@ -68,7 +68,7 @@ export const CreatorBadgeIcon: React.FC<CreatorBadgeIconProps> = ({
 
     switch (level) {
         case 1:
-            // LEVEL 1: VERIFIED CREATOR - Copper/Bronze Rosette, Dark Midnight Blue Inner, Top Shield, Serif 'T', Vertical Ribbon Tails
+            // LEVEL 1: VERIFIED CREATOR - Bronze Rosette, Midnight Blue Center, Shield Accent, Serif 'T'
             return (
                 <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`${className} ${opacityClass}`}>
                     <defs>
