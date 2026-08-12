@@ -238,6 +238,64 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         }
     }, [debouncedSearchQuery]);
 
+    const loadUsers = React.useCallback(async (pageToLoad = usersPage, searchToUse = debouncedUserSearchQuery) => {
+        setUsersLoading(true);
+        try {
+            const { data, error } = await fetchUsers({
+                page: pageToLoad,
+                limit: 10,
+                search: searchToUse
+            });
+
+            if (error) throw error;
+            if (data && typeof data === 'object' && 'items' in data) {
+                setUsers(data.items || []);
+                setUsersTotal(data.total || 0);
+            } else if (Array.isArray(data)) {
+                setUsers(data);
+                setUsersTotal(data.length);
+            }
+
+            // Fetch Report Stats for Admin
+            const { data: statsData } = await fetchAdminUsersReportStats();
+            if (statsData) {
+                setReportStats(statsData);
+            }
+
+        } catch (error) {
+            console.error("Error loading users:", error);
+            toast.error("Failed to load users");
+        } finally {
+            setUsersLoading(false);
+        }
+    }, [usersPage, debouncedUserSearchQuery]);
+
+    const loadVerifiedCreators = React.useCallback(async (pageToLoad = verifiedCreatorsPage, searchToUse = debouncedCreatorSearchQuery) => {
+        setVerifiedCreatorsLoading(true);
+        try {
+            const { data, error } = await fetchUsers({
+                page: pageToLoad,
+                limit: 10,
+                search: searchToUse,
+                is_verified_creator: true
+            });
+
+            if (error) throw error;
+            if (data && typeof data === 'object' && 'items' in data) {
+                setVerifiedCreators(data.items || []);
+                setVerifiedCreatorsTotal(data.total || 0);
+            } else if (Array.isArray(data)) {
+                setVerifiedCreators(data);
+                setVerifiedCreatorsTotal(data.length);
+            }
+        } catch (error) {
+            console.error("Error loading verified creators:", error);
+            toast.error("Failed to load verified creators");
+        } finally {
+            setVerifiedCreatorsLoading(false);
+        }
+    }, [verifiedCreatorsPage, debouncedCreatorSearchQuery]);
+
     // Registered Users Search Debounce
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -411,63 +469,6 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         setCategoriesLoading(false);
     };
 
-    const loadUsers = React.useCallback(async (pageToLoad = usersPage, searchToUse = debouncedUserSearchQuery) => {
-        setUsersLoading(true);
-        try {
-            const { data, error } = await fetchUsers({
-                page: pageToLoad,
-                limit: 10,
-                search: searchToUse
-            });
-
-            if (error) throw error;
-            if (data && typeof data === 'object' && 'items' in data) {
-                setUsers(data.items || []);
-                setUsersTotal(data.total || 0);
-            } else if (Array.isArray(data)) {
-                setUsers(data);
-                setUsersTotal(data.length);
-            }
-
-            // Fetch Report Stats for Admin
-            const { data: statsData } = await fetchAdminUsersReportStats();
-            if (statsData) {
-                setReportStats(statsData);
-            }
-
-        } catch (error) {
-            console.error("Error loading users:", error);
-            toast.error("Failed to load users");
-        } finally {
-            setUsersLoading(false);
-        }
-    }, [usersPage, debouncedUserSearchQuery]);
-
-    const loadVerifiedCreators = React.useCallback(async (pageToLoad = verifiedCreatorsPage, searchToUse = debouncedCreatorSearchQuery) => {
-        setVerifiedCreatorsLoading(true);
-        try {
-            const { data, error } = await fetchUsers({
-                page: pageToLoad,
-                limit: 10,
-                search: searchToUse,
-                is_verified_creator: true
-            });
-
-            if (error) throw error;
-            if (data && typeof data === 'object' && 'items' in data) {
-                setVerifiedCreators(data.items || []);
-                setVerifiedCreatorsTotal(data.total || 0);
-            } else if (Array.isArray(data)) {
-                setVerifiedCreators(data);
-                setVerifiedCreatorsTotal(data.length);
-            }
-        } catch (error) {
-            console.error("Error loading verified creators:", error);
-            toast.error("Failed to load verified creators");
-        } finally {
-            setVerifiedCreatorsLoading(false);
-        }
-    }, [verifiedCreatorsPage, debouncedCreatorSearchQuery]);
 
     const loadConductModeTests = async () => {
         setConductModeLoading(true);
