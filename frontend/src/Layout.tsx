@@ -23,11 +23,9 @@ export default function Layout() {
 
     const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
-    // Expand sidebar on AI page, minimize on dashboard
+    // Expand sidebar on AI page
     useEffect(() => {
-        if (location.pathname === '/dashboard') {
-            setIsCollapsed(true);
-        } else if (location.pathname === '/generate-with-ai') {
+        if (location.pathname === '/generate-with-ai') {
             setIsCollapsed(false);
         }
     }, [location.pathname]);
@@ -85,12 +83,12 @@ export default function Layout() {
 
     const hideFooter = isLiveTestPage || isResultsPage || isCreateTestPage;
 
-    // Sidebar is hidden on /dashboard for Student role (non-educators) to preserve legacy student view
+    // Sidebar is shown on /dashboard for all authenticated users, similar to /my-tests
     const isSidebarHidden =
         isLiveTestPage ||
         location.pathname === '/' ||
         location.pathname === '/support' ||
-        (location.pathname === '/dashboard' && !isTeacherOrInstitution);
+        (location.pathname === '/dashboard' && !user);
 
     const handleToggleSidebar = () => {
         if (window.innerWidth < 768) {
