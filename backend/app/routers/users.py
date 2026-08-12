@@ -225,7 +225,7 @@ async def get_all_users(
 ):
     try:
         _verify_is_admin(request, db)
-        query = db.table("profiles").select("*")
+        query = supabase.table("profiles").select("*")
         
         if ids:
             # ids is comma separated string "id1,id2"
@@ -366,8 +366,8 @@ async def get_all_ai_history(
     try:
         _verify_is_admin(request, db)
 
-        # 1. Fetch AI generation history items (selecting light records)
-        query = db.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
+        # 1. Fetch AI generation history items (using global service-role client 'supabase' to bypass RLS)
+        query = supabase.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
         
         # Fetch all items ordered by created_at desc to compute accurate metrics & allow filtering
         history_res = query.order("created_at", desc=True).execute()
@@ -405,7 +405,7 @@ async def get_all_ai_history(
         user_ids = list(set([item["user_id"] for item in all_raw if item.get("user_id")]))
         profiles_map = {}
         if user_ids:
-            profiles_res = db.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
+            profiles_res = supabase.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
             for p in (profiles_res.data or []):
                 profiles_map[p["id"]] = p
 
@@ -488,14 +488,14 @@ async def get_ai_history_detail(
     try:
         _verify_is_admin(request, db)
 
-        # 1. Fetch full record including questions array from ai_generation_history
-        res = db.table("ai_generation_history").select("*").eq("id", history_id).execute()
+        # 1. Fetch full record including questions array from ai_generation_history (using global service-role client 'supabase' to bypass RLS)
+        res = supabase.table("ai_generation_history").select("*").eq("id", history_id).execute()
         item = None
         if res.data and len(res.data) > 0:
             item = res.data[0]
         else:
             # Fallback check in tests table
-            test_res = db.table("tests").select("*").eq("id", history_id).execute()
+            test_res = supabase.table("tests").select("*").eq("id", history_id).execute()
             if test_res.data and len(test_res.data) > 0:
                 test = test_res.data[0]
                 item = {
@@ -521,7 +521,7 @@ async def get_ai_history_detail(
         # 2. Attach full user profile
         uid = item.get("user_id")
         if uid:
-            prof_res = db.table("profiles").select("id, full_name, email, avatar_url, designation").eq("id", uid).execute()
+            prof_res = supabase.table("profiles").select("id, full_name, email, avatar_url, designation").eq("id", uid).execute()
             if prof_res.data and len(prof_res.data) > 0:
                 item["user_profile"] = prof_res.data[0]
             else:
