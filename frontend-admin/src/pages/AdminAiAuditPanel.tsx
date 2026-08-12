@@ -199,7 +199,7 @@ export default function AdminAiAuditPanel() {
                         </Button>
 
                         <Button 
-                            onClick={loadHistory} 
+                            onClick={() => loadHistory(1, activeSubSection, searchQuery)} 
                             disabled={loading} 
                             className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md rounded-2xl px-4 py-2.5 text-xs font-semibold shadow-lg transition-all"
                         >
@@ -815,20 +815,25 @@ export default function AdminAiAuditPanel() {
                                                     <File className="w-4 h-4 text-indigo-500" />
                                                     {selectedItem.file_name}
                                                 </p>
-                                                {selectedItem.parsed_data?.files_details?.[0] && (
-                                                    <p className="text-[10px] text-slate-500 font-mono">
-                                                        Size: {formatBytes(selectedItem.parsed_data.files_details[0].size_bytes)} | Type: {selectedItem.parsed_data.files_details[0].type}
-                                                    </p>
-                                                )}
-                                                {selectedItem.parsed_data?.files_details?.[0]?.url && (
-                                                    <a
-                                                        href={selectedItem.parsed_data.files_details[0].url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 underline pt-1"
-                                                    >
-                                                        <ExternalLink className="w-3.5 h-3.5" /> View Uploaded Original File
-                                                    </a>
+                                                {Array.isArray(selectedItem.parsed_data?.files_details) && selectedItem.parsed_data.files_details.length > 0 && selectedItem.parsed_data.files_details[0] && (
+                                                    <>
+                                                        {(selectedItem.parsed_data.files_details[0].size_bytes || selectedItem.parsed_data.files_details[0].type) && (
+                                                            <p className="text-[10px] text-slate-500 font-mono">
+                                                                {selectedItem.parsed_data.files_details[0].size_bytes ? `Size: ${formatBytes(selectedItem.parsed_data.files_details[0].size_bytes)}` : ''}
+                                                                {selectedItem.parsed_data.files_details[0].type ? `${selectedItem.parsed_data.files_details[0].size_bytes ? ' | ' : ''}Type: ${selectedItem.parsed_data.files_details[0].type}` : ''}
+                                                            </p>
+                                                        )}
+                                                        {selectedItem.parsed_data.files_details[0].url && (
+                                                            <a
+                                                                href={selectedItem.parsed_data.files_details[0].url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 underline pt-1"
+                                                            >
+                                                                <ExternalLink className="w-3.5 h-3.5" /> View Uploaded Original File
+                                                            </a>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         )}
