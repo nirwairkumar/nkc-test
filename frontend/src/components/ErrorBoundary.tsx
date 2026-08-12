@@ -25,25 +25,37 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error caught by ErrorBoundary:', error, errorInfo);
 
+    const errorMsg = error?.message || error?.toString() || '';
     const isChunkError =
       error?.name === 'ChunkLoadError' ||
-      error?.message?.includes('Failed to fetch dynamically imported module') ||
-      error?.message?.includes('Importing a module script failed') ||
-      error?.message?.includes('Loading chunk');
+      errorMsg.includes('Failed to fetch dynamically imported module') ||
+      errorMsg.includes('Importing a module script failed') ||
+      errorMsg.includes('Loading chunk') ||
+      errorMsg.includes("reading 'default'") ||
+      errorMsg.includes('reading "default"') ||
+      errorMsg.includes("property 'default' of undefined") ||
+      errorMsg.includes("Cannot read properties of undefined") ||
+      errorMsg.includes("Failed to load module script");
 
     if (isChunkError) {
       const storageKey = 'last_chunk_error_reload';
       const now = Date.now();
       const lastReload = Number(sessionStorage.getItem(storageKey) || 0);
-      if (now - lastReload > 10000) {
+      if (now - lastReload > 8000) {
         sessionStorage.setItem(storageKey, String(now));
-        window.location.reload();
+        // Force hard reload with cache-buster to bypass stale browser HTTP disk cache
+        const url = new URL(window.location.href);
+        url.searchParams.set('_v', now.toString());
+        window.location.href = url.toString();
       }
     }
   }
 
   private handleReload = () => {
-    window.location.reload();
+    // Hard reload with cache-buster parameter to guarantee loading latest index.html
+    const url = new URL(window.location.href);
+    url.searchParams.set('_v', Date.now().toString());
+    window.location.href = url.toString();
   };
 
   private handleHome = () => {

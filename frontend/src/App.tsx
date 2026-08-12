@@ -15,62 +15,90 @@ import Layout from "./Layout";
 // Lazy Load Pages
 import { HelmetProvider } from 'react-helmet-async';
 
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const GoogleAdsLanding = lazy(() => import("./pages/GoogleAdsLanding"));
-const AITestImporter = lazy(() => import("./pages/AITestImporter"));
+// Helper for resilient lazy component loading with automatic post-deployment recovery
+const safeLazy = <T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T } | any>
+) => {
+  return lazy(async () => {
+    try {
+      const module = await factory();
+      if (module && module.default) {
+        return module;
+      }
+      if (module && typeof module === 'object') {
+        return { default: module.default || module };
+      }
+      throw new Error("Module export is invalid");
+    } catch (error: any) {
+      console.warn("Dynamic import failed (chunk outdated after deployment), auto-reloading page...", error);
+      const storageKey = 'safe_lazy_reload_' + window.location.pathname;
+      const now = Date.now();
+      const lastReload = Number(sessionStorage.getItem(storageKey) || 0);
+      if (now - lastReload > 8000) {
+        sessionStorage.setItem(storageKey, String(now));
+        const url = new URL(window.location.href);
+        url.searchParams.set('_v', now.toString());
+        window.location.href = url.toString();
+      }
+      throw error;
+    }
+  });
+};
 
-const CategoryPage = lazy(() => import("./pages/CategoryPage"));
-const TestList = lazy(() => import("./pages/TestList"));
-const TestPage = lazy(() => import("./pages/TestPage"));
-const TestIntroPage = lazy(() => import("./pages/TestIntroPage"));
-const TestHistory = lazy(() => import("./pages/TestHistory"));
-const ResultsLayout = lazy(() => import("./components/layout/ResultsLayout"));
-const ResultsPage = lazy(() => import("./pages/ResultsPage"));
-const SolutionEditorPage = lazy(() => import("./pages/SolutionEditorPage"));
-const SolutionsViewPage = lazy(() => import("./pages/SolutionsViewPage"));
-const FeedbackViewPage = lazy(() => import("./pages/FeedbackViewPage"));
-const AuthForm = lazy(() => import("@/components/AuthForm"));
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const AuthError = lazy(() => import("./pages/AuthError"));
-const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
-const PricingPage = lazy(() => import("./pages/PricingPage"));
-const PremiumPage = lazy(() => import("./pages/PremiumPage"));
-const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
-const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
-const UserTestManager = lazy(() => import("./pages/UserTestManager"));
-const AllSubmissionsPage = lazy(() => import("./pages/AllSubmissionsPage"));
-const RewardsPage = lazy(() => import("./pages/RewardsPage"));
-const MaterialsManager = lazy(() => import("./pages/MaterialsManager"));
-const SupportPage = lazy(() => import("./pages/SupportPage"));
-const UserGuidePage = lazy(() => import("./pages/UserGuidePage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const CreateTestPage = lazy(() => import("./pages/CreateTestPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const CreatorProfilePage = lazy(() => import("./pages/CreatorProfilePage"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
-const AboutPage = lazy(() => import("./pages/AboutPage"));
-const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-const TestSubmissionSuccess = lazy(() => import("./pages/TestSubmissionSuccess"));
-const AdvancedAnalysis = lazy(() => import("./pages/AdvancedAnalysis"));
-const FullTestAnalysisPage = lazy(() => import("./pages/FullTestAnalysisPage"));
+const LandingPage = safeLazy(() => import("./pages/LandingPage"));
+const GoogleAdsLanding = safeLazy(() => import("./pages/GoogleAdsLanding"));
+const AITestImporter = safeLazy(() => import("./pages/AITestImporter"));
 
-const CombinedIntroPage = lazy(() => import("./pages/CombinedIntroPage"));
-const CombinedBreakScreen = lazy(() => import("./pages/CombinedBreakScreen"));
-const CreateCombinedTestPage = lazy(() => import("./pages/CreateCombinedTestPage"));
-const MoreTestsPage = lazy(() => import("./pages/MoreTestsPage"));
-const ConvertPage = lazy(() => import("./pages/ConvertPage"));
-const SurveyPage = lazy(() => import("./pages/SurveyPage"));
+const CategoryPage = safeLazy(() => import("./pages/CategoryPage"));
+const TestList = safeLazy(() => import("./pages/TestList"));
+const TestPage = safeLazy(() => import("./pages/TestPage"));
+const TestIntroPage = safeLazy(() => import("./pages/TestIntroPage"));
+const TestHistory = safeLazy(() => import("./pages/TestHistory"));
+const ResultsLayout = safeLazy(() => import("./components/layout/ResultsLayout"));
+const ResultsPage = safeLazy(() => import("./pages/ResultsPage"));
+const SolutionEditorPage = safeLazy(() => import("./pages/SolutionEditorPage"));
+const SolutionsViewPage = safeLazy(() => import("./pages/SolutionsViewPage"));
+const FeedbackViewPage = safeLazy(() => import("./pages/FeedbackViewPage"));
+const AuthForm = safeLazy(() => import("@/components/AuthForm"));
+const AuthCallback = safeLazy(() => import("./pages/AuthCallback"));
+const AuthError = safeLazy(() => import("./pages/AuthError"));
+const UpdatePassword = safeLazy(() => import("./pages/UpdatePassword"));
+const PricingPage = safeLazy(() => import("./pages/PricingPage"));
+const PremiumPage = safeLazy(() => import("./pages/PremiumPage"));
+const OnboardingPage = safeLazy(() => import("./pages/OnboardingPage"));
+const NotificationsPage = safeLazy(() => import("./pages/NotificationsPage"));
+const UserTestManager = safeLazy(() => import("./pages/UserTestManager"));
+const AllSubmissionsPage = safeLazy(() => import("./pages/AllSubmissionsPage"));
+const RewardsPage = safeLazy(() => import("./pages/RewardsPage"));
+const MaterialsManager = safeLazy(() => import("./pages/MaterialsManager"));
+const SupportPage = safeLazy(() => import("./pages/SupportPage"));
+const UserGuidePage = safeLazy(() => import("./pages/UserGuidePage"));
+const NotFound = safeLazy(() => import("./pages/NotFound"));
+const CreateTestPage = safeLazy(() => import("./pages/CreateTestPage"));
+const ProfilePage = safeLazy(() => import("./pages/ProfilePage"));
+const CreatorProfilePage = safeLazy(() => import("./pages/CreatorProfilePage"));
+const PrivacyPolicy = safeLazy(() => import("./pages/PrivacyPolicy"));
+const TermsAndConditions = safeLazy(() => import("./pages/TermsAndConditions"));
+const AboutPage = safeLazy(() => import("./pages/AboutPage"));
+const SettingsPage = safeLazy(() => import("./pages/SettingsPage"));
+const TestSubmissionSuccess = safeLazy(() => import("./pages/TestSubmissionSuccess"));
+const AdvancedAnalysis = safeLazy(() => import("./pages/AdvancedAnalysis"));
+const FullTestAnalysisPage = safeLazy(() => import("./pages/FullTestAnalysisPage"));
+
+const CombinedIntroPage = safeLazy(() => import("./pages/CombinedIntroPage"));
+const CombinedBreakScreen = safeLazy(() => import("./pages/CombinedBreakScreen"));
+const CreateCombinedTestPage = safeLazy(() => import("./pages/CreateCombinedTestPage"));
+const MoreTestsPage = safeLazy(() => import("./pages/MoreTestsPage"));
+const ConvertPage = safeLazy(() => import("./pages/ConvertPage"));
+const SurveyPage = safeLazy(() => import("./pages/SurveyPage"));
 
 // News & Posts
-const NewsFeed = lazy(() => import("./pages/NewsFeed"));
-const NewsPostView = lazy(() => import("./pages/NewsPostView"));
-const NewsPostEditor = lazy(() => import("./pages/NewsPostEditor"));
-const MyPosts = lazy(() => import("./pages/MyPosts"));
+const NewsFeed = safeLazy(() => import("./pages/NewsFeed"));
+const NewsPostView = safeLazy(() => import("./pages/NewsPostView"));
+const NewsPostEditor = safeLazy(() => import("./pages/NewsPostEditor"));
+const MyPosts = safeLazy(() => import("./pages/MyPosts"));
 
-
-
-const TeacherDashboard = lazy(() => import("./components/dashboard/TeacherDashboard"));
+const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
 import { useAuth } from "@/contexts/AuthContext";
 
