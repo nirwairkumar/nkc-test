@@ -270,6 +270,20 @@ async def get_all_users(
         print(f"Error fetching users: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+ALLOWED_PROFILE_FIELDS = {
+    "full_name",
+    "avatar_url",
+    "designation",
+    "bio",
+    "email",
+    "is_creator",
+    "following_visibility",
+    "is_verified_creator",
+    "verified_role",
+    "verified_at",
+    "verified_by_admin_id"
+}
+
 @router.put("/{user_id}")
 async def update_user_profile(
     user_id: str,
@@ -278,40 +292,75 @@ async def update_user_profile(
     db: Client = Depends(get_db)
 ):
     try:
+        # 1. Authorize: user can update own profile, or admin can update any profile
         _verify_owner_or_admin(user_id, request, db)
         
-        # Check if profile exists
-        profile_check = db.table("profiles").select("id").eq("id", user_id).execute()
+        # 2. Sanitize payload fields to prevent 400 Bad Request on unknown columns (e.g., updated_at)
+        sanitized_updates = {k: v for k, v in updates.items() if k in ALLOWED_PROFILE_FIELDS and v is not None}
+        
+        if not sanitized_updates:
+            # Fallback if empty dictionary sent, return existing profile
+            existing = supabase.table("profiles").select("*").eq("id", user_id).execute()
+            if existing.data:
+                return existing.data[0]
+            raise HTTPException(status_code=400, detail="No valid profile fields provided for update")
+
+        # 3. Check if profile exists using service role client 'supabase' to avoid RLS blockages
+        profile_check = supabase.table("profiles").select("id").eq("id", user_id).execute()
         
         if not profile_check.data:
             print(f"Profile doesn't exist for user {user_id} in update_user_profile. Inserting new profile...")
-            if "email" not in updates:
+            insert_data = dict(sanitized_updates)
+            insert_data["id"] = user_id
+            if "email" not in insert_data:
                 try:
                     auth_user = supabase.auth.admin.get_user_by_id(user_id)
                     if auth_user and auth_user.user:
-                        updates["email"] = auth_user.user.email
+                        insert_data["email"] = auth_user.user.email
                 except Exception as auth_err:
                     print(f"Error fetching email from auth in update_user_profile: {auth_err}")
             
-            updates["id"] = user_id
-            response = db.table("profiles").insert(updates).execute()
+            response = supabase.table("profiles").insert(insert_data).execute()
         else:
-            response = db.table("profiles").update(updates).eq("id", user_id).execute()
+            response = supabase.table("profiles").update(sanitized_updates).eq("id", user_id).execute()
         
-        # 2. Sync with Tests (if name or avatar changed)
-        if updates.get("full_name") or updates.get("avatar_url"):
+        # 4. Sync Auth User Metadata in auth.users
+        meta_updates = {}
+        if "full_name" in sanitized_updates:
+            meta_updates["full_name"] = sanitized_updates["full_name"]
+        if "bio" in sanitized_updates:
+            meta_updates["bio"] = sanitized_updates["bio"]
+        if "avatar_url" in sanitized_updates:
+            meta_updates["avatar_url"] = sanitized_updates["avatar_url"]
+        if "designation" in sanitized_updates:
+            meta_updates["designation"] = sanitized_updates["designation"]
+
+        if meta_updates:
+            try:
+                supabase.auth.admin.update_user_by_id(user_id, {"user_metadata": meta_updates})
+            except Exception as auth_meta_err:
+                print(f"Non-critical: error syncing user_metadata for {user_id}: {auth_meta_err}")
+
+        # 5. Sync with Tests (if name or avatar changed)
+        if "full_name" in sanitized_updates or "avatar_url" in sanitized_updates:
             test_updates = {}
-            if "full_name" in updates:
-                test_updates["creator_name"] = updates["full_name"]
-            if "avatar_url" in updates:
-                test_updates["creator_avatar"] = updates["avatar_url"]
+            if "full_name" in sanitized_updates:
+                test_updates["creator_name"] = sanitized_updates["full_name"]
+            if "avatar_url" in sanitized_updates:
+                test_updates["creator_avatar"] = sanitized_updates["avatar_url"]
             
             if test_updates:
-                db.table("tests").update(test_updates).eq("created_by", user_id).execute()
+                supabase.table("tests").update(test_updates).eq("created_by", user_id).execute()
 
-        if response.data:
+        if response.data and len(response.data) > 0:
             return response.data[0]
-        return None
+            
+        # Fallback fetch
+        updated_profile = supabase.table("profiles").select("*").eq("id", user_id).execute()
+        if updated_profile.data:
+            return updated_profile.data[0]
+
+        return {"id": user_id, **sanitized_updates}
     except HTTPException:
         raise
     except Exception as e:
