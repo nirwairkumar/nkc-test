@@ -368,10 +368,50 @@ async def get_all_ai_history(
 
         # 1. Fetch AI generation history items (using global service-role client 'supabase' to bypass RLS)
         query = supabase.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
-        
-        # Fetch all items ordered by created_at desc to compute accurate metrics & allow filtering
         history_res = query.order("created_at", desc=True).execute()
-        all_raw = history_res.data or []
+        ai_raw = history_res.data or []
+
+        # 2. Fetch all tests created directly on the platform (tests table for manual tests)
+        tests_res = supabase.table("tests").select("id, created_by, title, description, custom_id, total_questions, questions, created_at").order("created_at", desc=True).execute()
+        all_tests = tests_res.data or []
+
+        # Track existing history IDs to avoid duplicate manual entries for tests created via AI/YouTube
+        existing_history_ids = set()
+        for h in ai_raw:
+            existing_history_ids.add(str(h.get("id")))
+
+        # Build manual test entries for tests created manually (not logged in ai_generation_history)
+        manual_raw = []
+        for t in all_tests:
+            tid = str(t.get("id"))
+            custom_id = str(t.get("custom_id") or "")
+            
+            # Skip if it's a YouTube generated test or already in AI generation history
+            if custom_id.startswith("YT") or tid in existing_history_ids:
+                continue
+            
+            qs = t.get("questions") or []
+            q_count = t.get("total_questions") or len(qs)
+
+            manual_raw.append({
+                "id": t.get("id"),
+                "user_id": t.get("created_by"),
+                "mode": "manual",
+                "title": t.get("title") or "Manual Created Test",
+                "description": t.get("description") or "Created using Manual Test Builder",
+                "file_name": custom_id or "Manual Test Creator",
+                "question_count": q_count,
+                "created_at": t.get("created_at"),
+                "parsed_data": {
+                    "tool_type": "manual",
+                    "used_method": "Manual Test Builder",
+                    "execution_time_seconds": 0
+                }
+            })
+
+        # Combine AI history and Manual history
+        all_raw = ai_raw + manual_raw
+        all_raw.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
 
         # Calculate overall platform stats efficiently
         total_requests = len(all_raw)
@@ -380,6 +420,7 @@ async def get_all_ai_history(
         gen_count = 0
         yt_count = 0
         top_count = 0
+        manual_count = 0
         exec_times = []
 
         for item in all_raw:
@@ -388,7 +429,9 @@ async def get_all_ai_history(
             fn = (item.get("file_name") or "").lower()
             tt = parsed.get("tool_type") or m
             
-            if tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
+            if tt == 'manual' or m == 'manual':
+                manual_count += 1
+            elif tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
                 yt_count += 1
             elif tt == 'topics' or m == 'topics' or 'topic' in (item.get("title") or "").lower():
                 top_count += 1
@@ -421,7 +464,9 @@ async def get_all_ai_history(
             
             # Determine actual tool category
             item_tool = 'generate_with_ai'
-            if tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
+            if tt == 'manual' or m == 'manual':
+                item_tool = 'manual'
+            elif tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
                 item_tool = 'youtube'
             elif tt == 'topics' or m == 'topics' or 'topic' in (item.get("title") or "").lower():
                 item_tool = 'topics'
@@ -470,6 +515,7 @@ async def get_all_ai_history(
                 "generate_ai_count": gen_count,
                 "youtube_count": yt_count,
                 "topics_count": top_count,
+                "manual_count": manual_count,
                 "avg_execution_time": avg_time
             }
         }
