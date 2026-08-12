@@ -1,8 +1,8 @@
 import apiClient from '@/lib/apiClient';
 
-export async function fetchUsers() {
+export async function fetchUsers(params?: { page?: number; limit?: number; search?: string; is_verified_creator?: boolean }) {
     try {
-        const response = await apiClient.get('/users/');
+        const response = await apiClient.get('/users/', { params });
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };

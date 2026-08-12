@@ -1,3 +1,4 @@
+import math
 import base64
 import json
 import time
@@ -221,19 +222,46 @@ async def check_admin(
 async def get_all_users(
     request: Request,
     ids: Optional[str] = None,
+    page: Optional[int] = None,
+    limit: Optional[int] = None,
+    search: Optional[str] = None,
+    is_verified_creator: Optional[bool] = None,
     db: Client = Depends(get_db)
 ):
     try:
         _verify_is_admin(request, db)
-        query = supabase.table("profiles").select("*")
-        
+
         if ids:
             # ids is comma separated string "id1,id2"
             id_list = ids.split(",")
-            query = query.in_("id", id_list)
-        else:
-            query = query.order("created_at", desc=True)
-            
+            response = supabase.table("profiles").select("*").in_("id", id_list).execute()
+            return response.data
+
+        if page is not None or limit is not None:
+            p = page if page and page > 0 else 1
+            l = limit if limit and limit > 0 else 10
+            offset = (p - 1) * l
+
+            query = supabase.table("profiles").select("*", count="exact")
+            if search and search.strip():
+                s = search.strip()
+                query = query.or_(f"full_name.ilike.%{s}%,email.ilike.%{s}%")
+            if is_verified_creator is not None:
+                query = query.eq("is_verified_creator", is_verified_creator)
+
+            query = query.order("created_at", desc=True).range(offset, offset + l - 1)
+            response = query.execute()
+            total = response.count if response.count is not None else len(response.data or [])
+            return {
+                "items": response.data or [],
+                "total": total,
+                "page": p,
+                "limit": l,
+                "total_pages": math.ceil(total / l) if total > 0 else 1
+            }
+
+        # Fallback for unpaginated requests
+        query = supabase.table("profiles").select("*").order("created_at", desc=True)
         response = query.execute()
         return response.data
     except HTTPException:
