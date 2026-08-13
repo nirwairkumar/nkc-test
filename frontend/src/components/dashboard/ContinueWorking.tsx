@@ -42,7 +42,7 @@ export default function ContinueWorking({
     const safeTests = Array.isArray(tests) ? tests : [];
     const now = new Date();
     const hasEnded = (t: any) => t?.settings?.schedule?.end_time && new Date(t.settings.schedule.end_time) < now;
-    const isLive = (t: any) => !!t?.settings?.conduct_exam?.enabled;
+    const isLive = (t: any) => !!t?.settings?.conduct_exam?.enabled && !hasEnded(t);
     const isScheduled = (t: any) => t?.settings?.schedule?.enabled && t?.settings?.schedule?.start_time && new Date(t.settings.schedule.start_time) > now;
     const isDraft = (t: any) => !isLive(t) && !isScheduled(t) && (t?.questions?.length === 0 || t?.visibility === 'private');
 

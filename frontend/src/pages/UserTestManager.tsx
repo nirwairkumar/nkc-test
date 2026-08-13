@@ -148,6 +148,7 @@ export default function UserTestManager() {
     const [removeExamId, setRemoveExamId] = useState<string | null>(null);
     const [removeExamTitle, setRemoveExamTitle] = useState("");
     const [removeInfoOpen, setRemoveInfoOpen] = useState<'public' | 'private' | null>(null);
+    const [removeExamSource, setRemoveExamSource] = useState<'active' | 'inactive' | null>(null);
 
     const [showEnvPopupTestId, setShowEnvPopupTestId] = useState<string | null>(null);
 
@@ -518,48 +519,75 @@ export default function UserTestManager() {
         }
     };
 
+    // Remove from ACTIVE container → move to Inactive as private (no dialog)
+    const handleRemoveFromActive = async (testId: string) => {
+        const test = tests.find(t => t.id === testId);
+        if (!test) return;
+
+        const newSettings = { ...(test.settings || {}) };
+        newSettings.conduct_exam = { ...newSettings.conduct_exam, enabled: false };
+
+        const payload: any = {
+            visibility: 'private',
+            is_public: false,
+            slug: `unlisted-${test.custom_id || test.id}`,
+            settings: newSettings,
+        };
+
+        // Optimistic update
+        setTests(prev => prev.map(t => t.id === testId ? { ...t, ...payload } : t));
+
+        try {
+            const { error } = await updateTest(testId, payload, isAdmin);
+            if (error) throw error;
+            toast.success('Exam stopped. Moved to Inactive (Private).');
+        } catch (error: any) {
+            toast.error('Failed to stop exam: ' + error.message);
+            setTests(prev => prev.map(t => t.id === testId ? { ...t, ...test } : t));
+        }
+    };
+
+    // Remove from INACTIVE container → show public/private choice dialog
+    const handleRemoveFromInactive = (testId: string, testTitle: string) => {
+        setRemoveExamId(testId);
+        setRemoveExamTitle(testTitle);
+        setRemoveExamSource('inactive');
+    };
+
+    // Legacy handler used by the hamburger menus and the "Remove" button
     const handleRemoveExam = async (testId: string, testTitle: string) => {
         const test = tests.find(t => t.id === testId);
         if (!test) return;
 
-        const now = new Date();
-        const testHasEnded = !!test.settings?.schedule?.end_time && new Date(test.settings.schedule.end_time) < now;
-        const isActive = test.settings?.conduct_exam?.enabled && !testHasEnded;
+        const isActive = test.settings?.conduct_exam?.enabled === true;
 
-        if (!isActive) {
-            // Inactive exam — remove silently, preserve current visibility
-            setRemoveExamId(testId);
-            setRemoveExamTitle(testTitle);
-            await confirmRemoveExamById(testId, test.is_public ?? false);
-            return;
+        if (isActive) {
+            // Active exam → move directly to inactive as private
+            await handleRemoveFromActive(testId);
+        } else {
+            // Inactive exam → show public/private dialog
+            handleRemoveFromInactive(testId, testTitle);
         }
-
-        // Active exam — show confirmation popup
-        setRemoveExamId(testId);
-        setRemoveExamTitle(testTitle);
     };
 
+    // Confirm removal from inactive → fully remove conduct_exam settings, set visibility
     const confirmRemoveExamById = async (testId: string, makePublic: boolean) => {
         const test = tests.find(t => t.id === testId);
         if (!test) return;
 
-        const now = new Date();
-        const testHasEnded = !!test.settings?.schedule?.end_time && new Date(test.settings.schedule.end_time) < now;
-        const wasActive = test.settings?.conduct_exam?.enabled && !testHasEnded;
-        const originalSlug = test.settings?.conduct_exam?.original_slug || '';
         const newSettings = { ...(test.settings || {}) };
+        delete newSettings.conduct_exam;
 
-        if (wasActive) {
-            newSettings.conduct_exam = { ...newSettings.conduct_exam, enabled: false };
-        } else {
-            delete newSettings.conduct_exam;
-        }
-
-        const payload: any = { visibility: makePublic ? 'public' : 'private', is_public: makePublic, settings: newSettings };
-        payload.slug = makePublic ? (test.custom_id || test.id) : `unlisted-${test.custom_id || test.id}`;
+        const payload: any = {
+            visibility: makePublic ? 'public' : 'private',
+            is_public: makePublic,
+            settings: newSettings,
+            slug: makePublic ? (test.custom_id || test.id) : `unlisted-${test.custom_id || test.id}`,
+        };
 
         setTests(prev => prev.map(t => t.id === testId ? { ...t, ...payload } : t));
         setRemoveExamId(null);
+        setRemoveExamSource(null);
 
         try {
             const { error } = await updateTest(testId, payload, isAdmin);
@@ -637,15 +665,57 @@ export default function UserTestManager() {
 
     const hasConductSettings = (t: any) => t.settings?.conduct_exam !== undefined;
 
+    // Active = conduct enabled AND not ended by schedule
     const activeExams = tests.filter(t =>
         hasConductSettings(t) &&
-        t.settings.conduct_exam.enabled === true
+        t.settings.conduct_exam.enabled === true &&
+        !hasEnded(t)
     );
+    // Inactive = conduct settings exist AND (explicitly disabled OR schedule ended)
     const inactiveExams = tests.filter(t =>
         hasConductSettings(t) &&
-        t.settings.conduct_exam.enabled !== true
+        (t.settings.conduct_exam.enabled !== true || hasEnded(t))
     );
     const regularTests = tests; // Show all tests in grid (conducted ones also show with LIVE badge)
+
+    // Auto-transition: when a scheduled exam ends, move it to inactive with private mode
+    const autoDeactivatedRef = React.useRef<Set<string>>(new Set());
+    useEffect(() => {
+        const currentNow = new Date();
+        const endedActiveExams = tests.filter(t =>
+            t.settings?.conduct_exam?.enabled === true &&
+            t.settings?.schedule?.end_time &&
+            new Date(t.settings.schedule.end_time) < currentNow &&
+            !autoDeactivatedRef.current.has(t.id)
+        );
+
+        if (endedActiveExams.length === 0) return;
+
+        endedActiveExams.forEach(async (test) => {
+            autoDeactivatedRef.current.add(test.id);
+
+            const newSettings = { ...(test.settings || {}) };
+            newSettings.conduct_exam = { ...newSettings.conduct_exam, enabled: false };
+
+            const payload: any = {
+                visibility: 'private',
+                is_public: false,
+                slug: `unlisted-${test.custom_id || test.id}`,
+                settings: newSettings,
+            };
+
+            // Optimistic update
+            setTests(prev => prev.map(t => t.id === test.id ? { ...t, ...payload } : t));
+
+            try {
+                await updateTest(test.id, payload, isAdmin);
+                toast.info(`"${test.title}" has ended and moved to Inactive.`);
+            } catch (err) {
+                console.error('Failed to auto-deactivate ended exam:', err);
+                autoDeactivatedRef.current.delete(test.id);
+            }
+        });
+    }, [tests]);
 
     return (
         <div className="container mx-auto max-w-5xl py-3 px-3 sm:py-5 sm:px-4 space-y-4">
@@ -830,7 +900,7 @@ export default function UserTestManager() {
                                                         size="sm"
                                                         variant="outline"
                                                         className="h-8 px-2 sm:px-3 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors duration-200 cursor-pointer"
-                                                        onClick={() => handleRemoveExam(test.id, test.title)}
+                                                        onClick={() => handleRemoveFromActive(test.id)}
                                                     >
                                                         <X className="w-3.5 h-3.5 sm:mr-1.5" />
                                                         <span className="hidden sm:inline">Remove</span>
@@ -875,7 +945,7 @@ export default function UserTestManager() {
                                                                 </DropdownMenuSubContent>
                                                             </DropdownMenuSub>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => handleRemoveExam(test.id, test.title)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                            <DropdownMenuItem onClick={() => handleRemoveFromActive(test.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
                                                                 <X className="mr-2 h-4 w-4" /> Remove from Conduct
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="text-red-700 focus:text-red-700 focus:bg-red-50 font-semibold">
@@ -954,7 +1024,7 @@ export default function UserTestManager() {
                                                         size="sm"
                                                         variant="outline"
                                                         className="h-7 px-2 sm:px-3 text-[11px] border-red-100 text-red-400 hover:bg-red-50 hover:border-red-200 transition-colors duration-200 cursor-pointer"
-                                                        onClick={() => handleRemoveExam(test.id, test.title)}
+                                                        onClick={() => handleRemoveFromInactive(test.id, test.title)}
                                                     >
                                                         <X className="w-3 h-3 sm:mr-1" />
                                                         <span className="hidden sm:inline">Remove</span>
@@ -999,7 +1069,7 @@ export default function UserTestManager() {
                                                                 </DropdownMenuSubContent>
                                                             </DropdownMenuSub>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => handleRemoveExam(test.id, test.title)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                                            <DropdownMenuItem onClick={() => handleRemoveFromInactive(test.id, test.title)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
                                                                 <X className="mr-2 h-4 w-4" /> Remove from Conduct
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="text-red-700 focus:text-red-700 focus:bg-red-50 font-semibold">
@@ -1198,7 +1268,7 @@ export default function UserTestManager() {
             </AlertDialog>
 
             {/* ── Remove Exam Confirmation Dialog (Active exams only) ── */}
-            <AlertDialog open={!!removeExamId} onOpenChange={(open) => !open && setRemoveExamId(null)}>
+            <AlertDialog open={!!removeExamId} onOpenChange={(open) => { if (!open) { setRemoveExamId(null); setRemoveExamSource(null); setRemoveInfoOpen(null); } }}>
                 <AlertDialogContent className="max-w-[min(380px,calc(100vw-32px))] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
                     {/* Dark header */}
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-6 pt-6 pb-5 text-center">
@@ -1206,9 +1276,11 @@ export default function UserTestManager() {
                             <X className="w-5 h-5 text-red-400" />
                         </div>
                         <AlertDialogTitle className="text-white text-base font-bold leading-tight">
-                            Stop conducting?
+                            {removeExamSource === 'inactive' ? 'Remove from exams?' : 'Stop conducting?'}
                         </AlertDialogTitle>
-
+                        {removeExamSource === 'inactive' && (
+                            <p className="text-slate-400 text-xs mt-1.5">Choose the visibility for "{removeExamTitle}" after removal.</p>
+                        )}
                     </div>
 
                     {/* Actions */}
@@ -1268,7 +1340,7 @@ export default function UserTestManager() {
                         </div>
 
                         <AlertDialogCancel
-                            onClick={() => { setRemoveExamId(null); setRemoveInfoOpen(null); }}
+                            onClick={() => { setRemoveExamId(null); setRemoveInfoOpen(null); setRemoveExamSource(null); }}
                             className="w-full h-9 border-0 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
                         >
                             Cancel
