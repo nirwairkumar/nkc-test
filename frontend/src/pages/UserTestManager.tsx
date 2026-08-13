@@ -639,12 +639,11 @@ export default function UserTestManager() {
 
     const activeExams = tests.filter(t =>
         hasConductSettings(t) &&
-        t.settings.conduct_exam.enabled === true &&
-        !hasEnded(t)
+        t.settings.conduct_exam.enabled === true
     );
     const inactiveExams = tests.filter(t =>
         hasConductSettings(t) &&
-        (t.settings.conduct_exam.enabled === false || hasEnded(t))
+        t.settings.conduct_exam.enabled !== true
     );
     const regularTests = tests; // Show all tests in grid (conducted ones also show with LIVE badge)
 
