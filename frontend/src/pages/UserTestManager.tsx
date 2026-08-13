@@ -487,6 +487,11 @@ export default function UserTestManager() {
                 }
             };
 
+            // If the test has an expired schedule, clear it when starting a live conduct exam
+            if (newSettings.schedule?.end_time && new Date(newSettings.schedule.end_time) < new Date()) {
+                delete newSettings.schedule;
+            }
+
             const payload = {
                 visibility: 'unlisted' as const,
                 is_public: false,
@@ -519,19 +524,38 @@ export default function UserTestManager() {
         }
     };
 
+    const DEFAULT_ENVIRONMENT_SETTINGS = {
+        attempt_limit: undefined,
+        strict_timer: false,
+        allow_flexible_timer: true,
+        tab_switch_mode: 'off' as const,
+        disable_copy_paste: false,
+        disable_actions: false,
+        force_fullscreen: false,
+        block_back_button: false,
+        disable_exit_button: false,
+        shuffle_questions: false,
+        show_results_immediate: true,
+        schedule: { enabled: false },
+        start_form: { enabled: false, fields: [] },
+    };
+
     // Remove from ACTIVE container → move to Inactive as private (no dialog)
     const handleRemoveFromActive = async (testId: string) => {
         const test = tests.find(t => t.id === testId);
         if (!test) return;
 
-        const newSettings = { ...(test.settings || {}) };
-        newSettings.conduct_exam = { ...newSettings.conduct_exam, enabled: false };
+        const resetSettings = {
+            ...DEFAULT_ENVIRONMENT_SETTINGS,
+            conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false }
+        };
 
         const payload: any = {
             visibility: 'private',
             is_public: false,
+            class_id: null,
             slug: `unlisted-${test.custom_id || test.id}`,
-            settings: newSettings,
+            settings: resetSettings,
         };
 
         // Optimistic update
@@ -540,7 +564,7 @@ export default function UserTestManager() {
         try {
             const { error } = await updateTest(testId, payload, isAdmin);
             if (error) throw error;
-            toast.success('Exam stopped. Moved to Inactive (Private).');
+            toast.success('Exam stopped. Reset to default settings and moved to Inactive (Private).');
         } catch (error: any) {
             toast.error('Failed to stop exam: ' + error.message);
             setTests(prev => prev.map(t => t.id === testId ? { ...t, ...test } : t));
@@ -575,13 +599,15 @@ export default function UserTestManager() {
         const test = tests.find(t => t.id === testId);
         if (!test) return;
 
-        const newSettings = { ...(test.settings || {}) };
-        delete newSettings.conduct_exam;
+        const resetSettings = {
+            ...DEFAULT_ENVIRONMENT_SETTINGS,
+        };
 
         const payload: any = {
             visibility: makePublic ? 'public' : 'private',
             is_public: makePublic,
-            settings: newSettings,
+            class_id: null,
+            settings: resetSettings,
             slug: makePublic ? (test.custom_id || test.id) : `unlisted-${test.custom_id || test.id}`,
         };
 
@@ -592,7 +618,7 @@ export default function UserTestManager() {
         try {
             const { error } = await updateTest(testId, payload, isAdmin);
             if (error) throw error;
-            toast.success(`Exam removed. Test set to ${makePublic ? 'public' : 'private'}.`);
+            toast.success(`Exam removed. Reset to default settings and set to ${makePublic ? 'public' : 'private'}.`);
         } catch (error: any) {
             toast.error('Failed to remove exam: ' + error.message);
             setTests(prev => prev.map(t => t.id === testId ? { ...t, ...test } : t));
@@ -659,6 +685,7 @@ export default function UserTestManager() {
 
     const now = new Date();
     const hasEnded = (test: any) => {
+        if (!test.settings?.schedule?.enabled) return false;
         if (!test.settings?.schedule?.end_time) return false;
         return new Date(test.settings.schedule.end_time) < now;
     };
@@ -684,6 +711,7 @@ export default function UserTestManager() {
         const currentNow = new Date();
         const endedActiveExams = tests.filter(t =>
             t.settings?.conduct_exam?.enabled === true &&
+            t.settings?.schedule?.enabled === true &&
             t.settings?.schedule?.end_time &&
             new Date(t.settings.schedule.end_time) < currentNow &&
             !autoDeactivatedRef.current.has(t.id)
@@ -694,14 +722,17 @@ export default function UserTestManager() {
         endedActiveExams.forEach(async (test) => {
             autoDeactivatedRef.current.add(test.id);
 
-            const newSettings = { ...(test.settings || {}) };
-            newSettings.conduct_exam = { ...newSettings.conduct_exam, enabled: false };
+            const resetSettings = {
+                ...DEFAULT_ENVIRONMENT_SETTINGS,
+                conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false }
+            };
 
             const payload: any = {
                 visibility: 'private',
                 is_public: false,
+                class_id: null,
                 slug: `unlisted-${test.custom_id || test.id}`,
-                settings: newSettings,
+                settings: resetSettings,
             };
 
             // Optimistic update
@@ -1292,7 +1323,7 @@ export default function UserTestManager() {
                                     onClick={() => confirmRemoveExam(true)}
                                     className="flex-1 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl border-0 text-xs font-semibold shadow-lg shadow-indigo-200/50 transition-all active:scale-[0.98] cursor-pointer"
                                 >
-                                    <Globe className="w-3.5 h-3.5 mr-1.5" /> Stop & Make Public
+                                    <Globe className="w-3.5 h-3.5 mr-1.5" /> {removeExamSource === 'inactive' ? 'Save as Public' : 'Stop & Make Public'}
                                 </AlertDialogAction>
                                 <button
                                     onClick={() => setRemoveInfoOpen(removeInfoOpen === 'public' ? null : 'public')}
@@ -1319,7 +1350,7 @@ export default function UserTestManager() {
                                     onClick={() => confirmRemoveExam(false)}
                                     className="flex-1 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl border-0 text-xs font-semibold shadow-lg shadow-red-200/50 transition-all active:scale-[0.98] cursor-pointer"
                                 >
-                                    <Lock className="w-3.5 h-3.5 mr-1.5" /> Stop & Make Private
+                                    <Lock className="w-3.5 h-3.5 mr-1.5" /> {removeExamSource === 'inactive' ? 'Save as Private' : 'Stop & Make Private'}
                                 </AlertDialogAction>
                                 <button
                                     onClick={() => setRemoveInfoOpen(removeInfoOpen === 'private' ? null : 'private')}

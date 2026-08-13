@@ -153,7 +153,7 @@ export default function TeacherDashboard() {
         if (!selectedTestForConduct) return;
         try {
             const currentSettings = selectedTestForConduct.settings || {};
-            const updatedSettings = {
+            const updatedSettings: any = {
                 ...currentSettings,
                 conduct_exam: {
                     ...(currentSettings.conduct_exam || {}),
@@ -161,6 +161,11 @@ export default function TeacherDashboard() {
                     slug: conductSlug
                 }
             };
+
+            // If the test has an expired schedule, clear it when starting a live conduct exam
+            if (updatedSettings.schedule?.end_time && new Date(updatedSettings.schedule.end_time) < new Date()) {
+                delete updatedSettings.schedule;
+            }
 
             const res = await updateTest(selectedTestForConduct.id, { settings: updatedSettings }, targetUserId);
             if (res?.error) throw res.error;
@@ -270,7 +275,7 @@ export default function TeacherDashboard() {
     // Calculate metrics
     const safeTests = Array.isArray(tests) ? tests : [];
     const now = new Date();
-    const hasEnded = (t: any) => t?.settings?.schedule?.end_time && new Date(t.settings.schedule.end_time) < now;
+    const hasEnded = (t: any) => t?.settings?.schedule?.enabled && t?.settings?.schedule?.end_time && new Date(t.settings.schedule.end_time) < now;
     const isLive = (t: any) => !!t?.settings?.conduct_exam?.enabled && !hasEnded(t);
     const isScheduled = (t: any) => t?.settings?.schedule?.enabled && t?.settings?.schedule?.start_time && new Date(t.settings.schedule.start_time) > now;
     const isDraft = (t: any) => !isLive(t) && !isScheduled(t) && (t?.questions?.length === 0 || t?.visibility === 'private');

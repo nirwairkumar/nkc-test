@@ -93,7 +93,7 @@ export default function AllSubmissionsPage() {
             const now = new Date();
 
             const mapped: ConductedTestCardItem[] = rawTests.map(t => {
-                const isEnded = !!t.settings?.schedule?.end_time && new Date(t.settings.schedule.end_time) < now;
+                const isEnded = !!t.settings?.schedule?.enabled && !!t.settings?.schedule?.end_time && new Date(t.settings.schedule.end_time) < now;
                 const isLive = !!t.settings?.conduct_exam?.enabled && !isEnded;
                 const hasConduct = !!t.settings?.conduct_exam;
 
