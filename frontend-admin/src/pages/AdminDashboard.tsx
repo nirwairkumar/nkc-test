@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
     FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
-    FileText, BookOpen, Users, Layers, Radio
+    FileText, BookOpen, Users, Layers, Radio, Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,11 +21,12 @@ import AdminPricingPanel from './AdminPricingPanel';
 import AdminPromoCodesPanel from './AdminPromoCodesPanel';
 import AdminMigrationPanel from './AdminMigrationPanel';
 import AdminAiAuditPanel from './AdminAiAuditPanel';
+import AdminEmailBroadcastPanel from './AdminEmailBroadcastPanel';
 import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
+type TabId = 'analytics' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession } = useAuth();
@@ -92,6 +93,7 @@ export default function AdminDashboard() {
             items: [
                 { id: 'materials' as const, label: 'Class Materials', icon: GraduationCap },
                 { id: 'posts' as const, label: 'News & Announcements', icon: Newspaper },
+                { id: 'email_broadcast' as const, label: 'Email Broadcast', icon: Mail },
             ]
         },
         {
@@ -230,6 +232,7 @@ export default function AdminDashboard() {
                     {(activeTab === 'ai_analysis' || activeTab === 'ai_audit') && <AdminAiAuditPanel />}
                     {activeTab === 'materials' && <MaterialsManager />}
                     {activeTab === 'posts' && <NewsFeed />}
+                    {activeTab === 'email_broadcast' && <AdminEmailBroadcastPanel />}
                     {activeTab === 'features' && <AdminFeatureControlPanel />}
                     {activeTab === 'pricing' && <AdminPricingPanel />}
                     {activeTab === 'promos' && <AdminPromoCodesPanel />}

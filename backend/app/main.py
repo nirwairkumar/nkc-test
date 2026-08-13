@@ -157,6 +157,9 @@ app.include_router(solutions.router, prefix="/api/tests", tags=["Solutions"])
 from app.routers import combined_sessions
 app.include_router(combined_sessions.router, prefix="/api/combined-sessions", tags=["Combined Sessions"])
 
+from app.routers import email_broadcast
+app.include_router(email_broadcast.router, prefix="/api/email-broadcast", tags=["Email Broadcast"])
+
 @app.get("/api/health")
 def health_check():
     return {

@@ -1,0 +1,487 @@
+import smtplib
+import ssl
+import re
+import os
+import json
+import base64
+import time
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from typing import Optional, List, Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
+from pydantic import BaseModel, EmailStr
+from app.core.database import get_db, supabase
+from app.core.config import settings
+from supabase import Client
+from cachetools import TTLCache
+
+router = APIRouter()
+
+# In-memory store for custom SMTP settings overridden by admin UI during server runtime
+runtime_smtp_config: Dict[str, Any] = {
+    "host": os.getenv("SMTP_HOST", "smtp.zoho.com"),
+    "port": int(os.getenv("SMTP_PORT", "465")),
+    "user": os.getenv("SMTP_USER", "no-reply@testoza.com"),
+    "password": os.getenv("SMTP_PASSWORD", ""),
+    "from_name": os.getenv("SMTP_FROM_NAME", "TestoZa Team"),
+    "use_ssl": True
+}
+
+admin_cache = TTLCache(maxsize=1000, ttl=300)
+
+def _verify_auth_token(request: Request, db: Client) -> str:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    token = auth_header.replace("Bearer ", "")
+
+    try:
+        parts = token.split(".")
+        if len(parts) == 3:
+            payload_b64 = parts[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            payload = json.loads(base64.b64decode(payload_b64).decode("utf-8"))
+            user_id = payload.get("sub")
+            exp = payload.get("exp")
+            if user_id and exp and time.time() < exp:
+                return user_id
+    except Exception:
+        pass
+
+    try:
+        user_response = db.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_response.user.id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+def _verify_is_admin(request: Request, db: Client) -> str:
+    requesting_user_id = _verify_auth_token(request, db)
+    profile_res = supabase.table("profiles").select("email").eq("id", requesting_user_id).execute()
+    is_admin = False
+    if profile_res.data:
+        email = profile_res.data[0].get("email")
+        if email:
+            if email in admin_cache:
+                is_admin = admin_cache[email]
+            else:
+                admin_res = supabase.table("admins").select("email").eq("email", email).execute()
+                is_admin = bool(admin_res.data)
+                admin_cache[email] = is_admin
+    if not is_admin:
+        raise HTTPException(status_code=403, detail="Admin authorization required")
+    return requesting_user_id
+
+class SmtpConfigRequest(BaseModel):
+    host: str
+    port: int
+    user: str
+    password: str
+    from_name: Optional[str] = "TestoZa Team"
+    use_ssl: Optional[bool] = True
+
+class SendTestEmailRequest(BaseModel):
+    target_email: EmailStr
+    sender_email: str
+    sender_name: Optional[str] = "TestoZa Support"
+    subject: str
+    body_html: str
+    smtp_config: Optional[SmtpConfigRequest] = None
+
+class BatchEmailRequest(BaseModel):
+    recipient_ids: List[str]
+    sender_email: str
+    sender_name: Optional[str] = "TestoZa Support"
+    subject: str
+    body_html: str
+    smtp_config: Optional[SmtpConfigRequest] = None
+
+def get_active_smtp(override_config: Optional[SmtpConfigRequest] = None) -> Dict[str, Any]:
+    if override_config:
+        return {
+            "host": override_config.host.strip(),
+            "port": override_config.port,
+            "user": override_config.user.strip(),
+            "password": override_config.password.strip(),
+            "from_name": (override_config.from_name or "TestoZa Team").strip(),
+            "use_ssl": override_config.use_ssl if override_config.use_ssl is not None else (override_config.port == 465)
+        }
+    return runtime_smtp_config
+
+def send_smtp_message(smtp_cfg: Dict[str, Any], sender_email: str, sender_name: str, recipient_email: str, subject: str, html_body: str):
+    host = smtp_cfg["host"]
+    port = int(smtp_cfg["port"])
+    user = smtp_cfg["user"]
+    password = smtp_cfg["password"]
+    
+    if not user or not password:
+        raise ValueError("SMTP Credentials missing. Please configure your Zoho Mail user and App Password.")
+
+    # In Zoho Mail, envelope sender in sendmail() MUST match the authenticated user or alias
+    envelope_sender = user.strip()
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{sender_name} <{sender_email}>" if sender_name else sender_email
+    msg["To"] = recipient_email
+    msg["Reply-To"] = sender_email
+
+    # Plain text fallback generated by stripping HTML tags
+    text_plain = re.sub(r'<[^>]+>', '', html_body)
+    msg.attach(MIMEText(text_plain, "plain", "utf-8"))
+    msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+    print(f"Connecting to SMTP server {host}:{port} for user {user}...")
+
+    if port == 465:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(host, port, context=context, timeout=15) as server:
+            server.login(user, password)
+            server.sendmail(envelope_sender, [recipient_email], msg.as_string())
+    else:
+        with smtplib.SMTP(host, port, timeout=15) as server:
+            server.ehlo()
+            if server.has_extn("STARTTLS"):
+                context = ssl.create_default_context()
+                server.starttls(context=context)
+                server.ehlo()
+            server.login(user, password)
+            server.sendmail(envelope_sender, [recipient_email], msg.as_string())
+
+def build_branded_html(raw_content: str, recipient_name: str) -> str:
+    """Wraps user HTML in a sleek modern TestoZa responsive template."""
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TestoZa Notification</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+        }}
+        .email-container {{
+            max-width: 600px;
+            margin: 30px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border: 1px solid #e2e8f0;
+        }}
+        .email-header {{
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            padding: 28px 32px;
+            text-align: center;
+        }}
+        .brand-logo {{
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+            display: inline-block;
+        }}
+        .brand-tagline {{
+            color: #c7d2fe;
+            font-size: 12px;
+            margin-top: 4px;
+            font-weight: 500;
+        }}
+        .email-body {{
+            padding: 32px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #334155;
+        }}
+        .email-footer {{
+            background-color: #f1f5f9;
+            padding: 20px 32px;
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+        }}
+        .email-footer a {{
+            color: #4f46e5;
+            text-decoration: none;
+        }}
+        .button {{
+            display: inline-block;
+            background-color: #4f46e5;
+            color: #ffffff !important;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 16px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="brand-logo">TestoZa</div>
+            <div class="brand-tagline">Empowering Test Creators & Learners</div>
+        </div>
+        <div class="email-body">
+            {raw_content}
+        </div>
+        <div class="email-footer">
+            <p style="margin:0 0 6px 0;">Sent with ❤️ from <strong>TestoZa Platform</strong></p>
+            <p style="margin:0;">Need help? Contact <a href="mailto:support@testoza.com">support@testoza.com</a></p>
+        </div>
+    </div>
+</body>
+</html>"""
+
+def replace_placeholders(template_str: str, user_data: Dict[str, Any]) -> str:
+    name = user_data.get("full_name") or user_data.get("email", "").split("@")[0] or "User"
+    email = user_data.get("email", "")
+    tests_created = str(user_data.get("tests_created", 0))
+    attempts_count = str(user_data.get("attempts_count", 0))
+    is_verified = "Verified Creator" if user_data.get("is_verified_creator") else "Member"
+    join_date = str(user_data.get("created_at", ""))[:10] if user_data.get("created_at") else "N/A"
+
+    mapping = {
+        "name": name,
+        "email": email,
+        "tests_created": tests_created,
+        "attempts_count": attempts_count,
+        "is_verified": is_verified,
+        "join_date": join_date,
+    }
+
+    result = template_str
+    for key, val in mapping.items():
+        # Replace {key} and {{key}}
+        result = result.replace(f"{{{key}}}", val)
+        result = result.replace(f"{{{{{key}}}}}", val)
+    return result
+
+@router.get("/recipients")
+async def get_email_recipients(
+    request: Request,
+    search: Optional[str] = Query(None),
+    role: Optional[str] = Query(None),
+    min_tests: Optional[int] = Query(None),
+    db: Client = Depends(get_db)
+):
+    """Fetch all users enriched with test creation count and test attempt stats."""
+    _verify_is_admin(request, db)
+    try:
+        # Fetch profiles using service role client
+        profiles_res = supabase.table("profiles").select("*").order("created_at", desc=True).execute()
+        profiles = profiles_res.data or []
+
+        # Fetch tests counts per user
+        tests_res = supabase.table("tests").select("created_by").execute()
+        test_counts: Dict[str, int] = {}
+        for t in (tests_res.data or []):
+            cb = t.get("created_by")
+            if cb:
+                test_counts[cb] = test_counts.get(cb, 0) + 1
+
+        # Fetch attempt counts per user
+        attempts_res = supabase.table("user_tests").select("user_id").execute()
+        attempt_counts: Dict[str, int] = {}
+        for a in (attempts_res.data or []):
+            uid = a.get("user_id")
+            if uid:
+                attempt_counts[uid] = attempt_counts.get(uid, 0) + 1
+
+        enriched_users = []
+        for p in profiles:
+            uid = p.get("id")
+            email = p.get("email") or ""
+            full_name = p.get("full_name") or ""
+            
+            if not email:
+                continue
+
+            num_tests = test_counts.get(uid, 0)
+            num_attempts = attempt_counts.get(uid, 0)
+
+            # Filtering logic
+            if search and search.strip():
+                s = search.strip().lower()
+                if s not in email.lower() and s not in full_name.lower():
+                    continue
+
+            if role == "creator" and not p.get("is_creator") and not p.get("is_verified_creator"):
+                continue
+            elif role == "verified" and not p.get("is_verified_creator"):
+                continue
+
+            if min_tests is not None and num_tests < min_tests:
+                continue
+
+            enriched_users.append({
+                "id": uid,
+                "email": email,
+                "full_name": full_name or email.split("@")[0],
+                "avatar_url": p.get("avatar_url"),
+                "is_verified_creator": bool(p.get("is_verified_creator")),
+                "is_creator": bool(p.get("is_creator")),
+                "designation": p.get("designation") or "User",
+                "created_at": p.get("created_at"),
+                "tests_created": num_tests,
+                "attempts_count": num_attempts
+            })
+
+        return {
+            "users": enriched_users,
+            "total": len(enriched_users)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching email recipients: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/smtp-status")
+async def get_smtp_status(request: Request, db: Client = Depends(get_db)):
+    """Check if SMTP credentials are configured."""
+    _verify_is_admin(request, db)
+    configured = bool(runtime_smtp_config.get("user") and runtime_smtp_config.get("password"))
+    return {
+        "configured": configured,
+        "host": runtime_smtp_config.get("host"),
+        "port": runtime_smtp_config.get("port"),
+        "user": runtime_smtp_config.get("user"),
+        "from_name": runtime_smtp_config.get("from_name"),
+        "available_senders": ["no-reply@testoza.com", "support@testoza.com", "nirwair@testoza.com"]
+    }
+
+@router.post("/smtp-config")
+async def update_smtp_config(payload: SmtpConfigRequest, request: Request, db: Client = Depends(get_db)):
+    """Update runtime SMTP credentials without restarting backend server."""
+    _verify_is_admin(request, db)
+    runtime_smtp_config["host"] = payload.host.strip()
+    runtime_smtp_config["port"] = payload.port
+    runtime_smtp_config["user"] = payload.user.strip()
+    runtime_smtp_config["password"] = payload.password.strip()
+    runtime_smtp_config["from_name"] = (payload.from_name or "TestoZa Team").strip()
+    runtime_smtp_config["use_ssl"] = payload.use_ssl if payload.use_ssl is not None else (payload.port == 465)
+    return {"success": True, "message": "SMTP configuration updated successfully", "smtp_user": runtime_smtp_config["user"]}
+
+@router.post("/send-test")
+async def send_test_email(payload: SendTestEmailRequest, request: Request, db: Client = Depends(get_db)):
+    """Send a single test email to verify SMTP configuration and email layout."""
+    _verify_is_admin(request, db)
+    smtp_cfg = get_active_smtp(payload.smtp_config)
+
+    # Sample user payload for test rendering if template tags exist
+    sample_user = {
+        "full_name": "Admin Tester",
+        "email": payload.target_email,
+        "tests_created": 5,
+        "attempts_count": 12,
+        "is_verified_creator": True,
+        "created_at": "2026-01-01T00:00:00Z"
+    }
+
+    final_subject = replace_placeholders(payload.subject, sample_user)
+    raw_body = replace_placeholders(payload.body_html, sample_user)
+    final_html = build_branded_html(raw_body, sample_user["full_name"])
+
+    try:
+        send_smtp_message(
+            smtp_cfg=smtp_cfg,
+            sender_email=payload.sender_email,
+            sender_name=payload.sender_name or "TestoZa Admin",
+            recipient_email=payload.target_email,
+            subject=f"[TEST] {final_subject}",
+            html_body=final_html
+        )
+        return {"success": True, "message": f"Test email sent successfully to {payload.target_email}"}
+    except Exception as e:
+        print(f"Failed to send test email: {e}")
+        raise HTTPException(status_code=500, detail=f"SMTP Delivery Failed: {str(e)}")
+
+@router.post("/send-batch")
+async def send_batch_emails(payload: BatchEmailRequest, request: Request, db: Client = Depends(get_db)):
+    """Send customized batch emails to selected recipient IDs."""
+    _verify_is_admin(request, db)
+    if not payload.recipient_ids:
+        raise HTTPException(status_code=400, detail="No recipients selected for batch email")
+
+    smtp_cfg = get_active_smtp(payload.smtp_config)
+    if not smtp_cfg.get("user") or not smtp_cfg.get("password"):
+        raise HTTPException(status_code=400, detail="SMTP credentials missing. Please set your Zoho App Password in Settings.")
+
+    # Fetch recipient details
+    profiles_res = supabase.table("profiles").select("*").in_("id", payload.recipient_ids).execute()
+    profiles = profiles_res.data or []
+
+    # Fetch test & attempt counts
+    tests_res = supabase.table("tests").select("created_by").in_("created_by", payload.recipient_ids).execute()
+    test_counts: Dict[str, int] = {}
+    for t in (tests_res.data or []):
+        cb = t.get("created_by")
+        if cb:
+            test_counts[cb] = test_counts.get(cb, 0) + 1
+
+    attempts_res = supabase.table("user_tests").select("user_id").in_("user_id", payload.recipient_ids).execute()
+    attempt_counts: Dict[str, int] = {}
+    for a in (attempts_res.data or []):
+        uid = a.get("user_id")
+        if uid:
+            attempt_counts[uid] = attempt_counts.get(uid, 0) + 1
+
+    sent_count = 0
+    failed_count = 0
+    failures: List[Dict[str, str]] = []
+
+    for p in profiles:
+        uid = p.get("id")
+        email = p.get("email")
+        if not email:
+            failed_count += 1
+            failures.append({"id": uid, "email": "unknown", "error": "No email address found"})
+            continue
+
+        user_data = {
+            "full_name": p.get("full_name") or email.split("@")[0],
+            "email": email,
+            "tests_created": test_counts.get(uid, 0),
+            "attempts_count": attempt_counts.get(uid, 0),
+            "is_verified_creator": bool(p.get("is_verified_creator")),
+            "created_at": p.get("created_at")
+        }
+
+        cust_subject = replace_placeholders(payload.subject, user_data)
+        cust_body_raw = replace_placeholders(payload.body_html, user_data)
+        cust_html = build_branded_html(cust_body_raw, user_data["full_name"])
+
+        try:
+            send_smtp_message(
+                smtp_cfg=smtp_cfg,
+                sender_email=payload.sender_email,
+                sender_name=payload.sender_name or "TestoZa Team",
+                recipient_email=email,
+                subject=cust_subject,
+                html_body=cust_html
+            )
+            sent_count += 1
+        except Exception as e:
+            failed_count += 1
+            print(f"FAILED to send broadcast email to {email}: {e}")
+            import traceback
+            traceback.print_exc()
+            failures.append({"id": uid, "email": email, "error": str(e)})
+
+    return {
+        "success": True,
+        "total_requested": len(payload.recipient_ids),
+        "sent": sent_count,
+        "failed": failed_count,
+        "failures": failures
+    }

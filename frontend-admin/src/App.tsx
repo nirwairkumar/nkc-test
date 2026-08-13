@@ -62,6 +62,7 @@ const App: React.FC = () => {
                   <Route path="/ai-importer" element={<Navigate to="/admin?tab=importer" replace />} />
                   <Route path="/materials" element={<Navigate to="/admin?tab=materials" replace />} />
                   <Route path="/news" element={<Navigate to="/admin?tab=posts" replace />} />
+                  <Route path="/email-broadcast" element={<Navigate to="/admin?tab=email_broadcast" replace />} />
                   <Route path="/features" element={<Navigate to="/admin?tab=features" replace />} />
                   <Route path="/pricing" element={<Navigate to="/admin?tab=pricing" replace />} />
                   <Route path="/promos" element={<Navigate to="/admin?tab=promos" replace />} />
