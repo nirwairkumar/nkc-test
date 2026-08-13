@@ -39,13 +39,92 @@ const TEMPLATE_PRESETS = [
 <p>Best of luck with your studies!<br><strong>TestoZa Support Team</strong></p>`
     },
     {
-        name: "📢 General Announcement",
-        subject: "Important update for {name} from TestoZa",
+        name: "🏆 Creator Badge Conduct Reminder",
+        subject: "Hi {name}, conduct tests to claim your Verified Creator badge!",
         body: `<p>Hello <strong>{name}</strong>,</p>
-<p>We are reaching out to inform you about important platform updates designed to improve your test creation and taking experience.</p>
-<p>If you have any questions or feedback, feel free to reply directly to this email or contact us at <a href="mailto:support@testoza.com">support@testoza.com</a>.</p>
-<p>Thank you for choosing TestoZa!</p>
-<p>Best regards,<br><strong>TestoZa Team</strong></p>`
+<p>You are getting close to unlocking your next <strong>Creator Badge</strong> on TestoZa! To earn your badge and boost your creator status, encourage your students to take your published tests in <strong>Conduct Mode</strong>.</p>
+
+<!-- GOAL & PROGRESS WIDGET -->
+<div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #451a03 100%); border: 1px solid #f59e0b; border-radius: 14px; padding: 20px; margin: 20px 0; color: #ffffff; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+            <td style="vertical-align: middle;">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #fbbf24; font-weight: 700; margin-bottom: 4px;">🎯 TARGET BADGE GOAL</div>
+                <div style="font-size: 18px; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+                    {next_badge_title}
+                </div>
+                
+                <div style="font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 6px;">
+                    Progress: <strong style="color: #fbbf24;">{quality_tests_count} Conducted Tests</strong> <span style="color: #fbbf24; font-weight: 700; margin-left: 8px;">({progress_percentage}%)</span>
+                </div>
+
+                <div style="background-color: #334155; border-radius: 999px; height: 10px; width: 100%; overflow: hidden; margin-bottom: 10px; border: 1px solid #475569;">
+                    <div style="background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%); height: 100%; width: {progress_percentage}%; border-radius: 999px;"></div>
+                </div>
+
+                <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">
+                    🛡️ <strong>Condition to achieve:</strong> Need <strong>{quality_tests_needed} more conducted test(s)</strong> (min 20 student submissions in Conduct Mode each).
+                </div>
+            </td>
+            <td width="70" align="right" style="vertical-align: middle; padding-left: 12px;">
+                <img src="https://testoza.com/reward-icons/testoza_verified_creator_badge_exact(1st).svg" width="64" height="64" alt="Verified Creator Badge" style="display: block; width: 64px; height: 64px; max-width: 64px;" />
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- TEST SUBMISSIONS BREAKDOWN TABLE -->
+<h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 24px 0 12px 0;">📊 Your Test Conduct Performance</h3>
+
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+    <thead>
+        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 50px;">S.No</th>
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: left;">Test Title</th>
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 100px;">Created Date</th>
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 140px;">Submissions in Conduct Mode</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
+            <td style="padding: 10px 12px; font-size: 13px; color: #64748b; text-align: center; font-weight: 600;">1</td>
+            <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; font-weight: 600;">Physics Mechanics Quiz Chapter 1</td>
+            <td style="padding: 10px 12px; font-size: 12px; color: #64748b; text-align: center;">2026-08-01</td>
+            <td style="padding: 10px 12px; font-size: 13px; text-align: center;">
+                <span style="display: inline-block; background-color: #dcfce7; color: #166534; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">24 / 20 (Qualified ✅)</span>
+            </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #f8fafc;">
+            <td style="padding: 10px 12px; font-size: 13px; color: #64748b; text-align: center; font-weight: 600;">2</td>
+            <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; font-weight: 600;">Organic Chemistry Practice Test</td>
+            <td style="padding: 10px 12px; font-size: 12px; color: #64748b; text-align: center;">2026-08-05</td>
+            <td style="padding: 10px 12px; font-size: 13px; text-align: center;">
+                <span style="display: inline-block; background-color: #fef3c7; color: #92400e; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">16 / 20 (Need 4 more ⏳)</span>
+            </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
+            <td style="padding: 10px 12px; font-size: 13px; color: #64748b; text-align: center; font-weight: 600;">3</td>
+            <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; font-weight: 600;">Mathematics Mock Exam Series</td>
+            <td style="padding: 10px 12px; font-size: 12px; color: #64748b; text-align: center;">2026-08-10</td>
+            <td style="padding: 10px 12px; font-size: 13px; text-align: center;">
+                <span style="display: inline-block; background-color: #fef3c7; color: #92400e; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">11 / 20 (Need 9 more ⏳)</span>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 16px; margin-top: 20px;">
+    <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #1e40af;">💡 Tips to Reach Your Badge Goal Faster:</p>
+    <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #1e3a8a; line-height: 1.6;">
+        <li>Share your test link and <strong>Conduct Passcode</strong> directly with your students or WhatsApp/Telegram groups.</li>
+        <li>Conduct live timed sessions in class where students log in simultaneously in Conduct Mode.</li>
+    </ul>
+</div>
+
+<p style="text-align: center; margin-top: 28px;">
+    <a href="https://testoza.com/dashboard" class="button">Conduct Tests & Claim Your Badge →</a>
+</p>
+<p>Warm regards,<br><strong>Nirwair & The TestoZa Team</strong></p>`
     }
 ];
 
@@ -281,12 +360,24 @@ export default function AdminEmailBroadcastPanel() {
         const isVerified = selectedPreviewUser.is_verified_creator ? 'Verified Creator' : 'Member';
         const joinDate = selectedPreviewUser.created_at ? selectedPreviewUser.created_at.substring(0, 10) : 'N/A';
 
+        const qCount = selectedPreviewUser.tests_created ? Math.min(selectedPreviewUser.tests_created, 3) : 3;
+        const nextBadge = selectedPreviewUser.is_verified_creator ? "TRUSTED CREATOR (Level 2)" : "VERIFIED CREATOR (Level 1)";
+        const neededTests = String(Math.max(1, 5 - qCount));
+        const progressPct = String(Math.min(100, Math.round((qCount / 5) * 100)));
+        const totalSubs = String(qCount * 22 + 5);
+
         text = text.replace(/{name}/g, name).replace(/{{name}}/g, name);
         text = text.replace(/{email}/g, email).replace(/{{email}}/g, email);
         text = text.replace(/{tests_created}/g, tests).replace(/{{tests_created}}/g, tests);
         text = text.replace(/{attempts_count}/g, attempts).replace(/{{attempts_count}}/g, attempts);
         text = text.replace(/{is_verified}/g, isVerified).replace(/{{is_verified}}/g, isVerified);
         text = text.replace(/{join_date}/g, joinDate).replace(/{{join_date}}/g, joinDate);
+
+        text = text.replace(/{quality_tests_count}/g, String(qCount)).replace(/{{quality_tests_count}}/g, String(qCount));
+        text = text.replace(/{next_badge_title}/g, nextBadge).replace(/{{next_badge_title}}/g, nextBadge);
+        text = text.replace(/{quality_tests_needed}/g, neededTests).replace(/{{quality_tests_needed}}/g, neededTests);
+        text = text.replace(/{progress_percentage}/g, progressPct).replace(/{{progress_percentage}}/g, progressPct);
+        text = text.replace(/{total_submissions}/g, totalSubs).replace(/{{total_submissions}}/g, totalSubs);
 
         return text;
     }, [bodyHtml, selectedPreviewUser]);
@@ -681,6 +772,41 @@ export default function AdminEmailBroadcastPanel() {
                                         className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white transition-colors"
                                     >
                                         &#123;join_date&#125;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{quality_tests_count}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-[11px] font-mono font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;quality_tests_count&#125;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{next_badge_title}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-[11px] font-mono font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;next_badge_title&#125;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{quality_tests_needed}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-[11px] font-mono font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;quality_tests_needed&#125;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{progress_percentage}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-[11px] font-mono font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;progress_percentage&#125;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{total_submissions}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-[11px] font-mono font-bold text-amber-600 dark:text-amber-300 hover:bg-amber-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;total_submissions&#125;
                                     </button>
                                 </div>
                             </div>

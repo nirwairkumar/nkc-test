@@ -242,6 +242,48 @@ def build_branded_html(raw_content: str, recipient_name: str) -> str:
 </body>
 </html>"""
 
+CREATOR_LEVELS_CONFIG = [
+    {"level": 1, "title": "VERIFIED CREATOR (Level 1)", "required": 5},
+    {"level": 2, "title": "TRUSTED CREATOR (Level 2)", "required": 20},
+    {"level": 3, "title": "EXPERT CREATOR (Level 3)", "required": 50},
+    {"level": 4, "title": "ELITE CREATOR (Level 4)", "required": 100},
+    {"level": 5, "title": "MASTER CREATOR (Level 5)", "required": 250},
+    {"level": 6, "title": "LEGEND CREATOR (Level 6)", "required": 500},
+]
+
+def calculate_creator_badge_metrics(quality_tests_count: int) -> Dict[str, str]:
+    prev_threshold = 0
+    next_level = CREATOR_LEVELS_CONFIG[0]
+    
+    for lvl in CREATOR_LEVELS_CONFIG:
+        if quality_tests_count >= lvl["required"]:
+            prev_threshold = lvl["required"]
+            idx = lvl["level"]
+            if idx < len(CREATOR_LEVELS_CONFIG):
+                next_level = CREATOR_LEVELS_CONFIG[idx]
+            else:
+                next_level = CREATOR_LEVELS_CONFIG[-1]
+        else:
+            next_level = lvl
+            break
+
+    if quality_tests_count >= 500:
+        pct = 100
+        needed = 0
+    else:
+        req = next_level["required"]
+        range_val = max(1, req - prev_threshold)
+        done = max(0, quality_tests_count - prev_threshold)
+        pct = min(100, max(0, int(round((done / range_val) * 100))))
+        needed = max(0, req - quality_tests_count)
+
+    return {
+        "quality_tests_count": str(quality_tests_count),
+        "next_badge_title": next_level["title"],
+        "quality_tests_needed": str(needed),
+        "progress_percentage": str(pct),
+    }
+
 def replace_placeholders(template_str: str, user_data: Dict[str, Any]) -> str:
     name = user_data.get("full_name") or user_data.get("email", "").split("@")[0] or "User"
     email = user_data.get("email", "")
@@ -250,6 +292,9 @@ def replace_placeholders(template_str: str, user_data: Dict[str, Any]) -> str:
     is_verified = "Verified Creator" if user_data.get("is_verified_creator") else "Member"
     join_date = str(user_data.get("created_at", ""))[:10] if user_data.get("created_at") else "N/A"
 
+    q_count = user_data.get("quality_tests_count", 0)
+    badge_metrics = calculate_creator_badge_metrics(int(q_count))
+
     mapping = {
         "name": name,
         "email": email,
@@ -257,13 +302,18 @@ def replace_placeholders(template_str: str, user_data: Dict[str, Any]) -> str:
         "attempts_count": attempts_count,
         "is_verified": is_verified,
         "join_date": join_date,
+        "quality_tests_count": str(badge_metrics["quality_tests_count"]),
+        "next_badge_title": str(badge_metrics["next_badge_title"]),
+        "quality_tests_needed": str(badge_metrics["quality_tests_needed"]),
+        "progress_percentage": str(badge_metrics["progress_percentage"]),
+        "total_submissions": str(user_data.get("total_submissions", 0)),
     }
 
     result = template_str
     for key, val in mapping.items():
         # Replace {key} and {{key}}
-        result = result.replace(f"{{{key}}}", val)
-        result = result.replace(f"{{{{{key}}}}}", val)
+        result = result.replace(f"{{{key}}}", str(val))
+        result = result.replace(f"{{{{{key}}}}}", str(val))
     return result
 
 @router.get("/recipients")
