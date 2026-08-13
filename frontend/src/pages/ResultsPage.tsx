@@ -273,7 +273,22 @@ const ResultsPage = () => {
 
   const [loading, setLoading] = useState(true);
 
-  const stateData = rawState as {
+  const getStoredResultData = () => {
+    try {
+      const stored = sessionStorage.getItem('latest_test_result');
+      if (!stored) return undefined;
+      const parsed = JSON.parse(stored);
+      // Validate owner match: if stored payload has userId and current user is logged in, verify matching IDs
+      if (parsed?.userId && user?.id && parsed.userId !== user.id) {
+        return undefined;
+      }
+      return parsed;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const stateData = (rawState || getStoredResultData()) as {
     test: any;
     answers: Record<number, string>;
     score: number;
@@ -281,6 +296,7 @@ const ResultsPage = () => {
     marksPerQuestion: number;
     negativeMark: number;
     justSubmitted?: boolean;
+    userId?: string;
     // Combined mode
     isCombined?: boolean;
     combinedSessionId?: string;
@@ -290,6 +306,20 @@ const ResultsPage = () => {
     p1?: { test: any; answers: any; score: number; totalMarks: number };
     p2?: { test: any; answers: any; score: number; totalMarks: number };
   } | undefined;
+
+  // Persist stateData to sessionStorage if received via location.state
+  useEffect(() => {
+    if (rawState && typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem(
+          'latest_test_result',
+          JSON.stringify({ ...rawState, userId: user?.id })
+        );
+      } catch (e) {
+        console.warn('Failed to cache result state in sessionStorage', e);
+      }
+    }
+  }, [rawState, user?.id]);
 
   // ─── COMBINED RESULTS EARLY RETURN ─────────────────────────────────
   if (stateData?.isCombined && stateData.p1 && stateData.p2) {
@@ -474,11 +504,24 @@ const ResultsPage = () => {
 
   if (!showPersonalResults) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl font-bold mb-4">No Result Found</h1>
-        <Button onClick={() => navigate('/')}>Go Home</Button>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center">
+        <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 shadow-sm border border-indigo-100 dark:border-indigo-900">
+          <FileText className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">No Active Result Session</h1>
+        <p className="text-slate-500 dark:text-slate-400 max-w-md text-sm mb-6 leading-relaxed">
+          Looking for your test results? If you have completed tests previously, you can review all your submitted assessments and performance reports in your Test History.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <Button onClick={() => navigate('/history')} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5">
+            <History className="w-4 h-4 mr-2" /> View Test History
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/')} className="px-5">
+            <Home className="w-4 h-4 mr-2" /> Go Home
+          </Button>
+        </div>
       </div>
-    )
+    );
   }
 
   if (loading) {

@@ -53,7 +53,23 @@ export default function ResultsLayout() {
     const userName = fullUserName.split(' ')[0];
 
     // Try to extract State Data so we can pass it down through Outlet context or links
-    const stateData = location.state as any;
+    const rawStateData = location.state as any;
+
+    const getStoredState = () => {
+        try {
+            const stored = sessionStorage.getItem('latest_test_result');
+            if (!stored) return null;
+            const parsed = JSON.parse(stored);
+            if (parsed?.userId && user?.id && parsed.userId !== user.id) {
+                return null;
+            }
+            return parsed;
+        } catch {
+            return null;
+        }
+    };
+
+    const stateData = rawStateData || getStoredState();
     // We get testId either from URL or state
     const currentTestId = testId || stateData?.test?.id;
 
