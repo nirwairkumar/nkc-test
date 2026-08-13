@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NavLink, Outlet, useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles, LayoutDashboard, RotateCcw, LayoutGrid, NotepadText, PanelBottomClose } from 'lucide-react';
 import { useTest } from '@/contexts/TestContext';
@@ -55,7 +55,8 @@ export default function ResultsLayout() {
     // Try to extract State Data so we can pass it down through Outlet context or links
     const rawStateData = location.state as any;
 
-    const getStoredState = () => {
+    const stateData = useMemo(() => {
+        if (rawStateData) return rawStateData;
         try {
             const stored = sessionStorage.getItem('latest_test_result');
             if (!stored) return null;
@@ -67,9 +68,8 @@ export default function ResultsLayout() {
         } catch {
             return null;
         }
-    };
+    }, [rawStateData, user?.id]);
 
-    const stateData = rawStateData || getStoredState();
     // We get testId either from URL or state
     const currentTestId = testId || stateData?.test?.id;
 

@@ -1,5 +1,5 @@
 import { getApiUrl } from '@/lib/getApiUrl';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -273,12 +273,12 @@ const ResultsPage = () => {
 
   const [loading, setLoading] = useState(true);
 
-  const getStoredResultData = () => {
+  const stateData = useMemo(() => {
+    if (rawState) return rawState;
     try {
       const stored = sessionStorage.getItem('latest_test_result');
       if (!stored) return undefined;
       const parsed = JSON.parse(stored);
-      // Validate owner match: if stored payload has userId and current user is logged in, verify matching IDs
       if (parsed?.userId && user?.id && parsed.userId !== user.id) {
         return undefined;
       }
@@ -286,26 +286,7 @@ const ResultsPage = () => {
     } catch {
       return undefined;
     }
-  };
-
-  const stateData = (rawState || getStoredResultData()) as {
-    test: any;
-    answers: Record<number, string>;
-    score: number;
-    totalQuestions: number;
-    marksPerQuestion: number;
-    negativeMark: number;
-    justSubmitted?: boolean;
-    userId?: string;
-    // Combined mode
-    isCombined?: boolean;
-    combinedSessionId?: string;
-    sessionTitle?: string;
-    paper1Label?: string;
-    paper2Label?: string;
-    p1?: { test: any; answers: any; score: number; totalMarks: number };
-    p2?: { test: any; answers: any; score: number; totalMarks: number };
-  } | undefined;
+  }, [rawState, user?.id]);
 
   // Persist stateData to sessionStorage if received via location.state
   useEffect(() => {
@@ -330,13 +311,16 @@ const ResultsPage = () => {
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
   const selectedTest = stateData?.test || contextSelectedTest;
 
-  // Normalize answers
-  let answers: Record<number, string> = {};
-  if (stateData?.answers) {
-    answers = stateData.answers;
-  } else if (contextAnswers) {
-    answers = contextAnswers as any;
-  }
+  // Normalize answers with memoization
+  const answers: Record<number, string> = useMemo(() => {
+    if (stateData?.answers) {
+      return stateData.answers;
+    }
+    if (contextAnswers) {
+      return contextAnswers as any;
+    }
+    return {};
+  }, [stateData, contextAnswers]);
 
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -476,6 +460,8 @@ const ResultsPage = () => {
     }, 600);
   };
 
+  const answersKey = useMemo(() => JSON.stringify(answers), [answers]);
+
   useEffect(() => {
     if (showPersonalResults && selectedTest) {
       const loadAnalysis = async () => {
@@ -495,7 +481,7 @@ const ResultsPage = () => {
       };
       loadAnalysis();
     }
-  }, [showPersonalResults, selectedTest, answers]);
+  }, [showPersonalResults, selectedTest?.id, answersKey]);
 
   const handleRetakeTest = () => {
     resetTest();
