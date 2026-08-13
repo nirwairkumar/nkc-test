@@ -257,6 +257,9 @@ const CombinedResultsView = ({ state, navigate }: { state: any; navigate: any })
             <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
           )}
         </div>
+      )}
+    </div>
+  );
 };
 // ─── END COMBINED RESULTS VIEW ────────────────────────────────────────────────
 
