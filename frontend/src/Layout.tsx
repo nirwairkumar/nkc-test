@@ -33,7 +33,7 @@ export default function Layout() {
     useEffect(() => {
         try {
             localStorage.setItem('app_sidebar_collapsed', isCollapsed ? 'true' : 'false');
-        } catch {}
+        } catch { }
     }, [isCollapsed]);
 
     // Track page views on route change
@@ -86,6 +86,7 @@ export default function Layout() {
     // Sidebar is shown on /dashboard for all authenticated users, similar to /my-tests
     const isSidebarHidden =
         isLiveTestPage ||
+        isResultsPage ||
         location.pathname === '/' ||
         location.pathname === '/support' ||
         (location.pathname === '/dashboard' && !user);
