@@ -1,5 +1,14 @@
 import apiClient from '@/lib/apiClient';
 
+export interface CreatorTestItem {
+    id: string;
+    title: string;
+    created_at?: string;
+    submissions_count: number;
+    is_quality: boolean;
+    needed_submissions: number;
+}
+
 export interface EmailRecipient {
     id: string;
     email: string;
@@ -11,6 +20,9 @@ export interface EmailRecipient {
     created_at: string;
     tests_created: number;
     attempts_count: number;
+    quality_tests_count?: number;
+    total_submissions?: number;
+    tests_list?: CreatorTestItem[];
 }
 
 export interface SmtpConfig {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { 
     Mail, Send, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Settings, 
     Users, Search, ShieldCheck, FileText, Check, HelpCircle, Eye, Code, 
@@ -9,6 +9,121 @@ import {
     fetchRecipients, fetchSmtpStatus, updateSmtpConfig, sendTestEmail, sendBatchEmails,
     EmailRecipient, SmtpStatus, SmtpConfig 
 } from '@/lib/emailBroadcastApi';
+
+const CREATOR_LEVELS_CONFIG = [
+    { level: 1, title: 'VERIFIED CREATOR (Level 1)', required: 5, icon: 'https://testoza.com/reward-icons/testoza_verified_creator_badge_exact(1st).svg' },
+    { level: 2, title: 'TRUSTED CREATOR (Level 2)', required: 20, icon: 'https://testoza.com/reward-icons/testoza_trusted_creator_badge_exact(2nd).svg' },
+    { level: 3, title: 'EXPERT CREATOR (Level 3)', required: 50, icon: 'https://testoza.com/reward-icons/testoza_expert_creator_badge_exact(3rd).svg' },
+    { level: 4, title: 'ELITE CREATOR (Level 4)', required: 100, icon: 'https://testoza.com/reward-icons/testoza_elite_creator_badge_exact(4th).svg' },
+    { level: 5, title: 'MASTER CREATOR (Level 5)', required: 250, icon: 'https://testoza.com/reward-icons/testoza_master_creator_badge_exact(5th).svg' },
+    { level: 6, title: 'LEGEND CREATOR (Level 6)', required: 500, icon: 'https://testoza.com/reward-icons/testoza_legend_creator_badge_exact(6th).svg' },
+];
+
+function getCreatorBadgeMetrics(qualityCount: number) {
+    let prevThreshold = 0;
+    let nextLevel = CREATOR_LEVELS_CONFIG[0];
+
+    for (let i = 0; i < CREATOR_LEVELS_CONFIG.length; i++) {
+        const lvl = CREATOR_LEVELS_CONFIG[i];
+        if (qualityCount >= lvl.required) {
+            prevThreshold = lvl.required;
+            if (i + 1 < CREATOR_LEVELS_CONFIG.length) {
+                nextLevel = CREATOR_LEVELS_CONFIG[i + 1];
+            } else {
+                nextLevel = CREATOR_LEVELS_CONFIG[CREATOR_LEVELS_CONFIG.length - 1];
+            }
+        } else {
+            nextLevel = lvl;
+            break;
+        }
+    }
+
+    if (qualityCount >= 500) {
+        return {
+            quality_tests_count: String(qualityCount),
+            next_badge_title: nextLevel.title,
+            quality_tests_needed: '0',
+            progress_percentage: '100',
+            badge_icon_url: nextLevel.icon,
+        };
+    }
+
+    const req = nextLevel.required;
+    const range = Math.max(1, req - prevThreshold);
+    const done = Math.max(0, qualityCount - prevThreshold);
+    const pct = Math.min(100, Math.max(0, Math.round((done / range) * 100)));
+    const needed = Math.max(0, req - qualityCount);
+
+    return {
+        quality_tests_count: String(qualityCount),
+        next_badge_title: nextLevel.title,
+        quality_tests_needed: String(needed),
+        progress_percentage: String(pct),
+        badge_icon_url: nextLevel.icon,
+    };
+}
+
+function renderTestsRowsHtml(tests: any[]) {
+    if (!Array.isArray(tests) || tests.length === 0) {
+        return `<tr style="border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
+    <td colspan="4" style="padding: 16px 12px; font-size: 13px; color: #64748b; text-align: center;">
+        No published tests yet. Create your first test to start conducting!
+    </td>
+</tr>`;
+    }
+
+    const displayed = tests.slice(0, 10);
+    const rows = displayed.map((t, idx) => {
+        const bg = (idx + 1) % 2 !== 0 ? '#ffffff' : '#f8fafc';
+        const title = t?.title || 'Untitled Test';
+        const date = (t?.created_at || '').substring(0, 10) || 'N/A';
+        const sub = Number(t?.submissions_count || 0);
+        const badge = sub >= 20
+            ? `<span style="display: inline-block; background-color: #dcfce7; color: #166534; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">${sub} / 20 (Qualified ✅)</span>`
+            : `<span style="display: inline-block; background-color: #fef3c7; color: #92400e; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">${sub} / 20 (Need ${Math.max(0, 20 - sub)} more ⏳)</span>`;
+
+        return `<tr style="border-bottom: 1px solid #f1f5f9; background-color: ${bg};">
+    <td style="padding: 10px 12px; font-size: 13px; color: #64748b; text-align: center; font-weight: 600;">${idx + 1}</td>
+    <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; font-weight: 600;">${title}</td>
+    <td style="padding: 10px 12px; font-size: 12px; color: #64748b; text-align: center;">${date}</td>
+    <td style="padding: 10px 12px; font-size: 13px; text-align: center;">${badge}</td>
+</tr>`;
+    });
+
+    if (tests.length > 10) {
+        rows.push(`<tr style="background-color: #f1f5f9;">
+    <td colspan="4" style="padding: 10px 12px; font-size: 12px; color: #475569; text-align: center; font-weight: 600;">
+        + ${tests.length - 10} more test(s) available on your creator dashboard.
+    </td>
+</tr>`);
+    }
+
+    return rows.join('\n');
+}
+
+function renderTestsTableHtml(tests: any[]) {
+    if (!Array.isArray(tests) || tests.length === 0) {
+        return `<div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 20px; text-align: center; color: #64748b; margin: 16px 0;">
+    <p style="margin: 0 0 4px 0; font-weight: 700; color: #334155; font-size: 13px;">No published tests yet</p>
+    <p style="margin: 0; font-size: 12px; color: #64748b;">Create and conduct your first test on TestoZa to start collecting student submissions and unlock creator medals!</p>
+</div>`;
+    }
+
+    const rowsHtml = renderTestsRowsHtml(tests);
+    return `<table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 16px 0;">
+    <thead>
+        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 50px;">S.No</th>
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: left;">Test Title</th>
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 100px;">Created Date</th>
+            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 150px;">Submissions in Conduct Mode</th>
+        </tr>
+    </thead>
+    <tbody>
+${rowsHtml}
+    </tbody>
+</table>`;
+}
 
 const TEMPLATE_PRESETS = [
     {
@@ -67,7 +182,7 @@ const TEMPLATE_PRESETS = [
                 </div>
             </td>
             <td width="70" align="right" style="vertical-align: middle; padding-left: 12px;">
-                <img src="https://testoza.com/reward-icons/testoza_verified_creator_badge_exact(1st).svg" width="64" height="64" alt="Verified Creator Badge" style="display: block; width: 64px; height: 64px; max-width: 64px;" />
+                <img src="{badge_icon_url}" width="64" height="64" alt="Target Creator Badge" style="display: block; width: 64px; height: 64px; max-width: 64px;" />
             </td>
         </tr>
     </table>
@@ -76,42 +191,7 @@ const TEMPLATE_PRESETS = [
 <!-- TEST SUBMISSIONS BREAKDOWN TABLE -->
 <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 24px 0 12px 0;">📊 Your Test Conduct Performance</h3>
 
-<table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-    <thead>
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 50px;">S.No</th>
-            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: left;">Test Title</th>
-            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 100px;">Created Date</th>
-            <th style="padding: 10px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; text-align: center; width: 140px;">Submissions in Conduct Mode</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
-            <td style="padding: 10px 12px; font-size: 13px; color: #64748b; text-align: center; font-weight: 600;">1</td>
-            <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; font-weight: 600;">Physics Mechanics Quiz Chapter 1</td>
-            <td style="padding: 10px 12px; font-size: 12px; color: #64748b; text-align: center;">2026-08-01</td>
-            <td style="padding: 10px 12px; font-size: 13px; text-align: center;">
-                <span style="display: inline-block; background-color: #dcfce7; color: #166534; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">24 / 20 (Qualified ✅)</span>
-            </td>
-        </tr>
-        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #f8fafc;">
-            <td style="padding: 10px 12px; font-size: 13px; color: #64748b; text-align: center; font-weight: 600;">2</td>
-            <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; font-weight: 600;">Organic Chemistry Practice Test</td>
-            <td style="padding: 10px 12px; font-size: 12px; color: #64748b; text-align: center;">2026-08-05</td>
-            <td style="padding: 10px 12px; font-size: 13px; text-align: center;">
-                <span style="display: inline-block; background-color: #fef3c7; color: #92400e; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">16 / 20 (Need 4 more ⏳)</span>
-            </td>
-        </tr>
-        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
-            <td style="padding: 10px 12px; font-size: 13px; color: #64748b; text-align: center; font-weight: 600;">3</td>
-            <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; font-weight: 600;">Mathematics Mock Exam Series</td>
-            <td style="padding: 10px 12px; font-size: 12px; color: #64748b; text-align: center;">2026-08-10</td>
-            <td style="padding: 10px 12px; font-size: 13px; text-align: center;">
-                <span style="display: inline-block; background-color: #fef3c7; color: #92400e; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 999px;">11 / 20 (Need 9 more ⏳)</span>
-            </td>
-        </tr>
-    </tbody>
-</table>
+{creator_tests_table}
 
 <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 16px; margin-top: 20px;">
     <p style="margin: 0 0 6px 0; font-size: 13px; font-weight: 700; color: #1e40af;">💡 Tips to Reach Your Badge Goal Faster:</p>
@@ -152,6 +232,7 @@ export default function AdminEmailBroadcastPanel() {
     const [savingSmtp, setSavingSmtp] = useState<boolean>(false);
 
     // Email composer state
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [senderEmail, setSenderEmail] = useState<string>('no-reply@testoza.com');
     const [senderName, setSenderName] = useState<string>('TestoZa Team');
     const [subject, setSubject] = useState<string>('Hi {name}, see your TestoZa creator achievements!');
@@ -245,9 +326,21 @@ export default function AdminEmailBroadcastPanel() {
         setSelectedUserIds(nextSet);
     };
 
-    // Insert Tag helper into focused editor or text
+    // Insert Tag helper into focused editor at cursor position
     const insertTag = (tag: string) => {
-        setBodyHtml(prev => prev + ` ${tag}`);
+        if (textareaRef.current) {
+            const textarea = textareaRef.current;
+            const start = textarea.selectionStart ?? bodyHtml.length;
+            const end = textarea.selectionEnd ?? bodyHtml.length;
+            const nextText = bodyHtml.substring(0, start) + tag + bodyHtml.substring(end);
+            setBodyHtml(nextText);
+            setTimeout(() => {
+                textarea.focus();
+                textarea.setSelectionRange(start + tag.length, start + tag.length);
+            }, 0);
+        } else {
+            setBodyHtml(prev => prev + ` ${tag}`);
+        }
         toast.info(`Inserted placeholder ${tag}`);
     };
 
@@ -343,12 +436,29 @@ export default function AdminEmailBroadcastPanel() {
             id: 'sample',
             email: 'user@example.com',
             full_name: 'John Doe',
-            tests_created: 4,
+            tests_created: 3,
             attempts_count: 15,
             is_verified_creator: true,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            quality_tests_count: 1,
+            total_submissions: 51,
+            tests_list: [
+                { id: 'sample-1', title: 'Physics Mechanics Quiz Chapter 1', created_at: '2026-08-01', submissions_count: 24, is_quality: true, needed_submissions: 0 },
+                { id: 'sample-2', title: 'Organic Chemistry Practice Test', created_at: '2026-08-05', submissions_count: 16, is_quality: false, needed_submissions: 4 },
+                { id: 'sample-3', title: 'Mathematics Mock Exam Series', created_at: '2026-08-10', submissions_count: 11, is_quality: false, needed_submissions: 9 },
+            ]
         };
     }, [recipients, previewUserId]);
+
+    // Live Rendered Subject for preview
+    const renderedPreviewSubject = useMemo(() => {
+        let text = subject;
+        const name = selectedPreviewUser.full_name || selectedPreviewUser.email.split('@')[0];
+        const email = selectedPreviewUser.email;
+        text = text.replace(/{name}/g, name).replace(/{{name}}/g, name);
+        text = text.replace(/{email}/g, email).replace(/{{email}}/g, email);
+        return text;
+    }, [subject, selectedPreviewUser]);
 
     // Live Rendered HTML for preview
     const renderedPreviewHtml = useMemo(() => {
@@ -360,11 +470,18 @@ export default function AdminEmailBroadcastPanel() {
         const isVerified = selectedPreviewUser.is_verified_creator ? 'Verified Creator' : 'Member';
         const joinDate = selectedPreviewUser.created_at ? selectedPreviewUser.created_at.substring(0, 10) : 'N/A';
 
-        const qCount = selectedPreviewUser.tests_created ? Math.min(selectedPreviewUser.tests_created, 3) : 3;
-        const nextBadge = selectedPreviewUser.is_verified_creator ? "TRUSTED CREATOR (Level 2)" : "VERIFIED CREATOR (Level 1)";
-        const neededTests = String(Math.max(1, 5 - qCount));
-        const progressPct = String(Math.min(100, Math.round((qCount / 5) * 100)));
-        const totalSubs = String(qCount * 22 + 5);
+        const testsList = Array.isArray(selectedPreviewUser?.tests_list) ? selectedPreviewUser.tests_list : [];
+        const qCount = typeof selectedPreviewUser?.quality_tests_count === 'number'
+            ? selectedPreviewUser.quality_tests_count 
+            : testsList.filter(t => (Number(t?.submissions_count) || 0) >= 20).length;
+        
+        const totalSubs = typeof selectedPreviewUser?.total_submissions === 'number'
+            ? selectedPreviewUser.total_submissions 
+            : testsList.reduce((acc, t) => acc + (Number(t?.submissions_count) || 0), 0);
+
+        const badgeMetrics = getCreatorBadgeMetrics(qCount);
+        const tableHtml = renderTestsTableHtml(testsList);
+        const rowsHtml = renderTestsRowsHtml(testsList);
 
         text = text.replace(/{name}/g, name).replace(/{{name}}/g, name);
         text = text.replace(/{email}/g, email).replace(/{{email}}/g, email);
@@ -373,11 +490,15 @@ export default function AdminEmailBroadcastPanel() {
         text = text.replace(/{is_verified}/g, isVerified).replace(/{{is_verified}}/g, isVerified);
         text = text.replace(/{join_date}/g, joinDate).replace(/{{join_date}}/g, joinDate);
 
-        text = text.replace(/{quality_tests_count}/g, String(qCount)).replace(/{{quality_tests_count}}/g, String(qCount));
-        text = text.replace(/{next_badge_title}/g, nextBadge).replace(/{{next_badge_title}}/g, nextBadge);
-        text = text.replace(/{quality_tests_needed}/g, neededTests).replace(/{{quality_tests_needed}}/g, neededTests);
-        text = text.replace(/{progress_percentage}/g, progressPct).replace(/{{progress_percentage}}/g, progressPct);
-        text = text.replace(/{total_submissions}/g, totalSubs).replace(/{{total_submissions}}/g, totalSubs);
+        text = text.replace(/{quality_tests_count}/g, badgeMetrics.quality_tests_count).replace(/{{quality_tests_count}}/g, badgeMetrics.quality_tests_count);
+        text = text.replace(/{next_badge_title}/g, badgeMetrics.next_badge_title).replace(/{{next_badge_title}}/g, badgeMetrics.next_badge_title);
+        text = text.replace(/{quality_tests_needed}/g, badgeMetrics.quality_tests_needed).replace(/{{quality_tests_needed}}/g, badgeMetrics.quality_tests_needed);
+        text = text.replace(/{progress_percentage}/g, badgeMetrics.progress_percentage).replace(/{{progress_percentage}}/g, badgeMetrics.progress_percentage);
+        text = text.replace(/{total_submissions}/g, String(totalSubs)).replace(/{{total_submissions}}/g, String(totalSubs));
+        text = text.replace(/{badge_icon_url}/g, badgeMetrics.badge_icon_url).replace(/{{badge_icon_url}}/g, badgeMetrics.badge_icon_url);
+
+        text = text.replace(/{creator_tests_table}/g, tableHtml).replace(/{{creator_tests_table}}/g, tableHtml);
+        text = text.replace(/{creator_tests_rows}/g, rowsHtml).replace(/{{creator_tests_rows}}/g, rowsHtml);
 
         return text;
     }, [bodyHtml, selectedPreviewUser]);
@@ -617,6 +738,11 @@ export default function AdminEmailBroadcastPanel() {
                                             <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                                                 🎯 {user.tests_created} {user.tests_created === 1 ? 'test' : 'tests'}
                                             </span>
+                                            {user.quality_tests_count !== undefined && user.quality_tests_count > 0 && (
+                                                <span className="text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded border border-amber-200 dark:border-amber-800">
+                                                    ⭐ {user.quality_tests_count} qualified
+                                                </span>
+                                            )}
                                             <span className="text-[10px] text-slate-400">
                                                 📝 {user.attempts_count} attempts
                                             </span>
@@ -808,6 +934,27 @@ export default function AdminEmailBroadcastPanel() {
                                     >
                                         &#123;total_submissions&#125;
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{badge_icon_url}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-purple-300 dark:border-purple-700 text-[11px] font-mono font-bold text-purple-600 dark:text-purple-300 hover:bg-purple-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;badge_icon_url&#125;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{creator_tests_table}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;creator_tests_table&#125;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => insertTag('{creator_tests_rows}')}
+                                        className="px-2 py-0.5 rounded bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white transition-colors"
+                                    >
+                                        &#123;creator_tests_rows&#125;
+                                    </button>
                                 </div>
                             </div>
 
@@ -817,6 +964,7 @@ export default function AdminEmailBroadcastPanel() {
                                     Email Body Content (HTML Supported)
                                 </label>
                                 <textarea
+                                    ref={textareaRef}
                                     value={bodyHtml}
                                     onChange={(e) => setBodyHtml(e.target.value)}
                                     placeholder="Write HTML content here..."
@@ -849,6 +997,16 @@ export default function AdminEmailBroadcastPanel() {
                             {/* Mock Email Frame */}
                             <div className="flex-1 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-950 p-4 overflow-y-auto">
                                 <div className="max-w-[550px] mx-auto bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden text-slate-800 font-sans">
+                                    {/* Mock Email Envelope Header */}
+                                    <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-3 text-xs space-y-1">
+                                        <div className="text-slate-900 dark:text-slate-100 font-bold truncate">
+                                            <span className="text-slate-500 font-normal">Subject:</span> {renderedPreviewSubject}
+                                        </div>
+                                        <div className="text-slate-600 dark:text-slate-400 text-[11px] truncate flex justify-between">
+                                            <span><span className="font-semibold">From:</span> {senderName} &lt;{senderEmail}&gt;</span>
+                                            <span><span className="font-semibold">To:</span> {selectedPreviewUser.full_name} &lt;{selectedPreviewUser.email}&gt;</span>
+                                        </div>
+                                    </div>
                                     <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-5 text-center text-white">
                                         <div className="font-extrabold text-xl tracking-tight">TestoZa</div>
                                         <div className="text-[11px] text-indigo-200">Empowering Test Creators & Learners</div>
