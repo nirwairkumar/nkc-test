@@ -49,33 +49,35 @@ def _verify_auth_token(request: Request, db: Client) -> str:
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
+def _is_user_admin(user_id: str, db: Client) -> bool:
+    try:
+        profile_res = db.table("profiles").select("email").eq("id", user_id).execute()
+        if profile_res.data:
+            email = profile_res.data[0].get("email")
+            if email:
+                admin_res = db.table("admins").select("email").eq("email", email).execute()
+                return bool(admin_res.data)
+    except Exception as e:
+        print(f"Error checking admin status: {e}")
+    return False
+
 def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
     requesting_user_id = _verify_auth_token(request, db)
     if requesting_user_id == user_id:
         return requesting_user_id
         
-    # Check if admin
-    profile_res = db.table("profiles").select("email").eq("id", requesting_user_id).execute()
-    is_admin = False
-    if profile_res.data:
-        email = profile_res.data[0].get("email")
-        if email:
-            admin_res = db.table("admins").select("email").eq("email", email).execute()
-            is_admin = bool(admin_res.data)
-            
-    if not is_admin:
+    if not _is_user_admin(requesting_user_id, db):
         raise HTTPException(status_code=403, detail="Unauthorized access")
     return requesting_user_id
 
 def require_verified_creator(user_id: str, request: Request, db: Client):
     _verify_owner_or_admin(user_id, request, db)
+    if _is_user_admin(user_id, db):
+        return
     profile = db.table("profiles").select("is_verified_creator").eq("id", user_id).execute()
-    admin_check = db.table("admins").select("*").eq("user_id", user_id).execute()
-    
     is_verified = bool(profile.data and profile.data[0].get("is_verified_creator"))
-    is_admin = bool(admin_check.data)
     
-    if not is_verified and not is_admin:
+    if not is_verified:
         raise HTTPException(status_code=403, detail="Only verified creators or admins can perform this action")
 
 from fastapi.responses import Response
@@ -144,7 +146,12 @@ async def get_my_posts(
 ):
     try:
         _verify_owner_or_admin(user_id, request, db)
-        response = db.table("posts").select("id, author_id, title, slug, summary, cover_image, category, tags, status, is_pinned, view_count, like_count, published_at, created_at, updated_at").eq("author_id", user_id).order("created_at", desc=True).execute()
+        is_admin = _is_user_admin(user_id, db)
+        if is_admin:
+            # Admins can view and manage all posts across the platform
+            response = db.table("posts").select("id, author_id, title, slug, summary, cover_image, category, tags, status, is_pinned, view_count, like_count, published_at, created_at, updated_at").order("created_at", desc=True).execute()
+        else:
+            response = db.table("posts").select("id, author_id, title, slug, summary, cover_image, category, tags, status, is_pinned, view_count, like_count, published_at, created_at, updated_at").eq("author_id", user_id).order("created_at", desc=True).execute()
         return response.data
     except HTTPException:
         raise
@@ -269,8 +276,7 @@ async def update_post(
             
         if post_res.data[0]["author_id"] != user_id:
             # Check if admin
-            admin_check = db.table("admins").select("*").eq("user_id", user_id).execute()
-            if not admin_check.data:
+            if not _is_user_admin(user_id, db):
                 raise HTTPException(status_code=403, detail="Not authorized to edit this post")
                 
         update_data = payload.dict(exclude_unset=True)
@@ -313,8 +319,7 @@ async def delete_post(
             
         if post_res.data[0]["author_id"] != user_id:
              # Check if admin
-            admin_check = db.table("admins").select("*").eq("user_id", user_id).execute()
-            if not admin_check.data:
+            if not _is_user_admin(user_id, db):
                 raise HTTPException(status_code=403, detail="Not authorized to delete this post")
         
         # Optional: Delete cover image from storage if it belongs to our bucket
