@@ -92,6 +92,59 @@ export default function NewsPostEditor() {
             Underline,
             Placeholder.configure({ placeholder: 'Write your story here... Use headings, bullet points, images, and rich formatting.' }),
         ],
+        editorProps: {
+            handlePaste: (view, event) => {
+                const items = Array.from(event.clipboardData?.items || []);
+                const imageItem = items.find(item => item.type.startsWith('image/'));
+                if (imageItem) {
+                    const file = imageItem.getAsFile();
+                    if (file) {
+                        event.preventDefault();
+                        toast.info("Uploading pasted image...");
+                        postsApi.uploadImage(file)
+                            .then((url) => {
+                                const { state, dispatch } = view;
+                                const { schema } = state;
+                                const node = schema.nodes.image.create({ src: url });
+                                const transaction = state.tr.replaceSelectionWith(node);
+                                dispatch(transaction);
+                                toast.success("Image pasted successfully!");
+                            })
+                            .catch((err: any) => {
+                                toast.error("Failed to upload pasted image: " + (err.message || 'Error'));
+                            });
+                        return true;
+                    }
+                }
+                return false;
+            },
+            handleDrop: (view, event, slice, moved) => {
+                if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+                    const file = event.dataTransfer.files[0];
+                    if (file.type.startsWith('image/')) {
+                        event.preventDefault();
+                        toast.info("Uploading dropped image...");
+                        postsApi.uploadImage(file)
+                            .then((url) => {
+                                const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+                                if (coordinates) {
+                                    const { state, dispatch } = view;
+                                    const { schema } = state;
+                                    const node = schema.nodes.image.create({ src: url });
+                                    const transaction = state.tr.insert(coordinates.pos, node);
+                                    dispatch(transaction);
+                                }
+                                toast.success("Image uploaded successfully!");
+                            })
+                            .catch((err: any) => {
+                                toast.error("Failed to upload image: " + (err.message || 'Error'));
+                            });
+                        return true;
+                    }
+                }
+                return false;
+            }
+        },
         content: '',
     });
 

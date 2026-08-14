@@ -60,21 +60,25 @@ export const postsApi = {
         return response.data;
     },
 
-    // Images
-    uploadImage: async (file: File) => {
-        const userId = getUserIdFromToken();
-        if (!userId) throw new Error("Not authenticated");
+    // Images (Direct Fast Cloudinary CDN Upload)
+    uploadImage: async (file: File): Promise<string> => {
+        const uploadPreset = "TestoZa_cloudinary";
+        const cloudName = "dma0h19mk";
 
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('user_id', userId);
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
 
-        const response = await apiClient.post<{ url: string }>('/posts/upload-image', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+            method: "POST",
+            body: formData,
         });
-        return response.data.url;
+
+        const data = await res.json();
+        if (data.secure_url) {
+            return data.secure_url;
+        }
+        throw new Error(data.error?.message || "Failed to upload image to Cloudinary");
     },
 
     // Engagement
