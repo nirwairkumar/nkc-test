@@ -14,6 +14,7 @@ router = APIRouter()
 class PostCreate(BaseModel):
     title: str
     content: dict         # Tiptap JSON document
+    slug: Optional[str] = None
     summary: Optional[str] = None
     cover_image: Optional[str] = None
     category: str = "general"
@@ -23,6 +24,7 @@ class PostCreate(BaseModel):
 class PostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[dict] = None
+    slug: Optional[str] = None
     summary: Optional[str] = None
     cover_image: Optional[str] = None
     category: Optional[str] = None
@@ -76,13 +78,23 @@ def require_verified_creator(user_id: str, request: Request, db: Client):
     if not is_verified and not is_admin:
         raise HTTPException(status_code=403, detail="Only verified creators or admins can perform this action")
 
-def generate_slug(title: str) -> str:
+from fastapi.responses import Response
+
+def generate_slug(title: str, custom_slug: Optional[str] = None) -> str:
     import re
-    # Remove special characters, replace spaces with hyphens, lowercase
-    slug = re.sub(r'[^a-zA-Z0-9\s-]', '', title).strip().lower()
+    raw = (custom_slug.strip() if custom_slug and custom_slug.strip() else title).strip().lower()
+    # Remove special characters, replace spaces with hyphens
+    slug = re.sub(r'[^a-zA-Z0-9\s-]', '', raw).strip()
     slug = re.sub(r'[-\s]+', '-', slug)
     
-    # Add random suffix to avoid collisions
+    if not slug:
+        slug = "blog-post"
+        
+    # If custom slug was provided, don't append random suffix unless needed
+    if custom_slug and custom_slug.strip():
+        return slug
+        
+    # Add timestamp suffix for default title generated slugs
     suffix = str(int(time.time() % 100000))
     return f"{slug}-{suffix}"
 
@@ -167,6 +179,48 @@ async def get_post_by_slug(
         print(f"Error fetching post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/sitemap.xml")
+async def get_blog_sitemap(db: Client = Depends(get_db)):
+    """Generate XML sitemap of all published blog posts for Google Search Console."""
+    try:
+        response = db.table("posts").select("slug, updated_at, published_at").eq("status", "published").order("published_at", desc=True).execute()
+        posts = response.data or []
+        
+        xml_items = []
+        for p in posts:
+            slug = p.get("slug")
+            date = (p.get("updated_at") or p.get("published_at") or "").split("T")[0] or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            xml_items.append(f"""  <url>
+    <loc>https://blog.testoza.com/{slug}</loc>
+    <lastmod>{date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://testoza.com/blog/{slug}</loc>
+    <lastmod>{date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>""")
+            
+        xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://blog.testoza.com</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://testoza.com/blog</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+{"".join(xml_items)}
+</urlset>"""
+        return Response(content=xml_content, media_type="application/xml")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("")
 async def create_post(
     payload: PostCreate,
@@ -181,7 +235,7 @@ async def create_post(
         # 2. Prepare data
         post_data = payload.dict()
         post_data["author_id"] = user_id
-        post_data["slug"] = generate_slug(payload.title)
+        post_data["slug"] = generate_slug(payload.title, payload.slug)
         
         if payload.status == "published":
             post_data["published_at"] = datetime.now(timezone.utc).isoformat()
@@ -221,6 +275,10 @@ async def update_post(
                 
         update_data = payload.dict(exclude_unset=True)
         update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        # If slug provided in update, sanitize
+        if payload.slug:
+            update_data["slug"] = generate_slug("", payload.slug)
         
         # If toggling to published for the first time
         if update_data.get("status") == "published" and post_res.data[0]["status"] != "published":

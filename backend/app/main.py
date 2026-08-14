@@ -35,6 +35,8 @@ origins = [
     "https://www.testoza.com",
     "https://app.testoza.com",
     "https://admin.testoza.com",
+    "https://blog.testoza.com",
+    "https://news.testoza.com",
     "https://testing.testoza.com",
     "http://localhost:5173", # Local dev
     "http://localhost:8081", # Local dev

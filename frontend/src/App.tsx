@@ -131,6 +131,18 @@ const AIImportRoute = () => {
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 
+const isBlogSubdomain = typeof window !== 'undefined' && (
+  window.location.hostname === 'blog.testoza.com' ||
+  window.location.hostname === 'news.testoza.com'
+);
+
+const HomeRoute = () => {
+  if (isBlogSubdomain) {
+    return <NewsFeed />;
+  }
+  return <LandingPage />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -145,15 +157,19 @@ const App = () => (
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route element={<Layout />}>
-                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/" element={<HomeRoute />} />
                     <Route path="/quiz-creator" element={<GoogleAdsLanding />} />
                     <Route path="/assessment-platform" element={<GoogleAdsLanding />} />
                     <Route path="/dashboard" element={<DashboardRoute />} />
                     <Route path="/more-tests" element={<MoreTestsPage />} />
 
-                    {/* News & Posts Routes */}
+                    {/* News & Blog Routes */}
+                    <Route path="/blog" element={<NewsFeed />} />
+                    <Route path="/blog/:slug" element={<NewsPostView />} />
                     <Route path="/news" element={<NewsFeed />} />
                     <Route path="/news/:slug" element={<NewsPostView />} />
+                    <Route path="/posts" element={<NewsFeed />} />
+                    <Route path="/posts/:slug" element={<NewsPostView />} />
                     <Route path="/news/create" element={
                       <PrivateRoute>
                         <NewsPostEditor />

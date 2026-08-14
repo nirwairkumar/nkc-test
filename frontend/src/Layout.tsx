@@ -83,12 +83,30 @@ export default function Layout() {
 
     const hideFooter = isLiveTestPage || isResultsPage || isCreateTestPage;
 
-    // Sidebar is shown on /dashboard for all authenticated users, similar to /my-tests
+    // Check if current page is on blog subdomain or blog/news routes
+    const isBlogSubdomain = typeof window !== 'undefined' && (
+        window.location.hostname === 'blog.testoza.com' ||
+        window.location.hostname === 'news.testoza.com'
+    );
+
+    const isBlogPage =
+        isBlogSubdomain ||
+        location.pathname.startsWith('/blog') ||
+        location.pathname.startsWith('/news') ||
+        location.pathname.startsWith('/posts') ||
+        location.pathname.startsWith('/my-posts');
+
+    // Sidebar is shown only on internal dashboard & management pages, completely hidden on blog & marketing pages
     const isSidebarHidden =
+        isBlogPage ||
         isLiveTestPage ||
         isResultsPage ||
         location.pathname === '/' ||
         location.pathname === '/support' ||
+        location.pathname === '/about' ||
+        location.pathname === '/convert' ||
+        location.pathname === '/privacy-policy' ||
+        location.pathname === '/terms-and-conditions' ||
         (location.pathname === '/dashboard' && !user);
 
     const handleToggleSidebar = () => {

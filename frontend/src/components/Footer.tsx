@@ -74,10 +74,25 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {/* About Section */}
+                    {/* Resources & About Section */}
                     <div className="flex flex-col gap-2">
-                        <h3 className="text-base font-semibold">About</h3>
+                        <h3 className="text-base font-semibold">Resources & News</h3>
                         <nav className="flex flex-col gap-1">
+                            <a
+                                href="https://blog.testoza.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left font-medium text-indigo-600 dark:text-indigo-400 flex items-center gap-1"
+                            >
+                                <span>📰 TestoZa Blog & News</span>
+                                <span className="text-[10px] text-slate-400">↗</span>
+                            </a>
+                            <Link
+                                to="/user-guide"
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
+                            >
+                                User Guide
+                            </Link>
                             <Link
                                 to="/about"
                                 className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"

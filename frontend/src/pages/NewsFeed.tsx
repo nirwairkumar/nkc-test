@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { postsApi } from '@/lib/postsApi';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -6,13 +6,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, Heart, Calendar, Search, Pin, Edit } from 'lucide-react';
+import { Eye, Heart, Calendar, Search, Pin, Clock, ArrowRight, Sparkles, BookOpen, Newspaper } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
+import { SEO } from '@/components/SEO';
 
-const CATEGORIES = ["all", "jee", "neet", "upsc", "ssc", "general"];
+const CATEGORIES = [
+    { value: "all", label: "All Topics" },
+    { value: "general", label: "Announcements" },
+    { value: "jee", label: "JEE Main & Adv" },
+    { value: "neet", label: "NEET Medical" },
+    { value: "upsc", label: "UPSC Civil Services" },
+    { value: "ssc", label: "SSC & Govt Exams" },
+    { value: "study-tips", label: "Study Tips" },
+    { value: "product-news", label: "Platform News" }
+];
 
 export default function NewsFeed() {
     const [activeCategory, setActiveCategory] = useState("all");
@@ -20,11 +30,9 @@ export default function NewsFeed() {
     const { user, profile, isAdmin } = useAuth();
     const navigate = useNavigate();
 
-    const isCreatorOrAdmin = profile?.is_verified_creator || isAdmin;
-
-    const { data: posts, isLoading: postsLoading, error } = useQuery({
+    const { data: posts = [], isLoading: postsLoading, error } = useQuery({
         queryKey: ['posts', activeCategory, searchQuery],
-        queryFn: () => postsApi.getFeed(1, 100, activeCategory, searchQuery),
+        queryFn: () => postsApi.getFeed(1, 100, activeCategory === 'all' ? undefined : activeCategory, searchQuery),
     });
 
     const [features, setFeatures] = useState<FeatureFlags | null>(null);
@@ -38,23 +46,33 @@ export default function NewsFeed() {
     }, []);
 
     const isNewsEnabled = features?.enable_news_updates ?? true;
+    const isLoading = postsLoading || featuresLoading;
 
-    if (featuresLoading) {
-        return (
-            <div className="container max-w-6xl mx-auto py-20 px-4 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
+    // Separate pinned hero post from rest of feed
+    const { featuredPost, regularPosts } = useMemo(() => {
+        if (!posts || posts.length === 0) return { featuredPost: null, regularPosts: [] };
+        
+        const pinned = posts.find(p => p.is_pinned);
+        if (pinned && activeCategory === 'all' && !searchQuery.trim()) {
+            return {
+                featuredPost: pinned,
+                regularPosts: posts.filter(p => p.id !== pinned.id)
+            };
+        }
+        return {
+            featuredPost: activeCategory === 'all' && !searchQuery.trim() ? posts[0] : null,
+            regularPosts: activeCategory === 'all' && !searchQuery.trim() ? posts.slice(1) : posts
+        };
+    }, [posts, activeCategory, searchQuery]);
 
     if (!isAdmin && !isNewsEnabled) {
         return (
             <div className="container max-w-2xl mx-auto py-20 px-4 text-center">
                 <div className="text-6xl mb-6">🚧</div>
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent dark:from-slate-100 dark:to-slate-300 mb-4">News & Updates Unavailable</h2>
-                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-4">Blog Under Maintenance</h2>
+                <div className="p-6 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
                     <p className="text-slate-600 dark:text-slate-400">
-                        {features?.news_updates_notes || "The News & Updates section is currently undergoing maintenance and is temporarily unavailable."}
+                        {features?.news_updates_notes || "The TestoZa Blog & News section is currently undergoing updates and will be back shortly."}
                     </p>
                 </div>
                 <Button className="mt-8" onClick={() => navigate('/')}>Return to Home</Button>
@@ -62,162 +80,251 @@ export default function NewsFeed() {
         );
     }
 
-    const isLoading = postsLoading || featuresLoading;
+    const blogSchema = {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": "TestoZa Blog & News",
+        "description": "Latest exam notifications, study strategies, tips, and product announcements from TestoZa.",
+        "url": "https://blog.testoza.com",
+        "publisher": {
+            "@type": "Organization",
+            "name": "TestoZa",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://testoza.com/favicon.ico"
+            }
+        }
+    };
 
     return (
-        <div className="container max-w-6xl mx-auto py-8 px-4 sm:px-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">News & Updates</h1>
-                    <p className="text-muted-foreground mt-1">Get the latest exam news, study materials, and updates.</p>
-                </div>
+        <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 font-sans pb-24">
+            <SEO
+                title="TestoZa Blog - Exam Insights, Study Tips & Product Updates"
+                description="Explore top articles, exam preparation tips, JEE/NEET syllabus changes, quiz creator strategies, and platform announcements on TestoZa Blog."
+                canonicalUrl="https://blog.testoza.com"
+                schemas={[blogSchema]}
+            />
 
-                {isCreatorOrAdmin && (
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => navigate('/my-posts')}>
-                            My Posts
-                        </Button>
-                        <Button onClick={() => navigate('/news/create')}>
-                            <Edit className="w-4 h-4 mr-2" /> Write Post
-                        </Button>
+            {/* Professional Compact Blog Header */}
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-6 sm:py-7 shadow-2xs">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>Official Publication</span>
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                TestoZa Blog & News
+                            </h1>
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl">
+                                Exam prep strategies, JEE/NEET insights, study techniques, and platform updates.
+                            </p>
+                        </div>
+
+                        {/* Integrated Search Box */}
+                        <div className="w-full md:w-72">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                                <Input
+                                    placeholder="Search articles, topics..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-9 pr-3 py-1.5 h-9 bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-xs rounded-xl focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
 
-            <div className="flex flex-col md:flex-row gap-4 mb-8">
-                <div className="relative flex-1 md:max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search posts..."
-                        className="pl-9"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-                <div className="flex overflow-x-auto pb-2 -mb-2 gap-2 hide-scrollbar">
-                    {CATEGORIES.map(cat => (
-                        <Badge
-                            key={cat}
-                            variant={activeCategory === cat ? "default" : "outline"}
-                            className="px-4 py-1.5 cursor-pointer whitespace-nowrap text-sm bg-white"
-                            onClick={() => setActiveCategory(cat)}
-                        >
-                            {cat.toUpperCase()}
-                        </Badge>
-                    ))}
+                    {/* Category Filter Pills */}
+                    <div className="mt-5 flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+                        {CATEGORIES.map(cat => (
+                            <button
+                                key={cat.value}
+                                onClick={() => setActiveCategory(cat.value)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                                    activeCategory === cat.value
+                                        ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
+                            >
+                                {cat.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(6)].map((_, i) => (
-                        <Card key={i} className="flex flex-col h-full overflow-hidden">
-                            <Skeleton className="h-48 w-full" />
-                            <CardHeader className="p-4 space-y-2">
-                                <Skeleton className="h-4 w-1/4" />
-                                <Skeleton className="h-6 w-3/4" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-2/3" />
-                            </CardHeader>
-                            <CardFooter className="p-4 mt-auto">
-                                <Skeleton className="h-10 w-full" />
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-            ) : error ? (
-                <div className="text-center py-12 text-red-500 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                    Failed to load posts. Please try again later.
-                </div>
-            ) : posts && posts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {posts.map(post => (
-                        <Link key={post.id} to={`/news/${post.slug}`} className="group block h-full">
-                            <Card className="flex flex-col h-full overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-slate-200 dark:border-slate-800 bg-white">
-                                <div className="relative aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                    {post.cover_image ? (
-                                        <img
-                                            src={post.cover_image}
-                                            alt={post.title}
-                                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-900/20">
-                                            <span className="text-4xl">📰</span>
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8">
+
+                {isLoading ? (
+                    <div className="space-y-8">
+                        <Skeleton className="h-96 w-full rounded-2xl" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[...Array(6)].map((_, i) => (
+                                <Skeleton key={i} className="h-80 w-full rounded-2xl" />
+                            ))}
+                        </div>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-20 bg-rose-50 dark:bg-rose-950/20 text-rose-600 rounded-2xl border border-rose-200">
+                        Failed to load articles. Please check your connection and try again.
+                    </div>
+                ) : posts.length === 0 ? (
+                    <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                        <div className="text-5xl">📰</div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">No Articles Found</h3>
+                        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                            {searchQuery ? "No blog posts match your keyword search. Try searching for other exam terms." : "New articles are being drafted. Check back soon!"}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-12">
+                        
+                        {/* Featured Lead Article Hero */}
+                        {featuredPost && (
+                            <Link 
+                                to={`/news/${featuredPost.slug}`} 
+                                className="group block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+                            >
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-center">
+                                    <div className="lg:col-span-7 aspect-video lg:aspect-auto lg:h-[380px] bg-slate-100 dark:bg-slate-800 overflow-hidden relative">
+                                        {featuredPost.cover_image ? (
+                                            <img
+                                                src={featuredPost.cover_image}
+                                                alt={featuredPost.title}
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-6xl">
+                                                ✍️
+                                            </div>
+                                        )}
+                                        <div className="absolute top-3 left-3 bg-indigo-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md">
+                                            FEATURED ARTICLE
                                         </div>
-                                    )}
-                                    {post.is_pinned && (
-                                        <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 flex items-center gap-1 rounded shadow-sm font-medium">
-                                            <Pin className="w-3 h-3" /> Pinned
+                                    </div>
+
+                                    <div className="lg:col-span-5 p-6 sm:p-8 space-y-4">
+                                        <div className="flex items-center gap-3 text-xs text-slate-400">
+                                            <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-[11px]">
+                                                {featuredPost.category}
+                                            </span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                {new Date(featuredPost.published_at || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </span>
                                         </div>
-                                    )}
-                                    <div className="absolute top-2 left-2 bg-slate-900/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
-                                        {post.category.toUpperCase()}
+
+                                        <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors leading-tight">
+                                            {featuredPost.title}
+                                        </h2>
+
+                                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                                            {featuredPost.summary || "Read the full article on TestoZa to discover actionable insights and strategies..."}
+                                        </p>
+
+                                        <div className="pt-2 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="w-8 h-8 rounded-full border border-slate-200">
+                                                    <AvatarImage src={featuredPost.profiles?.avatar_url} />
+                                                    <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold text-xs">
+                                                        {featuredPost.profiles?.full_name?.charAt(0) || 'T'}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                                    {featuredPost.profiles?.full_name || 'TestoZa Team'}
+                                                </span>
+                                            </div>
+
+                                            <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                                <span>Read Article</span>
+                                                <ArrowRight className="w-3.5 h-3.5" />
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+                            </Link>
+                        )}
 
-                                <CardContent className="flex-1 p-5">
-                                    <h3 className="text-xl font-bold mb-2 line-clamp-2 text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors">
-                                        {post.title}
-                                    </h3>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 mb-4">
-                                        {post.summary || "Read the full post for more details and updates..."}
-                                    </p>
+                        {/* Regular Articles Grid */}
+                        {regularPosts.length > 0 && (
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <BookOpen className="w-5 h-5 text-indigo-600" />
+                                    <span>Latest Articles</span>
+                                </h3>
 
-                                    <div className="flex flex-wrap gap-1 mb-4">
-                                        {post.tags && post.tags.slice(0, 3).map(tag => (
-                                            <span key={tag} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                        {post.tags && post.tags.length > 3 && (
-                                            <span className="text-[10px] text-slate-500">+{post.tags.length - 3}</span>
-                                        )}
-                                    </div>
-                                </CardContent>
-
-                                <CardFooter className="p-5 pt-0 mt-auto border-t border-slate-100 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="w-8 h-8 rounded border border-slate-200">
-                                            <AvatarImage src={post.profiles?.avatar_url} />
-                                            <AvatarFallback className="rounded bg-blue-100 text-blue-700 font-semibold text-xs">
-                                                {post.profiles?.full_name?.charAt(0) || '?'}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-medium text-slate-900 dark:text-slate-200 line-clamp-1">
-                                                {post.profiles?.full_name || 'Anonymous'}
-                                            </span>
-                                            <div className="flex items-center text-[10px] text-slate-500 gap-1">
-                                                <Calendar className="w-3 h-3" />
-                                                {new Date(post.published_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {regularPosts.map((post) => (
+                                        <Link
+                                            key={post.id}
+                                            to={`/news/${post.slug}`}
+                                            className="group flex flex-col h-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                                        >
+                                            <div className="aspect-video bg-slate-100 dark:bg-slate-800 overflow-hidden relative">
+                                                {post.cover_image ? (
+                                                    <img
+                                                        src={post.cover_image}
+                                                        alt={post.title}
+                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-indigo-50 dark:from-slate-800 dark:to-indigo-950/40 text-4xl">
+                                                        📰
+                                                    </div>
+                                                )}
+                                                <div className="absolute top-2.5 left-2.5 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                                    {post.category}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                                        <span className="flex items-center gap-1 bg-white/50 px-1.5 py-0.5 rounded">
-                                            <Eye className="w-3 h-3" /> {post.view_count || 0}
-                                        </span>
-                                        <span className="flex items-center gap-1 bg-white/50 px-1.5 py-0.5 rounded">
-                                            <Heart className="w-3 h-3 text-rose-500" /> {post.like_count || 0}
-                                        </span>
-                                    </div>
-                                </CardFooter>
-                            </Card>
-                        </Link>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-20 bg-slate-50 dark:bg-slate-900/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
-                    <div className="text-4xl mb-4">📭</div>
-                    <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">No posts found</h3>
-                    <p className="text-slate-500 text-sm mt-1 mb-4">Check back later or try a different category.</p>
-                    {isCreatorOrAdmin && (
-                        <Button onClick={() => navigate('/news/create')}>Write the first post</Button>
-                    )}
-                </div>
-            )}
+                                            <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                                                <div className="space-y-2">
+                                                    <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                                                        <Calendar className="w-3 h-3" />
+                                                        <span>{new Date(post.published_at || '').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                    </div>
+
+                                                    <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
+                                                        {post.title}
+                                                    </h4>
+
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                                        {post.summary || "Explore the complete article on TestoZa Blog..."}
+                                                    </p>
+                                                </div>
+
+                                                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Avatar className="w-5 h-5 rounded-full">
+                                                            <AvatarImage src={post.profiles?.avatar_url} />
+                                                            <AvatarFallback className="text-[9px] bg-indigo-100 text-indigo-700 font-bold">
+                                                                {post.profiles?.full_name?.charAt(0) || 'T'}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <span className="text-[11px] font-medium truncate max-w-[100px]">
+                                                            {post.profiles?.full_name || 'TestoZa'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                                        <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-blue-500" /> {post.view_count || 0}</span>
+                                                        <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-rose-500" /> {post.like_count || 0}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+                )}
+
+            </div>
         </div>
     );
 }

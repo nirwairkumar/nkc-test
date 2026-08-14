@@ -38,6 +38,7 @@ export interface Notification {
 export interface PostCreate {
     title: string;
     content: Record<string, any>;
+    slug?: string;
     summary?: string;
     cover_image?: string;
     category?: string;
@@ -48,6 +49,7 @@ export interface PostCreate {
 export interface PostUpdate {
     title?: string;
     content?: Record<string, any>;
+    slug?: string;
     summary?: string;
     cover_image?: string;
     category?: string;
