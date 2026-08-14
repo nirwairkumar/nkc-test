@@ -63,38 +63,118 @@ function renderDeviceBadge(deviceType?: string, browser?: string, os?: string) {
     );
 }
 
+function formatDuration(totalSeconds?: number): string {
+    if (!totalSeconds || totalSeconds <= 0) return '10s';
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (hrs > 0) {
+        return `${hrs}h ${mins}m`;
+    }
+    if (mins > 0) {
+        return `${mins}m ${secs > 0 ? `${secs}s` : ''}`.trim();
+    }
+    return `${secs}s`;
+}
+
+interface PageGroup {
+    dateKey: string;
+    dateLabel: string;
+    isToday: boolean;
+    pages: any[];
+    totalStaySecs: number;
+}
+
+function getGroupedVisitorPages(pages: any[]): PageGroup[] {
+    if (!pages || pages.length === 0) return [];
+
+    const todayStr = new Date().toDateString();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+
+    const groupsMap: Record<string, { dateLabel: string; isToday: boolean; pages: any[]; totalStaySecs: number }> = {};
+    const dateKeysOrder: string[] = [];
+
+    for (const pv of pages) {
+        const pvDate = pv.time ? new Date(pv.time) : new Date();
+        const dateKey = pvDate.toISOString().split('T')[0];
+
+        if (!groupsMap[dateKey]) {
+            let dateLabel = pvDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const ds = pvDate.toDateString();
+            let isToday = false;
+            if (ds === todayStr) {
+                dateLabel = `Today (${pvDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`;
+                isToday = true;
+            } else if (ds === yesterdayStr) {
+                dateLabel = `Yesterday (${pvDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`;
+            }
+
+            groupsMap[dateKey] = {
+                dateLabel,
+                isToday,
+                pages: [],
+                totalStaySecs: 0
+            };
+            dateKeysOrder.push(dateKey);
+        }
+
+        groupsMap[dateKey].pages.push(pv);
+        groupsMap[dateKey].totalStaySecs += (pv.duration_secs || 15);
+    }
+
+    return dateKeysOrder.map(dk => ({
+        dateKey: dk,
+        ...groupsMap[dk]
+    }));
+}
+
 function renderTrafficBadge(visitor: any) {
     if (visitor.is_bot || (visitor.traffic_category && visitor.traffic_category !== 'human')) {
         const cat = visitor.traffic_category;
         if (cat === 'ai_bot') {
+            const label = visitor.traffic_label || 'AI Bot';
             return (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                    <Bot className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
-                    <span>{visitor.traffic_label || 'AI Bot'}</span>
-                </span>
+                <div 
+                    title={label} 
+                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800 transition-transform hover:scale-110 cursor-help"
+                >
+                    <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
             );
         }
         if (cat === 'search_bot') {
+            const label = visitor.traffic_label || 'Search Crawler';
             return (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                    <Globe className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>{visitor.traffic_label || 'Search Crawler'}</span>
-                </span>
+                <div 
+                    title={label} 
+                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-transform hover:scale-110 cursor-help"
+                >
+                    <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
             );
         }
+        const label = visitor.traffic_label || 'Automated Bot';
         return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                <Cpu className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                <span>{visitor.traffic_label || 'Automated Bot'}</span>
-            </span>
+            <div 
+                title={label} 
+                className="inline-flex items-center justify-center p-1.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-transform hover:scale-110 cursor-help"
+            >
+                <Cpu className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
         );
     }
 
+    const label = visitor.traffic_label || 'Real Human';
     return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Human</span>
-        </span>
+        <div 
+            title={label} 
+            className="inline-flex items-center justify-center p-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-transform hover:scale-110 cursor-help"
+        >
+            <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+        </div>
     );
 }
 
@@ -134,8 +214,9 @@ export default function AdminAnalyticsPanel() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [tabLoading, setTabLoading] = useState(true);
 
-    // Lazy load visitor page views
+    // Lazy load visitor page views & date stepper map
     const [visitorPages, setVisitorPages] = useState<Record<string, any[]>>({});
+    const [visitorDateIndexMap, setVisitorDateIndexMap] = useState<Record<string, number>>({});
     const [fetchingPagesId, setFetchingPagesId] = useState<string | null>(null);
 
     // Cache to prevent duplicate database calls
@@ -740,10 +821,15 @@ export default function AdminAnalyticsPanel() {
                                                                         <span>{v.city || 'Unknown'}, {v.country || 'Unknown'}</span>
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-5 py-4 whitespace-nowrap">
-                                                                    <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300" title={v.last_seen_at ? new Date(v.last_seen_at).toLocaleString() : ''}>
-                                                                        <Clock className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                                                                        <span className="font-medium">{formatRelativeTime(v.last_seen_at)}</span>
+                                                                 <td className="px-5 py-4 whitespace-nowrap">
+                                                                    <div className="flex flex-col gap-0.5 text-xs" title={v.last_seen_at ? new Date(v.last_seen_at).toLocaleString() : ''}>
+                                                                        <div className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+                                                                            <Clock className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                                                                            <span>{formatRelativeTime(v.last_seen_at)}</span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-slate-500 dark:text-slate-400 pl-5 font-mono">
+                                                                            Stay: <span className="font-semibold text-slate-700 dark:text-slate-300">{formatDuration(v.total_stay_seconds)}</span>
+                                                                        </div>
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-5 py-4 text-center font-mono font-semibold">{v.total_visits}</td>
@@ -757,29 +843,117 @@ export default function AdminAnalyticsPanel() {
                                                                 </td>
                                                             </tr>
                                                             {isExpanded && (
-                                                                <tr className="bg-slate-50/70 dark:bg-slate-900/50">
-                                                                    <td colSpan={7} className="px-8 py-4 border-l-4 border-indigo-500">
-                                                                        <div className="space-y-2">
-                                                                            <div className="flex items-center justify-between">
-                                                                                <h4 className="font-semibold text-xs text-slate-500 uppercase tracking-wider">Page View Journey</h4>
-                                                                                <span className="text-xs text-slate-400 font-mono">Visitor ID: {v.id}</span>
+                                                                <tr className="bg-slate-50/80 dark:bg-slate-900/60">
+                                                                    <td colSpan={7} className="px-6 py-4 border-l-4 border-indigo-500">
+                                                                        {fetchingPagesId === v.id ? (
+                                                                            <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+                                                                                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                                                                                <span>Loading page views...</span>
                                                                             </div>
-                                                                            {fetchingPagesId === v.id ? (
-                                                                                <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-                                                                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-600" />
-                                                                                    <span>Loading page views...</span>
-                                                                                </div>
-                                                                            ) : (visitorPages[v.id] || []).length === 0 ? (
-                                                                                <p className="text-xs text-slate-400 italic py-1">No detailed page views recorded.</p>
-                                                                            ) : (
-                                                                                (visitorPages[v.id] || []).map((pv: any, idx: number) => (
-                                                                                    <div key={idx} className="flex justify-between text-xs py-1.5 border-b border-slate-200/60 dark:border-slate-800">
-                                                                                        <span className="font-medium text-slate-800 dark:text-slate-200">{pv.title || 'Untitled'} <span className="text-slate-400 font-normal">({pv.path})</span></span>
-                                                                                        <span className="text-slate-500 font-mono">{new Date(pv.time).toLocaleTimeString()}</span>
+                                                                        ) : (() => {
+                                                                            const pages = visitorPages[v.id] || [];
+                                                                            if (pages.length === 0) {
+                                                                                return <p className="text-xs text-slate-400 italic py-2">No detailed page views recorded.</p>;
+                                                                            }
+                                                                            const dateGroups = getGroupedVisitorPages(pages);
+                                                                            const currentIdx = Math.min(visitorDateIndexMap[v.id] || 0, dateGroups.length - 1);
+                                                                            const currentGroup = dateGroups[currentIdx] || dateGroups[0];
+                                                                            const hasPrevDate = currentIdx < dateGroups.length - 1;
+                                                                            const hasNextDate = currentIdx > 0;
+
+                                                                            return (
+                                                                                <div className="space-y-4">
+                                                                                    {/* Header bar with Date Info & Stepper Buttons */}
+                                                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+                                                                                        <div>
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <span className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                                                                                    📅 {currentGroup.dateLabel}
+                                                                                                </span>
+                                                                                                {currentGroup.isToday && (
+                                                                                                    <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                                                                                                        Today
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                                                {currentGroup.pages.length} {currentGroup.pages.length === 1 ? 'page view' : 'page views'} • Stay Time: <span className="font-semibold text-slate-700 dark:text-slate-200">{formatDuration(currentGroup.totalStaySecs)}</span>
+                                                                                            </p>
+                                                                                        </div>
+
+                                                                                        {/* Controls: Stepper Button & Date Selector Dropdown */}
+                                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                                            {dateGroups.length > 1 && (
+                                                                                                <div className="flex items-center gap-1 bg-slate-200/60 dark:bg-slate-800/80 p-1 rounded-lg">
+                                                                                                    {hasNextDate && (
+                                                                                                        <button
+                                                                                                            onClick={() => setVisitorDateIndexMap(prev => ({ ...prev, [v.id]: currentIdx - 1 }))}
+                                                                                                            className="px-2.5 py-1 text-xs font-semibold rounded bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-100 transition-colors flex items-center gap-1"
+                                                                                                            title="View Newer Date"
+                                                                                                        >
+                                                                                                            ← Newer Date
+                                                                                                        </button>
+                                                                                                    )}
+
+                                                                                                    {hasPrevDate && (
+                                                                                                        <button
+                                                                                                            onClick={() => setVisitorDateIndexMap(prev => ({ ...prev, [v.id]: currentIdx + 1 }))}
+                                                                                                            className="px-2.5 py-1 text-xs font-semibold rounded bg-indigo-600 text-white shadow-xs hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                                                                                                            title={`View Previous Date: ${dateGroups[currentIdx + 1]?.dateLabel}`}
+                                                                                                        >
+                                                                                                            <span>View Previous Date ({dateGroups[currentIdx + 1]?.dateLabel})</span>
+                                                                                                            <span className="font-bold">→</span>
+                                                                                                        </button>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            )}
+
+                                                                                            {dateGroups.length > 1 && (
+                                                                                                <select
+                                                                                                    value={currentIdx}
+                                                                                                    onChange={(e) => setVisitorDateIndexMap(prev => ({ ...prev, [v.id]: Number(e.target.value) }))}
+                                                                                                    className="text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                                                >
+                                                                                                    {dateGroups.map((g, idx) => (
+                                                                                                        <option key={g.dateKey} value={idx}>
+                                                                                                            {g.dateLabel} ({g.pages.length} visits)
+                                                                                                        </option>
+                                                                                                    ))}
+                                                                                                </select>
+                                                                                            )}
+                                                                                        </div>
                                                                                     </div>
-                                                                                ))
-                                                                            )}
-                                                                        </div>
+
+                                                                                    {/* Page List for current selected date */}
+                                                                                    <div className="space-y-2">
+                                                                                        {currentGroup.pages.map((pv: any, idx: number) => (
+                                                                                            <div 
+                                                                                                key={idx} 
+                                                                                                className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+                                                                                            >
+                                                                                                <div className="flex flex-col min-w-0 pr-4">
+                                                                                                    <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate">
+                                                                                                        {pv.title || 'Untitled Page'}
+                                                                                                    </span>
+                                                                                                    <span className="text-[11px] text-slate-400 font-mono truncate">
+                                                                                                        {pv.path}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                                <div className="flex items-center gap-3 shrink-0 text-xs">
+                                                                                                    <span className="inline-flex items-center gap-1 font-mono font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded text-[11px]">
+                                                                                                        <Clock className="h-3 w-3" />
+                                                                                                        {formatDuration(pv.duration_secs)} stay
+                                                                                                    </span>
+                                                                                                    <span className="text-slate-400 font-mono text-[11px]">
+                                                                                                        {pv.time ? new Date(pv.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })()}
                                                                     </td>
                                                                 </tr>
                                                             )}
