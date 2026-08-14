@@ -7,14 +7,8 @@ import {
     AlignLeft, AlignCenter, AlignRight,
     List, ListOrdered, Link as LinkIcon, Image as ImageIcon,
     Quote, SeparatorHorizontal, Undo, Redo, Table as TableIcon,
-    Code, Sparkles
+    Code, Type
 } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 import { postsApi } from '@/lib/postsApi';
 
@@ -48,245 +42,312 @@ export default function PostToolbar({ editor }: PostToolbarProps) {
 
     const setLink = () => {
         const previousUrl = editor.getAttributes('link').href;
-        const url = window.prompt('Enter Link URL (e.g. https://testoza.com/quiz)', previousUrl);
+        const url = window.prompt('Enter Link URL (e.g. https://testoza.com/quiz)', previousUrl || 'https://');
 
         if (url === null) {
             return;
         }
 
-        if (url === '') {
+        if (url.trim() === '' || url.trim() === 'https://') {
             editor.chain().focus().extendMarkRange('link').unsetLink().run();
             return;
         }
 
-        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+        editor.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();
     };
 
     const insertTable = () => {
         editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
     };
 
+    // Helper to execute command while preserving cursor focus
+    const runCmd = (e: React.MouseEvent, fn: () => void) => {
+        e.preventDefault(); // Prevent button from stealing focus from text area
+        fn();
+    };
+
     return (
-        <div className="border-b border-slate-200 dark:border-slate-800 p-2 flex flex-wrap items-center gap-1 sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur z-30">
+        <div className="border-b border-slate-200 dark:border-slate-800 p-2 flex flex-wrap items-center gap-1.5 sticky top-0 bg-white/98 dark:bg-slate-900/98 backdrop-blur z-30 shadow-2xs select-none">
+            
             {/* Undo / Redo */}
-            <div className="flex items-center space-x-0.5 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-1">
-                <Button
+            <div className="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-0.5">
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().undo().run()}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().undo().run())}
                     disabled={!editor.can().undo()}
-                    className="h-7 w-7 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    title="Undo"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    title="Undo (Ctrl+Z)"
                 >
-                    <Undo className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <Undo className="h-4 w-4" />
+                </button>
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().redo().run()}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().redo().run())}
                     disabled={!editor.can().redo()}
-                    className="h-7 w-7 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    title="Redo"
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    title="Redo (Ctrl+Y)"
                 >
-                    <Redo className="h-3.5 w-3.5" />
-                </Button>
+                    <Redo className="h-4 w-4" />
+                </button>
             </div>
 
-            {/* Typography / Headings */}
-            <div className="flex items-center space-x-0.5 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-1">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            {editor.isActive('heading', { level: 1 }) ? 'H1 Title' :
-                             editor.isActive('heading', { level: 2 }) ? 'H2 Section' :
-                             editor.isActive('heading', { level: 3 }) ? 'H3 Subheading' :
-                             'Paragraph'}
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        <DropdownMenuItem onClick={() => editor.chain().focus().setParagraph().run()} className={editor.isActive('paragraph') ? 'bg-slate-100 dark:bg-slate-800 font-bold' : ''}>
-                            Paragraph
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={editor.isActive('heading', { level: 1 }) ? 'bg-slate-100 dark:bg-slate-800 font-bold' : ''}>
-                            <Heading1 className="h-4 w-4 mr-2 text-indigo-500" /> Heading 1
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={editor.isActive('heading', { level: 2 }) ? 'bg-slate-100 dark:bg-slate-800 font-bold' : ''}>
-                            <Heading2 className="h-4 w-4 mr-2 text-indigo-500" /> Heading 2 (Major Section)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={editor.isActive('heading', { level: 3 }) ? 'bg-slate-100 dark:bg-slate-800 font-bold' : ''}>
-                            <Heading3 className="h-4 w-4 mr-2 text-indigo-500" /> Heading 3 (Subsection)
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+            {/* Direct Heading Selectors (LinkedIn Style) */}
+            <div className="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-0.5">
+                <button
+                    type="button"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().setParagraph().run())}
+                    className={`h-8 px-2.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${
+                        editor.isActive('paragraph') && !editor.isActive('heading')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Normal Paragraph"
+                >
+                    <Type className="h-3.5 w-3.5" />
+                    <span>Normal</span>
+                </button>
 
-                <Button
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleBold().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('bold') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-bold' : 'text-slate-600 dark:text-slate-400'}`}
-                    title="Bold"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleHeading({ level: 1 }).run())}
+                    className={`h-8 px-2.5 rounded-lg text-xs font-extrabold transition-colors flex items-center gap-1 ${
+                        editor.isActive('heading', { level: 1 })
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Heading 1 (Main Section Title)"
                 >
-                    <Bold className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <Heading1 className="h-4 w-4" />
+                    <span>H1</span>
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleItalic().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('italic') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
-                    title="Italic"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleHeading({ level: 2 }).run())}
+                    className={`h-8 px-2.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${
+                        editor.isActive('heading', { level: 2 })
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Heading 2 (Subsection Title)"
                 >
-                    <Italic className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <Heading2 className="h-4 w-4" />
+                    <span>H2</span>
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleUnderline().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('underline') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
-                    title="Underline"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleHeading({ level: 3 }).run())}
+                    className={`h-8 px-2.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 ${
+                        editor.isActive('heading', { level: 3 })
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Heading 3 (Minor Topic)"
                 >
-                    <Underline className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <Heading3 className="h-4 w-4" />
+                    <span>H3</span>
+                </button>
+            </div>
+
+            {/* Inline Formatting (Bold, Italic, Underline, Strike) */}
+            <div className="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-0.5">
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleStrike().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('strike') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleBold().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
+                        editor.isActive('bold')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Bold (Ctrl+B)"
+                >
+                    <Bold className="h-4 w-4" />
+                </button>
+
+                <button
+                    type="button"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleItalic().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive('italic')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Italic (Ctrl+I)"
+                >
+                    <Italic className="h-4 w-4" />
+                </button>
+
+                <button
+                    type="button"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleUnderline().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive('underline')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Underline (Ctrl+U)"
+                >
+                    <Underline className="h-4 w-4" />
+                </button>
+
+                <button
+                    type="button"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleStrike().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive('strike')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     title="Strikethrough"
                 >
-                    <Strikethrough className="h-3.5 w-3.5" />
-                </Button>
+                    <Strikethrough className="h-4 w-4" />
+                </button>
             </div>
 
-            {/* Formatting & Alignment */}
-            <div className="flex items-center space-x-0.5 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-1">
-                <Button
+            {/* Alignment */}
+            <div className="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-0.5">
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().setTextAlign('left').run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive({ textAlign: 'left' }) ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().setTextAlign('left').run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive({ textAlign: 'left' })
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     title="Align Left"
                 >
-                    <AlignLeft className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <AlignLeft className="h-4 w-4" />
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().setTextAlign('center').run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive({ textAlign: 'center' }) ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().setTextAlign('center').run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive({ textAlign: 'center' })
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     title="Align Center"
                 >
-                    <AlignCenter className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <AlignCenter className="h-4 w-4" />
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().setTextAlign('right').run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive({ textAlign: 'right' }) ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().setTextAlign('right').run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive({ textAlign: 'right' })
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     title="Align Right"
                 >
-                    <AlignRight className="h-3.5 w-3.5" />
-                </Button>
+                    <AlignRight className="h-4 w-4" />
+                </button>
             </div>
 
-            {/* Lists & Quotes */}
-            <div className="flex items-center space-x-0.5 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-1">
-                <Button
+            {/* Lists, Quote, Code, Divider */}
+            <div className="flex items-center space-x-1 border-r border-slate-200 dark:border-slate-800 pr-1.5 mr-0.5">
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleBulletList().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('bulletList') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleBulletList().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive('bulletList')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     title="Bullet List"
                 >
-                    <List className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <List className="h-4 w-4" />
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('orderedList') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleOrderedList().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive('orderedList')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     title="Numbered List"
                 >
-                    <ListOrdered className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <ListOrdered className="h-4 w-4" />
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('blockquote') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
-                    title="Blockquote"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleBlockquote().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive('blockquote')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Blockquote (Quote Block)"
                 >
-                    <Quote className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <Quote className="h-4 w-4" />
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-                    className={`h-7 w-7 p-0 ${editor.isActive('codeBlock') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400'}`}
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().toggleCodeBlock().run())}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs transition-colors ${
+                        editor.isActive('codeBlock')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                     title="Code Block"
                 >
-                    <Code className="h-3.5 w-3.5" />
-                </Button>
-                <Button
+                    <Code className="h-4 w-4" />
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().setHorizontalRule().run()}
-                    className="h-7 w-7 p-0 text-slate-600 dark:text-slate-400"
-                    title="Divider Line"
+                    onMouseDown={(e) => runCmd(e, () => editor.chain().focus().setHorizontalRule().run())}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    title="Insert Divider Line"
                 >
-                    <SeparatorHorizontal className="h-3.5 w-3.5" />
-                </Button>
+                    <SeparatorHorizontal className="h-4 w-4" />
+                </button>
             </div>
 
-            {/* Media & Links */}
-            <div className="flex items-center space-x-0.5">
-                <Button
+            {/* Media: Link, Image, Table */}
+            <div className="flex items-center space-x-1">
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={setLink}
-                    className={`h-7 px-2 text-xs flex items-center gap-1 ${editor.isActive('link') ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-semibold' : 'text-slate-600 dark:text-slate-400'}`}
-                    title="Add Link"
+                    onMouseDown={(e) => runCmd(e, setLink)}
+                    className={`h-8 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
+                        editor.isActive('link')
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                    title="Insert Hyperlink"
                 >
                     <LinkIcon className="h-3.5 w-3.5" />
                     <span>Link</span>
-                </Button>
-                <Button
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={addImage}
-                    className="h-7 px-2 text-xs flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                    title="Insert Image into Content"
+                    onMouseDown={(e) => runCmd(e, addImage)}
+                    className="h-8 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    title="Insert Inline Image"
                 >
-                    <ImageIcon className="h-3.5 w-3.5 text-indigo-500" />
+                    <ImageIcon className="h-3.5 w-3.5 text-indigo-600" />
                     <span>Image</span>
-                </Button>
-                <Button
+                </button>
+
+                <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={insertTable}
-                    className="h-7 px-2 text-xs flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                    title="Insert Table"
+                    onMouseDown={(e) => runCmd(e, insertTable)}
+                    className="h-8 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    title="Insert 3x3 Table"
                 >
-                    <TableIcon className="h-3.5 w-3.5 text-indigo-500" />
+                    <TableIcon className="h-3.5 w-3.5 text-indigo-600" />
                     <span>Table</span>
-                </Button>
+                </button>
             </div>
+
         </div>
     );
 }

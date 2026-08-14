@@ -379,10 +379,13 @@ export default function NewsPostEditor() {
                             />
                         </div>
 
-                        {/* Rich Document Editor Canvas */}
+                        {/* Rich Document Editor Canvas (LinkedIn Article Style) */}
                         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
                             {editor && <PostToolbar editor={editor} />}
-                            <div className="min-h-[550px] p-6 sm:p-10 prose prose-slate dark:prose-invert max-w-none focus-within:outline-none placeholder:text-slate-300">
+                            <div 
+                                onClick={() => editor?.commands.focus()}
+                                className="tiptap-editorial-canvas min-h-[550px] p-6 sm:p-10 cursor-text focus-within:outline-none"
+                            >
                                 <EditorContent editor={editor} />
                             </div>
                         </div>
