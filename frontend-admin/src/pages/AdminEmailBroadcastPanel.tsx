@@ -205,6 +205,33 @@ const TEMPLATE_PRESETS = [
     <a href="https://testoza.com/dashboard" class="button">Conduct Tests & Claim Your Badge →</a>
 </p>
 <p>Warm regards,<br><strong>Nirwair & The TestoZa Team</strong></p>`
+    },
+    {
+        name: "💬 Issue Report & Experience Feedback",
+        subject: "Quick check-in: Did you face any issue creating or conducting tests?",
+        body: `<p>Hello <strong>{name}</strong>,</p>
+<p>We hope you’re having a great experience on <strong>TestoZa</strong>. We are reaching out with a quick check-in to ask if everything went smoothly while <strong>creating questions</strong> or <strong>conducting/taking tests</strong> on our platform.</p>
+
+<div style="background-color: #f8fafc; border-left: 4px solid #4f46e5; border-radius: 8px; padding: 14px 18px; margin: 20px 0; border: 1px solid #e2e8f0;">
+    <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">Did you encounter any issues with:</p>
+    <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #475569; line-height: 1.6;">
+        <li>Creating, editing, or importing test questions &amp; math equations?</li>
+        <li>Conducting live tests or student submission/timer flows?</li>
+        <li>Viewing results, leaderboards, or score analytics?</li>
+    </ul>
+</div>
+
+<p>If you encountered any glitch, or have suggestions to make TestoZa better for you, please write and submit it directly to us using our <strong>Support &amp; Report</strong> portal below:</p>
+
+<p style="text-align: center; margin: 26px 0;">
+    <a href="https://testoza.com/support" class="button">Write to Support &amp; Report &rarr;</a>
+</p>
+
+<p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 24px;">
+    You can also simply <strong>reply directly to this email</strong> (<a href="mailto:support@testoza.com" style="color: #4f46e5; text-decoration: underline;">support@testoza.com</a>) and our team will get back to you immediately.
+</p>
+
+<p>Warm regards,<br><strong>Nirwair & The TestoZa Team</strong></p>`
     }
 ];
 
