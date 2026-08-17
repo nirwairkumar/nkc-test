@@ -36,6 +36,7 @@ export default function AdminDashboard() {
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = (searchParams.get('tab') as TabId) || 'analytics';
     const [conductCount, setConductCount] = useState<number>(0);
+    const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
     useEffect(() => {
         const loadInitialConductCount = async () => {
@@ -110,8 +111,6 @@ export default function AdminDashboard() {
             ]
         }
     ];
-
-    const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
     return (
         <div className="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row font-sans">
