@@ -100,6 +100,30 @@ def generate_slug(title: str, custom_slug: Optional[str] = None) -> str:
     suffix = str(int(time.time() % 100000))
     return f"{slug}-{suffix}"
 
+def _attach_author_profiles(posts: List[Dict[str, Any]], db: Client) -> List[Dict[str, Any]]:
+    """Resiliently attach author profile information without relying on PostgREST foreign key embedding."""
+    if not posts:
+        return posts
+    author_ids = list({p.get("author_id") for p in posts if p.get("author_id")})
+    profiles_map = {}
+    if author_ids:
+        try:
+            prof_res = db.table("profiles").select("id, full_name, avatar_url, is_verified_creator, bio").in_("id", author_ids).execute()
+            for prof in (prof_res.data or []):
+                profiles_map[prof["id"]] = prof
+        except Exception as pe:
+            print(f"Warning: Failed to fetch author profiles: {pe}")
+            
+    for p in posts:
+        p["profiles"] = profiles_map.get(p.get("author_id"), {
+            "id": p.get("author_id"),
+            "full_name": "TestoZa Team",
+            "avatar_url": None,
+            "is_verified_creator": True,
+            "bio": ""
+        })
+    return posts
+
 # --- Endpoints ---
 
 @router.get("/feed")
@@ -113,7 +137,7 @@ async def get_posts_feed(
 ):
     try:
         query = db.table("posts").select(
-            "id, title, slug, summary, cover_image, category, tags, published_at, view_count, like_count, is_pinned, author_id, profiles(id, full_name, avatar_url, is_verified_creator)"
+            "id, title, slug, summary, cover_image, category, tags, published_at, view_count, like_count, is_pinned, author_id, created_at, updated_at"
         ).eq("status", "published")
         
         if category and category != "all":
@@ -133,7 +157,8 @@ async def get_posts_feed(
         query = query.range(start, end)
         
         response = query.execute()
-        return response.data
+        posts = response.data or []
+        return _attach_author_profiles(posts, db)
     except Exception as e:
         print(f"Error fetching feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -148,42 +173,33 @@ async def get_my_posts(
         _verify_owner_or_admin(user_id, request, db)
         is_admin = _is_user_admin(user_id, db)
         if is_admin:
-            # Admins can view and manage all posts across the platform
-            response = db.table("posts").select("id, author_id, title, slug, summary, cover_image, category, tags, status, is_pinned, view_count, like_count, published_at, created_at, updated_at").order("created_at", desc=True).execute()
+            # Admins can view and manage all posts across the platform (includes content for editing)
+            response = db.table("posts").select("*").order("created_at", desc=True).execute()
         else:
-            response = db.table("posts").select("id, author_id, title, slug, summary, cover_image, category, tags, status, is_pinned, view_count, like_count, published_at, created_at, updated_at").eq("author_id", user_id).order("created_at", desc=True).execute()
-        return response.data
+            response = db.table("posts").select("*").eq("author_id", user_id).order("created_at", desc=True).execute()
+        posts = response.data or []
+        return _attach_author_profiles(posts, db)
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error fetching my posts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{slug}")
-async def get_post_by_slug(
-    slug: str,
+@router.get("/id/{post_id}")
+async def get_post_by_id(
+    post_id: str,
     db: Client = Depends(get_db)
 ):
     try:
-        response = db.table("posts").select(
-            "*, profiles(id, full_name, avatar_url, is_verified_creator, bio)"
-        ).eq("slug", slug).execute()
-        
+        response = db.table("posts").select("*").eq("id", post_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="Post not found")
-            
-        post = response.data[0]
-        
-        # Increment view count (if published)
-        if post.get("status") == "published":
-            db.table("posts").update({"view_count": post["view_count"] + 1}).eq("id", post["id"]).execute()
-            post["view_count"] += 1
-            
-        return post
+        posts = _attach_author_profiles(response.data, db)
+        return posts[0]
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching post: {e}")
+        print(f"Error fetching post by id: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sitemap.xml")
@@ -222,10 +238,42 @@ async def get_blog_sitemap(db: Client = Depends(get_db)):
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
-{"".join(xml_items)}
+{ "".join(xml_items) }
 </urlset>"""
         return Response(content=xml_content, media_type="application/xml")
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{slug}")
+async def get_post_by_slug(
+    slug: str,
+    db: Client = Depends(get_db)
+):
+    try:
+        response = db.table("posts").select("*").eq("slug", slug).execute()
+        
+        if not response.data:
+            # Fallback: check if slug is a post ID UUID
+            response = db.table("posts").select("*").eq("id", slug).execute()
+            if not response.data:
+                raise HTTPException(status_code=404, detail="Post not found")
+            
+        posts = _attach_author_profiles(response.data, db)
+        post = posts[0]
+        
+        # Increment view count (if published)
+        if post.get("status") == "published":
+            try:
+                db.table("posts").update({"view_count": (post.get("view_count") or 0) + 1}).eq("id", post["id"]).execute()
+                post["view_count"] = (post.get("view_count") or 0) + 1
+            except Exception as ve:
+                print(f"Warning: Failed to increment view count: {ve}")
+            
+        return post
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("")

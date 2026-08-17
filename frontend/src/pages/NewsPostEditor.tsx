@@ -63,8 +63,13 @@ export default function NewsPostEditor() {
     const { data: existingPost, isLoading: isLoadingPost } = useQuery({
         queryKey: ['post-edit', id],
         queryFn: async () => {
-            const posts = await postsApi.getMyPosts();
-            return posts.find(p => p.id === id) || null;
+            if (!id) return null;
+            try {
+                return await postsApi.getPostById(id);
+            } catch {
+                const posts = await postsApi.getMyPosts();
+                return posts.find(p => p.id === id) || null;
+            }
         },
         enabled: isEditing,
     });
@@ -143,14 +148,22 @@ export default function NewsPostEditor() {
 
     // Populate form if editing
     useEffect(() => {
-        if (existingPost && editor) {
-            setTitle(existingPost.title);
+        if (existingPost && editor && !editor.isDestroyed) {
+            setTitle(existingPost.title || '');
             setSummary(existingPost.summary || '');
-            setCategory(existingPost.category);
+            setCategory(existingPost.category || 'general');
             setTags(existingPost.tags || []);
             setCoverImage(existingPost.cover_image || null);
-            if (!editor.isDestroyed) {
-                editor.commands.setContent(existingPost.content || '');
+            if (existingPost.content) {
+                let contentToSet = existingPost.content;
+                if (typeof contentToSet === 'string' && (contentToSet.startsWith('{') || contentToSet.startsWith('['))) {
+                    try {
+                        contentToSet = JSON.parse(contentToSet);
+                    } catch (e) {
+                        // ignore and use string
+                    }
+                }
+                editor.commands.setContent(contentToSet);
             }
         }
     }, [existingPost, editor]);

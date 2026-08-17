@@ -30,6 +30,11 @@ export const postsApi = {
         return response.data;
     },
 
+    getPostById: async (id: string) => {
+        const response = await apiClient.get<PostDetailed>(`/posts/id/${encodeURIComponent(id)}`);
+        return response.data;
+    },
+
     // Creator Dashboard
     getMyPosts: async () => {
         const userId = getUserIdFromToken();

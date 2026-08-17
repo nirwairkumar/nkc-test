@@ -70,8 +70,13 @@ export default function NewsPostEditor() {
     const { data: existingPost, isLoading: isLoadingPost } = useQuery({
         queryKey: ['post-edit', id],
         queryFn: async () => {
-            const posts = await postsApi.getMyPosts();
-            return posts.find(p => p.id === id) || null;
+            if (!id) return null;
+            try {
+                return await postsApi.getPostById(id);
+            } catch {
+                const posts = await postsApi.getMyPosts();
+                return posts.find(p => p.id === id) || null;
+            }
         },
         enabled: isEditing,
     });
@@ -175,8 +180,8 @@ export default function NewsPostEditor() {
 
     // Populate form if editing
     useEffect(() => {
-        if (existingPost && editor) {
-            setTitle(existingPost.title);
+        if (existingPost && editor && !editor.isDestroyed) {
+            setTitle(existingPost.title || '');
             setSlug(existingPost.slug || '');
             setIsCustomSlug(true);
             setSummary(existingPost.summary || '');
@@ -184,8 +189,16 @@ export default function NewsPostEditor() {
             setTags(existingPost.tags || []);
             setCoverImage(existingPost.cover_image || null);
             setIsPinned(!!existingPost.is_pinned);
-            if (!editor.isDestroyed && existingPost.content) {
-                editor.commands.setContent(existingPost.content);
+            if (existingPost.content) {
+                let contentToSet = existingPost.content;
+                if (typeof contentToSet === 'string' && (contentToSet.startsWith('{') || contentToSet.startsWith('['))) {
+                    try {
+                        contentToSet = JSON.parse(contentToSet);
+                    } catch (e) {
+                        // ignore and use string
+                    }
+                }
+                editor.commands.setContent(contentToSet);
             }
         }
     }, [existingPost, editor]);
@@ -242,8 +255,11 @@ export default function NewsPostEditor() {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['posts'] });
             queryClient.invalidateQueries({ queryKey: ['my-posts'] });
+            if (id) {
+                queryClient.invalidateQueries({ queryKey: ['post-edit', id] });
+            }
             toast.success(data.status === 'published' ? "🎉 Blog Post Published Live!" : "💾 Draft Saved Successfully!");
-            navigate('/posts');
+            navigate('/admin?tab=posts');
         },
         onError: (err: any) => {
             toast.error(err?.response?.data?.detail || err.message || "Failed to save blog post");

@@ -126,6 +126,18 @@ export default function NewsPostView() {
         editable: false,
     }, [post?.content]);
 
+    useEffect(() => {
+        if (editor && !editor.isDestroyed && post?.content) {
+            let contentToSet = post.content;
+            if (typeof contentToSet === 'string' && (contentToSet.startsWith('{') || contentToSet.startsWith('['))) {
+                try {
+                    contentToSet = JSON.parse(contentToSet);
+                } catch (e) {}
+            }
+            editor.commands.setContent(contentToSet);
+        }
+    }, [editor, post?.content]);
+
     // Estimated Reading Time
     const readTimeMinutes = useMemo(() => {
         if (!post?.content) return 3;
