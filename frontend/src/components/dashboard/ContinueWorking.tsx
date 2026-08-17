@@ -80,34 +80,30 @@ export default function ContinueWorking({
                     <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl overflow-x-auto max-w-full scrollbar-hide shrink-0">
                         <button
                             onClick={() => setActiveTab('all')}
-                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                                activeTab === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                            }`}
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                                }`}
                         >
                             All ({safeTests.length})
                         </button>
                         <button
                             onClick={() => setActiveTab('live')}
-                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                                activeTab === 'live' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                            }`}
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'live' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                                }`}
                         >
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Live ({safeTests.filter(isLive).length})
                         </button>
                         <button
                             onClick={() => setActiveTab('drafts')}
-                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                                activeTab === 'drafts' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                            }`}
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === 'drafts' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                                }`}
                         >
                             Drafts ({safeTests.filter(isDraft).length})
                         </button>
                         <button
                             onClick={() => setActiveTab('scheduled')}
-                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                                activeTab === 'scheduled' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                            }`}
+                            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${activeTab === 'scheduled' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                                }`}
                         >
                             Scheduled ({safeTests.filter(isScheduled).length})
                         </button>
@@ -148,11 +144,10 @@ export default function ContinueWorking({
                         return (
                             <div
                                 key={test.id}
-                                className={`rounded-xl border p-4 transition-all duration-200 flex flex-col justify-between group ${
-                                    testIsLive
+                                className={`rounded-xl border p-4 transition-all duration-200 flex flex-col justify-between group ${testIsLive
                                         ? 'bg-emerald-50/30 border-emerald-200 shadow-xs'
                                         : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md'
-                                }`}
+                                    }`}
                             >
                                 <div>
                                     {/* Top Status & Badge */}

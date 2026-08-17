@@ -293,7 +293,7 @@ export default function TeacherDashboard() {
                 tests={tests}
                 configuringTest={selectedTestForSettings}
                 conductExamTest={selectedTestForConduct}
-                onSkip={() => {}}
+                onSkip={() => { }}
                 userId={targetUserId}
             />
 

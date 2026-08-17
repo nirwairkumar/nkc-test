@@ -203,7 +203,7 @@ export default function UserTestManager() {
 
     const checkCreatorStatus = async () => {
         if (!targetUserId) return;
-        
+
         // If not impersonating and we already have the profile data, load it immediately
         if (targetUserId === user?.id && profile) {
             setIsCreator(profile.is_creator);
@@ -279,7 +279,7 @@ export default function UserTestManager() {
                 signal: controller.signal
             });
             if (error) throw error;
-            
+
             const fetchedTests = data || [];
             if (reset) {
                 setTests(fetchedTests);
@@ -392,7 +392,7 @@ export default function UserTestManager() {
         const isPublic = newVisibility === 'public';
         const oldVisibility = test.visibility;
 
-        const restoredSlug = isPublic 
+        const restoredSlug = isPublic
             ? (test.custom_id || test.id)
             : `unlisted-${test.custom_id || test.id}`;
 
@@ -1327,11 +1327,10 @@ export default function UserTestManager() {
                                 </AlertDialogAction>
                                 <button
                                     onClick={() => setRemoveInfoOpen(removeInfoOpen === 'public' ? null : 'public')}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
-                                        removeInfoOpen === 'public'
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${removeInfoOpen === 'public'
                                             ? 'bg-indigo-200 text-indigo-700'
                                             : 'bg-indigo-50 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100'
-                                    }`}
+                                        }`}
                                 >
                                     <Info className="w-4 h-4" />
                                 </button>
@@ -1354,11 +1353,10 @@ export default function UserTestManager() {
                                 </AlertDialogAction>
                                 <button
                                     onClick={() => setRemoveInfoOpen(removeInfoOpen === 'private' ? null : 'private')}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${
-                                        removeInfoOpen === 'private'
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${removeInfoOpen === 'private'
                                             ? 'bg-red-200 text-red-700'
                                             : 'bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100'
-                                    }`}
+                                        }`}
                                 >
                                     <Info className="w-4 h-4" />
                                 </button>

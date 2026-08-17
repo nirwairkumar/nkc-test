@@ -62,6 +62,7 @@ const App: React.FC = () => {
                   <Route path="/posts/create" element={<NewsPostEditor />} />
                   <Route path="/posts/edit/:id" element={<NewsPostEditor />} />
                   <Route path="/analytics" element={<Navigate to="/admin?tab=analytics" replace />} />
+                  <Route path="/notifications" element={<Navigate to="/admin?tab=notifications" replace />} />
                   <Route path="/manage-tests" element={<Navigate to="/admin?tab=tests" replace />} />
                   <Route path="/create-test" element={<Navigate to="/admin?tab=builder" replace />} />
                   <Route path="/ai-importer" element={<Navigate to="/admin?tab=importer" replace />} />

@@ -120,11 +120,21 @@ async def create_notification(payload: NotificationCreate, db: Client = Depends(
 @router.put("/notifications/{id}/read")
 async def mark_read(id: str, user_id: str, db: Client = Depends(get_db)):
     try:
-        response = db.table("notifications").update({"read": True})\
+        response = db.table("notifications").update({"read": True, "is_read": True})\
             .eq("id", id)\
             .eq("user_id", user_id)\
             .execute()
         return response.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/notifications/mark-all-read/{user_id}")
+async def mark_all_read(user_id: str, db: Client = Depends(get_db)):
+    try:
+        response = db.table("notifications").update({"read": True, "is_read": True})\
+            .eq("user_id", user_id)\
+            .execute()
+        return {"success": True, "data": response.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
