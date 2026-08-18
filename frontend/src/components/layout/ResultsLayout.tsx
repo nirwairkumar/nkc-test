@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NavLink, Outlet, useParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Trophy, Target, BookOpen, Menu, Share2, Home, MessageCircle, Download, Facebook, Instagram, Disc as Reddit, Sparkles, LayoutDashboard, RotateCcw, LayoutGrid, NotepadText, PanelBottomClose } from 'lucide-react';
 import { useTest } from '@/contexts/TestContext';
@@ -53,7 +53,23 @@ export default function ResultsLayout() {
     const userName = fullUserName.split(' ')[0];
 
     // Try to extract State Data so we can pass it down through Outlet context or links
-    const stateData = location.state as any;
+    const rawStateData = location.state as any;
+
+    const stateData = useMemo(() => {
+        if (rawStateData) return rawStateData;
+        try {
+            const stored = sessionStorage.getItem('latest_test_result');
+            if (!stored) return null;
+            const parsed = JSON.parse(stored);
+            if (parsed?.userId && user?.id && parsed.userId !== user.id) {
+                return null;
+            }
+            return parsed;
+        } catch {
+            return null;
+        }
+    }, [rawStateData, user?.id]);
+
     // We get testId either from URL or state
     const currentTestId = testId || stateData?.test?.id;
 
@@ -62,6 +78,22 @@ export default function ResultsLayout() {
     const { resetTest } = useTest();
     
     const isSingleAttempt = stateData?.test?.settings?.attempt_limit === 1;
+
+    const isConductMode = useMemo(() => {
+        return !!(
+            stateData?.test?.settings?.conduct_exam?.enabled ||
+            stateData?.test?.settings?.conduct_exam ||
+            stateData?.test?.visibility === 'conduct' ||
+            stateData?.test?.is_conduct_mode ||
+            stateData?.test?.metadata?.conduct_exam ||
+            stateData?.metadata?.conduct_exam ||
+            stateData?.attempt?.metadata?.conduct_exam ||
+            stateData?.attempt?.metadata?.visibility === 'conduct' ||
+            stateData?.attempt?.metadata?.test_visibility === 'conduct' ||
+            stateData?.p1?.test?.settings?.conduct_exam?.enabled ||
+            stateData?.p2?.test?.settings?.conduct_exam?.enabled
+        );
+    }, [stateData]);
 
     // Build base URL for navigation
     const basePath = '/results';
@@ -178,76 +210,80 @@ export default function ResultsLayout() {
                     </NavLink>
                 )}
 
-                <Button
-                    variant="ghost"
-                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                    onClick={() => {
-                        const test = stateData?.test || { id: currentTestId, title: "Test" };
-                        const score = stateData?.score || 0;
-                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                        shareWithFriends(test, score, totalMarks);
-                    }}
-                >
-                    <Share2 className="mr-3 h-5 w-5" />
-                    Share with friends
-                </Button>
+                {!isConductMode && (
+                    <>
+                        <Button
+                            variant="ghost"
+                            className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                            onClick={() => {
+                                const test = stateData?.test || { id: currentTestId, title: "Test" };
+                                const score = stateData?.score || 0;
+                                const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                                shareWithFriends(test, score, totalMarks);
+                            }}
+                        >
+                            <Share2 className="mr-3 h-5 w-5" />
+                            Share with friends
+                        </Button>
 
-                <Button
-                    variant="ghost"
-                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                    onClick={() => {
-                        const test = stateData?.test || { id: currentTestId, title: "Test" };
-                        const score = stateData?.score || 0;
-                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                        shareResultWhatsApp(test, score, totalMarks);
-                    }}
-                >
-                    <MessageCircle className="mr-3 h-5 w-5 text-green-500" />
-                    Share on WhatsApp
-                </Button>
+                        <Button
+                            variant="ghost"
+                            className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                            onClick={() => {
+                                const test = stateData?.test || { id: currentTestId, title: "Test" };
+                                const score = stateData?.score || 0;
+                                const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                                shareResultWhatsApp(test, score, totalMarks);
+                            }}
+                        >
+                            <MessageCircle className="mr-3 h-5 w-5 text-green-500" />
+                            Share on WhatsApp
+                        </Button>
 
-                <Button
-                    variant="ghost"
-                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                    onClick={() => {
-                        const test = stateData?.test || { id: currentTestId, title: "Test" };
-                        const score = stateData?.score || 0;
-                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                        shareResultImage(test, score, totalMarks);
-                    }}
-                >
-                    <Download className="mr-3 h-5 w-5 text-blue-500" />
-                    Share Result Image
-                </Button>
+                        <Button
+                            variant="ghost"
+                            className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                            onClick={() => {
+                                const test = stateData?.test || { id: currentTestId, title: "Test" };
+                                const score = stateData?.score || 0;
+                                const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                                shareResultImage(test, score, totalMarks);
+                            }}
+                        >
+                            <Download className="mr-3 h-5 w-5 text-blue-500" />
+                            Share Result Image
+                        </Button>
 
-                <Button
-                    variant="ghost"
-                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                    onClick={() => {
-                        const test = stateData?.test || { id: currentTestId, title: "Test" };
-                        const url = `${window.location.origin}/test/${test.id}`;
-                        shareToFacebook(url);
-                    }}
-                >
-                    <Facebook className="mr-3 h-5 w-5 text-blue-600" />
-                    Share on Facebook
-                </Button>
+                        <Button
+                            variant="ghost"
+                            className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                            onClick={() => {
+                                const test = stateData?.test || { id: currentTestId, title: "Test" };
+                                const url = `${window.location.origin}/test/${test.id}`;
+                                shareToFacebook(url);
+                            }}
+                        >
+                            <Facebook className="mr-3 h-5 w-5 text-blue-600" />
+                            Share on Facebook
+                        </Button>
 
-                <Button
-                    variant="ghost"
-                    className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
-                    onClick={() => {
-                        const test = stateData?.test || { id: currentTestId, title: "Test" };
-                        const score = stateData?.score || 0;
-                        const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
-                        const url = `${window.location.origin}/test/${test.id}`;
-                        const title = `I scored ${score}/${totalMarks} in "${test.title}"!`;
-                        shareToReddit(url, title);
-                    }}
-                >
-                    <Reddit className="mr-3 h-5 w-5 text-orange-600" />
-                    Share on Reddit
-                </Button>
+                        <Button
+                            variant="ghost"
+                            className="justify-start px-4 py-3 font-medium text-slate-600 dark:text-slate-400"
+                            onClick={() => {
+                                const test = stateData?.test || { id: currentTestId, title: "Test" };
+                                const score = stateData?.score || 0;
+                                const totalMarks = stateData?.test?.total_marks || (stateData?.totalQuestions ? stateData.totalQuestions * (stateData?.marksPerQuestion || 1) : 0);
+                                const url = `${window.location.origin}/test/${test.id}`;
+                                const title = `I scored ${score}/${totalMarks} in "${test.title}"!`;
+                                shareToReddit(url, title);
+                            }}
+                        >
+                            <Reddit className="mr-3 h-5 w-5 text-orange-600" />
+                            Share on Reddit
+                        </Button>
+                    </>
+                )}
 
                 <NavLink
                     to="/"

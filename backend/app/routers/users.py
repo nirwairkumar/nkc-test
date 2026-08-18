@@ -1,3 +1,4 @@
+import math
 import base64
 import json
 import time
@@ -221,19 +222,46 @@ async def check_admin(
 async def get_all_users(
     request: Request,
     ids: Optional[str] = None,
+    page: Optional[int] = None,
+    limit: Optional[int] = None,
+    search: Optional[str] = None,
+    is_verified_creator: Optional[bool] = None,
     db: Client = Depends(get_db)
 ):
     try:
         _verify_is_admin(request, db)
-        query = db.table("profiles").select("*")
-        
+
         if ids:
             # ids is comma separated string "id1,id2"
             id_list = ids.split(",")
-            query = query.in_("id", id_list)
-        else:
-            query = query.order("created_at", desc=True)
-            
+            response = supabase.table("profiles").select("*").in_("id", id_list).execute()
+            return response.data
+
+        if page is not None or limit is not None:
+            p = page if page and page > 0 else 1
+            l = limit if limit and limit > 0 else 10
+            offset = (p - 1) * l
+
+            query = supabase.table("profiles").select("*", count="exact")
+            if search and search.strip():
+                s = search.strip()
+                query = query.or_(f"full_name.ilike.%{s}%,email.ilike.%{s}%")
+            if is_verified_creator is not None:
+                query = query.eq("is_verified_creator", is_verified_creator)
+
+            query = query.order("created_at", desc=True).range(offset, offset + l - 1)
+            response = query.execute()
+            total = response.count if response.count is not None else len(response.data or [])
+            return {
+                "items": response.data or [],
+                "total": total,
+                "page": p,
+                "limit": l,
+                "total_pages": math.ceil(total / l) if total > 0 else 1
+            }
+
+        # Fallback for unpaginated requests
+        query = supabase.table("profiles").select("*").order("created_at", desc=True)
         response = query.execute()
         return response.data
     except HTTPException:
@@ -241,6 +269,20 @@ async def get_all_users(
     except Exception as e:
         print(f"Error fetching users: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+ALLOWED_PROFILE_FIELDS = {
+    "full_name",
+    "avatar_url",
+    "designation",
+    "bio",
+    "email",
+    "is_creator",
+    "following_visibility",
+    "is_verified_creator",
+    "verified_role",
+    "verified_at",
+    "verified_by_admin_id"
+}
 
 @router.put("/{user_id}")
 async def update_user_profile(
@@ -250,40 +292,75 @@ async def update_user_profile(
     db: Client = Depends(get_db)
 ):
     try:
+        # 1. Authorize: user can update own profile, or admin can update any profile
         _verify_owner_or_admin(user_id, request, db)
         
-        # Check if profile exists
-        profile_check = db.table("profiles").select("id").eq("id", user_id).execute()
+        # 2. Sanitize payload fields to prevent 400 Bad Request on unknown columns (e.g., updated_at)
+        sanitized_updates = {k: v for k, v in updates.items() if k in ALLOWED_PROFILE_FIELDS and v is not None}
+        
+        if not sanitized_updates:
+            # Fallback if empty dictionary sent, return existing profile
+            existing = supabase.table("profiles").select("*").eq("id", user_id).execute()
+            if existing.data:
+                return existing.data[0]
+            raise HTTPException(status_code=400, detail="No valid profile fields provided for update")
+
+        # 3. Check if profile exists using service role client 'supabase' to avoid RLS blockages
+        profile_check = supabase.table("profiles").select("id").eq("id", user_id).execute()
         
         if not profile_check.data:
             print(f"Profile doesn't exist for user {user_id} in update_user_profile. Inserting new profile...")
-            if "email" not in updates:
+            insert_data = dict(sanitized_updates)
+            insert_data["id"] = user_id
+            if "email" not in insert_data:
                 try:
                     auth_user = supabase.auth.admin.get_user_by_id(user_id)
                     if auth_user and auth_user.user:
-                        updates["email"] = auth_user.user.email
+                        insert_data["email"] = auth_user.user.email
                 except Exception as auth_err:
                     print(f"Error fetching email from auth in update_user_profile: {auth_err}")
             
-            updates["id"] = user_id
-            response = db.table("profiles").insert(updates).execute()
+            response = supabase.table("profiles").insert(insert_data).execute()
         else:
-            response = db.table("profiles").update(updates).eq("id", user_id).execute()
+            response = supabase.table("profiles").update(sanitized_updates).eq("id", user_id).execute()
         
-        # 2. Sync with Tests (if name or avatar changed)
-        if updates.get("full_name") or updates.get("avatar_url"):
+        # 4. Sync Auth User Metadata in auth.users
+        meta_updates = {}
+        if "full_name" in sanitized_updates:
+            meta_updates["full_name"] = sanitized_updates["full_name"]
+        if "bio" in sanitized_updates:
+            meta_updates["bio"] = sanitized_updates["bio"]
+        if "avatar_url" in sanitized_updates:
+            meta_updates["avatar_url"] = sanitized_updates["avatar_url"]
+        if "designation" in sanitized_updates:
+            meta_updates["designation"] = sanitized_updates["designation"]
+
+        if meta_updates:
+            try:
+                supabase.auth.admin.update_user_by_id(user_id, {"user_metadata": meta_updates})
+            except Exception as auth_meta_err:
+                print(f"Non-critical: error syncing user_metadata for {user_id}: {auth_meta_err}")
+
+        # 5. Sync with Tests (if name or avatar changed)
+        if "full_name" in sanitized_updates or "avatar_url" in sanitized_updates:
             test_updates = {}
-            if "full_name" in updates:
-                test_updates["creator_name"] = updates["full_name"]
-            if "avatar_url" in updates:
-                test_updates["creator_avatar"] = updates["avatar_url"]
+            if "full_name" in sanitized_updates:
+                test_updates["creator_name"] = sanitized_updates["full_name"]
+            if "avatar_url" in sanitized_updates:
+                test_updates["creator_avatar"] = sanitized_updates["avatar_url"]
             
             if test_updates:
-                db.table("tests").update(test_updates).eq("created_by", user_id).execute()
+                supabase.table("tests").update(test_updates).eq("created_by", user_id).execute()
 
-        if response.data:
+        if response.data and len(response.data) > 0:
             return response.data[0]
-        return None
+            
+        # Fallback fetch
+        updated_profile = supabase.table("profiles").select("*").eq("id", user_id).execute()
+        if updated_profile.data:
+            return updated_profile.data[0]
+
+        return {"id": user_id, **sanitized_updates}
     except HTTPException:
         raise
     except Exception as e:
@@ -366,12 +443,52 @@ async def get_all_ai_history(
     try:
         _verify_is_admin(request, db)
 
-        # 1. Fetch AI generation history items (selecting light records)
-        query = db.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
-        
-        # Fetch all items ordered by created_at desc to compute accurate metrics & allow filtering
+        # 1. Fetch AI generation history items (using global service-role client 'supabase' to bypass RLS)
+        query = supabase.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
         history_res = query.order("created_at", desc=True).execute()
-        all_raw = history_res.data or []
+        ai_raw = history_res.data or []
+
+        # 2. Fetch all tests created directly on the platform (tests table for manual tests)
+        tests_res = supabase.table("tests").select("id, created_by, title, description, custom_id, total_questions, questions, created_at").order("created_at", desc=True).execute()
+        all_tests = tests_res.data or []
+
+        # Track existing history IDs to avoid duplicate manual entries for tests created via AI/YouTube
+        existing_history_ids = set()
+        for h in ai_raw:
+            existing_history_ids.add(str(h.get("id")))
+
+        # Build manual test entries for tests created manually (not logged in ai_generation_history)
+        manual_raw = []
+        for t in all_tests:
+            tid = str(t.get("id"))
+            custom_id = str(t.get("custom_id") or "")
+            
+            # Skip if it's a YouTube generated test or already in AI generation history
+            if custom_id.startswith("YT") or tid in existing_history_ids:
+                continue
+            
+            qs = t.get("questions") or []
+            q_count = t.get("total_questions") or len(qs)
+
+            manual_raw.append({
+                "id": t.get("id"),
+                "user_id": t.get("created_by"),
+                "mode": "manual",
+                "title": t.get("title") or "Manual Created Test",
+                "description": t.get("description") or "Created using Manual Test Builder",
+                "file_name": custom_id or "Manual Test Creator",
+                "question_count": q_count,
+                "created_at": t.get("created_at"),
+                "parsed_data": {
+                    "tool_type": "manual",
+                    "used_method": "Manual Test Builder",
+                    "execution_time_seconds": 0
+                }
+            })
+
+        # Combine AI history and Manual history
+        all_raw = ai_raw + manual_raw
+        all_raw.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
 
         # Calculate overall platform stats efficiently
         total_requests = len(all_raw)
@@ -380,6 +497,7 @@ async def get_all_ai_history(
         gen_count = 0
         yt_count = 0
         top_count = 0
+        manual_count = 0
         exec_times = []
 
         for item in all_raw:
@@ -388,7 +506,9 @@ async def get_all_ai_history(
             fn = (item.get("file_name") or "").lower()
             tt = parsed.get("tool_type") or m
             
-            if tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
+            if tt == 'manual' or m == 'manual':
+                manual_count += 1
+            elif tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
                 yt_count += 1
             elif tt == 'topics' or m == 'topics' or 'topic' in (item.get("title") or "").lower():
                 top_count += 1
@@ -405,7 +525,7 @@ async def get_all_ai_history(
         user_ids = list(set([item["user_id"] for item in all_raw if item.get("user_id")]))
         profiles_map = {}
         if user_ids:
-            profiles_res = db.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
+            profiles_res = supabase.table("profiles").select("id, full_name, email, avatar_url, designation").in_("id", user_ids).execute()
             for p in (profiles_res.data or []):
                 profiles_map[p["id"]] = p
 
@@ -421,7 +541,9 @@ async def get_all_ai_history(
             
             # Determine actual tool category
             item_tool = 'generate_with_ai'
-            if tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
+            if tt == 'manual' or m == 'manual':
+                item_tool = 'manual'
+            elif tt == 'youtube' or m == 'youtube' or 'youtube' in fn:
                 item_tool = 'youtube'
             elif tt == 'topics' or m == 'topics' or 'topic' in (item.get("title") or "").lower():
                 item_tool = 'topics'
@@ -470,6 +592,7 @@ async def get_all_ai_history(
                 "generate_ai_count": gen_count,
                 "youtube_count": yt_count,
                 "topics_count": top_count,
+                "manual_count": manual_count,
                 "avg_execution_time": avg_time
             }
         }
@@ -488,14 +611,14 @@ async def get_ai_history_detail(
     try:
         _verify_is_admin(request, db)
 
-        # 1. Fetch full record including questions array from ai_generation_history
-        res = db.table("ai_generation_history").select("*").eq("id", history_id).execute()
+        # 1. Fetch full record including questions array from ai_generation_history (using global service-role client 'supabase' to bypass RLS)
+        res = supabase.table("ai_generation_history").select("*").eq("id", history_id).execute()
         item = None
         if res.data and len(res.data) > 0:
             item = res.data[0]
         else:
             # Fallback check in tests table
-            test_res = db.table("tests").select("*").eq("id", history_id).execute()
+            test_res = supabase.table("tests").select("*").eq("id", history_id).execute()
             if test_res.data and len(test_res.data) > 0:
                 test = test_res.data[0]
                 item = {
@@ -521,7 +644,7 @@ async def get_ai_history_detail(
         # 2. Attach full user profile
         uid = item.get("user_id")
         if uid:
-            prof_res = db.table("profiles").select("id, full_name, email, avatar_url, designation").eq("id", uid).execute()
+            prof_res = supabase.table("profiles").select("id, full_name, email, avatar_url, designation").eq("id", uid).execute()
             if prof_res.data and len(prof_res.data) > 0:
                 item["user_profile"] = prof_res.data[0]
             else:

@@ -37,7 +37,8 @@ export interface Notification {
 
 export interface PostCreate {
     title: string;
-    content: Record<string, any>;
+    content: Record<string, any> | string;
+    slug?: string;
     summary?: string;
     cover_image?: string;
     category?: string;
@@ -47,7 +48,8 @@ export interface PostCreate {
 
 export interface PostUpdate {
     title?: string;
-    content?: Record<string, any>;
+    content?: Record<string, any> | string;
+    slug?: string;
     summary?: string;
     cover_image?: string;
     category?: string;
@@ -78,7 +80,7 @@ export interface PostFeedResponse {
 }
 
 export interface PostDetailed extends Omit<PostFeedResponse, 'profiles'> {
-    content: Record<string, any>;
+    content: Record<string, any> | string;
     created_at: string;
     updated_at: string;
     status: 'draft' | 'published' | 'archived';

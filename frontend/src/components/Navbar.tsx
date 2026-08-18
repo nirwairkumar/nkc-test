@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { signOut } from '@/hooks/useAuthActions';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,8 +13,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, ChartSpline, Wrench, Sparkles, PanelLeft } from 'lucide-react';
+import { LogOut, User, History, Shield, Home, HelpCircle, Menu, Plus, Bell, Crown, DollarSign, Settings, TicketPercent, FileText, LayoutDashboard, Book, BookOpen, ChartSpline, Wrench, Sparkles, PanelLeft, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CreatorBadgeIcon } from '@/components/CreatorBadgeIcon';
 import TestoZaLogo from './TestoZaLogo';
 import { getAppUrl, getMarketingUrl } from '@/utils/subdomain';
 
@@ -31,6 +33,18 @@ interface NavbarProps {
 
 export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
     const { user, isAdmin, profile } = useAuth();
+    const userBatch = user?.user_metadata?.batch || (profile as any)?.batch;
+    const [rewardsStats, setRewardsStats] = React.useState<any>(null);
+
+    React.useEffect(() => {
+        if (user?.id) {
+            import('@/lib/rewardsApi').then(({ fetchCreatorRewards }) => {
+                fetchCreatorRewards(user.id).then(({ data }) => {
+                    if (data) setRewardsStats(data);
+                }).catch(() => {});
+            });
+        }
+    }, [user?.id]);
 
     // Feature Flag for News — read from cache synchronously, defer network call
     const [isNewsEnabled, setIsNewsEnabled] = React.useState(() => {
@@ -70,21 +84,17 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
     const [isSolutionGuideOpen, setIsSolutionGuideOpen] = React.useState(false);
     const [isUploadGuideOpen, setIsUploadGuideOpen] = React.useState(false);
 
-    if (isLiveTest) return null;
+    const { openAuthModal } = useAuthModal();
 
     const handleLoginNavigation = (isSignup: boolean = false, fromPath: string = '') => {
-        const path = `/login${isSignup ? '?signup=true' : ''}${fromPath ? `${isSignup ? '&' : '?'}from=${encodeURIComponent(fromPath)}` : ''}`;
-        const targetUrl = getAppUrl(path);
-        if (targetUrl.startsWith('http')) {
-            window.location.href = targetUrl;
-        } else {
-            navigate(path, { state: { isSignup, from: fromPath } });
-        }
+        openAuthModal({
+            view: isSignup ? 'signup' : 'login',
+            redirectPath: fromPath || location.pathname
+        });
     };
 
     const handleSignOut = async () => {
         await signOut();
-        navigate('/login');
     };
 
     const getInitials = (name?: string) => {
@@ -99,27 +109,80 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
 
     const isLandingPage = location.pathname === '/' || location.pathname === '/dashboard' || location.pathname === '/support';
 
+    const isBlogSubdomain = typeof window !== 'undefined' && (
+        window.location.hostname === 'blog.testoza.com' ||
+        window.location.hostname === 'news.testoza.com'
+    );
+    const isBlogPage =
+        isBlogSubdomain ||
+        location.pathname.startsWith('/blog') ||
+        location.pathname.startsWith('/news') ||
+        location.pathname.startsWith('/posts') ||
+        location.pathname.startsWith('/my-posts');
+
     return (
-        <header className="w-full sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs transition-all">
+        <header className="w-full sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs transition-all">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-                <div className="flex items-center gap-3">
-                    <Link to="/" className="hover:opacity-90 transition-opacity">
-                        <TestoZaLogo size={36} />
-                    </Link>
+                <div className="flex items-center gap-2 sm:gap-3">
+                    {onToggleSidebar && !isBlogPage && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onToggleSidebar}
+                            className="md:hidden text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl shrink-0 h-9 w-9"
+                            aria-label="Toggle Sidebar Menu"
+                        >
+                            <Menu className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+                        </Button>
+                    )}
+                    
+                    {isBlogPage ? (
+                        <Link to={isBlogSubdomain ? "/" : "/blog"} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+                            <TestoZaLogo size={34} />
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-2 py-0.5 rounded-md shadow-xs">
+                                BLOG
+                            </span>
+                        </Link>
+                    ) : (
+                        <Link to="/" className="hover:opacity-90 transition-opacity">
+                            <TestoZaLogo size={36} />
+                        </Link>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-4">
+                    {/* If on Blog, show quick shortcut to main Test Platform */}
+                    {isBlogPage && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                const mainUrl = getMarketingUrl('/');
+                                if (mainUrl.startsWith('http')) {
+                                    window.location.href = mainUrl;
+                                } else {
+                                    navigate('/');
+                                }
+                            }}
+                            className="hidden sm:flex text-xs font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-300"
+                        >
+                            <span>Explore TestoZa App ↗</span>
+                        </Button>
+                    )}
+
                     {/* Logged Out Navigation */}
                     {!user && (
                         <div className="hidden md:flex items-center gap-2">
-                            <Button
-                                variant="ghost"
-                                onClick={() => navigate('/create-test')}
-                                className="text-slate-600 hover:text-slate-900 font-medium"
-                            >
-                                <Plus className="mr-1.5 h-4 w-4" />
-                                <span>Create Test</span>
-                            </Button>
+                            {!isBlogPage && (
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => navigate('/create-test')}
+                                    className="text-slate-600 hover:text-slate-900 font-medium"
+                                >
+                                    <Plus className="mr-1.5 h-4 w-4" />
+                                    <span>Create Test</span>
+                                </Button>
+                            )}
                             <Button
                                 variant="ghost"
                                 onClick={() => handleLoginNavigation(false, location.pathname)}
@@ -266,8 +329,22 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border border-slate-200/80 dark:border-slate-800" align="end" forceMount>
                                     <DropdownMenuLabel className="font-normal px-3 py-2">
-                                        <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-semibold leading-none text-slate-800 dark:text-slate-100">{user.user_metadata?.full_name || 'User'}</p>
+                                        <div className="flex flex-col space-y-1.5">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <p className="text-sm font-semibold leading-none text-slate-800 dark:text-slate-100">{user.user_metadata?.full_name || 'User'}</p>
+                                                {isAdmin ? (
+                                                    <Shield className="w-5 h-5 text-red-500 shrink-0" />
+                                                ) : rewardsStats?.currentLevel ? (
+                                                    <CreatorBadgeIcon level={rewardsStats.currentLevel.level} size={20} className="w-5 h-5 shrink-0" />
+                                                ) : (
+                                                    <Award className="w-5 h-5 text-amber-500 shrink-0" />
+                                                )}
+                                                {userBatch && (
+                                                    <span className="text-xs font-semibold text-slate-400 leading-none">
+                                                        ({userBatch})
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-xs leading-none text-slate-400 truncate">
                                                 {user.email}
                                             </p>
@@ -312,6 +389,14 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
                                     >
                                         <HelpCircle className="mr-2.5 h-4 w-4" />
                                         <span>Support</span>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
+                                        onClick={() => window.open('https://blog.testoza.com', '_blank')}
+                                        className="rounded-xl px-3 py-2 cursor-pointer font-medium text-xs text-indigo-600 dark:text-indigo-400"
+                                    >
+                                        <BookOpen className="mr-2.5 h-4 w-4 text-indigo-600" />
+                                        <span>Blog & News ↗</span>
                                     </DropdownMenuItem>
 
                                     <DropdownMenuSeparator className="my-1" />

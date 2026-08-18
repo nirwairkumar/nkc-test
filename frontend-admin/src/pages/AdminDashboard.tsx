@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
     FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
-    FileText, BookOpen, Users, Layers, Radio
+    FileText, BookOpen, Users, Layers, Radio, Mail, Bell
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,17 +21,22 @@ import AdminPricingPanel from './AdminPricingPanel';
 import AdminPromoCodesPanel from './AdminPromoCodesPanel';
 import AdminMigrationPanel from './AdminMigrationPanel';
 import AdminAiAuditPanel from './AdminAiAuditPanel';
+import AdminEmailBroadcastPanel from './AdminEmailBroadcastPanel';
+import AdminNotificationsPanel from './AdminNotificationsPanel';
+import { useNotifications } from '@/hooks/useNotifications';
 import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'features' | 'pricing' | 'promos' | 'migration';
+type TabId = 'analytics' | 'notifications' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession } = useAuth();
+    const { unreadCount } = useNotifications();
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = (searchParams.get('tab') as TabId) || 'analytics';
     const [conductCount, setConductCount] = useState<number>(0);
+    const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
     useEffect(() => {
         const loadInitialConductCount = async () => {
@@ -76,6 +81,7 @@ export default function AdminDashboard() {
             title: "Core Platform",
             items: [
                 { id: 'analytics' as const, label: 'Analytics & Matrix', icon: BarChart3 },
+                { id: 'notifications' as const, label: 'Notifications', icon: Bell },
                 { id: 'tests' as const, label: 'Manage Tests', icon: FileText },
                 { id: 'categories' as const, label: 'Categories', icon: BookOpen },
                 { id: 'users' as const, label: 'Users', icon: Users },
@@ -92,6 +98,7 @@ export default function AdminDashboard() {
             items: [
                 { id: 'materials' as const, label: 'Class Materials', icon: GraduationCap },
                 { id: 'posts' as const, label: 'News & Announcements', icon: Newspaper },
+                { id: 'email_broadcast' as const, label: 'Email Broadcast', icon: Mail },
             ]
         },
         {
@@ -104,8 +111,6 @@ export default function AdminDashboard() {
             ]
         }
     ];
-
-    const [mobileOpen, setMobileOpen] = useState<boolean>(false);
 
     return (
         <div className="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 flex flex-col md:flex-row font-sans">
@@ -126,9 +131,22 @@ export default function AdminDashboard() {
                         <h2 className="text-sm font-bold tracking-tight text-white">TestoZa Admin</h2>
                     </div>
                 </div>
-                <span className="text-[10px] bg-indigo-600/80 text-white font-mono font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
-                    {activeTab}
-                </span>
+                <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                        <button
+                            onClick={() => handleTabChange('notifications')}
+                            className="relative p-1.5 text-slate-300 hover:text-white"
+                            title="Notifications"
+                        >
+                            <Bell className="h-4 w-4" />
+                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />
+                        </button>
+                    )}
+                    <span className="text-[10px] bg-indigo-600/80 text-white font-mono font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                        {activeTab}
+                    </span>
+                </div>
             </div>
 
             {/* Mobile Backdrop Overlay */}
@@ -187,6 +205,15 @@ export default function AdminDashboard() {
                                         <item.icon className="h-4 w-4 shrink-0" />
                                     )}
                                     <span className="truncate flex-1 text-left">{item.label}</span>
+                                    {item.id === 'notifications' && unreadCount > 0 && (
+                                        <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono ${
+                                            activeTab === 'notifications'
+                                                ? 'bg-white/20 text-white border border-white/30'
+                                                : 'bg-rose-500 text-white shadow-xs animate-pulse'
+                                        }`}>
+                                            {unreadCount}
+                                        </span>
+                                    )}
                                     {item.id === 'activity' && (
                                         <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${
                                             activeTab === 'activity'
@@ -222,6 +249,7 @@ export default function AdminDashboard() {
             <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 overflow-x-hidden">
                 <div className="max-w-7xl mx-auto">
                     {activeTab === 'analytics' && <AdminAnalyticsPanel />}
+                    {activeTab === 'notifications' && <AdminNotificationsPanel />}
                     {['tests', 'categories', 'users', 'verified_creators', 'combined', 'activity'].includes(activeTab) && (
                         <ManageTests activeTab={activeTab} />
                     )}
@@ -230,6 +258,7 @@ export default function AdminDashboard() {
                     {(activeTab === 'ai_analysis' || activeTab === 'ai_audit') && <AdminAiAuditPanel />}
                     {activeTab === 'materials' && <MaterialsManager />}
                     {activeTab === 'posts' && <NewsFeed />}
+                    {activeTab === 'email_broadcast' && <AdminEmailBroadcastPanel />}
                     {activeTab === 'features' && <AdminFeatureControlPanel />}
                     {activeTab === 'pricing' && <AdminPricingPanel />}
                     {activeTab === 'promos' && <AdminPromoCodesPanel />}

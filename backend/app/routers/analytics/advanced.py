@@ -3,6 +3,7 @@ from app.core.database import get_db, supabase
 from supabase import Client
 from datetime import datetime, timedelta
 from typing import Optional
+from .track import classify_user_agent
 
 router = APIRouter()
 
@@ -785,6 +786,36 @@ async def get_detailed_visitors(
                 .execute()
             for p in (p_res.data or []):
                 profiles_map[p["id"]] = p
+
+        # Get stay time / duration for each visitor from sessions
+        v_ids = [v["id"] for v in visitors]
+        visitor_stay_map = {}
+        if v_ids:
+            try:
+                s_res = supabase.table("sessions")\
+                    .select("visitor_id, started_at, ended_at, duration_secs, page_count")\
+                    .in_("visitor_id", v_ids)\
+                    .execute()
+                for s in (s_res.data or []):
+                    vid = s.get("visitor_id")
+                    if not vid:
+                        continue
+                    dur = s.get("duration_secs") or 0
+                    started_at = s.get("started_at")
+                    ended_at = s.get("ended_at")
+                    if not dur and started_at and ended_at:
+                        try:
+                            t_start = datetime.fromisoformat(started_at.replace('Z', '+00:00'))
+                            t_end = datetime.fromisoformat(ended_at.replace('Z', '+00:00'))
+                            dur = int((t_end - t_start).total_seconds())
+                        except Exception:
+                            dur = 0
+                    pg_cnt = s.get("page_count", 1) or 1
+                    if dur <= 0:
+                        dur = pg_cnt * 15
+                    visitor_stay_map[vid] = visitor_stay_map.get(vid, 0) + max(dur, 10)
+            except Exception as s_err:
+                print(f"Warning fetching visitor session durations: {s_err}")
                 
         result = []
         for v in visitors:
@@ -798,21 +829,35 @@ async def get_detailed_visitors(
             elif v.get("total_visits", 1) > 1:
                 v_type = "repeat_guest"
                 
+            browser_str = v.get("browser") or ""
+            os_str = v.get("os") or ""
+            full_ua = f"{browser_str} {os_str}".strip()
+            traffic_info = classify_user_agent(full_ua)
+
+            total_page_views = v.get("total_page_views", 0)
+            total_stay = visitor_stay_map.get(vid)
+            if total_stay is None:
+                total_stay = max(total_page_views * 15, 10)
+                
             result.append({
                 "id": vid,
                 "fingerprint": v.get("fingerprint"),
-                "device_type": v.get("device_type"),
-                "browser": v.get("browser"),
-                "os": v.get("os"),
-                "country": v.get("country"),
-                "city": v.get("city"),
+                "device_type": v.get("device_type") or "unknown",
+                "browser": browser_str or "Unknown Browser",
+                "os": os_str or "Unknown OS",
+                "country": v.get("country") or "Unknown",
+                "city": v.get("city") or "Unknown",
                 "total_visits": v.get("total_visits", 1),
-                "total_page_views": v.get("total_page_views", 0),
+                "total_page_views": total_page_views,
+                "total_stay_seconds": total_stay,
                 "last_seen_at": v.get("last_seen_at") or v.get("created_at"),
                 "user_id": uid,
                 "full_name": profile.get("full_name"),
                 "email": profile.get("email"),
                 "visitor_type": v_type,
+                "is_bot": traffic_info["is_bot"],
+                "traffic_category": traffic_info["category"],
+                "traffic_label": traffic_info["label"],
                 "page_views": []  # Lazy loaded on demand
             })
             
@@ -828,24 +873,59 @@ async def get_visitor_pages(
     db: Client = Depends(get_db)
 ):
     """
-    Returns timeline of page views for a specific visitor.
+    Returns timeline of page views for a specific visitor with calculated stay duration per page.
     """
     try:
         pv_res = supabase.table("page_views")\
-            .select("page_path, page_title, created_at")\
+            .select("page_path, page_title, created_at, time_on_page")\
             .eq("visitor_id", visitor_id)\
-            .order("created_at", desc=True)\
-            .limit(200)\
+            .order("created_at", desc=False)\
+            .limit(300)\
             .execute()
         
-        result = [
-            {
-                "path": pv.get("page_path"),
-                "title": pv.get("page_title"),
-                "time": pv.get("created_at")
-            }
-            for pv in (pv_res.data or [])
-        ]
+        raw_pvs = pv_res.data or []
+        parsed = []
+        for pv in raw_pvs:
+            t_str = pv.get("created_at")
+            dt = None
+            if t_str:
+                try:
+                    dt = datetime.fromisoformat(t_str.replace('Z', '+00:00'))
+                except Exception:
+                    pass
+            parsed.append({
+                "path": pv.get("page_path", "/"),
+                "title": pv.get("page_title", "Untitled Page"),
+                "time": t_str,
+                "dt": dt,
+                "time_on_page": pv.get("time_on_page")
+            })
+
+        result = []
+        for i in range(len(parsed)):
+            curr = parsed[i]
+            dur = curr.get("time_on_page") or 0
+            if not dur and curr["dt"]:
+                if i < len(parsed) - 1 and parsed[i+1]["dt"]:
+                    diff = int((parsed[i+1]["dt"] - curr["dt"]).total_seconds())
+                    if 0 < diff <= 1800:
+                        dur = diff
+                    else:
+                        dur = 20
+                else:
+                    dur = 20
+            if dur <= 0:
+                dur = 15
+
+            result.append({
+                "path": curr["path"],
+                "title": curr["title"],
+                "time": curr["time"],
+                "duration_secs": dur
+            })
+
+        # Newest page views first
+        result.reverse()
         return result
     except Exception as e:
         print(f"Error in visitor pages timeline: {e}")

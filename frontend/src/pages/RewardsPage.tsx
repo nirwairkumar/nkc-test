@@ -38,7 +38,6 @@ export default function RewardsPage() {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            navigate('/login');
             return;
         }
 
@@ -66,7 +65,7 @@ export default function RewardsPage() {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-6 px-3 sm:px-6 lg:px-8">
             <Helmet>
                 <title>Creator Rewards & Badges | TestoZa</title>
-                <meta name="description" content="Earn creator badges and unlock rewards by conducting quality tests on TestoZa." />
+                <meta name="description" content="Earn creator badges and unlock rewards by conducting tests on TestoZa." />
             </Helmet>
 
             <div className="max-w-6xl mx-auto space-y-6">
@@ -128,7 +127,7 @@ export default function RewardsPage() {
                                         />
                                     </div>
                                     <p className="text-xs text-slate-400">
-                                        {qualityCount} of {nextLvl.requiredQualityTests} Quality Tests completed ({stats?.qualityTestsNeededForNext} needed to reach Level {nextLvl.level})
+                                        {qualityCount} of {nextLvl.requiredQualityTests} Conducted Tests completed ({stats?.qualityTestsNeededForNext} needed to reach Level {nextLvl.level})
                                     </p>
                                 </div>
                             )}
@@ -158,7 +157,7 @@ export default function RewardsPage() {
                             <Award className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Quality Tests</p>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Conducted Tests</p>
                             <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{qualityCount}</p>
                             <p className="text-[10px] text-slate-400">20+ submissions each</p>
                         </div>
@@ -195,7 +194,7 @@ export default function RewardsPage() {
                             <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 truncate">
                                 {currentLvl ? `Level ${currentLvl.level}` : 'Unranked'}
                             </p>
-                            <p className="text-[10px] text-slate-400 truncate">{currentLvl?.title || 'Reach 5 Quality Tests'}</p>
+                            <p className="text-[10px] text-slate-400 truncate">{currentLvl?.title || 'Reach 5 Conducted Tests'}</p>
                         </div>
                     </Card>
                 </div>
@@ -205,7 +204,7 @@ export default function RewardsPage() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Creator Levels & Badges</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Unlock higher badges as you conduct more quality tests on the platform</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Unlock higher badges as you conduct more tests on the platform</p>
                         </div>
                     </div>
 
@@ -289,7 +288,7 @@ export default function RewardsPage() {
                         <Shield className="w-5 h-5" />
                     </div>
                     <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                        Earn higher badges by conducting more quality tests with at least 20 submissions per test.
+                        Earn higher badges by conducting more tests with at least 20 submissions per test.
                     </p>
                 </div>
 
@@ -302,7 +301,7 @@ export default function RewardsPage() {
                                 <p className="text-xs text-slate-500">Track student submission counts per test to see which tests count toward your badges</p>
                             </div>
                             <Badge variant="outline" className="text-xs font-semibold">
-                                {stats.test_details.filter(t => t.is_quality).length} / {stats.test_details.length} Quality Tests
+                                {stats.test_details.filter(t => t.is_quality).length} / {stats.test_details.length} Conducted Tests
                             </Badge>
                         </div>
 
@@ -338,7 +337,7 @@ export default function RewardsPage() {
 
                                         {t.is_quality ? (
                                             <Badge className="bg-emerald-500 text-white font-bold text-[10px] hover:bg-emerald-600">
-                                                Quality Test Verified
+                                                Conducted Test Verified
                                             </Badge>
                                         ) : (
                                             <Badge variant="outline" className="text-[10px] text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800">

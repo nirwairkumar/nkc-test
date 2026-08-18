@@ -63,8 +63,13 @@ export default function NewsPostEditor() {
     const { data: existingPost, isLoading: isLoadingPost } = useQuery({
         queryKey: ['post-edit', id],
         queryFn: async () => {
-            const posts = await postsApi.getMyPosts();
-            return posts.find(p => p.id === id) || null;
+            if (!id) return null;
+            try {
+                return await postsApi.getPostById(id);
+            } catch {
+                const posts = await postsApi.getMyPosts();
+                return posts.find(p => p.id === id) || null;
+            }
         },
         enabled: isEditing,
     });
@@ -85,19 +90,80 @@ export default function NewsPostEditor() {
             Underline,
             Placeholder.configure({ placeholder: 'Start writing your post...' }),
         ],
+        editorProps: {
+            handlePaste: (view, event) => {
+                const items = Array.from(event.clipboardData?.items || []);
+                const imageItem = items.find(item => item.type.startsWith('image/'));
+                if (imageItem) {
+                    const file = imageItem.getAsFile();
+                    if (file) {
+                        event.preventDefault();
+                        toast.info("Uploading pasted image...");
+                        postsApi.uploadImage(file)
+                            .then((url) => {
+                                const { state, dispatch } = view;
+                                const { schema } = state;
+                                const node = schema.nodes.image.create({ src: url });
+                                const transaction = state.tr.replaceSelectionWith(node);
+                                dispatch(transaction);
+                                toast.success("Image pasted successfully!");
+                            })
+                            .catch((err: any) => {
+                                toast.error("Failed to upload pasted image: " + (err.message || 'Error'));
+                            });
+                        return true;
+                    }
+                }
+                return false;
+            },
+            handleDrop: (view, event, slice, moved) => {
+                if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+                    const file = event.dataTransfer.files[0];
+                    if (file.type.startsWith('image/')) {
+                        event.preventDefault();
+                        toast.info("Uploading dropped image...");
+                        postsApi.uploadImage(file)
+                            .then((url) => {
+                                const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+                                if (coordinates) {
+                                    const { state, dispatch } = view;
+                                    const { schema } = state;
+                                    const node = schema.nodes.image.create({ src: url });
+                                    const transaction = state.tr.insert(coordinates.pos, node);
+                                    dispatch(transaction);
+                                }
+                                toast.success("Image uploaded successfully!");
+                            })
+                            .catch((err: any) => {
+                                toast.error("Failed to upload image: " + (err.message || 'Error'));
+                            });
+                        return true;
+                    }
+                }
+                return false;
+            }
+        },
         content: '',
     });
 
     // Populate form if editing
     useEffect(() => {
-        if (existingPost && editor) {
-            setTitle(existingPost.title);
+        if (existingPost && editor && !editor.isDestroyed) {
+            setTitle(existingPost.title || '');
             setSummary(existingPost.summary || '');
-            setCategory(existingPost.category);
+            setCategory(existingPost.category || 'general');
             setTags(existingPost.tags || []);
             setCoverImage(existingPost.cover_image || null);
-            if (!editor.isDestroyed) {
-                editor.commands.setContent(existingPost.content || '');
+            if (existingPost.content) {
+                let contentToSet: any = existingPost.content;
+                if (typeof contentToSet === 'string' && (contentToSet.startsWith('{') || contentToSet.startsWith('['))) {
+                    try {
+                        contentToSet = JSON.parse(contentToSet);
+                    } catch (e) {
+                        // ignore and use string
+                    }
+                }
+                editor.commands.setContent(contentToSet);
             }
         }
     }, [existingPost, editor]);

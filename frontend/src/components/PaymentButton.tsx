@@ -4,6 +4,7 @@ import { useRazorpay } from '@/hooks/useRazorpay';
 import { Loader2 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -23,13 +24,14 @@ export default function PaymentButton({ planId, amount, currency = 'INR', promoC
     const [isVerifying, setIsVerifying] = useState(false);
     const [statusMessage, setStatusMessage] = useState('');
     const { user } = useAuth();
+    const { openAuthModal } = useAuthModal();
     const navigate = useNavigate();
     const location = useLocation();
 
     const handlePayment = async () => {
         if (!user) {
             toast.error("Please login to purchase");
-            navigate('/login', { state: { from: location.pathname } });
+            openAuthModal({ view: 'login', redirectPath: location.pathname });
             return;
         }
 

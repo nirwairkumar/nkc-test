@@ -114,28 +114,29 @@ export async function fetchCreatorRewards(creatorId: string): Promise<{ data: Cr
 
         // Fallback to Supabase JS queries if backend endpoint failed
         if (!statsPayload) {
-            const { data: tests, error: testsErr } = await supabase
+            const { data: tests, error: testsErr } = await (supabase as any)
                 .from('tests')
-                .select('id, title, created_at, custom_id, settings')
-                .eq('created_by', creatorId);
+                .select('id, title, created_at, custom_id, settings, created_by, user_id')
+                .or(`created_by.eq.${creatorId},user_id.eq.${creatorId}`);
 
             if (testsErr) throw testsErr;
 
-            const filteredTests = (tests || []).filter(t => 
+            const filteredTests = (tests || []).filter((t: any) => 
                 !t.settings?.is_example_template && !t.settings?.is_user_example
             );
 
-            const testIds = filteredTests.map(t => t.id);
+            const testIds = filteredTests.map((t: any) => t.id).filter(Boolean);
             const testSubmissionMap: Record<string, number> = {};
-            filteredTests.forEach(t => { testSubmissionMap[t.id] = 0; });
+            filteredTests.forEach((t: any) => { if (t.id) testSubmissionMap[t.id] = 0; });
 
             if (testIds.length > 0) {
-                const { data: attempts } = await supabase
+                const { data: attempts } = await (supabase as any)
                     .from('user_tests')
                     .select('test_id')
-                    .in('test_id', testIds);
+                    .in('test_id', testIds)
+                    .limit(10000);
 
-                (attempts || []).forEach(a => {
+                (attempts || []).forEach((a: any) => {
                     if (a.test_id && testSubmissionMap[a.test_id] !== undefined) {
                         testSubmissionMap[a.test_id] += 1;
                     }
@@ -144,16 +145,16 @@ export async function fetchCreatorRewards(creatorId: string): Promise<{ data: Cr
 
             let qCount = 0;
             let totalSubs = 0;
-            const details: QualityTestDetail[] = filteredTests.map(t => {
+            const details: QualityTestDetail[] = filteredTests.map((t: any) => {
                 const count = testSubmissionMap[t.id] || 0;
                 totalSubs += count;
                 const isQ = count >= 20;
                 if (isQ) qCount++;
                 return {
                     id: t.id,
-                    title: t.title,
-                    custom_id: t.custom_id,
-                    created_at: t.created_at,
+                    title: t.title || 'Untitled Test',
+                    custom_id: t.custom_id || '',
+                    created_at: t.created_at || '',
                     submissions_count: count,
                     is_quality: isQ,
                     needed_submissions: Math.max(0, 20 - count)

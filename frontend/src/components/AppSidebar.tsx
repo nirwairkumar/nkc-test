@@ -11,6 +11,7 @@ import {
     BookOpen,
     History,
     Book,
+    ClipboardList,
     PanelLeftClose,
     PanelLeft,
     Shield,
@@ -217,6 +218,12 @@ Item 2 & Value B & 200 \\\\
                 path: '/my-tests?tab=reports',
                 icon: BarChart2,
                 matchPaths: ['/results', '/results/analytics']
+            },
+            {
+                title: 'All Submissions',
+                path: '/all-submissions',
+                icon: ClipboardList,
+                matchPaths: ['/all-submissions']
             },
             {
                 title: 'Rewards',

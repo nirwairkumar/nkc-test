@@ -178,11 +178,21 @@ async def update_user(
         
         user_id = user_response.user.id
         
+        # Fetch current user metadata first to perform a safe merge
+        try:
+            curr_user = supabase.auth.admin.get_user_by_id(user_id)
+            existing_metadata = {}
+            if curr_user and curr_user.user and curr_user.user.user_metadata:
+                existing_metadata = dict(curr_user.user.user_metadata)
+            merged_metadata = {**existing_metadata, **payload}
+        except Exception:
+            merged_metadata = payload
+
         # Use admin client to update user metadata reliably
         # This works for all auth providers (email, Google, etc.)
         response = supabase.auth.admin.update_user_by_id(
             user_id,
-            attributes={"user_metadata": payload}
+            attributes={"user_metadata": merged_metadata}
         )
         
         if hasattr(response, "user") and response.user:

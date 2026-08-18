@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 /**
@@ -42,19 +42,19 @@ interface PrefetchLinkProps {
 export function PrefetchLink({ to, children, className }: PrefetchLinkProps) {
   const { prefetchRoute } = usePrefetchRoutes();
 
-  return (
-    <a
-      href={to}
-      className={className}
-      onMouseEnter={() => prefetchRoute(to)}
-      onTouchStart={() => prefetchRoute(to)}
-      onClick={(e) => {
+  return React.createElement(
+    'a',
+    {
+      href: to,
+      className,
+      onMouseEnter: () => prefetchRoute(to),
+      onTouchStart: () => prefetchRoute(to),
+      onClick: (e: React.MouseEvent) => {
         e.preventDefault();
         window.location.href = to;
-      }}
-    >
-      {children}
-    </a>
+      },
+    },
+    children
   );
 }
 
@@ -62,7 +62,7 @@ export function PrefetchLink({ to, children, className }: PrefetchLinkProps) {
  * usePageVisibility - Hook to pause expensive operations when tab is not visible
  */
 export function usePageVisibility() {
-  const [isVisible, setIsVisible] = React.useState(!document.hidden);
+  const [isVisible, setIsVisible] = useState(!document.hidden);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -75,6 +75,3 @@ export function usePageVisibility() {
 
   return isVisible;
 }
-
-// Import React for the hook above
-import React from 'react';

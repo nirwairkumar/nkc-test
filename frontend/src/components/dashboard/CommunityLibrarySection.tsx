@@ -93,29 +93,29 @@ export default function CommunityLibrarySection({ currentUserId }: CommunityLibr
     return (
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center border border-violet-100 shrink-0">
                         <Globe className="w-4 h-4" />
                     </div>
-                    <div>
-                        <h2 className="text-base font-bold text-slate-900 tracking-tight">Community Library & Repository</h2>
-                        <p className="text-xs text-slate-400">Discover and clone top-rated test papers published by peer institutions</p>
+                    <div className="min-w-0">
+                        <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight truncate">Community Library & Repository</h2>
+                        <p className="text-[11px] sm:text-xs text-slate-400 truncate">Discover and clone top-rated test papers published by peer institutions</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl text-xs">
+                <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl text-xs overflow-x-auto max-w-full scrollbar-hide shrink-0">
                     <button
                         onClick={() => setFilter('trending')}
-                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap ${
                             filter === 'trending' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
-                        <Sparkles className="w-3 h-3 text-amber-500" />
+                        <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
                         <span>Trending</span>
                     </button>
                     <button
                         onClick={() => setFilter('cloned')}
-                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap ${
                             filter === 'cloned' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
@@ -123,7 +123,7 @@ export default function CommunityLibrarySection({ currentUserId }: CommunityLibr
                     </button>
                     <button
                         onClick={() => setFilter('newest')}
-                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                        className={`px-3 py-1 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap ${
                             filter === 'newest' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >

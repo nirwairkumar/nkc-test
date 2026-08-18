@@ -1,11 +1,182 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { analyticsApi } from '@/lib/analyticsApi';
-import { Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, ArrowUp, ArrowDown, Search, Upload, ChevronDown, ChevronUp } from 'lucide-react';
+import { 
+    Loader2, TrendingUp, TrendingDown, Users, FileText, AlertTriangle, 
+    CheckCircle2, Clock, BarChart3, RefreshCw, UserX, List, ArrowUpDown, 
+    ArrowUp, ArrowDown, Search, Upload, ChevronDown, ChevronUp, Laptop, 
+    Smartphone, Tablet, Bot, Cpu, UserCheck, Globe, MapPin 
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell, Legend, AreaChart, Area
 } from 'recharts';
+
+function formatRelativeTime(dateString?: string) {
+    if (!dateString) return '—';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '—';
+    
+    const now = new Date();
+    const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffSecs < 30) return 'Just now';
+    if (diffSecs < 60) return `${diffSecs}s ago`;
+    
+    const diffMins = Math.floor(diffSecs / 60);
+    if (diffMins < 60) return `${diffMins}m ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderDeviceBadge(deviceType?: string, browser?: string, os?: string) {
+    const dev = (deviceType || 'unknown').toLowerCase();
+    let Icon = Laptop;
+    let label = 'Desktop';
+
+    if (dev === 'mobile') {
+        Icon = Smartphone;
+        label = 'Mobile';
+    } else if (dev === 'tablet') {
+        Icon = Tablet;
+        label = 'Tablet';
+    }
+
+    const detailText = [browser, os].filter(Boolean).join(' · ') || 'Browser Unknown';
+
+    return (
+        <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                <Icon className="h-4 w-4" />
+            </div>
+            <div className="flex flex-col text-xs min-w-0">
+                <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize">{label}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[150px]" title={detailText}>{detailText}</span>
+            </div>
+        </div>
+    );
+}
+
+function formatDuration(totalSeconds?: number): string {
+    if (!totalSeconds || totalSeconds <= 0) return '10s';
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (hrs > 0) {
+        return `${hrs}h ${mins}m`;
+    }
+    if (mins > 0) {
+        return `${mins}m ${secs > 0 ? `${secs}s` : ''}`.trim();
+    }
+    return `${secs}s`;
+}
+
+interface PageGroup {
+    dateKey: string;
+    dateLabel: string;
+    isToday: boolean;
+    pages: any[];
+    totalStaySecs: number;
+}
+
+function getGroupedVisitorPages(pages: any[]): PageGroup[] {
+    if (!pages || pages.length === 0) return [];
+
+    const todayStr = new Date().toDateString();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+
+    const groupsMap: Record<string, { dateLabel: string; isToday: boolean; pages: any[]; totalStaySecs: number }> = {};
+    const dateKeysOrder: string[] = [];
+
+    for (const pv of pages) {
+        const pvDate = pv.time ? new Date(pv.time) : new Date();
+        const dateKey = pvDate.toISOString().split('T')[0];
+
+        if (!groupsMap[dateKey]) {
+            let dateLabel = pvDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const ds = pvDate.toDateString();
+            let isToday = false;
+            if (ds === todayStr) {
+                dateLabel = `Today (${pvDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`;
+                isToday = true;
+            } else if (ds === yesterdayStr) {
+                dateLabel = `Yesterday (${pvDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })})`;
+            }
+
+            groupsMap[dateKey] = {
+                dateLabel,
+                isToday,
+                pages: [],
+                totalStaySecs: 0
+            };
+            dateKeysOrder.push(dateKey);
+        }
+
+        groupsMap[dateKey].pages.push(pv);
+        groupsMap[dateKey].totalStaySecs += (pv.duration_secs || 15);
+    }
+
+    return dateKeysOrder.map(dk => ({
+        dateKey: dk,
+        ...groupsMap[dk]
+    }));
+}
+
+function renderTrafficBadge(visitor: any) {
+    if (visitor.is_bot || (visitor.traffic_category && visitor.traffic_category !== 'human')) {
+        const cat = visitor.traffic_category;
+        if (cat === 'ai_bot') {
+            const label = visitor.traffic_label || 'AI Bot';
+            return (
+                <div 
+                    title={label} 
+                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800 transition-transform hover:scale-110 cursor-help"
+                >
+                    <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+            );
+        }
+        if (cat === 'search_bot') {
+            const label = visitor.traffic_label || 'Search Crawler';
+            return (
+                <div 
+                    title={label} 
+                    className="inline-flex items-center justify-center p-1.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-transform hover:scale-110 cursor-help"
+                >
+                    <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
+            );
+        }
+        const label = visitor.traffic_label || 'Automated Bot';
+        return (
+            <div 
+                title={label} 
+                className="inline-flex items-center justify-center p-1.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-transform hover:scale-110 cursor-help"
+            >
+                <Cpu className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+        );
+    }
+
+    const label = visitor.traffic_label || 'Real Human';
+    return (
+        <div 
+            title={label} 
+            className="inline-flex items-center justify-center p-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-transform hover:scale-110 cursor-help"
+        >
+            <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+        </div>
+    );
+}
 
 function StatCard({ title, value, subtitle, icon: Icon, color = 'text-primary', bgColor = 'bg-primary/10' }: any) {
     return (
@@ -43,8 +214,9 @@ export default function AdminAnalyticsPanel() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [tabLoading, setTabLoading] = useState(true);
 
-    // Lazy load visitor page views
+    // Lazy load visitor page views & date stepper map
     const [visitorPages, setVisitorPages] = useState<Record<string, any[]>>({});
+    const [visitorDateIndexMap, setVisitorDateIndexMap] = useState<Record<string, number>>({});
     const [fetchingPagesId, setFetchingPagesId] = useState<string | null>(null);
 
     // Cache to prevent duplicate database calls
@@ -59,6 +231,7 @@ export default function AdminAnalyticsPanel() {
     const [expandedVisitorId, setExpandedVisitorId] = useState<string | null>(null);
     const [visitorSearch, setVisitorSearch] = useState('');
     const [visitorTypeFilter, setVisitorTypeFilter] = useState<'all' | 'registered' | 'repeat_guest' | 'guest'>('all');
+    const [botFilter, setBotFilter] = useState<'all' | 'human' | 'bot'>('all');
 
     const handleFetchVisitorPages = async (visitorId: string) => {
         if (visitorPages[visitorId]) {
@@ -533,40 +706,77 @@ export default function AdminAnalyticsPanel() {
                             <div className="space-y-6">
                                 <div className="grid gap-4 md:grid-cols-4">
                                     <StatCard title="Total Visitors" value={detailedVisitors.length} icon={Users} color="text-indigo-500" bgColor="bg-indigo-500/10" />
-                                    <StatCard title="Registered Users" value={detailedVisitors.filter((v: any) => v.visitor_type === 'registered').length} icon={CheckCircle2} color="text-emerald-500" bgColor="bg-emerald-500/10" />
-                                    <StatCard title="Repeat Guests" value={detailedVisitors.filter((v: any) => v.visitor_type === 'repeat_guest').length} icon={RefreshCw} color="text-blue-500" bgColor="bg-blue-500/10" />
-                                    <StatCard title="One-Time Guests" value={detailedVisitors.filter((v: any) => v.visitor_type === 'guest').length} icon={UserX} color="text-amber-500" bgColor="bg-amber-500/10" />
+                                    <StatCard 
+                                        title="Real Humans" 
+                                        value={detailedVisitors.filter((v: any) => !v.is_bot && v.traffic_category === 'human').length} 
+                                        icon={UserCheck} 
+                                        color="text-emerald-500" 
+                                        bgColor="bg-emerald-500/10" 
+                                        subtitle={`${Math.round((detailedVisitors.filter((v: any) => !v.is_bot && v.traffic_category === 'human').length / (detailedVisitors.length || 1)) * 100)}% human traffic`}
+                                    />
+                                    <StatCard 
+                                        title="AI Bots & Crawlers" 
+                                        value={detailedVisitors.filter((v: any) => v.is_bot || v.traffic_category !== 'human').length} 
+                                        icon={Bot} 
+                                        color="text-purple-500" 
+                                        bgColor="bg-purple-500/10" 
+                                        subtitle="Crawlers, scrapers & LLM bots"
+                                    />
+                                    <StatCard 
+                                        title="Mobile Visitors" 
+                                        value={detailedVisitors.filter((v: any) => (v.device_type || '').toLowerCase() === 'mobile').length} 
+                                        icon={Smartphone} 
+                                        color="text-blue-500" 
+                                        bgColor="bg-blue-500/10" 
+                                        subtitle={`${detailedVisitors.filter((v: any) => (v.device_type || '').toLowerCase() === 'desktop').length} Desktop`}
+                                    />
                                 </div>
 
                                 <div className="rounded-xl border bg-card p-5 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
-                                    <input
-                                        type="text"
-                                        placeholder="Search location/fingerprint..."
-                                        value={visitorSearch}
-                                        onChange={(e) => setVisitorSearch(e.target.value)}
-                                        className="w-full sm:max-w-xs rounded-lg border bg-background px-3 py-2 text-sm outline-none"
-                                    />
-                                    <select
-                                        value={visitorTypeFilter}
-                                        onChange={(e: any) => setVisitorTypeFilter(e.target.value)}
-                                        className="w-full sm:w-auto rounded-lg border bg-background px-3 py-2 text-sm"
-                                    >
-                                        <option value="all">All Visitors</option>
-                                        <option value="registered">Registered</option>
-                                        <option value="repeat_guest">Repeat Guest</option>
-                                        <option value="guest">Guest</option>
-                                    </select>
+                                    <div className="relative w-full sm:max-w-xs">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search location/fingerprint/name..."
+                                            value={visitorSearch}
+                                            onChange={(e) => setVisitorSearch(e.target.value)}
+                                            className="w-full rounded-lg border bg-background pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                                        <select
+                                            value={botFilter}
+                                            onChange={(e: any) => setBotFilter(e.target.value)}
+                                            className="rounded-lg border bg-background px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="all">🤖 All Traffic (Human + Bots)</option>
+                                            <option value="human">👤 Real Humans Only</option>
+                                            <option value="bot">🤖 AI Bots & Crawlers Only</option>
+                                        </select>
+                                        <select
+                                            value={visitorTypeFilter}
+                                            onChange={(e: any) => setVisitorTypeFilter(e.target.value)}
+                                            className="rounded-lg border bg-background px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="all">All User Types</option>
+                                            <option value="registered">Registered</option>
+                                            <option value="repeat_guest">Repeat Guest</option>
+                                            <option value="guest">One-time Guest</option>
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                                <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="border-b bg-muted/30">
-                                                <th className="px-6 py-3.5 text-left font-semibold">Identity</th>
-                                                <th className="px-6 py-3.5 text-left font-semibold">Type</th>
-                                                <th className="px-6 py-3.5 text-left font-semibold">Location</th>
-                                                <th className="px-6 py-3.5 text-center font-semibold">Visits</th>
-                                                <th className="px-6 py-3.5 text-center font-semibold">Actions</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Identity</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Traffic Class</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Device & OS</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Location</th>
+                                                <th className="px-5 py-3.5 text-left font-semibold">Last Visit</th>
+                                                <th className="px-5 py-3.5 text-center font-semibold">Visits</th>
+                                                <th className="px-5 py-3.5 text-center font-semibold">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y">
@@ -575,43 +785,175 @@ export default function AdminAnalyticsPanel() {
                                                     const matchesSearch = 
                                                         v.fingerprint?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
                                                         v.full_name?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
+                                                        v.email?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
                                                         v.country?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
                                                         v.city?.toLowerCase().includes(visitorSearch.toLowerCase());
                                                     if (!matchesSearch) return false;
+                                                    
+                                                    if (botFilter === 'human' && (v.is_bot || v.traffic_category !== 'human')) return false;
+                                                    if (botFilter === 'bot' && (!v.is_bot && v.traffic_category === 'human')) return false;
+
                                                     return visitorTypeFilter === 'all' || v.visitor_type === visitorTypeFilter;
                                                 })
                                                 .map((v: any) => {
                                                     const isExpanded = expandedVisitorId === v.id;
                                                     return (
                                                         <React.Fragment key={v.id}>
-                                                            <tr className="hover:bg-muted/10">
-                                                                <td className="px-6 py-4">
-                                                                    {v.visitor_type === 'registered' ? v.full_name : `${v.fingerprint?.substring(0, 8)}...`}
+                                                            <tr className="hover:bg-muted/10 transition-colors">
+                                                                <td className="px-5 py-4">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                                                            {v.visitor_type === 'registered' && v.full_name ? v.full_name : `${v.fingerprint?.substring(0, 10)}...`}
+                                                                        </span>
+                                                                        {v.email && <span className="text-xs text-slate-500 dark:text-slate-400">{v.email}</span>}
+                                                                        <span className="text-[11px] text-slate-400 capitalize">{v.visitor_type.replace('_', ' ')}</span>
+                                                                    </div>
                                                                 </td>
-                                                                <td className="px-6 py-4">{v.visitor_type}</td>
-                                                                <td className="px-6 py-4">{v.city}, {v.country}</td>
-                                                                <td className="px-6 py-4 text-center">{v.total_visits}</td>
-                                                                <td className="px-6 py-4 text-center">
+                                                                <td className="px-5 py-4">
+                                                                    {renderTrafficBadge(v)}
+                                                                </td>
+                                                                <td className="px-5 py-4">
+                                                                    {renderDeviceBadge(v.device_type, v.browser, v.os)}
+                                                                </td>
+                                                                <td className="px-5 py-4">
+                                                                    <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300">
+                                                                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                                        <span>{v.city || 'Unknown'}, {v.country || 'Unknown'}</span>
+                                                                    </div>
+                                                                </td>
+                                                                 <td className="px-5 py-4 whitespace-nowrap">
+                                                                    <div className="flex flex-col gap-0.5 text-xs" title={v.last_seen_at ? new Date(v.last_seen_at).toLocaleString() : ''}>
+                                                                        <div className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+                                                                            <Clock className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                                                                            <span>{formatRelativeTime(v.last_seen_at)}</span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-slate-500 dark:text-slate-400 pl-5 font-mono">
+                                                                            Stay: <span className="font-semibold text-slate-700 dark:text-slate-300">{formatDuration(v.total_stay_seconds)}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-5 py-4 text-center font-mono font-semibold">{v.total_visits}</td>
+                                                                <td className="px-5 py-4 text-center">
                                                                     <button
                                                                         onClick={() => isExpanded ? setExpandedVisitorId(null) : handleFetchVisitorPages(v.id)}
-                                                                        className="text-xs text-indigo-600 hover:underline"
+                                                                        className="px-3 py-1 rounded-md text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 transition-colors"
                                                                     >
-                                                                        {isExpanded ? 'Hide' : 'View Pages'}
+                                                                        {isExpanded ? 'Close' : 'View Pages'}
                                                                     </button>
                                                                 </td>
                                                             </tr>
                                                             {isExpanded && (
-                                                                <tr className="bg-muted/5">
-                                                                    <td colSpan={5} className="px-8 py-4 border-l-4 border-indigo-500">
-                                                                        <div className="space-y-2">
-                                                                            <h4 className="font-semibold text-xs text-muted-foreground uppercase">Page Views</h4>
-                                                                            {visitorPages[v.id]?.map((pv: any, idx: number) => (
-                                                                                <div key={idx} className="flex justify-between text-xs py-1 border-b">
-                                                                                    <span>{pv.title || 'Untitled'} - {pv.path}</span>
-                                                                                    <span>{new Date(pv.time).toLocaleTimeString()}</span>
+                                                                <tr className="bg-slate-50/80 dark:bg-slate-900/60">
+                                                                    <td colSpan={7} className="px-6 py-4 border-l-4 border-indigo-500">
+                                                                        {fetchingPagesId === v.id ? (
+                                                                            <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+                                                                                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                                                                                <span>Loading page views...</span>
+                                                                            </div>
+                                                                        ) : (() => {
+                                                                            const pages = visitorPages[v.id] || [];
+                                                                            if (pages.length === 0) {
+                                                                                return <p className="text-xs text-slate-400 italic py-2">No detailed page views recorded.</p>;
+                                                                            }
+                                                                            const dateGroups = getGroupedVisitorPages(pages);
+                                                                            const currentIdx = Math.min(visitorDateIndexMap[v.id] || 0, dateGroups.length - 1);
+                                                                            const currentGroup = dateGroups[currentIdx] || dateGroups[0];
+                                                                            const hasPrevDate = currentIdx < dateGroups.length - 1;
+                                                                            const hasNextDate = currentIdx > 0;
+
+                                                                            return (
+                                                                                <div className="space-y-4">
+                                                                                    {/* Header bar with Date Info & Stepper Buttons */}
+                                                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+                                                                                        <div>
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <span className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                                                                                                    📅 {currentGroup.dateLabel}
+                                                                                                </span>
+                                                                                                {currentGroup.isToday && (
+                                                                                                    <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                                                                                                        Today
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                                                                {currentGroup.pages.length} {currentGroup.pages.length === 1 ? 'page view' : 'page views'} • Stay Time: <span className="font-semibold text-slate-700 dark:text-slate-200">{formatDuration(currentGroup.totalStaySecs)}</span>
+                                                                                            </p>
+                                                                                        </div>
+
+                                                                                        {/* Controls: Stepper Button & Date Selector Dropdown */}
+                                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                                            {dateGroups.length > 1 && (
+                                                                                                <div className="flex items-center gap-1 bg-slate-200/60 dark:bg-slate-800/80 p-1 rounded-lg">
+                                                                                                    {hasNextDate && (
+                                                                                                        <button
+                                                                                                            onClick={() => setVisitorDateIndexMap(prev => ({ ...prev, [v.id]: currentIdx - 1 }))}
+                                                                                                            className="px-2.5 py-1 text-xs font-semibold rounded bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-100 transition-colors flex items-center gap-1"
+                                                                                                            title="View Newer Date"
+                                                                                                        >
+                                                                                                            ← Newer Date
+                                                                                                        </button>
+                                                                                                    )}
+
+                                                                                                    {hasPrevDate && (
+                                                                                                        <button
+                                                                                                            onClick={() => setVisitorDateIndexMap(prev => ({ ...prev, [v.id]: currentIdx + 1 }))}
+                                                                                                            className="px-2.5 py-1 text-xs font-semibold rounded bg-indigo-600 text-white shadow-xs hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                                                                                                            title={`View Previous Date: ${dateGroups[currentIdx + 1]?.dateLabel}`}
+                                                                                                        >
+                                                                                                            <span>View Previous Date ({dateGroups[currentIdx + 1]?.dateLabel})</span>
+                                                                                                            <span className="font-bold">→</span>
+                                                                                                        </button>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            )}
+
+                                                                                            {dateGroups.length > 1 && (
+                                                                                                <select
+                                                                                                    value={currentIdx}
+                                                                                                    onChange={(e) => setVisitorDateIndexMap(prev => ({ ...prev, [v.id]: Number(e.target.value) }))}
+                                                                                                    className="text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 text-slate-700 dark:text-slate-200 font-medium outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                                                >
+                                                                                                    {dateGroups.map((g, idx) => (
+                                                                                                        <option key={g.dateKey} value={idx}>
+                                                                                                            {g.dateLabel} ({g.pages.length} visits)
+                                                                                                        </option>
+                                                                                                    ))}
+                                                                                                </select>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {/* Page List for current selected date */}
+                                                                                    <div className="space-y-2">
+                                                                                        {currentGroup.pages.map((pv: any, idx: number) => (
+                                                                                            <div 
+                                                                                                key={idx} 
+                                                                                                className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+                                                                                            >
+                                                                                                <div className="flex flex-col min-w-0 pr-4">
+                                                                                                    <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate">
+                                                                                                        {pv.title || 'Untitled Page'}
+                                                                                                    </span>
+                                                                                                    <span className="text-[11px] text-slate-400 font-mono truncate">
+                                                                                                        {pv.path}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                                <div className="flex items-center gap-3 shrink-0 text-xs">
+                                                                                                    <span className="inline-flex items-center gap-1 font-mono font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded text-[11px]">
+                                                                                                        <Clock className="h-3 w-3" />
+                                                                                                        {formatDuration(pv.duration_secs)} stay
+                                                                                                    </span>
+                                                                                                    <span className="text-slate-400 font-mono text-[11px]">
+                                                                                                        {pv.time ? new Date(pv.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
                                                                                 </div>
-                                                                            ))}
-                                                                        </div>
+                                                                            );
+                                                                        })()}
                                                                     </td>
                                                                 </tr>
                                                             )}

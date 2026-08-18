@@ -1,5 +1,5 @@
 import { getApiUrl } from '@/lib/getApiUrl';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -263,6 +263,60 @@ const CombinedResultsView = ({ state, navigate }: { state: any; navigate: any })
 };
 // ─── END COMBINED RESULTS VIEW ────────────────────────────────────────────────
 
+const isRankPredictorSupported = (test: any): boolean => {
+  if (!test) return false;
+
+  const categoryNames: string[] = [];
+
+  // 1. From test.categories (array of objects or strings)
+  if (Array.isArray(test.categories)) {
+    test.categories.forEach((cat: any) => {
+      if (typeof cat === 'string') categoryNames.push(cat);
+      else if (cat && typeof cat === 'object') {
+        if (cat.name) categoryNames.push(cat.name);
+        if (cat.title) categoryNames.push(cat.title);
+      }
+    });
+  }
+
+  // 2. From test.custom_category
+  if (test.custom_category && typeof test.custom_category === 'string') {
+    categoryNames.push(test.custom_category);
+  }
+
+  // 3. From test.tags
+  if (Array.isArray(test.tags)) {
+    test.tags.forEach((tag: any) => {
+      if (typeof tag === 'string') categoryNames.push(tag);
+    });
+  }
+
+  // 4. From test.category
+  if (test.category) {
+    if (typeof test.category === 'string') categoryNames.push(test.category);
+    else if (test.category.name) categoryNames.push(test.category.name);
+  }
+
+  if (categoryNames.length === 0) return false;
+
+  // Allowed target categories: JEE Advance, NEET, JEE MAINS, SSC, RRB, GATE, GAT-B, IIT JAM, NTSE
+  const allowedPatterns = [
+    /jee[- ]?adv/i,      // JEE Advance, JEE-Advanced, JEE Advanced
+    /neet/i,             // NEET, NEET UG, NEET-UG
+    /jee[- ]?main/i,     // JEE MAINS, JEE-Mains, JEE Main, JEE-Main 2026
+    /ssc/i,              // SSC, SSC CGL, SSC CHSL
+    /rrb/i,              // RRB, RRB Level 1 Stage 1, RRB NTPC
+    /gate/i,             // GATE
+    /gat[- ]?b/i,        // GAT-B, GAT B
+    /iit[- ]?jam/i,      // IIT JAM, IIT-JAM
+    /ntse/i              // NTSE
+  ];
+
+  return categoryNames.some(name =>
+    allowedPatterns.some(pattern => pattern.test(name))
+  );
+};
+
 const ResultsPage = () => {
 
   const { studentName: contextStudentName, selectedTest: contextSelectedTest, answers: contextAnswers, resetTest, isTestCompleted } = useTest();
@@ -273,23 +327,34 @@ const ResultsPage = () => {
 
   const [loading, setLoading] = useState(true);
 
-  const stateData = rawState as {
-    test: any;
-    answers: Record<number, string>;
-    score: number;
-    totalQuestions: number;
-    marksPerQuestion: number;
-    negativeMark: number;
-    justSubmitted?: boolean;
-    // Combined mode
-    isCombined?: boolean;
-    combinedSessionId?: string;
-    sessionTitle?: string;
-    paper1Label?: string;
-    paper2Label?: string;
-    p1?: { test: any; answers: any; score: number; totalMarks: number };
-    p2?: { test: any; answers: any; score: number; totalMarks: number };
-  } | undefined;
+  const stateData = useMemo(() => {
+    if (rawState) return rawState;
+    try {
+      const stored = sessionStorage.getItem('latest_test_result');
+      if (!stored) return undefined;
+      const parsed = JSON.parse(stored);
+      if (parsed?.userId && user?.id && parsed.userId !== user.id) {
+        return undefined;
+      }
+      return parsed;
+    } catch {
+      return undefined;
+    }
+  }, [rawState, user?.id]);
+
+  // Persist stateData to sessionStorage if received via location.state
+  useEffect(() => {
+    if (rawState && typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem(
+          'latest_test_result',
+          JSON.stringify({ ...rawState, userId: user?.id })
+        );
+      } catch (e) {
+        console.warn('Failed to cache result state in sessionStorage', e);
+      }
+    }
+  }, [rawState, user?.id]);
 
   // ─── COMBINED RESULTS EARLY RETURN ─────────────────────────────────
   if (stateData?.isCombined && stateData.p1 && stateData.p2) {
@@ -300,13 +365,16 @@ const ResultsPage = () => {
   const showPersonalResults = !!stateData || (!!contextStudentName && !!contextSelectedTest && isTestCompleted);
   const selectedTest = stateData?.test || contextSelectedTest;
 
-  // Normalize answers
-  let answers: Record<number, string> = {};
-  if (stateData?.answers) {
-    answers = stateData.answers;
-  } else if (contextAnswers) {
-    answers = contextAnswers as any;
-  }
+  // Normalize answers with memoization
+  const answers: Record<number, string> = useMemo(() => {
+    if (stateData?.answers) {
+      return stateData.answers;
+    }
+    if (contextAnswers) {
+      return contextAnswers as any;
+    }
+    return {};
+  }, [stateData, contextAnswers]);
 
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -446,6 +514,8 @@ const ResultsPage = () => {
     }, 600);
   };
 
+  const answersKey = useMemo(() => JSON.stringify(answers), [answers]);
+
   useEffect(() => {
     if (showPersonalResults && selectedTest) {
       const loadAnalysis = async () => {
@@ -465,7 +535,7 @@ const ResultsPage = () => {
       };
       loadAnalysis();
     }
-  }, [showPersonalResults, selectedTest, answers]);
+  }, [showPersonalResults, selectedTest?.id, answersKey]);
 
   const handleRetakeTest = () => {
     resetTest();
@@ -474,11 +544,24 @@ const ResultsPage = () => {
 
   if (!showPersonalResults) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl font-bold mb-4">No Result Found</h1>
-        <Button onClick={() => navigate('/')}>Go Home</Button>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center">
+        <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 shadow-sm border border-indigo-100 dark:border-indigo-900">
+          <FileText className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">No Active Result Session</h1>
+        <p className="text-slate-500 dark:text-slate-400 max-w-md text-sm mb-6 leading-relaxed">
+          Looking for your test results? If you have completed tests previously, you can review all your submitted assessments and performance reports in your Test History.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <Button onClick={() => navigate('/history')} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5">
+            <History className="w-4 h-4 mr-2" /> View Test History
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/')} className="px-5">
+            <Home className="w-4 h-4 mr-2" /> Go Home
+          </Button>
+        </div>
       </div>
-    )
+    );
   }
 
   if (loading) {
@@ -627,42 +710,44 @@ const ResultsPage = () => {
                   </Card>
                 </div>
 
-                {/* AI Rank Predictor */}
-                <div className="mt-6 mb-8 relative">
-                  <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm overflow-hidden group">
-                    {isPredictingRank && (
-                      <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-2" />
-                        <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300 animate-pulse">Searching historical data and predicting rank...</p>
-                      </div>
-                    )}
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-purple-500" />
-                            Predict your rank
-                          </h3>
-                        </div>
-                        <Button
-                          onClick={handlePredictRank}
-                          disabled={isPredictingRank}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all shrink-0 w-full md:w-auto"
-                        >
-                          Predict
-                        </Button>
-                      </div>
-
-                      {rankPrediction && (
-                        <div className="mt-6 p-4 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-slate-800 shadow-inner">
-                          <div className="prose prose-sm dark:prose-invert prose-indigo max-w-none">
-                            <ReactMarkdown>{rankPrediction}</ReactMarkdown>
-                          </div>
+                {/* AI Rank Predictor (Shown only for supported competitive exam categories) */}
+                {isRankPredictorSupported(selectedTest) && (
+                  <div className="mt-6 mb-8 relative">
+                    <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-800/50 shadow-sm overflow-hidden group">
+                      {isPredictingRank && (
+                        <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-2" />
+                          <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300 animate-pulse">Searching historical data and predicting rank...</p>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                </div>
+                      <CardContent className="p-6">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                              <Sparkles className="w-5 h-5 text-purple-500" />
+                              Predict your rank
+                            </h3>
+                          </div>
+                          <Button
+                            onClick={handlePredictRank}
+                            disabled={isPredictingRank}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all shrink-0 w-full md:w-auto"
+                          >
+                            Predict
+                          </Button>
+                        </div>
+
+                        {rankPrediction && (
+                          <div className="mt-6 p-4 bg-white dark:bg-slate-900 rounded-xl border border-indigo-100 dark:border-slate-800 shadow-inner">
+                            <div className="prose prose-sm dark:prose-invert prose-indigo max-w-none">
+                              <ReactMarkdown>{rankPrediction}</ReactMarkdown>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
 
                 {/* Section Wise Analysis */}
                 {selectedTest?.enable_section_mode && (

@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import {
-    Loader2, Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle,
-    FileText, CheckCircle, ArrowLeft, Info, RefreshCcw, WifiOff, Monitor,
-    HardDrive, UserCheck, ShieldCheck, ArrowRight, CheckCircle2, Lock, Sparkles
+    Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle,
+    FileText, CheckCircle, ArrowLeft, RefreshCcw, WifiOff,
+    UserCheck, ShieldCheck, Lock, Sparkles
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { fetchTestById, fetchTestBySlug, Test, fetchSolutions } from '@/lib/testsApi';
 import { SEO } from '@/components/SEO';
-import { fetchFeatureFlags } from '@/lib/featuresApi';
 import { toast } from 'sonner';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
@@ -82,13 +81,14 @@ const CountdownDisplay = ({ targetDate, onComplete }: { targetDate: Date; onComp
     );
 };
 
-export type ExamFlowStep = 'intro' | 'system_check' | 'start_form' | 'final_instructions';
+export type ExamFlowStep = 'intro' | 'waiting_room';
 
 export default function TestIntroPage() {
     const { id, slug } = useParams<{ id: string; slug: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, refreshSession } = useAuth();
+    const { openAuthModal } = useAuthModal();
 
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
@@ -97,24 +97,41 @@ export default function TestIntroPage() {
     const [retryCount, setRetryCount] = useState(0);
     const MAX_AUTO_RETRIES = 2;
 
-    // Step Flow Control
+    // Step Flow Control (Simplified: 'intro' or 'waiting_room')
     const [flowStep, setFlowStep] = useState<ExamFlowStep>('intro');
 
-    // System Diagnostics State
+    // System Diagnostics State (Run silently in background)
     const [diagResult, setDiagResult] = useState<SystemCheckResult | null>(null);
-    const [isSystemChecking, setIsSystemChecking] = useState(false);
-    const [systemCheckDone, setSystemCheckDone] = useState(false);
 
     // Logic State
     const [hasAttempted, setHasAttempted] = useState(false);
-    const [checklistDiff, setChecklistDiff] = useState(false);
+    const [checklistDiff, setChecklistDiff] = useState(true); // Default checked for 1-click start
     const [isTimerDisabled, setIsTimerDisabled] = useState(false);
     const [startFormValues, setStartFormValues] = useState<Record<string, string>>({});
     const [schedulingStatus, setSchedulingStatus] = useState<'upcoming' | 'ended' | 'live' | null>(null);
     const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
     const [hasSolutions, setHasSolutions] = useState(false);
     const [isAuthLoading, setIsAuthLoading] = useState(false);
-    const [enableAnonymousTests, setEnableAnonymousTests] = useState(false);
+
+    const handleGoogleLogin = async () => {
+        setIsAuthLoading(true);
+        try {
+            const { error } = await signInWithGoogle();
+            if (error) {
+                if (!error.message?.includes('closed')) {
+                    toast.error(error.message || 'Google authentication failed');
+                }
+                setIsAuthLoading(false);
+                return;
+            }
+            await refreshSession();
+            toast.success('Successfully signed in with Google!');
+        } catch (err: any) {
+            toast.error(err.message || 'Google authentication failed');
+        } finally {
+            setIsAuthLoading(false);
+        }
+    };
 
     // Permission check
     const checkPermissions = async () => {
@@ -237,8 +254,14 @@ export default function TestIntroPage() {
         }
     };
 
+    // Run silent diagnostics & storage vacate in background
     useEffect(() => {
-        fetchFeatureFlags().then(flags => setEnableAnonymousTests(flags.enable_anonymous_tests));
+        try {
+            const diag = runBrowserDiagnosticsAndVacateStorage();
+            setDiagResult(diag);
+        } catch (e) {
+            console.warn("Storage vacate silent run:", e);
+        }
     }, []);
 
     useEffect(() => {
@@ -287,82 +310,42 @@ export default function TestIntroPage() {
     }, [loading]);
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP NAVIGATION HANDLERS
+    // 1-STEP START TEST HANDLER
     // ─────────────────────────────────────────────────────────────────────────
-
-    // Step 1 -> Step 2: System Compatibility & Storage Check
     const handleStartFlow = () => {
-        if (hasAttempted || schedulingStatus === 'ended') return;
-        setFlowStep('system_check');
-        runSystemDiagnostics();
-    };
-
-    // Step 2 Logic: Diagnostics & Storage Vacate
-    const runSystemDiagnostics = () => {
-        setIsSystemChecking(true);
-        setSystemCheckDone(false);
-
-        setTimeout(() => {
-            const diag = runBrowserDiagnosticsAndVacateStorage();
-            setDiagResult(diag);
-            setIsSystemChecking(false);
-            setSystemCheckDone(true);
-
-            // Auto-continue to Step 3 if user is already authenticated
-            if (user) {
-                setTimeout(() => {
-                    advanceToNextStepAfterSystemCheck();
-                }, 1200);
-            }
-        }, 600);
-    };
-
-    // Auto-advance after system check & auth resolution
-    const advanceToNextStepAfterSystemCheck = () => {
-        if (test?.settings?.start_form?.enabled) {
-            setFlowStep('start_form');
-        } else {
-            setFlowStep('final_instructions');
-        }
-    };
-
-    const handleGoogleLogin = async () => {
-        setIsAuthLoading(true);
-        try {
-            localStorage.setItem('auth_redirect_intent', location.pathname);
-            const { error } = await signInWithGoogle();
-            if (error) throw error;
-        } catch (error: any) {
-            toast.error(error.message || 'Google login failed');
-            setIsAuthLoading(false);
-        }
-    };
-
-    const handleAnonymousContinue = () => {
-        advanceToNextStepAfterSystemCheck();
-    };
-
-    // Step 3 -> Step 4: Validate Start Form
-    const handleStartFormSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
         if (!test) return;
+        if (hasAttempted || schedulingStatus === 'ended') return;
 
+        // 1. Check Login Requirement if enabled by Creator
+        if (test.settings?.login_required && !user) {
+            toast.error("Login Required: The creator has required authentication to take this exam.");
+            return;
+        }
+
+        // 2. Validate Candidate Start Form (if enabled)
         if (test.settings?.start_form?.enabled) {
             const fields = test.settings.start_form.fields && test.settings.start_form.fields.length > 0
                 ? test.settings.start_form.fields
                 : [{ label: 'Name', required: true }];
-            const missing = fields.filter((f: any) => f.required && !startFormValues[f.label]);
+            const missing = fields.filter((f: any) => f.required && !startFormValues[f.label]?.trim());
             if (missing.length > 0) {
-                toast.error(`Please fill all required fields: ${missing.map((f: any) => f.label).join(', ')}`);
+                toast.error(`Please fill required candidate information: ${missing.map((f: any) => f.label).join(', ')}`);
                 return;
             }
             sessionStorage.setItem(`start_form_${test.id}`, JSON.stringify(startFormValues));
         }
 
-        setFlowStep('final_instructions');
+        // 3. If Scheduled in Future: Enter Waiting Room with live countdown
+        if (test.settings?.schedule?.enabled && scheduledDate && new Date() < scheduledDate) {
+            setFlowStep('waiting_room');
+            return;
+        }
+
+        // 4. Launch Live Test
+        handleFinalStartTest(true);
     };
 
-    // Step 4: Final Start Exam
+    // Final Exam Launch
     const handleFinalStartTest = async (enableFullScreen: boolean) => {
         if (!test) return;
 
@@ -538,10 +521,11 @@ export default function TestIntroPage() {
         ? test.sections.reduce((acc, sec) => acc + getSectionDetails(sec).maxAllowed, 0)
         : questionCount;
 
-    const hasStartForm = Boolean(test.settings?.start_form?.enabled);
+    const isLoginRequired = Boolean(test.settings?.login_required);
+    const isLoginGateActive = isLoginRequired && !user;
 
     return (
-        <div className="container mx-auto max-w-3xl py-4 px-4 space-y-4 relative">
+        <div className="container mx-auto max-w-3xl py-4 px-4 space-y-4 relative font-sans">
             <SEO
                 title={test.title}
                 description={test.description || `${test.title} - Free Online Mock Test with ${test.questions?.length || 0} questions. Start practicing now on TestoZa.`}
@@ -549,7 +533,7 @@ export default function TestIntroPage() {
                 url={`${window.location.origin}${test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`}`}
             />
 
-            {/* Structured Quiz Schema for Googlebot & Google Ads Review Bots */}
+            {/* Structured Quiz Schema for Search Engines */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
@@ -576,141 +560,198 @@ export default function TestIntroPage() {
                 }}
             />
 
+            {/* Back Button */}
             <Button
                 variant="ghost"
                 className="fixed top-20 left-0 h-10 w-12 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-none rounded-r-lg shadow-md z-50 transition-transform hover:translate-x-1"
                 onClick={() => {
-                    if (flowStep === 'intro') navigate(-1);
-                    else if (flowStep === 'system_check') setFlowStep('intro');
-                    else if (flowStep === 'start_form') setFlowStep('system_check');
-                    else if (flowStep === 'final_instructions') setFlowStep(hasStartForm ? 'start_form' : 'system_check');
+                    if (flowStep === 'waiting_room') {
+                        setFlowStep('intro');
+                    } else {
+                        navigate(-1);
+                    }
                 }}
             >
                 <ArrowLeft className="h-6 w-6" />
             </Button>
 
-            {/* Stepper Header */}
-            <div className="flex items-center justify-between px-3 py-2.5 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                <div className={`flex items-center gap-1.5 ${flowStep === 'intro' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : ''}`}>
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${flowStep === 'intro' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}>1</span>
-                    Overview
-                </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-
-                <div className={`flex items-center gap-1.5 ${flowStep === 'system_check' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : ''}`}>
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${flowStep === 'system_check' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}>2</span>
-                    Verification
-                </div>
-
-                {hasStartForm && (
-                    <>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                        <div className={`flex items-center gap-1.5 ${flowStep === 'start_form' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : ''}`}>
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${flowStep === 'start_form' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}>3</span>
-                            Candidate Form
+            {/* ════════════════════════════════════════════════════════════════ */}
+            {/* VIEW A: DEDICATED PRE-EXAM WAITING ROOM (FOR SCHEDULED EXAMS)   */}
+            {/* ════════════════════════════════════════════════════════════════ */}
+            {flowStep === 'waiting_room' && scheduledDate && (
+                <Card className="border-t-4 border-t-indigo-600 shadow-2xl overflow-hidden rounded-3xl animate-in zoom-in-95 duration-200 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <CardHeader className="text-center pb-2 pt-8 px-6">
+                        <div className="inline-flex items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-950/60 rounded-3xl mb-3 shadow-inner border border-indigo-100 dark:border-indigo-900/50">
+                            <Clock className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
                         </div>
-                    </>
-                )}
-
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                <div className={`flex items-center gap-1.5 ${flowStep === 'final_instructions' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : ''}`}>
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] ${flowStep === 'final_instructions' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800'}`}>
-                        {hasStartForm ? '4' : '3'}
-                    </span>
-                    Start Exam
-                </div>
-            </div>
-
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {/* STEP 1: TEST OVERVIEW PAGE                                      */}
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {flowStep === 'intro' && (
-                <Card className="border-t-4 border-t-primary shadow-lg relative">
-                    <CardHeader className="text-center pb-2 pt-6 p-4">
-                        <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">{test.title}</CardTitle>
-                        <CardDescription className="text-sm mt-1">
-                            {test.description || "No description provided."}
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider mx-auto mb-2 border border-indigo-200 dark:border-indigo-800/60">
+                            <span>Exam Waiting Room</span>
+                        </div>
+                        <CardTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                            {test.title}
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm mt-1 max-w-md mx-auto text-slate-500 dark:text-slate-400">
+                            You have arrived early. Please keep this screen open. Your test will automatically load when the countdown reaches zero.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4 p-4 pt-0">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-3 bg-slate-50 dark:bg-slate-900 rounded-lg p-3">
-                            <div className="flex flex-col items-center justify-center text-center">
-                                <HelpCircle className="h-6 w-6 text-blue-500 mb-2" />
-                                <span className="text-sm text-muted-foreground">Questions</span>
+
+                    <CardContent className="space-y-6 p-6">
+                        {/* Large Interactive Countdown Timer */}
+                        <div className="py-2">
+                            <CountdownDisplay
+                                targetDate={scheduledDate}
+                                onComplete={() => {
+                                    setSchedulingStatus('live');
+                                    toast.success("Exam start time reached! Loading test...");
+                                    setTimeout(() => {
+                                        handleFinalStartTest(true);
+                                    }, 400);
+                                }}
+                            />
+                        </div>
+
+                        {/* Live Sync Status Alert */}
+                        <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-3 text-xs text-indigo-900 dark:text-indigo-300">
+                            <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-bold">Auto-Launch Synchronized</p>
+                                <p className="text-indigo-700/80 dark:text-indigo-400/80 mt-0.5">
+                                    No need to refresh the page. The question paper will appear immediately at {formatTimeCustom(scheduledDate)}.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Candidate Identity Summary if filled */}
+                        {test.settings?.start_form?.enabled && Object.keys(startFormValues).length > 0 && (
+                            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                                <p className="font-bold text-slate-700 dark:text-slate-300 mb-1">Candidate Profile Confirmed:</p>
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-600 dark:text-slate-400">
+                                    {Object.entries(startFormValues).map(([k, v]) => (
+                                        <span key={k}><strong>{k}:</strong> {v}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+
+                    <CardFooter className="flex flex-col sm:flex-row gap-3 pt-0 pb-8 px-6">
+                        <Button
+                            variant="outline"
+                            className="w-full rounded-xl py-6 font-semibold border-slate-200 dark:border-slate-700"
+                            onClick={() => setFlowStep('intro')}
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Test Overview
+                        </Button>
+                    </CardFooter>
+                </Card>
+            )}
+
+            {/* ════════════════════════════════════════════════════════════════ */}
+            {/* VIEW B: UNIFIED 1-STEP TEST INTRO CARD                          */}
+            {/* ════════════════════════════════════════════════════════════════ */}
+            {flowStep === 'intro' && (
+                <Card className="border-t-4 border-t-indigo-600 shadow-xl rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 relative animate-in fade-in duration-300">
+                    <CardHeader className="text-center pb-2 pt-6 p-4 sm:p-6">
+                        <CardTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                            {test.title}
+                        </CardTitle>
+                        <CardDescription className="text-xs sm:text-sm mt-1 text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
+                            {test.description || "Review test parameters and start your assessment."}
+                        </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="space-y-5 p-4 sm:p-6 pt-0">
+                        {/* KPI Metrics Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3 py-3 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl p-3 border border-slate-100 dark:border-slate-800">
+                            <div className="flex flex-col items-center justify-center text-center p-2">
+                                <HelpCircle className="h-5 w-5 text-indigo-500 mb-1" />
+                                <span className="text-xs text-muted-foreground">Questions</span>
                                 <div className="flex flex-col items-center">
-                                    <span className="font-bold text-lg">{questionCount}</span>
+                                    <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">{questionCount}</span>
                                     {totalAllowedQuestions < questionCount && (
-                                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 rounded-full border border-blue-100">
+                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 rounded-full border border-indigo-100">
                                             Attempt: {totalAllowedQuestions}
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <div className="flex flex-col items-center justify-center text-center">
-                                <Clock className="h-6 w-6 text-orange-500 mb-2" />
-                                <span className="text-sm text-muted-foreground">Duration</span>
-                                <span className="font-bold text-lg">{test.duration || "N/A"} mins</span>
+                            <div className="flex flex-col items-center justify-center text-center p-2">
+                                <Clock className="h-5 w-5 text-orange-500 mb-1" />
+                                <span className="text-xs text-muted-foreground">Duration</span>
+                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">{test.duration || "N/A"} mins</span>
                             </div>
-                            <div className="flex flex-col items-center justify-center text-center">
-                                <Trophy className="h-6 w-6 text-emerald-600 mb-2" />
-                                <span className="text-sm text-muted-foreground">Total Marks</span>
-                                <span className="font-bold text-lg">{totalMaxMarks}</span>
+                            <div className="flex flex-col items-center justify-center text-center p-2">
+                                <Trophy className="h-5 w-5 text-emerald-600 mb-1" />
+                                <span className="text-xs text-muted-foreground">Total Marks</span>
+                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">{totalMaxMarks}</span>
                             </div>
 
-                            {hasSolutions && (
-                                <div className="flex flex-col items-center justify-center text-center">
-                                    <CheckCircle className="h-6 w-6 text-indigo-600 mb-2 animate-pulse" />
-                                    <span className="text-sm text-muted-foreground">Detailed</span>
-                                    <span className="font-bold text-sm text-indigo-700">Solutions</span>
+                            {hasSolutions ? (
+                                <div className="flex flex-col items-center justify-center text-center p-2">
+                                    <CheckCircle className="h-5 w-5 text-indigo-600 mb-1" />
+                                    <span className="text-xs text-muted-foreground">Answer Key</span>
+                                    <span className="font-bold text-xs sm:text-sm text-indigo-700 dark:text-indigo-400">Detailed Sol.</span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center text-center p-2">
+                                    <ShieldCheck className="h-5 w-5 text-purple-600 mb-1" />
+                                    <span className="text-xs text-muted-foreground">Proctoring</span>
+                                    <span className="font-bold text-xs sm:text-sm text-purple-700 dark:text-purple-400">
+                                        {test.settings?.tab_switch_mode === 'strict' ? 'Strict' : 'Standard'}
+                                    </span>
                                 </div>
                             )}
 
                             {test.enable_section_mode && (
-                                <div className="flex flex-col items-center justify-center text-center col-span-2 md:col-span-2 bg-white dark:bg-slate-800 rounded border border-dashed">
-                                    <BookOpen className="h-6 w-6 text-purple-500 mb-1" />
-                                    <span className="text-sm font-medium">Section-wise {hasAnyAttemptControl ? "& Attempt Control" : "Pattern"}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {test.sections?.length || 0} Sections
-                                        {hasAnyAttemptControl && " • Limits Applied"}
+                                <div className="flex flex-col items-center justify-center text-center col-span-2 sm:col-span-3 md:col-span-4 bg-white dark:bg-slate-800 rounded-xl p-2.5 border border-indigo-100 dark:border-indigo-900/50 shadow-2xs">
+                                    <div className="flex items-center gap-1.5">
+                                        <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                            Section-wise Pattern {hasAnyAttemptControl ? "(Attempt Limits Apply)" : ""}
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] text-muted-foreground mt-0.5">
+                                        {test.sections?.length || 0} Sections configured for this assessment
                                     </span>
                                 </div>
                             )}
                         </div>
 
+                        {/* Section Table (if enabled) */}
                         {test.enable_section_mode && test.sections && test.sections.length > 0 && (
-                            <div className="border rounded-md overflow-hidden my-4">
-                                <table className="w-full text-sm text-left bg-white dark:bg-slate-950">
-                                    <thead className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold uppercase text-xs">
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                                <table className="w-full text-xs text-left bg-white dark:bg-slate-950">
+                                    <thead className="bg-slate-100/80 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px]">
                                         <tr>
-                                            <th className="p-3">Section</th>
-                                            <th className="p-3 text-center">Qs</th>
-                                            <th className="p-3 text-center">Total Marks</th>
+                                            <th className="p-2.5 sm:p-3">Section</th>
+                                            <th className="p-2.5 sm:p-3 text-center">Questions</th>
+                                            <th className="p-2.5 sm:p-3 text-center">Total Marks</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y dark:divide-slate-800">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                         {test.sections.map((sec: any) => {
                                             const { totalQs, maxAllowed, sectionMaxMarks, isEnabled } = getSectionDetails(sec);
                                             return (
-                                                <tr key={sec.id} className={isEnabled ? "bg-indigo-50/30" : ""}>
-                                                    <td className="p-3 font-medium">
+                                                <tr key={sec.id} className={isEnabled ? "bg-indigo-50/30 dark:bg-indigo-950/20" : ""}>
+                                                    <td className="p-2.5 sm:p-3 font-medium">
                                                         {sec.name}
                                                         {isEnabled && (
-                                                            <Badge variant="outline" className="ml-2 text-[9px] h-4 px-1 bg-indigo-100 text-indigo-700 border-indigo-200">
+                                                            <Badge variant="outline" className="ml-2 text-[9px] h-4 px-1 bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300">
                                                                 Limit
                                                             </Badge>
                                                         )}
                                                     </td>
-                                                    <td className="p-3 text-center">
+                                                    <td className="p-2.5 sm:p-3 text-center">
                                                         <div className="flex flex-col items-center">
                                                             <span className={isEnabled ? "text-slate-400 text-xs line-through" : ""}>{totalQs}</span>
                                                             {isEnabled && (
-                                                                <span className="text-indigo-600 font-bold">
+                                                                <span className="text-indigo-600 dark:text-indigo-400 font-bold">
                                                                     {maxAllowed}
                                                                 </span>
                                                             )}
                                                         </div>
                                                     </td>
-                                                    <td className="p-3 text-center text-emerald-600 font-bold">{sectionMaxMarks}</td>
+                                                    <td className="p-2.5 sm:p-3 text-center text-emerald-600 font-bold">{sectionMaxMarks}</td>
                                                 </tr>
                                             );
                                         })}
@@ -719,277 +760,186 @@ export default function TestIntroPage() {
                             </div>
                         )}
 
+                        {/* Syllabus & Notes Accordion (if present) */}
                         {test.revision_notes && (
-                            <div className="mt-4 border rounded-md">
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
                                 <details className="group">
-                                    <summary className="cursor-pointer p-4 bg-muted/30 hover:bg-muted/50 font-medium flex items-center justify-center select-none">
-                                        <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4" />
-                                            View Test Summary & Syllabus
+                                    <summary className="cursor-pointer p-3.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold text-xs flex items-center justify-between select-none transition-colors">
+                                        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                                            <FileText className="h-4 w-4 text-indigo-600" />
+                                            View Test Syllabus & Study Notes
                                         </div>
-                                        <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform ml-2">▼</span>
+                                        <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
                                     </summary>
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-950/30 border-t max-h-[500px] overflow-y-auto">
+                                    <div className="p-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 max-h-[350px] overflow-y-auto">
                                         <article
-                                            className="prose prose-sm dark:prose-invert max-w-none"
+                                            className="prose prose-sm dark:prose-invert max-w-none text-xs"
                                             dangerouslySetInnerHTML={{ __html: test.revision_notes }}
                                         />
                                     </div>
                                 </details>
                             </div>
                         )}
-                    </CardContent>
-                    <CardFooter className="pt-0 pb-4 px-4 flex flex-col gap-3">
-                        {schedulingStatus === 'ended' && scheduledDate ? (
-                            <div className="w-full p-4 bg-red-50 text-red-800 rounded-xl text-center font-medium border border-red-100 shadow-sm">
-                                This test ended on {formatDateCustom(scheduledDate)}
-                            </div>
-                        ) : hasAttempted ? (
-                            <div className="w-full p-4 bg-amber-50 text-amber-800 rounded-xl text-center font-medium border border-amber-100 shadow-sm">
-                                You have already attempted this test.
-                            </div>
-                        ) : (
-                            <Button size="lg" className="w-full text-lg h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md" onClick={handleStartFlow}>
-                                Continue <ArrowRight className="ml-2 h-5 w-5" />
-                            </Button>
-                        )}
-                    </CardFooter>
-                </Card>
-            )}
 
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {/* STEP 2: BROWSER COMPATIBILITY & STORAGE CHECK & AUTH            */}
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {flowStep === 'system_check' && (
-                <Card className="border-t-4 border-t-indigo-600 shadow-xl animate-in zoom-in-95 duration-200">
-                    <CardHeader className="text-center pb-3">
-                        <div className="mx-auto w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center mb-2">
-                            <ShieldCheck className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <CardTitle className="text-xl font-bold">System Diagnostics & Authentication</CardTitle>
-                        <CardDescription className="text-xs">
-                            Verifying browser compatibility, clearing storage cache, and checking login session.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {isSystemChecking ? (
-                            <div className="flex flex-col items-center justify-center py-8 space-y-3">
-                                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-                                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Running diagnostic checks & freeing storage...</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {/* Browser Compatibility Card */}
-                                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-start gap-3">
-                                    <Monitor className="w-5 h-5 text-indigo-600 mt-0.5 shrink-0" />
-                                    <div className="flex-1 text-xs">
-                                        <p className="font-bold text-slate-800 dark:text-slate-200">Browser Compatibility</p>
-                                        <p className="text-slate-500 mt-0.5">
-                                            {diagResult?.browserName || 'Web Browser'} • {diagResult?.fullscreenSupported ? 'Fullscreen Supported' : 'Standard View'}
-                                        </p>
-                                    </div>
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                        {/* Candidate Information Form (if enabled by Creator in Test Settings) */}
+                        {test.settings?.start_form?.enabled && (
+                            <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 space-y-3">
+                                <div className="flex items-center gap-2 text-xs font-bold text-indigo-950 dark:text-indigo-300">
+                                    <UserCheck className="w-4 h-4 text-indigo-600" />
+                                    <span>Candidate Details</span>
+                                    <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-semibold">
+                                        Required
+                                    </span>
                                 </div>
-
-                                {/* Storage Check & Vacate Card */}
-                                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-start gap-3">
-                                    <HardDrive className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-                                    <div className="flex-1 text-xs">
-                                        <p className="font-bold text-slate-800 dark:text-slate-200">Browser Storage Check</p>
-                                        <p className="text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
-                                            Vacated stale exam cache ({diagResult?.freedStorageKB || 0} KB freed). Storage optimized for live exam.
-                                        </p>
-                                    </div>
-                                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                                </div>
-
-                                {/* Authentication Status Card */}
-                                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/80">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <UserCheck className="w-5 h-5 text-indigo-600" />
-                                        <p className="font-bold text-sm text-slate-800 dark:text-slate-200">User Identity & Authentication</p>
-                                    </div>
-
-                                    {user ? (
-                                        <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-lg">
-                                            <div className="text-xs">
-                                                <p className="font-semibold text-emerald-900 dark:text-emerald-300">Logged in as {user.email}</p>
-                                                <p className="text-emerald-700 dark:text-emerald-400 text-[11px]">Identity verified. Auto-continuing...</p>
-                                            </div>
-                                            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3 pt-1">
-                                            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-lg text-xs text-amber-900 dark:text-amber-300 flex items-start gap-2">
-                                                <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                                                <p>You are not logged in. Login to save your progress, analysis, and certificate history.</p>
-                                            </div>
-                                            <div className="flex flex-col gap-2">
-                                                <GoogleSignInButton
-                                                    onClick={handleGoogleLogin}
-                                                    isLoading={isAuthLoading}
-                                                    text="Continue with Google"
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {(() => {
+                                        const fields = test.settings?.start_form?.fields && test.settings.start_form.fields.length > 0
+                                            ? test.settings.start_form.fields
+                                            : [{ label: 'Name', required: true }];
+                                        return fields.map((field: any, idx: number) => (
+                                            <div key={idx} className="space-y-1">
+                                                <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                                    <span>{field.label}</span>
+                                                    {field.required && <span className="text-red-500 font-bold">*</span>}
+                                                </label>
+                                                <input
+                                                    className="flex h-9 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1 text-xs shadow-2xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                                                    value={startFormValues[field.label] || ''}
+                                                    onChange={(e) => setStartFormValues(prev => ({ ...prev, [field.label]: e.target.value }))}
+                                                    required={field.required}
                                                 />
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <Button variant="outline" size="sm" onClick={() => navigate('/login', { state: { from: location.pathname } })}>
-                                                        Login
-                                                    </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => navigate('/login', { state: { isSignup: true, from: location.pathname } })}>
-                                                        Create Account
-                                                    </Button>
-                                                </div>
-                                                {enableAnonymousTests && (
-                                                    <Button variant="ghost" size="sm" className="text-slate-500 text-xs mt-1" onClick={handleAnonymousContinue}>
-                                                        Continue Anonymously →
-                                                    </Button>
-                                                )}
                                             </div>
-                                        </div>
-                                    )}
+                                        ));
+                                    })()}
                                 </div>
                             </div>
                         )}
-                    </CardContent>
-                    {systemCheckDone && user && (
-                        <CardFooter className="pt-0">
-                            <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" onClick={advanceToNextStepAfterSystemCheck}>
-                                Auto-Continuing <ArrowRight className="ml-2 w-4 h-4 animate-pulse" />
-                            </Button>
-                        </CardFooter>
-                    )}
-                </Card>
-            )}
 
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {/* STEP 3: CANDIDATE START FORM (if implemented by creator)         */}
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {flowStep === 'start_form' && (
-                <Card className="border-t-4 border-t-indigo-600 shadow-xl animate-in zoom-in-95 duration-200">
-                    <CardHeader className="text-center pb-2">
-                        <CardTitle className="text-xl font-bold">Candidate Information</CardTitle>
-                        <CardDescription className="text-xs">
-                            The creator of this test requires you to fill out your details before starting.
-                        </CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleStartFormSubmit}>
-                        <CardContent className="space-y-4 pt-2">
-                            {(() => {
-                                const fields = test.settings?.start_form?.fields && test.settings.start_form.fields.length > 0
-                                    ? test.settings.start_form.fields
-                                    : [{ label: 'Name', required: true }];
-                                return fields.map((field: any, idx: number) => (
-                                    <div key={idx} className="space-y-1.5">
-                                        <div className="flex justify-between text-xs font-semibold">
-                                            <label>{field.label}</label>
-                                            {field.required && <span className="text-red-500">* Required</span>}
-                                        </div>
-                                        <input
-                                            className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                            placeholder={`Enter your ${field.label.toLowerCase()}`}
-                                            value={startFormValues[field.label] || ''}
-                                            onChange={(e) => setStartFormValues(prev => ({ ...prev, [field.label]: e.target.value }))}
-                                            required={field.required}
-                                        />
-                                    </div>
-                                ));
-                            })()}
-                        </CardContent>
-                        <CardFooter className="pt-2">
-                            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-11 rounded-xl">
-                                Next: Final Instructions <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </CardFooter>
-                    </form>
-                </Card>
-            )}
-
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {/* STEP 4: FINAL INSTRUCTIONS & TIMER (IF APPLIED) & START BUTTON   */}
-            {/* ════════════════════════════════════════════════════════════════ */}
-            {flowStep === 'final_instructions' && (
-                <Card className="border-t-4 border-t-emerald-600 shadow-xl animate-in zoom-in-95 duration-200">
-                    <CardHeader className="text-center pb-2">
-                        <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">
-                            <Sparkles className="w-5 h-5 text-amber-500" /> Final Instructions & Checklist
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                            Please review rules and accept the pre-exam checklist to activate the Start Test button.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {/* Rules Summary */}
-                        <div className="space-y-3 border p-3.5 rounded-xl bg-slate-50/50 dark:bg-slate-900/50">
-                            <div className="flex items-center gap-2 font-semibold text-sm">
-                                <FileText className="h-4 w-4 text-indigo-600" />
-                                <span>Exam Parameters</span>
-                            </div>
-                            <Separator />
-                            <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
-                                <li>Total duration: <strong>{test.duration} minutes</strong>. Once started, timer cannot be paused.</li>
-                                <li>Total questions: <strong>{questionCount}</strong> • Total marks: <strong>{totalMaxMarks}</strong></li>
-                                {test.settings?.tab_switch_mode === 'strict' && (
-                                    <li className="text-red-600 font-medium">Tab Switching: Strictly prohibited. Switching tabs auto-submits.</li>
-                                )}
-                                {test.settings?.force_fullscreen && (
-                                    <li className="text-amber-600 font-medium">Full Screen: Required. Exiting full screen submits exam.</li>
-                                )}
-                            </ul>
-                        </div>
-
-                        {/* Pre-Exam Checklist Checkbox */}
-                        <div className="space-y-3">
-                            <label className="flex items-start gap-3 p-3.5 border rounded-xl hover:bg-slate-50 dark:hover:bg-slate-900 cursor-pointer transition-colors">
+                        {/* Pre-Exam Rules & Checklist */}
+                        <div className="space-y-3 pt-1">
+                            <label className="flex items-start gap-3 p-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors bg-white dark:bg-slate-900/50">
                                 <input
                                     type="checkbox"
                                     className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 flex-shrink-0"
                                     checked={checklistDiff}
                                     onChange={(e) => setChecklistDiff(e.target.checked)}
                                 />
-                                <span className="text-xs text-slate-800 dark:text-slate-200 leading-tight">
-                                    I have closed all other tabs and applications. I confirm that I am ready to take the exam without distraction.
+                                <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                                    I confirm that I am ready to take the exam in a quiet environment without distraction.
+                                    {test.settings?.tab_switch_mode === 'strict' && (
+                                        <span className="text-red-600 font-bold block mt-0.5">
+                                            ⚠️ Strict tab switch monitoring is enabled for this exam.
+                                        </span>
+                                    )}
                                 </span>
                             </label>
 
                             {test.settings?.allow_flexible_timer !== false && (
-                                <div className="flex items-center gap-3 p-3 border rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border-purple-100 dark:border-purple-900/40">
+                                <div className="flex items-center justify-between p-3 border border-purple-100 dark:border-purple-900/40 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20">
+                                    <div className="space-y-0.5">
+                                        <label htmlFor="flexible-timer" className="text-xs font-semibold text-purple-950 dark:text-purple-300 cursor-pointer">
+                                            Flexible Timer
+                                        </label>
+                                        <p className="text-[11px] text-purple-700/80 dark:text-purple-400/80">
+                                            Practice without time limit pressure.
+                                        </p>
+                                    </div>
                                     <Switch
                                         id="flexible-timer"
                                         checked={isTimerDisabled}
                                         onCheckedChange={setIsTimerDisabled}
                                     />
-                                    <label htmlFor="flexible-timer" className="text-xs text-slate-800 dark:text-slate-200 cursor-pointer leading-tight">
-                                        <strong>Flexible Timer:</strong> Take this test without a strict time limit.
-                                    </label>
                                 </div>
                             )}
                         </div>
 
-                        {/* Scheduled Countdown Timer (if applied by creator) */}
+                        {/* Login Gate Card (Only displayed if Creator enabled 'login_required' and candidate is not logged in) */}
+                        {isLoginGateActive && (
+                            <div className="p-4 sm:p-5 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/40 space-y-3 animate-in zoom-in-95 duration-200">
+                                <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-300">
+                                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                                    <span>Authentication Required</span>
+                                </div>
+                                <p className="text-xs text-amber-800/90 dark:text-amber-300/90">
+                                    The creator has required candidates to log in for this exam. Sign in to start your test and save your results to your permanent profile.
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                                    <div className="flex-1">
+                                        <GoogleSignInButton
+                                            onClick={handleGoogleLogin}
+                                            isLoading={isAuthLoading}
+                                            text="Continue with Google"
+                                        />
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-10 text-xs font-semibold rounded-xl border-amber-300 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200"
+                                        onClick={() => openAuthModal({ view: 'login' })}
+                                    >
+                                        Login / Signup
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Scheduled Countdown Timer (Directly above Start Test Button if test is scheduled for future) */}
                         {schedulingStatus === 'upcoming' && scheduledDate && (
-                            <CountdownDisplay
-                                targetDate={scheduledDate}
-                                onComplete={() => setSchedulingStatus('live')}
-                            />
+                            <div className="pt-2">
+                                <CountdownDisplay
+                                    targetDate={scheduledDate}
+                                    onComplete={() => setSchedulingStatus('live')}
+                                />
+                            </div>
                         )}
                     </CardContent>
-                    <CardFooter className="pt-2 pb-5">
-                        {schedulingStatus === 'upcoming' ? (
-                            <Button disabled size="lg" className="w-full text-base h-12 rounded-xl opacity-70">
-                                <Lock className="mr-2 w-4 h-4" /> Waiting for Scheduled Start Time...
+
+                    <CardFooter className="pt-0 pb-6 px-4 sm:px-6 flex flex-col gap-3">
+                        {schedulingStatus === 'ended' && scheduledDate ? (
+                            <div className="w-full p-4 bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300 rounded-2xl text-center font-bold text-xs sm:text-sm border border-red-200 dark:border-red-900/50 shadow-sm">
+                                This exam ended on {formatDateCustom(scheduledDate)} at {formatTimeCustom(scheduledDate)}.
+                            </div>
+                        ) : hasAttempted ? (
+                            <div className="w-full p-4 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 rounded-2xl text-center font-bold text-xs sm:text-sm border border-amber-200 dark:border-amber-900/50 shadow-sm">
+                                You have already attempted this exam.
+                            </div>
+                        ) : isLoginGateActive ? (
+                            <Button
+                                size="lg"
+                                className="w-full text-base h-12 rounded-2xl font-bold bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                disabled
+                            >
+                                <Lock className="mr-2 h-4 w-4" /> Please Login Above to Begin Exam
+                            </Button>
+                        ) : schedulingStatus === 'upcoming' ? (
+                            <Button
+                                size="lg"
+                                className="w-full text-base sm:text-lg h-12 font-bold rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 transition-all hover:scale-[1.01]"
+                                onClick={handleStartFlow}
+                            >
+                                <Clock className="mr-2 h-5 w-5" /> Enter Exam Waiting Room
                             </Button>
                         ) : (
                             <Button
                                 size="lg"
-                                className={`w-full text-lg h-12 font-bold rounded-xl shadow-lg transition-all ${
+                                className={`w-full text-base sm:text-lg h-12 font-bold rounded-2xl shadow-lg transition-all ${
                                     !checklistDiff
                                         ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
-                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200 dark:shadow-none hover:scale-[1.01]'
+                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 hover:scale-[1.01]'
                                 }`}
                                 disabled={!checklistDiff}
-                                onClick={() => handleFinalStartTest(true)}
+                                onClick={handleStartFlow}
                             >
                                 <PlayCircle className="mr-2 h-6 w-6" /> Start Test Now
                             </Button>
+                        )}
+
+                        {/* Subtle guest status hint if login is not required and user is guest */}
+                        {!user && !isLoginRequired && (
+                            <p className="text-[11px] text-center text-slate-400">
+                                Taking test as guest. <span onClick={() => openAuthModal({ view: 'login' })} className="text-indigo-600 dark:text-indigo-400 font-semibold cursor-pointer hover:underline">Sign in</span> to save results to your profile.
+                            </p>
                         )}
                     </CardFooter>
                 </Card>

@@ -105,10 +105,22 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
     const [editingSubCategory, setEditingSubCategory] = useState<{ id?: string, name: string, category_id: string }>({ name: '', category_id: '' });
     const [allSubCategories, setAllSubCategories] = useState<SubCategory[]>([]);
 
-    // Users State
+    // Registered Users State
     const [users, setUsers] = useState<any[]>([]);
     const [usersLoading, setUsersLoading] = useState(true);
+    const [usersPage, setUsersPage] = useState(1);
+    const [usersTotal, setUsersTotal] = useState(0);
     const [userSearchQuery, setUserSearchQuery] = useState("");
+    const [debouncedUserSearchQuery, setDebouncedUserSearchQuery] = useState("");
+
+    // Verified Creators State
+    const [verifiedCreators, setVerifiedCreators] = useState<any[]>([]);
+    const [verifiedCreatorsLoading, setVerifiedCreatorsLoading] = useState(true);
+    const [verifiedCreatorsPage, setVerifiedCreatorsPage] = useState(1);
+    const [verifiedCreatorsTotal, setVerifiedCreatorsTotal] = useState(0);
+    const [creatorSearchQuery, setCreatorSearchQuery] = useState("");
+    const [debouncedCreatorSearchQuery, setDebouncedCreatorSearchQuery] = useState("");
+
     const [viewingUser, setViewingUser] = useState<any>(null); // For User Details Dialog
     const [userDetails, setUserDetails] = useState<any>({ createdTests: [], attempts: [], reports: [] });
     const [loadingUserDetails, setLoadingUserDetails] = useState<boolean>(false);
@@ -226,6 +238,104 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         }
     }, [debouncedSearchQuery]);
 
+    const loadUsers = React.useCallback(async (pageToLoad = usersPage, searchToUse = debouncedUserSearchQuery) => {
+        setUsersLoading(true);
+        try {
+            const { data, error } = await fetchUsers({
+                page: pageToLoad,
+                limit: 10,
+                search: searchToUse
+            });
+
+            if (error) throw error;
+            if (data && typeof data === 'object' && 'items' in data) {
+                setUsers(data.items || []);
+                setUsersTotal(data.total || 0);
+            } else if (Array.isArray(data)) {
+                setUsers(data);
+                setUsersTotal(data.length);
+            }
+
+            // Fetch Report Stats for Admin
+            const { data: statsData } = await fetchAdminUsersReportStats();
+            if (statsData) {
+                setReportStats(statsData);
+            }
+
+        } catch (error) {
+            console.error("Error loading users:", error);
+            toast.error("Failed to load users");
+        } finally {
+            setUsersLoading(false);
+        }
+    }, [usersPage, debouncedUserSearchQuery]);
+
+    const loadVerifiedCreators = React.useCallback(async (pageToLoad = verifiedCreatorsPage, searchToUse = debouncedCreatorSearchQuery) => {
+        setVerifiedCreatorsLoading(true);
+        try {
+            const { data, error } = await fetchUsers({
+                page: pageToLoad,
+                limit: 10,
+                search: searchToUse,
+                is_verified_creator: true
+            });
+
+            if (error) throw error;
+            if (data && typeof data === 'object' && 'items' in data) {
+                setVerifiedCreators(data.items || []);
+                setVerifiedCreatorsTotal(data.total || 0);
+            } else if (Array.isArray(data)) {
+                setVerifiedCreators(data);
+                setVerifiedCreatorsTotal(data.length);
+            }
+        } catch (error) {
+            console.error("Error loading verified creators:", error);
+            toast.error("Failed to load verified creators");
+        } finally {
+            setVerifiedCreatorsLoading(false);
+        }
+    }, [verifiedCreatorsPage, debouncedCreatorSearchQuery]);
+
+    // Registered Users Search Debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedUserSearchQuery(userSearchQuery);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [userSearchQuery]);
+
+    const isFirstUserSearchRef = React.useRef(true);
+    useEffect(() => {
+        if (isFirstUserSearchRef.current) {
+            isFirstUserSearchRef.current = false;
+            return;
+        }
+        if (activeTab === 'users') {
+            setUsersPage(1);
+            loadUsers(1, debouncedUserSearchQuery);
+        }
+    }, [debouncedUserSearchQuery]);
+
+    // Verified Creators Search Debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedCreatorSearchQuery(creatorSearchQuery);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [creatorSearchQuery]);
+
+    const isFirstCreatorSearchRef = React.useRef(true);
+    useEffect(() => {
+        if (isFirstCreatorSearchRef.current) {
+            isFirstCreatorSearchRef.current = false;
+            return;
+        }
+        if (activeTab === 'verified_creators') {
+            setVerifiedCreatorsPage(1);
+            loadVerifiedCreators(1, debouncedCreatorSearchQuery);
+        }
+    }, [debouncedCreatorSearchQuery]);
+
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -268,8 +378,10 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                     loadCategories(),
                     loadAllSubCategoriesData()
                 ]);
-            } else if (tabId === 'users' || tabId === 'verified_creators') {
+            } else if (tabId === 'users') {
                 await loadUsers();
+            } else if (tabId === 'verified_creators') {
+                await loadVerifiedCreators();
             } else if (tabId === 'combined') {
                 await Promise.all([
                     loadCombinedSessions(),
@@ -285,7 +397,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         } finally {
             setTabLoading(false);
         }
-    }, [tests.length]);
+    }, [tests.length, loadUsers, loadVerifiedCreators]);
 
     useEffect(() => {
         fetchActiveTabData(activeTab);
@@ -357,27 +469,6 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         setCategoriesLoading(false);
     };
 
-    const loadUsers = async () => {
-        setUsersLoading(true);
-        try {
-            const { data, error } = await fetchUsers();
-
-            if (error) throw error;
-            setUsers(data || []);
-
-            // Fetch Report Stats for Admin
-            const { data: statsData } = await fetchAdminUsersReportStats();
-            if (statsData) {
-                setReportStats(statsData);
-            }
-
-        } catch (error) {
-            console.error("Error loading users:", error);
-            toast.error("Failed to load users");
-        } finally {
-            setUsersLoading(false);
-        }
-    };
 
     const loadConductModeTests = async () => {
         setConductModeLoading(true);
@@ -501,15 +592,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         }
     };
 
-    const filteredUsers = users.filter(user => {
-        if (!userSearchQuery) return true;
-        const q = userSearchQuery.toLowerCase();
-        return (
-            (user.full_name?.toLowerCase() || '').includes(q) ||
-            (user.email?.toLowerCase() || '').includes(q) ||
-            (user.id?.toLowerCase() || '').includes(q)
-        );
-    });
+
 
     // --- Three-dot Menu Handlers ---
     const loadAllClasses = async () => {
@@ -637,7 +720,8 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
 
             if (error) throw error;
             toast.success(`${userToVerify.full_name} is now a Verified Creator!`);
-            loadUsers();
+            loadUsers(usersPage);
+            loadVerifiedCreators(verifiedCreatorsPage);
         } catch (error: any) {
             console.error("Error verifying user:", error);
             toast.error("Failed to verify user: " + error.message);
@@ -652,7 +736,8 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
 
             if (error) throw error;
             toast.success(`Verification revoked for ${userToRevoke.full_name}`);
-            loadUsers();
+            loadUsers(usersPage);
+            loadVerifiedCreators(verifiedCreatorsPage);
         } catch (error: any) {
             console.error("Error revoking verification:", error);
             toast.error("Failed to revoke verification: " + error.message);
@@ -665,6 +750,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
             if (error) throw error;
             toast.success(`Updated role for ${userToUpdate.full_name || userToUpdate.email} to ${newDesignation}`);
             setUsers(prev => prev.map(u => u.id === userToUpdate.id ? { ...u, designation: newDesignation } : u));
+            setVerifiedCreators(prev => prev.map(u => u.id === userToUpdate.id ? { ...u, designation: newDesignation } : u));
         } catch (error: any) {
             console.error("Error updating user designation:", error);
             toast.error("Failed to update user role: " + (error.message || String(error)));
@@ -682,6 +768,9 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
             if (error) throw error;
             toast.success(`User ${userName} deleted permanently.`);
             setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+            setVerifiedCreators(prev => prev.filter(u => u.id !== userToDelete.id));
+            loadUsers(usersPage);
+            loadVerifiedCreators(verifiedCreatorsPage);
         } catch (error: any) {
             console.error("Error deleting user:", error);
             toast.error("Failed to delete user: " + (error.message || String(error)));
@@ -1334,14 +1423,14 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ) : filteredUsers.length === 0 ? (
+                                    ) : users.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                                                 No users found.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredUsers.map(user => (
+                                        users.map(user => (
                                             <TableRow key={user.id}>
                                                 <TableCell>
                                                     <Avatar className="h-8 w-8">
@@ -1391,6 +1480,45 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     )}
                                 </TableBody>
                             </Table>
+
+                            {/* Registered Users Pagination Footer */}
+                            <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
+                                <div>
+                                    Showing {usersTotal > 0 ? (usersPage - 1) * 10 + 1 : 0} to {Math.min(usersPage * 10, usersTotal)} of {usersTotal} registered users
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const newPage = Math.max(1, usersPage - 1);
+                                            setUsersPage(newPage);
+                                            loadUsers(newPage);
+                                        }}
+                                        disabled={usersPage <= 1 || usersLoading}
+                                        className="h-8 text-xs rounded-xl"
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                        Page {usersPage} of {Math.ceil(usersTotal / 10) || 1}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const maxPage = Math.ceil(usersTotal / 10) || 1;
+                                            const newPage = Math.min(maxPage, usersPage + 1);
+                                            setUsersPage(newPage);
+                                            loadUsers(newPage);
+                                        }}
+                                        disabled={usersPage >= (Math.ceil(usersTotal / 10) || 1) || usersLoading}
+                                        className="h-8 text-xs rounded-xl"
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -1407,9 +1535,9 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 <div className="relative w-full md:w-64">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search users..."
-                                        value={userSearchQuery}
-                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                        placeholder="Search creators..."
+                                        value={creatorSearchQuery}
+                                        onChange={(e) => setCreatorSearchQuery(e.target.value)}
                                         className="pl-9"
                                     />
                                 </div>
@@ -1428,7 +1556,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {usersLoading ? (
+                                    {verifiedCreatorsLoading ? (
                                         <TableRow>
                                             <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-medium">
                                                 <div className="flex flex-col items-center justify-center gap-2">
@@ -1437,14 +1565,14 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ) : filteredUsers.length === 0 ? (
+                                    ) : verifiedCreators.length === 0 ? (
                                         <TableRow>
                                             <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                                No users found.
+                                                No verified creators found.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredUsers.map(user => (
+                                        verifiedCreators.map(user => (
                                             <TableRow key={user.id}>
                                                 <TableCell>
                                                     <Avatar className="h-8 w-8">
@@ -1516,6 +1644,45 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     )}
                                 </TableBody>
                             </Table>
+
+                            {/* Verified Creators Pagination Footer */}
+                            <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
+                                <div>
+                                    Showing {verifiedCreatorsTotal > 0 ? (verifiedCreatorsPage - 1) * 10 + 1 : 0} to {Math.min(verifiedCreatorsPage * 10, verifiedCreatorsTotal)} of {verifiedCreatorsTotal} verified creators
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const newPage = Math.max(1, verifiedCreatorsPage - 1);
+                                            setVerifiedCreatorsPage(newPage);
+                                            loadVerifiedCreators(newPage);
+                                        }}
+                                        disabled={verifiedCreatorsPage <= 1 || verifiedCreatorsLoading}
+                                        className="h-8 text-xs rounded-xl"
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                                        Page {verifiedCreatorsPage} of {Math.ceil(verifiedCreatorsTotal / 10) || 1}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const maxPage = Math.ceil(verifiedCreatorsTotal / 10) || 1;
+                                            const newPage = Math.min(maxPage, verifiedCreatorsPage + 1);
+                                            setVerifiedCreatorsPage(newPage);
+                                            loadVerifiedCreators(newPage);
+                                        }}
+                                        disabled={verifiedCreatorsPage >= (Math.ceil(verifiedCreatorsTotal / 10) || 1) || verifiedCreatorsLoading}
+                                        className="h-8 text-xs rounded-xl"
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

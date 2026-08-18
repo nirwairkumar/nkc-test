@@ -29,13 +29,13 @@ export default function AnalyticsSection({
     return (
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs mb-6">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold shrink-0">
                         <BarChart2 className="w-4 h-4" />
                     </div>
-                    <div>
-                        <h2 className="text-base font-bold text-slate-900 tracking-tight">Performance & Submissions Analytics</h2>
-                        <p className="text-xs text-slate-400">Response trends and score distributions across all active tests</p>
+                    <div className="min-w-0">
+                        <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-tight truncate">Performance & Submissions Analytics</h2>
+                        <p className="text-[11px] sm:text-xs text-slate-400 truncate">Response trends and score distributions across all active tests</p>
                     </div>
                 </div>
 
@@ -43,9 +43,10 @@ export default function AnalyticsSection({
                     variant="outline"
                     size="sm"
                     onClick={() => navigate('/analytics/full')}
-                    className="h-8 px-3 text-xs border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center gap-1"
+                    className="h-8 px-3 text-xs border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer font-medium flex items-center gap-1 shrink-0"
                 >
-                    <span>Full Analytics</span>
+                    <span className="hidden sm:inline">Full Analytics</span>
+                    <span className="sm:hidden">Full</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                 </Button>
             </div>

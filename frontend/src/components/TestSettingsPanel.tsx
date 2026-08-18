@@ -97,6 +97,22 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         loadFullTest();
     }, [test.id]);
 
+    const formatForDateTimeLocal = (dateStr?: string) => {
+        if (!dateStr) return '';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        } catch {
+            return dateStr;
+        }
+    };
+
     const handleSave = async (forceSave: boolean = false) => {
         // If overridePremium (admin) is true, skip check
         if (!isPremium && !overridePremium) {
@@ -110,6 +126,32 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
             return;
         }
 
+        if (settings.schedule?.enabled) {
+            if (!settings.schedule.start_time || !settings.schedule.end_time) {
+                toast.error("Please specify both start and end times for scheduled access.");
+                return;
+            }
+
+            const startTime = new Date(settings.schedule.start_time);
+            const endTime = new Date(settings.schedule.end_time);
+            const now = new Date();
+
+            if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                toast.error("Invalid start or end time format.");
+                return;
+            }
+
+            if (endTime <= startTime) {
+                toast.error("End date & time must be after start date & time.");
+                return;
+            }
+
+            if (endTime <= now) {
+                toast.error("End date & time has already passed. Please select a future end time.");
+                return;
+            }
+        }
+
         const isConducted = settings.conduct_exam?.enabled === true;
         const hasStrictSettings = settings.force_fullscreen || settings.tab_switch_mode !== 'off' || settings.disable_copy_paste || settings.disable_actions || settings.block_back_button;
 
@@ -120,8 +162,15 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
         setLoading(true);
         try {
+            const sanitizedSettings = {
+                ...settings,
+                schedule: settings.schedule?.enabled
+                    ? settings.schedule
+                    : { enabled: false }
+            };
+
             const { data, error } = await updateTest(test.id, {
-                settings: settings,
+                settings: sanitizedSettings,
                 class_id: classId
             }, overridePremium);
 
@@ -251,8 +300,8 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     {/* Tab Switch Detection Toggle */}
                     <div className="flex items-center justify-between" id={mode === 'desktop' ? "tour-tab-switch-container" : undefined}>
                         <div className="space-y-0.5">
-                            <Label className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Tab Switch Detection</Label>
-                            <p className="text-sm text-muted-foreground">Detect if user switches tabs or minimizes browser.</p>
+                            <Label className="text-base flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Tab/App Switch Detection</Label>
+                            <p className="text-sm text-muted-foreground">Detect if user switches tabs/apps or minimizes browser.</p>
                         </div>
                         <Switch
                             id={mode === 'desktop' ? "tour-tab-switch" : undefined}
@@ -321,7 +370,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                     </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground italic">
-                                    Both fullscreen exits and tab switches count toward this limit.
+                                    Both fullscreen exits and tab/app switches count toward this limit.
                                 </p>
                             </div>
                         </>
@@ -395,7 +444,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                 <Label>Start Date & Time</Label>
                                 <Input
                                     type="datetime-local"
-                                    value={settings.schedule?.start_time || ''}
+                                    value={formatForDateTimeLocal(settings.schedule?.start_time)}
                                     onChange={(e) => updateSetting('schedule', { ...settings.schedule!, start_time: e.target.value })}
                                 />
                             </div>
@@ -403,7 +452,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                                 <Label>End Date & Time</Label>
                                 <Input
                                     type="datetime-local"
-                                    value={settings.schedule?.end_time || ''}
+                                    value={formatForDateTimeLocal(settings.schedule?.end_time)}
                                     onChange={(e) => updateSetting('schedule', { ...settings.schedule!, end_time: e.target.value })}
                                 />
                             </div>
@@ -448,6 +497,29 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                             onCheckedChange={(c) => updateSetting('attempt_limit', c ? 1 : undefined)}
                         />
                     </div>
+                </div>
+
+                {/* Require Login Toggle */}
+                <div className="flex flex-col gap-2 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-900/50">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-base flex items-center gap-2">
+                                <Lock className="w-4 h-4 text-indigo-600" /> Require Candidate Login
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                When enabled, candidates must log in before starting to save results to their profile.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={settings.login_required || false}
+                            onCheckedChange={(c) => updateSetting('login_required', c)}
+                        />
+                    </div>
+                    {settings.login_required && (
+                        <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium bg-indigo-50/70 dark:bg-indigo-950/40 p-2.5 rounded-md border border-indigo-100 dark:border-indigo-900/50">
+                            🔒 <strong>Login Mandatory:</strong> Candidates opening this test link must sign in before attempting. Unauthenticated visitors will be prompted to log in.
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-4 border p-4 rounded-lg" id={mode === 'desktop' ? "tour-start-form-container" : undefined}>
@@ -830,7 +902,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     <AlertDialogHeader>
                         <AlertDialogTitle>Conduct Exam Required</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Strict environment monitoring features (Full Screen, Tab Switching Detection, etc.) can only be applied when an exam is in <strong>Conduct Mode</strong>.
+                            Strict environment monitoring features (Full Screen, Tab/App Switching Detection, etc.) can only be applied when an exam is in <strong>Conduct Mode</strong>.
                             <br /><br />
                             Do you want to move this test to Conduct Exam mode now?
                         </AlertDialogDescription>

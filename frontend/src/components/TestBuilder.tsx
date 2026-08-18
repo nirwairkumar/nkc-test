@@ -1,6 +1,7 @@
 import { TestBuilderMinimap } from './TestBuilderMinimap';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,7 @@ interface TestBuilderProps {
 
 export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImport }: TestBuilderProps) {
     const { user, isAdmin } = useAuth();
+    const { openAuthModal } = useAuthModal();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -971,8 +973,8 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             localStorage.setItem('create_test_draft', JSON.stringify(draftData));
             localStorage.setItem('auth_redirect_intent', '/create-test');
 
-            toast.error("Please login to save your test. Redirecting...");
-            setTimeout(() => navigate('/login'), 1500);
+            toast.error("Please sign in to save your test.");
+            openAuthModal({ view: 'login', redirectPath: '/create-test' });
             return;
         }
         if (!title.trim()) { toast.error("Test Title is required"); return; }
