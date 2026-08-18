@@ -190,7 +190,7 @@ export default function NewsPostEditor() {
             setCoverImage(existingPost.cover_image || null);
             setIsPinned(!!existingPost.is_pinned);
             if (existingPost.content) {
-                let contentToSet = existingPost.content;
+                let contentToSet: any = existingPost.content;
                 if (typeof contentToSet === 'string' && (contentToSet.startsWith('{') || contentToSet.startsWith('['))) {
                     try {
                         contentToSet = JSON.parse(contentToSet);

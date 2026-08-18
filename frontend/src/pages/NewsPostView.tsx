@@ -128,7 +128,7 @@ export default function NewsPostView() {
 
     useEffect(() => {
         if (editor && !editor.isDestroyed && post?.content) {
-            let contentToSet = post.content;
+            let contentToSet: any = post.content;
             if (typeof contentToSet === 'string' && (contentToSet.startsWith('{') || contentToSet.startsWith('['))) {
                 try {
                     contentToSet = JSON.parse(contentToSet);
@@ -142,7 +142,7 @@ export default function NewsPostView() {
     const readTimeMinutes = useMemo(() => {
         if (!post?.content) return 3;
         try {
-            const str = JSON.stringify(post.content);
+            const str = typeof post.content === 'string' ? post.content : JSON.stringify(post.content);
             const words = str.split(/\s+/).length;
             return Math.max(1, Math.ceil(words / 200));
         } catch {

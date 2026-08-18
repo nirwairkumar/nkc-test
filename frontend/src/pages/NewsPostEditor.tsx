@@ -155,7 +155,7 @@ export default function NewsPostEditor() {
             setTags(existingPost.tags || []);
             setCoverImage(existingPost.cover_image || null);
             if (existingPost.content) {
-                let contentToSet = existingPost.content;
+                let contentToSet: any = existingPost.content;
                 if (typeof contentToSet === 'string' && (contentToSet.startsWith('{') || contentToSet.startsWith('['))) {
                     try {
                         contentToSet = JSON.parse(contentToSet);
