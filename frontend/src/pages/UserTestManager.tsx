@@ -310,7 +310,7 @@ export default function UserTestManager() {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            navigate('/login');
+            return;
         } else if (impersonateUserId && !isAdmin) {
             toast.error("You are not authorized to view this user's dashboard.");
             navigate('/my-tests', { replace: true });

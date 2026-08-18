@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
 import {
     DropdownMenu,
@@ -149,6 +150,7 @@ const ensureParsedObject = (val: any): any => {
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { openAuthModal } = useAuthModal();
 
     const [files, setFiles] = useState<SelectedFile[]>([]);
     const [answerKeyFile, setAnswerKeyFile] = useState<File | null>(null);
@@ -1257,8 +1259,11 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             } catch (e) {
                 console.warn("Could not save pending test to localStorage", e);
             }
-            toast.error("Please login to save the test. Redirecting...");
-            setTimeout(() => navigate('/login'), 1000);
+            toast.info("Please sign in to save your test.");
+            openAuthModal({
+                view: 'login',
+                redirectPath: '/generate-with-ai'
+            });
             return;
         }
 

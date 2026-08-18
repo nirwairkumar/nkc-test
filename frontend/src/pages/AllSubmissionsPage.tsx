@@ -53,7 +53,6 @@ export default function AllSubmissionsPage() {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            navigate('/login');
             return;
         }
 

@@ -38,7 +38,6 @@ export default function RewardsPage() {
 
     useEffect(() => {
         if (!authLoading && !user) {
-            navigate('/login');
             return;
         }
 

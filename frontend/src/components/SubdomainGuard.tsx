@@ -56,14 +56,10 @@ export default function SubdomainGuard() {
         window.location.replace(`https://app.testoza.com${location.pathname}${location.search}${location.hash}`);
       }
     } else if (isAppDomain) {
-      // App subdomain root page should go to dashboard or login
+      // App subdomain root page should go to dashboard
       if (location.pathname === '/') {
         if (!loading) {
-          if (user) {
-            navigate('/dashboard', { replace: true });
-          } else {
-            navigate('/login', { replace: true });
-          }
+          navigate('/dashboard', { replace: true });
         }
       }
     }
