@@ -13,10 +13,9 @@ interface AuthModalContextType {
     authModalView: AuthModalView;
     redirectPath?: string;
     onSuccessCallback?: () => void;
-    openAuthModal: (options?: OpenAuthModalOptions | 'login' | 'signup') => void;
+    openAuthModal: (options?: OpenAuthModalOptions | 'login' | 'signup' | 'onboarding') => void;
     closeAuthModal: () => void;
     setAuthModalView: (view: AuthModalView) => void;
-    isOnboardingModalOpen: boolean;
     openOnboardingModal: (onSuccess?: () => void) => void;
     closeOnboardingModal: () => void;
 }
@@ -27,7 +26,6 @@ const AuthModalContext = createContext<AuthModalContextType>({
     openAuthModal: () => {},
     closeAuthModal: () => {},
     setAuthModalView: () => {},
-    isOnboardingModalOpen: false,
     openOnboardingModal: () => {},
     closeOnboardingModal: () => {},
 });
@@ -38,10 +36,7 @@ export const AuthModalProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [redirectPath, setRedirectPath] = useState<string | undefined>(undefined);
     const [onSuccessCallback, setOnSuccessCallback] = useState<(() => void) | undefined>(undefined);
 
-    const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
-    const [onboardingSuccessCallback, setOnboardingSuccessCallback] = useState<(() => void) | undefined>(undefined);
-
-    const openAuthModal = useCallback((options?: OpenAuthModalOptions | 'login' | 'signup') => {
+    const openAuthModal = useCallback((options?: OpenAuthModalOptions | 'login' | 'signup' | 'onboarding') => {
         if (typeof options === 'string') {
             setAuthModalView(options);
             setRedirectPath(undefined);
@@ -63,12 +58,11 @@ export const AuthModalProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }, []);
 
     const openOnboardingModal = useCallback((onSuccess?: () => void) => {
-        setOnboardingSuccessCallback(() => onSuccess);
-        setIsOnboardingModalOpen(true);
-    }, []);
+        openAuthModal({ view: 'onboarding', onSuccess });
+    }, [openAuthModal]);
 
     const closeOnboardingModal = useCallback(() => {
-        setIsOnboardingModalOpen(false);
+        setIsAuthModalOpen(false);
     }, []);
 
     return (
@@ -81,7 +75,6 @@ export const AuthModalProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 openAuthModal,
                 closeAuthModal,
                 setAuthModalView,
-                isOnboardingModalOpen,
                 openOnboardingModal,
                 closeOnboardingModal,
             }}

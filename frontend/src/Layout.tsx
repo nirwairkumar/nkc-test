@@ -6,7 +6,6 @@ import AppSidebar from './components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import AuthModal from '@/components/auth/AuthModal';
-import OnboardingModal from '@/components/auth/OnboardingModal';
 import { analyticsTracker } from '@/lib/analyticsTracker';
 import { PanelLeft } from 'lucide-react';
 
@@ -14,7 +13,7 @@ export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, profile, loading } = useAuth();
-    const { openOnboardingModal } = useAuthModal();
+    const { openOnboardingModal, isAuthModalOpen } = useAuthModal();
 
     // Sidebar collapsed state (persistent in localStorage)
     const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
@@ -55,14 +54,14 @@ export default function Layout() {
 
             if (!hasDesignation) {
                 // If on standalone /onboarding or /login page, leave route intact; otherwise open popup onboarding
-                if (location.pathname !== '/onboarding' && location.pathname !== '/login') {
+                if (location.pathname !== '/onboarding' && location.pathname !== '/login' && !isAuthModalOpen) {
                     openOnboardingModal();
                 }
             } else if (location.pathname === '/onboarding') {
                 navigate('/', { replace: true });
             }
         }
-    }, [user, profile, loading, navigate, location.pathname, openOnboardingModal]);
+    }, [user, profile, loading, navigate, location.pathname, openOnboardingModal, isAuthModalOpen]);
 
     // Check if logged in user is Teacher or Institution
     const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);
@@ -140,9 +139,8 @@ export default function Layout() {
 
             {!hideFooter && <Footer />}
 
-            {/* Global Popup Authentication & Onboarding Modals */}
+            {/* Global Popup Authentication & Onboarding Modal */}
             <AuthModal />
-            <OnboardingModal />
         </div>
     );
 }
