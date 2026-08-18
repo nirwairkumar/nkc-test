@@ -60,19 +60,86 @@ export async function resetPasswordForEmail(email: string) {
 
 import { getAppUrl } from '@/utils/subdomain';
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(): Promise<{ error: any; data?: any }> {
     try {
         const redirectUrl = getAppUrl('/auth/callback');
-        console.log('[AuthActions] Initiating Google OAuth with redirectTo:', redirectUrl);
-        const { error } = await supabase.auth.signInWithOAuth({
+        console.log('[AuthActions] Initiating Google OAuth with popup flow:', redirectUrl);
+
+        // Request OAuth URL from Supabase with skipBrowserRedirect so current page is never refreshed
+        const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: redirectUrl
+                redirectTo: redirectUrl,
+                skipBrowserRedirect: true
             }
         });
 
         if (error) throw error;
-        return { error: null };
+        if (!data?.url) throw new Error('No OAuth URL received from authentication provider');
+
+        // Center popup on current screen
+        const width = 500;
+        const height = 650;
+        const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
+        const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+
+        const popup = window.open(
+            data.url,
+            'TestoZaGoogleAuth',
+            `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes,scrollbars=yes`
+        );
+
+        if (!popup) {
+            // Popup blocked by browser policy - fallback to standard navigation
+            console.warn('[AuthActions] Popup blocked, falling back to full-page redirect');
+            window.location.href = data.url;
+            return { error: null };
+        }
+
+        // Return a Promise that resolves when popup completes authentication
+        return new Promise((resolve) => {
+            let messageHandled = false;
+
+            const handleMessage = (event: MessageEvent) => {
+                if (event.origin !== window.location.origin) return;
+
+                if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
+                    messageHandled = true;
+                    window.removeEventListener('message', handleMessage);
+                    clearInterval(checkClosedInterval);
+
+                    const { accessToken, refreshToken } = event.data;
+                    if (accessToken) {
+                        tokenStorage.setTokens(accessToken, refreshToken || undefined);
+                    }
+                    resolve({ error: null, data: event.data });
+                } else if (event.data?.type === 'OAUTH_AUTH_ERROR') {
+                    messageHandled = true;
+                    window.removeEventListener('message', handleMessage);
+                    clearInterval(checkClosedInterval);
+                    resolve({ error: new Error(event.data?.error || 'Google authentication failed') });
+                }
+            };
+
+            window.addEventListener('message', handleMessage);
+
+            // Periodically check if popup was manually closed
+            const checkClosedInterval = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosedInterval);
+                    window.removeEventListener('message', handleMessage);
+                    if (!messageHandled) {
+                        const localToken = tokenStorage.getTokens().token;
+                        if (localToken) {
+                            resolve({ error: null });
+                        } else {
+                            resolve({ error: new Error('Login popup closed') });
+                        }
+                    }
+                }
+            }, 500);
+        });
+
     } catch (error: any) {
         console.error("Client Google Auth error:", error);
         return { error };

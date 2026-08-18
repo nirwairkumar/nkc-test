@@ -87,7 +87,7 @@ export default function TestIntroPage() {
     const { id, slug } = useParams<{ id: string; slug: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, refreshSession } = useAuth();
     const { openAuthModal } = useAuthModal();
 
     const [test, setTest] = useState<Test | null>(null);
@@ -112,6 +112,26 @@ export default function TestIntroPage() {
     const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
     const [hasSolutions, setHasSolutions] = useState(false);
     const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+    const handleGoogleLogin = async () => {
+        setIsAuthLoading(true);
+        try {
+            const { error } = await signInWithGoogle();
+            if (error) {
+                if (!error.message?.includes('closed')) {
+                    toast.error(error.message || 'Google authentication failed');
+                }
+                setIsAuthLoading(false);
+                return;
+            }
+            await refreshSession();
+            toast.success('Successfully signed in with Google!');
+        } catch (err: any) {
+            toast.error(err.message || 'Google authentication failed');
+        } finally {
+            setIsAuthLoading(false);
+        }
+    };
 
     // Permission check
     const checkPermissions = async () => {
@@ -288,18 +308,6 @@ export default function TestIntroPage() {
 
         return () => clearInterval(interval);
     }, [loading]);
-
-    const handleGoogleLogin = async () => {
-        setIsAuthLoading(true);
-        try {
-            localStorage.setItem('auth_redirect_intent', location.pathname);
-            const { error } = await signInWithGoogle();
-            if (error) throw error;
-        } catch (error: any) {
-            toast.error(error.message || 'Google login failed');
-            setIsAuthLoading(false);
-        }
-    };
 
     // ─────────────────────────────────────────────────────────────────────────
     // 1-STEP START TEST HANDLER

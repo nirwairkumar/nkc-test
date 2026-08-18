@@ -60,9 +60,43 @@ export default function AuthModal() {
             }
 
             const { error } = await signInWithGoogle();
-            if (error) throw error;
+            if (error) {
+                if (!error.message?.includes('closed')) {
+                    toast.error(error.message || 'Google authentication failed');
+                }
+                setIsLoading(false);
+                return;
+            }
+
+            // Successfully authenticated in popup! Refresh session state in-place
+            await refreshSession();
+
+            // Check if user has designation or needs onboarding
+            const localDesignation = localStorage.getItem('user_designation');
+            const { fetchUserDetails } = await import('@/lib/usersApi');
+            const { supabase } = await import('@/integrations/supabase/client');
+            const sessionData = await supabase.auth.getSession();
+            const authedUser = sessionData.data?.session?.user;
+
+            let hasDesignation = authedUser?.user_metadata?.designation || localDesignation;
+            if (!hasDesignation && authedUser?.id) {
+                const profileRes = await fetchUserDetails(authedUser.id);
+                hasDesignation = profileRes.data?.designation;
+            }
+
+            if (!hasDesignation) {
+                setOnboardingName(authedUser?.user_metadata?.full_name || authedUser?.email?.split('@')[0] || '');
+                setAuthModalView('onboarding');
+                setIsLoading(false);
+                return;
+            }
+
+            toast.success('Successfully signed in with Google!');
+            closeAuthModal();
+            if (onSuccessCallback) onSuccessCallback();
         } catch (error: any) {
             toast.error(error.message || 'Google authentication failed');
+        } finally {
             setIsLoading(false);
         }
     };
