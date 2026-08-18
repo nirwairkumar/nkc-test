@@ -658,15 +658,12 @@ export default function TestPage() {
 
     // 3. Full Screen Check — violations ONLY for conduct-exam tests
     const checkFullScreenState = () => {
-      const isAPIFullScreen = !!(
+      const currentFullScreen = !!(
         document.fullscreenElement ||
         (document as any).webkitFullscreenElement ||
         (document as any).mozFullScreenElement ||
         (document as any).msFullscreenElement
       );
-
-      const isWindowFullScreen = window.innerWidth === window.screen.width && window.innerHeight === window.screen.height;
-      const currentFullScreen = isAPIFullScreen || isWindowFullScreen;
 
       setIsFullScreen(currentFullScreen);
 

@@ -290,7 +290,11 @@ async def get_user_combined_attempts(
             .order("created_at", desc=True)\
             .execute()
 
-        attempts = attempts_res.data or []
+        raw_attempts = attempts_res.data or []
+        attempts = [
+            a for a in raw_attempts
+            if not (a.get("metadata") or {}).get("deleted_by_user")
+        ]
 
         # Enrich with combined session title
         session_ids = list(set([a["combined_session_id"] for a in attempts if a.get("combined_session_id")]))
@@ -408,18 +412,41 @@ async def delete_combined_attempt(
         user_id = _verify_auth_token(request, db)
 
         res = supabase.table("combined_attempts")\
-            .select("user_id")\
+            .select("id, user_id, combined_session_id, paper1_data, paper2_data")\
             .eq("id", attempt_id)\
             .single()\
             .execute()
 
         if not res.data:
             raise HTTPException(status_code=404, detail="Attempt not found")
-        if res.data["user_id"] != user_id:
+
+        attempt = res.data
+        session_id = attempt.get("combined_session_id")
+        is_creator = False
+        if session_id:
+            session_res = supabase.table("combined_sessions").select("created_by").eq("id", session_id).single().execute()
+            if session_res.data and session_res.data.get("created_by") == user_id:
+                is_creator = True
+
+        profile_res = supabase.table("profiles").select("email").eq("id", user_id).single().execute()
+        is_admin = False
+        if profile_res.data:
+            email = profile_res.data.get("email")
+            if email:
+                admin_res = supabase.table("admins").select("email").eq("email", email).execute()
+                is_admin = bool(admin_res.data and len(admin_res.data) > 0)
+
+        if not (attempt.get("user_id") == user_id or is_creator or is_admin):
             raise HTTPException(status_code=403, detail="Not authorized")
 
-        supabase.table("combined_attempts").delete().eq("id", attempt_id).execute()
-        return {"success": True}
+        if is_creator or is_admin:
+            supabase.table("combined_attempts").delete().eq("id", attempt_id).execute()
+            return {"success": True, "action": "hard_delete"}
+        else:
+            meta = dict(attempt.get("metadata") or {})
+            meta["deleted_by_user"] = True
+            supabase.table("combined_attempts").update({"metadata": meta}).eq("id", attempt_id).execute()
+            return {"success": True, "action": "soft_delete"}
 
     except HTTPException:
         raise

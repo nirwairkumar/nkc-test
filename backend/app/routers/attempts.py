@@ -143,12 +143,17 @@ async def get_user_attempts(
 
         # Step A: Fetch attempts using global supabase client (Service Role) to bypass RLS
         attempts_res = supabase.table("user_tests")\
-            .select("id, test_id, score, created_at, violation_count, questions_attempted")\
+            .select("id, test_id, score, created_at, violation_count, questions_attempted, metadata")\
             .eq("user_id", user_id)\
             .order("created_at", desc=True)\
             .execute()
             
-        attempts_data = attempts_res.data or []
+        raw_attempts = attempts_res.data or []
+        # Exclude attempts deleted by candidate from their end
+        attempts_data = [
+            a for a in raw_attempts
+            if not (a.get("metadata") or {}).get("deleted_by_user")
+        ]
         
         if not attempts_data:
             return []
@@ -395,19 +400,24 @@ async def get_attempt_detail(
             raise HTTPException(status_code=404, detail="Attempt not found")
         # Verify access: owner, admin, or test creator
         attempt = response.data
+        test_id = attempt.get("test_id")
+        is_creator = False
+        if test_id:
+            test_res = supabase.table("tests").select("created_by").eq("id", test_id).single().execute()
+            if test_res.data and test_res.data.get("created_by") == user_id:
+                is_creator = True
+
+        admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
+        is_admin = admin_res.data and len(admin_res.data) > 0
+
         if attempt.get("user_id") != user_id:
-             admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
-             is_admin = admin_res.data and len(admin_res.data) > 0
-             if not is_admin:
-                 test_id = attempt.get("test_id")
-                 is_creator = False
-                 if test_id:
-                     test_res = supabase.table("tests").select("created_by").eq("id", test_id).single().execute()
-                     if test_res.data and test_res.data.get("created_by") == user_id:
-                         is_creator = True
-                 if not is_creator:
-                     raise HTTPException(status_code=403, detail="Not authorized")
-                 
+            if not is_admin and not is_creator:
+                raise HTTPException(status_code=403, detail="Not authorized")
+        else:
+            # If user deleted this attempt from their end, and is not creator/admin, treat as not found
+            if (attempt.get("metadata") or {}).get("deleted_by_user") and not is_admin and not is_creator:
+                raise HTTPException(status_code=404, detail="Attempt not found")
+                  
         return attempt
     except Exception as e:
         print(f"Error fetching attempt detail: {e}")
@@ -437,12 +447,6 @@ async def get_test_attempts(
         from app.core.database import supabase
         admin_res = supabase.table("admins").select("email").eq("email", user_response.user.email).execute()
         is_admin = admin_res.data and len(admin_res.data) > 0
-
-        # Optional: check if creator
-        # test_res = supabase.table("tests").select("created_by").eq("id", test_id).execute()
-        # test_created_by = test_res.data[0].get("created_by") if test_res.data else None
-        # if not is_admin and user_id != test_created_by:
-        #     raise HTTPException(status_code=403, detail="Not authorized")
 
         # Determine Premium Access
         is_premium = False
@@ -490,7 +494,7 @@ async def get_test_attempts(
                         except Exception as parse_error:
                             print(f"Error parsing expiry date: {parse_error}")
 
-        # Fetch all attempts for specific test
+        # Fetch all attempts for specific test (including those user deleted from their own history)
         select_cols = "id, test_id, user_id, score, created_at, metadata, violation_count, questions_attempted"
         if not exclude_answers:
             select_cols += ", answers, violation_log"
@@ -596,23 +600,45 @@ async def delete_attempt(
         # Security: Verify JWT
         requesting_user_id = _verify_auth_token_attempts(request, db)
 
-        # Verify ownership: only the attempt owner or an admin can delete
-        attempt_res = supabase.table("user_tests").select("user_id").eq("id", attempt_id).execute()
+        # Fetch attempt details
+        attempt_res = supabase.table("user_tests").select("id, user_id, test_id, metadata").eq("id", attempt_id).execute()
         if not attempt_res.data:
             raise HTTPException(status_code=404, detail="Attempt not found")
 
-        attempt_owner = attempt_res.data[0].get("user_id")
-        if attempt_owner != requesting_user_id:
-            # Check admin
-            admin_res = supabase.table("admins").select("email").execute()
-            profile_res = supabase.table("profiles").select("email").eq("id", requesting_user_id).execute()
-            user_email = profile_res.data[0].get("email") if profile_res.data else None
-            is_admin = any(a.get("email") == user_email for a in (admin_res.data or []))
-            if not is_admin:
-                raise HTTPException(status_code=403, detail="Not authorized to delete this attempt")
+        attempt = attempt_res.data[0]
+        attempt_owner = attempt.get("user_id")
+        test_id = attempt.get("test_id")
 
-        supabase.table("user_tests").delete().eq("id", attempt_id).execute()
-        return {"success": True}
+        # Check if requesting user is the creator of the test
+        is_creator = False
+        if test_id:
+            test_res = supabase.table("tests").select("created_by").eq("id", test_id).single().execute()
+            if test_res.data and test_res.data.get("created_by") == requesting_user_id:
+                is_creator = True
+
+        # Check if requesting user is an admin
+        profile_res = supabase.table("profiles").select("email").eq("id", requesting_user_id).execute()
+        user_email = profile_res.data[0].get("email") if profile_res.data else None
+        is_admin = False
+        if user_email:
+            admin_res = supabase.table("admins").select("email").eq("email", user_email).execute()
+            is_admin = any(a.get("email") == user_email for a in (admin_res.data or []))
+
+        # Authorization: must be attempt owner, test creator, or admin
+        if not (attempt_owner == requesting_user_id or is_creator or is_admin):
+            raise HTTPException(status_code=403, detail="Not authorized to delete this attempt")
+
+        if is_creator or is_admin:
+            # Creator or Admin deletion -> Hard delete from database (deleted from BOTH creator and candidate ends)
+            supabase.table("user_tests").delete().eq("id", attempt_id).execute()
+            return {"success": True, "action": "hard_delete"}
+        else:
+            # Candidate / User deletion -> Soft delete in metadata
+            # Candidate no longer sees it in test history, but test creator still sees it fully
+            meta = dict(attempt.get("metadata") or {})
+            meta["deleted_by_user"] = True
+            supabase.table("user_tests").update({"metadata": meta}).eq("id", attempt_id).execute()
+            return {"success": True, "action": "soft_delete"}
     except HTTPException:
         raise
     except Exception as e:
