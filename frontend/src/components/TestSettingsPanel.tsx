@@ -499,6 +499,29 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                     </div>
                 </div>
 
+                {/* Require Login Toggle */}
+                <div className="flex flex-col gap-2 border p-4 rounded-lg bg-slate-50/50 dark:bg-slate-900/50">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label className="text-base flex items-center gap-2">
+                                <Lock className="w-4 h-4 text-indigo-600" /> Require Candidate Login
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                When enabled, candidates must log in before starting to save results to their profile.
+                            </p>
+                        </div>
+                        <Switch
+                            checked={settings.login_required || false}
+                            onCheckedChange={(c) => updateSetting('login_required', c)}
+                        />
+                    </div>
+                    {settings.login_required && (
+                        <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium bg-indigo-50/70 dark:bg-indigo-950/40 p-2.5 rounded-md border border-indigo-100 dark:border-indigo-900/50">
+                            🔒 <strong>Login Mandatory:</strong> Candidates opening this test link must sign in before attempting. Unauthenticated visitors will be prompted to log in.
+                        </p>
+                    )}
+                </div>
+
                 <div className="flex flex-col gap-4 border p-4 rounded-lg" id={mode === 'desktop' ? "tour-start-form-container" : undefined}>
                     <div className="flex items-center justify-between">
                         <div className="space-y-0.5">

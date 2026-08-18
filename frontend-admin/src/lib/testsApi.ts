@@ -89,6 +89,7 @@ export interface TestSettings {
     };
     block_back_button?: boolean;
     disable_exit_button?: boolean;
+    login_required?: boolean; // false by default, if true candidates must log in
     conduct_exam?: {
         enabled: boolean;
         conduct_slug: string; // secure slug >10 chars used for exam link
