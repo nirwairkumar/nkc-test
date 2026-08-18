@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
 import { SEO } from '@/components/SEO';
 
@@ -34,6 +35,7 @@ import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 export default function NewsPostView() {
     const { slug } = useParams<{ slug: string }>();
     const { user } = useAuth();
+    const { openAuthModal } = useAuthModal();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
@@ -178,7 +180,7 @@ export default function NewsPostView() {
     const handleLike = () => {
         if (!user) {
             toast("Please log in to like this blog post", {
-                action: { label: "Log in", onClick: () => navigate('/login') }
+                action: { label: "Log in", onClick: () => openAuthModal({ view: 'login' }) }
             });
             return;
         }

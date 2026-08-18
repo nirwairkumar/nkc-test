@@ -3,6 +3,7 @@ import { SEO } from '@/components/SEO';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import apiClient from '@/lib/apiClient';
 import { Loader2 } from 'lucide-react';
 import { GoogleSignInButton } from './GoogleSignInButton';
@@ -59,11 +60,10 @@ export default function AuthForm() {
     const location = useLocation();
 
     const { refreshSession } = useAuth();
+    const { openAuthModal } = useAuthModal();
     const { turnstileRef, getToken, resetTurnstile, isReady } = useTurnstile({ theme: 'auto', size: 'normal' });
 
     useEffect(() => {
-        // Eagerly warm up the auth endpoint — by the time the user types
-        // credentials and clicks login, Cloud Run's auth path is already hot
         apiClient.get('health').catch(() => {});
 
         const queryParams = new URLSearchParams(location.search);
@@ -75,14 +75,18 @@ export default function AuthForm() {
             setView('login');
         }
 
-        // Store the redirect intent globally as soon as the AuthForm mounts,
-        // so it survives email/password logins and Google OAuth redirects.
         const stateFrom = location.state?.from;
         const redirectPath = (typeof stateFrom === 'string' ? stateFrom : stateFrom?.pathname);
         if (redirectPath && redirectPath !== '/login' && redirectPath !== '/onboarding') {
             localStorage.setItem('auth_redirect_intent', redirectPath);
         }
-    }, [location.state, location.search]);
+
+        // Trigger the popup modal
+        openAuthModal({
+            view: isSignupParam ? 'signup' : 'login',
+            redirectPath: redirectPath && redirectPath !== '/login' ? redirectPath : '/'
+        });
+    }, [location.state, location.search, openAuthModal]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),

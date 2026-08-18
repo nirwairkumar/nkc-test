@@ -6,6 +6,7 @@ import { Loader2, Youtube, Sparkles, AlertCircle } from 'lucide-react';
 import { generateTestFromYouTube } from '@/lib/gemini';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchFeatureFlags } from '@/lib/featuresApi';
 import {
@@ -34,6 +35,7 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
     const [disabledMessage, setDisabledMessage] = useState('');
     const [showDisabledDialog, setShowDisabledDialog] = useState(false);
     const { user } = useAuth();
+    const { openAuthModal } = useAuthModal();
     const navigate = useNavigate();
 
     const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -55,7 +57,7 @@ export default function YouTubeGenerator({ onTestGenerated }: { onTestGenerated:
 
         if (!user) {
             toast.error("Please login to generate tests.");
-            navigate('/login');
+            openAuthModal({ view: 'login' });
             return;
         }
 

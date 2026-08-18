@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
 
@@ -21,6 +22,7 @@ interface Plan {
 
 export default function PremiumPage() {
     const { user, loading: authLoading } = useAuth();
+    const { openAuthModal } = useAuthModal();
     const { isPremium, loading: statusLoading } = usePremiumStatus();
     const navigate = useNavigate();
     const [plans, setPlans] = useState<Plan[]>([]);
@@ -47,7 +49,7 @@ export default function PremiumPage() {
 
     const handleSubscribe = async (plan: Plan) => {
         if (!user) {
-            navigate('/login', { state: { from: { pathname: '/premium' } } });
+            openAuthModal({ view: 'login', redirectPath: '/premium' });
             return;
         }
 
