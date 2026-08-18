@@ -184,7 +184,7 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         data?: any;
     } | null>(null);
     const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
-    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('parallel');
+    const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // AI Generation Custom Parameters State
@@ -950,62 +950,58 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     if (!trimmedLine) {
                         // Empty line means event completion: dispatch the collected payload
                         if (currentEvent && currentData) {
-                            let parsed: any;
                             try {
-                                parsed = JSON.parse(currentData);
-                            } catch (e) {
-                                console.error('Failed to parse SSE JSON data:', e, currentData);
-                                currentEvent = '';
-                                currentData = '';
-                                continue;
-                            }
+                                const parsed = JSON.parse(currentData);
 
-                            switch (currentEvent) {
-                                case 'progress':
-                                    setStreamProgress({
-                                        stage: parsed.stage,
-                                        percent: parsed.percent,
-                                        message: parsed.message,
-                                        data: parsed.data
-                                    });
-                                    if (parsed.data && parsed.data.quality_tier) {
-                                        setExtractionMeta({
-                                            quality_tier: parsed.data.quality_tier,
-                                            dpi: parsed.data.dpi,
-                                            warning: parsed.data.warning
+                                switch (currentEvent) {
+                                    case 'progress':
+                                        setStreamProgress({
+                                            stage: parsed.stage,
+                                            percent: parsed.percent,
+                                            message: parsed.message,
+                                            data: parsed.data
                                         });
-                                    }
-                                    break;
+                                        if (parsed.data && parsed.data.quality_tier) {
+                                            setExtractionMeta({
+                                                quality_tier: parsed.data.quality_tier,
+                                                dpi: parsed.data.dpi,
+                                                warning: parsed.data.warning
+                                            });
+                                        }
+                                        break;
 
-                                case 'question':
-                                    if (parsed.question) {
-                                        setStreamingQuestions(prev => {
-                                            const exists = prev.some(q => q.id === parsed.question.id);
-                                            if (exists) return prev;
-                                            return [...prev, parsed.question];
+                                    case 'question':
+                                        if (parsed.question) {
+                                            setStreamingQuestions(prev => {
+                                                // Avoid duplicate entries if any
+                                                const exists = prev.some(q => q.id === parsed.question.id);
+                                                if (exists) return prev;
+                                                return [...prev, parsed.question];
+                                            });
+                                        }
+                                        break;
+
+                                    case 'complete': {
+                                        const hasQuestions = parsed.questions && parsed.questions.length > 0;
+                                        const hasSections = parsed.sections && parsed.sections.length > 0;
+                                        if (!hasQuestions && !hasSections) {
+                                            throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
+                                        }
+                                        setPendingParsedData(parsed);
+                                        setStreamProgress({
+                                            stage: 'complete',
+                                            percent: 100,
+                                            message: 'All questions processed successfully!'
                                         });
+                                        return;
                                     }
-                                    break;
 
-                                case 'complete': {
-                                    const hasQuestions = parsed.questions && parsed.questions.length > 0;
-                                    const hasSections = parsed.sections && parsed.sections.length > 0;
-                                    if (!hasQuestions && !hasSections) {
-                                        throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
-                                    }
-                                    setPendingParsedData(parsed);
-                                    setStreamProgress({
-                                        stage: 'complete',
-                                        percent: 100,
-                                        message: 'All questions processed successfully!'
-                                    });
-                                    return;
+                                    case 'error':
+                                        throw new Error(parsed.message);
                                 }
-
-                                case 'error':
-                                    throw new Error(parsed.message || 'AI processing encountered an error.');
+                            } catch (e) {
+                                console.error('Failed to parse SSE data:', e, currentData);
                             }
-
                             currentEvent = '';
                             currentData = '';
                         }

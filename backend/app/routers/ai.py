@@ -584,7 +584,7 @@ async def parse_document_stream(
                     answer_key=answer_key_data,
                     progress_callback=progress_callback,
                     question_callback=question_callback,
-                    max_concurrent=4,
+                    max_concurrent=2,
                     algorithm=algorithm,
                     languages=languages,
                     difficulty=difficulty,
