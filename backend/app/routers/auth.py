@@ -15,10 +15,12 @@ router = APIRouter()
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    turnstile_token: Optional[str] = None
 
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
+    turnstile_token: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
 
 class PasswordResetRequest(BaseModel):

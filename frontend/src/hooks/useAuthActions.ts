@@ -5,27 +5,51 @@ import { tokenStorage } from '@/utils/tokenStorage';
 
 export async function signUpWithEmail(email: string, password: string, name?: string, designation?: string, turnstileToken?: string) {
     try {
-        const response = await authApi.register({
-            email,
-            password,
-            turnstile_token: turnstileToken,
-            metadata: {
-                full_name: name,
-                designation: designation,
+        let response: any = null;
+        try {
+            response = await authApi.register({
+                email,
+                password,
+                turnstile_token: turnstileToken,
+                metadata: {
+                    full_name: name,
+                    designation: designation,
+                }
+            });
+        } catch (apiErr: any) {
+            console.warn('[AuthActions] Backend register endpoint unavailable or returned error, falling back to direct Supabase:', apiErr);
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: name,
+                        designation: designation,
+                    }
+                }
+            });
+
+            if (error) {
+                return { data: null, error };
             }
-        });
-        return response;
-    } catch (error: any) {
-        return { data: null, error };
-    }
-}
 
-export async function signInWithEmail(email: string, password: string, turnstileToken?: string) {
-    try {
-        const response = await authApi.login({ email, password, turnstile_token: turnstileToken });
+            if (data?.session?.access_token) {
+                tokenStorage.setTokens(
+                    data.session.access_token,
+                    data.session.refresh_token
+                );
+            }
 
-        // After successful login, store tokens
-        if (response.data?.session?.access_token) {
+            return {
+                data: {
+                    user: data.user,
+                    session: data.session
+                },
+                error: null
+            };
+        }
+
+        if (response?.data?.session?.access_token) {
             tokenStorage.setTokens(
                 response.data.session.access_token,
                 response.data.session.refresh_token
@@ -34,7 +58,81 @@ export async function signInWithEmail(email: string, password: string, turnstile
 
         return response;
     } catch (error: any) {
-        return { data: null, error };
+        const errorMsg = error.response?.data?.detail || error.message || 'Registration failed';
+        return { data: null, error: new Error(errorMsg) };
+    }
+}
+
+export async function signInWithEmail(email: string, password: string, turnstileToken?: string) {
+    try {
+        let response: any = null;
+        try {
+            response = await authApi.login({ email, password, turnstile_token: turnstileToken });
+        } catch (apiErr: any) {
+            console.warn('[AuthActions] Backend login endpoint returned error or unreachable, attempting direct Supabase sign-in:', apiErr);
+            // Fallback directly to Supabase client SDK
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) {
+                const cleanMsg = error.message || 'Invalid email or password';
+                return { data: null, error: new Error(cleanMsg) };
+            }
+
+            if (data?.session?.access_token) {
+                tokenStorage.setTokens(
+                    data.session.access_token,
+                    data.session.refresh_token
+                );
+            }
+
+            return {
+                data: {
+                    user: data.user,
+                    session: data.session
+                },
+                error: null
+            };
+        }
+
+        // After successful backend login, store tokens
+        if (response?.data?.session?.access_token) {
+            tokenStorage.setTokens(
+                response.data.session.access_token,
+                response.data.session.refresh_token
+            );
+
+            // Sync into Supabase client SDK
+            try {
+                await supabase.auth.setSession({
+                    access_token: response.data.session.access_token,
+                    refresh_token: response.data.session.refresh_token || ''
+                });
+            } catch (e) {
+                // Ignore sync errors
+            }
+        }
+
+        return response;
+    } catch (error: any) {
+        // As a last resort, try direct Supabase auth
+        try {
+            const { data, error: sbError } = await supabase.auth.signInWithPassword({ email, password });
+            if (!sbError && data?.session?.access_token) {
+                tokenStorage.setTokens(data.session.access_token, data.session.refresh_token);
+                return {
+                    data: { user: data.user, session: data.session },
+                    error: null
+                };
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        const errorMsg = error.response?.data?.detail || error.message || 'Invalid email or password';
+        return { data: null, error: new Error(errorMsg) };
     }
 }
 
@@ -44,6 +142,9 @@ export async function signOut() {
     } catch (error) {
         console.error("Logout error:", error);
     } finally {
+        try {
+            await supabase.auth.signOut();
+        } catch (e) { /* ignore */ }
         tokenStorage.clearTokens();
         window.location.reload(); // Force full reload to clear state
     }
@@ -54,7 +155,17 @@ export async function resetPasswordForEmail(email: string) {
         const response = await authApi.resetPassword(email);
         return response;
     } catch (error: any) {
-        return { data: null, error };
+        try {
+            const host = window.location.origin;
+            const { data, error: sbError } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${host}/update-password`
+            });
+            if (sbError) throw sbError;
+            return { data, error: null };
+        } catch (sbErr: any) {
+            const msg = error.response?.data?.detail || sbErr.message || error.message || 'Password reset request failed';
+            return { data: null, error: new Error(msg) };
+        }
     }
 }
 

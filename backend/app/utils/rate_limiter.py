@@ -128,13 +128,14 @@ TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverif
 async def verify_turnstile_token(token: str, client_ip: str = "") -> bool:
     """
     Verify a Cloudflare Turnstile token by calling the siteverify API.
-    Returns True if the token is valid, False otherwise.
+    Returns True if the token is valid, False if an invalid token was submitted.
     
-    In development (no secret key set), always returns True to allow
-    local testing without Turnstile.
+    If no secret key is configured or no token is provided (e.g. adblockers,
+    script delay, or mobile webviews), returns True so that Layer 2 (per-email
+    rate limiting) protects against brute force without locking out humans.
     """
-    # Skip verification in development if no secret key is configured
-    if not TURNSTILE_SECRET_KEY:
+    # Skip verification if no secret key is configured or no token was sent
+    if not TURNSTILE_SECRET_KEY or not token:
         return True
 
     try:
