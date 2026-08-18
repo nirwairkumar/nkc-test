@@ -1,3 +1,4 @@
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { signOut } from '@/hooks/useAuthActions';
