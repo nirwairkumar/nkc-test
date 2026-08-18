@@ -126,8 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const initializeAuth = async () => {
-        if (initPromise) {
+    const initializeAuth = async (force: boolean = false) => {
+        if (initPromise && !force) {
             return initPromise;
         }
 
@@ -167,143 +167,124 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                 }
 
-                // 2. Load from localStorage
+                // 2. Load token from storage
                 const token = tokenStorage.getTokens().token;
-                if (token) {
+                if (!token) {
+                    setUser(null);
+                    setSession(null);
+                    setProfile(null);
+                    setIsAdmin(false);
+                    await checkPremiumStatus(undefined);
+                    return;
+                }
+
+                // Parse JWT payload client-side
+                let decodedPayload: any = null;
+                let userId: string | undefined;
+                let isExpired = false;
+                try {
+                    const payloadBase64 = token.split('.')[1];
+                    decodedPayload = JSON.parse(atob(payloadBase64));
+                    userId = decodedPayload.sub;
+                    if (decodedPayload.exp && decodedPayload.exp * 1000 < Date.now()) {
+                        isExpired = true;
+                    }
+                } catch (err) {
+                    console.warn("[AuthContext] Failed to parse JWT payload client-side:", err);
+                }
+
+                // 3. Resolve User Object (Resilient Multi-Layer Strategy)
+                let userData: any = null;
+
+                // Strategy A: Supabase Client SDK directly
+                try {
+                    const { data: sbData, error: sbErr } = await supabase.auth.getUser(token);
+                    if (!sbErr && sbData?.user) {
+                        userData = sbData.user;
+                    }
+                } catch (sbErr) {
+                    console.warn("[AuthContext] Supabase SDK getUser failed, trying next strategy:", sbErr);
+                }
+
+                // Strategy B: Backend /auth/me
+                if (!userData) {
                     try {
-                        let userId: string | undefined;
+                        const meResponse = await authApi.getMe();
+                        if (meResponse?.data?.user) {
+                            userData = meResponse.data.user;
+                        }
+                    } catch (apiErr) {
+                        console.warn("[AuthContext] Backend /auth/me call failed:", apiErr);
+                    }
+                }
+
+                // Strategy C: JWT Claims (if token is unexpired, use parsed user data as offline fallback)
+                if (!userData && decodedPayload && !isExpired) {
+                    userData = {
+                        id: decodedPayload.sub || userId,
+                        email: decodedPayload.email,
+                        user_metadata: decodedPayload.user_metadata || {},
+                        app_metadata: decodedPayload.app_metadata || {},
+                        role: decodedPayload.role || 'authenticated'
+                    };
+                }
+
+                // If user was successfully resolved:
+                if (userData && userData.id) {
+                    setUser(userData);
+                    setSession({ user: userData, access_token: token });
+
+                    // Keep Supabase SDK internal session warm
+                    try {
+                        const refreshToken = tokenStorage.getTokens().refreshToken;
+                        if (refreshToken) {
+                            await supabase.auth.setSession({
+                                access_token: token,
+                                refresh_token: refreshToken
+                            });
+                        }
+                    } catch (sdkErr) {
+                        // ignore sdk sync errors
+                    }
+
+                    // Safe isolated parallel fetch for profile & admin status (errors won't wipe login)
+                    const [profileData] = await Promise.all([
+                        fetchProfileData(userData.id).catch(() => null),
+                        checkAdminStatus(userData.id).catch(() => false)
+                    ]);
+
+                    // Auto-provision profile if missing
+                    let activeProfile = profileData;
+                    if (!activeProfile) {
                         try {
-                            const payloadBase64 = token.split('.')[1];
-                            const decodedPayload = JSON.parse(atob(payloadBase64));
-                            userId = decodedPayload.sub;
-                        } catch (err) {
-                            console.warn("Failed to parse JWT payload client-side:", err);
-                        }
-
-                        if (userId) {
-                            // Parallelize: authApi.getMe(), profile details, and admin status
-                            const [meResponse, profileData] = await Promise.all([
-                                authApi.getMe(),
-                                fetchProfileData(userId),
-                                checkAdminStatus(userId)
-                            ]);
-
-                            if (meResponse.data?.user) {
-                                const userData = meResponse.data.user;
-                                setUser(userData);
-                                setSession({ user: userData, access_token: token });
-
-                                // Sync back into Supabase client SDK so its internal session stays warm
-                                try {
-                                    const refreshToken = tokenStorage.getTokens().refreshToken;
-                                    if (refreshToken) {
-                                        await supabase.auth.setSession({
-                                            access_token: token,
-                                            refresh_token: refreshToken
-                                        });
-                                    }
-                                } catch (sdkErr) {
-                                    console.warn("Failed to sync session to Supabase SDK:", sdkErr);
-                                }
-
-                                // Frontend Auto-Provisioning: if profile is missing (404), create it using JWT metadata
-                                let activeProfile = profileData;
-                                if (!activeProfile) {
-                                    console.log("Profile not found in database. Auto-provisioning from frontend...");
-                                    try {
-                                        const { updateProfile } = await import('@/lib/usersApi');
-                                        const provisionRes = await updateProfile(userData.id, {
-                                            email: userData.email,
-                                            full_name: userData.user_metadata?.full_name || userData.user_metadata?.name || '',
-                                            avatar_url: userData.user_metadata?.avatar_url || userData.user_metadata?.picture || ''
-                                        });
-                                        if (provisionRes.data) {
-                                            activeProfile = provisionRes.data;
-                                            setProfile(activeProfile);
-                                            console.log("Profile auto-provisioned successfully:", activeProfile);
-                                        }
-                                    } catch (provErr) {
-                                        console.error("Failed to auto-provision profile from frontend:", provErr);
-                                    }
-                                }
-
-                                // checkPremiumStatus uses the preloaded profileData to prevent a duplicate fetch
-                                await checkPremiumStatus(userData.id, activeProfile);
-                            } else {
-                                throw new Error("No user in response");
+                            const { updateProfile } = await import('@/lib/usersApi');
+                            const provisionRes = await updateProfile(userData.id, {
+                                email: userData.email,
+                                full_name: userData.user_metadata?.full_name || userData.user_metadata?.name || '',
+                                avatar_url: userData.user_metadata?.avatar_url || userData.user_metadata?.picture || ''
+                            });
+                            if (provisionRes.data) {
+                                activeProfile = provisionRes.data;
+                                setProfile(activeProfile);
                             }
-                        } else {
-                            // Fallback to sequential flow if token parsing fails
-                            const response = await authApi.getMe();
-                            if (response.data?.user) {
-                                const userData = response.data.user;
-                                setUser(userData);
-                                setSession({ user: userData, access_token: token });
-
-                                // Sync back into Supabase client SDK so its internal session stays warm
-                                try {
-                                    const refreshToken = tokenStorage.getTokens().refreshToken;
-                                    if (refreshToken) {
-                                        await supabase.auth.setSession({
-                                            access_token: token,
-                                            refresh_token: refreshToken
-                                        });
-                                    }
-                                } catch (sdkErr) {
-                                    console.warn("Failed to sync session to Supabase SDK:", sdkErr);
-                                }
-
-                                let profileData = await fetchProfileData(userData.id);
-
-                                // Frontend Auto-Provisioning fallback
-                                if (!profileData) {
-                                    console.log("Profile not found. Auto-provisioning from frontend (sequential path)...");
-                                    try {
-                                        const { updateProfile } = await import('@/lib/usersApi');
-                                        const provisionRes = await updateProfile(userData.id, {
-                                            email: userData.email,
-                                            full_name: userData.user_metadata?.full_name || userData.user_metadata?.name || '',
-                                            avatar_url: userData.user_metadata?.avatar_url || userData.user_metadata?.picture || ''
-                                        });
-                                        if (provisionRes.data) {
-                                            profileData = provisionRes.data;
-                                            setProfile(profileData);
-                                            console.log("Profile auto-provisioned successfully:", profileData);
-                                        }
-                                    } catch (provErr) {
-                                        console.error("Failed to auto-provision profile from frontend:", provErr);
-                                    }
-                                }
-
-                                await Promise.all([
-                                    checkAdminStatus(userData.id),
-                                    checkPremiumStatus(userData.id, profileData)
-                                ]);
-                            } else {
-                                throw new Error("No user in response");
-                            }
-                        }
-                    } catch (e: any) {
-                        // Only wipe token and logout on definitive auth error (401/403)
-                        const isAuthError = e?.response?.status === 401 || e?.response?.status === 403 || e?.message === "No user in response";
-                        if (isAuthError) {
-                            console.warn("Authentication invalid, clearing session:", e);
-                            tokenStorage.clearTokens();
-                            setUser(null);
-                            setSession(null);
-                            await checkPremiumStatus(undefined);
-                        } else {
-                            console.error("Auth initialization failed due to server/network error:", e);
+                        } catch (provErr) {
+                            // ignore auto-provision errors
                         }
                     }
 
-                } else {
+                    await checkPremiumStatus(userData.id, activeProfile).catch(() => {});
+                } else if (isExpired) {
+                    // Only clear if definitively expired and cannot be resolved
+                    console.warn("[AuthContext] Session expired, clearing tokens");
+                    tokenStorage.clearTokens();
                     setUser(null);
                     setSession(null);
+                    setProfile(null);
+                    setIsAdmin(false);
                     await checkPremiumStatus(undefined);
                 }
             } catch (error) {
-                console.error('Auth initialization error:', error);
+                console.error('[AuthContext] Auth initialization error:', error);
             } finally {
                 setLoading(false);
                 initPromise = null;
@@ -314,17 +295,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        // Fire backend warmup FIRST — Cloud Run may be CPU-throttled and needs
-        // maximum head-start before the user interacts with login/dashboard.
-        // Using top-level imported apiClient (no dynamic import delay).
+        // Fire backend warmup FIRST
         const warmUpBackend = () => {
-            // Warm both the health endpoint AND the auth path (different route handlers)
             apiClient.get('health').catch(() => { });
             apiClient.options('auth/login').catch(() => { });
         };
         warmUpBackend();
 
         initializeAuth();
+
+        // Listen for Supabase SDK auth state changes
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+                if (session?.access_token) {
+                    tokenStorage.setTokens(session.access_token, session.refresh_token);
+                    if (session.user) {
+                        setUser(session.user);
+                        setSession(session);
+                    }
+                }
+            } else if (event === 'SIGNED_OUT') {
+                tokenStorage.clearTokens();
+                setUser(null);
+                setSession(null);
+                setProfile(null);
+                setIsAdmin(false);
+            }
+        });
+
+        return () => {
+            authListener?.subscription?.unsubscribe();
+        };
     }, []);
 
     return (
@@ -338,7 +339,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             premiumLoading,
             isGlobalUnlock,
             hasActivePlans,
-            refreshSession: initializeAuth
+            refreshSession: () => initializeAuth(true)
         }}>
             {children}
         </AuthContext.Provider>
