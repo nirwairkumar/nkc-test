@@ -22,6 +22,7 @@ import {
 import { toggleCreatorMode, updateFollowingVisibility, getFollowerCount, getFollowingCount } from '@/lib/socialApi';
 import { useNavigate } from 'react-router-dom';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProfilePage = () => {
     const { user, session, isAdmin } = useAuth();
@@ -45,7 +46,7 @@ const ProfilePage = () => {
             setFullName(user.user_metadata?.full_name || '');
             setBio(user.user_metadata?.bio || '');
             setAvatarUrl(user.user_metadata?.avatar_url || '');
-            setDesignation(isAdmin ? 'Admin' : (user.user_metadata?.designation || 'Student'));
+            setDesignation(isAdmin ? 'Admin' : (user.user_metadata?.designation || 'Other'));
             fetchProfileSettings();
             fetchSocialCounts();
         }
@@ -78,11 +79,21 @@ const ProfilePage = () => {
         name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
     const designationColor: Record<string, string> = {
-        Admin: 'bg-red-100 text-red-700',
-        Teacher: 'bg-blue-100 text-blue-700',
-        Institution: 'bg-yellow-100 text-yellow-800',
-        Student: 'bg-slate-100 text-slate-600',
-        Guest: 'bg-gray-100 text-gray-500',
+        Admin: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+        Teacher: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400',
+        Institution: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-400',
+        Other: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+        Student: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+        Guest: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+    };
+
+    const designationLabel: Record<string, string> = {
+        Admin: 'Admin',
+        Teacher: 'Teacher / Educator',
+        Institution: 'School / Coaching Institution',
+        Other: 'Student / Independent Creator',
+        Student: 'Student / Independent Creator',
+        Guest: 'Guest',
     };
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,21 +117,48 @@ const ProfilePage = () => {
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        const finalDesignation = isAdmin ? 'Admin' : designation;
+        const finalDesignation = isAdmin ? 'Admin' : (designation || 'Other');
         try {
-            const { authApi } = await import('@/lib/authApi');
-            const { error } = await authApi.updateMetadata({ full_name: fullName, bio, avatar_url: avatarUrl, designation: finalDesignation });
-            if (error) throw error;
+            // 1. Direct Supabase Auth client metadata sync
+            try {
+                await supabase.auth.updateUser({
+                    data: {
+                        full_name: fullName,
+                        bio: bio,
+                        avatar_url: avatarUrl,
+                        designation: finalDesignation
+                    }
+                });
+            } catch (sbErr) {
+                console.warn('[ProfilePage] Direct Supabase updateUser error:', sbErr);
+            }
+
+            // 2. Non-blocking backend metadata sync
+            try {
+                const { authApi } = await import('@/lib/authApi');
+                await authApi.updateMetadata({ full_name: fullName, bio, avatar_url: avatarUrl, designation: finalDesignation });
+            } catch (apiErr) {
+                console.warn('[ProfilePage] Backend authApi updateMetadata error (non-critical):', apiErr);
+            }
+
+            // 3. Update public profiles table
             const { updateProfile } = await import('@/lib/usersApi');
             const { error: apiError } = await updateProfile(user!.id, {
-                full_name: fullName, bio, avatar_url: avatarUrl, designation: finalDesignation,
-                email: user!.email, is_creator: isCreator, following_visibility: followingVisibility,
-                updated_at: new Date().toISOString()
+                full_name: fullName,
+                bio,
+                avatar_url: avatarUrl,
+                designation: finalDesignation,
+                email: user!.email,
+                is_creator: isCreator,
+                following_visibility: followingVisibility
             });
+
             if (apiError) throw apiError;
-            toast.success('Profile updated!');
+
+            localStorage.setItem('user_designation', finalDesignation);
+            toast.success('Profile updated successfully!');
         } catch (error: any) {
-            toast.error(error.message || 'Failed to update profile');
+            toast.error(error.response?.data?.detail || error.message || 'Failed to update profile');
         } finally {
             setLoading(false);
         }
@@ -200,8 +238,8 @@ const ProfilePage = () => {
                                 <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-0.5">TestoZa Authorized Partner</p>
                             ) : (
                                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${designationColor[role] || designationColor.Student}`}>
-                                        {role}
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${designationColor[role] || designationColor.Other}`}>
+                                        {designationLabel[role] || role}
                                     </span>
                                     {isCreator && (
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
@@ -322,15 +360,14 @@ const ProfilePage = () => {
                             {isAdmin ? (
                                 <Input value="Admin" disabled className="h-10 text-sm bg-slate-50 text-slate-400 cursor-not-allowed" />
                             ) : (
-                                <Select value={designation} onValueChange={setDesignation}>
+                                <Select value={designation || 'Other'} onValueChange={setDesignation}>
                                     <SelectTrigger className="h-10 text-sm">
                                         <SelectValue placeholder="Select designation" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Student">Student</SelectItem>
-                                        <SelectItem value="Teacher">Teacher</SelectItem>
-                                        <SelectItem value="Institution">Institution</SelectItem>
-                                        <SelectItem value="Guest">Guest</SelectItem>
+                                        <SelectItem value="Teacher">Teacher / Educator</SelectItem>
+                                        <SelectItem value="Institution">School / Coaching Institution</SelectItem>
+                                        <SelectItem value="Other">Student / Independent Creator</SelectItem>
                                     </SelectContent>
                                 </Select>
                             )}
