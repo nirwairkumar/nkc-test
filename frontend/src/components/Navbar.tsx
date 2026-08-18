@@ -1,5 +1,5 @@
-import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { signOut } from '@/hooks/useAuthActions';
 import { Button } from '@/components/ui/button';
 import {
@@ -83,21 +83,17 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
     const [isSolutionGuideOpen, setIsSolutionGuideOpen] = React.useState(false);
     const [isUploadGuideOpen, setIsUploadGuideOpen] = React.useState(false);
 
-    if (isLiveTest) return null;
+    const { openAuthModal } = useAuthModal();
 
     const handleLoginNavigation = (isSignup: boolean = false, fromPath: string = '') => {
-        const path = `/login${isSignup ? '?signup=true' : ''}${fromPath ? `${isSignup ? '&' : '?'}from=${encodeURIComponent(fromPath)}` : ''}`;
-        const targetUrl = getAppUrl(path);
-        if (targetUrl.startsWith('http')) {
-            window.location.href = targetUrl;
-        } else {
-            navigate(path, { state: { isSignup, from: fromPath } });
-        }
+        openAuthModal({
+            view: isSignup ? 'signup' : 'login',
+            redirectPath: fromPath || location.pathname
+        });
     };
 
     const handleSignOut = async () => {
         await signOut();
-        navigate('/login');
     };
 
     const getInitials = (name?: string) => {

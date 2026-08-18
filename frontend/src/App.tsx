@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
 import PageLoader from "@/components/ui/PageLoader";
@@ -147,12 +148,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <HelmetProvider>
-          <Toaster />
-          <Sonner />
-          <TestProvider>
-            <ErrorBoundary>
-              <BrowserRouter>
+        <AuthModalProvider>
+          <HelmetProvider>
+            <Toaster />
+            <Sonner />
+            <TestProvider>
+              <ErrorBoundary>
+                <BrowserRouter>
                 <SubdomainGuard />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
@@ -345,6 +347,7 @@ const App = () => (
           </ErrorBoundary>
         </TestProvider>
         </HelmetProvider>
+        </AuthModalProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

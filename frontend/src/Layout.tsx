@@ -4,6 +4,9 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AppSidebar from './components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
+import AuthModal from '@/components/auth/AuthModal';
+import OnboardingModal from '@/components/auth/OnboardingModal';
 import { analyticsTracker } from '@/lib/analyticsTracker';
 import { PanelLeft } from 'lucide-react';
 
@@ -11,6 +14,7 @@ export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, profile, loading } = useAuth();
+    const { openOnboardingModal } = useAuthModal();
 
     // Sidebar collapsed state (persistent in localStorage)
     const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
@@ -41,29 +45,24 @@ export default function Layout() {
         analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
     }, [location.pathname, user?.id]);
 
-    // Check for redirect intent after login is handled specifically 
-    // in AuthForm.tsx (for email) and AuthCallback.tsx (for Google OAuth)
-    // to avoid race conditions and double redirects.
+    // Popup-based Onboarding Trigger (Keeps user on their current screen without hard page redirects)
     React.useEffect(() => {
         if (loading) return;
 
         if (user) {
-            // Force onboarding if designation is missing in user_metadata, profile, and localStorage
             const localDesignation = localStorage.getItem('user_designation');
             const hasDesignation = user.user_metadata?.designation || profile?.designation || localDesignation;
 
             if (!hasDesignation) {
-                // Allow staying on /onboarding
-                if (location.pathname !== '/onboarding') {
-                    localStorage.setItem('auth_redirect_intent', location.pathname + location.search);
-                    navigate('/onboarding', { replace: true });
+                // If on standalone /onboarding or /login page, leave route intact; otherwise open popup onboarding
+                if (location.pathname !== '/onboarding' && location.pathname !== '/login') {
+                    openOnboardingModal();
                 }
             } else if (location.pathname === '/onboarding') {
-                // If they have a designation but somehow landed on the onboarding page, redirect them home
                 navigate('/', { replace: true });
             }
         }
-    }, [user, profile, loading, navigate, location.pathname]);
+    }, [user, profile, loading, navigate, location.pathname, openOnboardingModal]);
 
     // Check if logged in user is Teacher or Institution
     const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);
@@ -140,6 +139,10 @@ export default function Layout() {
             </div>
 
             {!hideFooter && <Footer />}
+
+            {/* Global Popup Authentication & Onboarding Modals */}
+            <AuthModal />
+            <OnboardingModal />
         </div>
     );
 }

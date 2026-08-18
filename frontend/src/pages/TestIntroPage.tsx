@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAuthModal } from '@/contexts/AuthModalContext';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
@@ -87,6 +88,7 @@ export default function TestIntroPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, loading: authLoading } = useAuth();
+    const { openAuthModal } = useAuthModal();
 
     const [test, setTest] = useState<Test | null>(null);
     const [loading, setLoading] = useState(true);
@@ -866,7 +868,7 @@ export default function TestIntroPage() {
                                         variant="outline"
                                         size="sm"
                                         className="h-10 text-xs font-semibold rounded-xl border-amber-300 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200"
-                                        onClick={() => navigate('/login', { state: { from: location.pathname } })}
+                                        onClick={() => openAuthModal({ view: 'login' })}
                                     >
                                         Login / Signup
                                     </Button>
@@ -928,7 +930,7 @@ export default function TestIntroPage() {
                         {/* Subtle guest status hint if login is not required and user is guest */}
                         {!user && !isLoginRequired && (
                             <p className="text-[11px] text-center text-slate-400">
-                                Taking test as guest. <span onClick={() => navigate('/login', { state: { from: location.pathname } })} className="text-indigo-600 dark:text-indigo-400 font-semibold cursor-pointer hover:underline">Sign in</span> to save results to your profile.
+                                Taking test as guest. <span onClick={() => openAuthModal({ view: 'login' })} className="text-indigo-600 dark:text-indigo-400 font-semibold cursor-pointer hover:underline">Sign in</span> to save results to your profile.
                             </p>
                         )}
                     </CardFooter>
