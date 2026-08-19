@@ -2122,7 +2122,13 @@ export default function FullTestAnalysisPage() {
                                         </div>
 
                                         <div className="flex items-center gap-3">
-                                            <img src={stu.avatar} alt={stu.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white shadow-xs shrink-0" />
+                                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-base shrink-0 border-2 border-white shadow-xs ${
+                                                i === 0 ? 'bg-amber-100 text-amber-700' :
+                                                i === 1 ? 'bg-slate-200 text-slate-700' :
+                                                'bg-orange-100 text-orange-700'
+                                            }`}>
+                                                {(stu.name || '#').charAt(0).toUpperCase()}
+                                            </div>
                                             <div className="min-w-0 flex-1">
                                                 <h4 className="font-bold text-slate-900 text-sm truncate">{stu.name}</h4>
                                                 {stu.email && <p className="text-xs text-slate-400 truncate">{stu.email}</p>}
@@ -2155,7 +2161,9 @@ export default function FullTestAnalysisPage() {
                         <div className="p-4 sm:p-6 border-b border-slate-200 bg-slate-50/80 sticky top-0 z-20 backdrop-blur-md space-y-3 sm:space-y-4">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <img src={drawerStudent.avatar} alt={drawerStudent.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white shadow-xs shrink-0" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg shrink-0 border-2 border-white shadow-xs">
+                                        {(drawerStudent.name || '#').charAt(0).toUpperCase()}
+                                    </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <h3 className="text-base sm:lg font-bold text-slate-900 truncate">{drawerStudent.name}</h3>
