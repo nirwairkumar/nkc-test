@@ -15,7 +15,10 @@ async function fetchFromEndpoints(endpoints) {
     for (const url of endpoints) {
         try {
             console.log(`[Sitemap] Attempting fetch from: ${url}`);
-            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const res = await fetch(url, { 
+                headers: { 'Accept': 'application/json' },
+                signal: AbortSignal.timeout(2500)
+            });
             if (res.ok) {
                 return res;
             }

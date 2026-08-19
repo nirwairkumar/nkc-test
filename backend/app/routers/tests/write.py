@@ -143,17 +143,24 @@ async def update_test(
         except Exception as e:
             print(f"Warning: could not verify test example status on update: {e}")
 
-        # Check if we need to update total_max_marks
+        # Check if we need to update total_max_marks and total_questions
         needs_marks_calc = any(k in payload for k in ["questions", "sections", "enable_section_mode"])
         if needs_marks_calc:
             try:
                 # Do not select marks_per_question as it is not a database column
-                existing = db.table("tests").select("questions, sections, enable_section_mode, settings").eq("id", test_id).single().execute()
+                existing = db.table("tests").select("questions, sections, enable_section_mode, settings, total_questions").eq("id", test_id).single().execute()
                 if existing.data:
                     merged = {**existing.data, **payload}
                     from app.utils.attempt_control import calculate_test_max_marks
                     calc = calculate_test_max_marks(merged)
                     payload["total_max_marks"] = calc.get("total_max_marks", 0)
+                    if "questions" in payload or "sections" in payload:
+                        secs = merged.get("sections")
+                        if merged.get("enable_section_mode") and secs and isinstance(secs, list):
+                            payload["total_questions"] = sum(len(s.get("questions") or []) for s in secs)
+                        else:
+                            qs = merged.get("questions") or []
+                            payload["total_questions"] = len(qs) if isinstance(qs, list) else 0
             except Exception as e:
                 print(f"Warning: Could not proactively calculate total_max_marks on update: {e}")
         

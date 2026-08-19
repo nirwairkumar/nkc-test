@@ -197,10 +197,20 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, s
     }
 }
 
+export function invalidateTestCache(id: string) {
+    try {
+        safeSessionStorage.removeItem(`test_cache_${id}_eq_false`);
+        safeSessionStorage.removeItem(`test_cache_${id}_eq_true`);
+        safeLocalStorage.removeItem(`test_cache_${id}_eq_false`);
+        safeLocalStorage.removeItem(`test_cache_${id}_eq_true`);
+    } catch {}
+}
+
 export async function updateTest(id: string, updates: Partial<Test>, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.put(endpoint, updates);
+        invalidateTestCache(id);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
@@ -238,6 +248,7 @@ export async function deleteTest(id: string, isAdmin: boolean = false) {
     try {
         const endpoint = isAdmin ? `tests/admin/${id}` : `tests/${id}`;
         const response = await apiClient.delete(endpoint);
+        invalidateTestCache(id);
         return { data: response.data, error: null };
     } catch (error: any) {
         return { data: null, error };
@@ -459,9 +470,9 @@ function _setCachedTest(id: string, data: any, excludeQuestions: boolean = false
     safeLocalStorage.removeItem(`test_cache_${id}_eq_${excludeQuestions}`);
 }
 
-export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false) {
-    // Serve stale cache immediately, revalidate in background
-    const cached = _getCachedTest(id, excludeQuestions);
+export async function fetchTestById(id: string, onCacheHit?: (data: any) => void, excludeQuestions: boolean = false, bypassCache: boolean = false) {
+    // Serve stale cache immediately, revalidate in background (unless bypassCache is true)
+    const cached = !bypassCache ? _getCachedTest(id, excludeQuestions) : null;
     if (cached && onCacheHit) {
         onCacheHit(cached);
     }

@@ -6,10 +6,11 @@ const AITestImporter = lazy(() => import('./AITestImporter'));
 import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
 
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 export default function CreateTestPage() {
     const location = useLocation();
+    const { id: paramId } = useParams();
     const [showImporter, setShowImporter] = useState(false);
     const [importedData, setImportedData] = useState<any>(null);
 
@@ -47,11 +48,12 @@ export default function CreateTestPage() {
     return (
         <div className="relative">
             <SEO
-                title={"Create Online Test Free – AI Exam Maker for Teachers | TestoZa"}
-                description={"Create your online test in minutes. Free test maker for teachers with AI — generate MCQ quizzes, mock exams, and CBT practice tests from PDFs, YouTube videos, or text. No technical skills needed."}
-                canonicalUrl="https://testoza.com/create-test"
+                title={paramId ? "Edit Online Test | TestoZa" : "Create Online Test Free – AI Exam Maker for Teachers | TestoZa"}
+                description={paramId ? "Edit your online test, manage questions, sections, and scoring." : "Create your online test in minutes. Free test maker for teachers with AI — generate MCQ quizzes, mock exams, and CBT practice tests from PDFs, YouTube videos, or text. No technical skills needed."}
+                canonicalUrl={paramId ? `https://testoza.com/edit-test/${paramId}` : "https://testoza.com/create-test"}
                 keywords={[
                     "create online test",
+                    "edit online test",
                     "create exam online",
                     "make test online",
                     "make exam online",
@@ -68,7 +70,7 @@ export default function CreateTestPage() {
                 ]}
             />
             <TestBuilder
-                key={importedData ? 'imported-test' : 'new-test'}
+                key={importedData ? 'imported-test' : (paramId ? `edit-${paramId}` : 'new-test')}
                 initialData={importedData}
                 onAiImport={() => setShowImporter(true)}
             />

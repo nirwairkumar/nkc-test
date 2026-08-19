@@ -202,7 +202,10 @@ export default function UserTestManager() {
     const [showTour, setShowTour] = useState(false);
 
     const checkCreatorStatus = async () => {
-        if (!targetUserId) return;
+        if (!targetUserId) {
+            setCheckingCreator(false);
+            return;
+        }
 
         // If not impersonating and we already have the profile data, load it immediately
         if (targetUserId === user?.id && profile) {
@@ -213,12 +216,17 @@ export default function UserTestManager() {
         }
 
         setCheckingCreator(true);
-        const { data } = await fetchUserDetails(targetUserId);
-        if (data) {
-            setIsCreator(data.is_creator);
-            setTargetUserProfile(data);
+        try {
+            const { data } = await fetchUserDetails(targetUserId);
+            if (data) {
+                setIsCreator(data.is_creator);
+                setTargetUserProfile(data);
+            }
+        } catch (err) {
+            console.error("Failed to check creator status:", err);
+        } finally {
+            setCheckingCreator(false);
         }
-        setCheckingCreator(false);
     };
 
     const loadClasses = async () => {
@@ -310,6 +318,8 @@ export default function UserTestManager() {
 
     useEffect(() => {
         if (!authLoading && !user) {
+            setCheckingCreator(false);
+            navigate('/login?redirect=/my-tests');
             return;
         } else if (impersonateUserId && !isAdmin) {
             toast.error("You are not authorized to view this user's dashboard.");

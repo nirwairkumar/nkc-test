@@ -97,7 +97,7 @@ export function UserTestCard({
                             <CardTitle
                                 className="text-[0.875rem] sm:text-[0.9375rem] font-semibold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2 group-hover:text-primary transition-colors duration-200 cursor-pointer"
                                 title={test.title}
-                                onClick={() => onConfigure(test)}
+                                onClick={() => onEdit(test)}
                             >
                                 {test.title}
                             </CardTitle>
@@ -246,30 +246,16 @@ export function UserTestCard({
 
             {/* --- Zone D: Actions --- */}
             <div className="flex items-center justify-end gap-1.5 sm:gap-2 mt-auto pt-2.5 border-t border-slate-100 dark:border-slate-800/50 pl-2 flex-wrap">
-                <div className="relative">
-                    <Button
-                        id={test.settings?.is_user_example ? "tour-settings-btn" : undefined}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
-                        onClick={() => onConfigure(test)}
-                    >
-                        <Settings className="w-3.5 h-3.5" />
-                        <span>Settings</span>
-                    </Button>
-                    {isConducted && !proctoringActive && (
-                        <div className="absolute -top-1 -right-1 z-10 text-yellow-500">
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                        </div>
-                    )}
-                    {showEnvPopup && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-yellow-500 text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-md whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-200 flex items-center gap-1.5 border border-yellow-400">
-                            <AlertTriangle className="w-3.5 h-3.5 text-slate-900" />
-                            <span>Set exam environment</span>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-yellow-500" />
-                        </div>
-                    )}
-                </div>
+                <Button
+                    id={test.settings?.is_user_example ? "tour-edit-btn" : undefined}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 h-8 text-[11px] sm:text-xs font-medium px-2.5 sm:px-3 bg-transparent border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
+                    onClick={() => onEdit(test)}
+                >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>Edit Test</span>
+                </Button>
                 {!isConducted && (
                     <Button
                         id={test.settings?.is_user_example ? "tour-conduct-btn" : undefined}

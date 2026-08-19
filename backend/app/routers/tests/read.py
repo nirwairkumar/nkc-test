@@ -274,14 +274,15 @@ async def get_user_tests(
     db: Client = Depends(get_db)
 ):
     try:
-        if response:
-            set_public_cache(response, 60, 60)
-            
         # 1. Authenticate / Identify the requester
         requesting_user_id, is_admin = _get_request_user_and_admin(request, db)
-
-        # 2. Authorization Enforcement
         is_owner = (requesting_user_id == user_id)
+
+        if response:
+            if profile_view and not is_owner and not is_admin:
+                set_public_cache(response, 60, 60)
+            else:
+                set_no_cache(response)
         
         if not is_owner and not is_admin:
             # If they are trying to load the full dashboard tests (profile_view=False)
@@ -501,7 +502,7 @@ async def get_test_by_id(
                 if vis == "unlisted" and not is_slug_lookup:
                     raise HTTPException(status_code=404, detail="Test not found")
             if response:
-                if vis == "public":
+                if vis == "public" and not is_owner and not is_admin:
                     set_public_cache(response)
                 else:
                     set_no_cache(response)
@@ -616,7 +617,7 @@ async def get_test_by_id(
 
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")
-            if visibility == "public":
+            if visibility == "public" and not is_owner and not is_admin:
                 set_public_cache(response)
             else:
                 set_no_cache(response)

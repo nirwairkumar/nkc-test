@@ -354,7 +354,7 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
         // Otherwise fetch from ID
         if (isEditMode && testId && user) {
             setLoading(true);
-            fetchTestById(testId).then(async ({ data, error }) => {
+            fetchTestById(testId, undefined, false, true).then(async ({ data, error }) => {
                 if (data) {
                     if (data.created_by !== user.id && !isAdmin) {
                         toast.error("You can only edit your own tests");
@@ -877,12 +877,17 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             questions: s.questions.map(sanitizeQ)
         })) : undefined;
 
-        const testDataPayload = {
+        const totalQs = enableSectionMode
+            ? (sanitizedSections || []).reduce((acc, s) => acc + (s.questions?.length || 0), 0)
+            : sanitizedQuestions.length;
+
+        const testDataPayload: any = {
             title,
             description,
             revision_notes: revisionNotes,
             duration: time,
             is_public: isPublic,
+            total_questions: totalQs,
             // If section mode, we can either save empty questions or flat map them. 
             // Saving flat map ensures backward compatibility for some views (like listing count).
             questions: enableSectionMode
@@ -892,7 +897,6 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             institution_logo: institutionLogo,
             institution_color: institutionColor,
             institution_font: institutionFont,
-            slug: title ? slugify(title, { lower: true, strict: true }) + '-' + Math.random().toString(36).substr(2, 4) : undefined,
             tags: tags,
             custom_category: showOtherCategory && customCategory.trim() ? customCategory.trim() : null,
 
@@ -904,6 +908,10 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
             // Only include merged_sections when there's actual data (column may not exist in DB)
             ...(enableSectionMode && mergedSections.length > 0 ? { merged_sections: mergedSections } : {})
         };
+
+        if (!isEditMode && title) {
+            testDataPayload.slug = slugify(title, { lower: true, strict: true }) + '-' + Math.random().toString(36).substr(2, 4);
+        }
 
         if (isEditMode && testId) {
             const { error } = await updateTest(testId, testDataPayload, isAdmin);
