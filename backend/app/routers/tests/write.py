@@ -85,6 +85,19 @@ async def create_test(
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
+                try:
+                    from app.utils.notifications import send_notification
+                    test_title = result.get("title", "Untitled Test")
+                    send_notification(
+                        user_id=result.get("created_by"),
+                        title="Test Created",
+                        message=f'Your test "{test_title}" was created successfully.',
+                        link=f'/edit-test/{result.get("id")}',
+                        custom_test_id=result.get("id"),
+                        db=db
+                    )
+                except Exception as ne:
+                    print(f"Failed to send test creation notification: {ne}")
             return result
         except Exception as e:
             print(f"Full insert failed: {e}. Retrying with legacy fields only.")
@@ -103,6 +116,19 @@ async def create_test(
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
+                try:
+                    from app.utils.notifications import send_notification
+                    test_title = result.get("title", "Untitled Test")
+                    send_notification(
+                        user_id=result.get("created_by"),
+                        title="Test Created",
+                        message=f'Your test "{test_title}" was created successfully.',
+                        link=f'/edit-test/{result.get("id")}',
+                        custom_test_id=result.get("id"),
+                        db=db
+                    )
+                except Exception as ne:
+                    print(f"Failed to send test creation notification: {ne}")
             return result
             
     except HTTPException:
@@ -170,6 +196,30 @@ async def update_test(
             if response.data:
                 bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
+                
+                # Check if conduct exam transitioned from active/enabled to finished/disabled
+                try:
+                    old_sett = (existing_meta.data[0].get("settings") if existing_meta.data else {}) or {}
+                    old_conduct = old_sett.get("conduct_exam", {}).get("enabled", False)
+                    new_sett = payload.get("settings") or {}
+                    new_conduct = new_sett.get("conduct_exam", {}).get("enabled", False) if "conduct_exam" in new_sett else old_conduct
+                    
+                    if old_conduct and not new_conduct:
+                        from app.utils.notifications import send_notification
+                        subs_res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).execute()
+                        total_subs = subs_res.count if hasattr(subs_res, "count") and subs_res.count is not None else len(subs_res.data or [])
+                        test_title = response.data[0].get("title", "Exam")
+                        send_notification(
+                            user_id=owner_id,
+                            title="Exam Concluded",
+                            message=f'Conducted exam session for "{test_title}" has concluded with {total_subs} total submissions.',
+                            link="/my-tests",
+                            custom_test_id=test_id,
+                            db=db
+                        )
+                except Exception as ne:
+                    print(f"Failed to send exam concluded notification: {ne}")
+
                 return response.data[0]
             return None
         except Exception as e:
@@ -188,6 +238,29 @@ async def update_test(
             if response.data:
                 bust_test_cache(test_id)
                 background_tasks.add_task(notify_test_updated, response.data[0])
+                
+                try:
+                    old_sett = (existing_meta.data[0].get("settings") if existing_meta.data else {}) or {}
+                    old_conduct = old_sett.get("conduct_exam", {}).get("enabled", False)
+                    new_sett = safe_payload.get("settings") or {}
+                    new_conduct = new_sett.get("conduct_exam", {}).get("enabled", False) if "conduct_exam" in new_sett else old_conduct
+                    
+                    if old_conduct and not new_conduct:
+                        from app.utils.notifications import send_notification
+                        subs_res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).execute()
+                        total_subs = subs_res.count if hasattr(subs_res, "count") and subs_res.count is not None else len(subs_res.data or [])
+                        test_title = response.data[0].get("title", "Exam")
+                        send_notification(
+                            user_id=owner_id,
+                            title="Exam Concluded",
+                            message=f'Conducted exam session for "{test_title}" has concluded with {total_subs} total submissions.',
+                            link="/my-tests",
+                            custom_test_id=test_id,
+                            db=db
+                        )
+                except Exception as ne:
+                    print(f"Failed to send exam concluded notification: {ne}")
+
                 return response.data[0]
             return None
 
@@ -424,6 +497,31 @@ async def clone_test(
             print(f"Warning: Failed to copy categories for clone {clone_id}: {cat_err}")
 
         print(f"[clone] Test {test_id} cloned as {clone_id} by {payload.cloner_id}")
+
+        # Send notifications for test cloning
+        try:
+            from app.utils.notifications import send_notification
+            orig_author = src.get("created_by")
+            if orig_author:
+                send_notification(
+                    user_id=orig_author,
+                    title="Test Cloned",
+                    message=f'Another creator cloned your public test "{src.get("title", "Untitled")}".',
+                    link="/my-tests",
+                    custom_test_id=test_id,
+                    db=db
+                )
+            send_notification(
+                user_id=payload.cloner_id,
+                title="Test Cloned",
+                message=f'Successfully cloned "{src.get("title", "Untitled")}" into your workspace.',
+                link=f'/edit-test/{clone_id}',
+                custom_test_id=clone_id,
+                db=db
+            )
+        except Exception as ne:
+            print(f"Failed to send clone notifications: {ne}")
+
         return cloned_test
 
     except HTTPException:

@@ -42,13 +42,15 @@ async def submit_report(payload: ReportCreate, db: Client = Depends(get_db)):
         
         # Add Notification for the Creator
         try:
-            notif_data = {
-                "user_id": payload.creator_id,
-                "title": "New Question Report",
-                "message": f"A user reported an issue ({payload.reason}) with question {payload.question_id + 1}.",
-                "link": "/your-tests?tab=reports"
-            }
-            admin_db.table("notifications").insert(notif_data).execute()
+            from app.utils.notifications import send_notification
+            send_notification(
+                user_id=payload.creator_id,
+                title="Question Flagged",
+                message=f"A student reported an issue ({payload.reason}) with Question {payload.question_id + 1}.",
+                link="/my-tests?tab=reports",
+                custom_test_id=payload.test_id,
+                db=admin_db
+            )
         except Exception as ne:
             print(f"Failed to create notification: {ne}")
             

@@ -58,8 +58,8 @@ async def save_attempt(
         # Override client-supplied user_id with the authenticated one
         effective_user_id = authenticated_user_id
 
-        # Fetch test details for attempt control validation
-        test_res = supabase.table("tests").select("id, enable_section_mode, sections, settings").eq("id", payload.test_id).single().execute()
+        # Fetch test details for attempt control validation and notification
+        test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings").eq("id", payload.test_id).single().execute()
         test_data = test_res.data
         
         if test_data and test_data.get("enable_section_mode") and test_data.get("sections"):
@@ -99,6 +99,23 @@ async def save_attempt(
         except Exception:
             pass  # Non-critical: don't block submission
         
+        # Notify the test creator about the candidate submission
+        try:
+            creator_id = test_data.get("created_by") if test_data else None
+            test_title = test_data.get("title", "Mock Test") if test_data else "Mock Test"
+            if creator_id and creator_id != effective_user_id:
+                from app.utils.notifications import send_notification
+                send_notification(
+                    user_id=creator_id,
+                    title="New Test Submission",
+                    message=f'A candidate completed and submitted your test "{test_title}".',
+                    link="/my-tests",
+                    custom_test_id=payload.test_id,
+                    db=supabase
+                )
+        except Exception as ne:
+            print(f"Failed to send submission notification: {ne}")
+
         # In v2, insert returns APIResponse. .data contains array of inserted rows.
         if response.data:
             return {"data": response.data[0], "error": None}

@@ -4,6 +4,8 @@ import { Search, Bell, Sparkles, Building2, UserCheck, Shield, Plus, Command } f
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 
+import { useNotifications } from '@/hooks/useNotifications';
+
 interface DashboardHeaderProps {
     user: any;
     profile: any;
@@ -22,6 +24,7 @@ export default function DashboardHeader({
     onOpenNotifications
 }: DashboardHeaderProps) {
     const navigate = useNavigate();
+    const { unreadCount } = useNotifications();
     const isInstitution = role === 'Institution';
 
     const getInitials = (name?: string) => {
@@ -80,7 +83,12 @@ export default function DashboardHeader({
                     title="Notifications"
                 >
                     <Bell className="w-4 h-4" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600 ring-2 ring-white" />
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-600 ring-2 ring-white"></span>
+                        </span>
+                    )}
                 </Button>
 
                 {/* Primary CTA */}

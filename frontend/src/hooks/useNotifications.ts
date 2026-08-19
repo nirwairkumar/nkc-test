@@ -1,15 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 export type Notification = {
     id: string;
     user_id: string;
-    type: string;
-    content: string;
-    read: boolean;
+    title: string;
+    message: string;
+    link?: string;
+    read?: boolean;
+    is_read?: boolean;
     created_at: string;
-    data?: any;
+    custom_test_id?: string;
+    sender_name?: string;
+    sender_email?: string;
+    type?: string;
 };
 
 export const useNotifications = () => {
@@ -18,23 +23,27 @@ export const useNotifications = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         if (!user) return;
-        setLoading(true);
         try {
             const { default: apiClient } = await import('@/lib/apiClient');
             const response = await apiClient.get(`/social/notifications/${user.id}`, {
                 params: { limit: 50 }
             });
-            if (response.data) {
-                setNotifications(response.data);
-                setUnreadCount(response.data.filter((n: any) => !n.read).length);
+            if (response.data && Array.isArray(response.data)) {
+                const list = response.data.map((item: any) => ({
+                    ...item,
+                    read: Boolean(item.read || item.is_read)
+                }));
+                setNotifications(list);
+                setUnreadCount(list.filter((n: Notification) => !n.read).length);
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    };
+    }, [user]);
 
     useEffect(() => {
         if (user) {
@@ -52,7 +61,7 @@ export const useNotifications = () => {
             setUnreadCount(0);
             setLoading(false);
         }
-    }, [user]);
+    }, [user, fetchNotifications]);
 
     const handleDelete = async (id: string) => {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -68,7 +77,7 @@ export const useNotifications = () => {
     };
 
     const markAsRead = async (id: string) => {
-        setNotifications((prev) => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        setNotifications((prev) => prev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n));
         setUnreadCount((prev) => Math.max(0, prev - 1));
 
         try {
@@ -76,6 +85,21 @@ export const useNotifications = () => {
             await apiClient.put(`/social/notifications/${id}/read?user_id=${user?.id}`);
         } catch (error) {
             console.error("Failed to mark as read", error);
+            fetchNotifications();
+        }
+    };
+
+    const markAllRead = async () => {
+        setNotifications((prev) => prev.map(n => ({ ...n, read: true, is_read: true })));
+        setUnreadCount(0);
+        if (!user) return;
+
+        try {
+            const { default: apiClient } = await import('@/lib/apiClient');
+            await apiClient.put(`/social/notifications/mark-all-read/${user.id}`);
+            toast.success("All notifications marked as read");
+        } catch (error) {
+            console.error("Failed to mark all as read", error);
             fetchNotifications();
         }
     };
@@ -88,6 +112,7 @@ export const useNotifications = () => {
         try {
             const { default: apiClient } = await import('@/lib/apiClient');
             await apiClient.delete(`/social/notifications/clear/${user.id}`);
+            toast.success("All notifications cleared");
         } catch (error) {
             toast.error("Failed to clear notifications");
             fetchNotifications();
@@ -100,6 +125,8 @@ export const useNotifications = () => {
         loading,
         handleDelete,
         handleClearAll,
-        markAsRead
+        markAsRead,
+        markAllRead,
+        refresh: fetchNotifications
     };
 };
