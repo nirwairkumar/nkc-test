@@ -81,6 +81,45 @@ const CountdownDisplay = ({ targetDate, onComplete }: { targetDate: Date; onComp
     );
 };
 
+const CompactCountdown = ({ targetDate, onComplete }: { targetDate: Date; onComplete: () => void }) => {
+    const [timeLeft, setTimeLeft] = useState(targetDate.getTime() - Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const newTimeLeft = targetDate.getTime() - Date.now();
+            setTimeLeft(newTimeLeft);
+            if (newTimeLeft <= 0) {
+                clearInterval(timer);
+                onComplete();
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [targetDate, onComplete]);
+
+    if (timeLeft <= 0) return null;
+
+    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+    const seconds = Math.floor((timeLeft / 1000) % 60);
+
+    return (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 p-3 px-4 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 text-xs">
+            <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200">
+                <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span>Scheduled for <strong className="font-semibold">{formatDateCustom(targetDate)}</strong> at <strong className="font-semibold">{formatTimeCustom(targetDate)}</strong></span>
+            </div>
+            <div className="flex items-center gap-1 font-mono text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-900 px-3 py-1 rounded-xl border border-indigo-100 dark:border-indigo-900/50 shadow-2xs">
+                <span className="text-[10px] uppercase font-sans font-semibold text-slate-400 mr-1 tracking-wider">Starts in:</span>
+                {days > 0 && <span>{days}d : </span>}
+                <span>{String(hours).padStart(2, '0')}h : </span>
+                <span>{String(minutes).padStart(2, '0')}m : </span>
+                <span>{String(seconds).padStart(2, '0')}s</span>
+            </div>
+        </div>
+    );
+};
+
 export type ExamFlowStep = 'intro' | 'waiting_room';
 
 export default function TestIntroPage() {
@@ -112,6 +151,7 @@ export default function TestIntroPage() {
     const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
     const [hasSolutions, setHasSolutions] = useState(false);
     const [isAuthLoading, setIsAuthLoading] = useState(false);
+    const [examReady, setExamReady] = useState(false);
 
     const handleGoogleLogin = async () => {
         setIsAuthLoading(true);
@@ -338,6 +378,16 @@ export default function TestIntroPage() {
         // 3. If Scheduled in Future: Enter Waiting Room with live countdown
         if (test.settings?.schedule?.enabled && scheduledDate && new Date() < scheduledDate) {
             setFlowStep('waiting_room');
+            // Request fullscreen NOW while we're still inside a user-gesture (click) context.
+            // Browsers block requestFullscreen() when called from timers/setTimeout.
+            if (test.settings?.force_fullscreen) {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch((err) => {
+                        console.log("Fullscreen request denied during waiting room entry:", err);
+                    });
+                }
+            }
             return;
         }
 
@@ -359,11 +409,14 @@ export default function TestIntroPage() {
         }
 
         if (enableFullScreen || test.settings?.force_fullscreen) {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch((err) => {
-                    console.log("Fullscreen request denied:", err);
-                });
+            // Only request fullscreen if not already in fullscreen (e.g. entered via waiting room)
+            if (!document.fullscreenElement) {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch((err) => {
+                        console.log("Fullscreen request denied:", err);
+                    });
+                }
             }
         }
 
@@ -580,43 +633,65 @@ export default function TestIntroPage() {
             {/* ════════════════════════════════════════════════════════════════ */}
             {flowStep === 'waiting_room' && scheduledDate && (
                 <Card className="border-t-4 border-t-indigo-600 shadow-2xl overflow-hidden rounded-3xl animate-in zoom-in-95 duration-200 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardHeader className="text-center pb-2 pt-8 px-6">
-                        <div className="inline-flex items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-950/60 rounded-3xl mb-3 shadow-inner border border-indigo-100 dark:border-indigo-900/50">
-                            <Clock className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                    <CardHeader className="text-center pb-5 pt-8 px-6 bg-gradient-to-b from-slate-50/90 via-slate-50/40 to-white dark:from-slate-800/40 dark:via-slate-900 dark:to-slate-900 border-b border-slate-100/90 dark:border-slate-800/70 mb-4">
+                        <div className="inline-flex items-center justify-center p-3.5 bg-indigo-50 dark:bg-indigo-950/60 rounded-2xl mb-3 shadow-inner border border-indigo-100 dark:border-indigo-900/50 mx-auto">
+                            <Clock className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin" />
                         </div>
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider mx-auto mb-2 border border-indigo-200 dark:border-indigo-800/60">
+                        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-xs font-semibold tracking-wide mx-auto mb-3 border border-indigo-200 dark:border-indigo-800/60 shadow-2xs">
                             <span>Exam Waiting Room</span>
                         </div>
-                        <CardTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        <h1 className="text-lg sm:text-2xl md:text-[1.65rem] font-bold text-slate-900 dark:text-white tracking-tight leading-snug sm:leading-snug max-w-2xl mx-auto antialiased">
                             {test.title}
-                        </CardTitle>
-                        <CardDescription className="text-xs sm:text-sm mt-1 max-w-md mx-auto text-slate-500 dark:text-slate-400">
-                            You have arrived early. Please keep this screen open. Your test will automatically load when the countdown reaches zero.
-                        </CardDescription>
+                        </h1>
+                        <p className="text-xs sm:text-sm mt-2 max-w-md mx-auto text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
+                            You have arrived early. Please keep this screen open. When the countdown reaches zero, a button will appear — click it to enter the exam.
+                        </p>
                     </CardHeader>
 
                     <CardContent className="space-y-6 p-6">
                         {/* Large Interactive Countdown Timer */}
                         <div className="py-2">
-                            <CountdownDisplay
-                                targetDate={scheduledDate}
-                                onComplete={() => {
-                                    setSchedulingStatus('live');
-                                    toast.success("Exam start time reached! Loading test...");
-                                    setTimeout(() => {
-                                        handleFinalStartTest(true);
-                                    }, 400);
-                                }}
-                            />
+                            {examReady ? (
+                                /* Exam is live — show launch button requiring a click (user gesture for fullscreen) */
+                                <div className="flex flex-col items-center gap-4 py-4">
+                                    <div className="relative flex items-center justify-center">
+                                        <span className="absolute inline-flex h-24 w-24 rounded-full bg-emerald-400 opacity-30 animate-ping" />
+                                        <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                                            <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                        </div>
+                                    </div>
+                                    <p className="text-emerald-700 dark:text-emerald-400 font-bold text-lg text-center">Exam time has started!</p>
+                                    <Button
+                                        size="lg"
+                                        className="w-full max-w-sm h-14 text-base font-bold rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg animate-pulse cursor-pointer"
+                                        onClick={() => handleFinalStartTest(true)}
+                                    >
+                                        🚀 Enter Exam Now
+                                    </Button>
+                                    <p className="text-xs text-slate-400 text-center">Click the button above to enter fullscreen and begin your exam.</p>
+                                </div>
+                            ) : (
+                                <CountdownDisplay
+                                    targetDate={scheduledDate}
+                                    onComplete={() => {
+                                        setSchedulingStatus('live');
+                                        setExamReady(true);
+                                        toast.success("Exam time has started! Click the button to enter.");
+                                    }}
+                                />
+                            )}
                         </div>
 
                         {/* Live Sync Status Alert */}
                         <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-3 text-xs text-indigo-900 dark:text-indigo-300">
                             <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                             <div>
-                                <p className="font-bold">Auto-Launch Synchronized</p>
+                                <p className="font-bold">Exam Launch Ready</p>
                                 <p className="text-indigo-700/80 dark:text-indigo-400/80 mt-0.5">
-                                    No need to refresh the page. The question paper will appear immediately at {formatTimeCustom(scheduledDate)}.
+                                    {examReady
+                                        ? "The exam is live! Click the green button above to enter fullscreen and begin."
+                                        : `A launch button will appear at ${formatTimeCustom(scheduledDate)}. Click it to enter the exam.`
+                                    }
                                 </p>
                             </div>
                         </div>
@@ -651,52 +726,60 @@ export default function TestIntroPage() {
             {/* ════════════════════════════════════════════════════════════════ */}
             {flowStep === 'intro' && (
                 <Card className="border-t-4 border-t-indigo-600 shadow-xl rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 relative animate-in fade-in duration-300">
-                    <CardHeader className="text-center pb-2 pt-6 p-4 sm:p-6">
-                        <CardTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <CardHeader className="text-center pb-5 pt-7 px-5 sm:px-8 relative bg-gradient-to-b from-slate-50/90 via-slate-50/40 to-white dark:from-slate-800/40 dark:via-slate-900 dark:to-slate-900 border-b border-slate-100/90 dark:border-slate-800/70 mb-5">
+                        {Boolean(test.custom_category || (Array.isArray(test.categories) ? test.categories[0]?.name : (test.categories as any)?.name) || (test as any).subject) && (
+                            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 text-xs font-medium tracking-wide border border-indigo-100 dark:border-indigo-800/70 mx-auto mb-3 shadow-2xs">
+                                <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                                <span>{test.custom_category || (Array.isArray(test.categories) ? test.categories[0]?.name : (test.categories as any)?.name) || (test as any).subject}</span>
+                            </div>
+                        )}
+                        <h1 className="text-lg sm:text-2xl md:text-[1.65rem] font-bold text-slate-900 dark:text-slate-50 tracking-tight leading-snug sm:leading-snug max-w-2xl mx-auto antialiased">
                             {test.title}
-                        </CardTitle>
-                        <CardDescription className="text-xs sm:text-sm mt-1 text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-                            {test.description || "Review test parameters and start your assessment."}
-                        </CardDescription>
+                        </h1>
+                        {test.description && (
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed mt-2 font-normal">
+                                {test.description}
+                            </p>
+                        )}
                     </CardHeader>
 
                     <CardContent className="space-y-5 p-4 sm:p-6 pt-0">
                         {/* KPI Metrics Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3 py-3 bg-slate-50/80 dark:bg-slate-800/50 rounded-2xl p-3 border border-slate-100 dark:border-slate-800">
-                            <div className="flex flex-col items-center justify-center text-center p-2">
-                                <HelpCircle className="h-5 w-5 text-indigo-500 mb-1" />
-                                <span className="text-xs text-muted-foreground">Questions</span>
-                                <div className="flex flex-col items-center">
-                                    <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">{questionCount}</span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 py-3 bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/80">
+                            <div className="flex flex-col items-center justify-center text-center p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/50 border border-slate-100/80 dark:border-slate-800/50 shadow-2xs">
+                                <HelpCircle className="h-4 w-4 text-indigo-500 mb-1" />
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Questions</span>
+                                <div className="flex flex-col items-center mt-0.5">
+                                    <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-none">{questionCount}</span>
                                     {totalAllowedQuestions < questionCount && (
-                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 rounded-full border border-indigo-100">
+                                        <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full border border-indigo-100 mt-1">
                                             Attempt: {totalAllowedQuestions}
                                         </span>
                                     )}
                                 </div>
                             </div>
-                            <div className="flex flex-col items-center justify-center text-center p-2">
-                                <Clock className="h-5 w-5 text-orange-500 mb-1" />
-                                <span className="text-xs text-muted-foreground">Duration</span>
-                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">{test.duration || "N/A"} mins</span>
+                            <div className="flex flex-col items-center justify-center text-center p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/50 border border-slate-100/80 dark:border-slate-800/50 shadow-2xs">
+                                <Clock className="h-4 w-4 text-amber-500 mb-1" />
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Duration</span>
+                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white mt-0.5 leading-none">{test.duration || "N/A"} mins</span>
                             </div>
-                            <div className="flex flex-col items-center justify-center text-center p-2">
-                                <Trophy className="h-5 w-5 text-emerald-600 mb-1" />
-                                <span className="text-xs text-muted-foreground">Total Marks</span>
-                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white">{totalMaxMarks}</span>
+                            <div className="flex flex-col items-center justify-center text-center p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/50 border border-slate-100/80 dark:border-slate-800/50 shadow-2xs">
+                                <Trophy className="h-4 w-4 text-emerald-500 mb-1" />
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Marks</span>
+                                <span className="font-bold text-base sm:text-lg text-slate-900 dark:text-white mt-0.5 leading-none">{totalMaxMarks}</span>
                             </div>
 
                             {hasSolutions ? (
-                                <div className="flex flex-col items-center justify-center text-center p-2">
-                                    <CheckCircle className="h-5 w-5 text-indigo-600 mb-1" />
-                                    <span className="text-xs text-muted-foreground">Answer Key</span>
-                                    <span className="font-bold text-xs sm:text-sm text-indigo-700 dark:text-indigo-400">Detailed Sol.</span>
+                                <div className="flex flex-col items-center justify-center text-center p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/50 border border-slate-100/80 dark:border-slate-800/50 shadow-2xs">
+                                    <CheckCircle className="h-4 w-4 text-indigo-500 mb-1" />
+                                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Answer Key</span>
+                                    <span className="font-bold text-xs sm:text-sm text-indigo-700 dark:text-indigo-400 mt-0.5 leading-none">Detailed Sol.</span>
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center text-center p-2">
-                                    <ShieldCheck className="h-5 w-5 text-purple-600 mb-1" />
-                                    <span className="text-xs text-muted-foreground">Proctoring</span>
-                                    <span className="font-bold text-xs sm:text-sm text-purple-700 dark:text-purple-400">
+                                <div className="flex flex-col items-center justify-center text-center p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/50 border border-slate-100/80 dark:border-slate-800/50 shadow-2xs">
+                                    <ShieldCheck className="h-4 w-4 text-purple-500 mb-1" />
+                                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Proctoring</span>
+                                    <span className="font-bold text-xs sm:text-sm text-purple-700 dark:text-purple-400 mt-0.5 leading-none">
                                         {test.settings?.tab_switch_mode === 'strict' ? 'Strict' : 'Standard'}
                                     </span>
                                 </div>
@@ -816,6 +899,65 @@ export default function TestIntroPage() {
                             </div>
                         )}
 
+                        {/* Compact Proctoring & Security Rules (Only shown if proctoring features are active) */}
+                        {Boolean(
+                            test.settings?.force_fullscreen ||
+                            (test.settings?.tab_switch_mode && test.settings.tab_switch_mode !== 'off') ||
+                            test.settings?.violation_limit ||
+                            test.settings?.disable_copy_paste ||
+                            test.settings?.disable_actions ||
+                            test.settings?.block_back_button
+                        ) && (
+                            <div className="p-3 sm:p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/25 border border-amber-200/70 dark:border-amber-900/50 space-y-2 text-xs">
+                                <div className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-300 text-[11px] uppercase tracking-wide">
+                                    <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                                    <span>Exam Proctoring & Security Restrictions</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] text-amber-900/90 dark:text-amber-300/90">
+                                    {test.settings?.force_fullscreen && (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                            <span>Full screen enforced (do not exit window)</span>
+                                        </div>
+                                    )}
+                                    {test.settings?.tab_switch_mode && test.settings.tab_switch_mode !== 'off' && (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                            <span>
+                                                {test.settings.tab_switch_mode === 'strict'
+                                                    ? 'Strict tab tracking (tab switch counts as violation)'
+                                                    : 'Tab switching is monitored and recorded'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {test.settings?.violation_limit && (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                            <span>Auto-submits after {test.settings.violation_limit} violations</span>
+                                        </div>
+                                    )}
+                                    {test.settings?.disable_copy_paste && (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                            <span>Copy, paste & clipboard actions disabled</span>
+                                        </div>
+                                    )}
+                                    {test.settings?.disable_actions && (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                            <span>Right-click & shortcuts blocked</span>
+                                        </div>
+                                    )}
+                                    {test.settings?.block_back_button && (
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                            <span>Browser back navigation locked</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Pre-Exam Rules & Checklist */}
                         <div className="space-y-3 pt-1">
                             <label className="flex items-start gap-3 p-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors bg-white dark:bg-slate-900/50">
@@ -884,10 +1026,10 @@ export default function TestIntroPage() {
                             </div>
                         )}
 
-                        {/* Scheduled Countdown Timer (Directly above Start Test Button if test is scheduled for future) */}
+                        {/* Scheduled Countdown Timer (Compact inline banner on intro card) */}
                         {schedulingStatus === 'upcoming' && scheduledDate && (
                             <div className="pt-2">
-                                <CountdownDisplay
+                                <CompactCountdown
                                     targetDate={scheduledDate}
                                     onComplete={() => setSchedulingStatus('live')}
                                 />
