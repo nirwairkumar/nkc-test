@@ -395,15 +395,23 @@ export default function TestIntroPage() {
         handleFinalStartTest(true);
     };
 
-    // Final Exam Launch
     const handleFinalStartTest = async (enableFullScreen: boolean) => {
         if (!test) return;
 
         sessionStorage.setItem(`flexible_timer_${test.id}`, String(isTimerDisabled));
 
+        const effectiveUserId = user?.id || (() => {
+            let anonId = sessionStorage.getItem(`anon_user_id_${test.id}`);
+            if (!anonId) {
+                anonId = crypto.randomUUID();
+                sessionStorage.setItem(`anon_user_id_${test.id}`, anonId);
+            }
+            return anonId;
+        })();
+
         try {
             const { registerTestStart } = await import('@/lib/attemptsApi');
-            await registerTestStart(user?.id || null, test.id);
+            await registerTestStart(effectiveUserId, test.id);
         } catch (err) {
             console.error("Error registering start:", err);
         }

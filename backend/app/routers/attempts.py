@@ -53,14 +53,33 @@ async def save_attempt(
     db: Client = Depends(get_db)
 ):
     try:
-        # Security: Verify JWT and use authenticated user_id
-        authenticated_user_id = _verify_auth_token_attempts(request, db)
-        # Override client-supplied user_id with the authenticated one
-        effective_user_id = authenticated_user_id
+        # Security: Check auth header first
+        auth_header = request.headers.get("Authorization")
+        effective_user_id = None
 
-        # Fetch test details for attempt control validation and notification
+        # Fetch test details for attempt control validation, notification, and conduct verification
         test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings").eq("id", payload.test_id).single().execute()
         test_data = test_res.data
+
+        is_conduct_exam = False
+        if test_data:
+            settings_dict = test_data.get("settings") or {}
+            is_conduct_exam = bool(settings_dict.get("conduct_exam", {}).get("enabled", False))
+
+        if auth_header:
+            try:
+                authenticated_user_id = _verify_auth_token_attempts(request, db)
+                effective_user_id = authenticated_user_id
+            except HTTPException as auth_err:
+                if is_conduct_exam and payload.user_id:
+                    effective_user_id = payload.user_id
+                else:
+                    raise auth_err
+        else:
+            if is_conduct_exam and payload.user_id:
+                effective_user_id = payload.user_id
+            else:
+                raise HTTPException(status_code=401, detail="Missing Authorization header")
         
         if test_data and test_data.get("enable_section_mode") and test_data.get("sections"):
             try:

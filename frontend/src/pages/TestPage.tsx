@@ -384,59 +384,70 @@ export default function TestPage() {
   // ─── Analytics: Progress Tracking & Abandon Detection ───────
   const submittedRef = useRef(false);
 
-  // On test load: register anonymous start
+  // On test load: register anonymous start (only for non-conduct exams)
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !id) return;
-    if (!user) {
+    if (!test) return;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    if (!user && !isConductExam) {
       // Anonymous user starts — track in dedicated anon table
-      analyticsApi.startAnonAttempt(id);
+      analyticsApi.startAnonAttempt(test.id);
     }
   }, [test?.id, isExamStarted]);
 
   // Periodic progress ping (every 60 seconds)
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !id || isSubmitting) return;
+    if (!test || isSubmitting) return;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
+    
     const interval = setInterval(() => {
       if (submittedRef.current) return;
       const totalQ = test.questions?.length || 1;
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      if (user) {
-        // Registered user
-        analyticsApi.updateProgress(user.id, id, Math.min(pct, 99));
+      
+      if (user || isConductExam) {
+        if (effectiveUserId) {
+          analyticsApi.updateProgress(effectiveUserId, test.id, Math.min(pct, 99), answers);
+        }
       } else {
-        // Anonymous user — use dedicated anon endpoint
-        analyticsApi.updateAnonProgress(id, Math.min(pct, 99));
+        // Standard anonymous user — use dedicated anon endpoint
+        analyticsApi.updateAnonProgress(test.id, Math.min(pct, 99));
       }
     }, 60000); // every 60 seconds
     return () => clearInterval(interval);
-  }, [test, user, id, answers, isSubmitting, isExamStarted]);
+  }, [test, user, answers, isSubmitting, isExamStarted]);
 
   // Abandon detection on tab close / navigation away
   useEffect(() => {
     if (!isExamStarted) return;
-    if (!test || !id) return;
+    if (!test) return;
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    const effectiveUserId = user?.id || sessionStorage.getItem(`anon_user_id_${test.id}`);
+
     const handleBeforeUnload = () => {
       if (submittedRef.current) return; // already submitted, don't mark abandoned
       const totalQ = test.questions?.length || 1;
       const answeredQ = Object.keys(answers).length;
       const pct = Math.round((answeredQ / totalQ) * 100);
-      if (user) {
-        // Emergency vault save on unload — synchronous fallback
-        try {
-          const draft = JSON.stringify({ key: `${user.id}_${test.id}`, answers, savedAt: new Date().toISOString() });
-          sessionStorage.setItem(`vault_emergency_${user.id}_${test.id}`, draft);
-        } catch { /**/ }
-        analyticsApi.markAbandoned(user.id, id, 'tab_closed', pct);
+      
+      if (user || isConductExam) {
+        if (effectiveUserId) {
+          try {
+            const draft = JSON.stringify({ key: `${effectiveUserId}_${test.id}`, answers, savedAt: new Date().toISOString() });
+            sessionStorage.setItem(`vault_emergency_${effectiveUserId}_${test.id}`, draft);
+          } catch { /**/ }
+          analyticsApi.markAbandoned(effectiveUserId, test.id, 'tab_closed', pct);
+        }
       } else {
-        analyticsApi.abandonAnonAttempt(id, 'tab_closed', pct);
+        analyticsApi.abandonAnonAttempt(test.id, 'tab_closed', pct);
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [test, user, id, answers, isExamStarted]);
+  }, [test, user, answers, isExamStarted]);
 
   // ─── Guard: Redirect away if this test was already submitted ─────────────
   useEffect(() => {
@@ -1197,9 +1208,12 @@ export default function TestPage() {
       startedAt: startTimeStr
     };
 
+    const isConductExam = !!test.settings?.conduct_exam?.enabled;
+
     // Tag as conduct exam attempt so creator dashboard can filter correctly
-    if (test.settings?.conduct_exam?.enabled) {
+    if (isConductExam) {
       metadata.conduct_exam = true;
+      metadata.is_conducted_attempt = true;
     }
 
     const finalScore = (isNaN(score) || !isFinite(score)) ? 0 : parseFloat(score.toFixed(2));
@@ -1208,8 +1222,17 @@ export default function TestPage() {
     const totalQ = test.questions?.length || 1;
     const finalCompletionPercentage = Math.round((visited.size / totalQ) * 100);
 
-    // ANONYMOUS SUBMISSION
-    if (!user) {
+    const effectiveUserId = user?.id || (() => {
+      let anonId = sessionStorage.getItem(`anon_user_id_${test.id}`);
+      if (!anonId) {
+        anonId = crypto.randomUUID();
+        sessionStorage.setItem(`anon_user_id_${test.id}`, anonId);
+      }
+      return anonId;
+    })();
+
+    // ANONYMOUS SUBMISSION (Only for standard non-conduct exams)
+    if (!user && !isConductExam) {
       // Submit to dedicated anon table — correctly marks this session as submitted
       await analyticsApi.submitAnonAttempt(id || test.id, finalAnswers as Record<string, any>, finalScore);
       toast.info('Test Submitted (Anonymous Mode). Result not saved to history.');
@@ -1245,7 +1268,7 @@ export default function TestPage() {
 
     let retryToastId: string | number | undefined;
     const { error } = await saveAttemptWithRetry(
-      user.id, test.id, answers, finalScore, metadata, finalCompletionPercentage,
+      effectiveUserId, test.id, answers, finalScore, metadata, finalCompletionPercentage,
       (attempt) => {
         // Show a "Retrying..." toast on 2nd attempt onwards
         const msg = `Connection issue — retrying submission (${attempt}/5)...`;
@@ -1269,15 +1292,13 @@ export default function TestPage() {
       setIsSubmitting(false);
     } else {
       // ─── Success: clear all saved state ────────────────────────────────
-      if (user) {
-        clearLocalTestSession(user.id, id, test.id);
-        // Mark both route ID (slug/custom_id) and test UUID as submitted
-        try {
-          localStorage.setItem(`test_submitted_${user.id}_${id}`, 'true');
-          localStorage.setItem(`test_submitted_${user.id}_${test.id}`, 'true');
-        } catch (e) {
-          console.warn("Storage quota exceeded, could not save submission marker", e);
-        }
+      clearLocalTestSession(effectiveUserId, id, test.id);
+      // Mark both route ID (slug/custom_id) and test UUID as submitted
+      try {
+        localStorage.setItem(`test_submitted_${effectiveUserId}_${id}`, 'true');
+        localStorage.setItem(`test_submitted_${effectiveUserId}_${test.id}`, 'true');
+      } catch (e) {
+        console.warn("Storage quota exceeded, could not save submission marker", e);
       }
 
       // Exit Full Screen if active
