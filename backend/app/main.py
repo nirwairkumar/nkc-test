@@ -162,6 +162,15 @@ app.include_router(combined_sessions.router, prefix="/api/combined-sessions", ta
 from app.routers import email_broadcast
 app.include_router(email_broadcast.router, prefix="/api/email-broadcast", tags=["Email Broadcast"])
 
+from app.routers import sitemap
+app.include_router(sitemap.router, prefix="/api", tags=["Sitemap"])
+app.include_router(sitemap.router, prefix="", tags=["Sitemap"])
+
+@app.get("/sitemap.xml", response_class=sitemap.XMLResponse, tags=["Sitemap"])
+@app.get("/api/sitemap.xml", response_class=sitemap.XMLResponse, tags=["Sitemap"])
+async def get_root_sitemap():
+    return await sitemap.get_sitemap_index()
+
 @app.get("/api/health")
 def health_check():
     return {

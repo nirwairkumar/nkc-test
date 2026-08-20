@@ -1,6 +1,6 @@
 /**
  * Cloudflare Worker for TestoZa SEO Optimization
- * Handles: Edge caching, sitemap proxying, meta tag injection for crawlers
+ * Handles: Edge caching, dynamic sitemap proxying, meta tag & canonical injection for crawlers and humans
  * Deploy to: Cloudflare Workers (testoza.com domain)
  */
 
@@ -17,19 +17,24 @@ const CONFIG = {
     SITEMAP: 3600,      // 1 hour
     STATIC: 86400,      // 24 hours
     API: 1800,          // 30 minutes
-    HTML: 300           // 5 minutes for prerendered HTML
+    HTML: 300           // 5 minutes for HTML
   },
 
   // Crawler user agents that need special handling
   CRAWLER_AGENTS: [
     'googlebot',
     'bingbot',
+    'yandex',
+    'duckduckbot',
+    'baiduspider',
     'facebookexternalhit',
     'twitterbot',
     'linkedinbot',
     'whatsapp',
     'slackbot',
     'discordbot',
+    'telegrambot',
+    'pinterest',
     'lighthouse',
     'pagespeed',
     'google page speed'
@@ -63,7 +68,7 @@ function shouldBypassCache(url) {
 }
 
 /**
- * Generate cache key based on URL and user agent type
+ * Generate cache key based on URL
  */
 function generateCacheKey(request) {
   const url = new URL(request.url);
@@ -79,7 +84,7 @@ function generateCacheKey(request) {
 function getCacheTTL(url) {
   const pathname = new URL(url).pathname;
 
-  if (pathname.startsWith('/sitemap')) {
+  if (pathname.startsWith('/sitemap') || pathname === '/sitemap.xml') {
     return CONFIG.CACHE_TTL.SITEMAP;
   }
   if (pathname.startsWith('/test/') || pathname.startsWith('/test-intro/')) {
@@ -93,32 +98,46 @@ function getCacheTTL(url) {
 }
 
 /**
- * Fetch from backend API with caching
+ * Fetch from backend API with timeout and caching
  */
 async function fetchFromAPI(endpoint, options = {}) {
   const url = `${CONFIG.API_BASE_URL}${endpoint}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers
-    }
-  });
-
-  return response;
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Accept': 'application/xml, application/json, text/plain',
+        ...options.headers
+      }
+    });
+    return response;
+  } catch (err) {
+    console.error(`fetchFromAPI failed for ${url}:`, err);
+    return new Response(null, { status: 502 });
+  }
 }
 
 /**
- * Handle sitemap requests - proxy to backend with edge caching
+ * Handle sitemap requests - proxy to backend with fallback and edge caching
  */
 async function handleSitemap(request) {
   const url = new URL(request.url);
-  const sitemapType = url.pathname.replace('/sitemap/', '').replace('.xml', '');
+  let subPath = url.pathname.replace(/^\/+/, ''); // e.g. "sitemap.xml" or "sitemap/static.xml"
+  
+  if (subPath === 'sitemap.xml' || subPath === 'sitemap' || subPath === 'sitemap/index.xml' || subPath === 'sitemap/sitemap.xml') {
+    subPath = 'sitemap/index.xml';
+  } else if (!subPath.startsWith('sitemap/')) {
+    subPath = `sitemap/${subPath}`;
+  }
+  
+  if (!subPath.endsWith('.xml')) {
+    subPath = `${subPath}.xml`;
+  }
 
-  // Try cache first
+  // Try Cloudflare Edge Cache first
   const cache = caches.default;
-  const cacheKey = new Request(`${CONFIG.FRONTEND_URL}/sitemap/${sitemapType}.xml`, request);
+  const cacheKey = new Request(`${CONFIG.FRONTEND_URL}/${subPath}`, request);
   let cached = await cache.match(cacheKey);
 
   if (cached) {
@@ -132,10 +151,20 @@ async function handleSitemap(request) {
     });
   }
 
-  // Fetch from backend
-  const apiResponse = await fetchFromAPI(`/sitemap/${sitemapType}.xml`);
+  // 1. Attempt fetch from Backend API
+  let apiResponse = await fetchFromAPI(`/${subPath}`);
 
+  // 2. Fallback to /api prefix if root /sitemap fails
   if (!apiResponse.ok) {
+    apiResponse = await fetchFromAPI(`/api/${subPath}`);
+  }
+
+  // 3. Fallback to Frontend Static Origin (Cloudflare Pages) if backend is unreachable
+  if (!apiResponse.ok) {
+    const originResponse = await fetch(request);
+    if (originResponse.ok) {
+      return originResponse;
+    }
     return new Response('Sitemap not found', { status: 404 });
   }
 
@@ -145,14 +174,14 @@ async function handleSitemap(request) {
   const response = new Response(body, {
     status: 200,
     headers: {
-      'Content-Type': 'application/xml',
-      'Cache-Control': `public, max-age=${CONFIG.CACHE_TTL.SITEMAP}`,
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': `public, max-age=${CONFIG.CACHE_TTL.SITEMAP}, stale-while-revalidate=86400`,
       'X-Cache': 'MISS',
       'X-Cache-Location': 'EDGE'
     }
   });
 
-  // Store in cache
+  // Store in edge cache
   await cache.put(cacheKey, response.clone());
 
   return response;
@@ -164,7 +193,7 @@ async function handleSitemap(request) {
 function formatCategoryName(slug) {
   if (!slug) return '';
   const words = slug.split('-');
-  const acronyms = ['jee', 'gate', 'cat', 'iit', 'jam', 'neet', 'ssc', 'upsc', 'clat', 'nda'];
+  const acronyms = ['jee', 'gate', 'cat', 'iit', 'jam', 'neet', 'ssc', 'upsc', 'clat', 'nda', 'rrb', 'cbt'];
 
   return words.map(word => {
     const lower = word.toLowerCase();
@@ -175,21 +204,19 @@ function formatCategoryName(slug) {
   }).join(' ');
 }
 
-// injectSEOMetaTags is deprecated and replaced by native HTMLRewriter streaming injection in handleHTMLRequest
-
 /**
- * Generate comprehensive meta tags
+ * Generate comprehensive meta tags with strict canonical URLs
  */
 function generateMetaTags(url, testData = null) {
   const siteUrl = CONFIG.FRONTEND_URL;
   const path = new URL(url).pathname;
 
-  // Default meta - matching the high quality ones in index.html
+  // Default meta - matching high quality educational branding
   let title = 'TestoZa – Free Online Test Maker for Teachers | Create Exam Online with AI';
-  let description = 'Create online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Free quiz creator, mock tests, CBT platform & secure proctoring tools.';
+  let description = 'Create online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Free quiz creator, mock tests, CBT platform & exam integrity tools.';
   let type = 'website';
   let image = `${siteUrl}/default-og.png`;
-  let keywords = 'online test maker, ai test generator, quiz creator, exam builder, conduct online exam, mock test platform';
+  let keywords = 'online test maker, ai test generator, quiz creator, exam builder, conduct online exam, mock test platform, online examination software';
 
   // Customize based on route
   if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
@@ -203,54 +230,61 @@ function generateMetaTags(url, testData = null) {
       const countStr = questionCount > 0 ? `${questionCount} questions` : 'Practice test';
       description = `${testDesc} (${countStr}, instant results & solutions on TestoZa).`;
       type = 'article';
-      keywords = `${testData.title}, online test, practice test, ${testData.categories?.map(c => c.name).join(', ') || ''}`;
+      const catNames = testData.categories?.map(c => c.name).join(', ') || '';
+      keywords = `${testData.title}, online test, practice test, mock exam, ${catNames}, TestoZa`;
+      if (testData.og_image) {
+        image = testData.og_image;
+      }
     } else {
       title = 'Online Test | TestoZa';
-      description = 'Take this online test on TestoZa. Practice and improve your skills.';
+      description = 'Take this online test on TestoZa. Practice and improve your skills with real exam simulation.';
     }
   } else if (path.startsWith('/tests/')) {
     const category = path.split('/')[2];
     const catName = formatCategoryName(category);
     title = `${catName} Practice Tests & Mock Exams | TestoZa`;
-    description = `Free ${catName} practice tests and mock exams online. Take timed practice papers with instant grading, detailed solutions, and analysis.`;
+    description = `Free ${catName} practice tests and mock exams online. Take timed practice papers with instant grading, detailed solutions, and comprehensive rank analysis.`;
     type = 'website';
-    keywords = `${catName} test, ${catName} practice test, online exam, mock test, competitive exam prep`;
+    keywords = `${catName} test, ${catName} practice test, online exam, mock test, competitive exam prep, TestoZa`;
   } else if (path.startsWith('/creator/')) {
     title = 'Creator Profile | TestoZa';
     description = 'View tests and educational content from this creator on TestoZa.';
   } else if (path === '/pricing') {
-    title = 'Pricing | TestoZa';
-    description = 'Affordable pricing plans for online test creation. Start free, upgrade anytime.';
+    title = 'Pricing & Plans | Free Online Test Maker for Teachers | TestoZa';
+    description = 'Affordable pricing plans for educators, coaching institutes, and schools. Start 100% free with unlimited tests and students.';
     type = 'product';
+  } else if (path === '/premium') {
+    title = 'TestoZa Premium - Advanced CBT Assessment Features';
+    description = 'Upgrade to TestoZa Premium for white-label branding, custom certificates, and deep analytics.';
   } else if (path === '/more-tests' || path === '/dashboard' || path === '/explore') {
     title = 'Explore Free Mock Tests & Online Exams | TestoZa';
-    description = 'Find and take free mock tests across various competitive exams, subjects, and topics. Access timed practice papers with real-time analytics and detailed solutions.';
+    description = 'Find and take free mock tests across various competitive exams, subjects, and topics. Access timed practice papers with real-time analytics.';
   } else if (path === '/create-test') {
     title = 'Create Online Tests & Mock Exams | TestoZa';
-    description = 'Easily build custom online tests, quizzes, and exams. Customize settings including timer, marking schemes, section rules, and remote proctoring options.';
+    description = 'Easily build custom online tests, quizzes, and exams. Customize settings including timer, negative marking, section rules, and proctoring.';
   } else if (path === '/generate-with-ai') {
     title = 'Free AI Quiz & Test Generator | Create Exams in Minutes | TestoZa';
-    description = 'Generate comprehensive quizzes and tests in seconds using AI. Import PDFs, YouTube videos, docx, or text prompts to create ready-to-take exams.';
+    description = 'Generate comprehensive quizzes and tests in seconds using AI. Import PDFs, YouTube videos, or text prompts to create ready-to-take exams.';
   } else if (path.startsWith('/user-guide')) {
     title = 'TestoZa User Guide & Tutorials for Teachers | TestoZa';
-    description = 'Learn how to use TestoZa to create exams, manage classrooms, invite students, and analyze test results with our step-by-step documentation and guide.';
+    description = 'Learn how to use TestoZa to create exams, invite students, and analyze test results with our step-by-step documentation.';
   } else if (path === '/about') {
-    title = 'Why TestoZa - Best Free Online Test Maker | TestoZa';
-    description = 'Discover why TestoZa is the preferred choice for educators and institutions. Secure proctoring, AI question generation, and instant grading analytics.';
+    title = 'Why TestoZa - Best Free Online Test Maker for Teachers | TestoZa';
+    description = 'Discover why TestoZa is the preferred choice for educators and institutions. Secure proctoring, AI question generation, and instant grading.';
   } else if (path === '/quiz-creator') {
     title = 'Free AI Quiz & Test Generator for Teachers | TestoZa';
-    description = 'Instantly create tests, quizzes, and exams online using AI. Generate assessments from text, PDFs, or YouTube videos. Clean, modern, distraction-free CBT simulator.';
-    keywords = 'online quiz creator, ai quiz generator, free quiz maker, create quiz online, exam builder for teachers';
+    description = 'Instantly create tests, quizzes, and exams online using AI. Generate assessments from text, PDFs, or YouTube videos. Clean, modern CBT simulator.';
+    keywords = 'online quiz creator, ai quiz generator, free quiz maker, create quiz online, exam builder for teachers, TestoZa';
   } else if (path === '/assessment-platform') {
     title = 'CBT & Online Assessment Platform | Free Exam Creator | TestoZa';
-    description = 'Create, distribute, and grade computer-based tests (CBT) and classroom assessments online. Get detailed student score reports and automated analytics instantly.';
-    keywords = 'cbt assessment platform, computer based test, online exam platform, classroom assessment, exam software';
+    description = 'Create, distribute, and grade computer-based tests (CBT) and classroom assessments online. Get detailed student score reports instantly.';
+    keywords = 'cbt assessment platform, computer based test, online exam platform, classroom assessment, exam software, TestoZa';
   } else if (path === '/login') {
     title = 'Login to TestoZa | Free Online Test Maker';
     description = 'Sign in to your TestoZa account to create tests, manage exams, and view student results.';
   } else if (path === '/support') {
     title = 'Contact Support | TestoZa Help Center';
-    description = 'Get help with TestoZa. Contact our support team for questions about creating tests, managing exams, or account issues.';
+    description = 'Get help with TestoZa. Contact our support team for questions about creating tests, managing exams, or account assistance.';
   } else if (path === '/privacy-policy') {
     title = 'Privacy Policy | TestoZa';
     description = 'Read the TestoZa Privacy Policy to understand how we collect, use, and protect your data.';
@@ -261,16 +295,15 @@ function generateMetaTags(url, testData = null) {
     title = 'Community Survey | TestoZa';
     description = 'Share your feedback and help us improve TestoZa for teachers and students.';
   } else if (path === '/convert') {
-    title = 'Convert PDF to Quiz | TestoZa';
+    title = 'Convert PDF to Quiz Online | TestoZa';
     description = 'Convert any PDF document into a ready-to-take online quiz in seconds using AI.';
-  } else if (path === '/news' || path.startsWith('/news/')) {
-    title = 'Education News & Updates | TestoZa';
-    description = 'Stay up to date with the latest news, feature releases, and education tips from the TestoZa team.';
-  } else if (path === '/pricing') {
-    title = 'Pricing | TestoZa';
-    description = 'Affordable pricing plans for online test creation. Start free, upgrade anytime.';
-    type = 'product';
+  } else if (path === '/news' || path.startsWith('/news/') || path === '/blog' || path.startsWith('/blog/')) {
+    title = 'Education News, Guides & Updates | TestoZa';
+    description = 'Stay up to date with the latest exam updates, test creation guides, and education tips from the TestoZa team.';
   }
+
+  // Clean canonical URL without trailing slash or tracking parameters
+  const canonicalUrl = `${siteUrl}${path}`;
 
   // Build meta tag HTML
   return `
@@ -278,22 +311,23 @@ function generateMetaTags(url, testData = null) {
     <title>${escapeHtml(title)}</title>
     <meta name="description" content="${escapeHtml(description)}">
     <meta name="keywords" content="${escapeHtml(keywords)}">
-    <link rel="canonical" href="${siteUrl}${path}">
+    <link rel="canonical" href="${canonicalUrl}">
     
     <!-- Open Graph -->
     <meta property="og:title" content="${escapeHtml(title)}">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:type" content="${type}">
-    <meta property="og:url" content="${siteUrl}${path}">
+    <meta property="og:url" content="${canonicalUrl}">
     <meta property="og:image" content="${image}">
     <meta property="og:site_name" content="TestoZa">
-    <meta property="og:locale" content="en_US">
+    <meta property="og:locale" content="en_IN">
     
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${escapeHtml(title)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${image}">
+    <meta name="twitter:site" content="@testoza">
     
     <!-- Robots -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -305,7 +339,8 @@ function generateMetaTags(url, testData = null) {
  * Escape HTML entities
  */
 function escapeHtml(text) {
-  return text
+  if (!text) return '';
+  return String(text)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -314,7 +349,7 @@ function escapeHtml(text) {
 }
 
 /**
- * Handle HTML requests with potential meta tag injection
+ * Handle HTML requests with meta tag & canonical injection
  */
 async function handleHTMLRequest(request) {
   const cache = caches.default;
@@ -333,7 +368,7 @@ async function handleHTMLRequest(request) {
     });
   }
 
-  // Fetch from origin
+  // Fetch from origin (Cloudflare Pages)
   const originResponse = await fetch(request);
 
   if (!originResponse.ok) {
@@ -349,69 +384,66 @@ async function handleHTMLRequest(request) {
   if (path !== '/' && path !== '') {
     const isTestRoute = path.startsWith('/test/') || path.startsWith('/test-intro/');
 
-    // Run dynamic rewrite for all visitors (crawlers and humans) to ensure consistency and prevent cloaking flags
-    if (true) {
-      let testData = null;
-      if (isTestRoute) {
-        const parts = path.split('/');
-        const identifier = parts[2];
-        if (identifier) {
-          try {
-            // Fetch test data (excluding large questions list for efficiency)
-            const apiResponse = await fetch(`${CONFIG.API_BASE_URL}/api/tests/${identifier}?exclude_questions=true`, {
-              headers: {
-                'Accept': 'application/json'
-              }
-            });
-            if (apiResponse.ok) {
-              testData = await apiResponse.json();
+    let testData = null;
+    if (isTestRoute) {
+      const parts = path.split('/');
+      const identifier = parts[2];
+      if (identifier) {
+        try {
+          // Fetch test data (excluding large questions list for efficiency)
+          const apiResponse = await fetch(`${CONFIG.API_BASE_URL}/api/tests/${identifier}?exclude_questions=true`, {
+            headers: {
+              'Accept': 'application/json'
             }
-          } catch (e) {
-            console.error('Failed to fetch test data in worker:', e);
+          });
+          if (apiResponse.ok) {
+            testData = await apiResponse.json();
           }
+        } catch (e) {
+          console.error('Failed to fetch test data in worker:', e);
         }
       }
-
-      // Generate meta tags HTML
-      const metaTags = generateMetaTags(request.url, testData);
-
-      // Use native HTMLRewriter to strip old SEO tags and append new ones cleanly
-      const rewriter = new HTMLRewriter()
-        .on('title', {
-          element(el) { el.remove(); }
-        })
-        .on('meta[name="description"]', {
-          element(el) { el.remove(); }
-        })
-        .on('meta[name="keywords"]', {
-          element(el) { el.remove(); }
-        })
-        .on('meta[name="author"]', {
-          element(el) { el.remove(); }
-        })
-        .on('meta[name="robots"]', {
-          element(el) { el.remove(); }
-        })
-        .on('meta[name="googlebot"]', {
-          element(el) { el.remove(); }
-        })
-        .on('link[rel="canonical"]', {
-          element(el) { el.remove(); }
-        })
-        .on('meta[property^="og:"]', {
-          element(el) { el.remove(); }
-        })
-        .on('meta[name^="twitter:"]', {
-          element(el) { el.remove(); }
-        })
-        .on('head', {
-          element(el) {
-            el.append(metaTags, { html: true });
-          }
-        });
-
-      responseToReturn = rewriter.transform(originResponse);
     }
+
+    // Generate meta tags HTML
+    const metaTags = generateMetaTags(request.url, testData);
+
+    // Use native HTMLRewriter to strip old SEO tags and append new ones cleanly
+    const rewriter = new HTMLRewriter()
+      .on('title', {
+        element(el) { el.remove(); }
+      })
+      .on('meta[name="description"]', {
+        element(el) { el.remove(); }
+      })
+      .on('meta[name="keywords"]', {
+        element(el) { el.remove(); }
+      })
+      .on('meta[name="author"]', {
+        element(el) { el.remove(); }
+      })
+      .on('meta[name="robots"]', {
+        element(el) { el.remove(); }
+      })
+      .on('meta[name="googlebot"]', {
+        element(el) { el.remove(); }
+      })
+      .on('link[rel="canonical"]', {
+        element(el) { el.remove(); }
+      })
+      .on('meta[property^="og:"]', {
+        element(el) { el.remove(); }
+      })
+      .on('meta[name^="twitter:"]', {
+        element(el) { el.remove(); }
+      })
+      .on('head', {
+        element(el) {
+          el.append(metaTags, { html: true });
+        }
+      });
+
+    responseToReturn = rewriter.transform(originResponse);
   }
 
   // Create response with cache headers
@@ -459,8 +491,8 @@ export default {
 
     // Route handling
     try {
-      // Sitemap requests
-      if (url.pathname.startsWith('/sitemap')) {
+      // Sitemap requests (e.g. /sitemap.xml, /sitemap/index.xml, /sitemap/static.xml)
+      if (url.pathname.startsWith('/sitemap') || url.pathname === '/sitemap.xml') {
         return await handleSitemap(request);
       }
 
@@ -468,7 +500,7 @@ export default {
       if (url.pathname === '/robots.txt') {
         return new Response(ROBOTS_TXT, {
           headers: {
-            'Content-Type': 'text/plain',
+            'Content-Type': 'text/plain; charset=utf-8',
             'Cache-Control': 'public, max-age=86400'
           }
         });
@@ -505,13 +537,17 @@ export default {
       }
 
       // Static assets - pass through directly to let Cloudflare Pages handle native caching & compression
-      const hasStaticExtension = /\.(txt|xml|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i.test(url.pathname);
+      const hasStaticExtension = /\.(txt|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i.test(url.pathname);
       if (hasStaticExtension) {
         return fetch(request);
       }
 
-      // HTML pages
-      if (request.headers.get('accept')?.includes('text/html')) {
+      // HTML pages & client-side routes (all routes without a static file extension)
+      const isHtmlRoute = request.headers.get('accept')?.includes('text/html') ||
+                          !url.pathname.includes('.') ||
+                          isCrawler(request);
+
+      if (isHtmlRoute) {
         return await handleHTMLRequest(request);
       }
 
@@ -520,30 +556,32 @@ export default {
 
     } catch (error) {
       console.error('Worker error:', error);
-
-      // Fallback to origin on error
       return fetch(request);
     }
   }
 };
 
 /**
- * Robots.txt content
+ * Complete Robots.txt content with all declared sitemaps
  */
 const ROBOTS_TXT = `# TestoZa SEO Robots Configuration
 # Domain: https://testoza.com
-# Last Updated: 2026-07-05
+# Last Updated: 2026-08-20
 
 User-agent: *
 Allow: /
 
-# Sitemap location
+# Sitemap Declarations
+Sitemap: https://testoza.com/sitemap.xml
 Sitemap: https://testoza.com/sitemap/index.xml
 Sitemap: https://testoza.com/sitemap/static.xml
-Sitemap: https://testoza.com/sitemap.xml
+Sitemap: https://testoza.com/sitemap/tests.xml
+Sitemap: https://testoza.com/sitemap/categories.xml
+Sitemap: https://testoza.com/sitemap/posts.xml
+Sitemap: https://testoza.com/sitemap/creators.xml
 
 # Crawl rate
-Crawl-delay: 1
+Crawl-delay: 0.5
 
 # Private Routes - Do Not Index
 Disallow: /live/
@@ -569,8 +607,11 @@ Disallow: /_next/
 Disallow: /*.js.map$
 Disallow: /*.css.map$
 Disallow: /*.json$
-Disallow: /*.xml$
+
+# Allow all XML and sitemaps
 Allow: /sitemap*.xml$
+Allow: /sitemap/*.xml$
+Allow: /*.xml$
 
 # Google-specific
 User-agent: Googlebot
@@ -584,7 +625,7 @@ Allow: /images/
 # Bing-specific
 User-agent: Bingbot
 Allow: /
-Crawl-delay: 1
+Crawl-delay: 0.5
 
 # Social Media Crawlers
 User-agent: facebookexternalhit
@@ -594,34 +635,12 @@ Crawl-delay: 0
 User-agent: Twitterbot
 Allow: /
 Crawl-delay: 0
-`;
 
-/**
- * Deployment Instructions:
- * 
- * 1. Install Wrangler CLI:
- *    npm install -g wrangler
- * 
- * 2. Authenticate with Cloudflare:
- *    wrangler login
- * 
- * 3. Create wrangler.toml:
- *    name = "testoza-seo-worker"
- *    main = "worker.js"
- *    compatibility_date = "2026-02-12"
- *    
- *    [env.production]
- *    route = { pattern = "testoza.com/*", zone_name = "testoza.com" }
- *    
- *    [vars]
- *    API_BASE_URL = "https://your-railway-app.up.railway.app"
- *    FRONTEND_URL = "https://testoza.com"
- * 
- * 4. Deploy:
- *    wrangler deploy --env production
- * 
- * 5. Configure in Cloudflare Dashboard:
- *    - Set up custom domain
- *    - Configure caching rules
- *    - Enable analytics
- */
+User-agent: LinkedInBot
+Allow: /
+Crawl-delay: 0
+
+User-agent: WhatsApp
+Allow: /
+Crawl-delay: 0
+`;

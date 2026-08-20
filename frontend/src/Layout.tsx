@@ -39,10 +39,18 @@ export default function Layout() {
         } catch { }
     }, [isCollapsed]);
 
-    // Track page views on route change
+    // Track page views on route change (in custom analytics tracker + Google Analytics GA4)
     React.useEffect(() => {
         analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
-    }, [location.pathname, user?.id]);
+
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'page_view', {
+                page_path: location.pathname + (location.search || ''),
+                page_title: document.title,
+                page_location: window.location.href,
+            });
+        }
+    }, [location.pathname, location.search, user?.id]);
 
     // Popup-based Onboarding Trigger (Keeps user on their current screen without hard page redirects)
     React.useEffect(() => {

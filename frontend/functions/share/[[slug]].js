@@ -14,14 +14,13 @@ export async function onRequest(context) {
 
     // Defaults
     let test = null;
-    let title = "Answer Ace Lab";
-    let description = "Attempt this mock test on Answer Ace Lab with real exam experience.";
-    let image = "https://testoza.pages.dev/default-og.png";
+    let title = "TestoZa – Free Online Test Maker";
+    let description = "Attempt this mock test on TestoZa with real exam experience, instant grading, and detailed solutions.";
+    let image = "https://testoza.com/default-og.png";
     let destPath = "/";
 
     try {
         // Fetch test data from backend API
-        // The backend /tests/{id} endpoint handles both UUIDs and slugs
         const apiPath = `${apiUrl}/tests/${slugOrId}`;
         const res = await fetch(apiPath);
 
@@ -30,8 +29,7 @@ export async function onRequest(context) {
         }
 
         if (test) {
-            title = test.title || title;
-            // Format Description
+            title = test.title ? `${test.title} | TestoZa` : title;
             let descText = test.description || "Attempt this online mock test.";
             if (descText.length > 200) descText = descText.substring(0, 197) + "...";
 
@@ -39,11 +37,10 @@ export async function onRequest(context) {
             if (test.tags && Array.isArray(test.tags)) cats.push(...test.tags);
             if (test.custom_category) cats.push(test.custom_category);
 
-            // Build parts
             const parts = [];
             if (cats.length > 0) parts.push(`Categories: ${cats.join(', ')}`);
             if (test.creator_name) parts.push(`Creator: ${test.creator_name}`);
-            parts.push("Answer Ace Lab");
+            parts.push("TestoZa");
 
             if (parts.length > 0) {
                 description = `${descText} | ${parts.join(' | ')}`;
@@ -51,10 +48,8 @@ export async function onRequest(context) {
                 description = descText;
             }
 
-            // Image
             if (test.og_image) image = test.og_image;
 
-            // Destination
             destPath = test.slug ? `/test/${test.slug}` : `/test-intro/${test.id}`;
         }
 
@@ -62,19 +57,16 @@ export async function onRequest(context) {
         console.error("Fetch error", e);
     }
 
-    // Construct Canonical URL (the share URL itself is often best for OG, or the destination)
-    // User requested "Clean canonical URL". Usually this means the public SPA URL.
-    const canonicalUrl = `${url.origin}${destPath}`;
-    const redirectUrl = `${url.origin}${destPath}`;
+    const canonicalUrl = `https://testoza.com${destPath}`;
+    const redirectUrl = `https://testoza.com${destPath}`;
 
-    // HTML Template
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${title} | Answer Ace Lab</title>
-
+  <title>${title}</title>
   <meta name="description" content="${description}" />
+  <link rel="canonical" href="${canonicalUrl}" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="${title}" />
@@ -82,12 +74,14 @@ export async function onRequest(context) {
   <meta property="og:image" content="${image}" />
   <meta property="og:url" content="${canonicalUrl}" />
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TestoZa" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
   <meta name="twitter:image" content="${image}" />
+  <meta name="twitter:site" content="@testoza" />
 </head>
 <body>
   <p>Redirecting to test...</p>
@@ -100,7 +94,6 @@ export async function onRequest(context) {
     return new Response(html, {
         headers: {
             "Content-Type": "text/html;charset=UTF-8",
-            // Cache for a short time to improve performance but allow updates
             "Cache-Control": "public, max-age=60"
         }
     });
