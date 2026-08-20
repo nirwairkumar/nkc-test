@@ -1,6 +1,43 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timezone
 from supabase import Client
 from concurrent.futures import ThreadPoolExecutor
+
+def compute_test_status(settings: Optional[Dict[str, Any]]) -> str:
+    """
+    Dynamically computes test status ('upcoming' | 'active' | 'inactive') 
+    from schedule and conduct_exam settings relative to current UTC timestamp.
+    """
+    if not settings:
+        return "inactive"
+    
+    conduct = settings.get("conduct_exam") or {}
+    if not conduct.get("enabled"):
+        return "inactive"
+    
+    schedule = settings.get("schedule") or {}
+    if schedule.get("enabled"):
+        now = datetime.now(timezone.utc)
+        start_str = schedule.get("start_time")
+        end_str = schedule.get("end_time")
+        
+        if start_str:
+            try:
+                start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+                if now < start_dt:
+                    return "upcoming"
+            except Exception:
+                pass
+                
+        if end_str:
+            try:
+                end_dt = datetime.fromisoformat(end_str.replace("Z", "+00:00"))
+                if now > end_dt:
+                    return "inactive"
+            except Exception:
+                pass
+                
+    return "active"
 
 def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
     """
@@ -67,6 +104,7 @@ def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
             t["creator_verified"] = verified_creators[cid]["is_verified"]
         t["categories"] = tests_categories_map.get(t["id"], [])
         t["sub_category_id"] = tests_subcategory_map.get(t["id"])
+        t["computed_status"] = compute_test_status(t.get("settings"))
         enriched_tests.append(t)
         
     return enriched_tests

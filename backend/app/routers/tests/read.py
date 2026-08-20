@@ -4,7 +4,7 @@ from supabase import Client
 from typing import Optional, List, Dict, Any
 from app.routers.tests.schemas import *
 from app.utils.attempt_control import calculate_test_max_marks
-from app.routers.tests.utils import enrich_tests
+from app.routers.tests.utils import enrich_tests, compute_test_status
 from app.utils.cache_headers import set_public_cache, set_no_cache, set_private_cache
 import uuid
 from cachetools import TTLCache
@@ -614,6 +614,7 @@ async def get_test_by_id(
         else:
             test["categories"] = []
 
+        test["computed_status"] = compute_test_status(test.get("settings"))
 
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")
@@ -742,6 +743,8 @@ async def get_test_by_slug(
             test["categories"] = cats_res.data or []
         else:
             test["categories"] = []
+
+        test["computed_status"] = compute_test_status(test.get("settings"))
 
         if response:
             visibility = test.get("visibility", "public" if test.get("is_public") else "private")

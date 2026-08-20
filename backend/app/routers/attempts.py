@@ -76,6 +76,22 @@ async def save_attempt(
         has_start_form = bool(settings_dict.get("start_form", {}).get("enabled", False))
         has_form_submission = bool((payload.metadata or {}).get("startFormData"))
 
+        # Verify schedule window (grace period of 5 minutes for submissions already in progress)
+        schedule_dict = settings_dict.get("schedule") or {}
+        if schedule_dict.get("enabled"):
+            from datetime import datetime, timezone, timedelta
+            now_utc = datetime.now(timezone.utc)
+            end_time_str = schedule_dict.get("end_time")
+            if end_time_str:
+                try:
+                    end_time_dt = datetime.fromisoformat(end_time_str.replace("Z", "+00:00"))
+                    if now_utc > (end_time_dt + timedelta(minutes=5)):
+                        raise HTTPException(status_code=403, detail="The scheduled window for this exam has ended.")
+                except HTTPException:
+                    raise
+                except Exception as parse_err:
+                    print(f"Warning parsing schedule end_time in save_attempt: {parse_err}")
+
         # Determine if unauthenticated submission is allowed:
         # Allowed if login is NOT explicitly required, OR if conduct exam is active, OR if candidate start form was filled
         allow_unauthenticated = (not is_login_required) or is_conduct_exam or has_start_form or has_form_submission

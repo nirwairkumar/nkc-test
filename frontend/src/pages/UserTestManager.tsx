@@ -695,18 +695,27 @@ export default function UserTestManager() {
 
     const now = new Date();
     const hasEnded = (test: any) => {
+        if (test.computed_status === 'inactive' && test.settings?.conduct_exam?.enabled) return true;
         if (!test.settings?.schedule?.enabled) return false;
         if (!test.settings?.schedule?.end_time) return false;
         return new Date(test.settings.schedule.end_time) < now;
     };
 
+    const isUpcoming = (test: any) => {
+        if (test.computed_status === 'upcoming') return true;
+        if (!test.settings?.schedule?.enabled) return false;
+        if (!test.settings?.schedule?.start_time) return false;
+        return new Date(test.settings.schedule.start_time) > now;
+    };
+
     const hasConductSettings = (t: any) => t.settings?.conduct_exam !== undefined;
 
-    // Active = conduct enabled AND not ended by schedule
+    // Active = conduct enabled AND currently in active window (not ended and not upcoming)
     const activeExams = tests.filter(t =>
         hasConductSettings(t) &&
         t.settings.conduct_exam.enabled === true &&
-        !hasEnded(t)
+        !hasEnded(t) &&
+        !isUpcoming(t)
     );
     // Inactive = conduct settings exist AND (explicitly disabled OR schedule ended)
     const inactiveExams = tests.filter(t =>
