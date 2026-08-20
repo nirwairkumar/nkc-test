@@ -58,28 +58,44 @@ async def save_attempt(
         effective_user_id = None
 
         # Fetch test details for attempt control validation, notification, and conduct verification
-        test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings").eq("id", payload.test_id).single().execute()
-        test_data = test_res.data
+        test_data = None
+        try:
+            test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings").eq("id", payload.test_id).limit(1).execute()
+            if test_res.data and len(test_res.data) > 0:
+                test_data = test_res.data[0]
+            else:
+                test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings").or_(f"slug.eq.{payload.test_id},custom_id.eq.{payload.test_id}").limit(1).execute()
+                if test_res.data and len(test_res.data) > 0:
+                    test_data = test_res.data[0]
+        except Exception as te:
+            print(f"Warning: error looking up test {payload.test_id} in save_attempt: {te}")
 
-        is_conduct_exam = False
-        if test_data:
-            settings_dict = test_data.get("settings") or {}
-            is_conduct_exam = bool(settings_dict.get("conduct_exam", {}).get("enabled", False))
+        settings_dict = (test_data.get("settings") or {}) if test_data else {}
+        is_conduct_exam = bool(settings_dict.get("conduct_exam", {}).get("enabled", False))
+        is_login_required = bool(settings_dict.get("login_required", False))
+        has_start_form = bool(settings_dict.get("start_form", {}).get("enabled", False))
+        has_form_submission = bool((payload.metadata or {}).get("startFormData"))
 
-        if auth_header:
+        # Determine if unauthenticated submission is allowed:
+        # Allowed if login is NOT explicitly required, OR if conduct exam is active, OR if candidate start form was filled
+        allow_unauthenticated = (not is_login_required) or is_conduct_exam or has_start_form or has_form_submission
+
+        if auth_header and auth_header.strip():
             try:
                 authenticated_user_id = _verify_auth_token_attempts(request, db)
                 effective_user_id = authenticated_user_id
             except HTTPException as auth_err:
-                if is_conduct_exam and payload.user_id:
+                if allow_unauthenticated and payload.user_id:
                     effective_user_id = payload.user_id
                 else:
                     raise auth_err
         else:
-            if is_conduct_exam and payload.user_id:
+            if allow_unauthenticated and payload.user_id:
+                effective_user_id = payload.user_id
+            elif payload.user_id and not is_login_required:
                 effective_user_id = payload.user_id
             else:
-                raise HTTPException(status_code=401, detail="Missing Authorization header")
+                raise HTTPException(status_code=401, detail="Missing Authorization header: Login is required to submit this exam")
         
         if test_data and test_data.get("enable_section_mode") and test_data.get("sections"):
             try:
@@ -88,13 +104,44 @@ async def save_attempt(
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
 
+        target_test_id = (test_data.get("id") if test_data else None) or payload.test_id
+
+        import uuid
+        if not effective_user_id:
+            effective_user_id = str(uuid.uuid4())
+
+        # Ensure effective_user_id exists in auth.users to satisfy foreign key constraint fk_user
+        try:
+            user_exists = False
+            try:
+                user_check = supabase.auth.admin.get_user_by_id(effective_user_id)
+                if user_check and getattr(user_check, "user", None):
+                    user_exists = True
+            except Exception:
+                user_exists = False
+
+            if not user_exists:
+                clean_id = effective_user_id.replace("-", "")[:12]
+                anon_email = f"candidate_{clean_id}@guest.testoza.com"
+                supabase.auth.admin.create_user({
+                    "id": effective_user_id,
+                    "email": anon_email,
+                    "email_confirm": True,
+                    "user_metadata": {
+                        "is_guest_candidate": True,
+                        "startFormData": (payload.metadata or {}).get("startFormData", {})
+                    }
+                })
+        except Exception as ue:
+            print(f"Notice: guest user check/create for {effective_user_id}: {ue}")
+
         metadata = payload.metadata or {}
-        if test_data and test_data.get("settings", {}).get("conduct_exam", {}).get("enabled", False):
+        if is_conduct_exam or has_start_form or has_form_submission:
             metadata["is_conducted_attempt"] = True
 
         response = supabase.table("user_tests").insert({
             "user_id": effective_user_id,
-            "test_id": payload.test_id,
+            "test_id": target_test_id,
             "answers": payload.answers,
             "score": payload.score,
             "metadata": metadata
@@ -112,7 +159,7 @@ async def save_attempt(
                     "last_active_at": now
                 })\
                 .eq("user_id", effective_user_id)\
-                .eq("test_id", payload.test_id)\
+                .eq("test_id", target_test_id)\
                 .neq("status", "submitted")\
                 .execute()
         except Exception:
@@ -129,7 +176,7 @@ async def save_attempt(
                     title="New Test Submission",
                     message=f'A candidate completed and submitted your test "{test_title}".',
                     link="/my-tests",
-                    custom_test_id=payload.test_id,
+                    custom_test_id=target_test_id,
                     db=supabase
                 )
         except Exception as ne:
@@ -226,7 +273,8 @@ async def get_user_attempts(
                     "test_title": "Deleted Test",
                     "test_settings": {},
                     "violation_count": item.get("violation_count") or 0,
-                    "questions_attempted": item.get("questions_attempted") or 0
+                    "questions_attempted": item.get("questions_attempted") or 0,
+                    "metadata": item.get("metadata") or {}
                 }
             else:
                 flat = {
@@ -238,7 +286,8 @@ async def get_user_attempts(
                     "test_settings": test.get("settings") or {},
                     "total_max_marks": test.get("total_max_marks") or 0,
                     "violation_count": item.get("violation_count") or 0,
-                    "questions_attempted": item.get("questions_attempted") or 0
+                    "questions_attempted": item.get("questions_attempted") or 0,
+                    "metadata": item.get("metadata") or {}
                 }
             enriched.append(flat)
             
@@ -583,15 +632,14 @@ async def get_test_attempts(
                 meta["startedAt"] = fallback_start or attempt.get("created_at")
                 attempt["metadata"] = meta
 
-        # Filter for only conducted attempts (or all if the test is currently in conduct mode and legacy)
-        # Admin bypasses the filtering and sees ALL attempts.
+        # Filter attempts: allow conducted attempts, attempts with candidate form data, and all attempts for open tests
         if not is_admin:
             filtered_data = []
+            is_login_req = bool(test_data.get("settings", {}).get("login_required", False)) if test_data else False
             for a in data:
                 meta = a.get("metadata") or {}
-                # Allow if it's explicitly marked as conducted, OR if the test is currently a conduct exam 
-                # (which covers legacy attempts created before we added this flag, if any)
-                if meta.get("is_conducted_attempt") or is_conduct_exam:
+                # Allow if it's marked as conducted, or test is conduct exam, or has candidate startFormData, or if test is open
+                if meta.get("is_conducted_attempt") or is_conduct_exam or meta.get("startFormData") or not is_login_req:
                     filtered_data.append(a)
             data = filtered_data
         

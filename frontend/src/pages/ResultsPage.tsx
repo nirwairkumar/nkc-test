@@ -90,6 +90,18 @@ const getDisplayMark = (value: string | number | undefined, defaultVal: number =
   return isNaN(num) ? defaultVal : num;
 };
 
+const formatQuestionTime = (seconds?: number | string): string => {
+  if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
+  const sec = typeof seconds === 'number' ? seconds : parseInt(String(seconds), 10);
+  if (isNaN(sec) || sec <= 0) return '< 1s';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m > 0) {
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  }
+  return `${s}s`;
+};
+
 // ─── COMBINED RESULTS VIEW ────────────────────────────────────────────────────
 const CombinedResultsView = ({ state, navigate }: { state: any; navigate: any }) => {
   const { p1, p2, sessionTitle, paper1Label = 'Paper I', paper2Label = 'Paper II' } = state;
@@ -103,8 +115,8 @@ const CombinedResultsView = ({ state, navigate }: { state: any; navigate: any })
   const combinedPct = combinedMaxMarks > 0 ? ((combinedTotal / combinedMaxMarks) * 100) : 0;
 
   useEffect(() => {
-    if (p1?.test) fetchAdvancedAnalysis(p1.test, p1.answers).then(r => setP1Analysis(r.data));
-    if (p2?.test) fetchAdvancedAnalysis(p2.test, p2.answers).then(r => setP2Analysis(r.data));
+    if (p1?.test) fetchAdvancedAnalysis(p1.test, p1.answers, p1.questionTimes || p1.question_times).then(r => setP1Analysis(r.data));
+    if (p2?.test) fetchAdvancedAnalysis(p2.test, p2.answers, p2.questionTimes || p2.question_times).then(r => setP2Analysis(r.data));
   }, []);
 
   const pctColor = combinedPct >= 75 ? 'text-emerald-400' : combinedPct >= 50 ? 'text-amber-400' : 'text-red-400';
@@ -376,6 +388,11 @@ const ResultsPage = () => {
     return {};
   }, [stateData, contextAnswers]);
 
+  // Read per-question time tracking
+  const questionTimes: Record<string | number, number> = useMemo(() => {
+    return stateData?.questionTimes || stateData?.timeSpentPerQuestion || stateData?.metadata?.question_times || stateData?.test?.metadata?.question_times || {};
+  }, [stateData]);
+
   const [analysisData, setAnalysisData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -521,7 +538,7 @@ const ResultsPage = () => {
       const loadAnalysis = async () => {
         setLoading(true);
         try {
-          const { data, error } = await fetchAdvancedAnalysis(selectedTest, answers);
+          const { data, error } = await fetchAdvancedAnalysis(selectedTest, answers, questionTimes);
           if (error) {
             setError(error);
           } else {
@@ -535,7 +552,7 @@ const ResultsPage = () => {
       };
       loadAnalysis();
     }
-  }, [showPersonalResults, selectedTest?.id, answersKey]);
+  }, [showPersonalResults, selectedTest?.id, answersKey, questionTimes]);
 
   const handleRetakeTest = () => {
     resetTest();
@@ -1018,6 +1035,7 @@ const ResultsPage = () => {
                         const isWrong = qStats.status === 'wrong';
                         const isPartial = qStats.status === 'partial';
                         const isSkipped = qStats.status === 'skipped';
+                        const qTime = qStats.time_spent !== undefined ? qStats.time_spent : (questionTimes[q.id] || questionTimes[String(q.id)] || 0);
 
                         return (
                           <AccordionItem key={q.id} value={`item-${q.id}`} className="border rounded-lg px-2 data-[state=open]:bg-slate-50">
@@ -1040,6 +1058,12 @@ const ResultsPage = () => {
                                   <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent pointer-events-none z-10" />
                                 </div>
                                 <div className="mr-2 flex items-center gap-3">
+                                  {/* Time Spent Badge */}
+                                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold shrink-0" title="Time spent on this question">
+                                    <Timer className="w-3.5 h-3.5 text-indigo-500" />
+                                    <span>{formatQuestionTime(qTime)}</span>
+                                  </div>
+
                                   {/* Marks Display: Obtained / Total */}
                                   {(() => {
                                     const obtainedMark = qStats.score || 0;
@@ -1062,6 +1086,27 @@ const ResultsPage = () => {
                             </AccordionTrigger>
                             <AccordionContent className="px-4 pb-4">
                               <div className="space-y-4 pt-2">
+                                {/* Question Details Header Strip */}
+                                <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+                                      <Timer className="w-3.5 h-3.5 text-indigo-500" />
+                                      <span>Time Spent: <strong className="text-indigo-600 dark:text-indigo-400">{formatQuestionTime(qTime)}</strong></span>
+                                    </div>
+                                    <Separator orientation="vertical" className="h-3.5" />
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                      <span>Marks: </span>
+                                      <strong className={qStats.score > 0 ? 'text-green-600' : qStats.score < 0 ? 'text-red-500' : 'text-slate-500'}>
+                                        {parseFloat((qStats.score || 0).toFixed(2))}
+                                      </strong>
+                                      <span> / {marksDisplay}</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                    {q.type === 'numerical' ? 'Numerical' : q.type === 'multiple' ? 'Multiple Choice' : 'Single Choice'}
+                                  </span>
+                                </div>
+
                                 <div className="text-base font-medium text-slate-900 border-l-4 border-primary pl-3 overflow-x-auto max-w-full custom-scrollbar pb-2">
                                   <LatexRenderer>{q.question || ""}</LatexRenderer>
                                 </div>

@@ -77,6 +77,18 @@ const getDisplayMark = (value: string | number | undefined, defaultVal: number =
     return isNaN(num) ? defaultVal : num;
 };
 
+const formatQuestionTime = (seconds?: number | string): string => {
+    if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
+    const sec = typeof seconds === 'number' ? seconds : parseInt(String(seconds), 10);
+    if (isNaN(sec) || sec <= 0) return '< 1s';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m > 0) {
+        return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
+    return `${s}s`;
+};
+
 export default function StudentDetailedResultModal({
     isOpen,
     onClose,
@@ -115,7 +127,10 @@ export default function StudentDetailedResultModal({
                         }
                     }
                     const answers = activeAttemptData.answers || {};
-                    const { data, error } = await fetchAdvancedAnalysis(test, answers);
+                    const questionTimes = activeAttemptData.metadata?.question_times
+                        || activeAttemptData.metadata?.time_spent_per_question
+                        || {};
+                    const { data, error } = await fetchAdvancedAnalysis(test, answers, questionTimes);
                     if (error) {
                         setError(error);
                     } else {
@@ -537,6 +552,12 @@ export default function StudentDetailedResultModal({
                                                     marks = parseMark(q.marks, marks);
                                                 }
 
+                                                const qTimesMap = activeAttempt.metadata?.question_times
+                                                    || activeAttempt.metadata?.time_spent_per_question
+                                                    || analysisData?.questionTimes
+                                                    || {};
+                                                const qTimeSpent = qTimesMap[q.id] ?? qTimesMap[String(q.id)] ?? qTimesMap[index + 1] ?? qTimesMap[String(index + 1)];
+
                                                 return (
                                                     <AccordionItem
                                                         key={q.id}
@@ -562,7 +583,13 @@ export default function StudentDetailedResultModal({
                                                                     <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white dark:from-slate-950 to-transparent pointer-events-none z-10" />
                                                                 </div>
 
-                                                                <div className="mr-2 flex items-center gap-3">
+                                                                <div className="mr-2 flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+                                                                    {qTimeSpent !== undefined && (
+                                                                        <Badge variant="outline" className="text-[10px] font-mono text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/50 flex items-center gap-1 h-5 px-1.5 font-bold">
+                                                                            <Clock className="w-2.5 h-2.5 text-slate-400" />
+                                                                            {formatQuestionTime(qTimeSpent)}
+                                                                        </Badge>
+                                                                    )}
                                                                     <span className={`text-xs font-bold ${qStats.score > 0 ? 'text-emerald-600 dark:text-emerald-400' : qStats.score < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'}`}>
                                                                         {parseFloat((qStats.score || 0).toFixed(2))} / {marks}
                                                                     </span>
@@ -575,6 +602,16 @@ export default function StudentDetailedResultModal({
                                                         </AccordionTrigger>
 
                                                         <AccordionContent className="pb-4 space-y-4 pt-1 border-t border-slate-100 dark:border-slate-800/40">
+                                                            <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/40 pb-2">
+                                                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Question {index + 1}</span>
+                                                                {qTimeSpent !== undefined && (
+                                                                    <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
+                                                                        <Timer className="w-3.5 h-3.5 text-indigo-500" />
+                                                                        Time Spent: <strong className="text-slate-800 dark:text-slate-200">{formatQuestionTime(qTimeSpent)}</strong>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
                                                             <div className="text-sm font-medium text-slate-800 dark:text-slate-200 border-l-2 border-indigo-500 pl-3 py-1 overflow-x-auto max-w-full custom-scrollbar">
                                                                 <LatexRenderer className="text-slate-800 dark:text-slate-200">{q.question || ""}</LatexRenderer>
                                                             </div>

@@ -26,6 +26,7 @@ export default function CombinedBreakScreen() {
         paper1TestId?: string;
         paper1TestTitle?: string;
         paper1Test?: any;
+        paper1QuestionTimes?: any;
         paper2TestId?: string;
         sessionTitle?: string;
         paper2Label?: string;
@@ -42,6 +43,7 @@ export default function CombinedBreakScreen() {
                 total_marks: locationState.paper1TotalMarks ?? 0,
                 test_title: locationState.paper1TestTitle || 'Paper I',
                 test: locationState.paper1Test,
+                question_times: locationState.paper1QuestionTimes,
             };
             sessionStorage.setItem(`combined_p1_${combinedId}`, JSON.stringify(p1Data));
         }

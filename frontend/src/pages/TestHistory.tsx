@@ -5,7 +5,7 @@ import { fetchUserCombinedAttempts, deleteCombinedAttempt } from '@/lib/combined
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Calendar, Trash2, RefreshCw, Target, Layers } from 'lucide-react';
+import { Loader2, Calendar, Trash2, RefreshCw, Target, Layers, Timer } from 'lucide-react';
 import { format } from 'date-fns';
 import {
     Table,
@@ -20,6 +20,18 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const formatQuestionTime = (seconds?: number | string): string => {
+    if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
+    const sec = typeof seconds === 'number' ? seconds : parseInt(String(seconds), 10);
+    if (isNaN(sec) || sec <= 0) return '< 1s';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m > 0) {
+        return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
+    return `${s}s`;
+};
 
 // Framer Motion Variants for Staggered Rows
 const containerVariants = {
@@ -79,6 +91,7 @@ interface Attempt {
     total_max_marks?: number;
     created_at: string;
     answers?: any;
+    metadata?: any;
     test_title?: string;
     test_settings?: any;
 }
@@ -124,7 +137,8 @@ export default function TestHistory() {
             if (fullAttempt) {
                 const updatedAttempt = {
                     ...attempt,
-                    answers: typeof fullAttempt.answers === 'string' ? JSON.parse(fullAttempt.answers) : fullAttempt.answers
+                    answers: typeof fullAttempt.answers === 'string' ? JSON.parse(fullAttempt.answers) : fullAttempt.answers,
+                    metadata: fullAttempt.metadata || attempt.metadata || {}
                 };
                 setAttempts(prev => prev.map(a => a.id === attempt.id ? updatedAttempt : a));
                 return updatedAttempt;
@@ -437,6 +451,9 @@ export default function TestHistory() {
                                                                                 state: {
                                                                                     test: test,
                                                                                     answers: fullAttempt.answers,
+                                                                                    questionTimes: fullAttempt.metadata?.question_times || fullAttempt.metadata?.time_spent_per_question || attempt.metadata?.question_times || {},
+                                                                                    timeSpentPerQuestion: fullAttempt.metadata?.question_times || fullAttempt.metadata?.time_spent_per_question || attempt.metadata?.question_times || {},
+                                                                                    metadata: fullAttempt.metadata || attempt.metadata || {},
                                                                                     timeSpent: 0,
                                                                                     score: attempt.score
                                                                                 }
@@ -575,6 +592,19 @@ export default function TestHistory() {
                                                                                                         <Badge variant={isCorrect ? 'default' : 'destructive'} className="text-[9px] h-4 py-0 font-black">
                                                                                                             {isCorrect ? 'CORRECT' : 'INCORRECT'}
                                                                                                         </Badge>
+                                                                                                        {(() => {
+                                                                                                            const qTimes = attempt.metadata?.question_times || attempt.metadata?.time_spent_per_question || {};
+                                                                                                            const qTime = qTimes[q.id] || qTimes[String(q.id)];
+                                                                                                            if (qTime !== undefined && qTime !== null) {
+                                                                                                                return (
+                                                                                                                    <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full" title="Time spent on this question">
+                                                                                                                        <Timer className="w-3 h-3 text-indigo-500" />
+                                                                                                                        {formatQuestionTime(qTime)}
+                                                                                                                    </span>
+                                                                                                                );
+                                                                                                            }
+                                                                                                            return null;
+                                                                                                        })()}
                                                                                                     </div>
                                                                                                     <div className="font-bold text-slate-800 dark:text-slate-200 leading-relaxed text-sm">
                                                                                                         <LatexRenderer>{q.question}</LatexRenderer>
@@ -748,6 +778,9 @@ export default function TestHistory() {
                                                             state: {
                                                                 test: test,
                                                                 answers: fullAttempt.answers,
+                                                                questionTimes: fullAttempt.metadata?.question_times || fullAttempt.metadata?.time_spent_per_question || attempt.metadata?.question_times || {},
+                                                                timeSpentPerQuestion: fullAttempt.metadata?.question_times || fullAttempt.metadata?.time_spent_per_question || attempt.metadata?.question_times || {},
+                                                                metadata: fullAttempt.metadata || attempt.metadata || {},
                                                                 timeSpent: 0,
                                                                 score: attempt.score
                                                             }

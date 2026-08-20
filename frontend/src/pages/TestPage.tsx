@@ -95,6 +95,10 @@ export default function TestPage() {
   const [markedForReview, setMarkedForReview] = useState<Set<number>>(new Set());
   const [visited, setVisited] = useState<Set<number>>(new Set([0]));
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({});
+  const questionTimesRef = useRef<Record<number, number>>({});
+  const activeQuestionEnterTimeRef = useRef<number | null>(null);
+  const currentQuestionIdRef = useRef<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTimeUp, setIsTimeUp] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
@@ -289,6 +293,65 @@ export default function TestPage() {
     };
   }, [timeRemaining, isTimeUp, isExamStarted]);
 
+  // ── Helper to flush active question's elapsed seconds into questionTimesRef ──
+  const flushActiveQuestionTime = (resetEnterTime: boolean = true) => {
+    const qId = currentQuestionIdRef.current;
+    const enterTime = activeQuestionEnterTimeRef.current;
+    if (qId != null && enterTime != null && isExamStarted && !isSubmitting && !isTimeUp) {
+      const now = Date.now();
+      const deltaSeconds = Math.max(0, Math.floor((now - enterTime) / 1000));
+      if (deltaSeconds > 0) {
+        questionTimesRef.current[qId] = (questionTimesRef.current[qId] || 0) + deltaSeconds;
+        setQuestionTimes(prev => ({
+          ...prev,
+          [qId]: questionTimesRef.current[qId]
+        }));
+      }
+      if (resetEnterTime) {
+        activeQuestionEnterTimeRef.current = now;
+      }
+    }
+  };
+
+  // ── Track Per-Question Active Time on Question Switch / Load ──
+  useEffect(() => {
+    if (!isExamStarted || !test?.questions?.length) return;
+    const nextQ = test.questions[currentQuestionIndex];
+    if (!nextQ) return;
+
+    if (currentQuestionIdRef.current !== nextQ.id) {
+      if (currentQuestionIdRef.current != null && activeQuestionEnterTimeRef.current != null) {
+        const deltaSeconds = Math.max(0, Math.floor((Date.now() - activeQuestionEnterTimeRef.current) / 1000));
+        if (deltaSeconds > 0) {
+          const prevId = currentQuestionIdRef.current;
+          questionTimesRef.current[prevId] = (questionTimesRef.current[prevId] || 0) + deltaSeconds;
+          setQuestionTimes(prev => ({ ...prev, [prevId]: questionTimesRef.current[prevId] }));
+        }
+      }
+      currentQuestionIdRef.current = nextQ.id;
+      activeQuestionEnterTimeRef.current = Date.now();
+    } else if (activeQuestionEnterTimeRef.current === null) {
+      activeQuestionEnterTimeRef.current = Date.now();
+    }
+  }, [currentQuestionIndex, test, isExamStarted]);
+
+  // ── Handle visibility changes (Tab Switch / Window Hide) ──
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!isExamStarted) return;
+      if (document.visibilityState === 'hidden') {
+        flushActiveQuestionTime(false);
+        activeQuestionEnterTimeRef.current = null;
+      } else if (document.visibilityState === 'visible') {
+        activeQuestionEnterTimeRef.current = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isExamStarted]);
+
   // Mark current question as visited
   // Save progress to localStorage
   useEffect(() => {
@@ -299,6 +362,14 @@ export default function TestPage() {
     // Only persist if user is logged in
     if (!user) return;
 
+    // Compute live question times including ongoing seconds for active question
+    const currentQId = test?.questions?.[currentQuestionIndex]?.id;
+    const liveQuestionTimes = { ...questionTimesRef.current };
+    if (currentQId != null && activeQuestionEnterTimeRef.current != null) {
+      const liveDelta = Math.max(0, Math.floor((Date.now() - activeQuestionEnterTimeRef.current) / 1000));
+      liveQuestionTimes[currentQId] = (liveQuestionTimes[currentQId] || 0) + liveDelta;
+    }
+
     // Create session object
     const sessionData = {
       answers,
@@ -306,6 +377,7 @@ export default function TestPage() {
       visited: Array.from(visited),
       currentQuestionIndex,
       timeRemaining,
+      questionTimes: liveQuestionTimes,
       timestamp: Date.now()
     };
 
@@ -317,7 +389,7 @@ export default function TestPage() {
     } catch (e) {
       console.warn("Storage quota exceeded, could not save session draft", e);
     }
-  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, test?.id, isExamStarted]);
+  }, [answers, markedForReview, visited, currentQuestionIndex, timeRemaining, user, id, test?.id, isExamStarted, questionTimes]);
 
   // ─── IndexedDB vault: save answers on every change (throttled 30s) ────────
   useEffect(() => {
@@ -533,6 +605,10 @@ export default function TestPage() {
     setMarkedForReview(new Set(resumeData.markedForReview || []));
     setVisited(new Set(resumeData.visited || [0]));
     setCurrentQuestionIndex(resumeData.currentQuestionIndex || 0);
+    if (resumeData.questionTimes) {
+      setQuestionTimes(resumeData.questionTimes);
+      questionTimesRef.current = { ...resumeData.questionTimes };
+    }
     if (resumeData.timeRemaining) {
       setTimeRemaining(resumeData.timeRemaining);
     }
@@ -1008,6 +1084,10 @@ export default function TestPage() {
     setShowSubmitDialog(false);
     if (timerRef.current) clearInterval(timerRef.current);
 
+    // Flush active time for current question
+    flushActiveQuestionTime(false);
+    const finalQuestionTimes = { ...questionTimesRef.current };
+
     const unattemptedCountOriginal = test.questions.filter(q => !answers[q.id]).length;
 
     let score = 0;
@@ -1204,14 +1284,17 @@ export default function TestPage() {
         unattemptedCount,
         totalQuestions: test.questions.length
       },
+      question_times: finalQuestionTimes,
+      time_spent_per_question: finalQuestionTimes,
       submittedAt: new Date().toISOString(),
       startedAt: startTimeStr
     };
 
     const isConductExam = !!test.settings?.conduct_exam?.enabled;
+    const hasStartForm = !!(test.settings?.start_form?.enabled || startFormData);
 
-    // Tag as conduct exam attempt so creator dashboard can filter correctly
-    if (isConductExam) {
+    // Tag as conduct/candidate attempt so creator dashboard can filter and display candidate details correctly
+    if (isConductExam || hasStartForm) {
       metadata.conduct_exam = true;
       metadata.is_conducted_attempt = true;
     }
@@ -1231,39 +1314,9 @@ export default function TestPage() {
       return anonId;
     })();
 
-    // ANONYMOUS SUBMISSION (Only for standard non-conduct exams)
-    if (!user && !isConductExam) {
-      // Submit to dedicated anon table — correctly marks this session as submitted
-      await analyticsApi.submitAnonAttempt(id || test.id, finalAnswers as Record<string, any>, finalScore);
-      toast.info('Test Submitted (Anonymous Mode). Result not saved to history.');
-
-      // Exit Full Screen if active
-      if (document.fullscreenElement) {
-        try {
-          await document.exitFullscreen();
-        } catch (err) {
-          console.error("Error exiting full screen:", err);
-        }
-      }
-
-      // Handle Result Visibility
-      if (test.settings?.show_results_immediate === false) {
-        navigate('/test-submitted', { replace: true });
-      } else {
-        navigate('/results', {
-          state: {
-            test: test,
-            answers: answers,
-            score: score,
-            totalQuestions: test.questions.length,
-            marksPerQuestion: test.marks_per_question || 4,
-            negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1,
-            justSubmitted: true
-          },
-          replace: true
-        });
-      }
-      return;
+    // Also record anonymous analytics session in background if unauthenticated
+    if (!user) {
+      analyticsApi.submitAnonAttempt(id || test.id, finalAnswers as Record<string, any>, finalScore).catch(() => {});
     }
 
     let retryToastId: string | number | undefined;
@@ -1338,6 +1391,7 @@ export default function TestPage() {
               paper1TestId: test.id,
               paper1TestTitle: test.title,
               paper1Test: test,
+              paper1QuestionTimes: finalQuestionTimes,
               paper2TestId: sessionCtx?.test2Id,
               sessionTitle: sessionCtx?.sessionTitle || combinedState.sessionTitle,
               paper2Label: sessionCtx?.paper2Label || combinedState.paper2Label,
@@ -1353,7 +1407,15 @@ export default function TestPage() {
           if (!p1Data) {
             toast.warning('Could not retrieve Paper I results. Showing Paper II results only.');
             navigate('/results', {
-              state: { test, answers: finalAnswers, score: finalScore, justSubmitted: true },
+              state: {
+                test,
+                answers: finalAnswers,
+                score: finalScore,
+                questionTimes: finalQuestionTimes,
+                timeSpentPerQuestion: finalQuestionTimes,
+                metadata: metadata,
+                justSubmitted: true
+              },
               replace: true
             });
             return;
@@ -1371,6 +1433,7 @@ export default function TestPage() {
                 score: p1Data.score,
                 total_marks: p1Data.total_marks,
                 test_title: p1Data.test_title,
+                question_times: p1Data.question_times || p1Data.questionTimes || p1Data.paper1QuestionTimes,
               },
               paper2_data: {
                 test_id: test.id,
@@ -1378,6 +1441,7 @@ export default function TestPage() {
                 score: finalScore,
                 total_marks: totalMaxMarks,
                 test_title: test.title,
+                question_times: finalQuestionTimes,
               },
               total_score: (p1Data.score || 0) + finalScore,
             });
@@ -1402,13 +1466,17 @@ export default function TestPage() {
                 answers: p1Data.answers,
                 score: p1Data.score,
                 totalMarks: p1Data.total_marks,
+                questionTimes: p1Data.question_times || p1Data.questionTimes || p1Data.paper1QuestionTimes,
               },
               p2: {
                 test,
                 answers: finalAnswers,
                 score: finalScore,
                 totalMarks: totalMaxMarks,
+                questionTimes: finalQuestionTimes,
               },
+              questionTimes: finalQuestionTimes,
+              timeSpentPerQuestion: finalQuestionTimes,
               justSubmitted: true,
             },
             replace: true
@@ -1432,6 +1500,9 @@ export default function TestPage() {
             totalQuestions: test.questions.length,
             marksPerQuestion: test.marks_per_question || 4,
             negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1,
+            questionTimes: finalQuestionTimes,
+            timeSpentPerQuestion: finalQuestionTimes,
+            metadata: metadata,
             justSubmitted: true
           },
           replace: true

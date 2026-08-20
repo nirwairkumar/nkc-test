@@ -185,11 +185,12 @@ export async function importTestJson(file: File) {
     }
 }
 
-export async function fetchAdvancedAnalysis(test: any, answers: Record<number, string>) {
+export async function fetchAdvancedAnalysis(test: any, answers: Record<number, any>, question_times?: Record<number | string, number>) {
     try {
         const response = await apiClient.post('results/analyze', {
             test,
-            answers
+            answers,
+            question_times
         });
         return { data: response.data, error: null };
     } catch (error: any) {

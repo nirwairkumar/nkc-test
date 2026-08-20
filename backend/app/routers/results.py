@@ -48,6 +48,7 @@ from pydantic import BaseModel
 class AnalyzeRequest(BaseModel):
     test: dict
     answers: dict
+    question_times: Optional[dict] = None
 
 def parse_mark(value: Any, default_val: float = 0.0) -> float:
     if isinstance(value, (int, float)):
@@ -68,6 +69,7 @@ def parse_mark(value: Any, default_val: float = 0.0) -> float:
 async def analyze_test_results(payload: AnalyzeRequest):
     test = payload.test
     answers = payload.answers
+    question_times = payload.question_times or {}
     
     enable_section = test.get("enable_section_mode", False)
     sections = test.get("sections", [])
@@ -297,9 +299,14 @@ async def analyze_test_results(payload: AnalyzeRequest):
         elif is_partial: status_label = "partial"
         elif is_wrong: status_label = "wrong"
 
+        q_time = 0
+        if question_times:
+            q_time = question_times.get(q_id, question_times.get(int(q_id) if q_id.isdigit() else q_id, 0)) or 0
+
         question_status[q_id] = {
             "status": status_label,
-            "score": q_score
+            "score": q_score,
+            "time_spent": q_time
         }
         
         if current_section_id in section_data:
@@ -408,6 +415,7 @@ async def analyze_test_results(payload: AnalyzeRequest):
         "sectionData": section_data,
         "typeData": type_data,
         "questionStatus": question_status,
+        "questionTimes": question_times,
         "pieData": pie_data,
         "radarData": radar_data,
         "barData": bar_data,

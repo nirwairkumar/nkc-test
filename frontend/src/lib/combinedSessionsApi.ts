@@ -78,6 +78,7 @@ export async function saveCombinedAttempt(data: {
         score: number;
         total_marks: number;
         test_title: string;
+        question_times?: any;
     };
     paper2_data: {
         test_id: string;
@@ -85,6 +86,7 @@ export async function saveCombinedAttempt(data: {
         score: number;
         total_marks: number;
         test_title: string;
+        question_times?: any;
     };
     total_score?: number;
 }) {

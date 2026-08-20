@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, ArrowRight, CheckCircle, XCircle, MinusCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, ArrowRight, CheckCircle, XCircle, MinusCircle, Timer } from 'lucide-react';
 import { fetchTestById, fetchSolutions } from '@/lib/testsApi';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { Badge } from '@/components/ui/badge';
+
+const formatQuestionTime = (seconds?: number | string): string => {
+    if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
+    const sec = typeof seconds === 'number' ? seconds : parseInt(String(seconds), 10);
+    if (isNaN(sec) || sec <= 0) return '< 1s';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m > 0) {
+        return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
+    return `${s}s`;
+};
 
 export default function SolutionsViewPage() {
     const { testId } = useParams();
     const navigate = useNavigate();
     const outletCtx = useOutletContext<{ stateData: any }>() || { stateData: null };
     const answers = outletCtx.stateData?.answers || {};
+    const questionTimes = outletCtx.stateData?.questionTimes || outletCtx.stateData?.timeSpentPerQuestion || outletCtx.stateData?.metadata?.question_times || {};
 
     const [test, setTest] = useState<any>(null);
     const [solutions, setSolutions] = useState<Record<string, string>>({});
@@ -115,6 +128,8 @@ export default function SolutionsViewPage() {
         correctAnswerFullDisplay = `${correctDisplay}) ${answerOptionText}`;
     }
 
+    const qTime = questionTimes[currentQ.id] || questionTimes[String(currentQ.id)] || 0;
+
     return (
         <div className="flex flex-col px-4 py-6 max-w-3xl mx-auto w-full">
 
@@ -122,6 +137,10 @@ export default function SolutionsViewPage() {
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Solutions</h2>
                 <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold" title="Time spent on this question">
+                        <Timer className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>{formatQuestionTime(qTime)}</span>
+                    </div>
                     <Badge variant="secondary" className="text-sm px-3 py-1 font-medium">
                         {currentQuestionIndex + 1} / {allQuestions.length}
                     </Badge>
