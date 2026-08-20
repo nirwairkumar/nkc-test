@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 export type AuthResponse = {
     data: {
@@ -22,13 +23,20 @@ export const authApi = {
         return response.data;
     },
     logout: async () => {
-        await apiClient.post('/auth/logout');
-        localStorage.removeItem('testoza_token');
-        localStorage.removeItem('testoza_refresh_token');
-        localStorage.removeItem('testoza_is_admin');
-        localStorage.removeItem('testoza_user');
-        localStorage.removeItem('testoza_profile');
-        localStorage.removeItem('user_designation');
+        try {
+            await apiClient.post('/auth/logout');
+        } catch (error) {
+            console.warn('Backend logout request failed, proceeding with local cleanup:', error);
+        } finally {
+            tokenStorage.clearTokens();
+            localStorage.removeItem('testoza_token');
+            localStorage.removeItem('testoza_refresh_token');
+            localStorage.removeItem('testoza_is_admin');
+            localStorage.removeItem('testoza_user');
+            localStorage.removeItem('testoza_profile');
+            localStorage.removeItem('user_designation');
+            sessionStorage.clear();
+        }
     },
     refreshToken: async (refresh_token: string) => {
         // Use standard axios to avoid cyclic interceptor triggers

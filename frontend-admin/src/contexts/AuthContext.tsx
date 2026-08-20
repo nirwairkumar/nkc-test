@@ -18,6 +18,7 @@ type AuthContextType = {
     isGlobalUnlock: boolean;
     hasActivePlans: boolean;
     refreshSession: () => Promise<void>;
+    signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
     isGlobalUnlock: false,
     hasActivePlans: true,
     refreshSession: async () => { },
+    signOut: async () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -338,6 +340,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initializeAuth();
     }, []);
 
+    const signOut = async () => {
+        setLoading(true);
+        try {
+            await authApi.logout();
+        } catch (err) {
+            console.error("Backend logout error:", err);
+        }
+        try {
+            await supabase.auth.signOut();
+        } catch (err) {
+            console.warn("Supabase auth signOut error:", err);
+        }
+        tokenStorage.clearTokens();
+        localStorage.removeItem('testoza_token');
+        localStorage.removeItem('testoza_refresh_token');
+        localStorage.removeItem('testoza_is_admin');
+        localStorage.removeItem('testoza_user');
+        localStorage.removeItem('testoza_profile');
+        localStorage.removeItem('user_designation');
+        sessionStorage.clear();
+
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setIsPremium(false);
+        setLoading(false);
+    };
+
     return (
         <AuthContext.Provider value={{
             session,
@@ -349,7 +380,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             premiumLoading,
             isGlobalUnlock,
             hasActivePlans,
-            refreshSession: initializeAuth
+            refreshSession: initializeAuth,
+            signOut
         }}>
             {children}
         </AuthContext.Provider>

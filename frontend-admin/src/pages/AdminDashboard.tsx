@@ -31,7 +31,7 @@ import SplashLoader from '@/components/ui/SplashLoader';
 type TabId = 'analytics' | 'notifications' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration';
 
 export default function AdminDashboard() {
-    const { user, isAdmin, loading: authLoading, refreshSession } = useAuth();
+    const { user, isAdmin, loading: authLoading, refreshSession, signOut } = useAuth();
     const { unreadCount } = useNotifications();
     const [searchParams, setSearchParams] = useSearchParams();
     const activeTab = (searchParams.get('tab') as TabId) || 'analytics';
@@ -60,10 +60,10 @@ export default function AdminDashboard() {
 
     const handleLogout = async () => {
         try {
-            await authApi.logout();
+            await signOut();
             toast.success('Logged out from admin panel');
-            refreshSession();
         } catch (error) {
+            console.error("Logout failed:", error);
             toast.error('Logout failed');
         }
     };
