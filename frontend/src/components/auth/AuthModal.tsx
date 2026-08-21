@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { signUpWithEmail, signInWithEmail, resetPasswordForEmail, signInWithGoogle } from '@/hooks/useAuthActions';
-import { useTurnstile } from '@/hooks/useTurnstile';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { toast } from 'sonner';
 import { Lock, Mail, User, Loader2, Sparkles, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
@@ -27,7 +26,6 @@ export default function AuthModal() {
     const { isAuthModalOpen, closeAuthModal, authModalView, setAuthModalView, redirectPath, onSuccessCallback } = useAuthModal();
     const { user, profile, refreshSession } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const { turnstileRef, getToken, resetTurnstile } = useTurnstile({ theme: 'auto', size: 'normal' });
 
     // Onboarding sub-state when user signs up / logs in without designation
     const [onboardingName, setOnboardingName] = useState('');
@@ -103,7 +101,6 @@ export default function AuthModal() {
 
     const handleEmailSubmit = async (values: z.infer<typeof authFormSchema>) => {
         setIsLoading(true);
-        const turnstileToken = getToken();
 
         try {
             if (authModalView === 'login') {
@@ -113,9 +110,8 @@ export default function AuthModal() {
                     return;
                 }
 
-                const response = await signInWithEmail(values.email, values.password, turnstileToken);
+                const response = await signInWithEmail(values.email, values.password);
                 if (response.error) {
-                    resetTurnstile();
                     toast.error(response.error.message || 'Login failed');
                     setIsLoading(false);
                     return;
@@ -156,9 +152,8 @@ export default function AuthModal() {
                     return;
                 }
 
-                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation, turnstileToken);
+                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation);
                 if (error) {
-                    resetTurnstile();
                     if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
                         toast.error('Account already exists. Please sign in.');
                         setAuthModalView('login');
@@ -171,7 +166,7 @@ export default function AuthModal() {
 
                 // Automatic sign-in after signup
                 try {
-                    const response = await signInWithEmail(values.email, values.password, turnstileToken);
+                    const response = await signInWithEmail(values.email, values.password);
                     if (response.error) throw response.error;
 
                     localStorage.setItem('user_designation', values.designation);
@@ -448,8 +443,6 @@ export default function AuthModal() {
                                         />
                                     )}
 
-                                    {/* Cloudflare Turnstile Bot Protection Container */}
-                                    <div ref={turnstileRef} className="flex justify-center my-1"></div>
 
                                     <Button
                                         type="submit"

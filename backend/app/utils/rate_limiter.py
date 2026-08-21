@@ -2,7 +2,6 @@ from fastapi import Request, HTTPException, status
 from typing import Dict, List
 import time
 import json
-import httpx
 from collections import defaultdict
 
 
@@ -77,32 +76,11 @@ async def _extract_email_from_body(request: Request) -> str:
 #  RATE LIMITING STRATEGY
 # ══════════════════════════════════════════════════════════════════
 #
-#  TestoZa is used by schools/coachings for mass online exams.
-#  500-1000 students may sit on the SAME WiFi = same public IP.
-#
-#  APPROACH (2 layers):
-#
-#  ┌──────────────────────────────────────────────────────────────┐
-#  │  LAYER 1 — Cloudflare Turnstile (managed mode)              │
-#  │  Applied to: Login, Register                                │
-#  │  How: Frontend sends turnstile token → backend verifies     │
-#  │  Effect: Invisible for real browsers (all students pass),   │
-#  │          blocks bot scripts (can't solve challenge)         │
-#  │  → Replaces IP-based rate limiting entirely for auth        │
-#  ├──────────────────────────────────────────────────────────────┤
-#  │  LAYER 2 — Per-Email Rate Limiting                          │
-#  │  Applied to: Login, Register, Password Reset                │
-#  │  Key: email address (NOT IP)                                │
-#  │  Effect: Stops brute-force against specific accounts        │
-#  │  → 5 login attempts per email per 5 min                    │
-#  │  → 2 registrations per email per hour                      │
-#  │  → 3 password resets per email per hour                    │
-#  └──────────────────────────────────────────────────────────────┘
-#
-#  NO per-IP rate limiting on auth endpoints.
-#  Turnstile handles bot protection, per-email handles brute force.
+#  Per-Email Rate Limiting (brute force protection):
+#  → 5 login attempts per email per 5 min
+#  → 2 registrations per email per hour
+#  → 3 password resets per email per hour
 # ══════════════════════════════════════════════════════════════════
-
 
 # ── Per-Email Limiters (brute-force protection) ───────────────────
 # 5 login attempts per 5 minutes per email
@@ -112,48 +90,8 @@ register_per_email = RateLimiter(requests=2, window=3600)
 # 3 password resets per hour per email
 reset_per_email = RateLimiter(requests=3, window=3600)
 
-# ── Analytics (IP only — no Turnstile needed) ─────────────────────
+# ── Analytics (IP only) ───────────────────────────────────────────
 analytics_rate_limiter = RateLimiter(requests=100, window=60)
-
-
-# ══════════════════════════════════════════════════════════════════
-#  CLOUDFLARE TURNSTILE VERIFICATION
-# ══════════════════════════════════════════════════════════════════
-
-import os
-
-TURNSTILE_SECRET_KEY = os.getenv("TURNSTILE_SECRET") or os.getenv("TURNSTILE_SECRET_KEY") or ""
-TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-
-async def verify_turnstile_token(token: str, client_ip: str = "") -> bool:
-    """
-    Verify a Cloudflare Turnstile token by calling the siteverify API.
-    Returns True if the token is valid, False otherwise.
-    
-    In development (no secret key set), always returns True to allow
-    local testing without Turnstile.
-    """
-    # Skip verification in development if no secret key is configured
-    if not TURNSTILE_SECRET_KEY:
-        return True
-
-    try:
-        payload = {
-            "secret": TURNSTILE_SECRET_KEY,
-            "response": token,
-        }
-        if client_ip:
-            payload["remoteip"] = client_ip
-
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            resp = await client.post(TURNSTILE_VERIFY_URL, data=payload)
-            result = resp.json()
-            return result.get("success", False)
-    except Exception:
-        # If Turnstile API is unreachable, fail open to avoid blocking
-        # all logins during a Cloudflare outage. Per-email limiter
-        # still provides brute-force protection.
-        return True
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -162,29 +100,9 @@ async def verify_turnstile_token(token: str, client_ip: str = "") -> bool:
 
 async def check_login_rate_limit(request: Request):
     """
-    Login protection: Turnstile (bot filter) + per-email (brute force).
-    No IP-based blocking — safe for 500+ students on shared WiFi.
+    Per-email login protection (stops brute force without blocking shared IPs).
     """
-    client_ip = _get_client_ip(request)
-
-    # Parse body to get email and turnstile token
-    try:
-        body = await request.body()
-        data = json.loads(body)
-    except Exception:
-        data = {}
-
-    email = (data.get("email") or "").strip().lower()
-    turnstile_token = data.get("turnstile_token", "")
-
-    # Layer 1: Turnstile verification (blocks bots, invisible for humans)
-    if not await verify_turnstile_token(turnstile_token, client_ip):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Human verification failed. Please try again."
-        )
-
-    # Layer 2: Per-email rate limit (blocks brute force on specific accounts)
+    email = await _extract_email_from_body(request)
     if email and not login_per_email.is_allowed(email):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -194,27 +112,9 @@ async def check_login_rate_limit(request: Request):
 
 async def check_register_rate_limit(request: Request):
     """
-    Registration protection: Turnstile + per-email.
+    Per-email registration protection.
     """
-    client_ip = _get_client_ip(request)
-
-    try:
-        body = await request.body()
-        data = json.loads(body)
-    except Exception:
-        data = {}
-
-    email = (data.get("email") or "").strip().lower()
-    turnstile_token = data.get("turnstile_token", "")
-
-    # Layer 1: Turnstile
-    if not await verify_turnstile_token(turnstile_token, client_ip):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Human verification failed. Please try again."
-        )
-
-    # Layer 2: Per-email
+    email = await _extract_email_from_body(request)
     if email and not register_per_email.is_allowed(email):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -224,16 +124,9 @@ async def check_register_rate_limit(request: Request):
 
 async def check_password_reset_rate_limit(request: Request):
     """
-    Password reset: Per-email only (no Turnstile needed, low abuse risk).
+    Password reset: Per-email only.
     """
-    try:
-        body = await request.body()
-        data = json.loads(body)
-    except Exception:
-        data = {}
-
-    email = (data.get("email") or "").strip().lower()
-
+    email = await _extract_email_from_body(request)
     if email and not reset_per_email.is_allowed(email):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -242,7 +135,7 @@ async def check_password_reset_rate_limit(request: Request):
 
 
 async def check_analytics_rate_limit(request: Request):
-    """Analytics — IP only (no email context)."""
+    """Analytics — IP only."""
     client_ip = _get_client_ip(request)
     if not analytics_rate_limiter.is_allowed(client_ip):
         raise HTTPException(

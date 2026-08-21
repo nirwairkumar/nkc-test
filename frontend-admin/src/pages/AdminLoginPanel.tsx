@@ -20,7 +20,6 @@ import { signInWithEmail } from '@/hooks/useAuthActions';
 import { useAuth } from '@/contexts/AuthContext';
 import { checkAdmin } from '@/lib/usersApi';
 import { authApi } from '@/lib/authApi';
-import { useTurnstile } from '@/hooks/useTurnstile';
 
 const formSchema = z.object({
     email: z.string().email(),
@@ -35,7 +34,6 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
     const [isLoading, setIsLoading] = useState(false);
     const { user, isAdmin, refreshSession } = useAuth();
     const navigate = useNavigate();
-    const { turnstileRef, getToken, resetTurnstile, isReady } = useTurnstile({ theme: 'auto', size: 'normal' });
 
     useEffect(() => {
         if (user && isAdmin) {
@@ -54,17 +52,14 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         try {
-            const turnstileToken = getToken();
-            const { error: authError, data: authData } = await signInWithEmail(values.email, values.password, turnstileToken);
+            const { error: authError, data: authData } = await signInWithEmail(values.email, values.password);
 
             if (authError) {
-                resetTurnstile();
                 throw authError;
             }
 
             const userId = authData.user?.id;
             if (!userId) {
-                resetTurnstile();
                 throw new Error("Login succeeded but no user data found.");
             }
 
@@ -74,7 +69,6 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
                 await authApi.logout();
                 toast.error("Access Denied: You are not an authorized administrator.");
                 setIsLoading(false);
-                resetTurnstile();
                 return;
             }
 
@@ -84,7 +78,6 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
             navigate('/admin?tab=analytics', { replace: true });
         } catch (error: any) {
             console.error(error);
-            resetTurnstile();
             toast.error(error.message || 'Admin Authentication failed');
         } finally {
             setIsLoading(false);
@@ -132,12 +125,7 @@ export default function AdminLoginPanel({ onLoginSuccess }: AdminLoginPanelProps
                                 )}
                             />
 
-                            {/* Cloudflare Turnstile bot verification */}
-                            <div className="flex justify-center my-2 min-h-[65px]">
-                                <div ref={turnstileRef} />
-                            </div>
-
-                            <Button type="submit" className="w-full bg-red-900 hover:bg-red-800" disabled={isLoading || !isReady}>
+                            <Button type="submit" className="w-full bg-red-900 hover:bg-red-800" disabled={isLoading}>
                                 {isLoading ? 'Authenticating...' : 'Access Admin Panel'}
                             </Button>
                         </form>

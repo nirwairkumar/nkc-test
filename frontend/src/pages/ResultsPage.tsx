@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
 import { FeedbackForm } from '@/components/FeedbackForm';
+import { BehavioralTimeMatrix } from '@/components/results/BehavioralTimeMatrix';
 
 import { useAuth } from '@/contexts/AuthContext';
 import 'katex/dist/katex.min.css';
@@ -812,6 +813,18 @@ const ResultsPage = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Method 1: Behavioral Time & Cognitive Matrix */}
+                <BehavioralTimeMatrix
+                  questions={allQuestions}
+                  answers={answers}
+                  questionTimes={questionTimes}
+                  testDurationMinutes={selectedTest?.duration || 60}
+                  questionStatus={questionStatus}
+                  onSelectQuestion={(idx) => {
+                    setSearchParams({ tab: 'solutions' });
+                  }}
+                />
               </motion.div>
             )}
 
