@@ -23,7 +23,7 @@ Open a second terminal, navigate to the `backend` folder, activate the Python vi
 
 ```powershell
 cd backend
-python -m uvicorn app.main:app --reload --host 127.0.5.1 --port 8000
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 *By default, the backend API will run at: `http://127.0.0.1:8000`*

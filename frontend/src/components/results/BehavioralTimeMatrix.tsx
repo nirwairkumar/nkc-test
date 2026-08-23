@@ -28,6 +28,14 @@ interface BehavioralTimeMatrixProps {
   onSelectQuestion?: (questionIndex: number) => void;
 }
 
+interface MatrixItem {
+  index: number;
+  question: any;
+  timeSpent: number;
+  deltaPercent: number;
+  status: string;
+}
+
 type QuadrantId = 'fast_correct' | 'slow_correct' | 'fast_wrong' | 'time_traps' | 'normal_correct';
 
 export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
@@ -59,11 +67,11 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
 
   // Analyze each question and bucket into the 4 iOS-style cognitive quadrants
   const matrixData = useMemo(() => {
-    const fastCorrect: Array<{ index: number; question: any; timeSpent: number; deltaPercent: number }> = [];
-    const slowCorrect: Array<{ index: number; question: any; timeSpent: number; deltaPercent: number }> = [];
-    const normalCorrect: Array<{ index: number; question: any; timeSpent: number; deltaPercent: number }> = [];
-    const fastWrong: Array<{ index: number; question: any; timeSpent: number; deltaPercent: number }> = [];
-    const timeTraps: Array<{ index: number; question: any; timeSpent: number; deltaPercent: number; status: string }> = [];
+    const fastCorrect: MatrixItem[] = [];
+    const slowCorrect: MatrixItem[] = [];
+    const normalCorrect: MatrixItem[] = [];
+    const fastWrong: MatrixItem[] = [];
+    const timeTraps: MatrixItem[] = [];
 
     let totalStudentTime = 0;
     let totalAttempted = 0;
