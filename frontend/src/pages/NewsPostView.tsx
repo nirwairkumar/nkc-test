@@ -55,12 +55,55 @@ export default function NewsPostView() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Fetch Post Data
+    // Fetch Post Data (Pure read-only)
     const { data: post, isLoading, error } = useQuery({
         queryKey: ['post', slug],
         queryFn: () => postsApi.getPostBySlug(slug!),
         enabled: !!slug,
     });
+
+    // Industry-Grade View Counter (3.5s dwell-time intent gate & 24h client deduplication)
+    useEffect(() => {
+        if (!post?.id || post.status !== 'published') return;
+
+        const VIEW_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+        const storageKey = 'testoza_post_views';
+
+        // 1. Check local storage for recent view
+        try {
+            const raw = localStorage.getItem(storageKey);
+            const history = raw ? JSON.parse(raw) : {};
+            const lastViewedAt = history[post.id];
+
+            if (lastViewedAt && (Date.now() - lastViewedAt < VIEW_COOLDOWN_MS)) {
+                return; // Already counted within 24h window
+            }
+        } catch {
+            // LocalStorage fallback
+        }
+
+        // 2. Gate with 3.5s dwell time to verify reader engagement (filters bounces/crawlers)
+        const timer = setTimeout(() => {
+            postsApi.recordView(post.id).then((res) => {
+                if (res?.recorded) {
+                    try {
+                        const raw = localStorage.getItem(storageKey);
+                        const history = raw ? JSON.parse(raw) : {};
+                        history[post.id] = Date.now();
+                        localStorage.setItem(storageKey, JSON.stringify(history));
+                    } catch {}
+
+                    // Update UI view count optimistically
+                    queryClient.setQueryData(['post', slug], (old: any) => {
+                        if (!old) return old;
+                        return { ...old, view_count: (old.view_count || 0) + 1 };
+                    });
+                }
+            });
+        }, 3500);
+
+        return () => clearTimeout(timer);
+    }, [post?.id, post?.status, slug, queryClient]);
 
     // Fetch Related Posts
     const { data: relatedPosts = [] } = useQuery({

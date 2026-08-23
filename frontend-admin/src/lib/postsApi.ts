@@ -99,5 +99,16 @@ export const postsApi = {
         if (!userId) return { liked: false };
         const response = await apiClient.get<{ liked: boolean }>(`/posts/${id}/liked?user_id=${userId}`);
         return response.data;
+    },
+
+    recordView: async (id: string) => {
+        const userId = getUserIdFromToken();
+        const url = userId ? `/posts/${id}/view?user_id=${userId}` : `/posts/${id}/view`;
+        try {
+            const response = await apiClient.post<{ recorded: boolean }>(url);
+            return response.data;
+        } catch {
+            return { recorded: false };
+        }
     }
 };

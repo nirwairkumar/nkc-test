@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request, Response
 from app.core.database import get_db, supabase
+from app.utils.rate_limiter import _get_client_ip
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -7,8 +8,44 @@ from datetime import datetime, timezone
 import time
 import random
 import os
+import re
 
 router = APIRouter()
+
+# Bot/crawler regex
+BOT_REGEX = re.compile(
+    r"(bot|crawl|spider|slurp|facebookexternalhit|whatsapp|twitterbot|discordbot|slackbot|applebot|bingbot|googlebot|yandex|duckduckbot|baiduspider|embedly|quora link preview|outbrain|pinterest|linkedinbot)",
+    re.IGNORECASE
+)
+
+# In-memory deduplication cooldown cache: key = f"{post_id}:{ident}", value = timestamp
+VIEW_COOLDOWN_SECONDS = 86400  # 24 hours
+_post_view_cache: dict[str, float] = {}
+
+def _is_view_eligible(post_id: str, client_ip: str, user_agent: str, user_id: Optional[str] = None) -> bool:
+    # 1. Discard bots and crawlers
+    if BOT_REGEX.search(user_agent or ""):
+        return False
+
+    now = time.time()
+    
+    # 2. Occasional cleanup if cache grows large
+    if len(_post_view_cache) > 5000:
+        expired_keys = [k for k, ts in _post_view_cache.items() if now - ts > VIEW_COOLDOWN_SECONDS]
+        for k in expired_keys:
+            _post_view_cache.pop(k, None)
+
+    # 3. Deduplication key (per user if logged in, otherwise per IP)
+    ident = f"u:{user_id}" if user_id else f"ip:{client_ip}"
+    cache_key = f"{post_id}:{ident}"
+
+    last_view = _post_view_cache.get(cache_key)
+    if last_view and (now - last_view < VIEW_COOLDOWN_SECONDS):
+        return False  # Cooldown active, deduplicated
+
+    _post_view_cache[cache_key] = now
+    return True
+
 
 # --- Pydantic Models ---
 class PostCreate(BaseModel):
@@ -249,6 +286,7 @@ async def get_post_by_slug(
     slug: str,
     db: Client = Depends(get_db)
 ):
+    """Pure read-only fetch for post by slug or ID. Does not mutate view_count."""
     try:
         response = db.table("posts").select("*").eq("slug", slug).execute()
         
@@ -259,22 +297,47 @@ async def get_post_by_slug(
                 raise HTTPException(status_code=404, detail="Post not found")
             
         posts = _attach_author_profiles(response.data, db)
-        post = posts[0]
-        
-        # Increment view count (if published)
-        if post.get("status") == "published":
-            try:
-                db.table("posts").update({"view_count": (post.get("view_count") or 0) + 1}).eq("id", post["id"]).execute()
-                post["view_count"] = (post.get("view_count") or 0) + 1
-            except Exception as ve:
-                print(f"Warning: Failed to increment view count: {ve}")
-            
-        return post
+        return posts[0]
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error fetching post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{post_id}/view")
+async def record_post_view(
+    post_id: str,
+    request: Request,
+    user_id: Optional[str] = Query(None),
+    db: Client = Depends(get_db)
+):
+    """
+    Industry-grade view counter:
+    - Pure, decoupled from GET requests
+    - Bot & crawler filtering
+    - 24-hour IP & User deduplication cooldown
+    - Atomic increment
+    """
+    try:
+        client_ip = _get_client_ip(request)
+        user_agent = request.headers.get("user-agent", "")
+
+        if not _is_view_eligible(post_id, client_ip, user_agent, user_id):
+            return {"recorded": False, "reason": "cooldown_or_bot"}
+
+        # Attempt atomic increment via Supabase RPC, fallback to direct update
+        try:
+            db.rpc("increment_post_view", {"p_post_id": post_id}).execute()
+        except Exception:
+            post_res = db.table("posts").select("id, view_count, status").eq("id", post_id).execute()
+            if post_res.data and post_res.data[0].get("status") == "published":
+                current_views = post_res.data[0].get("view_count") or 0
+                db.table("posts").update({"view_count": current_views + 1}).eq("id", post_id).execute()
+
+        return {"recorded": True}
+    except Exception as e:
+        print(f"Error recording view: {e}")
+        return {"recorded": False, "error": str(e)}
 
 @router.post("")
 async def create_post(
