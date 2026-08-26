@@ -285,208 +285,219 @@ Item 2 & Value B & 200 \\\\
                 />
             )}
 
-            {/* Sidebar Container */}
+            {/* Sidebar Container Shell */}
             <aside
-                onMouseEnter={() => {
-                    if (window.innerWidth >= 768 && isCollapsed) {
-                        setIsHovered(true);
-                    }
-                }}
-                onMouseLeave={() => {
-                    if (window.innerWidth >= 768) {
-                        setIsHovered(false);
-                    }
-                }}
                 className={`
                     fixed md:sticky top-0 md:top-16 left-0 z-50 md:z-40 h-full md:h-[calc(100vh-4rem)]
-                    bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl md:backdrop-blur-md
-                    border-r border-slate-200/80 dark:border-slate-800/80
-                    transition-all duration-300 ease-in-out flex flex-col justify-between
+                    shrink-0 transition-[width] duration-300 ease-in-out
                     ${mobileOpen ? 'translate-x-0 w-72 sm:w-80 shadow-2xl' : '-translate-x-full md:translate-x-0'}
-                    ${!mobileOpen && isVisiblyCollapsed ? 'md:w-16' : 'md:w-64'}
+                    ${isCollapsed ? 'md:w-16' : 'md:w-64'}
                 `}
             >
-                {/* Top Sidebar Header */}
-                <div>
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-slate-800/60">
-                        {(!isVisiblyCollapsed || mobileOpen) && (
-                            <div className="flex items-center gap-2 px-1">
-                                <span className="font-bold text-slate-800 dark:text-slate-200 text-base tracking-tight">
-                                    Menu
-                                </span>
+                {/* Inner Sidebar Panel (Floats above page on hover when collapsed, docks firmly when locked) */}
+                <div
+                    onMouseEnter={() => {
+                        if (window.innerWidth >= 768 && isCollapsed) {
+                            setIsHovered(true);
+                        }
+                    }}
+                    onMouseLeave={() => {
+                        if (window.innerWidth >= 768) {
+                            setIsHovered(false);
+                        }
+                    }}
+                    className={`
+                        h-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl md:backdrop-blur-md
+                        border-r border-slate-200/80 dark:border-slate-800/80
+                        transition-[width,box-shadow,border-color] duration-300 ease-in-out flex flex-col justify-between
+                        ${isCollapsed && isHovered
+                            ? 'md:absolute md:top-0 md:left-0 md:z-50 md:w-64 md:shadow-2xl md:border-r md:border-slate-300 dark:md:border-slate-700'
+                            : 'w-full'
+                        }
+                    `}
+                >
+                    {/* Top Sidebar Header */}
+                    <div>
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/60 dark:border-slate-800/60">
+                            {(!isVisiblyCollapsed || mobileOpen) && (
+                                <div className="flex items-center gap-2 px-1">
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 text-base tracking-tight">
+                                        Menu
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Mobile Close Button */}
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-slate-500 hover:text-slate-800 md:hidden"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+
+                                {/* Desktop Collapse/Lock Toggle */}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hidden md:flex"
+                                    onClick={() => {
+                                        setIsHovered(false);
+                                        setIsCollapsed(!isCollapsed);
+                                    }}
+                                    title={isCollapsed ? "Lock expanded menu" : "Collapse menu to rail"}
+                                >
+                                    {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+                                </Button>
                             </div>
-                        )}
-
-                        {/* Mobile Close Button */}
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-slate-500 hover:text-slate-800 md:hidden"
-                                onClick={() => setMobileOpen(false)}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
-
-                            {/* Desktop Collapse Toggle */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hidden md:flex"
-                                onClick={() => {
-                                    setIsHovered(false);
-                                    setIsCollapsed(!isCollapsed);
-                                }}
-                                title={isCollapsed ? "Expand menu" : "Collapse menu"}
-                            >
-                                {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-                            </Button>
                         </div>
-                    </div>
 
-                    {/* Menu Navigation List */}
-                    <nav className="p-2 space-y-1.5 overflow-y-auto max-h-[calc(100vh-8.5rem)]">
-                        {navItems.map((item) => {
-                            const active = isActive(item);
-                            const Icon = item.icon;
-                            const isAiItem = item.path === '/generate-with-ai';
+                        {/* Menu Navigation List */}
+                        <nav className="p-2 space-y-1.5 overflow-y-auto max-h-[calc(100vh-8.5rem)]">
+                            {navItems.map((item) => {
+                                const active = isActive(item);
+                                const Icon = item.icon;
+                                const isAiItem = item.path === '/generate-with-ai';
 
-                            const content = (
-                                <div key={item.title} className="space-y-1">
-                                    <button
-                                        onClick={() => handleItemClick(item.path)}
-                                        className={`
-                                            w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium
-                                            transition-all duration-200 group cursor-pointer text-left relative
-                                            ${active
-                                                ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-md shadow-slate-900/10 dark:shadow-slate-100/10 font-semibold'
-                                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60'
-                                            }
-                                            ${(isVisiblyCollapsed && !mobileOpen) ? 'justify-center px-0 h-10 w-10 mx-auto' : ''}
-                                        `}
-                                    >
-                                        <Icon className={`
-                                            h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110
-                                            ${active 
-                                                ? 'text-white dark:text-slate-900' 
-                                                : item.iconColor || 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
-                                            }
-                                        `} />
+                                const content = (
+                                    <div key={item.title} className="space-y-1">
+                                        <button
+                                            onClick={() => handleItemClick(item.path)}
+                                            className={`
+                                                w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-medium
+                                                transition-all duration-200 group cursor-pointer text-left relative
+                                                ${active
+                                                    ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-md shadow-slate-900/10 dark:shadow-slate-100/10 font-semibold'
+                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60'
+                                                }
+                                                ${(isVisiblyCollapsed && !mobileOpen) ? 'justify-center px-0 h-10 w-10 mx-auto' : ''}
+                                            `}
+                                        >
+                                            <Icon className={`
+                                                h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110
+                                                ${active 
+                                                    ? 'text-white dark:text-slate-900' 
+                                                    : item.iconColor || 'text-slate-500 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'
+                                                }
+                                            `} />
 
-                                        {(!isVisiblyCollapsed || mobileOpen) && (
-                                            <div className="flex items-center justify-between flex-1 min-w-0">
-                                                <span className="truncate">{item.title}</span>
-                                                {item.badge && (
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${item.badgeColor}`}>
-                                                        {item.badge}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                    </button>
-
-                                    {/* AI Import History Dropdown nested directly under Generate with AI - ONLY visible on Generate with AI page */}
-                                    {isAiItem && isAiPage && (!isVisiblyCollapsed || mobileOpen) && (
-                                        <div className="pl-3 py-1 space-y-1">
-                                            <button
-                                                onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-                                                className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/40 dark:hover:bg-slate-800/40 rounded-xl transition-colors cursor-pointer"
-                                            >
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <History className="h-4 w-4 text-violet-500 shrink-0" />
-                                                    <span className="truncate">AI Import History</span>
-                                                </div>
-                                                {isHistoryOpen ? (
-                                                    <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-                                                ) : (
-                                                    <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                                                )}
-                                            </button>
-
-                                            {isHistoryOpen && (
-                                                <div className="pl-2 space-y-1 max-h-48 overflow-y-auto pr-1">
-                                                    {loadingHistory ? (
-                                                        <div className="flex items-center justify-center p-3">
-                                                            <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
-                                                        </div>
-                                                    ) : historyItems.length === 0 ? (
-                                                        <div className="p-2 text-xs text-slate-400 dark:text-slate-500 italic text-center">
-                                                            No past generations
-                                                        </div>
-                                                    ) : (
-                                                        historyItems.map((item, idx) => (
-                                                            <div
-                                                                key={item.id || idx}
-                                                                onClick={() => handleSelectHistoryItem(item)}
-                                                                className="w-full flex items-center justify-between gap-1.5 px-2 py-1.5 text-xs rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/40 text-slate-600 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-300 group cursor-pointer transition-colors"
-                                                            >
-                                                                <div className="min-w-0 flex-1">
-                                                                    <p className="truncate font-medium leading-tight">
-                                                                        {item.title || 'AI Generated Test'}
-                                                                    </p>
-                                                                    <p className="text-[10px] text-slate-400 leading-tight">
-                                                                        {item.question_count} Questions
-                                                                    </p>
-                                                                </div>
-                                                                <button
-                                                                    onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
-                                                                    title="Delete"
-                                                                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 rounded-md transition-opacity shrink-0"
-                                                                >
-                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                </button>
-                                                            </div>
-                                                        ))
+                                            {(!isVisiblyCollapsed || mobileOpen) && (
+                                                <div className="flex items-center justify-between flex-1 min-w-0">
+                                                    <span className="truncate">{item.title}</span>
+                                                    {item.badge && (
+                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${item.badgeColor}`}>
+                                                            {item.badge}
+                                                        </span>
                                                     )}
                                                 </div>
                                             )}
-                                        </div>
-                                    )}
+                                        </button>
 
-                                    {/* AI Guide & Sy Pad Option under Create Test - ONLY on create test page */}
-                                    {item.path === '/create-test' && isCreateTestPage && (!isVisiblyCollapsed || mobileOpen) && (
-                                        <div className="pl-3 py-1 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                                            <button
-                                                onClick={() => window.dispatchEvent(new CustomEvent('toggle_ai_guide'))}
-                                                className="ai-guide-trigger w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-colors cursor-pointer"
-                                            >
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <Sparkles className="h-4 w-4 text-indigo-500 shrink-0" />
-                                                    <span className="truncate">AI Guide</span>
-                                                </div>
-                                            </button>
+                                        {/* AI Import History Dropdown nested directly under Generate with AI - ONLY visible on Generate with AI page */}
+                                        {isAiItem && isAiPage && (!isVisiblyCollapsed || mobileOpen) && (
+                                            <div className="pl-3 py-1 space-y-1">
+                                                <button
+                                                    onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                                                    className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/40 dark:hover:bg-slate-800/40 rounded-xl transition-colors cursor-pointer"
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <History className="h-4 w-4 text-violet-500 shrink-0" />
+                                                        <span className="truncate">AI Import History</span>
+                                                    </div>
+                                                    {isHistoryOpen ? (
+                                                        <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                                                    ) : (
+                                                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                                                    )}
+                                                </button>
 
-                                            {/* Sy Pad Option directly below AI Guide - ONLY on create test page */}
-                                            <button
-                                                onClick={() => window.dispatchEvent(new CustomEvent('toggle_sy_pad'))}
-                                                className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition-colors cursor-pointer mt-1"
-                                            >
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <Calculator className="h-4 w-4 text-blue-500 shrink-0" />
-                                                    <span className="truncate">Sy Pad</span>
-                                                </div>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            );
+                                                {isHistoryOpen && (
+                                                    <div className="pl-2 space-y-1 max-h-48 overflow-y-auto pr-1">
+                                                        {loadingHistory ? (
+                                                            <div className="flex items-center justify-center p-3">
+                                                                <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+                                                            </div>
+                                                        ) : historyItems.length === 0 ? (
+                                                            <div className="p-2 text-xs text-slate-400 dark:text-slate-500 italic text-center">
+                                                                No past generations
+                                                            </div>
+                                                        ) : (
+                                                            historyItems.map((item, idx) => (
+                                                                <div
+                                                                    key={item.id || idx}
+                                                                    onClick={() => handleSelectHistoryItem(item)}
+                                                                    className="w-full flex items-center justify-between gap-1.5 px-2 py-1.5 text-xs rounded-lg hover:bg-violet-50 dark:hover:bg-violet-950/40 text-slate-600 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-300 group cursor-pointer transition-colors"
+                                                                >
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="truncate font-medium leading-tight">
+                                                                            {item.title || 'AI Generated Test'}
+                                                                        </p>
+                                                                        <p className="text-[10px] text-slate-400 leading-tight">
+                                                                            {item.question_count} Questions
+                                                                        </p>
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={(e) => handleDeleteHistoryItem(e, item.id, idx)}
+                                                                        title="Delete"
+                                                                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 rounded-md transition-opacity shrink-0"
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            ))
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
-                            if (isVisiblyCollapsed && !mobileOpen) {
-                                return (
-                                    <Tooltip key={item.title}>
-                                        <TooltipTrigger asChild>
-                                            {content}
-                                        </TooltipTrigger>
-                                        <TooltipContent side="right" className="font-medium text-xs bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-none">
-                                            {item.title}
-                                        </TooltipContent>
-                                    </Tooltip>
+                                        {/* AI Guide & Sy Pad Option under Create Test - ONLY on create test page */}
+                                        {item.path === '/create-test' && isCreateTestPage && (!isVisiblyCollapsed || mobileOpen) && (
+                                            <div className="pl-3 py-1 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <button
+                                                    onClick={() => window.dispatchEvent(new CustomEvent('toggle_ai_guide'))}
+                                                    className="ai-guide-trigger w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-colors cursor-pointer"
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <Sparkles className="h-4 w-4 text-indigo-500 shrink-0" />
+                                                        <span className="truncate">AI Guide</span>
+                                                    </div>
+                                                </button>
+
+                                                {/* Sy Pad Option directly below AI Guide - ONLY on create test page */}
+                                                <button
+                                                    onClick={() => window.dispatchEvent(new CustomEvent('toggle_sy_pad'))}
+                                                    className="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition-colors cursor-pointer mt-1"
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <Calculator className="h-4 w-4 text-blue-500 shrink-0" />
+                                                        <span className="truncate">Sy Pad</span>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 );
-                            }
 
-                            return content;
-                        })}
-                    </nav>
+                                if (isVisiblyCollapsed && !mobileOpen) {
+                                    return (
+                                        <Tooltip key={item.title}>
+                                            <TooltipTrigger asChild>
+                                                {content}
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="font-medium text-xs bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-none">
+                                                {item.title}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    );
+                                }
+
+                                return content;
+                            })}
+                        </nav>
+                    </div>
                 </div>
             </aside>
         </TooltipProvider>
