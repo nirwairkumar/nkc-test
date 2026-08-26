@@ -96,6 +96,7 @@ export interface TestSettings {
         conduct_slug: string; // secure slug >10 chars used for exam link
         original_slug?: string; // preserved original slug (public tests)
     };
+    exam_interface_mode?: 'nta' | 'corporate'; // Layout mode: 'nta' (default) or 'corporate'
 }
 
 /** Generate a secure conduct slug (always >10 chars): title-slug + 8-char random hex */

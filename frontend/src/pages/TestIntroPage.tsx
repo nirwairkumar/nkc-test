@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import {
     Clock, HelpCircle, Trophy, BookOpen, AlertTriangle, PlayCircle,
     FileText, CheckCircle, ArrowLeft, RefreshCcw, WifiOff,
-    UserCheck, ShieldCheck, Lock, Sparkles
+    UserCheck, ShieldCheck, Lock, Sparkles, Monitor
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

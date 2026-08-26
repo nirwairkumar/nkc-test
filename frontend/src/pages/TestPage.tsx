@@ -33,6 +33,7 @@ import { analyticsApi } from '@/lib/analyticsApi';
 import { Progress } from '@/components/ui/progress';
 import ExitFeedbackDialog from '@/components/ExitFeedbackDialog';
 import VirtualNumericPad from '@/components/test/VirtualNumericPad';
+import CorporateTestView from '@/components/test/CorporateTestView';
 
 const parseMark = (value: string | number | undefined, defaultVal: number = 0): number => {
   if (typeof value === 'number') {
@@ -89,6 +90,9 @@ export default function TestPage() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [fontSize, setFontSize] = useState(18);
+
+  // Assessment UI Interface Mode: Derived directly from Creator Settings (default 'nta')
+  const uiMode: 'nta' | 'corporate' = (test?.settings?.exam_interface_mode === 'corporate') ? 'corporate' : 'nta';
 
   // State
   const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
@@ -1899,18 +1903,57 @@ export default function TestPage() {
   }
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
-      {/* Institution Branding Bar */}
-      {(test.institution_name || test.institution_logo) && (
-        <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3">
-          {test.institution_logo && (
-            <img src={test.institution_logo} alt="Institution Logo" className="h-9 w-auto object-contain" />
+    <>
+      {uiMode === 'corporate' ? (
+        <CorporateTestView
+          test={test}
+          currentQuestion={currentQuestion}
+          currentQuestionIndex={currentQuestionIndex}
+          setCurrentQuestionIndex={setCurrentQuestionIndex}
+          answers={answers}
+          setAnswers={setAnswers}
+          markedForReview={markedForReview}
+          visited={visited}
+          handleAnswerSelect={handleAnswerSelect}
+          handleClearResponse={handleClearResponse}
+          toggleMarkForReview={toggleMarkForReview}
+          handleSaveAndMarkReview={handleSaveAndMarkReview}
+          handleSaveAndNext={handleSaveAndNext}
+          handlePrevious={handlePrevious}
+          handleNumericKeypadPress={handleNumericKeypadPress}
+          checkAttemptLimit={checkAttemptLimit}
+          timeRemaining={timeRemaining}
+          isTimerDisabled={isTimerDisabled}
+          isTimeHidden={isTimeHidden}
+          setIsTimeHidden={setIsTimeHidden}
+          formatTime={formatTime}
+          warnings={warnings}
+          isCalculatorOpen={isCalculatorOpen}
+          setIsCalculatorOpen={setIsCalculatorOpen}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          connectionStatus={connectionStatus}
+          setShowExitDialog={setShowExitDialog}
+          attemptSubmit={attemptSubmit}
+          isSubmitting={isSubmitting}
+          renderReportQuestionButton={renderReportQuestionButton}
+          theme={theme}
+          setTheme={setTheme}
+          parseMark={parseMark}
+        />
+      ) : (
+        <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
+          {/* Institution Branding Bar */}
+          {(test.institution_name || test.institution_logo) && (
+            <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-1 flex items-center justify-center gap-3">
+              {test.institution_logo && (
+                <img src={test.institution_logo} alt="Institution Logo" className="h-9 w-auto object-contain" />
+              )}
+              {test.institution_name && (
+                <span className="text-xl font-bold" style={{ color: test.institution_color || '#475569', fontFamily: test.institution_font || 'inherit' }}>{test.institution_name}</span>
+              )}
+            </div>
           )}
-          {test.institution_name && (
-            <span className="text-xl font-bold" style={{ color: test.institution_color || '#475569', fontFamily: test.institution_font || 'inherit' }}>{test.institution_name}</span>
-          )}
-        </div>
-      )}
 
       <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2.5 md:px-5 md:py-2.5 relative md:sticky top-0 z-10 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
         {/* Left Side: Test Title (Dim, grayish, aesthetic) */}
@@ -2752,6 +2795,8 @@ export default function TestPage() {
           </Card>
         </div>
       </div>
+    </div>
+  )}
 
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
@@ -3005,6 +3050,6 @@ export default function TestPage() {
           </div>
         </div>
       )}
-    </div >
+    </>
   );
 }

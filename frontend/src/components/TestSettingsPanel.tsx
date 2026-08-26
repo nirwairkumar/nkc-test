@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Clock, Eye, Lock, Shield, Calendar, FormInput, Maximize, FileText, GraduationCap, Crown, Sparkles, Loader2, X, ChevronDown, ChevronRight, Monitor, Info } from 'lucide-react';
 import { ClassItem, fetchClasses } from '@/lib/classesApi';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -47,6 +48,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
         show_results_immediate: true,
         schedule: { enabled: false },
         start_form: { enabled: false, fields: [] },
+        exam_interface_mode: 'nta',
         ...test.settings // Merge existing settings
     });
 
@@ -676,6 +678,250 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                         checked={settings.shuffle_questions}
                         onCheckedChange={(c) => updateSetting('shuffle_questions', c)}
                     />
+                </div>
+
+                {/* Exam Layout & Interface Mode Selector (Compact with Info Tooltips) */}
+                <div className="flex flex-col gap-3.5 border p-4 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                            <Label className="text-sm sm:text-base font-bold flex items-center gap-2 text-slate-900 dark:text-slate-100">
+                                <Monitor className="w-4 h-4 text-indigo-600" /> Exam Interface Layout
+                            </Label>
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-0.5 rounded-full"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Info className="w-3.5 h-3.5" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs text-xs font-normal">
+                                        Select the test-taking interface your students will see during the examination.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800">
+                            Candidate Experience
+                        </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Standard Mode Card */}
+                        <div
+                            onClick={() => updateSetting('exam_interface_mode', 'nta')}
+                            className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between gap-2.5 relative ${
+                                (settings.exam_interface_mode || 'nta') === 'nta'
+                                    ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-xs ring-2 ring-indigo-500/20'
+                                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-950/40'
+                            }`}
+                        >
+                            {/* Header with Radio, Title & Info Button */}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                        (settings.exam_interface_mode || 'nta') === 'nta'
+                                            ? 'border-indigo-600 bg-indigo-600'
+                                            : 'border-slate-400 dark:border-slate-600'
+                                    }`}>
+                                        {(settings.exam_interface_mode || 'nta') === 'nta' && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                        )}
+                                    </div>
+                                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                        <span>🏛️ Standard Mode</span>
+                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            Default
+                                        </span>
+                                        <TooltipProvider delayDuration={150}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-0.5 rounded-full"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Info className="w-3 h-3" />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs text-xs font-normal">
+                                                    Traditional JEE / NEET / Government exam format with right-side question palette.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Realistic Mini Visual Mockup - Standard Layout */}
+                            <div className="w-full bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-2 space-y-1.5 select-none pointer-events-none">
+                                {/* Mockup Top Header */}
+                                <div className="flex items-center justify-between px-1.5 py-1 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded" />
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-8 h-2 bg-purple-100 dark:bg-purple-900/60 rounded text-[6px] text-purple-700 dark:text-purple-300 text-center font-bold">01:45</div>
+                                        <div className="w-6 h-2 bg-red-500 rounded text-[6px] text-white text-center font-bold">Submit</div>
+                                    </div>
+                                </div>
+
+                                {/* Mockup Body: Split Left Question + Right Palette */}
+                                <div className="flex gap-1.5 h-19">
+                                    {/* Left Question Area (65%) */}
+                                    <div className="flex-1 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 p-1.5 flex flex-col justify-between">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between">
+                                                <div className="w-8 h-1.5 bg-indigo-500 rounded" />
+                                                <div className="w-6 h-1 bg-emerald-400 rounded" />
+                                            </div>
+                                            <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                            <div className="w-3/4 h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                        </div>
+                                        {/* Mockup Options */}
+                                        <div className="space-y-0.5">
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
+                                                <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                                <div className="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded" />
+                                            </div>
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-blue-50 dark:bg-blue-950/40 border border-blue-400">
+                                                <div className="w-2 h-2 rounded-full bg-blue-600" />
+                                                <div className="w-12 h-1 bg-blue-400 rounded" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right Question Palette (35%) */}
+                                    <div className="w-16 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 p-1 flex flex-col justify-between">
+                                        <div>
+                                            <div className="text-[6px] font-bold text-slate-400 uppercase text-center mb-1">Palette</div>
+                                            <div className="grid grid-cols-3 gap-0.5">
+                                                <div className="h-2.5 rounded-xs bg-emerald-500 text-[6px] text-white font-bold flex items-center justify-center">1</div>
+                                                <div className="h-2.5 rounded-xs bg-red-500 text-[6px] text-white font-bold flex items-center justify-center">2</div>
+                                                <div className="h-2.5 rounded-xs bg-purple-600 text-[6px] text-white font-bold flex items-center justify-center">3</div>
+                                                <div className="h-2.5 rounded-xs bg-slate-200 dark:bg-slate-700 text-[6px] text-slate-600 dark:text-slate-300 flex items-center justify-center">4</div>
+                                                <div className="h-2.5 rounded-xs bg-slate-200 dark:bg-slate-700 text-[6px] text-slate-600 dark:text-slate-300 flex items-center justify-center">5</div>
+                                                <div className="h-2.5 rounded-xs bg-slate-200 dark:bg-slate-700 text-[6px] text-slate-600 dark:text-slate-300 flex items-center justify-center">6</div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                    </div>
+                                </div>
+
+                                {/* Mockup Bottom Controls */}
+                                <div className="flex items-center justify-between px-1.5 py-0.5 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="w-6 h-1.5 bg-slate-300 dark:bg-slate-600 rounded" />
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-6 h-1.5 bg-purple-500 rounded" />
+                                        <div className="w-8 h-1.5 bg-blue-600 rounded" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modern Mode Card */}
+                        <div
+                            onClick={() => updateSetting('exam_interface_mode', 'corporate')}
+                            className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between gap-2.5 relative ${
+                                settings.exam_interface_mode === 'corporate'
+                                    ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-xs ring-2 ring-indigo-500/20'
+                                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-950/40'
+                            }`}
+                        >
+                            {/* Header with Radio, Title & Info Button */}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                        settings.exam_interface_mode === 'corporate'
+                                            ? 'border-indigo-600 bg-indigo-600'
+                                            : 'border-slate-400 dark:border-slate-600'
+                                    }`}>
+                                        {settings.exam_interface_mode === 'corporate' && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                        )}
+                                    </div>
+                                    <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                        <span>💼 Modern Mode</span>
+                                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 uppercase">
+                                            Modern
+                                        </span>
+                                        <TooltipProvider delayDuration={150}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        type="button"
+                                                        className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-0.5 rounded-full"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Info className="w-3 h-3" />
+                                                    </button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" className="max-w-xs text-xs font-normal">
+                                                    Distraction-free centered card layout, top progress bar & clean options.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Realistic Mini Visual Mockup - Modern Layout */}
+                            <div className="w-full bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-2 space-y-1.5 select-none pointer-events-none">
+                                {/* Mockup Top Header */}
+                                <div className="flex items-center justify-between px-1.5 py-1 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-2.5 h-2.5 rounded bg-indigo-600" />
+                                        <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-600 rounded" />
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-7 h-2 bg-slate-100 dark:bg-slate-700 rounded text-[6px] text-slate-600 dark:text-slate-300 text-center font-bold">Q 4/20</div>
+                                        <div className="w-8 h-2 bg-slate-100 dark:bg-slate-700 rounded text-[6px] text-slate-600 dark:text-slate-300 text-center font-bold">01:45</div>
+                                        <div className="w-6 h-2 bg-rose-600 rounded text-[6px] text-white text-center font-bold">Submit</div>
+                                    </div>
+                                </div>
+
+                                {/* Top Progress Line */}
+                                <div className="w-full h-0.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                    <div className="w-1/3 h-full bg-indigo-600" />
+                                </div>
+
+                                {/* Mockup Centered Question Card */}
+                                <div className="h-19 flex justify-center">
+                                    <div className="w-[85%] bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-1.5 flex flex-col justify-between shadow-2xs">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center justify-between">
+                                                <div className="w-10 h-1.5 bg-indigo-600 rounded" />
+                                                <div className="w-8 h-1 bg-emerald-500 rounded" />
+                                            </div>
+                                            <div className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                            <div className="w-4/5 h-1 bg-slate-200 dark:bg-slate-700 rounded" />
+                                        </div>
+                                        {/* Mockup Centered Elevated Options */}
+                                        <div className="space-y-0.5">
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-700">
+                                                <div className="w-2 h-2 rounded bg-slate-200 dark:bg-slate-600 text-[5px] flex items-center justify-center font-bold">A</div>
+                                                <div className="w-12 h-1 bg-slate-300 dark:bg-slate-600 rounded" />
+                                            </div>
+                                            <div className="flex items-center gap-1 p-0.5 rounded bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-500">
+                                                <div className="w-2 h-2 rounded bg-indigo-600 text-[5px] text-white flex items-center justify-center font-bold">B</div>
+                                                <div className="w-14 h-1 bg-indigo-400 rounded" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Mockup Docked Bottom Action Bar */}
+                                <div className="flex items-center justify-between px-2 py-0.5 bg-white dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                                    <div className="w-7 h-1.5 bg-slate-200 dark:bg-slate-600 rounded" />
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-6 h-1.5 bg-slate-200 dark:bg-slate-600 rounded" />
+                                        <div className="w-8 h-1.5 bg-indigo-600 rounded" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
