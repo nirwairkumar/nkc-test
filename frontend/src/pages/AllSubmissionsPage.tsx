@@ -49,7 +49,7 @@ export default function AllSubmissionsPage() {
     const [tests, setTests] = useState<ConductedTestCardItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [filterTab, setFilterTab] = useState<'all' | 'submitted' | 'live'>('all');
+    const [filterTab, setFilterTab] = useState<'all' | 'submitted' | 'major' | 'live'>('all');
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -141,6 +141,7 @@ export default function AllSubmissionsPage() {
             if (!matchesQuery) return false;
 
             if (filterTab === 'submitted') return t.submissions_count > 0;
+            if (filterTab === 'major') return t.submissions_count >= 20;
             if (filterTab === 'live') return t.is_live;
             return true;
         });
@@ -152,6 +153,10 @@ export default function AllSubmissionsPage() {
 
     const liveExamsCount = useMemo(() => {
         return tests.filter(t => t.is_live).length;
+    }, [tests]);
+
+    const majorTestsCount = useMemo(() => {
+        return tests.filter(t => t.submissions_count >= 20).length;
     }, [tests]);
 
     if (authLoading || loading) {
@@ -187,9 +192,12 @@ export default function AllSubmissionsPage() {
                 </Button>
             </div>
 
-            {/* Quick Metrics Cards - 3 Column Grid on Mobile for Maximum Space Efficiency */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                <Card className="p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs">
+            {/* Quick Metrics Cards - 4 Column Responsive Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+                <Card 
+                    onClick={() => setFilterTab('submitted')}
+                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-all ${filterTab === 'submitted' ? 'ring-2 ring-indigo-500/20 border-indigo-400 dark:border-indigo-600' : ''}`}
+                >
                     <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
                         <Users className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
                     </div>
@@ -202,7 +210,10 @@ export default function AllSubmissionsPage() {
                     </div>
                 </Card>
 
-                <Card className="p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs">
+                <Card 
+                    onClick={() => setFilterTab('live')}
+                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-all ${filterTab === 'live' ? 'ring-2 ring-emerald-500/20 border-emerald-400 dark:border-emerald-600' : ''}`}
+                >
                     <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                         <Radio className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
                     </div>
@@ -215,7 +226,10 @@ export default function AllSubmissionsPage() {
                     </div>
                 </Card>
 
-                <Card className="p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs">
+                <Card 
+                    onClick={() => setFilterTab('all')}
+                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-amber-300 dark:hover:border-amber-700 transition-all ${filterTab === 'all' ? 'ring-2 ring-amber-500/20 border-amber-400 dark:border-amber-600' : ''}`}
+                >
                     <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                         <BarChart2 className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
                     </div>
@@ -225,6 +239,22 @@ export default function AllSubmissionsPage() {
                             {tests.length}
                         </p>
                         <p className="text-[9px] text-slate-400 hidden sm:block">Total tests</p>
+                    </div>
+                </Card>
+
+                <Card 
+                    onClick={() => setFilterTab('major')}
+                    className={`p-2.5 sm:p-4 bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-2 sm:gap-3.5 rounded-xl sm:rounded-2xl shadow-2xs cursor-pointer hover:border-purple-300 dark:hover:border-purple-700 transition-all ${filterTab === 'major' ? 'ring-2 ring-purple-500/20 border-purple-400 dark:border-purple-600' : ''}`}
+                >
+                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                        <Award className="w-4 h-4 sm:w-5.5 sm:h-5.5" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">Conducted (≥20)</p>
+                        <p className="text-base sm:text-xl font-black text-purple-600 dark:text-purple-400 font-mono leading-tight">
+                            {majorTestsCount}
+                        </p>
+                        <p className="text-[9px] text-purple-600 dark:text-purple-400 font-medium hidden sm:block">≥20 submissions</p>
                     </div>
                 </Card>
             </div>
@@ -261,6 +291,16 @@ export default function AllSubmissionsPage() {
                         }`}
                     >
                         With Submissions ({tests.filter(t => t.submissions_count > 0).length})
+                    </button>
+                    <button
+                        onClick={() => setFilterTab('major')}
+                        className={`shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                            filterTab === 'major'
+                                ? 'bg-purple-600 text-white shadow-xs'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                        ≥20 Submissions ({majorTestsCount})
                     </button>
                     <button
                         onClick={() => setFilterTab('live')}
