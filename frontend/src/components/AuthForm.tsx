@@ -38,7 +38,6 @@ const formSchema = z.object({
     password: z.string().optional(), // Validation handled manually or via refinement to allow empty for "forgot" view
     confirmPassword: z.string().optional(),
     name: z.string().optional(),
-    designation: z.enum(["Teacher", "Institution", "Other"]).optional(),
 }).refine((data) => {
     // Signup passwords match check
     /* 
@@ -93,7 +92,6 @@ export default function AuthForm() {
             password: '',
             confirmPassword: '',
             name: '',
-            designation: undefined,
         },
     });
 
@@ -155,12 +153,7 @@ export default function AuthForm() {
                     setIsLoading(false);
                     return;
                 }
-                if (!values.designation) {
-                    toast.error("Please select a designation");
-                    setIsLoading(false);
-                    return;
-                }
-                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation);
+                const { error } = await signUpWithEmail(values.email, values.password, values.name);
                 if (error) {
                     if (error.message.includes('already registered') || error.message.includes('already exists')) {
                         toast.error('Account already exists. Please login.');
@@ -299,30 +292,7 @@ export default function AuthForm() {
                                     />
                                 )}
 
-                                {view === 'signup' && (
-                                    <FormField
-                                        control={form.control}
-                                        name="designation"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Designation</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select designation" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="Teacher">Teacher</SelectItem>
-                                                        <SelectItem value="Institution">Institution</SelectItem>
-                                                        <SelectItem value="Other">Other</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
+
 
                                 <FormField
                                     control={form.control}

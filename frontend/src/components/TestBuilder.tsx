@@ -80,7 +80,7 @@ interface TestBuilderProps {
 }
 
 export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImport }: TestBuilderProps) {
-    const { user, isAdmin } = useAuth();
+    const { user, profile, isAdmin } = useAuth();
     const { openAuthModal } = useAuthModal();
     const navigate = useNavigate();
     const location = useLocation();
@@ -967,24 +967,39 @@ export default function TestBuilder({ initialData, onSuccess, onCancel, onAiImpo
     };
 
     const handleSave = async () => {
+        const returnUrl = isEditMode && testId ? `/edit-test/${testId}` : '/create-test';
+        const draftData = {
+            title, description, revision_notes: revisionNotes, institution_name: institutionName, institution_logo: institutionLogo, institution_color: institutionColor, institution_font: institutionFont,
+            duration: time, is_public: isPublic,
+            questions, selectedCategories,
+            enable_section_mode: enableSectionMode,
+            has_scientific_calculator: hasScientificCalculator,
+            sections,
+            tags
+        };
+
         if (!user) {
             // Save current draft state before redirecting
-            const draftData = {
-                title, description, revision_notes: revisionNotes, institution_name: institutionName, institution_logo: institutionLogo, institution_color: institutionColor, institution_font: institutionFont,
-                duration: time, is_public: isPublic,
-                questions, selectedCategories,
-                // Save new state too
-                enable_section_mode: enableSectionMode,
-                has_scientific_calculator: hasScientificCalculator,
-                sections
-            };
             localStorage.setItem('create_test_draft', JSON.stringify(draftData));
-            localStorage.setItem('auth_redirect_intent', '/create-test');
+            localStorage.setItem('auth_redirect_intent', returnUrl);
 
             toast.error("Please sign in to save your test.");
-            openAuthModal({ view: 'login', redirectPath: '/create-test' });
+            openAuthModal({ view: 'login', redirectPath: returnUrl });
             return;
         }
+
+        const localDesignation = typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null;
+        const hasDesignation = user?.user_metadata?.designation || profile?.designation || localDesignation;
+
+        if (!hasDesignation) {
+            localStorage.setItem('create_test_draft', JSON.stringify(draftData));
+            localStorage.setItem('auth_redirect_intent', returnUrl);
+
+            toast.info("Please set your designation to save your test.");
+            navigate('/onboarding');
+            return;
+        }
+
         if (!title.trim()) { toast.error("Test Title is required"); return; }
 
         // Validation Logic

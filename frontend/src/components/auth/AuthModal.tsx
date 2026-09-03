@@ -19,7 +19,6 @@ const authFormSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address." }),
     password: z.string().optional(),
     name: z.string().optional(),
-    designation: z.enum(["Teacher", "Institution", "Other"]).optional(),
 });
 
 export default function AuthModal() {
@@ -38,7 +37,6 @@ export default function AuthModal() {
             email: '',
             password: '',
             name: '',
-            designation: undefined,
         },
     });
 
@@ -68,26 +66,6 @@ export default function AuthModal() {
 
             // Successfully authenticated in popup! Refresh session state in-place
             await refreshSession();
-
-            // Check if user has designation or needs onboarding
-            const localDesignation = localStorage.getItem('user_designation');
-            const { fetchUserDetails } = await import('@/lib/usersApi');
-            const { supabase } = await import('@/integrations/supabase/client');
-            const sessionData = await supabase.auth.getSession();
-            const authedUser = sessionData.data?.session?.user;
-
-            let hasDesignation = authedUser?.user_metadata?.designation || localDesignation;
-            if (!hasDesignation && authedUser?.id) {
-                const profileRes = await fetchUserDetails(authedUser.id);
-                hasDesignation = profileRes.data?.designation;
-            }
-
-            if (!hasDesignation) {
-                setOnboardingName(authedUser?.user_metadata?.full_name || authedUser?.email?.split('@')[0] || '');
-                setAuthModalView('onboarding');
-                setIsLoading(false);
-                return;
-            }
 
             toast.success('Successfully signed in with Google!');
             closeAuthModal();
@@ -119,18 +97,6 @@ export default function AuthModal() {
 
                 await refreshSession();
 
-                // Check if user has designation
-                const localDesignation = localStorage.getItem('user_designation');
-                const hasDesignation = response.data?.user?.user_metadata?.designation || localDesignation;
-
-                if (!hasDesignation) {
-                    // Switch to inline onboarding view
-                    setOnboardingName(response.data?.user?.user_metadata?.full_name || values.email.split('@')[0]);
-                    setAuthModalView('onboarding');
-                    setIsLoading(false);
-                    return;
-                }
-
                 toast.success('Successfully signed in!');
                 closeAuthModal();
                 if (onSuccessCallback) onSuccessCallback();
@@ -146,13 +112,8 @@ export default function AuthModal() {
                     setIsLoading(false);
                     return;
                 }
-                if (!values.designation) {
-                    toast.error("Please select a designation");
-                    setIsLoading(false);
-                    return;
-                }
 
-                const { error } = await signUpWithEmail(values.email, values.password, values.name, values.designation);
+                const { error } = await signUpWithEmail(values.email, values.password, values.name);
                 if (error) {
                     if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
                         toast.error('Account already exists. Please sign in.');
@@ -169,7 +130,6 @@ export default function AuthModal() {
                     const response = await signInWithEmail(values.email, values.password);
                     if (response.error) throw response.error;
 
-                    localStorage.setItem('user_designation', values.designation);
                     await refreshSession();
 
                     toast.success('Account created and signed in!');
@@ -418,30 +378,7 @@ export default function AuthModal() {
                                         />
                                     )}
 
-                                    {authModalView === 'signup' && (
-                                        <FormField
-                                            control={form.control}
-                                            name="designation"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-1">
-                                                    <FormLabel className="text-xs font-semibold">I am a</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="h-10 text-xs rounded-xl">
-                                                                <SelectValue placeholder="Select your role" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Teacher">Teacher / Educator</SelectItem>
-                                                            <SelectItem value="Institution">School / Coaching Institution</SelectItem>
-                                                            <SelectItem value="Other">Student / Creator</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage className="text-[11px]" />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
+
 
 
                                     <Button

@@ -149,7 +149,7 @@ const ensureParsedObject = (val: any): any => {
 
 export default function AITestImporter({ onImport }: { onImport?: (data: any) => void }) {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const { openAuthModal } = useAuthModal();
 
     const [files, setFiles] = useState<SelectedFile[]>([]);
@@ -1264,6 +1264,24 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                 view: 'login',
                 redirectPath: '/generate-with-ai'
             });
+            return;
+        }
+
+        const localDesignation = typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null;
+        const hasDesignation = user?.user_metadata?.designation || profile?.designation || localDesignation;
+
+        if (!hasDesignation) {
+            try {
+                localStorage.setItem('pending_ai_import_test', JSON.stringify({
+                    parsedData,
+                    mode,
+                }));
+                localStorage.setItem('auth_redirect_intent', '/generate-with-ai');
+            } catch (e) {
+                console.warn("Could not save pending test to localStorage", e);
+            }
+            toast.info("Please set your designation to save your test.");
+            navigate('/onboarding');
             return;
         }
 

@@ -13,7 +13,6 @@ export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, profile, loading } = useAuth();
-    const { openOnboardingModal, isAuthModalOpen } = useAuthModal();
 
     // Sidebar collapsed state (persistent in localStorage)
     const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
@@ -52,7 +51,7 @@ export default function Layout() {
         }
     }, [location.pathname, location.search, user?.id]);
 
-    // Popup-based Onboarding Trigger (Keeps user on their current screen without hard page redirects)
+    // If user is already onboarded and visits /onboarding, redirect to home
     React.useEffect(() => {
         if (loading) return;
 
@@ -60,16 +59,11 @@ export default function Layout() {
             const localDesignation = localStorage.getItem('user_designation');
             const hasDesignation = user.user_metadata?.designation || profile?.designation || localDesignation;
 
-            if (!hasDesignation) {
-                // If on standalone /onboarding or /login page, leave route intact; otherwise open popup onboarding
-                if (location.pathname !== '/onboarding' && location.pathname !== '/login' && !isAuthModalOpen) {
-                    openOnboardingModal();
-                }
-            } else if (location.pathname === '/onboarding') {
+            if (hasDesignation && location.pathname === '/onboarding') {
                 navigate('/', { replace: true });
             }
         }
-    }, [user, profile, loading, navigate, location.pathname, openOnboardingModal, isAuthModalOpen]);
+    }, [user, profile, loading, navigate, location.pathname]);
 
     // Check if logged in user is Teacher or Institution
     const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);

@@ -1,6 +1,54 @@
 {
   "version": 1,
   "skills": {
+    "google-ads-api-account-diagnostics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-account-diagnostics/SKILL.md",
+      "computedHash": "f53665742bfde79f473f727474bba8ef1db8ec7b67de7fa63b283fa1c6b81038"
+    },
+    "google-ads-api-mcp-setup": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-mcp-setup/SKILL.md",
+      "computedHash": "c4e1407a6fbd3411e7a57e1d105df2615d604e9207bce237c445a3afb07e7e56"
+    },
+    "google-ads-api-quickstart": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-ads-api-quickstart/SKILL.md",
+      "computedHash": "523986435b17084ec2944ed6b17411916dcbb0d7f430ea9df671cee87f4e0273"
+    },
+    "google-mobile-ads-android-migrate-to-next-gen": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-android-migrate-to-next-gen/SKILL.md",
+      "computedHash": "7c1681cfba319151b98fe242845c3fc24e81c50189a0340488ec853b6b91276e"
+    },
+    "google-mobile-ads-banner": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-banner/SKILL.md",
+      "computedHash": "5c73ad33f03e93749382051f792c876f58eddd648126f336de0342f7c1579284"
+    },
+    "google-mobile-ads-get-started": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-get-started/SKILL.md",
+      "computedHash": "c907c39d75a9b8d3818519b14355f154755a051e6ced2692b71ca2cb4020c7ec"
+    },
+    "google-mobile-ads-interstitial": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-interstitial/SKILL.md",
+      "computedHash": "2b240e7dac5d389fc810a8e5be6355d227f397c75ada54da4e9aedd2e2a35443"
+    },
+    "google-mobile-ads-rewarded": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ads/google-mobile-ads-rewarded/SKILL.md",
+      "computedHash": "b246845cd8e357a94959787d9650e140c215b56352744591d62a02103c79cbb1"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

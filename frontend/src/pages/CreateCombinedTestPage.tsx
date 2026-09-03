@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 
 export default function CreateCombinedTestPage() {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const navigate = useNavigate();
 
     const [userTests, setUserTests] = useState<any[]>([]);
@@ -80,6 +80,22 @@ export default function CreateCombinedTestPage() {
     };
 
     const handleCreate = async () => {
+        if (!user) {
+            localStorage.setItem('auth_redirect_intent', '/create-combined-test');
+            toast.error('Please sign in to create combined tests.');
+            navigate('/login');
+            return;
+        }
+
+        const localDesignation = typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null;
+        const hasDesignation = user.user_metadata?.designation || profile?.designation || localDesignation;
+        if (!hasDesignation) {
+            localStorage.setItem('auth_redirect_intent', '/create-combined-test');
+            toast.info("Please set your designation to create combined tests.");
+            navigate('/onboarding');
+            return;
+        }
+
         if (!title.trim()) {
             toast.error('Please enter a title for the combined session');
             return;

@@ -99,9 +99,8 @@ export default function OnboardingPage() {
             if (redirectIntent) {
                 localStorage.removeItem('auth_redirect_intent');
             }
-            navigate(redirectIntent || '/', { replace: true });
-            // Reload to refresh the auth context with updated metadata
-            window.location.reload();
+            const destination = redirectIntent && redirectIntent !== '/onboarding' && redirectIntent !== '/login' ? redirectIntent : '/';
+            window.location.href = destination;
         } catch (error: any) {
             toast.error(error.message || 'Failed to update profile');
         } finally {
