@@ -153,12 +153,15 @@ export default function TeacherDashboard() {
         if (!selectedTestForConduct) return;
         try {
             const currentSettings = selectedTestForConduct.settings || {};
+            const nowIso = new Date().toISOString();
             const updatedSettings: any = {
                 ...currentSettings,
                 conduct_exam: {
                     ...(currentSettings.conduct_exam || {}),
                     enabled: true,
-                    slug: conductSlug
+                    slug: conductSlug,
+                    conduct_slug: conductSlug,
+                    started_at: nowIso
                 }
             };
 
@@ -188,7 +191,8 @@ export default function TeacherDashboard() {
                 ...currentSettings,
                 conduct_exam: {
                     ...(currentSettings.conduct_exam || {}),
-                    enabled: false
+                    enabled: false,
+                    ended_at: new Date().toISOString()
                 }
             };
 

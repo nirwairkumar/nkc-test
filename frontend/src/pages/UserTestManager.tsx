@@ -527,12 +527,14 @@ export default function UserTestManager() {
                 ? conductExamTest.slug
                 : (conductExamTest.settings?.conduct_exam?.original_slug || null);
 
+            const nowIso = new Date().toISOString();
             const newSettings = {
                 ...(conductExamTest.settings || {}),
                 conduct_exam: {
                     enabled: true,
                     conduct_slug: conductSlug,
                     original_slug: originalSlug,
+                    started_at: nowIso,
                 }
             };
 
@@ -596,7 +598,7 @@ export default function UserTestManager() {
 
         const resetSettings = {
             ...DEFAULT_ENVIRONMENT_SETTINGS,
-            conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false }
+            conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false, ended_at: new Date().toISOString() }
         };
 
         const payload: any = {
@@ -809,7 +811,7 @@ export default function UserTestManager() {
 
             const resetSettings = {
                 ...DEFAULT_ENVIRONMENT_SETTINGS,
-                conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false }
+                conduct_exam: { ...(test.settings?.conduct_exam || {}), enabled: false, ended_at: new Date().toISOString() }
             };
 
             const payload: any = {

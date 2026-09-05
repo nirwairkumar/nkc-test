@@ -492,7 +492,8 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
             ...test.settings,
             conduct_exam: {
                 ...test.settings?.conduct_exam,
-                enabled: false
+                enabled: false,
+                ended_at: new Date().toISOString()
             }
         };
         const { error } = await updateTest(test.id, { settings: updatedSettings }, isAdmin);
@@ -686,7 +687,8 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                             ...expTest.settings,
                             conduct_exam: {
                                 ...(expTest.settings?.conduct_exam || {}),
-                                enabled: false
+                                enabled: false,
+                                ended_at: new Date().toISOString()
                             }
                         };
                         await updateTest(expTest.id, { 
@@ -2135,7 +2137,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                         <div className="grid gap-4 sm:grid-cols-2">
                             {conductModeTests.map((t) => {
                                 const envSettings = getEnvironmentSettingsSummary(t.settings);
-                                const liveTimeStr = t.made_live_at || t.conduct_started_at || t.created_at;
+                                const liveTimeStr = t.made_live_at || t.conduct_started_at;
                                 const isScheduled = !!(t.is_scheduled || (t.settings?.schedule?.enabled && (t.end_time || t.start_time)));
                                 const scheduleEndTime = t.end_time || t.settings?.schedule?.end_time;
                                 const scheduleStartTime = t.start_time || t.settings?.schedule?.start_time;
@@ -2203,12 +2205,20 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                         </span>
                                                     </div>
                                                     <div className="text-right">
-                                                        <span className="font-bold text-[11px] text-emerald-800 dark:text-emerald-300 block font-mono">
-                                                            {formatIST(liveTimeStr)}
-                                                        </span>
-                                                        {formatTimeAgo(liveTimeStr) && (
-                                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                                                                ({formatTimeAgo(liveTimeStr)})
+                                                        {liveTimeStr ? (
+                                                            <>
+                                                                <span className="font-bold text-[11px] text-emerald-800 dark:text-emerald-300 block font-mono">
+                                                                    {formatIST(liveTimeStr)}
+                                                                </span>
+                                                                {formatTimeAgo(liveTimeStr) && (
+                                                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                                                        ({formatTimeAgo(liveTimeStr)})
+                                                                    </span>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <span className="font-semibold text-[11px] text-emerald-700 dark:text-emerald-300 block">
+                                                                Active (Current Link)
                                                             </span>
                                                         )}
                                                     </div>
@@ -2891,7 +2901,9 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
                                         <span className="text-slate-400 text-[10px] uppercase font-semibold block">Made Live Timestamp</span>
                                         <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
-                                            {formatIST(inspectingEnvTest.made_live_at || inspectingEnvTest.conduct_started_at || inspectingEnvTest.created_at, true)}
+                                            {(inspectingEnvTest.made_live_at || inspectingEnvTest.conduct_started_at)
+                                                ? formatIST(inspectingEnvTest.made_live_at || inspectingEnvTest.conduct_started_at, true)
+                                                : 'Active (Current Link)'}
                                         </span>
                                     </div>
 

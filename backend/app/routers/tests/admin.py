@@ -238,7 +238,8 @@ async def get_conduct_mode_tests():
                                     **settings,
                                     "conduct_exam": {
                                         **conduct_exam,
-                                        "enabled": False
+                                        "enabled": False,
+                                        "ended_at": now.isoformat()
                                     }
                                 }
                                 admin_db.table("tests").update({
@@ -269,18 +270,26 @@ async def get_conduct_mode_tests():
             for p in (profiles_res.data or []):
                 profiles_map[p["id"]] = p
                 
-        # 4. Fetch submission counts for conduct candidates
+        # 4. Fetch submission counts & conduct attempt timestamps for candidates
         candidate_ids = [t["id"] for t in conduct_candidates]
         submission_counts_map = {}
+        first_conduct_attempt_map = {}
         if candidate_ids:
             try:
                 attempts_res = admin_db.table("user_tests")\
-                    .select("test_id")\
+                    .select("test_id, created_at, metadata")\
                     .in_("test_id", candidate_ids)\
+                    .order("created_at", desc=False)\
                     .execute()
                 if attempts_res.data:
                     from collections import Counter
                     submission_counts_map = Counter(a["test_id"] for a in attempts_res.data)
+                    for a in attempts_res.data:
+                        tid = a["test_id"]
+                        meta = a.get("metadata") or {}
+                        if meta.get("conduct_exam") or meta.get("is_conducted_attempt"):
+                            if tid not in first_conduct_attempt_map and a.get("created_at"):
+                                first_conduct_attempt_map[tid] = a.get("created_at")
             except Exception as se:
                 print(f"Warning fetching submission counts for conduct tests: {se}")
 
@@ -294,10 +303,23 @@ async def get_conduct_mode_tests():
             settings = t.get("settings") or {}
             conduct_exam = settings.get("conduct_exam") or {}
             schedule = settings.get("schedule") or {}
-            start_time_str = schedule.get("start_time")
-            end_time_str = schedule.get("end_time")
+            start_time_str = schedule.get("start_time") if schedule.get("enabled") else None
+            end_time_str = schedule.get("end_time") if schedule.get("enabled") else None
             
-            made_live_at = conduct_exam.get("started_at") or start_time_str or t.get("created_at")
+            # The timestamp when this test went live with the recent/current link:
+            # 1. conduct_exam.started_at (exact moment creator confirmed link / went live)
+            # 2. schedule start_time (if scheduled test)
+            # 3. first attempt under this conduct exam link
+            # 4. created_at ONLY if created recently (< 48 hours ago), otherwise None
+            recent_live_at = conduct_exam.get("started_at") or start_time_str or first_conduct_attempt_map.get(t["id"])
+            if not recent_live_at and t.get("created_at"):
+                try:
+                    c_dt = datetime.fromisoformat(t["created_at"].replace("Z", "+00:00"))
+                    if (now - c_dt).total_seconds() < 172800:
+                        recent_live_at = t["created_at"]
+                except Exception:
+                    pass
+            made_live_at = recent_live_at
             
             conduct_tests.append({
                 "id": t["id"],
