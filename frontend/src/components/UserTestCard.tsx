@@ -27,7 +27,7 @@ import {
     GitFork,
     AlertTriangle,
 } from 'lucide-react';
-import TestVoteButtons from '@/components/TestVoteButtons';
+
 
 const isProctoringEnabled = (test: any) => {
     const s = test?.settings;
@@ -238,10 +238,6 @@ export function UserTestCard({
                         </span>
                     </div>
                 )}
-
-                <div className="ml-auto">
-                    <TestVoteButtons testId={test.id} userId={undefined} isCreatorOrAdmin={true} />
-                </div>
             </div>
 
             {/* --- Zone D: Actions --- */}

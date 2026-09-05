@@ -308,7 +308,7 @@ async def get_user_tests(
                 giant_or.append(f"custom_id.ilike.%{tok}%")
                 
             query_search = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, total_max_marks, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, total_max_marks, classes(name)")\
                 .eq("created_by", user_id)\
                 .or_(",".join(giant_or))\
                 .limit(800)
@@ -340,7 +340,7 @@ async def get_user_tests(
         else:
             # Default fetch — include settings/visibility/slug for conduct exam detection
             query_default = db.table("tests")\
-                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks, classes(name), test_votes(count)")\
+                .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks, classes(name)")\
                 .eq("created_by", user_id)\
                 .order("created_at", desc=True)
             if profile_view:
@@ -442,10 +442,6 @@ async def get_user_tests(
                 t["creator_name"] = creator_info.get("full_name")
                 t["creator_avatar"] = creator_info.get("avatar_url")
                 t["creator_verified"] = creator_info.get("is_verified_creator")
-            
-            # Ensure likes count is present if not in RPC result
-            if 'test_votes' not in t and 'id' in t:
-                 pass
 
             enriched_tests.append(t)
             

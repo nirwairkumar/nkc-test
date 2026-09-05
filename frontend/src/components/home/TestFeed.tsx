@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, ChevronDown, Library } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTests, Test } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Edit, GitFork } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import TestVoteButtons from '@/components/TestVoteButtons';
 import { fetchTestCardSnippet, getTestAttemptStatus } from '@/lib/testsApi';
 import { toast } from 'sonner';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
@@ -210,8 +209,7 @@ export default function IndependentTestCard({ testId, initialTitle, user, onMana
                         </div>
                     </div>
                 </CardContent>
-                <CardFooter className="p-3 pt-0 flex justify-between items-center gap-2">
-                    <div className="flex-none"><TestVoteButtons testId={test.id} userId={user?.id} /></div>
+                <CardFooter className="p-3 pt-0 flex justify-end items-center gap-2">
                     {user?.id === test.created_by ? (
                         <div className="flex-1 flex gap-2">
                             {onManageTest && (

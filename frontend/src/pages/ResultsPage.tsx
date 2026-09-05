@@ -43,7 +43,6 @@ import { BehavioralTimeMatrix } from '@/components/results/BehavioralTimeMatrix'
 import { useAuth } from '@/contexts/AuthContext';
 import 'katex/dist/katex.min.css';
 import LatexRenderer from '@/components/ui/LatexRenderer';
-import TestVoteButtons from '@/components/TestVoteButtons';
 import ReactMarkdown from 'react-markdown';
 import { AIChatBot } from '@/components/AIChatBot';
 import {
@@ -681,11 +680,6 @@ const ResultsPage = () => {
                             </Badge>
                           </div>
                         </div>
-                        {testId && (
-                          <div className="absolute bottom-0 right-0 md:static bg-white/20 backdrop-blur-md rounded-tl-lg md:rounded-full p-0.5 shadow-sm border-t border-l md:border border-white/30 self-end scale-90 md:scale-100 origin-bottom-right z-10 transition-all">
-                            <TestVoteButtons testId={testId} className="!bg-transparent rounded-none md:rounded-full" />
-                          </div>
-                        )}
                       </div>
 
                       {/* Merged Subject Marks */}

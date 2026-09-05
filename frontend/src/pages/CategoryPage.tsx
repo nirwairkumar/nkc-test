@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, Share2, ArrowRight, Settings, Loader2, Edit, Layers } from 'lucide-react';
-import TestVoteButtons from '@/components/TestVoteButtons';
 import TestCardCategoryList from '@/components/home/TestCardCategoryList';
 import { toSlug } from '@/lib/slugUtils';
 import { toast } from 'sonner';
