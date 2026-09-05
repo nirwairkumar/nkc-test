@@ -60,6 +60,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
         return `${secs}s`;
     };
     const [loading, setLoading] = useState(true);
+    const [loadingAnalysisId, setLoadingAnalysisId] = useState<string | null>(null);
     const [showRank, setShowRank] = useState(false);
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
     const [fullTest, setFullTest] = useState<any>(null);
@@ -107,7 +108,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
     };
 
     const handleOpenAnalysis = async (attempt: any) => {
-        setLoading(true);
+        setLoadingAnalysisId(attempt.id);
         try {
             const needsQuestions = !fullTest || (!fullTest.questions && (!fullTest.sections || fullTest.sections.length === 0 || !fullTest.sections[0].questions));
             const needsAnswers = !attempt.answers;
@@ -137,7 +138,7 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
             console.error("Error fetching detailed result data", err);
             toast.error("Failed to load details");
         } finally {
-            setLoading(false);
+            setLoadingAnalysisId(null);
         }
     };
 
@@ -915,10 +916,15 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
+                                                        disabled={loadingAnalysisId === attempt.id}
                                                         className="h-6 px-2 text-[10px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
                                                         onClick={() => handleOpenAnalysis(attempt)}
                                                     >
-                                                        <BarChart3 className="w-3 h-3 mr-1" />
+                                                        {loadingAnalysisId === attempt.id ? (
+                                                            <Loader2 className="w-3 h-3 mr-1 animate-spin text-indigo-600" />
+                                                        ) : (
+                                                            <BarChart3 className="w-3 h-3 mr-1" />
+                                                        )}
                                                         Detailed Result
                                                     </Button>
                                                     <Button
@@ -1044,10 +1050,15 @@ export default function TestResultsPanel({ test, onClose }: TestResultsPanelProp
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="icon"
+                                                                            disabled={loadingAnalysisId === attempt.id}
                                                                             className="h-8 w-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
                                                                             onClick={() => handleOpenAnalysis(attempt)}
                                                                         >
-                                                                            <BarChart3 className="w-4 h-4" />
+                                                                            {loadingAnalysisId === attempt.id ? (
+                                                                                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                                                                            ) : (
+                                                                                <BarChart3 className="w-4 h-4" />
+                                                                            )}
                                                                         </Button>
                                                                     </TooltipTrigger>
                                                                     <TooltipContent>
