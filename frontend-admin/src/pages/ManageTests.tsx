@@ -36,6 +36,7 @@ import { TestCardSkeleton } from '@/components/TestCardSkeleton';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import SplashLoader from '@/components/ui/SplashLoader';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { getUserAppUrl } from '@/utils/subdomain';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -50,7 +51,7 @@ import {
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
 import { shareTest } from '@/utils/shareUtils';
-import { getUserAppUrl } from '@/utils/subdomain';
+
 interface ManageTestsProps {
     activeTab?: string;
 }
@@ -502,6 +503,15 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
         } else {
             toast.success("Conduct mode stopped successfully.");
             loadConductModeTests();
+        }
+    };
+
+    const handleCopyLiveLink = async (url: string) => {
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success("Live exam link copied to clipboard!");
+        } catch {
+            toast.error("Failed to copy live link");
         }
     };
 
@@ -2141,6 +2151,8 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 const isScheduled = !!(t.is_scheduled || (t.settings?.schedule?.enabled && (t.end_time || t.start_time)));
                                 const scheduleEndTime = t.end_time || t.settings?.schedule?.end_time;
                                 const scheduleStartTime = t.start_time || t.settings?.schedule?.start_time;
+                                const conductSlug = t.settings?.conduct_exam?.conduct_slug || t.slug;
+                                const liveUrl = conductSlug ? getUserAppUrl(`/test/${conductSlug}`) : '';
                                 
                                 return (
                                     <Card key={t.id} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between rounded-xl shadow-xs">
@@ -2884,6 +2896,43 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                     Manage Settings
                                 </Button>
                             </div>
+
+                            {/* Active Live Link in Inspect Modal */}
+                            {((inspectingEnvTest.settings?.conduct_exam?.conduct_slug) || inspectingEnvTest.slug) && (
+                                <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100/70 dark:border-blue-900/40 gap-2">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                        <LinkIcon className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                            <span className="text-[10px] uppercase font-bold text-blue-900/70 dark:text-blue-300/70 block tracking-wide">
+                                                Active Live Exam Link
+                                            </span>
+                                            <span className="text-xs font-mono font-semibold text-blue-950 dark:text-blue-100 truncate block select-all">
+                                                {getUserAppUrl(`/test/${inspectingEnvTest.settings?.conduct_exam?.conduct_slug || inspectingEnvTest.slug}`)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 px-2 text-xs font-semibold text-blue-700 bg-white dark:bg-slate-900 border-blue-200 dark:border-blue-800 hover:bg-blue-50 cursor-pointer"
+                                            onClick={() => handleCopyLiveLink(getUserAppUrl(`/test/${inspectingEnvTest.settings?.conduct_exam?.conduct_slug || inspectingEnvTest.slug}`))}
+                                        >
+                                            <Copy className="h-3 w-3 mr-1" />
+                                            Copy
+                                        </Button>
+                                        <a
+                                            href={getUserAppUrl(`/test/${inspectingEnvTest.settings?.conduct_exam?.conduct_slug || inspectingEnvTest.slug}`)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="h-7 px-2.5 inline-flex items-center justify-center text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors shadow-xs"
+                                        >
+                                            <ExternalLink className="h-3 w-3 mr-1" />
+                                            Open
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Section 1: Timing & IST Schedule */}
                             <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5 bg-white dark:bg-slate-950/40">
