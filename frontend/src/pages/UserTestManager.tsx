@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield, AlertTriangle, Copy, Share2 } from 'lucide-react';
+import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield, AlertTriangle, Copy, Share2, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
@@ -55,6 +55,7 @@ import CreatorDashboardTour from '@/components/CreatorDashboardTour';
 import SplashLoader from '@/components/ui/SplashLoader';
 import { CurrentGoalWidget } from '@/components/CurrentGoalWidget';
 import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
+import { supabase } from '@/integrations/supabase/client';
 
 const isProctoringEnabled = (test: any) => {
     const s = test?.settings;
@@ -80,9 +81,17 @@ export default function UserTestManager() {
         return searchParams.get('tab') === 'reports' ? 'reports' : 'tests';
     });
 
+    const [selectedReportTestId, setSelectedReportTestId] = useState<string | null>(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        return searchParams.get('testId');
+    });
+
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
         const currentTab = searchParams.get('tab');
+        const testIdParam = searchParams.get('testId');
+        setSelectedReportTestId(testIdParam);
+
         if (currentTab === 'reports') {
             setActiveTab('reports');
             loadReports();
@@ -260,6 +269,36 @@ export default function UserTestManager() {
             toast.success("Report marked as solved");
             loadReports();
         }
+    };
+
+    useEffect(() => {
+        if (targetUserId) {
+            loadReports();
+        }
+    }, [targetUserId]);
+
+    const unresolvedReportsByTestId = React.useMemo(() => {
+        const map: Record<string, number> = {};
+        reports.forEach(r => {
+            if (r.status === 'open' && r.test_id) {
+                map[r.test_id] = (map[r.test_id] || 0) + 1;
+            }
+        });
+        return map;
+    }, [reports]);
+
+    const handleOpenTestReports = (test: any) => {
+        setSelectedReportTestId(test?.id || null);
+        setActiveTab('reports');
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('tab', 'reports');
+        if (test?.id) {
+            searchParams.set('testId', test.id);
+        } else {
+            searchParams.delete('testId');
+        }
+        navigate(`/my-tests?${searchParams.toString()}`);
+        loadReports();
     };
 
     const loadUserTests = React.useCallback(async (reset = false) => {
@@ -724,6 +763,33 @@ export default function UserTestManager() {
     );
     const regularTests = tests; // Show all tests in grid (conducted ones also show with LIVE badge)
 
+    const [activeSubmissionCounts, setActiveSubmissionCounts] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        if (activeExams.length === 0) return;
+        const testIds = activeExams.map(t => t.id);
+
+        const fetchActiveCounts = async () => {
+            try {
+                const { data, error } = await (supabase as any)
+                    .from('user_tests')
+                    .select('test_id')
+                    .in('test_id', testIds);
+                if (data && !error) {
+                    const counts: Record<string, number> = {};
+                    data.forEach((row: any) => {
+                        counts[row.test_id] = (counts[row.test_id] || 0) + 1;
+                    });
+                    setActiveSubmissionCounts(counts);
+                }
+            } catch (err) {
+                console.error('Failed to load active submissions count:', err);
+            }
+        };
+
+        fetchActiveCounts();
+    }, [activeExams.map(t => t.id).join(',')]);
+
     // Auto-transition: when a scheduled exam ends, move it to inactive with private mode
     const autoDeactivatedRef = React.useRef<Set<string>>(new Set());
     useEffect(() => {
@@ -800,7 +866,7 @@ export default function UserTestManager() {
                     <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-violet-100 bg-violet-50/50 text-[11px] text-violet-700 max-w-2xl flex-1 justify-center mx-4">
                         <Info className="h-3.5 w-3.5 text-violet-500 shrink-0" />
                         <span>
-                            Use <strong>"Conduct"</strong> mode on any test card to organize live exams, enable proctoring, and view submitted results.
+                            Use <strong>"Conduct Online"</strong> mode on any test card to organize live exams, enable proctoring, and view submitted results.
                         </span>
                     </div>
                 </div>
@@ -851,6 +917,7 @@ export default function UserTestManager() {
                                         ? `${window.location.origin}/test/${conductSlug}`
                                         : `${window.location.origin}/test-intro/${test.id}`;
                                     const questionCount = test.total_questions || test.questions?.length || 0;
+                                    const submissionCount = activeSubmissionCounts[test.id] ?? test.submission_count ?? 0;
 
                                     return (
                                         <div
@@ -937,15 +1004,23 @@ export default function UserTestManager() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
-                                                        onClick={() => setViewingResultsTest(test)}
-                                                    >
-                                                        <BarChart2 className="w-3.5 h-3.5 sm:mr-1.5" />
-                                                        <span className="hidden sm:inline">Results</span>
-                                                    </Button>
+                                                    <div className="relative">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
+                                                            onClick={() => setViewingResultsTest(test)}
+                                                        >
+                                                            <BarChart2 className="w-3.5 h-3.5 sm:mr-1.5" />
+                                                            <span className="hidden sm:inline">Results</span>
+                                                        </Button>
+                                                        {submissionCount > 0 && (
+                                                            <span className="absolute -top-1.5 -right-1.5 z-10 min-w-[18px] h-[18px] px-1 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-sm leading-none pointer-events-none">
+                                                                {submissionCount > 99 ? '99+' : submissionCount}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
@@ -958,12 +1033,34 @@ export default function UserTestManager() {
 
                                                     {/* Full hamburger menu — identical to normal card */}
                                                     <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
+                                                        <div className="relative inline-flex">
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50 cursor-pointer">
+                                                                    <MoreVertical className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
+                                                                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 pointer-events-none animate-pulse" />
+                                                            )}
+                                                        </div>
                                                         <DropdownMenuContent align="end" className="w-56">
+                                                            <DropdownMenuItem onClick={() => setViewingResultsTest(test)}>
+                                                                <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
+                                                            </DropdownMenuItem>
+                                                            {/* Reports */}
+                                                            <DropdownMenuItem onClick={() => handleOpenTestReports(test)} className="flex items-center justify-between cursor-pointer">
+                                                                <div className="flex items-center">
+                                                                    <Inbox className="mr-2 h-4 w-4 text-slate-500" /> Reports
+                                                                </div>
+                                                                {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
+                                                                    <span className="flex items-center gap-1.5">
+                                                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                                                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/50 px-1.5 py-0.5 rounded-full border border-red-200 dark:border-red-900 leading-none">
+                                                                            {unresolvedReportsByTestId[test.id]}
+                                                                        </span>
+                                                                    </span>
+                                                                )}
+                                                            </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={() => openTestEditor(test)}>
                                                                 <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
                                                             </DropdownMenuItem>
@@ -1082,14 +1179,33 @@ export default function UserTestManager() {
 
                                                     {/* Hamburger menu */}
                                                     <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50">
-                                                                <MoreVertical className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
+                                                        <div className="relative inline-flex">
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50 cursor-pointer">
+                                                                    <MoreVertical className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
+                                                                <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 pointer-events-none animate-pulse" />
+                                                            )}
+                                                        </div>
                                                         <DropdownMenuContent align="end" className="w-56">
                                                             <DropdownMenuItem onClick={() => setViewingResultsTest(test)}>
                                                                 <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
+                                                            </DropdownMenuItem>
+                                                            {/* Reports */}
+                                                            <DropdownMenuItem onClick={() => handleOpenTestReports(test)} className="flex items-center justify-between cursor-pointer">
+                                                                <div className="flex items-center">
+                                                                    <Inbox className="mr-2 h-4 w-4 text-slate-500" /> Reports
+                                                                </div>
+                                                                {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
+                                                                    <span className="flex items-center gap-1.5">
+                                                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                                                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/50 px-1.5 py-0.5 rounded-full border border-red-200 dark:border-red-900 leading-none">
+                                                                            {unresolvedReportsByTestId[test.id]}
+                                                                        </span>
+                                                                    </span>
+                                                                )}
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem onClick={() => openTestEditor(test)}>
                                                                 <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
@@ -1212,6 +1328,8 @@ export default function UserTestManager() {
                                                     }
                                                 }}
                                                 onConductExam={handleConductExam}
+                                                onViewReports={handleOpenTestReports}
+                                                unresolvedReportsCount={unresolvedReportsByTestId[test.id] || 0}
                                                 showEnvPopup={showEnvPopupTestId === test.id}
                                             />
                                         );
@@ -1245,25 +1363,81 @@ export default function UserTestManager() {
 
                 <TabsContent value="reports" className="space-y-4 m-0 border-0 p-0">
                     <Card className="p-4 md:p-6 shadow-sm border-slate-200">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600">
-                                <Inbox className="w-5 h-5" />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs text-slate-600 hover:text-slate-900 -ml-2 gap-1.5 cursor-pointer shrink-0"
+                                    onClick={() => {
+                                        setSelectedReportTestId(null);
+                                        setActiveTab('tests');
+                                        navigate('/my-tests');
+                                    }}
+                                >
+                                    <ArrowLeft className="w-4 h-4" /> Back to Tests
+                                </Button>
+                                <div className="w-10 h-10 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
+                                    <Inbox className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800">Issue Reports</h2>
+                                    <p className="text-xs text-slate-500">Reports filed by users taking your tests.</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-800">Issue Reports</h2>
-                                <p className="text-sm text-slate-500">Reports filed by users taking your tests.</p>
-                            </div>
+
+                            {selectedReportTestId && (
+                                <div className="flex items-center gap-2 bg-violet-50 text-violet-700 px-3 py-1.5 rounded-lg border border-violet-100 text-xs">
+                                    <span className="truncate max-w-[220px]">
+                                        Filtered test: <strong>{tests.find(t => t.id === selectedReportTestId)?.title || reports.find(r => r.test_id === selectedReportTestId)?.tests?.title || 'Selected Test'}</strong>
+                                    </span>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 px-1.5 text-xs text-violet-700 hover:text-violet-900 hover:bg-violet-100 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedReportTestId(null);
+                                            const searchParams = new URLSearchParams(location.search);
+                                            searchParams.delete('testId');
+                                            navigate(`/my-tests?${searchParams.toString()}`);
+                                        }}
+                                    >
+                                        <X className="w-3.5 h-3.5 mr-1" /> Show All
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         {reportsLoading ? (
-                            <div className="py-10 text-center text-muted-foreground">Loading reports...</div>
-                        ) : reports.length === 0 ? (
+                            <div className="py-10 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+                                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                                <span>Loading reports...</span>
+                            </div>
+                        ) : (selectedReportTestId ? reports.filter(r => r.test_id === selectedReportTestId) : reports).length === 0 ? (
                             <div className="py-10 text-center border dashed rounded-md text-muted-foreground border-slate-200 bg-slate-50">
-                                No reports found.
+                                {selectedReportTestId ? (
+                                    <div className="space-y-2">
+                                        <p>No reports found for this test.</p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setSelectedReportTestId(null);
+                                                const searchParams = new URLSearchParams(location.search);
+                                                searchParams.delete('testId');
+                                                navigate(`/my-tests?${searchParams.toString()}`);
+                                            }}
+                                        >
+                                            View All Reports
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    "No reports found."
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {reports.map((report) => (
+                                {(selectedReportTestId ? reports.filter(r => r.test_id === selectedReportTestId) : reports).map((report) => (
                                     <div key={report.id} className={`p-4 rounded-lg border flex flex-col md:flex-row gap-4 items-start md:items-center justify-between transition-colors
                                         ${report.status === 'open' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-70'}
                                     `}>
@@ -1289,7 +1463,7 @@ export default function UserTestManager() {
                                             )}
                                         </div>
                                         {report.status === 'open' && (
-                                            <Button size="sm" variant="outline" className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 shrink-0" onClick={() => handleResolveReport(report.id)}>
+                                            <Button size="sm" variant="outline" className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 shrink-0 cursor-pointer" onClick={() => handleResolveReport(report.id)}>
                                                 <CheckCircle className="w-4 h-4 mr-2" /> Mark Solved
                                             </Button>
                                         )}

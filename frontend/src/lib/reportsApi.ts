@@ -11,6 +11,7 @@ export interface ReportCreatePayload {
 export interface Report {
     id: string;
     created_at: string;
+    test_id?: string;
     question_id: number;
     reason: string;
     details: string | null;

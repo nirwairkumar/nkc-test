@@ -214,12 +214,6 @@ Item 2 & Value B & 200 \\\\
         },
         ...(!isAiPage && !isCreateTestPage ? [
             {
-                title: 'Reports',
-                path: '/my-tests?tab=reports',
-                icon: BarChart2,
-                matchPaths: ['/results', '/results/analytics']
-            },
-            {
                 title: 'All Submissions',
                 path: '/all-submissions',
                 icon: ClipboardList,
@@ -258,11 +252,8 @@ Item 2 & Value B & 200 \\\\
         if (item.path === '/dashboard') {
             return location.pathname === '/dashboard';
         }
-        if (item.title === 'Reports') {
-            return location.pathname === '/my-tests' && location.search.includes('tab=reports');
-        }
         if (item.title === 'My Tests') {
-            return location.pathname === '/my-tests' && !location.search.includes('tab=reports');
+            return location.pathname === '/my-tests';
         }
         if (item.matchPaths) {
             return item.matchPaths.some(p => location.pathname.startsWith(p));

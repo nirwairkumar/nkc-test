@@ -72,7 +72,7 @@ export default function ConductExamDialog({
                         </div>
                         <div>
                             <DialogTitle className="text-white text-base font-bold leading-tight">
-                                Conduct Exam
+                                Conduct Online Exam
                             </DialogTitle>
                             <DialogDescription className="text-white/70 text-[11px] mt-0.5">
                                 Generate a secure private link

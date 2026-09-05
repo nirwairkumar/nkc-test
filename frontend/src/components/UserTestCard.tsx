@@ -26,6 +26,8 @@ import {
     BarChart2,
     GitFork,
     AlertTriangle,
+    Inbox,
+    AlertCircle,
 } from 'lucide-react';
 
 
@@ -57,6 +59,8 @@ interface UserTestCardProps {
     onViewResults: (test: any) => void;
     onView: (test: any) => void;
     onConductExam: (test: any) => void;
+    onViewReports?: (test: any) => void;
+    unresolvedReportsCount?: number;
     showEnvPopup?: boolean;
 }
 
@@ -75,6 +79,8 @@ export function UserTestCard({
     onViewResults,
     onView,
     onConductExam,
+    onViewReports,
+    unresolvedReportsCount = 0,
     showEnvPopup,
 }: UserTestCardProps) {
     const visibility = test.visibility || (test.is_public ? 'public' : 'private');
@@ -139,11 +145,16 @@ export function UserTestCard({
                 {/* Top Actions: Menu */}
                 <div className="shrink-0 -mr-1 -mt-1">
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50 dark:hover:bg-slate-800">
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
+                        <div className="relative inline-flex">
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50 dark:hover:bg-slate-800 cursor-pointer">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            {unresolvedReportsCount > 0 && (
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 pointer-events-none animate-pulse" />
+                            )}
+                        </div>
                         <DropdownMenuContent align="end" className="w-56">
                             {/* Visibility (only Public / Private — no unlisted) */}
                             <DropdownMenuSub>
@@ -170,6 +181,21 @@ export function UserTestCard({
                                 <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
                             </DropdownMenuItem>
 
+                            {/* Reports */}
+                            <DropdownMenuItem onClick={() => onViewReports?.(test)} className="flex items-center justify-between cursor-pointer">
+                                <div className="flex items-center">
+                                    <Inbox className="mr-2 h-4 w-4 text-slate-500" /> Reports
+                                </div>
+                                {unresolvedReportsCount > 0 && (
+                                    <span className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/50 px-1.5 py-0.5 rounded-full border border-red-200 dark:border-red-900 leading-none">
+                                            {unresolvedReportsCount}
+                                        </span>
+                                    </span>
+                                )}
+                            </DropdownMenuItem>
+
                             <DropdownMenuItem onClick={() => onEdit(test)}>
                                 <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
                             </DropdownMenuItem>
@@ -185,7 +211,7 @@ export function UserTestCard({
                             {/* Conduct Exam */}
                             {!isConducted && (
                                 <DropdownMenuItem onClick={() => onConductExam(test)} className="text-indigo-600 focus:text-indigo-700 focus:bg-indigo-50">
-                                    <Radio className="mr-2 h-4 w-4" /> Conduct Exam
+                                    <Radio className="mr-2 h-4 w-4" /> Conduct Online Exam
                                 </DropdownMenuItem>
                             )}
 
@@ -261,7 +287,7 @@ export function UserTestCard({
                         onClick={() => onConductExam(test)}
                     >
                         <Radio className="w-3.5 h-3.5" />
-                        <span>Conduct</span>
+                        <span>Conduct Online</span>
                     </Button>
                 )}
 

@@ -434,6 +434,17 @@ async def get_user_tests(
         # Optimization: We know the user_id, just fetch once
         profile_res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").eq("id", user_id).single().execute()
         creator_info = profile_res.data if profile_res.data else {}
+
+        # Fetch submission counts from user_tests
+        submission_counts_map = {}
+        if test_ids:
+            try:
+                attempts_res = db.table("user_tests").select("test_id").in_("test_id", test_ids).execute()
+                if attempts_res.data:
+                    from collections import Counter
+                    submission_counts_map = Counter(a["test_id"] for a in attempts_res.data)
+            except Exception as se:
+                print(f"Warning fetching submission counts: {se}")
         
         enriched_tests = []
         for t in paginated_subset:
@@ -443,6 +454,7 @@ async def get_user_tests(
                 t["creator_avatar"] = creator_info.get("avatar_url")
                 t["creator_verified"] = creator_info.get("is_verified_creator")
 
+            t["submission_count"] = submission_counts_map.get(t["id"], 0)
             enriched_tests.append(t)
             
         if is_paginated:

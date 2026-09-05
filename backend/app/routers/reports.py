@@ -65,7 +65,7 @@ async def get_creator_reports(creator_id: str, db: Client = Depends(get_db)):
     try:
         # Fetch reports and join with test title to display nicely in the dashboard
         response = admin_db.table("question_reports") \
-                     .select("id, created_at, question_id, reason, details, status, reporter_id, tests(title, custom_id)") \
+                     .select("id, created_at, test_id, question_id, reason, details, status, reporter_id, tests(title, custom_id)") \
                      .eq("creator_id", creator_id) \
                      .order("created_at", desc=True) \
                      .execute()
@@ -126,7 +126,7 @@ async def get_admin_users_report_stats():
 async def get_admin_user_reports(user_id: str):
     try:
         response = admin_db.table("question_reports") \
-                           .select("id, created_at, question_id, reason, details, status, reporter_id, tests(title, custom_id)") \
+                           .select("id, created_at, test_id, question_id, reason, details, status, reporter_id, tests(title, custom_id)") \
                            .eq("creator_id", user_id) \
                            .order("created_at", desc=True) \
                            .execute()
