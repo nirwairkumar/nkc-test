@@ -205,9 +205,9 @@ async def admin_clone_test(
 async def get_conduct_mode_tests():
     try:
         from app.core.database import supabase as admin_db
-        # 1. Fetch all tests with settings, created_by, created_at
+        # 1. Fetch all tests with settings, created_by, created_at, updated_at
         response = admin_db.table("tests")\
-            .select("id, title, custom_id, settings, created_by, created_at")\
+            .select("id, title, custom_id, duration, total_questions, settings, created_by, created_at, updated_at, is_public, visibility, slug")\
             .execute()
         
         all_tests = response.data or []
@@ -228,11 +228,27 @@ async def get_conduct_mode_tests():
                 # Check if schedule end_time has passed
                 schedule = settings.get("schedule") or {}
                 end_time_str = schedule.get("end_time")
-                if end_time_str:
+                if schedule.get("enabled") and end_time_str:
                     try:
                         end_time = datetime.fromisoformat(end_time_str.replace("Z", "+00:00"))
                         if end_time < now:
-                            continue # Has ended
+                            # Auto-deactivate ended scheduled exam in database
+                            try:
+                                updated_settings = {
+                                    **settings,
+                                    "conduct_exam": {
+                                        **conduct_exam,
+                                        "enabled": False
+                                    }
+                                }
+                                admin_db.table("tests").update({
+                                    "settings": updated_settings,
+                                    "visibility": "private",
+                                    "is_public": False
+                                }).eq("id", t["id"]).execute()
+                            except Exception as deact_err:
+                                print(f"Error auto-deactivating expired test {t['id']}: {deact_err}")
+                            continue # Has ended and auto-deactivated
                     except Exception as parse_err:
                         print(f"Error parsing schedule end_time for test {t['id']}: {parse_err}")
                 
@@ -247,13 +263,28 @@ async def get_conduct_mode_tests():
         profiles_map = {}
         if creator_ids:
             profiles_res = admin_db.table("profiles")\
-                .select("id, full_name, email")\
+                .select("id, full_name, email, avatar_url, is_verified_creator")\
                 .in_("id", list(creator_ids))\
                 .execute()
             for p in (profiles_res.data or []):
                 profiles_map[p["id"]] = p
                 
-        # 4. Enrich and format response
+        # 4. Fetch submission counts for conduct candidates
+        candidate_ids = [t["id"] for t in conduct_candidates]
+        submission_counts_map = {}
+        if candidate_ids:
+            try:
+                attempts_res = admin_db.table("user_tests")\
+                    .select("test_id")\
+                    .in_("test_id", candidate_ids)\
+                    .execute()
+                if attempts_res.data:
+                    from collections import Counter
+                    submission_counts_map = Counter(a["test_id"] for a in attempts_res.data)
+            except Exception as se:
+                print(f"Warning fetching submission counts for conduct tests: {se}")
+
+        # 5. Enrich and format response
         conduct_tests = []
         for t in conduct_candidates:
             creator_id = t.get("created_by")
@@ -261,18 +292,34 @@ async def get_conduct_mode_tests():
             creator_name = profile.get("full_name") or "Unknown"
             
             settings = t.get("settings") or {}
+            conduct_exam = settings.get("conduct_exam") or {}
             schedule = settings.get("schedule") or {}
+            start_time_str = schedule.get("start_time")
             end_time_str = schedule.get("end_time")
+            
+            made_live_at = conduct_exam.get("started_at") or start_time_str or t.get("updated_at") or t.get("created_at")
             
             conduct_tests.append({
                 "id": t["id"],
                 "title": t["title"],
                 "custom_id": t.get("custom_id"),
+                "duration": t.get("duration"),
+                "total_questions": t.get("total_questions"),
+                "slug": t.get("slug"),
+                "visibility": t.get("visibility"),
                 "creator_name": creator_name,
                 "creator_email": profile.get("email"),
+                "creator_avatar": profile.get("avatar_url"),
+                "creator_verified": profile.get("is_verified_creator", False),
                 "created_by": creator_id,
+                "created_at": t.get("created_at"),
+                "updated_at": t.get("updated_at"),
+                "made_live_at": made_live_at,
+                "start_time": start_time_str,
                 "end_time": end_time_str,
-                "settings": settings
+                "is_scheduled": bool(schedule.get("enabled") and (start_time_str or end_time_str)),
+                "settings": settings,
+                "submission_count": submission_counts_map.get(t["id"], 0)
             })
             
         return conduct_tests

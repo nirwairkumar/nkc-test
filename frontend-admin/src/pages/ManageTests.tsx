@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers, Copy, Edit, Radio, BarChart2, Loader2, X, Menu } from 'lucide-react';
+import { Trash2, Settings, Save, Plus, Pencil, FileText, Info, Clock, CheckCircle, Search, RefreshCw, Users, BookOpen, GraduationCap, MoreVertical, Globe, Link as LinkIcon, Lock, Check, ArrowRight, Upload, Layers, Copy, Edit, Radio, BarChart2, Loader2, X, Menu, Shield, ShieldCheck, ShieldAlert, Eye, Maximize2, Calendar, SlidersHorizontal, CheckCircle2, XCircle, Timer, AlertTriangle, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import {
     DropdownMenu,
@@ -144,6 +144,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
 
     const [conductModeTests, setConductModeTests] = useState<any[]>([]);
     const [conductModeLoading, setConductModeLoading] = useState(false);
+    const [inspectingEnvTest, setInspectingEnvTest] = useState<any | null>(null);
 
     // Three-dot menu state
     const [allClasses, setAllClasses] = useState<any[]>([]);
@@ -502,6 +503,210 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
             loadConductModeTests();
         }
     };
+
+    const formatIST = (dateStr?: string | null, includeSeconds: boolean = false) => {
+        if (!dateStr) return 'N/A';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return String(dateStr);
+            return date.toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                ...(includeSeconds ? { second: '2-digit' } : {}),
+                hour12: true
+            }) + ' IST';
+        } catch {
+            return String(dateStr);
+        }
+    };
+
+    const formatTimeAgo = (dateStr?: string | null) => {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '';
+            const diffMs = Date.now() - date.getTime();
+            if (diffMs < 0) return 'in future';
+            const mins = Math.floor(diffMs / 60000);
+            if (mins < 1) return 'just now';
+            if (mins < 60) return `${mins}m ago`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return `${hours}h ${mins % 60}m ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        } catch {
+            return '';
+        }
+    };
+
+    const getEnvironmentSettingsSummary = (settings?: any) => {
+        if (!settings) return [];
+        const items: { label: string; active: boolean; detail?: string; icon: any; color: string }[] = [];
+
+        if (settings.force_fullscreen) {
+            items.push({
+                label: 'Fullscreen Locked',
+                active: true,
+                detail: 'Student must remain in full-screen mode',
+                icon: Maximize2,
+                color: 'text-violet-700 bg-violet-50 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800'
+            });
+        }
+
+        if (settings.tab_switch_mode && settings.tab_switch_mode !== 'off') {
+            const modeLabel = settings.tab_switch_mode === 'strict' 
+                ? 'Strict' 
+                : settings.tab_switch_mode === 'warning' 
+                ? 'Warning' 
+                : `${settings.tab_switch_mode}`;
+            items.push({
+                label: `Tab Switch: ${modeLabel}`,
+                active: true,
+                detail: `Tab switch detection: ${modeLabel}`,
+                icon: Eye,
+                color: 'text-blue-700 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
+            });
+        }
+
+        if (settings.disable_copy_paste) {
+            items.push({
+                label: 'No Copy/Paste',
+                active: true,
+                detail: 'Clipboard copy & paste is blocked',
+                icon: Copy,
+                color: 'text-rose-700 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+            });
+        }
+
+        if (settings.disable_actions) {
+            items.push({
+                label: 'Shortcuts Blocked',
+                active: true,
+                detail: 'Right-click and keyboard inspection shortcuts disabled',
+                icon: Lock,
+                color: 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+            });
+        }
+
+        if (settings.block_back_button) {
+            items.push({
+                label: 'Back Blocked',
+                active: true,
+                detail: 'Browser back button navigation prevented',
+                icon: Shield,
+                color: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800'
+            });
+        }
+
+        if (settings.disable_exit_button) {
+            items.push({
+                label: 'Exit Hidden',
+                active: true,
+                detail: 'Exit test button is disabled / hidden',
+                icon: XCircle,
+                color: 'text-purple-700 bg-purple-50 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
+            });
+        }
+
+        if (settings.strict_timer) {
+            items.push({
+                label: 'Strict Timer',
+                active: true,
+                detail: 'Timer counts down strictly without pause',
+                icon: Timer,
+                color: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+            });
+        }
+
+        if (settings.attempt_limit) {
+            items.push({
+                label: `${settings.attempt_limit} Attempt Limit`,
+                active: true,
+                detail: `Max ${settings.attempt_limit} attempt(s) per candidate`,
+                icon: Users,
+                color: 'text-cyan-700 bg-cyan-50 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800'
+            });
+        }
+
+        if (settings.shuffle_questions) {
+            items.push({
+                label: 'Shuffle Questions',
+                active: true,
+                detail: 'Questions are randomized per student',
+                icon: Layers,
+                color: 'text-teal-700 bg-teal-50 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800'
+            });
+        }
+
+        if (settings.start_form?.enabled && settings.start_form?.fields?.length > 0) {
+            items.push({
+                label: `Reg Form (${settings.start_form.fields.length})`,
+                active: true,
+                detail: `Fields: ${settings.start_form.fields.map((f: any) => f.label || f.name).join(', ')}`,
+                icon: FileText,
+                color: 'text-orange-700 bg-orange-50 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800'
+            });
+        }
+
+        if (settings.exam_interface_mode) {
+            items.push({
+                label: `${settings.exam_interface_mode.toUpperCase()} UI`,
+                active: true,
+                detail: `Exam UI: ${settings.exam_interface_mode.toUpperCase()} mode`,
+                icon: Settings,
+                color: 'text-slate-700 bg-slate-100 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800'
+            });
+        }
+
+        return items;
+    };
+
+    // Auto-deactivate ended scheduled exams
+    useEffect(() => {
+        if (!conductModeTests || conductModeTests.length === 0) return;
+
+        const checkExpiredScheduledTests = async () => {
+            const now = new Date();
+            const expiredTests = conductModeTests.filter(t => {
+                const schedule = t.settings?.schedule;
+                if (schedule?.enabled && schedule?.end_time) {
+                    return new Date(schedule.end_time) < now;
+                }
+                return false;
+            });
+
+            if (expiredTests.length > 0) {
+                for (const expTest of expiredTests) {
+                    try {
+                        const updatedSettings = {
+                            ...expTest.settings,
+                            conduct_exam: {
+                                ...(expTest.settings?.conduct_exam || {}),
+                                enabled: false
+                            }
+                        };
+                        await updateTest(expTest.id, { 
+                            settings: updatedSettings,
+                            visibility: 'private',
+                            is_public: false 
+                        }, isAdmin);
+                        toast.info(`Scheduled test "${expTest.title}" reached end time and was automatically deactivated.`);
+                    } catch (e) {
+                        console.error("Auto deactivation error in admin:", e);
+                    }
+                }
+                loadConductModeTests();
+            }
+        };
+
+        checkExpiredScheduledTests();
+        const interval = setInterval(checkExpiredScheduledTests, 15000);
+        return () => clearInterval(interval);
+    }, [conductModeTests]);
 
     const handleOpenCloneToUserDialog = (test: any) => {
         setCloningTestSelected(test);
@@ -1899,14 +2104,14 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <h2 className="text-xl font-bold tracking-tight">Active Conduct-Mode Exams</h2>
-                            <p className="text-sm text-muted-foreground">Monitor and control exams currently running live on the platform.</p>
+                            <p className="text-sm text-muted-foreground">Monitor and control exams currently running live on the platform with IST timings and environment settings.</p>
                         </div>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={loadConductModeTests}
                             disabled={conductModeLoading}
-                            className="bg-white hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-900 border"
+                            className="bg-white hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-900 border cursor-pointer"
                         >
                             <RefreshCw className={`h-4 w-4 mr-2 ${conductModeLoading ? 'animate-spin' : ''}`} />
                             Refresh Live Status
@@ -1928,67 +2133,192 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                         </Card>
                     ) : (
                         <div className="grid gap-4 sm:grid-cols-2">
-                            {conductModeTests.map((t) => (
-                                <Card key={t.id} className="border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-950/30 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between">
-                                    <CardHeader className="pb-3">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="space-y-1">
-                                                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mb-1 bg-emerald-50 dark:bg-emerald-950/40 w-fit px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/50">
-                                                    <span className="relative flex h-2 w-2">
-                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                                    </span>
-                                                    Live Now
+                            {conductModeTests.map((t) => {
+                                const envSettings = getEnvironmentSettingsSummary(t.settings);
+                                const liveTimeStr = t.made_live_at || t.conduct_started_at || t.created_at;
+                                const isScheduled = !!(t.is_scheduled || (t.settings?.schedule?.enabled && (t.end_time || t.start_time)));
+                                const scheduleEndTime = t.end_time || t.settings?.schedule?.end_time;
+                                const scheduleStartTime = t.start_time || t.settings?.schedule?.start_time;
+                                
+                                return (
+                                    <Card key={t.id} className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 overflow-hidden hover:shadow-md transition-shadow flex flex-col justify-between rounded-xl shadow-xs">
+                                        <CardHeader className="pb-3 border-b border-slate-100 dark:border-slate-900/60 bg-slate-50/40 dark:bg-slate-900/20">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="space-y-1.5 min-w-0 flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <div className="text-xs font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/80">
+                                                            <span className="relative flex h-2 w-2">
+                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                            </span>
+                                                            {isScheduled ? 'Scheduled Live' : 'Live Now'}
+                                                        </div>
+
+                                                        {t.custom_id && (
+                                                            <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                                                                #{t.custom_id}
+                                                            </span>
+                                                        )}
+
+                                                        {(t.submission_count !== undefined) && (
+                                                            <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60 flex items-center gap-1">
+                                                                <BarChart2 className="w-3 h-3 text-indigo-500" />
+                                                                {t.submission_count} {t.submission_count === 1 ? 'Submission' : 'Submissions'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <CardTitle className="text-base font-bold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2">
+                                                        {t.title}
+                                                    </CardTitle>
                                                 </div>
-                                                <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 leading-snug">{t.title}</CardTitle>
-                                                {t.custom_id && (
-                                                    <CardDescription className="text-xs text-slate-400 font-mono">ID: {t.custom_id}</CardDescription>
-                                                )}
                                             </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="pb-4 pt-0 space-y-3">
-                                        <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-                                            <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                                                <GraduationCap className="h-4 w-4 text-indigo-500 shrink-0" />
-                                                <div className="overflow-hidden truncate">
-                                                    <span className="font-semibold block text-slate-700 dark:text-slate-300 truncate">{t.creator_name || 'Unknown'}</span>
-                                                    <span className="text-slate-400 truncate block text-[10px]">{t.creator_email}</span>
+                                        </CardHeader>
+
+                                        <CardContent className="p-4 space-y-3.5 flex-1">
+                                            {/* Creator Info */}
+                                            <div className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800/60">
+                                                <Avatar className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-700">
+                                                    <AvatarImage src={t.creator_avatar} />
+                                                    <AvatarFallback className="bg-indigo-50 text-indigo-700 text-xs font-bold">
+                                                        {(t.creator_name || 'U').charAt(0).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="overflow-hidden min-w-0 flex-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{t.creator_name || 'Unknown'}</span>
+                                                        {t.creator_verified && <VerifiedBadge size="sm" />}
+                                                    </div>
+                                                    <span className="text-slate-400 truncate block text-[11px] font-mono">{t.creator_email}</span>
                                                 </div>
                                             </div>
-                                            {t.end_time && (
-                                                <div className="flex items-center gap-2 p-2 bg-amber-50/50 dark:bg-amber-950/10 rounded-lg border border-amber-100/30">
-                                                    <Clock className="h-4 w-4 text-amber-500 shrink-0" />
-                                                    <div>
-                                                        <span className="font-medium text-amber-800 dark:text-amber-300 block">Scheduled Ending</span>
-                                                        <span className="text-slate-400 text-[10px]">{new Date(t.end_time).toLocaleString()}</span>
+
+                                            {/* Live Time & Date in IST */}
+                                            <div className="space-y-1.5 text-xs">
+                                                <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/40">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                                        <span className="text-[11px] font-medium text-emerald-900 dark:text-emerald-200">
+                                                            Made Live (IST):
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="font-bold text-[11px] text-emerald-800 dark:text-emerald-300 block font-mono">
+                                                            {formatIST(liveTimeStr)}
+                                                        </span>
+                                                        {formatTimeAgo(liveTimeStr) && (
+                                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                                                ({formatTimeAgo(liveTimeStr)})
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="pt-2 border-t border-slate-100 dark:border-slate-900 bg-slate-50/30 dark:bg-slate-950/20 px-6 py-3 flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full h-8 text-xs font-semibold hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/20"
-                                            onClick={() => setViewingResultsTest(t)}
-                                        >
-                                            <BarChart2 className="w-3.5 h-3.5 mr-1.5" />
-                                            Live Results
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            className="w-full h-8 text-xs font-semibold"
-                                            onClick={() => handleStopConductMode(t)}
-                                        >
-                                            <X className="w-3.5 h-3.5 mr-1.5" />
-                                            Stop Exam
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            ))}
+
+                                                {/* Schedule Information in IST with Auto-Deactivation tag */}
+                                                {isScheduled && (
+                                                    <div className="p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-900/50 space-y-1.5">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200 font-semibold text-[11px]">
+                                                                <Calendar className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                                                                <span>Scheduled Window (IST)</span>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-800">
+                                                                Auto-Deactivates at End
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2 text-[11px] pt-0.5 font-mono">
+                                                            <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded border border-amber-100 dark:border-amber-900/40">
+                                                                <span className="text-[10px] text-slate-500 uppercase tracking-wide block font-sans">Start</span>
+                                                                <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                                                                    {formatIST(scheduleStartTime)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="bg-white/70 dark:bg-slate-900/60 p-1.5 rounded border border-amber-100 dark:border-amber-900/40">
+                                                                <span className="text-[10px] text-slate-500 uppercase tracking-wide block font-sans">End</span>
+                                                                <span className="font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                                                                    {formatIST(scheduleEndTime)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Test-Environment Settings Summary */}
+                                            <div className="space-y-1.5 pt-1">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                                        <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
+                                                        Environment Settings Enabled ({envSettings.length})
+                                                    </span>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 px-2 text-[10px] font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                                                        onClick={() => setInspectingEnvTest(t)}
+                                                    >
+                                                        <SlidersHorizontal className="h-3 w-3 mr-1" />
+                                                        Inspect Details
+                                                    </Button>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                                                    {envSettings.length === 0 ? (
+                                                        <span className="text-[11px] text-slate-400 italic">
+                                                            Standard Environment (Default settings)
+                                                        </span>
+                                                    ) : (
+                                                        envSettings.map((item, idx) => {
+                                                            const Icon = item.icon;
+                                                            return (
+                                                                <span
+                                                                    key={idx}
+                                                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border ${item.color}`}
+                                                                    title={item.detail}
+                                                                >
+                                                                    <Icon className="h-3 w-3 shrink-0" />
+                                                                    {item.label}
+                                                                </span>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </CardContent>
+
+                                        <CardFooter className="pt-2 border-t border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-950/30 px-4 py-3 flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1 h-8 text-xs font-semibold hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-950/20 cursor-pointer"
+                                                onClick={() => setViewingResultsTest(t)}
+                                            >
+                                                <BarChart2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                                                Live Results
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1 h-8 text-xs font-semibold hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 dark:hover:bg-indigo-950/20 cursor-pointer"
+                                                onClick={() => setInspectingEnvTest(t)}
+                                            >
+                                                <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+                                                Environment
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                className="h-8 text-xs font-semibold px-3 cursor-pointer"
+                                                onClick={() => handleStopConductMode(t)}
+                                                title="Stop this live exam"
+                                            >
+                                                <X className="w-3.5 h-3.5 mr-1" />
+                                                Stop
+                                            </Button>
+                                        </CardFooter>
+                                    </Card>
+                                );
+                            })}
                         </div>
                     )}
                 </TabsContent>
@@ -2492,6 +2822,235 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
                             >
                                 {isCloning ? 'Cloning...' : 'Confirm Clone'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+
+            {/* ENVIRONMENT SETTINGS INSPECTION DIALOG */}
+            {inspectingEnvTest && (
+                <Dialog open={!!inspectingEnvTest} onOpenChange={(open) => !open && setInspectingEnvTest(null)}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                        <DialogHeader>
+                            <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                                <ShieldCheck className="h-5 w-5" />
+                                <DialogTitle className="text-lg font-bold">
+                                    Test Environment & Proctoring Configuration
+                                </DialogTitle>
+                            </div>
+                            <DialogDescription className="text-xs">
+                                Review active proctoring rules, timing constraints, and candidate access settings for this live exam.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4 py-2 text-xs">
+                            {/* Test Summary Header */}
+                            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{inspectingEnvTest.title}</span>
+                                        {inspectingEnvTest.custom_id && (
+                                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                                #{inspectingEnvTest.custom_id}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500">
+                                        Creator: <strong className="text-slate-700 dark:text-slate-300">{inspectingEnvTest.creator_name || 'Unknown'}</strong> ({inspectingEnvTest.creator_email})
+                                    </p>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs text-indigo-600 hover:text-indigo-700 cursor-pointer"
+                                    onClick={() => {
+                                        const t = inspectingEnvTest;
+                                        setInspectingEnvTest(null);
+                                        setConfiguringTest(t);
+                                    }}
+                                >
+                                    <Settings className="h-3.5 w-3.5 mr-1" />
+                                    Manage Settings
+                                </Button>
+                            </div>
+
+                            {/* Section 1: Timing & IST Schedule */}
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5 bg-white dark:bg-slate-950/40">
+                                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                        <Clock className="h-4 w-4 text-emerald-500" />
+                                        Timing & IST Live Schedule
+                                    </h4>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                        All Times in IST (UTC+5:30)
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Made Live Timestamp</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
+                                            {formatIST(inspectingEnvTest.made_live_at || inspectingEnvTest.conduct_started_at || inspectingEnvTest.created_at, true)}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Timer Mode</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.strict_timer ? '⚡ Strict Timer' : 'Flexible Timer'} ({inspectingEnvTest.duration || inspectingEnvTest.settings?.duration || 0} mins)
+                                        </span>
+                                    </div>
+
+                                    {inspectingEnvTest.settings?.schedule?.enabled ? (
+                                        <>
+                                            <div className="p-2 bg-amber-50/60 dark:bg-amber-950/30 rounded-lg border border-amber-200/60 dark:border-amber-900/50">
+                                                <span className="text-amber-700 dark:text-amber-400 text-[10px] uppercase font-semibold block">Schedule Start (IST)</span>
+                                                <span className="font-bold text-amber-900 dark:text-amber-200 font-mono">
+                                                    {formatIST(inspectingEnvTest.start_time || inspectingEnvTest.settings?.schedule?.start_time, true)}
+                                                </span>
+                                            </div>
+
+                                            <div className="p-2 bg-amber-50/60 dark:bg-amber-950/30 rounded-lg border border-amber-200/60 dark:border-amber-900/50">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-amber-700 dark:text-amber-400 text-[10px] uppercase font-semibold block">Schedule End (IST)</span>
+                                                    <span className="text-[9px] font-bold text-amber-800 bg-amber-200/70 px-1 py-0.2 rounded">Auto-Deactivate</span>
+                                                </div>
+                                                <span className="font-bold text-amber-900 dark:text-amber-200 font-mono">
+                                                    {formatIST(inspectingEnvTest.end_time || inspectingEnvTest.settings?.schedule?.end_time, true)}
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="sm:col-span-2 p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800 text-slate-500">
+                                            <span>No automated schedule window. Test remains live until manually stopped by creator or admin.</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Section 2: Security & Anti-Cheat Grid */}
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2.5 bg-white dark:bg-slate-950/40">
+                                <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                        <ShieldAlert className="h-4 w-4 text-indigo-500" />
+                                        Anti-Cheating & Proctoring Safeguards
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.force_fullscreen ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Maximize2 className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Force Fullscreen</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.force_fullscreen ? 'Active: Exam enters fullscreen mode' : 'Disabled: Normal browser window'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.tab_switch_mode && inspectingEnvTest.settings?.tab_switch_mode !== 'off' ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Eye className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Tab Switch Detection</span>
+                                            <span className="text-[11px] opacity-80">
+                                                {inspectingEnvTest.settings?.tab_switch_mode === 'strict' ? 'Strict: Auto-submit on violations' : inspectingEnvTest.settings?.tab_switch_mode === 'warning' ? 'Warning Alerts active' : 'Disabled'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.disable_copy_paste ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Copy className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Copy / Paste Protection</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.disable_copy_paste ? 'Active: Copy, paste & selection blocked' : 'Disabled'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.disable_actions ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Lock className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">DevTools & Right Click Block</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.disable_actions ? 'Active: Inspection shortcuts blocked' : 'Disabled'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.block_back_button ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Back Button Lock</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.block_back_button ? 'Active: Traps browser back navigation' : 'Disabled'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 ${inspectingEnvTest.settings?.disable_exit_button ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-900 dark:text-emerald-200' : 'bg-slate-50/60 border-slate-200 text-slate-500 dark:bg-slate-900/30 dark:border-slate-800'}`}>
+                                        <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                                        <div>
+                                            <span className="font-bold block">Exit Button Restriction</span>
+                                            <span className="text-[11px] opacity-80">{inspectingEnvTest.settings?.disable_exit_button ? 'Active: Exit button hidden/blocked' : 'Disabled: Candidate may exit'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Delivery & Registration Form */}
+                            <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2 bg-white dark:bg-slate-950/40">
+                                <h4 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                    <FileText className="h-4 w-4 text-orange-500" />
+                                    Access Control & Candidate Form
+                                </h4>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Attempt Limit</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.attempt_limit ? `${inspectingEnvTest.settings.attempt_limit} Attempt(s)` : 'Unlimited Attempts'}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Question Randomization</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.shuffle_questions ? '✅ Shuffled' : 'Standard Order'}
+                                        </span>
+                                    </div>
+
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Immediate Results</span>
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            {inspectingEnvTest.settings?.show_results_immediate !== false ? '✅ Visible After Submit' : 'Hidden'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {inspectingEnvTest.settings?.start_form?.enabled && inspectingEnvTest.settings?.start_form?.fields?.length > 0 && (
+                                    <div className="mt-2 p-2.5 bg-orange-50/50 dark:bg-orange-950/20 rounded-lg border border-orange-200/60 dark:border-orange-900/40 space-y-1">
+                                        <span className="font-semibold text-orange-900 dark:text-orange-200 block">Candidate Required Registration Fields:</span>
+                                        <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                            {inspectingEnvTest.settings.start_form.fields.map((f: any, idx: number) => (
+                                                <span key={idx} className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded text-[10px] font-medium border border-orange-200 dark:border-orange-800 text-orange-800 dark:text-orange-300">
+                                                    {f.label || f.name} {f.required && '*'}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <DialogFooter className="gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setInspectingEnvTest(null)}>
+                                Close
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                onClick={() => {
+                                    const t = inspectingEnvTest;
+                                    setInspectingEnvTest(null);
+                                    setConfiguringTest(t);
+                                }}
+                            >
+                                <Settings className="w-3.5 h-3.5 mr-1.5" />
+                                Edit Settings
                             </Button>
                         </DialogFooter>
                     </DialogContent>
