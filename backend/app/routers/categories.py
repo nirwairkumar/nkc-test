@@ -7,12 +7,36 @@ from typing import Optional, List, Dict, Any
 router = APIRouter()
 
 from app.schemas.categories import CategoryCreate, CategoryUpdate, TestCategoryAssignment, SubCategoryCreate, SubCategoryUpdate, TestSubCategoryAssignment
+import threading
+from cachetools import TTLCache
+
+_cat_cache_lock = threading.Lock()
+# Cache categories list for 5 minutes (300s)
+_categories_cache: TTLCache = TTLCache(maxsize=10, ttl=300)
+# Cache subcategories list for 5 minutes (300s)
+_subcategories_cache: TTLCache = TTLCache(maxsize=100, ttl=300)
+
+def _bust_category_cache():
+    with _cat_cache_lock:
+        _categories_cache.clear()
+
+def _bust_subcategory_cache():
+    with _cat_cache_lock:
+        _subcategories_cache.clear()
 
 @router.get("/")
 async def get_categories(db: Client = Depends(get_db)):
+    with _cat_cache_lock:
+        cached = _categories_cache.get("all")
+        if cached is not None:
+            return cached
+
     try:
         response = db.table("categories").select("*").order("name").execute()
-        return response.data
+        data = response.data or []
+        with _cat_cache_lock:
+            _categories_cache["all"] = data
+        return data
     except Exception as e:
         print(f"Error fetching categories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -22,6 +46,7 @@ async def create_category(payload: CategoryCreate, db: Client = Depends(get_db))
     try:
         response = db.table("categories").insert({"name": payload.name}).execute()
         if response.data:
+            _bust_category_cache()
             return response.data[0]
         return None
     except Exception as e:
@@ -36,6 +61,7 @@ async def update_category(category_id: str, payload: CategoryUpdate, db: Client 
     try:
         response = db.table("categories").update({"name": payload.name}).eq("id", category_id).execute()
         if response.data:
+            _bust_category_cache()
             return response.data[0]
         return None
     except Exception as e:
@@ -46,6 +72,7 @@ async def update_category(category_id: str, payload: CategoryUpdate, db: Client 
 async def delete_category(category_id: str, db: Client = Depends(get_db)):
     try:
         response = db.table("categories").delete().eq("id", category_id).execute()
+        _bust_category_cache()
         return {"success": True}
     except Exception as e:
         print(f"Error deleting category: {e}")
@@ -135,18 +162,32 @@ async def admin_assign_categories(test_id: str, payload: TestCategoryAssignment)
 
 @router.get("/{category_id}/subcategories")
 async def get_subcategories(category_id: str, db: Client = Depends(get_db)):
+    with _cat_cache_lock:
+        cached = _subcategories_cache.get(f"cat:{category_id}")
+        if cached is not None:
+            return cached
     try:
         response = db.table("sub_categories").select("*").eq("category_id", category_id).order("name").execute()
-        return response.data
+        data = response.data or []
+        with _cat_cache_lock:
+            _subcategories_cache[f"cat:{category_id}"] = data
+        return data
     except Exception as e:
         print(f"Error fetching subcategories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/subcategories/all")
 async def get_all_subcategories(db: Client = Depends(get_db)):
+    with _cat_cache_lock:
+        cached = _subcategories_cache.get("all")
+        if cached is not None:
+            return cached
     try:
         response = db.table("sub_categories").select("*").order("name").execute()
-        return response.data
+        data = response.data or []
+        with _cat_cache_lock:
+            _subcategories_cache["all"] = data
+        return data
     except Exception as e:
         print(f"Error fetching all subcategories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -159,6 +200,7 @@ async def create_subcategory(category_id: str, payload: SubCategoryCreate, db: C
             "category_id": category_id
         }).execute()
         if response.data:
+            _bust_subcategory_cache()
             return response.data[0]
         return None
     except Exception as e:
@@ -173,6 +215,7 @@ async def update_subcategory(sub_category_id: str, payload: SubCategoryUpdate, d
     try:
         response = db.table("sub_categories").update({"name": payload.name}).eq("id", sub_category_id).execute()
         if response.data:
+            _bust_subcategory_cache()
             return response.data[0]
         return None
     except Exception as e:
@@ -183,6 +226,7 @@ async def update_subcategory(sub_category_id: str, payload: SubCategoryUpdate, d
 async def delete_subcategory(sub_category_id: str, db: Client = Depends(get_db)):
     try:
         response = db.table("sub_categories").delete().eq("id", sub_category_id).execute()
+        _bust_subcategory_cache()
         return {"success": True}
     except Exception as e:
         print(f"Error deleting subcategory: {e}")

@@ -205,9 +205,10 @@ async def admin_clone_test(
 async def get_conduct_mode_tests():
     try:
         from app.core.database import supabase as admin_db
-        # 1. Fetch all tests with settings, created_by, created_at
+        # 1. Fetch conduct mode tests directly at database level (massive egress saving)
         response = admin_db.table("tests")\
             .select("id, title, custom_id, duration, total_questions, settings, created_by, created_at, is_public, visibility, slug")\
+            .eq("settings->conduct_exam->>enabled", "true")\
             .execute()
         
         all_tests = response.data or []

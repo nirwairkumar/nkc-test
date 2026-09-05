@@ -73,7 +73,7 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
                 (test.sections && test.sections.length > 0);
 
             if (!hasQuestionsOrSections) {
-                const { data } = await fetchTestById(test.id);
+                const { data } = await fetchTestById(test.id, undefined, true);
                 if (data) {
                     setCurrentTest(data);
                     if (data.settings) {
@@ -175,10 +175,22 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
 
         setTopicGenerating(true);
         try {
+            let activeTest = currentTest;
+            const hasQuestions = (activeTest.enable_section_mode && activeTest.sections?.some(s => s.questions && s.questions.length > 0))
+                || (activeTest.questions && activeTest.questions.length > 0);
+
+            if (!hasQuestions) {
+                const { data: fullTest } = await fetchTestById(test.id, undefined, false);
+                if (fullTest) {
+                    activeTest = fullTest;
+                    setCurrentTest(fullTest);
+                }
+            }
+
             // Flatten questions from both modes
-            const questions: Question[] = currentTest.enable_section_mode && currentTest.sections
-                ? currentTest.sections.flatMap(s => s.questions || [])
-                : currentTest.questions || [];
+            const questions: Question[] = activeTest.enable_section_mode && activeTest.sections
+                ? activeTest.sections.flatMap(s => s.questions || [])
+                : activeTest.questions || [];
 
             if (questions.length === 0) {
                 toast.error("No questions found in this test.");
@@ -204,10 +216,10 @@ export default function TestSettingsPanel({ test, onClose, onUpdate, onViewResul
             }));
 
             let updatePayload: any = {};
-            if (currentTest.enable_section_mode && currentTest.sections) {
+            if (activeTest.enable_section_mode && activeTest.sections) {
                 // We need to re-structure them back into sections
                 let qIndex = 0;
-                const updatedSections = currentTest.sections.map(sec => {
+                const updatedSections = activeTest.sections.map(sec => {
                     const secQs = (sec.questions || []).map(() => updatedQuestions[qIndex++]);
                     return { ...sec, questions: secQs };
                 });

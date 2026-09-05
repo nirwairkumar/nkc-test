@@ -51,7 +51,7 @@ def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
     creator_ids = list(set([t["created_by"] for t in tests if t.get("created_by")]))
 
     def _fetch_categories():
-        tc_res = db.table("test_categories").select("*").in_("test_id", test_ids).execute()
+        tc_res = db.table("test_categories").select("test_id, category_id, sub_category_id").in_("test_id", test_ids).execute()
         return tc_res.data or []
 
     def _fetch_creators():
@@ -69,7 +69,7 @@ def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
     category_ids = list(set([tc["category_id"] for tc in test_cats]))
     all_cats = {}
     if category_ids:
-        cats_res = db.table("categories").select("*").in_("id", category_ids).execute()
+        cats_res = db.table("categories").select("id, name").in_("id", category_ids).execute()
         all_cats = {c["id"]: c for c in (cats_res.data or [])}
 
     tests_categories_map = {}

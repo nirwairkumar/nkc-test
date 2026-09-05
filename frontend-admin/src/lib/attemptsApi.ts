@@ -57,7 +57,7 @@ export async function saveAttemptWithRetry(
                     score: score ?? 0,
                     metadata: metadata || {}
                 })
-                .select();
+                .select('id, test_id, user_id, score, created_at');
 
             if (dbError) throw dbError;
 

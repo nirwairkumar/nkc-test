@@ -765,32 +765,7 @@ export default function UserTestManager() {
     );
     const regularTests = tests; // Show all tests in grid (conducted ones also show with LIVE badge)
 
-    const [activeSubmissionCounts, setActiveSubmissionCounts] = useState<Record<string, number>>({});
 
-    useEffect(() => {
-        if (activeExams.length === 0) return;
-        const testIds = activeExams.map(t => t.id);
-
-        const fetchActiveCounts = async () => {
-            try {
-                const { data, error } = await (supabase as any)
-                    .from('user_tests')
-                    .select('test_id')
-                    .in('test_id', testIds);
-                if (data && !error) {
-                    const counts: Record<string, number> = {};
-                    data.forEach((row: any) => {
-                        counts[row.test_id] = (counts[row.test_id] || 0) + 1;
-                    });
-                    setActiveSubmissionCounts(counts);
-                }
-            } catch (err) {
-                console.error('Failed to load active submissions count:', err);
-            }
-        };
-
-        fetchActiveCounts();
-    }, [activeExams.map(t => t.id).join(',')]);
 
     // Auto-transition: when a scheduled exam ends, move it to inactive with private mode
     const autoDeactivatedRef = React.useRef<Set<string>>(new Set());
@@ -919,7 +894,7 @@ export default function UserTestManager() {
                                         ? `${window.location.origin}/test/${conductSlug}`
                                         : `${window.location.origin}/test-intro/${test.id}`;
                                     const questionCount = test.total_questions || test.questions?.length || 0;
-                                    const submissionCount = activeSubmissionCounts[test.id] ?? test.submission_count ?? 0;
+                                    const submissionCount = test.submission_count ?? 0;
 
                                     return (
                                         <div

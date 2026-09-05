@@ -444,12 +444,14 @@ async def get_all_ai_history(
         _verify_is_admin(request, db)
 
         # 1. Fetch AI generation history items (using global service-role client 'supabase' to bypass RLS)
-        query = supabase.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at, parsed_data")
+        # Note: Exclude heavy parsed_data JSON (can be 5MB+ per row) from list endpoint to save massive egress.
+        query = supabase.table("ai_generation_history").select("id, user_id, mode, title, description, file_name, question_count, created_at")
         history_res = query.order("created_at", desc=True).execute()
         ai_raw = history_res.data or []
 
         # 2. Fetch all tests created directly on the platform (tests table for manual tests)
-        tests_res = supabase.table("tests").select("id, created_by, title, description, custom_id, total_questions, questions, created_at").order("created_at", desc=True).execute()
+        # Note: Exclude questions JSONB from list endpoint
+        tests_res = supabase.table("tests").select("id, created_by, title, description, custom_id, total_questions, created_at").order("created_at", desc=True).execute()
         all_tests = tests_res.data or []
 
         # Track existing history IDs to avoid duplicate manual entries for tests created via AI/YouTube
@@ -467,8 +469,7 @@ async def get_all_ai_history(
             if custom_id.startswith("YT") or tid in existing_history_ids:
                 continue
             
-            qs = t.get("questions") or []
-            q_count = t.get("total_questions") or len(qs)
+            q_count = t.get("total_questions") or 0
 
             manual_raw.append({
                 "id": t.get("id"),
@@ -568,13 +569,11 @@ async def get_all_ai_history(
                 if search_lower not in user_str and search_lower not in title_str:
                     continue
 
-            # LIGHTWEIGHT PAYLOAD: Strip heavy questions & full text arrays from list endpoint
-            light_parsed = dict(parsed)
-            light_parsed.pop("questions", None)
-            light_parsed.pop("questions_input", None)
-            light_parsed.pop("generated_topics", None)
-            light_parsed.pop("full_text", None)
-            item["parsed_data"] = light_parsed
+            # LIGHTWEIGHT PAYLOAD: Provide tool_type and execution time without heavy question blobs
+            item["parsed_data"] = {
+                "tool_type": item_tool,
+                "execution_time_seconds": 0 if item_tool == 'manual' else (parsed.get("execution_time_seconds") or 2.4)
+            }
 
             filtered_items.append(item)
 

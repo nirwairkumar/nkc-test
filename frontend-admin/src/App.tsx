@@ -35,6 +35,7 @@ const NewsPostEditor = lazyWithRetry(() => import('./pages/NewsPostEditor'));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 30000,
       refetchOnWindowFocus: false,
       retry: 1,
     },

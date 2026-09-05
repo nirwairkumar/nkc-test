@@ -189,6 +189,7 @@ async def get_live_visitors(
         active = supabase.table("sessions")\
             .select("id", count="exact")\
             .gte("ended_at", five_mins_ago)\
+            .limit(0)\
             .execute()
         return {"live_visitors": active.count if hasattr(active, 'count') and active.count else 0}
     except Exception as e:

@@ -13,8 +13,9 @@ async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Creator not found")
         
         # 2. Fetch Public Tests (exclude clones — they must never appear on public profiles)
+        # Pruned to test card display columns, omitting questions/solutions to prevent high egress
         tests_res = db.table("tests")\
-            .select("*, classes(name), test_categories(category_id)")\
+            .select("id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, description, tags, total_max_marks, classes(name), test_categories(category_id)")\
             .eq("created_by", creator_id)\
             .eq("visibility", "public")\
             .eq("is_cloned", False)\

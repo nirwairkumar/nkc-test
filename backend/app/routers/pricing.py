@@ -50,13 +50,36 @@ class PromoCodeCreate(BaseModel):
     valid_till: Optional[str] = None
     is_active: bool = True
 
+import threading
+from cachetools import TTLCache
+
+_pricing_cache_lock = threading.Lock()
+_plans_cache: TTLCache = TTLCache(maxsize=10, ttl=600)
+_settings_cache: TTLCache = TTLCache(maxsize=10, ttl=600)
+
+def _bust_plans_cache():
+    with _pricing_cache_lock:
+        _plans_cache.clear()
+
+def _bust_settings_cache():
+    with _pricing_cache_lock:
+        _settings_cache.clear()
+
 # --- Plans Endpoints ---
 
 @router.get("/plans")
 async def get_plans(db: Client = Depends(get_db)):
+    with _pricing_cache_lock:
+        cached = _plans_cache.get("all")
+        if cached is not None:
+            return cached
+
     try:
         response = db.table("plans").select("*").order("price", desc=False).execute()
-        return response.data
+        data = response.data or []
+        with _pricing_cache_lock:
+            _plans_cache["all"] = data
+        return data
     except Exception as e:
         print(f"Error fetching plans: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -68,6 +91,7 @@ async def create_plan(payload: PlanCreate, request: Request, db: Client = Depend
         data = payload.dict(exclude_unset=True)
         response = db.table("plans").insert(data).execute()
         if response.data:
+            _bust_plans_cache()
             return response.data[0]
         return None
     except HTTPException:
@@ -81,6 +105,7 @@ async def update_plan(plan_id: str, payload: Dict[str, Any], request: Request, d
         _verify_admin_for_pricing(request, db)
         response = db.table("plans").update(payload).eq("id", plan_id).execute()
         if response.data:
+            _bust_plans_cache()
             return response.data[0]
         return None
     except HTTPException:
@@ -218,12 +243,23 @@ async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
 @router.get("/settings")
 async def get_premium_settings(db: Client = Depends(get_db)):
     """Get global premium unlock settings"""
+    with _pricing_cache_lock:
+        cached = _settings_cache.get("settings")
+        if cached is not None:
+            return cached
+
     try:
         response = db.table("app_settings").select("*").limit(1).execute()
         if response.data and len(response.data) > 0:
-            return response.data[0]
+            data = response.data[0]
+            with _pricing_cache_lock:
+                _settings_cache["settings"] = data
+            return data
         # Return default if no settings exist
-        return {"unlock_all_premium": False}
+        default_settings = {"unlock_all_premium": False}
+        with _pricing_cache_lock:
+            _settings_cache["settings"] = default_settings
+        return default_settings
     except Exception as e:
         print(f"Error fetching premium settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -247,6 +283,7 @@ async def update_premium_settings(payload: UpdateSettingsRequest, request: Reque
             }).eq("id", settings_id).execute()
             
             if response.data:
+                _bust_settings_cache()
                 return response.data[0]
         else:
             # Insert new settings if none exist
@@ -255,6 +292,7 @@ async def update_premium_settings(payload: UpdateSettingsRequest, request: Reque
             }).execute()
             
             if response.data:
+                _bust_settings_cache()
                 return response.data[0]
         
         raise HTTPException(status_code=500, detail="Failed to update settings")

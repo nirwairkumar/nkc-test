@@ -25,7 +25,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import SplashLoader from '@/components/ui/SplashLoader';
 import { fetchTestsByUserId, Test } from '@/lib/testsApi';
-import { supabase } from '@/integrations/supabase/client';
 
 interface ConductedTestCardItem {
     id: string;
@@ -64,30 +63,9 @@ export default function AllSubmissionsPage() {
     const loadConductedSubmissionsData = async () => {
         setLoading(true);
         try {
-            // 1. Fetch user's tests
+            // 1. Fetch user's tests (backend already computes submission_count for each test)
             const { data: userTests } = await fetchTestsByUserId(user!.id);
-            const rawTests: Test[] = Array.isArray(userTests) ? userTests : [];
-
-            const testIds = rawTests.map(t => t.id);
-
-            // 2. Fetch submission counts for these tests from user_tests
-            const submissionCountMap: Record<string, number> = {};
-            testIds.forEach(id => { submissionCountMap[id] = 0; });
-
-            if (testIds.length > 0) {
-                const { data: attempts } = await (supabase as any)
-                    .from('user_tests')
-                    .select('test_id')
-                    .in('test_id', testIds);
-
-                if (attempts && Array.isArray(attempts)) {
-                    attempts.forEach((a: any) => {
-                        if (a.test_id && submissionCountMap[a.test_id] !== undefined) {
-                            submissionCountMap[a.test_id] += 1;
-                        }
-                    });
-                }
-            }
+            const rawTests: (Test & { submission_count?: number })[] = Array.isArray(userTests) ? userTests : [];
 
             const now = new Date();
 
@@ -102,7 +80,7 @@ export default function AllSubmissionsPage() {
                     custom_id: t.custom_id,
                     category: t.custom_category || 'General Assessment',
                     created_at: t.created_at,
-                    submissions_count: submissionCountMap[t.id] || 0,
+                    submissions_count: t.submission_count || 0,
                     duration: t.duration || 180,
                     total_questions: t.total_questions || (t.questions?.length || 0),
                     total_max_marks: t.total_max_marks || (t.questions?.length ? t.questions.length * 4 : 300),
