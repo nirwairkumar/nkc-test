@@ -2187,7 +2187,7 @@ export default function ManageTests({ activeTab: externalActiveTab }: ManageTest
                                                 <div className="overflow-hidden min-w-0 flex-1">
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{t.creator_name || 'Unknown'}</span>
-                                                        {t.creator_verified && <VerifiedBadge size="sm" />}
+                                                        {t.creator_verified && <VerifiedBadge size={14} />}
                                                     </div>
                                                     <span className="text-slate-400 truncate block text-[11px] font-mono">{t.creator_email}</span>
                                                 </div>

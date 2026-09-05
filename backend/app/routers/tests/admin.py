@@ -205,9 +205,9 @@ async def admin_clone_test(
 async def get_conduct_mode_tests():
     try:
         from app.core.database import supabase as admin_db
-        # 1. Fetch all tests with settings, created_by, created_at, updated_at
+        # 1. Fetch all tests with settings, created_by, created_at
         response = admin_db.table("tests")\
-            .select("id, title, custom_id, duration, total_questions, settings, created_by, created_at, updated_at, is_public, visibility, slug")\
+            .select("id, title, custom_id, duration, total_questions, settings, created_by, created_at, is_public, visibility, slug")\
             .execute()
         
         all_tests = response.data or []
@@ -297,7 +297,7 @@ async def get_conduct_mode_tests():
             start_time_str = schedule.get("start_time")
             end_time_str = schedule.get("end_time")
             
-            made_live_at = conduct_exam.get("started_at") or start_time_str or t.get("updated_at") or t.get("created_at")
+            made_live_at = conduct_exam.get("started_at") or start_time_str or t.get("created_at")
             
             conduct_tests.append({
                 "id": t["id"],
@@ -313,7 +313,6 @@ async def get_conduct_mode_tests():
                 "creator_verified": profile.get("is_verified_creator", False),
                 "created_by": creator_id,
                 "created_at": t.get("created_at"),
-                "updated_at": t.get("updated_at"),
                 "made_live_at": made_live_at,
                 "start_time": start_time_str,
                 "end_time": end_time_str,
