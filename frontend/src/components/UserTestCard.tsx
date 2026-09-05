@@ -276,7 +276,7 @@ export function UserTestCard({
                     onClick={() => onEdit(test)}
                 >
                     <Edit className="w-3.5 h-3.5" />
-                    <span>Edit Test</span>
+                    <span>Edit</span>
                 </Button>
                 {!isConducted && (
                     <Button
