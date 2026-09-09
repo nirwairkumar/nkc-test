@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/components/SEO';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Check, Loader2, Package, Settings, Sparkles, Zap, Star } from 'lucide-react';
+import { Check, Loader2, Package, Settings, Sparkles, Zap, Star, ChevronDown, HelpCircle } from 'lucide-react';
 import PaymentButton from '@/components/PaymentButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePremiumStatus } from '@/hooks/usePremiumStatus';
@@ -18,6 +18,103 @@ interface Plan {
     features: string[];
     is_active: boolean;
 }
+
+const DEFAULT_PLANS: Plan[] = [
+    {
+        id: '235d651d-90d5-445a-b960-ddf82460f40e',
+        name: 'Weekly Lite',
+        description: 'Perfect for occasional tests and weekly assessments',
+        price: 4900,
+        duration_days: 7,
+        features: [
+            'Institute Name & Logo Branding',
+            'Advanced Exam Security Controls',
+            'View & Export Submitted Results',
+            '100 Student Result Submissions',
+            'Scheduled Online Exams',
+            'Student Management & Batches'
+        ],
+        is_active: true
+    },
+    {
+        id: '8bb5ca89-cc2a-4278-bd54-727caba1ca15',
+        name: 'Monthly Pro',
+        description: 'Best for active classrooms and coaching batches',
+        price: 14900,
+        duration_days: 30,
+        features: [
+            'Institute Name & Logo Branding',
+            'Advanced Anti-Cheat Exam Mode',
+            'Detailed Score Analytics & Rank Reports',
+            '350 Student Result Submissions',
+            'Timed Exam Scheduling',
+            'Student Batch Management',
+            'Priority Support'
+        ],
+        is_active: true
+    },
+    {
+        id: 'c97026b6-8c9a-4546-8514-ffe28e4e8ca8',
+        name: 'Yearly Elite',
+        description: 'Maximum value for schools and coaching institutes',
+        price: 79900,
+        duration_days: 365,
+        features: [
+            'White-Label Institute Branding',
+            'Full Anti-Cheat Proctoring Suite',
+            'Comprehensive Student Analytics',
+            '4,000 Student Result Submissions',
+            'Unlimited Exam Scheduling',
+            'Custom Domain & Certificate Ready',
+            'Priority Support 24/7'
+        ],
+        is_active: true
+    }
+];
+
+const PRICING_FAQS = [
+    {
+        q: "Is TestoZa really free? What's the catch?",
+        a: "Yes, TestoZa is 100% free for individual teachers and educators creating and conducting standard online tests. There is no trial period, no credit card requirement, and no artificial cap on the number of tests you can create or students you can assess. Our paid plans are strictly for coaching institutes and schools needing white-label branding, higher submission quotas, and dedicated organizational support."
+    },
+    {
+        q: "How many students can take a test at once?",
+        a: "Hundreds of students can take a test simultaneously on TestoZa without lag or server degradation. Our infrastructure is powered by Google Cloud Run and Cloudflare edge networks, which scale dynamically to handle concurrent exam traffic during institute-wide tests, coaching mock exams, and school assessments."
+    },
+    {
+        q: "What happens if a student's internet disconnects mid-test?",
+        a: "If a student loses their internet connection during an exam, TestoZa saves all answered questions locally in the browser. When the connection is restored, responses sync automatically with our server. If the connection cannot be restored before the timer ends, submitted answers up to the point of disconnection remain safely recorded and accessible in the educator's dashboard."
+    },
+    {
+        q: "Do students need to create an account to take a test?",
+        a: "No, students do not need to create an account or sign up to take a test. They simply open the test link provided by the teacher, enter their name, roll number, or email address as required by your settings, and begin the assessment immediately. This eliminates login friction and technical barriers on exam day."
+    },
+    {
+        q: "Is my question paper data secure?",
+        a: "Yes, your question papers, uploaded study materials, and student response data are completely secure and private. All data is encrypted in transit using SSL/TLS and stored on secure cloud databases with strict access controls. TestoZa never shares, sells, or publicly publishes tests created privately by educators or coaching institutes."
+    },
+    {
+        q: "What payment methods do you support for premium plans?",
+        a: "We support all major Indian and international payment methods through our secure Razorpay gateway. You can pay using UPI (Google Pay, PhonePe, Paytm), credit and debit cards (Visa, MasterCard, RuPay), net banking across all major banks, and digital wallets. Invoices with GST details are automatically generated upon payment."
+    },
+    {
+        q: "Can I upgrade, renew, or cancel my subscription anytime?",
+        a: "Yes, you have complete control over your subscription with no lock-in contracts. Since our plans are flexible (weekly, monthly, or yearly), you can renew when exam seasons begin or switch plans as your student batch size changes. If your subscription expires, your tests and student history remain safe and accessible on the free tier."
+    }
+];
+
+const pricingFAQSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": PRICING_FAQS.map(faq => ({
+        "@type": "Question",
+        "name": faq.q,
+        "acceptedAnswer": {
+            "@type": "Answer",
+            "text": faq.a
+        }
+    }))
+};
 
 // Empty State Component
 const EmptyState = () => {
@@ -253,10 +350,11 @@ const PricingCard = ({
 };
 
 export default function PricingPage() {
+    const navigate = useNavigate();
     const { isAdmin } = useAuth();
     const { isPremium, planId: currentPlanId, expiryDate } = usePremiumStatus();
-    const [plans, setPlans] = useState<Plan[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [plans, setPlans] = useState<Plan[]>(DEFAULT_PLANS);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchPlans();
@@ -266,14 +364,14 @@ export default function PricingPage() {
         try {
             const { fetchPlans } = await import('@/lib/pricingApi');
             const { data, error } = await fetchPlans();
-            if (error) throw error;
-            const activePlans = (data || []).filter((p: Plan) => p.is_active);
-            setPlans(activePlans);
+            if (!error && data && data.length > 0) {
+                const activePlans = data.filter((p: Plan) => p.is_active);
+                if (activePlans.length > 0) {
+                    setPlans(activePlans);
+                }
+            }
         } catch (error: any) {
             console.error('Error fetching plans:', error);
-            toast.error('Failed to load plans');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -285,66 +383,203 @@ export default function PricingPage() {
         }).format(paise / 100);
     };
 
-    if (loading) {
-        return (
-            <div className="flex h-[80vh] items-center justify-center">
-                <div className="text-center space-y-3">
-                    <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mx-auto" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading pricing plans...</p>
-                </div>
-            </div>
-        );
-    }
-
     // Determine the "popular" plan (yearly, or the last one if no yearly)
     const popularPlanId = plans.find(p => p.duration_days >= 365)?.id ?? plans[plans.length - 1]?.id;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
             <SEO
-                title="Pricing Plans - TestoZa Premium"
-                description="Affordable pricing for TestoZa Premium. Unlock unlimited AI test generation, detailed analytics, and ad-free experience. Start for free."
-                keywords={['testoza pricing', 'premium test maker', 'quiz maker cost', 'online exam software pricing']}
+                title="Pricing & Plans for Teachers & Institutes | Free Online Test Maker | TestoZa"
+                description="Affordable, transparent pricing for teachers, coaching institutes, and schools. Start 100% free with unlimited tests and students, or upgrade to Weekly, Monthly, or Yearly plans for white-label branding and advanced proctoring."
+                canonicalUrl="https://testoza.com/pricing"
+                schemas={[pricingFAQSchema]}
             />
 
             {/* Hero Header */}
-            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-10 pb-16 text-center">
-                <div className="max-w-2xl mx-auto">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-2">TestoZa Premium</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-white mb-3">
-                        Simple, Transparent Pricing
-                    </p>
-                    <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto leading-relaxed">
-                        Choose the plan that fits your needs. Unlock premium features and take your testing experience to the next level.
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 pt-12 pb-20 text-center">
+                <div className="max-w-3xl mx-auto">
+                    <p className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Transparent Plans & Pricing</p>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">
+                        Simple, Predictable Pricing for Educators
+                    </h1>
+                    <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                        Start 100% free with unlimited test creation. Upgrade only when you need custom institute branding, anti-cheat proctoring, and official certificates.
                     </p>
                 </div>
             </div>
 
-            {/* Content */}
-            <div className="px-4 -mt-6 pb-12 max-w-5xl mx-auto">
-                {plans.length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-                        <EmptyState />
+            {/* Content Container */}
+            <div className="px-4 -mt-10 pb-16 max-w-6xl mx-auto">
+                {/* Free Forever Banner */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-indigo-100 dark:border-indigo-950/60 p-6 sm:p-8 mb-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="space-y-2 text-center md:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">
+                            ✓ 100% Free Tier
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                            Free Forever for Individual Teachers
+                        </h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl">
+                            Create unlimited tests, generate quizzes with AI from PDFs or YouTube, and share test links with as many students as you want. Zero credit card required.
+                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs text-slate-600 dark:text-slate-300">
+                            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Unlimited Tests</span>
+                            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Unlimited Students</span>
+                            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> AI Question Generator</span>
+                            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Instant Auto-Grading</span>
+                        </div>
                     </div>
-                ) : (
-                    <div className={`grid gap-4 sm:gap-6 ${plans.length === 1 ? 'max-w-sm mx-auto' : plans.length === 2 ? 'sm:grid-cols-2 max-w-2xl mx-auto' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
-                        {plans.map((plan) => (
-                            <PricingCard
-                                key={plan.id}
-                                plan={plan}
-                                isCurrentPlan={isPremium && currentPlanId === plan.id}
-                                isExpiredPlan={!isPremium && currentPlanId === plan.id}
-                                isPremium={isPremium}
-                                formatPrice={formatPrice}
-                                isPopular={plan.id === popularPlanId}
-                            />
+                    <div className="shrink-0">
+                        <Button
+                            size="lg"
+                            onClick={() => navigate('/create-test')}
+                            className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 font-bold px-8 py-6 rounded-xl"
+                        >
+                            Get Started Free
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Paid Plans Title */}
+                <div className="text-center mb-8">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                        Premium Plans for Coaching Institutes & Schools
+                    </h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Add white-label branding, secure anti-cheat controls, and detailed performance rank cards.
+                    </p>
+                </div>
+
+                {/* Plan Cards */}
+                <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-16">
+                    {plans.map((plan) => (
+                        <PricingCard
+                            key={plan.id}
+                            plan={plan}
+                            isCurrentPlan={isPremium && currentPlanId === plan.id}
+                            isExpiredPlan={!isPremium && currentPlanId === plan.id}
+                            isPremium={isPremium}
+                            formatPrice={formatPrice}
+                            isPopular={plan.id === popularPlanId}
+                        />
+                    ))}
+                </div>
+
+                {/* Feature Comparison Table */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 mb-16 shadow-sm overflow-x-auto">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2 text-center md:text-left">
+                        Detailed Feature Comparison
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 text-center md:text-left">
+                        Compare capabilities across TestoZa's free tier and premium institution plans.
+                    </p>
+                    <table className="w-full text-left text-sm border-collapse min-w-[600px]">
+                        <thead>
+                            <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-bold">
+                                <th className="pb-4 pr-4">Feature</th>
+                                <th className="pb-4 px-3 text-center">Free Forever</th>
+                                <th className="pb-4 px-3 text-center">Weekly Lite (₹49)</th>
+                                <th className="pb-4 px-3 text-center">Monthly Pro (₹149)</th>
+                                <th className="pb-4 pl-3 text-center text-indigo-600 dark:text-indigo-400">Yearly Elite (₹799)</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">Online Test Creation</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                            </tr>
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">Student Test Takers</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Unlimited</td>
+                            </tr>
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">AI Test Generation (PDF & Video)</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Included</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Included</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Included</td>
+                                <td className="py-3 text-center text-emerald-600 font-semibold">Included</td>
+                            </tr>
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">Submissions Quota per cycle</td>
+                                <td className="py-3 text-center">Standard</td>
+                                <td className="py-3 text-center font-semibold">100</td>
+                                <td className="py-3 text-center font-semibold">350</td>
+                                <td className="py-3 text-center font-semibold text-indigo-600 dark:text-indigo-400">4,000</td>
+                            </tr>
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">Custom Institute Logo & Name</td>
+                                <td className="py-3 text-center text-slate-400">—</td>
+                                <td className="py-3 text-center text-emerald-600">✓</td>
+                                <td className="py-3 text-center text-emerald-600">✓</td>
+                                <td className="py-3 text-center text-emerald-600">✓</td>
+                            </tr>
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">Anti-Cheat Tab & Focus Tracking</td>
+                                <td className="py-3 text-center">Standard</td>
+                                <td className="py-3 text-center text-emerald-600">Advanced</td>
+                                <td className="py-3 text-center text-emerald-600">Advanced</td>
+                                <td className="py-3 text-center text-emerald-600">Full Suite</td>
+                            </tr>
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">Export Results to Excel (CSV/XLSX)</td>
+                                <td className="py-3 text-center text-slate-400">—</td>
+                                <td className="py-3 text-center text-emerald-600">✓</td>
+                                <td className="py-3 text-center text-emerald-600">✓</td>
+                                <td className="py-3 text-center text-emerald-600">✓</td>
+                            </tr>
+                            <tr>
+                                <td className="py-3 font-medium text-slate-900 dark:text-white">Customer Support</td>
+                                <td className="py-3 text-center">Community</td>
+                                <td className="py-3 text-center">Email</td>
+                                <td className="py-3 text-center">Priority</td>
+                                <td className="py-3 text-center text-indigo-600 font-semibold">24/7 Dedicated</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pricing FAQs Section */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-10 mb-8 shadow-sm">
+                    <div className="text-center mb-10">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 mb-3">
+                            <HelpCircle className="w-3.5 h-3.5" />
+                            Pricing & Trust Questions
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                            Frequently Asked Questions About Pricing
+                        </h2>
+                        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+                            Clear answers to your questions about our free tier, plan limits, security, and payment options.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 max-w-3xl mx-auto">
+                        {PRICING_FAQS.map((faq, idx) => (
+                            <details
+                                key={idx}
+                                className="group rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 p-5 transition-all duration-200 hover:border-indigo-300 dark:hover:border-indigo-800 open:bg-white dark:open:bg-slate-900 open:shadow-sm"
+                            >
+                                <summary className="flex cursor-pointer items-center justify-between font-semibold text-slate-900 dark:text-slate-100 text-base md:text-lg list-none select-none">
+                                    <span>{faq.q}</span>
+                                    <ChevronDown className="w-5 h-5 text-slate-400 transition-transform duration-200 group-open:rotate-180 shrink-0 ml-4" />
+                                </summary>
+                                <p className="mt-4 text-slate-600 dark:text-slate-300 leading-relaxed text-sm md:text-base border-t border-slate-100 dark:border-slate-800 pt-3">
+                                    {faq.a}
+                                </p>
+                            </details>
                         ))}
                     </div>
-                )}
+                </div>
 
                 {/* Bottom note */}
-                <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-8">
-                    All prices are in INR and inclusive of applicable taxes. Subscriptions renew automatically.
+                <p className="text-center text-xs text-slate-400 dark:text-slate-500">
+                    All prices are in INR and inclusive of applicable taxes. Subscriptions renew automatically. Cancel or modify anytime.
                 </p>
             </div>
         </div>

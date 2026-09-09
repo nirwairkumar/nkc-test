@@ -370,7 +370,6 @@ function generateMetaTags(url, testData = null) {
     <!-- Dynamic SEO Meta Tags (Cloudflare Worker) -->
     <title>${escapeHtml(title)}</title>
     <meta name="description" content="${escapeHtml(description)}">
-    <meta name="keywords" content="${escapeHtml(keywords)}">
     <link rel="canonical" href="${canonicalUrl}">
     
     <!-- Open Graph -->
@@ -406,6 +405,579 @@ function escapeHtml(text) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+
+/**
+ * Route-specific rich content & FAQ schema generator for crawlers & bots
+ */
+function generateRouteContent(url, testData = null) {
+  const path = new URL(url).pathname;
+
+  // ─── 1. PRICING PAGE ────────────────────────────────────────────────────────
+  if (path === '/pricing') {
+    const faqs = [
+      {
+        q: "Is TestoZa really free? What's the catch?",
+        a: "Yes, TestoZa is 100% free for individual teachers and educators creating and conducting standard online tests. There is no trial period, no credit card requirement, and no artificial cap on the number of tests you can create or students you can assess. Our paid plans are strictly for coaching institutes and schools needing white-label branding, higher submission quotas, and dedicated organizational support."
+      },
+      {
+        q: "How many students can take a test at once?",
+        a: "Hundreds of students can take a test simultaneously on TestoZa without lag or server degradation. Our infrastructure is powered by Google Cloud Run and Cloudflare edge networks, which scale dynamically to handle concurrent exam traffic during institute-wide tests, coaching mock exams, and school assessments."
+      },
+      {
+        q: "What happens if a student's internet disconnects mid-test?",
+        a: "If a student loses their internet connection during an exam, TestoZa saves all answered questions locally in the browser. When the connection is restored, responses sync automatically with our server. If the connection cannot be restored before the timer ends, submitted answers up to the point of disconnection remain safely recorded and accessible in the educator's dashboard."
+      },
+      {
+        q: "Do students need to create an account to take a test?",
+        a: "No, students do not need to create an account or sign up to take a test. They simply open the test link provided by the teacher, enter their name, roll number, or email address as required by your settings, and begin the assessment immediately. This eliminates login friction and technical barriers on exam day."
+      },
+      {
+        q: "Is my question paper data secure?",
+        a: "Yes, your question papers, uploaded study materials, and student response data are completely secure and private. All data is encrypted in transit using SSL/TLS and stored on secure cloud databases with strict access controls. TestoZa never shares, sells, or publicly publishes tests created privately by educators or coaching institutes."
+      },
+      {
+        q: "What payment methods do you support for premium plans?",
+        a: "We support all major Indian and international payment methods through our secure Razorpay gateway. You can pay using UPI (Google Pay, PhonePe, Paytm), credit and debit cards (Visa, MasterCard, RuPay), net banking across all major banks, and digital wallets. Invoices with GST details are automatically generated upon payment."
+      },
+      {
+        q: "Can I upgrade, renew, or cancel my subscription anytime?",
+        a: "Yes, you have complete control over your subscription with no lock-in contracts. Since our plans are flexible (weekly, monthly, or yearly), you can renew when exam seasons begin or switch plans as your student batch size changes. If your subscription expires, your tests and student history remain safe and accessible on the free tier."
+      }
+    ];
+
+    const bodyHtml = `
+      <h1>Transparent Pricing & Plans for Educators and Coaching Institutes</h1>
+      <p>Start 100% free with unlimited test creation and student assessments. Upgrade to flexible weekly, monthly, or yearly plans for custom institute branding, anti-cheat proctoring, and official certificates.</p>
+
+      <h2>TestoZa Plans & Subscription Tiers</h2>
+      <div>
+        <h3>Free Forever Plan (₹0)</h3>
+        <p>Free forever for all individual teachers, educators, and creators. No credit card required.</p>
+        <ul>
+          <li>Unlimited online tests and quizzes</li>
+          <li>Unlimited student test takers</li>
+          <li>AI Question Generator (from PDF, YouTube, or text)</li>
+          <li>Manual Question Builder with full math & LaTeX support</li>
+          <li>Instant auto-grading, student scorecards, and class leaderboards</li>
+        </ul>
+
+        <h3>Weekly Lite (₹49 / 7 days)</h3>
+        <p>Designed for periodic test cycles, weekly coaching mock exams, and short tests.</p>
+        <ul>
+          <li>Includes all Free features</li>
+          <li>100 Student Result Submissions per cycle</li>
+          <li>Custom Institute Name & Logo on all test pages</li>
+          <li>Advanced Exam Security Controls & Anti-Cheat Environment</li>
+          <li>Scheduled Online Exams with strict access windows</li>
+          <li>Student Management & Batch Assignments</li>
+        </ul>
+
+        <h3>Monthly Pro (₹149 / 30 days)</h3>
+        <p>The most popular plan for active coaching institutes and classroom teachers.</p>
+        <ul>
+          <li>Includes all Weekly Lite features</li>
+          <li>350 Student Result Submissions per month</li>
+          <li>Full Anti-Cheat Proctoring with Tab-Switch & Focus Tracking</li>
+          <li>Detailed Performance Reports and Section-Wise Score Analysis</li>
+          <li>Export Student Results and Scorecards to Excel (CSV/XLSX)</li>
+          <li>Priority Customer Support</li>
+        </ul>
+
+        <h3>Yearly Elite (₹799 / 365 days)</h3>
+        <p>Maximum value for schools, colleges, and premier coaching academies.</p>
+        <ul>
+          <li>Includes all Monthly Pro features</li>
+          <li>4,000 Student Result Submissions per year</li>
+          <li>Full White-Label Institute Branding & Custom Certificate Generation</li>
+          <li>Unlimited Timed Exam Scheduling and Batch Management</li>
+          <li>Custom Domain & Portal Integration Ready</li>
+          <li>24/7 Dedicated Priority Support</li>
+        </ul>
+      </div>
+
+      <h2>Plan Feature Comparison</h2>
+      <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Free Forever</th>
+            <th>Weekly Lite (₹49)</th>
+            <th>Monthly Pro (₹149)</th>
+            <th>Yearly Elite (₹799)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Test Creation</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+          <tr><td>Student Assessments</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+          <tr><td>AI Test Generator (PDF/Video)</td><td>Included</td><td>Included</td><td>Included</td><td>Included</td></tr>
+          <tr><td>Submissions Quota</td><td>Standard</td><td>100</td><td>350</td><td>4,000</td></tr>
+          <tr><td>Institute Logo & Branding</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+          <tr><td>Anti-Cheat Tab Tracking</td><td>Standard</td><td>Advanced</td><td>Advanced</td><td>Full Suite</td></tr>
+          <tr><td>Export to Excel</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+          <tr><td>Support</td><td>Community</td><td>Email</td><td>Priority</td><td>24/7 Dedicated</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Frequently Asked Questions About Pricing</h2>
+      ${faqs.map(f => `<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>`).join('\n')}
+
+      <p><a href="https://testoza.com/create-test">Create a Test Free</a> | <a href="https://testoza.com/generate-with-ai">AI Quiz Maker</a> | <a href="https://testoza.com/">Back to Homepage</a></p>
+    `;
+
+    return {
+      bodyHtml,
+      faqSchema: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(f => ({
+          "@type": "Question",
+          "name": f.q,
+          "acceptedAnswer": { "@type": "Answer", "text": f.a }
+        }))
+      }
+    };
+  }
+
+  // ─── 2. CREATE TEST PAGE (MANUAL BUILDER) ──────────────────────────────────
+  if (path === '/create-test') {
+    const faqs = [
+      {
+        q: "What question types does TestoZa support?",
+        a: "TestoZa supports multiple question formats including Single-Choice Multiple Choice Questions (MCQs), Multiple-Select Questions (MSQs), Numerical Value Questions, True or False, Fill-in-the-Blanks, and Short Answer questions. You can combine different question types within a single test or organize them into distinct subject sections to mirror standard competitive and school exam formats."
+      },
+      {
+        q: "Can I import questions from Word or Excel?",
+        a: "Yes, you can import questions in bulk from Microsoft Word documents, Excel spreadsheets, or text files. With our AI and text import tools, you can simply copy and paste your existing question sets or upload documents directly. The system automatically parses question text, answer options, and correct answers into structured, editable test questions."
+      },
+      {
+        q: "Can I add images or math equations to questions?",
+        a: "Yes, TestoZa provides full support for images, diagrams, and complex mathematical formulas. You can upload images directly into questions and answer explanations, and format scientific notations and equations using LaTeX syntax. This makes it easy to construct technical exams in Mathematics, Physics, Chemistry, and Engineering."
+      },
+      {
+        q: "How do I configure negative marking and marking schemes?",
+        a: "You can configure custom marking schemes for each question or section within the test builder. Specify the positive marks awarded for correct answers and choose fractional negative deductions (such as -0.25, -0.33, -0.5, or -1) for incorrect responses. TestoZa calculates aggregate scores and negative deductions automatically when students submit their tests."
+      },
+      {
+        q: "Can I organize tests into multiple sections?",
+        a: "Yes, you can divide any test into multiple named sections—such as Physics, Chemistry, and Mathematics, or Section A (Objective) and Section B (Numerical). Each section can have its own instructions, question count, and optional sectional time limits, giving students an authentic exam environment."
+      },
+      {
+        q: "Can I download results and student responses as an Excel sheet?",
+        a: "Yes, you can export complete exam results and individual student scorecards to an Excel (CSV/XLSX) spreadsheet with a single click. The download includes student names, roll numbers, total scores, section-wise marks, accuracy percentages, time spent per question, and timestamps for comprehensive offline record-keeping."
+      },
+      {
+        q: "Can I schedule an exam to open and close at specific times?",
+        a: "Yes, you can schedule tests with precise start and end dates and times. Once scheduled, the test becomes accessible only during the designated exam window. You can also configure whether students can review answers immediately upon submission or only after the test window has officially closed."
+      }
+    ];
+
+    const bodyHtml = `
+      <h1>Create Online Tests & Mock Exams – Manual Question Builder & Exam Rules</h1>
+      <p>TestoZa's online test builder gives teachers and coaching institutes complete control over exam structure, question types, timer settings, negative marking rules, and anti-cheat proctoring. Create tests manually or import questions in bulk.</p>
+
+      <h2>Supported Question Formats</h2>
+      <ul>
+        <li><strong>Single-Choice Multiple Choice Questions (MCQ):</strong> Standard 4-option questions with one correct answer and detailed explanations.</li>
+        <li><strong>Multiple-Select Questions (MSQ):</strong> Advanced questions with multiple correct options and optional partial marking.</li>
+        <li><strong>Numerical & Integer Value Questions:</strong> Exact value, decimal, or range-based numerical input questions.</li>
+        <li><strong>Fill in the Blanks:</strong> Single or multi-blank sentences with case-sensitive validation options.</li>
+        <li><strong>True or False Questions:</strong> Rapid concept-check questions.</li>
+        <li><strong>LaTeX & Formula Support:</strong> Full LaTeX equation editor support for mathematical symbols and scientific notations.</li>
+        <li><strong>Rich Media:</strong> Upload diagrams, charts, and images directly into questions and answer explanations.</li>
+      </ul>
+
+      <h2>Timer Settings & Exam Scheduling</h2>
+      <ul>
+        <li><strong>Overall Countdown Timer:</strong> Strict time limit with automatic test submission upon expiry.</li>
+        <li><strong>Section-Wise Timers:</strong> Dedicated timers per section to simulate standardized competitive exams.</li>
+        <li><strong>Scheduled Exam Windows:</strong> Set start and end date/time so students only access the exam during designated windows.</li>
+      </ul>
+
+      <h2>Marking Schemes & Negative Marking Rules</h2>
+      <ul>
+        <li><strong>Custom Positive Marks:</strong> Assign specific marks (+1, +2, +4) per question or section.</li>
+        <li><strong>Configurable Negative Marking:</strong> Enforce negative marks (-0.25, -0.33, -0.5, -1) for incorrect responses.</li>
+        <li><strong>Automated Calculation:</strong> Net score, gross score, negative deductions, and accuracy percentages calculate automatically.</li>
+      </ul>
+
+      <h2>Exam Security & Anti-Cheat Proctoring</h2>
+      <ul>
+        <li><strong>Tab-Switch Monitoring:</strong> Records every time a student leaves the test tab.</li>
+        <li><strong>Full-Screen Enforcement:</strong> Distraction-free full-screen testing mode.</li>
+        <li><strong>Question & Option Shuffling:</strong> Automatically randomizes question and option order per student.</li>
+      </ul>
+
+      <h2>Frequently Asked Questions About Creating Tests</h2>
+      ${faqs.map(f => `<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>`).join('\n')}
+
+      <p><a href="https://testoza.com/generate-with-ai">Create Test with AI</a> | <a href="https://testoza.com/pricing">Pricing & Plans</a> | <a href="https://testoza.com/">Homepage</a></p>
+    `;
+
+    return {
+      bodyHtml,
+      faqSchema: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(f => ({
+          "@type": "Question",
+          "name": f.q,
+          "acceptedAnswer": { "@type": "Answer", "text": f.a }
+        }))
+      }
+    };
+  }
+
+  // ─── 3. GENERATE WITH AI ───────────────────────────────────────────────────
+  if (path === '/generate-with-ai') {
+    const faqs = [
+      {
+        q: "How does TestoZa generate tests using AI?",
+        a: "TestoZa uses advanced AI models to analyze educational content—such as PDF documents, lecture notes, textbook chapters, text prompts, or YouTube video transcripts. The AI extracts core learning concepts, formulates accurate multiple-choice and short-answer questions, specifies correct answers, and generates step-by-step explanations automatically in under two minutes."
+      },
+      {
+        q: "Can I edit AI-generated questions before publishing?",
+        a: "Yes, you have 100% editing control. Once the AI generates the test, all questions, options, and explanations load into our full-featured Test Builder. You can edit question wording, reorder options, change answer keys, add images or math formulas, and adjust marking schemes before sharing the test with students."
+      },
+      {
+        q: "What content formats can I upload for AI test generation?",
+        a: "TestoZa supports PDF documents (including textbooks and lecture slides), pasted plain text, topic prompts, and YouTube video URLs with transcripts. The AI parses the uploaded material and formats questions tailored to your chosen grade level and difficulty."
+      }
+    ];
+
+    const bodyHtml = `
+      <h1>Free AI Quiz & Test Generator – Create Online Exams from Any Content</h1>
+      <p>Transform PDFs, textbook chapters, lecture notes, text prompts, and YouTube videos into ready-to-take online tests in seconds using TestoZa's AI test generator. Free for teachers and educators.</p>
+
+      <h2>How AI Test Generation Works</h2>
+      <ol>
+        <li><strong>Upload Content:</strong> Upload a PDF document, paste lecture notes, or share a YouTube video link.</li>
+        <li><strong>Configure Preferences:</strong> Select your desired number of questions, question types (MCQ, MSQ, True/False, Fill-in-the-blank), and difficulty level.</li>
+        <li><strong>Instant Generation:</strong> Our AI extracts key concepts, formulates questions, creates plausible distractors, and writes detailed solution explanations.</li>
+        <li><strong>Review & Customize:</strong> Edit questions in our visual test builder, configure timer and marking settings, and publish.</li>
+      </ol>
+
+      <h2>Frequently Asked Questions About AI Test Generation</h2>
+      ${faqs.map(f => `<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>`).join('\n')}
+
+      <p><a href="https://testoza.com/create-test">Manual Test Builder</a> | <a href="https://testoza.com/pricing">Pricing</a> | <a href="https://testoza.com/">Homepage</a></p>
+    `;
+
+    return {
+      bodyHtml,
+      faqSchema: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(f => ({
+          "@type": "Question",
+          "name": f.q,
+          "acceptedAnswer": { "@type": "Answer", "text": f.a }
+        }))
+      }
+    };
+  }
+
+  // ─── 4. SEO USE-CASE LANDING PAGES ──────────────────────────────────────────
+  const useCaseDetails = {
+    '/online-test-maker': {
+      h1: 'Online Test Maker – Create Tests Online in Minutes',
+      overview: 'Create online tests instantly with TestoZa. The easiest online test maker for teachers, educators, and coaching institutes. Auto-grading, analytics, and secure test delivery — all free.',
+      features: ['AI Question Generation from PDFs, YouTube & Text', 'Instant Auto-Grading & Performance Reports', 'One-Click Test Sharing via Link or QR Code', 'Anti-Cheat Proctoring & Focus Tracking'],
+      faqs: [
+        { q: 'Is this online test maker free?', a: 'Yes, TestoZa is completely free for teachers, educators, and creators. You can create unlimited tests and assess unlimited students without any fee or subscription.' },
+        { q: 'Can students take tests on mobile phones?', a: 'Yes, tests are fully responsive and work on any smartphone, tablet, or laptop browser without installing any app.' },
+        { q: 'What question formats are supported?', a: 'TestoZa supports Single-Choice MCQs, Multiple-Select questions, Numerical values, Fill-in-the-blank, and True/False questions.' }
+      ]
+    },
+    '/online-exam-software': {
+      h1: 'Online Exam Software – Conduct Secure Online Exams',
+      overview: 'Secure online exam software for educators and coaching institutes. Conduct proctored exams with auto-grading, focus tracking, and detailed analytics.',
+      features: ['Standardized Exam Security & Tab-Switch Detection', 'Full-Screen Immersion & Anti-Multitasking', 'Timer & Section-Wise Scheduling', 'Automated Scorecards with Negative Marking'],
+      faqs: [
+        { q: 'How does TestoZa secure online exams?', a: 'TestoZa uses tab-switch tracking, fullscreen enforcement, question and option randomization, and copy-paste prevention to maintain exam integrity.' },
+        { q: 'Can I conduct institute-wide exams?', a: 'Yes, hundreds of students can attempt exams simultaneously with zero lag, supported by scalable cloud infrastructure.' },
+        { q: 'Does it support negative marking?', a: 'Yes, you can configure custom positive marks and negative mark penalties (-0.25, -0.33, -0.5, -1) per question or section.' }
+      ]
+    },
+    '/online-quiz-maker': {
+      h1: 'Online Quiz Maker for Teachers – Create Quizzes Free',
+      overview: 'Free online quiz maker for teachers. Create engaging quizzes from PDFs, text, or YouTube videos using AI. Auto-grading, instant results, and student analytics.',
+      features: ['Create Quizzes in 60 Seconds with AI', 'Instant Results & Student Scorecards', 'Classroom Leaderboards', 'No Account Required for Students'],
+      faqs: [
+        { q: 'How do I share a quiz with my class?', a: 'Copy the unique quiz link or display the QR code in class. Students can open it in any mobile or desktop browser immediately.' },
+        { q: 'Can I download quiz scores?', a: 'Yes, you can export all student responses, scores, and completion times to an Excel spreadsheet with one click.' },
+        { q: 'Is there a limit on quizzes?', a: 'No, teachers can create unlimited quizzes for free on TestoZa.' }
+      ]
+    },
+    '/mcq-test-maker': {
+      h1: 'MCQ Test Maker Online – Create Multiple Choice Tests Free',
+      overview: 'Create MCQ tests online in minutes. Free MCQ test maker for teachers with AI question generation, auto-grading, and detailed analytics.',
+      features: ['Single-Choice & Multi-Select MCQs', 'Negative Marking Rules', 'LaTeX Math & Scientific Notation Support', 'Question & Option Shuffling'],
+      faqs: [
+        { q: 'How many options can an MCQ have?', a: 'You can add 2 to 6 options per question, with full support for formulas and images.' },
+        { q: 'Can I import MCQs from Word or Excel?', a: 'Yes, you can paste questions in bulk or upload PDF documents, and AI parses them into MCQs automatically.' },
+        { q: 'Are questions randomized for each student?', a: 'Yes, you can enable automatic question and option shuffling to prevent answer sharing.' }
+      ]
+    },
+    '/ai-question-generator': {
+      h1: 'AI Question Generator – Generate Quiz Questions from Any Content',
+      overview: 'Generate quiz questions automatically using AI. Upload PDFs, paste text, or share YouTube videos — get MCQ, fill-in-the-blank, and true/false questions instantly.',
+      features: ['Extract Questions from PDFs & Textbooks', 'Convert YouTube Videos into Quizzes', 'Accurate Distractor Generation', 'Full Explanations for Every Question'],
+      faqs: [
+        { q: 'How accurate is the AI question generator?', a: 'The AI analyzes the provided source text directly, extracting factual concepts and generating contextually sound questions with correct answer keys.' },
+        { q: 'Can I modify questions after AI generation?', a: 'Yes, every question is fully editable in TestoZa’s visual test editor before publishing.' },
+        { q: 'Does it support STEM and math questions?', a: 'Yes, TestoZa handles mathematical notations, chemical formulas, and technical terminology with LaTeX rendering.' }
+      ]
+    },
+    '/pdf-to-quiz': {
+      h1: 'PDF to Quiz Converter – Turn PDFs into Online Quizzes with AI',
+      overview: 'Convert any PDF into an online quiz instantly using AI. Upload textbook chapters, lecture slides, or study notes — get a ready-to-take quiz with auto-grading.',
+      features: ['Direct PDF Upload & Parsing', 'Automatic MCQ & Fill-in-the-Blank Creation', 'Difficulty Level Selection', 'Instant Student Delivery'],
+      faqs: [
+        { q: 'What size PDF can I upload?', a: 'You can upload standard PDF documents including textbook chapters, slide decks, and lecture notes.' },
+        { q: 'How long does conversion take?', a: 'Most PDF documents are analyzed and converted into ready-to-use tests in under two minutes.' },
+        { q: 'Can I choose how many questions to generate?', a: 'Yes, you can choose the desired question count (e.g., 5, 10, 20, or custom) before generation.' }
+      ]
+    },
+    '/youtube-to-quiz': {
+      h1: 'YouTube to Quiz Generator – Create Quizzes from YouTube Videos',
+      overview: 'Create quizzes from YouTube videos using AI. Share a YouTube link and get a complete quiz with MCQs, answers, and explanations. Perfect for flipped classrooms.',
+      features: ['Automatic Transcript Extraction', 'Comprehension Concept Testing', 'Ideal for Flipped Classrooms', 'One-Click Publishing'],
+      faqs: [
+        { q: 'Does any YouTube video work?', a: 'Any public YouTube video with English subtitles or transcripts can be converted into a quiz.' },
+        { q: 'How does it help flipped classrooms?', a: 'Students watch the assigned video, then complete the quiz immediately to demonstrate concept mastery.' },
+        { q: 'Can students rewatch the video during the quiz?', a: 'You can embed the video right alongside the quiz questions or keep the quiz strictly separate.' }
+      ]
+    },
+    '/online-test-for-coaching': {
+      h1: 'Online Test Platform for Coaching Institutes',
+      overview: 'Online test platform built for coaching institutes. Conduct mock tests, track student performance, and manage batches with white-label branding. Start free.',
+      features: ['Batch & Student Management', 'Institute Name & Logo Branding', 'Rank & Percentile Analytics', 'Scheduled Exam Sessions'],
+      faqs: [
+        { q: 'Can I brand tests with my coaching institute logo?', a: 'Yes, premium plans allow you to display your institute name, logo, and custom instructions on all tests.' },
+        { q: 'Does it calculate ranks and percentiles?', a: 'Yes, TestoZa automatically computes student ranks, percentiles, and batch-wise performance distributions.' },
+        { q: 'Can I schedule tests for specific batch timings?', a: 'Yes, you can configure precise start and end times for any coaching batch.' }
+      ]
+    },
+    '/exam-software-for-schools': {
+      h1: 'Online Exam Software for Schools – Conduct School Exams Online',
+      overview: 'Online exam software designed for schools. Conduct class tests, mid-terms, and final exams online with auto-grading, secure delivery, and detailed student reports.',
+      features: ['Term Exams & Weekly Tests', 'Classroom Batch Assignments', 'Automated Score Reports', 'Excel Export for Report Cards'],
+      faqs: [
+        { q: 'Is TestoZa suitable for K-12 schools?', a: 'Yes, TestoZa is widely used by primary, secondary, and higher secondary schools for classroom evaluations.' },
+        { q: 'Can non-technical teachers use it?', a: 'Yes, the interface is simple and intuitive, allowing any teacher to build a test in minutes.' },
+        { q: 'Can parents receive test results?', a: 'Teachers can download or share individual scorecards and performance summaries directly.' }
+      ]
+    },
+    '/white-label-test-platform': {
+      h1: 'White Label Test Platform – Your Brand, Our Technology',
+      overview: 'White-label online test platform for coaching institutes and schools. Custom logo, colours, domain, and certificates. Your brand, powered by TestoZa technology.',
+      features: ['Custom Logo & Organization Identity', 'Branded Test URLs & Portals', 'Custom Completion Certificates', 'Private Question Banks'],
+      faqs: [
+        { q: 'What elements can be white-labeled?', a: 'Your organization logo, institute name, test portal headers, result pages, and certificates can be branded.' },
+        { q: 'Can I issue branded certificates?', a: 'Yes, TestoZa generates official PDF certificates with your institute seal, logo, and student scores.' },
+        { q: 'Are my tests private?', a: 'Yes, all tests and question banks remain strictly confidential to your institution.' }
+      ]
+    },
+    '/auto-grading-software': {
+      h1: 'Auto Grading Software – Instant Test Grading for Teachers',
+      overview: 'Auto-grade tests and quizzes instantly. Eliminates manual correction. Instant scores, analytics, and detailed student reports. Free for teachers.',
+      features: ['Instant Auto-Grading upon Submission', 'Zero Manual Paper Checking', 'Negative Marking Support', 'Accuracy & Time-Spent Metrics'],
+      faqs: [
+        { q: 'Which question types are auto-graded?', a: 'MCQs, MSQs, Numerical questions, Fill-in-the-blanks, and True/False questions are graded automatically.' },
+        { q: 'Do students see their scores immediately?', a: 'You can choose whether students view scores immediately or after the test window closes.' },
+        { q: 'Can I export grading sheets to Excel?', a: 'Yes, complete score sheets with sectional marks and time stamps export to Excel with one click.' }
+      ]
+    },
+    '/online-proctoring-software': {
+      h1: 'Online Proctoring Software – Secure Online Exam Monitoring',
+      overview: 'Conduct secure proctored online exams. Focus tracking, tab-switch detection, full-screen enforcement, and detailed activity logs. Free for educators.',
+      features: ['Real-Time Tab-Switch Tracking', 'Full-Screen Lock Mode', 'Copy-Paste Restriction', 'Question & Option Shuffling'],
+      faqs: [
+        { q: 'How does tab-switch detection work?', a: 'TestoZa monitors browser visibility state and logs each time a student leaves or minimizes the exam tab.' },
+        { q: 'Can tests auto-submit on cheating attempts?', a: 'Yes, teachers can set a maximum violation limit after which the test automatically submits.' },
+        { q: 'Do students need to install software?', a: 'No, all proctoring features operate directly in modern web browsers without plugins or downloads.' }
+      ]
+    }
+  };
+
+  if (useCaseDetails[path]) {
+    const d = useCaseDetails[path];
+    const bodyHtml = `
+      <h1>${escapeHtml(d.h1)}</h1>
+      <p>${escapeHtml(d.overview)}</p>
+
+      <h2>Key Features for Educators</h2>
+      <ul>
+        ${d.features.map(f => `<li>${escapeHtml(f)}</li>`).join('\n')}
+      </ul>
+
+      <h2>Frequently Asked Questions</h2>
+      ${d.faqs.map(f => `<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>`).join('\n')}
+
+      <p><a href="https://testoza.com/create-test">Create a Test Free</a> | <a href="https://testoza.com/generate-with-ai">AI Test Generator</a> | <a href="https://testoza.com/pricing">Pricing</a></p>
+    `;
+
+    return {
+      bodyHtml,
+      faqSchema: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": d.faqs.map(f => ({
+          "@type": "Question",
+          "name": f.q,
+          "acceptedAnswer": { "@type": "Answer", "text": f.a }
+        }))
+      }
+    };
+  }
+
+  // ─── 5. SEO SUBJECT HUB PAGES (/create-test/:subject) ──────────────────────
+  const subjectMatch = path.match(/^\/create-test\/([a-z-]+)$/);
+  if (subjectMatch) {
+    const slug = subjectMatch[1];
+    const subjectName = formatCategoryName(slug);
+    const faqs = [
+      {
+        q: `How do I create ${subjectName} tests on TestoZa?`,
+        a: `You can create ${subjectName} tests manually using our visual question editor or automatically with AI. Upload ${subjectName} lecture notes, textbook chapters, or PDF question banks, and TestoZa generates MCQs with step-by-step solutions in minutes.`
+      },
+      {
+        q: `Does TestoZa support formulas and diagrams for ${subjectName}?`,
+        a: `Yes, TestoZa provides full LaTeX equation editor support for mathematical, chemical, and physical formulas, as well as high-resolution image uploads for diagrams, charts, and graphs.`
+      },
+      {
+        q: `Can I share ${subjectName} tests with my students for free?`,
+        a: `Yes, TestoZa is 100% free for teachers. You can create unlimited ${subjectName} tests and share the link with any number of students without restrictions.`
+      }
+    ];
+
+    const bodyHtml = `
+      <h1>Create ${escapeHtml(subjectName)} Tests Online – AI-Powered ${escapeHtml(subjectName)} Quiz Maker</h1>
+      <p>Create, conduct, and grade ${escapeHtml(subjectName)} tests online with TestoZa. Built for ${escapeHtml(subjectName)} teachers, educators, and coaching institutes. Support for LaTeX formulas, diagrams, auto-grading, and anti-cheat proctoring.</p>
+
+      <h2>Capabilities for ${escapeHtml(subjectName)} Assessments</h2>
+      <ul>
+        <li>AI question generation from ${escapeHtml(subjectName)} notes, textbooks, and YouTube videos</li>
+        <li>Full LaTeX formula and scientific notation editor</li>
+        <li>Image, diagram, and graph embedding in questions and solutions</li>
+        <li>Instant auto-grading with detailed scorecards and explanations</li>
+        <li>Strict timers and negative marking configurations</li>
+      </ul>
+
+      <h2>Frequently Asked Questions About ${escapeHtml(subjectName)} Tests</h2>
+      ${faqs.map(f => `<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>`).join('\n')}
+
+      <p><a href="https://testoza.com/create-test">Build ${escapeHtml(subjectName)} Test</a> | <a href="https://testoza.com/generate-with-ai">AI Quiz Maker</a> | <a href="https://testoza.com/pricing">Pricing</a></p>
+    `;
+
+    return {
+      bodyHtml,
+      faqSchema: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(f => ({
+          "@type": "Question",
+          "name": f.q,
+          "acceptedAnswer": { "@type": "Answer", "text": f.a }
+        }))
+      }
+    };
+  }
+
+  // ─── 6. SEO COMPARISON PAGES (/compare/:slug) ──────────────────────────────
+  const compareMatch = path.match(/^\/compare\/([a-z-]+)$/);
+  if (compareMatch) {
+    const slug = compareMatch[1];
+    const compNameMap = {
+      'testmoz-alternative': 'Testmoz',
+      'classmarker-alternative': 'ClassMarker',
+      'google-forms-alternative': 'Google Forms',
+      'quizizz-alternative': 'Quizizz',
+      'typeform-alternative': 'Typeform'
+    };
+    const compName = compNameMap[slug] || 'Alternative';
+
+    const faqs = [
+      {
+        q: `Why is TestoZa better than ${compName} for online tests?`,
+        a: `TestoZa is purpose-built for academic and exam assessments. Unlike ${compName}, TestoZa offers native AI test generation from PDFs and YouTube videos, built-in countdown timers, negative marking, anti-cheating tab-switch detection, and student leaderboards—completely free with zero student limits.`
+      },
+      {
+        q: `Can I migrate my tests from ${compName} to TestoZa?`,
+        a: `Yes, you can easily migrate question sets by copying and pasting your text into TestoZa’s AI importer or uploading your question documents directly. Our AI parses questions, options, and answers automatically.`
+      },
+      {
+        q: `Is TestoZa really free compared to ${compName}?`,
+        a: `Yes, TestoZa offers unlimited test creation, unlimited students, and core assessment features 100% free for teachers. Paid plans are strictly optional for coaching institutes needing custom branding and higher submission quotas.`
+      }
+    ];
+
+    const bodyHtml = `
+      <h1>TestoZa vs ${escapeHtml(compName)} – Better Online Assessment Platform for Teachers</h1>
+      <p>Looking for a modern alternative to ${escapeHtml(compName)}? TestoZa offers AI-powered test generation, built-in exam security, automatic grading, and white-label branding at zero cost for educators.</p>
+
+      <h2>Comparison: TestoZa vs ${escapeHtml(compName)}</h2>
+      <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>TestoZa</th>
+            <th>${escapeHtml(compName)}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>AI Test Generator (PDF / Video)</td><td>Yes (Built-in)</td><td>No / Limited</td></tr>
+          <tr><td>Countdown Timers & Auto-Submit</td><td>Yes (Native)</td><td>Requires Add-on / Manual</td></tr>
+          <tr><td>Negative Marking Calculation</td><td>Yes (Automatic)</td><td>Limited / None</td></tr>
+          <tr><td>Anti-Cheat Tab-Switch Tracking</td><td>Yes (Native)</td><td>Limited</td></tr>
+          <tr><td>Student Account Required</td><td>No (Instant Link)</td><td>Often Required</td></tr>
+          <tr><td>Free Tier Limits</td><td>Unlimited Tests & Students</td><td>Restricted Limits</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Frequently Asked Questions</h2>
+      ${faqs.map(f => `<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>`).join('\n')}
+
+      <p><a href="https://testoza.com/create-test">Try TestoZa Free</a> | <a href="https://testoza.com/pricing">View Pricing</a> | <a href="https://testoza.com/">Homepage</a></p>
+    `;
+
+    return {
+      bodyHtml,
+      faqSchema: {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(f => ({
+          "@type": "Question",
+          "name": f.q,
+          "acceptedAnswer": { "@type": "Answer", "text": f.a }
+        }))
+      }
+    };
+  }
+
+  // ─── 7. TEST PRACTICE & INTRO ROUTES ───────────────────────────────────────
+  if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
+    if (testData) {
+      const qCount = testData.total_questions || testData.questions?.length || 0;
+      const duration = testData.time_limit_mins ? `${testData.time_limit_mins} minutes` : 'Untimed';
+      const bodyHtml = `
+        <h1>${escapeHtml(testData.title)}</h1>
+        <p>${escapeHtml(testData.description || 'Online test and assessment on TestoZa.')}</p>
+        <h2>Exam Information</h2>
+        <ul>
+          <li><strong>Total Questions:</strong> ${qCount}</li>
+          <li><strong>Duration:</strong> ${duration}</li>
+          <li><strong>Format:</strong> Computer-Based Test (CBT) with auto-grading</li>
+        </ul>
+        <p><a href="https://testoza.com/test-intro/${testData.id}">Start Test</a> | <a href="https://testoza.com/">Explore More Tests</a></p>
+      `;
+      return { bodyHtml, faqSchema: null };
+    }
+  }
+
+  return { bodyHtml: null, faqSchema: null };
 }
 
 /**
@@ -465,10 +1037,11 @@ async function handleHTMLRequest(request) {
       }
     }
 
-    // Generate meta tags HTML
+    // Generate meta tags HTML and route-specific body/schema
     const metaTags = generateMetaTags(request.url, testData);
+    const routeContent = generateRouteContent(request.url, testData);
 
-    // Use native HTMLRewriter to strip old SEO tags and append new ones cleanly
+    // Use native HTMLRewriter to strip old SEO tags, inject new ones, and replace <main> body
     const rewriter = new HTMLRewriter()
       .on('title', {
         element(el) { el.remove(); }
@@ -497,11 +1070,25 @@ async function handleHTMLRequest(request) {
       .on('meta[name^="twitter:"]', {
         element(el) { el.remove(); }
       })
+      .on('script#schema-faq', {
+        element(el) { el.remove(); }
+      })
       .on('head', {
         element(el) {
           el.append(metaTags, { html: true });
+          if (routeContent && routeContent.faqSchema) {
+            el.append(`\n    <!-- Route FAQPage Schema -->\n    <script id="schema-faq" type="application/ld+json">\n${JSON.stringify(routeContent.faqSchema, null, 2)}\n    </script>`, { html: true });
+          }
         }
       });
+
+    if (routeContent && routeContent.bodyHtml) {
+      rewriter.on('main', {
+        element(el) {
+          el.setInnerContent(routeContent.bodyHtml, { html: true });
+        }
+      });
+    }
 
     responseToReturn = rewriter.transform(originResponse);
   }

@@ -57,7 +57,6 @@ export const SEO: React.FC<SEOProps> = ({
             {/* Standard Meta Tags */}
             <title>{fullTitle}</title>
             <meta name="description" content={finalDescription} />
-            <meta name="keywords" content={finalKeywords} />
             <meta name="author" content="TestoZa Team" />
             <link rel="canonical" href={finalCanonicalUrl} />
 
