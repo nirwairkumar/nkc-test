@@ -213,10 +213,10 @@ function generateMetaTags(url, testData = null) {
 
   // Default meta - matching high quality educational branding
   let title = 'TestoZa – Free Online Test Maker for Teachers | Create Exam Online with AI';
-  let description = 'Create online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers — generate quizzes from PDFs, YouTube videos, or text. Free quiz creator, mock tests, CBT platform & exam integrity tools.';
+  let description = 'Create, conduct, and manage online tests and exams in minutes with AI. TestoZa is the best free online test maker for teachers, educators, coaching institutes, and content creators — generate quizzes from PDFs, YouTube videos, or text. Auto-grading, analytics, white-label branding & exam integrity tools.';
   let type = 'website';
   let image = `${siteUrl}/default-og.png`;
-  let keywords = 'online test maker, ai test generator, quiz creator, exam builder, conduct online exam, mock test platform, online examination software';
+  let keywords = 'online test maker for teachers, ai test generator, quiz creator for educators, exam builder, conduct online exam, assessment platform for coaching institutes, online examination software';
 
   // Customize based on route
   if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
