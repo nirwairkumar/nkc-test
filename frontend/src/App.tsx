@@ -93,6 +93,11 @@ const MoreTestsPage = safeLazy(() => import("./pages/MoreTestsPage"));
 const ConvertPage = safeLazy(() => import("./pages/ConvertPage"));
 const SurveyPage = safeLazy(() => import("./pages/SurveyPage"));
 
+// SEO Landing Pages
+const UseCaseLandingPage = safeLazy(() => import("./pages/UseCaseLandingPage"));
+const SubjectLandingPage = safeLazy(() => import("./pages/SubjectLandingPage"));
+const ComparisonLandingPage = safeLazy(() => import("./pages/ComparisonPage"));
+
 // News & Posts
 const NewsFeed = safeLazy(() => import("./pages/NewsFeed"));
 const NewsPostView = safeLazy(() => import("./pages/NewsPostView"));
@@ -218,6 +223,26 @@ const App = () => (
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/convert" element={<ConvertPage />} />
                     <Route path="/survey" element={<SurveyPage />} />
+
+                    {/* SEO Use-Case Landing Pages */}
+                    <Route path="/online-test-maker" element={<UseCaseLandingPage />} />
+                    <Route path="/online-exam-software" element={<UseCaseLandingPage />} />
+                    <Route path="/online-quiz-maker" element={<UseCaseLandingPage />} />
+                    <Route path="/mcq-test-maker" element={<UseCaseLandingPage />} />
+                    <Route path="/ai-question-generator" element={<UseCaseLandingPage />} />
+                    <Route path="/pdf-to-quiz" element={<UseCaseLandingPage />} />
+                    <Route path="/youtube-to-quiz" element={<UseCaseLandingPage />} />
+                    <Route path="/online-test-for-coaching" element={<UseCaseLandingPage />} />
+                    <Route path="/exam-software-for-schools" element={<UseCaseLandingPage />} />
+                    <Route path="/white-label-test-platform" element={<UseCaseLandingPage />} />
+                    <Route path="/auto-grading-software" element={<UseCaseLandingPage />} />
+                    <Route path="/online-proctoring-software" element={<UseCaseLandingPage />} />
+
+                    {/* SEO Subject Hub Pages */}
+                    <Route path="/create-test/:subject" element={<SubjectLandingPage />} />
+
+                    {/* SEO Comparison Pages */}
+                    <Route path="/compare/:slug" element={<ComparisonLandingPage />} />
 
 
                     {/* Protected Routes */}

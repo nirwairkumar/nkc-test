@@ -302,6 +302,66 @@ function generateMetaTags(url, testData = null) {
     description = 'Stay up to date with the latest exam updates, test creation guides, and education tips from the TestoZa team.';
   }
 
+  // ─── SEO USE-CASE LANDING PAGES ──────────────────────────────────────
+  const useCaseMetaMap = {
+    '/online-test-maker': { title: 'Online Test Maker – Create Tests Online in Minutes | TestoZa', description: 'Create online tests instantly with TestoZa. The easiest online test maker for teachers, educators, and coaching institutes. Auto-grading, analytics, and secure test delivery — all free.' },
+    '/online-exam-software': { title: 'Online Exam Software – Conduct Secure Online Exams | TestoZa', description: 'Secure online exam software for educators and coaching institutes. Conduct proctored exams with auto-grading, focus tracking, and detailed analytics. Start free.' },
+    '/online-quiz-maker': { title: 'Online Quiz Maker for Teachers – Create Quizzes Free | TestoZa', description: 'Free online quiz maker for teachers. Create engaging quizzes from PDFs, text, or YouTube videos using AI. Auto-grading, instant results, and student analytics.' },
+    '/mcq-test-maker': { title: 'MCQ Test Maker Online – Create Multiple Choice Tests Free | TestoZa', description: 'Create MCQ tests online in minutes. Free MCQ test maker for teachers with AI question generation, auto-grading, and detailed analytics.' },
+    '/ai-question-generator': { title: 'AI Question Generator – Generate Quiz Questions from Any Content | TestoZa', description: 'Generate quiz questions automatically using AI. Upload PDFs, paste text, or share YouTube videos — get MCQ, fill-in-the-blank, and true/false questions instantly.' },
+    '/pdf-to-quiz': { title: 'PDF to Quiz Converter – Turn PDFs into Online Quizzes with AI | TestoZa', description: 'Convert any PDF into an online quiz instantly using AI. Upload textbook chapters, lecture slides, or study notes — get a ready-to-take quiz with auto-grading.' },
+    '/youtube-to-quiz': { title: 'YouTube to Quiz Generator – Create Quizzes from YouTube Videos | TestoZa', description: 'Create quizzes from YouTube videos using AI. Share a YouTube link and get a complete quiz with MCQs, answers, and explanations. Perfect for flipped classrooms.' },
+    '/online-test-for-coaching': { title: 'Online Test Platform for Coaching Institutes | TestoZa', description: 'Online test platform built for coaching institutes. Conduct mock tests, track student performance, and manage batches with white-label branding. Start free.' },
+    '/exam-software-for-schools': { title: 'Online Exam Software for Schools – Conduct School Exams Online | TestoZa', description: 'Online exam software designed for schools. Conduct class tests, mid-terms, and final exams online with auto-grading, secure delivery, and detailed student reports.' },
+    '/white-label-test-platform': { title: 'White Label Test Platform – Your Brand, Our Technology | TestoZa', description: 'White-label online test platform for coaching institutes and schools. Custom logo, colours, domain, and certificates. Your brand, powered by TestoZa technology.' },
+    '/auto-grading-software': { title: 'Auto Grading Software – Instant Test Grading for Teachers | TestoZa', description: 'Auto-grade tests and quizzes instantly. Eliminates manual correction. Instant scores, analytics, and detailed student reports. Free for teachers.' },
+    '/online-proctoring-software': { title: 'Online Proctoring Software – Secure Online Exam Monitoring | TestoZa', description: 'Conduct secure proctored online exams. Focus tracking, tab-switch detection, full-screen enforcement, and detailed activity logs. Free for educators.' },
+  };
+  if (useCaseMetaMap[path]) {
+    title = useCaseMetaMap[path].title;
+    description = useCaseMetaMap[path].description;
+  }
+
+  // ─── SEO SUBJECT HUB PAGES (/create-test/:subject) ──────────────────
+  const subjectMatch = path.match(/^\/create-test\/([a-z-]+)$/);
+  if (subjectMatch) {
+    const subjectMetaMap = {
+      'physics': { title: 'Create Physics Tests Online – AI-Powered Physics Quiz Maker | TestoZa', description: 'Create physics tests and quizzes online using AI. Upload physics notes, textbooks, or videos — get ready-to-take MCQs with solutions. Free for physics teachers.' },
+      'chemistry': { title: 'Create Chemistry Tests Online – AI Chemistry Quiz Generator | TestoZa', description: 'Create chemistry tests and quizzes online using AI. Generate organic, inorganic, and physical chemistry MCQs from your materials. Free for chemistry teachers.' },
+      'mathematics': { title: 'Create Maths Tests Online – AI-Powered Maths Quiz Maker | TestoZa', description: 'Create mathematics tests and quizzes online with AI. Generate maths MCQs, numerical problems, and concept checks. Full LaTeX support. Free for teachers.' },
+      'biology': { title: 'Create Biology Tests Online – AI Biology Quiz Generator | TestoZa', description: 'Create biology tests and quizzes online using AI. Generate MCQs on botany, zoology, genetics, and ecology. Free for biology teachers.' },
+      'english': { title: 'Create English Tests Online – AI English Quiz Maker | TestoZa', description: 'Create English language and literature tests online using AI. Grammar quizzes, comprehension tests, and vocabulary assessments. Free for English teachers.' },
+      'computer-science': { title: 'Create Computer Science Tests Online – AI CS Quiz Maker | TestoZa', description: 'Create computer science tests and quizzes online using AI. Programming, DSA, DBMS, OS, and networking MCQs with code snippets.' },
+      'history': { title: 'Create History Tests Online – AI History Quiz Generator | TestoZa', description: 'Create history tests and quizzes online using AI. Generate MCQs on ancient, medieval, modern, and world history. Free for history teachers.' },
+      'geography': { title: 'Create Geography Tests Online – AI Geography Quiz Maker | TestoZa', description: 'Create geography tests and quizzes online using AI. Physical geography, human geography, and map-based MCQs. Free for teachers.' },
+      'economics': { title: 'Create Economics Tests Online – AI Economics Quiz Maker | TestoZa', description: 'Create economics tests and quizzes online using AI. Micro, macro, and Indian economy MCQs from your teaching materials. Free for economics teachers.' },
+      'general-knowledge': { title: 'Create GK Tests Online – AI General Knowledge Quiz Maker | TestoZa', description: 'Create general knowledge tests and quizzes online using AI. Current affairs, static GK, and awareness MCQs. Free for teachers.' },
+      'reasoning': { title: 'Create Reasoning Tests Online – AI Aptitude Quiz Maker | TestoZa', description: 'Create reasoning and aptitude tests online using AI. Logical reasoning, verbal ability, and quantitative aptitude MCQs. Free for educators.' },
+    };
+    const subjectSlug = subjectMatch[1];
+    if (subjectMetaMap[subjectSlug]) {
+      title = subjectMetaMap[subjectSlug].title;
+      description = subjectMetaMap[subjectSlug].description;
+    }
+  }
+
+  // ─── SEO COMPARISON PAGES (/compare/:slug) ───────────────────────────
+  const compareMatch = path.match(/^\/compare\/([a-z-]+)$/);
+  if (compareMatch) {
+    const compareMetaMap = {
+      'testmoz-alternative': { title: 'TestoZa vs Testmoz – Best Testmoz Alternative for Teachers', description: 'Looking for a Testmoz alternative? TestoZa offers AI question generation, auto-grading, analytics, and white-label branding — all free. Compare features.' },
+      'classmarker-alternative': { title: 'TestoZa vs ClassMarker – Best ClassMarker Alternative', description: 'Looking for a ClassMarker alternative? TestoZa offers AI test generation, better analytics, and white-label branding at a fraction of the cost.' },
+      'google-forms-alternative': { title: 'TestoZa vs Google Forms – Better Alternative for Online Tests', description: 'Google Forms is great for surveys, not for exams. TestoZa is purpose-built for assessments — AI generation, auto-grading, analytics, proctoring, and branding.' },
+      'quizizz-alternative': { title: 'TestoZa vs Quizizz – Best Quizizz Alternative for Assessments', description: 'Quizizz is great for gamified quizzes but lacks exam-grade features. TestoZa is built for serious assessments — AI generation, proctoring, and branding.' },
+      'typeform-alternative': { title: 'TestoZa vs Typeform – Better Alternative for Tests & Quizzes', description: 'Typeform is built for surveys, not assessments. TestoZa is purpose-built for tests — AI generation, auto-grading, exam security, and analytics.' },
+    };
+    const compareSlug = compareMatch[1];
+    if (compareMetaMap[compareSlug]) {
+      title = compareMetaMap[compareSlug].title;
+      description = compareMetaMap[compareSlug].description;
+    }
+  }
+
   // Clean canonical URL without trailing slash or tracking parameters
   const canonicalUrl = `${siteUrl}${path}`;
 

@@ -75,6 +75,40 @@ async function generateSitemap() {
             { url: '/survey', changefreq: 'monthly', priority: 0.6, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/privacy-policy', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/terms-and-conditions', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
+
+            // SEO Use-Case Landing Pages
+            { url: '/online-test-maker', changefreq: 'monthly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-exam-software', changefreq: 'monthly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-quiz-maker', changefreq: 'monthly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/mcq-test-maker', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/ai-question-generator', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/pdf-to-quiz', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/youtube-to-quiz', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-test-for-coaching', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/exam-software-for-schools', changefreq: 'monthly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/white-label-test-platform', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/auto-grading-software', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/online-proctoring-software', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+
+            // SEO Subject Hub Pages
+            { url: '/create-test/physics', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/chemistry', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/mathematics', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/biology', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/english', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/computer-science', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/history', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/geography', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/economics', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/general-knowledge', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/create-test/reasoning', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
+
+            // SEO Comparison Pages
+            { url: '/compare/testmoz-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/classmarker-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/google-forms-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/quizizz-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+            { url: '/compare/typeform-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
         ];
 
         // 1. Fetch Tests from Backend

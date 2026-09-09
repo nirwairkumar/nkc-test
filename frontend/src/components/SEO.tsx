@@ -21,7 +21,7 @@ const DEFAULT_SITE_NAME = "TestoZa";
 
 export const SEO: React.FC<SEOProps> = ({
     title,
-    description = "Create online tests instantly with TestoZa. AI-powered quiz maker from PDF, text, or YouTube. Free mock tests for JEE, NEET, GATE, and more.",
+    description = "Create, conduct, and manage online tests with AI. TestoZa is the best free test maker for teachers, educators, and coaching institutes — generate quizzes from PDFs, text, or YouTube.",
     url,
     image,
     type = 'website',
@@ -48,25 +48,16 @@ export const SEO: React.FC<SEOProps> = ({
     }
 
     // Default keywords if none provided
-    const matchKeywords = keywords.length > 0
+    const finalKeywords = keywords.length > 0
         ? keywords.join(', ')
-        : "online test maker, AI quiz generator, create test from PDF, free mock tests, exam preparation, TestoZa";
-
-    // Dynamic keyword boost for JEE or Previous Year content
-    const lowerTitle = (title || "").toLowerCase();
-    const isJEE = lowerTitle.includes('jee');
-    const isPYQ = lowerTitle.includes('previous year') || lowerTitle.includes('pyq') || lowerTitle.includes('202') || lowerTitle.includes('shift');
-
-    let finalKeywords = matchKeywords;
-    if (isJEE) finalKeywords = `JEE Main 2026, JEE Mock Test, JEE Practice Paper, ${finalKeywords}`;
-    if (isPYQ) finalKeywords = `Previous Year Questions, PYQ 2026, Solved Papers, ${finalKeywords}`;
+        : "online test maker for teachers, AI quiz generator, create test from PDF, free online exam software, assessment platform for educators, TestoZa";
 
     return (
         <Helmet>
             {/* Standard Meta Tags */}
             <title>{fullTitle}</title>
             <meta name="description" content={finalDescription} />
-            <meta name="keywords" content={matchKeywords} />
+            <meta name="keywords" content={finalKeywords} />
             <meta name="author" content="TestoZa Team" />
             <link rel="canonical" href={finalCanonicalUrl} />
 
