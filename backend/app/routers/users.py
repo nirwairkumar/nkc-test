@@ -1,7 +1,4 @@
 import math
-import base64
-import json
-import time
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from app.core.database import get_db, supabase # Import global supabase client
 from supabase import Client
@@ -20,27 +17,17 @@ def _verify_auth_token(request: Request, db: Client) -> str:
         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
     token = auth_header.replace("Bearer ", "")
 
-    # Fast path: decode JWT payload locally to eliminate 300ms network roundtrip to Supabase Auth API
+    # get_claims() verifies the signature (locally via cached JWKS for asymmetric keys,
+    # via Supabase Auth for HS256). Never trust an unverified JWT payload.
     try:
-        parts = token.split(".")
-        if len(parts) == 3:
-            payload_b64 = parts[1]
-            payload_b64 += "=" * (-len(payload_b64) % 4)
-            payload = json.loads(base64.b64decode(payload_b64).decode("utf-8"))
-            user_id = payload.get("sub")
-            exp = payload.get("exp")
-            if user_id and exp and time.time() < exp:
-                return user_id
+        claims_response = db.auth.get_claims(token)
     except Exception:
-        pass
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    try:
-        user_response = db.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return user_response.user.id
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+    user_id = claims_response["claims"].get("sub") if claims_response else None
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user_id
 
 def _verify_is_admin(request: Request, db: Client) -> str:
     requesting_user_id = _verify_auth_token(request, db)
