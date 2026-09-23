@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends, Header, Request
 from app.core.database import get_db, supabase as admin_db
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from app.core.config import settings
+from app.core.auth import verify_auth_token, verify_is_admin, verify_owner_or_admin, is_admin_user
 
 router = APIRouter()
 
@@ -61,7 +62,9 @@ async def submit_report(payload: ReportCreate, db: Client = Depends(get_db)):
 
 # 2. Get reports for a specific creator
 @router.get("/creator/{creator_id}")
-async def get_creator_reports(creator_id: str, db: Client = Depends(get_db)):
+async def get_creator_reports(creator_id: str, request: Request, db: Client = Depends(get_db)):
+    # C5: was unguarded — anyone could read any creator's question reports.
+    verify_owner_or_admin(creator_id, request, db)
     try:
         # Fetch reports and join with test title to display nicely in the dashboard
         response = admin_db.table("question_reports") \
@@ -77,10 +80,16 @@ async def get_creator_reports(creator_id: str, db: Client = Depends(get_db)):
 
 # 3. Mark report as solved (Creator or Admin)
 @router.put("/{report_id}/status")
-async def update_report_status(report_id: str, payload: ReportStatusUpdate, db: Client = Depends(get_db)):
+async def update_report_status(report_id: str, payload: ReportStatusUpdate, request: Request, db: Client = Depends(get_db)):
+    # C5: the old comment relied on RLS, but this router talks to Supabase with the
+    # service-role key, which bypasses RLS — so anyone could mark any report solved.
+    requesting_user_id = verify_auth_token(request, db)
+    owner_res = admin_db.table("question_reports").select("creator_id").eq("id", report_id).limit(1).execute()
+    if not owner_res.data:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if owner_res.data[0].get("creator_id") != requesting_user_id and not is_admin_user(requesting_user_id, db):
+        raise HTTPException(status_code=403, detail="Unauthorized access")
     try:
-        # Will use RLS to ensure only creator can update, OR admin can update via service role if we want.
-        # But normal db will rely on RLS: USING (auth.uid() = creator_id)
         if payload.status not in ["open", "solved"]:
             raise HTTPException(status_code=400, detail="Invalid status")
             
@@ -96,7 +105,8 @@ async def update_report_status(report_id: str, payload: ReportStatusUpdate, db: 
 
 # 4. ADMIN ONLY: Get report stats for all users (For the Users Tab Red Dot)
 @router.get("/admin/users-stats")
-async def get_admin_users_report_stats():
+async def get_admin_users_report_stats(request: Request):
+    verify_is_admin(request)
     try:
         # Use service role key to query all reports
         response = admin_db.table("question_reports") \
@@ -123,7 +133,8 @@ async def get_admin_users_report_stats():
 
 # 5. ADMIN ONLY: Get detailed reports for a specific users tests (For User Profile Dialog)
 @router.get("/admin/user/{user_id}")
-async def get_admin_user_reports(user_id: str):
+async def get_admin_user_reports(user_id: str, request: Request):
+    verify_is_admin(request)
     try:
         response = admin_db.table("question_reports") \
                            .select("id, created_at, test_id, question_id, reason, details, status, reporter_id, tests(title, custom_id)") \

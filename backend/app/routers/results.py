@@ -1,17 +1,25 @@
-from fastapi import APIRouter, HTTPException, Depends
-from app.core.database import get_db
+from fastapi import APIRouter, HTTPException, Depends, Request
+from app.core.database import get_db, supabase
 from supabase import Client
 from typing import Optional, Dict, Any, List
 from app.utils.attempt_control import calculate_test_max_marks, apply_section_attempt_control
+from app.core.auth import verify_auth_token, is_admin_user
 
 router = APIRouter()
 
 @router.get("/{attempt_id}")
 async def get_test_result(
     attempt_id: str,
+    request: Request,
     db: Client = Depends(get_db)
 ):
     try:
+        # C4/C5: this returns tests(*) — the full question bank INCLUDING correctAnswer
+        # and solutions. Unguarded, a candidate could submit a blank attempt, read the
+        # answer key from their own result, and retake the exam. Restrict it to the
+        # person who sat the test, the creator of the test, and admins.
+        requesting_user_id = verify_auth_token(request, db)
+
         # Fetch attempt with test details
         response = db.table("user_tests")\
             .select("*, tests(*, profiles(full_name, avatar_url))")\
@@ -23,6 +31,11 @@ async def get_test_result(
             
         result = response.data[0]
         test = result.get("tests")
+
+        is_attempt_owner = result.get("user_id") == requesting_user_id
+        is_test_creator = bool(test) and test.get("created_by") == requesting_user_id
+        if not (is_attempt_owner or is_test_creator or is_admin_user(requesting_user_id, db)):
+            raise HTTPException(status_code=404, detail="Result not found")
         
         # We can perform additional server-side calculations here if needed
         # e.g., Rank calculation (mocked or real)
@@ -40,15 +53,18 @@ async def get_test_result(
             }
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error fetching result: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to fetch result")
 
 from pydantic import BaseModel
 class AnalyzeRequest(BaseModel):
     test: dict
     answers: dict
     question_times: Optional[dict] = None
+    test_id: Optional[str] = None
 
 def parse_mark(value: Any, default_val: float = 0.0) -> float:
     if isinstance(value, (int, float)):
@@ -65,9 +81,37 @@ def parse_mark(value: Any, default_val: float = 0.0) -> float:
     except:
         return default_val
 
+def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Fetch the stored test (with its answer key) by UUID, slug or custom_id."""
+    if not test_id:
+        return None
+    import uuid as _uuid
+
+    cols = "id, title, questions, sections, enable_section_mode, section_marking_model, settings, total_max_marks"
+    try:
+        try:
+            _uuid.UUID(str(test_id))
+            res = supabase.table("tests").select(cols).eq("id", test_id).limit(1).execute()
+        except ValueError:
+            res = supabase.table("tests").select(cols).or_(
+                f"slug.eq.{test_id},custom_id.eq.{test_id}"
+            ).limit(1).execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        print(f"analyze: could not load test {test_id}: {e}")
+        return None
+
+
 @router.post("/analyze")
 async def analyze_test_results(payload: AnalyzeRequest):
-    test = payload.test
+    # C4: the questions the browser holds no longer carry correctAnswer, so the answer
+    # key is reloaded server-side. The client copy stays as a fallback for callers that
+    # still pass a full test object (e.g. the creator analysis view, which is allowed it).
+    stored_test = _load_authoritative_test(payload.test_id or (payload.test or {}).get("id"))
+    if stored_test and (stored_test.get("questions") or stored_test.get("sections")):
+        test = {**(payload.test or {}), **{k: v for k, v in stored_test.items() if v is not None}}
+    else:
+        test = payload.test
     answers = payload.answers
     question_times = payload.question_times or {}
     

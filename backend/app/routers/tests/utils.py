@@ -108,3 +108,46 @@ def enrich_tests(tests: List[Dict], db: Client) -> List[Dict]:
         enriched_tests.append(t)
         
     return enriched_tests
+
+
+# ── C4: keep the answer key off the wire during an exam ──────────────────────
+# GET /api/tests/{id} used to return every question with its `correctAnswer`, so a
+# candidate could read the answers straight out of the Network tab. Owners, admins and
+# the post-submission review paths still get the full object; everyone else gets the
+# questions with the answer fields removed.
+
+_ANSWER_FIELDS = ("correctAnswer", "correct_answer", "explanation", "solution")
+
+
+def _strip_question(question: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(question, dict):
+        return question
+    return {k: v for k, v in question.items() if k not in _ANSWER_FIELDS}
+
+
+def strip_answer_key(test: Optional[Dict[str, Any]], is_privileged: bool) -> Optional[Dict[str, Any]]:
+    """
+    Return a copy of `test` with answer fields removed from every question (flat and
+    section-wise) and the `solutions` blob dropped. No-op for owners/admins.
+
+    Copies rather than mutates: these dicts are shared with the in-process test cache,
+    so mutating in place would poison the cached entry for the owner as well.
+    """
+    if not test or is_privileged:
+        return test
+
+    safe = dict(test)
+    safe.pop("solutions", None)
+
+    if isinstance(safe.get("questions"), list):
+        safe["questions"] = [_strip_question(q) for q in safe["questions"]]
+
+    if isinstance(safe.get("sections"), list):
+        sections = []
+        for section in safe["sections"]:
+            if isinstance(section, dict) and isinstance(section.get("questions"), list):
+                section = {**section, "questions": [_strip_question(q) for q in section["questions"]]}
+            sections.append(section)
+        safe["sections"] = sections
+
+    return safe

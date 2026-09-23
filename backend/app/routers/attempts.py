@@ -60,11 +60,11 @@ async def save_attempt(
         # Fetch test details for attempt control validation, notification, and conduct verification
         test_data = None
         try:
-            test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings").eq("id", payload.test_id).limit(1).execute()
+            test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings, questions").eq("id", payload.test_id).limit(1).execute()
             if test_res.data and len(test_res.data) > 0:
                 test_data = test_res.data[0]
             else:
-                test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings").or_(f"slug.eq.{payload.test_id},custom_id.eq.{payload.test_id}").limit(1).execute()
+                test_res = supabase.table("tests").select("id, title, created_by, enable_section_mode, sections, settings, questions").or_(f"slug.eq.{payload.test_id},custom_id.eq.{payload.test_id}").limit(1).execute()
                 if test_res.data and len(test_res.data) > 0:
                     test_data = test_res.data[0]
         except Exception as te:
@@ -155,11 +155,38 @@ async def save_attempt(
         if is_conduct_exam or has_start_form or has_form_submission:
             metadata["is_conducted_attempt"] = True
 
+        # C4: the score is computed here from the stored answer key and the client-supplied
+        # `payload.score` is discarded. Falling back to the client value would reopen the
+        # hole, so a test we cannot load is rejected rather than trusted.
+        if not test_data:
+            raise HTTPException(status_code=404, detail="Test not found")
+
+        from app.services.scoring import score_attempt
+        scored = score_attempt(test_data, payload.answers)
+        server_score = scored["score"]
+
+        # Keep the client's own tally for auditing, but let the server stats win.
+        client_stats = metadata.get("stats")
+        if client_stats is not None:
+            metadata["client_reported_stats"] = client_stats
+        if payload.score is not None and abs(float(payload.score) - server_score) > 0.01:
+            metadata["client_reported_score"] = payload.score
+        metadata["stats"] = {
+            "positiveScore": scored["positiveScore"],
+            "negativeScore": scored["negativeScore"],
+            "correctCount": scored["correctCount"],
+            "partialCount": scored["partialCount"],
+            "wrongCount": scored["wrongCount"],
+            "unattemptedCount": scored["unattemptedCount"],
+            "totalQuestions": scored["totalQuestions"],
+        }
+        metadata["scored_by"] = "server"
+
         response = supabase.table("user_tests").insert({
             "user_id": effective_user_id,
             "test_id": target_test_id,
             "answers": payload.answers,
-            "score": payload.score,
+            "score": server_score,
             "metadata": metadata
         }).execute()
         
@@ -848,16 +875,33 @@ async def anon_progress(
 
 @router.post("/anon/submit")
 async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
-    """Mark an anonymous test as submitted, storing answers and score."""
+    """Mark an anonymous test as submitted, storing answers and a server-computed score."""
     try:
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc).isoformat()
+
+        # C4: score anonymous attempts server-side too — payload.score is ignored.
+        # test_id may be a UUID, a slug or a custom_id; `id.eq.<non-uuid>` would error.
+        import uuid as _uuid
+        cols = "id, enable_section_mode, sections, questions"
+        try:
+            _uuid.UUID(payload.test_id)
+            test_res = supabase.table("tests").select(cols).eq("id", payload.test_id).limit(1).execute()
+        except ValueError:
+            test_res = supabase.table("tests").select(cols)\
+                .or_(f"slug.eq.{payload.test_id},custom_id.eq.{payload.test_id}")\
+                .limit(1).execute()
+        if not test_res.data:
+            return {"success": False}
+
+        from app.services.scoring import score_attempt
+        server_score = score_attempt(test_res.data[0], payload.answers)["score"]
 
         supabase.table("anon_test_attempts")\
             .update({
                 "status": "submitted",
                 "answers": payload.answers or {},
-                "score": payload.score or 0,
+                "score": server_score,
                 "completion_pct": 100,
                 "submitted_at": now,
                 "last_active_at": now

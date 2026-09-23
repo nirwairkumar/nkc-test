@@ -1324,7 +1324,7 @@ export default function TestPage() {
     }
 
     let retryToastId: string | number | undefined;
-    const { error } = await saveAttemptWithRetry(
+    const { data: savedAttempt, error } = await saveAttemptWithRetry(
       effectiveUserId, test.id, answers, finalScore, metadata, finalCompletionPercentage,
       (attempt) => {
         // Show a "Retrying..." toast on 2nd attempt onwards
@@ -1334,6 +1334,14 @@ export default function TestPage() {
       }
     );
     if (retryToastId) toast.dismiss(retryToastId);
+
+    // C4: the exam payload no longer carries correctAnswer, so the tally computed above
+    // is only a placeholder. The backend recomputes the score from the stored answer key
+    // and returns the authoritative row — display that.
+    const serverScore = typeof savedAttempt?.score === 'number' ? savedAttempt.score : finalScore;
+    if (savedAttempt?.metadata?.stats) {
+      metadata.stats = savedAttempt.metadata.stats;
+    }
 
     if (error) {
       console.error("Save Attempt Error:", error);
@@ -1390,7 +1398,7 @@ export default function TestPage() {
           navigate(`/combined-break/${combinedSessionId}`, {
             state: {
               paper1Answers: finalAnswers,
-              paper1Score: finalScore,
+              paper1Score: serverScore,
               paper1TotalMarks: totalMaxMarks,
               paper1TestId: test.id,
               paper1TestTitle: test.title,
@@ -1414,7 +1422,7 @@ export default function TestPage() {
               state: {
                 test,
                 answers: finalAnswers,
-                score: finalScore,
+                score: serverScore,
                 questionTimes: finalQuestionTimes,
                 timeSpentPerQuestion: finalQuestionTimes,
                 metadata: metadata,
@@ -1442,12 +1450,12 @@ export default function TestPage() {
               paper2_data: {
                 test_id: test.id,
                 answers: finalAnswers,
-                score: finalScore,
+                score: serverScore,
                 total_marks: totalMaxMarks,
                 test_title: test.title,
                 question_times: finalQuestionTimes,
               },
-              total_score: (p1Data.score || 0) + finalScore,
+              total_score: (p1Data.score || 0) + serverScore,
             });
           } catch (saveErr) {
             console.error('Failed to save combined attempt:', saveErr);
@@ -1475,7 +1483,7 @@ export default function TestPage() {
               p2: {
                 test,
                 answers: finalAnswers,
-                score: finalScore,
+                score: serverScore,
                 totalMarks: totalMaxMarks,
                 questionTimes: finalQuestionTimes,
               },
@@ -1500,7 +1508,7 @@ export default function TestPage() {
           state: {
             test: test,
             answers: answers,
-            score: score,
+            score: serverScore,
             totalQuestions: test.questions.length,
             marksPerQuestion: test.marks_per_question || 4,
             negativeMark: test.negative_marks !== undefined ? test.negative_marks : 1,

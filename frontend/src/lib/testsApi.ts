@@ -191,7 +191,10 @@ export async function fetchAdvancedAnalysis(test: any, answers: Record<number, a
         const response = await apiClient.post('results/analyze', {
             test,
             answers,
-            question_times
+            question_times,
+            // C4: the browser no longer receives correctAnswer, so the server reloads
+            // the answer key by id and scores the attempt itself.
+            test_id: test?.id
         });
         return { data: response.data, error: null };
     } catch (error: any) {

@@ -4,7 +4,7 @@ from supabase import Client
 from typing import Optional, List, Dict, Any
 from app.routers.tests.schemas import *
 from app.utils.attempt_control import calculate_test_max_marks
-from app.routers.tests.utils import enrich_tests, compute_test_status
+from app.routers.tests.utils import enrich_tests, compute_test_status, strip_answer_key
 from app.utils.cache_headers import set_public_cache, set_no_cache, set_private_cache
 import uuid
 from cachetools import TTLCache
@@ -236,6 +236,29 @@ async def get_tests_feed(
     except Exception as e:
         print(f"Error fetching test feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _may_see_answers(test: Optional[Dict[str, Any]], user_id: Optional[str], is_admin: bool, db: Client) -> bool:
+    """
+    C4: who may receive `correctAnswer` / `solutions` for this test.
+
+    The owner and admins always may. A candidate may only once they have submitted —
+    that is what powers the post-test review (ResultsPage / SolutionsViewPage) while
+    keeping the answer key out of the payload during the exam itself.
+    """
+    if not test:
+        return False
+    if is_admin:
+        return True
+    if not user_id:
+        return False
+    if test.get("created_by") == user_id:
+        return True
+    try:
+        attempt = db.table("user_tests").select("id")            .eq("user_id", user_id).eq("test_id", test.get("id")).limit(1).execute()
+        return bool(attempt.data)
+    except Exception:
+        return False
 
 
 def _get_request_user_and_admin(request: Request, db: Client) -> tuple[Optional[str], bool]:
@@ -514,7 +537,8 @@ async def get_test_by_id(
                     set_public_cache(response)
                 else:
                     set_no_cache(response)
-            return cached
+            # C4: answers only for the owner/admin, or a candidate who already submitted.
+            return strip_answer_key(cached, _may_see_answers(cached, requesting_user_id, is_admin, db))
 
         # Check if UUID
         is_uuid = False
@@ -631,8 +655,9 @@ async def get_test_by_id(
             else:
                 set_no_cache(response)
 
+        # Cache the full object; strip per-requester on the way out.
         cache_set(test_cache, cache_key, test)
-        return test
+        return strip_answer_key(test, _may_see_answers(test, requesting_user_id, is_admin, db))
 
     except HTTPException:
         raise
@@ -668,7 +693,8 @@ async def get_test_by_slug(
                     set_public_cache(response)
                 else:
                     set_no_cache(response)
-            return cached
+            # C4: answers only for the owner/admin, or a candidate who already submitted.
+            return strip_answer_key(cached, _may_see_answers(cached, requesting_user_id, is_admin, db))
 
         # Define fields to select when excluding heavy questions/solutions JSON
         select_cols = (
@@ -761,8 +787,9 @@ async def get_test_by_slug(
             else:
                 set_no_cache(response)
 
+        # Cache the full object; strip per-requester on the way out.
         cache_set(test_cache, slug_cache_key, test)
-        return test
+        return strip_answer_key(test, _may_see_answers(test, requesting_user_id, is_admin, db))
 
     except HTTPException:
         raise

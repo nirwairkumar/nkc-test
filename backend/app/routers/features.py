@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from app.core.database import get_db
+from app.core.auth import verify_is_admin
 from supabase import Client
 from typing import Dict, Any
 from pydantic import BaseModel
@@ -38,8 +39,12 @@ class UpdateFeatureFlagsRequest(BaseModel):
     news_updates_notes: str = ""
 
 @router.put("/flags")
-async def update_feature_flags(payload: UpdateFeatureFlagsRequest, db: Client = Depends(get_db)):
-    """Update global feature flags (admin only via RLS in supabase)"""
+async def update_feature_flags(payload: UpdateFeatureFlagsRequest, request: Request, db: Client = Depends(get_db)):
+    """Update global feature flags. Admin only."""
+    # C5: the old comment claimed "admin only via RLS in supabase", but the backend
+    # connects with the service-role key, which bypasses RLS — so this was wide open and
+    # anyone could flip enable_anonymous_tests and the AI feature gates.
+    verify_is_admin(request, db)
     try:
         # Get the first (and should be only) settings row
         settings_res = db.table("app_settings").select("id").limit(1).execute()

@@ -1,3 +1,7 @@
+-- profiles.designation column (moved here from the deleted 20260206_fix_designation_trigger.sql,
+-- whose handle_new_user() body was superseded by the one below)
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS designation TEXT;
+
 -- Migration to fix profile overwrite on login
 -- This changes the trigger function to DO NOTHING if the profile already exists
 

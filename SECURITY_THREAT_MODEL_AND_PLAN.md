@@ -121,10 +121,14 @@ General principle: **the anon key should be able to read almost nothing directly
 
 #### C3 — Analytics + anonymous-attempt tables are world write/delete
 
-**Where:** [supabase/migrations/20260302100000_fix_analytics_rls.sql](supabase/migrations/20260302100000_fix_analytics_rls.sql) and [backend/migrations/create_anon_test_attempts.sql](backend/migrations/create_anon_test_attempts.sql)
+**Where:** formerly `supabase/migrations/20260302100000_fix_analytics_rls.sql` (deleted) and [backend/migrations/create_anon_test_attempts.sql](backend/migrations/create_anon_test_attempts.sql)
+
+> **Status 2026-09-20 — CONFIRMED from the live `pg_policies` catalog (Supabase MCP, read-only).** All policies below are live, `PERMISSIVE`, role `{public}`. Three of them exist in **no SQL file** (added in the SQL editor): `visitors."Anyone can log visits"` (INSERT), `anon_test_attempts."Anyone can insert anon attempts"` (INSERT), `anon_test_attempts."Anyone can update anon attempts"` (UPDATE). `service_role` has `BYPASSRLS=true`, so dropping every policy on these four tables cannot affect the backend. Fix: [supabase/migrations/20260920120000_c3_lock_analytics_and_anon_attempts_rls.sql](supabase/migrations/20260920120000_c3_lock_analytics_and_anon_attempts_rls.sql) — run it in the SQL editor (the MCP is read-only), then verify with `SELECT tablename, policyname FROM pg_policies WHERE tablename IN ('visitors','sessions','page_views','anon_test_attempts')` → must return 0 rows.
+>
+> **Same-class findings seen in the catalog while verifying C3 (not fixed — out of C3 scope):** `user_tests."Allow test attempt submissions"` INSERT `CHECK(true)` and `"Allow test attempt updates"` UPDATE `USING(true)` — anon can insert/overwrite **registered users' attempts and scores**; `sub_categories."Allow service role full access…"` ALL `USING(true)`; `categories."Admins can insert sections."` INSERT `CHECK(true)`; `notifications."Public can insert notifications"` INSERT `CHECK(true)`; `test_registrations."Authenticated users can read (MVP)"` SELECT `USING(true)`. No frontend code writes any of these tables directly, so the same "drop and let service_role do it" fix applies.
 
 **What's wrong:** These policies grant everyone (no `TO` clause = all roles incl. `anon`) full access:
-
++
 ```sql
 CREATE POLICY "Allow public insert and update visitors" ON public.visitors
     FOR ALL USING (true) WITH CHECK (true);          -- FOR ALL = select/insert/update/DELETE
