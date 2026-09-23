@@ -330,3 +330,340 @@ Think of this as three sprints. Each item references the finding above.
 ## One-paragraph summary
 
 The core issue is that your two security layers don't cover each other: the **backend runs as service-role so RLS is off for it**, yet several backend endpoints have **no auth checks** (feature flags, reports, categories, analytics, AI, and — worst — an **unsigned-JWT admin bypass**); meanwhile the **anon key that ships in your frontend can read most of your database directly** and **write/delete your analytics and anonymous exam attempts**, because RLS was loosened to `USING(true)`. On top of that, **exam answers are handed to the browser and scores are taken on trust**, which undermines the whole assessment product, and **old API keys are sitting in a public GitHub repo**. None of these require sophistication to exploit. The good news: the fixes are well-understood and mostly mechanical, the highest-impact one (C1) is a five-line change, and your service-role key and payment-signature verification were done correctly. Work top-down through Part 3 and you'll close the exploitable surface within two to three focused sessions.
+---
+---
+
+# Part 5 — Remediation log
+
+**Implemented:** 2026-09-20 → 2026-09-24
+**Method:** every finding was re-verified against the live system before being changed — code was re-read, and database claims were re-checked against the live `pg_policies` catalog (read-only). Nothing below was fixed on the strength of the audit text alone. Where a finding turned out to be already fixed, or not worth fixing as written, that is stated rather than quietly skipped.
+
+**How to read this:** Part 5 is what changed and why. **Part 6 is your checklist** — the things this document could not do for you, with their live status as of 2026-09-24.
+
+---
+
+## 5.1 — Status of every finding
+
+| # | Status | One-line outcome |
+|---|--------|------------------|
+| C1 | ✅ Fixed (was already fixed before this work) | Signature is verified via `get_claims()`; all 14 routes in the two files carry guards. |
+| C2 | ✅ Fixed & applied live | Anon can no longer read `profiles`, `app_settings`, `materials`, `classes`, `feedback`, `daily_stats`; `tests` restricted to `visibility='public'`; answer columns revoked at the column level. |
+| C3 | ✅ Fixed & applied live | Analytics + anon-attempt tables now have **zero** policies; `user_tests` unconditional writes dropped. |
+| C4 | ✅ Fixed | Scoring moved server-side; answer key stripped from the in-exam payload. |
+| C5 | ✅ Fixed | 29 authorization guards added across 8 routers. |
+| H1 | ⚠️ Partially — **needs you** | Prevention shipped (pre-commit hook, scanner, `.gitignore`). **Key rotation and making the repo private are yours.** |
+| H2 | ✅ Fixed | All 7 AI endpoints guarded or throttled; IDOR closed; identity now comes from the token. |
+| H3 | ✅ Fixed (by the C5 work) | Analytics dashboards are admin-only via a router-level dependency. |
+| H4 | ⚠️ Bounded, not eliminated — **deliberate** | Identity spoofing blocked and guest creation rate-limited. Full fix needs a schema change; see 5.5. |
+| M1 | ✅ Code done — **needs you to enable** | Shared-store limiter written; falls back to in-memory until Upstash env vars are set. |
+| M2 | ✅ Fixed | `CF-Connecting-IP` is now the trusted source of client IP. |
+| M3 | ✅ Fixed | All 5xx responses scrubbed centrally; every response carries a request ID. |
+| M4 | ✅ Fixed | 215 `print()` calls converted to levelled logging behind a redaction filter. |
+| M5 | ✅ Fixed | Password change requires the current password; recovery flow re-routed so it still works. |
+| M6 | ⚠️ Mitigated, root cause deferred — **deliberate** | XSS sinks closed and CSP tightened. Tokens still in `localStorage`; see 5.5. |
+| M7 | ✅ Fixed | Real CSP added where HTML is served; API CSP reduced to `default-src 'none'`. |
+| M8 | ✅ Fixed in code — **storage-side limits need you** | Uploads validated by magic bytes, size and bucket allow-list. |
+| M9 | ⚠️ Endpoint ready — **needs you to flip the bucket** | Signed-URL download endpoint added; buckets are still public-read. |
+| L1 | ✅ Fixed & applied live | Live policies re-baselined; 14 drifted scripts archived; drift checker added. |
+| L2 | ✅ Fixed | Backend confirmed as the real boundary, plus two real defects fixed in `check-admin`. |
+| L3 | ✅ Fixed | Tracked junk removed; artifact patterns added to `.gitignore`. |
+| L4 | ✅ Fixed & applied live | Atomic `increment_promo_usage()` replaces the read-then-update race. |
+| L5 | ✅ Fixed | Dead insecure config removed; production refuses to boot misconfigured. |
+| L6 | ✅ Verified + minor hardening | Docs confirmed disabled; `/api/health` no longer advertises version. |
+
+---
+
+## 5.2 — CRITICAL
+
+### C1 — Unsigned JWT admin bypass
+**Found:** already fixed in commit `afebecb` before this work began. **Verified**, not assumed: no `b64decode` of a JWT payload remains anywhere in `backend/app`, both routers use `db.auth.get_claims(token)` (which verifies the signature), and all 9 routes in `users.py` + 5 in `email_broadcast.py` carry a guard.
+
+### C2 — Database world-readable via the anon key
+**Why it mattered:** the anon key ships in your JavaScript bundle. Anyone could read it and query PostgREST directly — every user's email, premium status and plan, plus your whole analytics history.
+
+**Changed** — `supabase/migrations/20260923100000_c2_lock_public_reads.sql`:
+- `profiles` made owner-only, and a **`public_profiles` view** created exposing only `id, full_name, avatar_url, bio, designation, is_creator, is_verified_creator, verified_role, following_visibility, created_at`. This is what keeps public creator pages working without exposing email or billing status.
+- Public `SELECT` removed from `app_settings` (it leaked your admin email via `updated_by`), `materials`, `classes`, `feedback`, `daily_stats`, and the `ALL USING(true)` grant on `sub_categories`.
+- `tests` restricted to `visibility = 'public'` — the previous policies let anon read `unlisted` rows, i.e. your conducted-exam papers.
+- **Column-level `REVOKE`** on `tests.questions`, `tests.solutions`, `tests.sections` from `anon` and `authenticated`. Column privileges are checked before RLS, so the answer key is unreachable over PostgREST regardless of any future row policy.
+
+**Safe because** the backend connects as service-role (`BYPASSRLS`), and the browser bundles only ever touch three tables directly — verified by grepping every `.from(...)` call across both frontends.
+
+### C3 — Analytics and anonymous attempts world-writable
+**Why it mattered:** `FOR ALL USING(true)` includes DELETE. Anyone with the anon key could wipe your analytics, or read anonymous candidates' `session_token` values and overwrite their answers and scores.
+
+**Changed:** the pre-existing `20260920120000` migration (which had been written but **never applied**) plus a new `20260923110000_c3b_lock_write_policies.sql` extending it to same-class findings — `user_tests` unconditional INSERT/UPDATE (anon could forge or overwrite *registered* users' scores), `categories`, `notifications`, `test_registrations`.
+
+These four tables now have **zero policies** with RLS still enabled: anon gets nothing, the service-role backend is unaffected.
+
+### C4 — Exam answers shipped to the browser, scores trusted from it
+This is the one that undermines the product itself, so it got the most care.
+
+**Changed:**
+- **`backend/app/services/scoring.py`** — a faithful port of the scoring logic in `TestPage.tsx`: `parseMark` fraction handling (`"1/3"`), the marks precedence chain (per-question → per-section → test-level → 4/1 defaults), partial credit on multi-select, numerical ranges, and soft attempt-control (`first_n` / `best_n`). `save_attempt` and `anon/submit` now compute the score and **discard** `payload.score`, keeping the client's claim in `metadata.client_reported_score` for auditing.
+- **`strip_answer_key()`** removes `correctAnswer` and `solutions` from the test payload for anyone who is not the owner, an admin, **or a candidate who has already submitted**. That last case is what keeps the post-test review working.
+- `POST /api/results/analyze` now reloads the test server-side instead of scoring from a client-supplied test object.
+- The direct-Supabase fallback in both `attemptsApi.ts` files was **removed** — it inserted into `user_tests` straight from the browser with a client-chosen score, which would have defeated the whole change. Resilience still comes from the existing 5-attempt exponential backoff.
+
+**Why a parity test exists:** the client and server scorers must agree, or honest users see wrong marks. `backend/scripts/test_scoring_parity.py` pins that agreement — **15/15 passing**.
+
+### C5 — Privileged endpoints with no authorization check
+**Why it mattered:** the backend runs as service-role, so RLS does nothing for it. A route without a Python check *is* a public admin function.
+
+**Changed:** a shared **`backend/app/core/auth.py`** (`verify_auth_token`, `verify_is_admin`, `verify_owner_or_admin`, `verify_test_owner_or_admin`, `is_admin_user`) and **29 guards** wired across `features.py`, `categories.py`, `classes.py`, `reports.py`, `social.py`, `results.py`, `solutions.py` and the analytics routers.
+
+One implementation detail worth knowing: analytics uses a **router-level dependency**, so a dashboard route added in future is guarded by default rather than forgotten.
+
+**Why one shared module:** every router previously carried its own copy of these helpers. That duplication is exactly how C1's unsigned-JWT "fast path" survived in two files while every other router did it correctly.
+
+---
+
+## 5.3 — HIGH
+
+### H1 — Secrets in public git history
+**Verified:** `github.com/nirwairkumar/nkc-test` returns HTTP 200 unauthenticated — **public**. A full scan of every blob in history found **4 distinct Google/Gemini API keys** across 4 `.env` commits (`b045ef8`, `3c22b85`, `d862d6e`, `a8eb327`). No `.env` is tracked today. No Turnstile secret was found in those blobs — the original audit slightly overstated that.
+
+**Changed (prevention):**
+- **`.githooks/pre-commit`** — blocks env files, credential JSONs and 9 secret patterns; also runs `gitleaks` when installed. Tested 9/9, and it blocks all four of the real leaked keys.
+- **`scripts/scan-secrets.sh`** — `install` / `history` / `worktree` modes, findings printed redacted.
+- `.gitignore` extended to `.env.*`, `*.pem`, `*.key`, `client_secret*.json`.
+
+**Rotation and repo visibility are yours** — see Part 6.
+
+### H2 — AI endpoints unauthenticated, unthrottled, and an IDOR
+**Why it mattered:** `/parse` runs a PDF-vision pipeline and `/generate/youtube` downloads and analyses video — a stranger could loop either and spend your Gemini budget. Separately, `/chat` read `userId` **from the request body** and returned that user's last 10 attempts using the admin client: pass any UUID, read a stranger's exam history.
+
+**Changed:** all 7 endpoints now require a verified token except `/predict-rank` (see below); `/test-key` is admin-only; `/chat`, `/generate/youtube` and `/generate/topics` derive `user_id` **from the token**, overwriting whatever the body claimed. Per-user hourly caps: 30 heavy, 120 light.
+
+**`/predict-rank` was deliberately left open.** Anonymous candidates use it on their own results page, so requiring a login would have removed a working feature. It is capped at 10/hour per IP instead, and its error message was made generic — it had been returning the raw upstream error, which disclosed your GCP project number and billing URL to anonymous callers.
+
+**Also changed, or this would have broken:** four raw `fetch()` calls in both `AITestImporter` pages and the admin health check sent no `Authorization` header. They do now.
+
+### H3 — Analytics dashboards leak PII
+Closed by the C5 router-level admin dependency. Re-verified returning 401.
+
+### H4 — Guest-account flooding
+**Changed:** an unauthenticated submission claiming an **existing non-guest account** is now rejected (401); guest IDs still pass. Unauthenticated submits capped at 30/hour per IP.
+
+**Not fully eliminated, and this was a judgement call.** The audit's fix — route anonymous attempts to `anon_test_attempts` and stop minting `auth.users` rows — would empty creator dashboards for conducted exams, because `user_tests.user_id` has a foreign key to `auth.users` and `get_test_attempts` reads conducted attempts from `user_tests`. Doing it properly needs a nullable `user_id` plus guest identity in metadata, and dashboard changes. Bounding the abuse was the non-breaking half.
+
+---
+
+## 5.4 — MEDIUM
+
+### M1 — Rate limiting weak and narrow
+**Why it mattered:** the limiter was a plain dict inside each Cloud Run instance, so a limit of 5 was really 5×N and reset on every deploy.
+
+**Changed:** `rate_limiter.py` rewritten with a pluggable backend — Upstash Redis REST when `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` are set, in-memory otherwise. Upstash's REST API was chosen over a Redis driver so no new dependency is needed and there is no connection pool to manage on Cloud Run.
+
+Design decisions worth knowing: it **fails open** (a limiter that takes the site down when Redis blips is a worse outage than the abuse it prevents), has a circuit breaker so a dead store does not add latency to every request, and every rejection carries `Retry-After` and `X-RateLimit-*` headers. Coverage extended to uploads, support/feedback, reports, password change, and per-IP ceilings on login and registration.
+
+### M2 — IP spoofing
+`X-Forwarded-For` is attacker-controlled, which made every IP-keyed limit bypassable. `CF-Connecting-IP` is now preferred (Cloudflare strips and re-sets it). This was a prerequisite for M1 and H2/H4 to mean anything.
+
+### M3 — Internal errors leaked to clients
+**Changed:** rather than editing 143 call sites, three exception handlers in `main.py` do it centrally — 4xx messages pass through unchanged (they are written for users), 5xx are logged in full and replaced with a generic message plus a **request ID**, and validation errors no longer echo the submitted body back. A request-ID middleware echoes `X-Request-ID` and attaches it to every log line, so a user-reported error can still be found in the logs. That correlation is what makes a generic response acceptable.
+
+### M4 — Debug `print()` of tokens and PII
+**Changed:** all **215** `print()` calls across 26 files converted to levelled logging (verbose traces default to `DEBUG`, which is off in production), plus a **redaction filter** that scrubs JWTs, bearer tokens, API keys, `password`/`secret`-style pairs, and masks emails to `ni***@domain`. The filter is a last line of defence, not a licence to log secrets.
+
+### M5 — Password update lacked re-authentication
+**Changed:** `/auth/password-update` now requires `current_password` and verifies it via a throwaway client, plus a 5/hour cap.
+
+**The part that needed care:** two flows shared this endpoint. The forgot-password flow *cannot* supply a current password. So `UpdatePassword.tsx` was re-pointed at `supabase.auth.updateUser()`, which authorises against the emailed recovery session — Supabase's intended path — while `SettingsPage.tsx` gained a "Current Password" field. Without that split, the fix would have locked out everyone who forgot their password.
+
+### M6 — Tokens in `localStorage`
+**Mitigated, root cause deferred.** The audit's short-term advice — tighten CSP, audit XSS sinks — is what was done. See 5.6 for three live XSS vectors this turned up. The root fix (httpOnly cookie for the refresh token) is an auth-architecture change and is listed in Part 6 as deferred work rather than folded into a sweep.
+
+### M7 — CSP allows `unsafe-inline` / `unsafe-eval`
+**The finding was right but pointed at the wrong place.** That CSP was on the **JSON API**, which never renders HTML, while the actual SPA — served by the Cloudflare worker — had **no CSP at all**.
+
+**Changed:** full security headers added to the worker's HTML responses (CSP, HSTS with preload, `Cross-Origin-Opener-Policy`, `Permissions-Policy`, `X-Frame-Options`, `Referrer-Policy`), and the API CSP reduced to `default-src 'none'`.
+
+`script-src` still carries `'unsafe-inline'` and `'unsafe-eval'`: the Vite bundle and GTM inject inline scripts, and KaTeX/mhchem and the chart library evaluate generated code. Removing either breaks the app today. What *was* tightened costs nothing and blocks common XSS escalations: `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`.
+
+### M8 — Uploads validated by extension and client content-type
+**Worse than documented.** Because the extension came from the client filename and the content-type came from the client too, an `.html` file could be stored in a **public** bucket and served as a live document from the storage origin — stored XSS and phishing pages under your domain's trust.
+
+**Changed:** `backend/app/utils/upload_validation.py` decides type from **magic bytes**, enforces per-bucket size and type allow-lists, sanitises filenames, and derives the stored extension from the sniffed type. SVG is excluded deliberately — it is an image to users but an executable document to browsers. Wired into all three upload paths. Tested 8/8.
+
+### M9 — Storage buckets public-read
+**Changed:** `GET /api/materials/{id}/download` issues 5-minute signed URLs after an access check, falling back to the public URL so nothing breaks before the bucket is flipped. **Flipping the bucket is yours** — Part 6.
+
+---
+
+## 5.5 — LOW
+
+### L1 — RLS files drifted from live
+**Why it mattered more than "housekeeping" suggests:** 19 scripts named things like `enable_profiles_rls.sql` and `security_fix_registrations.sql` no longer matched production. Re-running one to "fix RLS" would have silently re-opened what C2/C3 closed.
+
+**Changed:**
+- **`supabase/migrations/20260924000000_rls_baseline.sql`** — all 129 live policies, idempotent, generated from the catalog and verified policy-for-policy (27 tables, exact per-table match). Historical duplicates were kept verbatim so applying it is a no-op rather than a behaviour change.
+- 14 RLS-only scripts moved to **`supabase/_archive_do_not_apply/`** with a README explaining what each did. The 23 files containing real table DDL stayed put.
+- **`scripts/check-rls-drift.sql`** — seven must-return-zero-rows invariants plus a baseline regenerator.
+
+### L2 — Admin gate is client-side only
+The audit said "no change needed beyond fixing the backend". The backend gate was confirmed sound — but `/users/check-admin` had two real defects:
+1. Its `401` was swallowed by a bare `except` and returned as `200 + false`, so an admin whose token had merely **expired** was silently demoted in the UI instead of the client refreshing it.
+2. Any logged-in user could pass someone else's `user_id` and learn whether that account is an admin.
+
+Both fixed. Before changing it, the admin login path was traced to confirm tokens are stored synchronously before `checkAdmin` runs, and that every caller passes the session user's own ID.
+
+### L3 — Stray files
+`chemdoodle.zip` was **tracked** — and is not a zip at all, but 36 KB of saved HTML, referenced nowhere. Untracked and deleted, along with `bash.exe.stackdump`. `.gitignore` extended so a stray `git add -A` cannot sweep up the next one.
+
+### L4 — Promo `used_count` race
+**Why it mattered:** two concurrent redemptions both read N and both write N+1, so a redemption is lost. Worse, `max_uses` was checked against the same stale read, so a limited promo could be redeemed past its limit — a revenue leak on a launch code, exactly when concurrency is highest.
+
+**Changed:** `increment_promo_usage(uuid)` does the limit check and the increment in **one** `UPDATE ... WHERE used_count < max_uses`, so concurrent callers serialise on the row lock. Service-role only. Both `create-order` and `verify-payment` now call it and log rather than fail a request whose payment already succeeded. A `CHECK` constraint was added `NOT VALID` — see Part 6 for the follow-up.
+
+### L5 — Config naming
+`SECRET_KEY`, `ALGORITHM` and `ACCESS_TOKEN_EXPIRE_MINUTES` were **entirely unused** — dead scaffold carrying the default `"YOUR_SUPER_SECRET_KEY_HERE_CHANGE_IN_PROD"`. They were removed rather than given a better default, because leaving one invites someone to wire it up later and inherit it.
+
+The anon-key fallback was the real risk: with it, a missing `SUPABASE_SERVICE_KEY` in production means the backend silently runs as anon and — post-C2/C3 — can read almost nothing, failing in ways that look like bugs. `validate_runtime_config()` now refuses to boot production when the service key is missing or identical to the anon key, and warns in development.
+
+### L6 — `/api/me` and `/api/health`
+Verified: docs return 404 in production, `/api/me` rejects both missing and forged tokens. `/api/health` was advertising project name and version to anonymous callers; it now returns `{"status": "healthy"}` in production (the field uptime monitors check) and the full payload only in development.
+
+---
+
+## 5.6 — Found during remediation, not in the original audit
+
+Nine issues surfaced while verifying the findings above. All are fixed.
+
+| # | Issue | Why it mattered |
+|---|-------|-----------------|
+| 1 | **Stored XSS via `test.revision_notes`** | Creator-authored HTML rendered raw to every test-taker. Combined with M6, one malicious creator could harvest every candidate's session token. |
+| 2 | **KaTeX ran with `trust: true`** | Enabled `\href`, so `\href{javascript:...}` inside any question or option was live XSS in both frontends. |
+| 3 | **JSON-LD injection** | `JSON.stringify` does not escape `<`; a test title containing `</script>` breaks out. Three components plus the worker. |
+| 4 | **Password-reset open redirect → account takeover** | `redirect_to` was built from the `Origin` header, which is attacker-controlled on a direct POST. Anyone could have Supabase email a victim a recovery link pointing at their own server and capture the token. |
+| 5 | **`GET /api/results/{attempt_id}` unauthenticated** | Returned `tests(*)` — the full answer key. A candidate could submit blank, read the answers from their own result, and retake. |
+| 6 | **`POST /api/results/analyze` scored from a client-supplied test** | Would have re-opened C4 through the back door. |
+| 7 | **`.html` upload into a public bucket** | See M8. |
+| 8 | **`check-admin` swallowed its own 401** | See L2. |
+| 9 | **Worker `og:image` attribute injection** | `content="${image}"` was unescaped while title and description were escaped. |
+
+Fixes 1–3 are in `frontend*/src/utils/sanitize.ts` (DOMPurify-based `sanitizeHtml`, a `katexTrust` callback, and `safeJsonLd`).
+
+---
+
+## 5.7 — New files and tooling
+
+| Path | Purpose |
+|------|---------|
+| `backend/app/core/auth.py` | One implementation of every auth check (C1, C5) |
+| `backend/app/core/logging_config.py` | Redacting, request-correlated logging (M3, M4) |
+| `backend/app/services/scoring.py` | Authoritative server-side scoring (C4) |
+| `backend/app/utils/upload_validation.py` | Magic-byte upload validation (M8) |
+| `backend/scripts/test_scoring_parity.py` | Pins client/server scoring agreement — 15/15 |
+| `frontend*/src/utils/sanitize.ts` | XSS sink hardening (M6) |
+| `.githooks/pre-commit` | Blocks secrets at commit time (H1) |
+| `scripts/scan-secrets.sh` | History / worktree secret scanner (H1) |
+| `scripts/check-rls-drift.sql` | RLS drift detection + baseline regeneration (L1) |
+| `supabase/migrations/20260920120000_*` | C3 analytics lockdown |
+| `supabase/migrations/20260923100000_*` | C2 public-read lockdown |
+| `supabase/migrations/20260923110000_*` | C3b write lockdown |
+| `supabase/migrations/20260924000000_*` | RLS baseline (L1) |
+| `supabase/migrations/20260924010000_*` | Residual policy tightening (L1) |
+| `supabase/migrations/20260924020000_*` | Atomic promo usage (L4) |
+| `supabase/_archive_do_not_apply/` | 14 drifted RLS scripts + README (L1) |
+
+---
+
+## 5.8 — Verification performed
+
+Not proof of absence of bugs, but every claim above was exercised:
+
+- **Authorization:** 10/10 previously-open endpoints return 401 unauthenticated, re-run after every subsequent session.
+- **Public surfaces unchanged:** `/api/analytics/track`, `/api/features/flags`, `/api/categories/`, `/api/attempts/anon/start`, `/api/health` all still reachable.
+- **Scoring parity:** 15/15.
+- **XSS:** 12/12 payloads blocked (script tags, `img onerror`, `svg onload`, `javascript:`/`data:` hrefs, `iframe srcdoc`, form/base/meta hijacks, nested obfuscation) with 5/5 legitimate creator-content cases preserved. KaTeX + JSON-LD: 12/12.
+- **Uploads:** 8/8 — HTML-renamed-`.png`, SVG-with-script, wrong-bucket PDF, exe bytes, oversize and empty all rejected; real PNG/PDF accepted; path traversal neutralised.
+- **Pre-commit hook:** 9/9, and it blocks all four real leaked keys.
+- **Origin allow-list:** 6/6, including `https://testoza.com.evil.com`.
+- **Config validation:** refuses to boot in production when the service key is missing or equals the anon key; warns in development.
+- **Rate limiter:** correct allow/deny, correct headers, and correct fallback with a dead Redis.
+- **Builds:** both frontends build (not just typecheck — `tsc -p tsconfig.json` was found to be silently skipping files, so real `vite build` became the gate), backend `compileall` clean, worker passes `node --check`, all three edge functions parse.
+- **Database:** RLS baseline verified policy-for-policy against live; post-migration state confirmed at 125 policies, analytics tables at zero, `public_profiles` present, `increment_promo_usage` present.
+
+---
+---
+
+# Part 6 — Your checklist
+
+Everything below is something this work could **not** do for you. Status verified live on **2026-09-24**.
+
+## 6.1 — Already done ✅
+
+Confirmed against the live database, so you can tick these off:
+
+- [x] **All six RLS migrations applied.** 125 policies live; analytics tables at zero; `public_profiles` view present; `user_tests` has no unconditional writes.
+- [x] **`increment_promo_usage()` exists** in the database.
+- [x] **Pre-commit hook active in this clone** (`core.hooksPath = .githooks`).
+
+## 6.2 — Do now 🔴
+
+- [ ] **Rotate the four leaked Gemini/Google API keys.** *(H1)*
+  They are permanently public in `nkc-test`'s git history. None of them appear in your current local `.env`, but "not in my env" is not "disabled". In Google Cloud Console, confirm all four are deleted or restricted, and **check billing for anomalies**.
+
+- [ ] **Make `nkc-test` private.** *(H1)* — **verified still public on 2026-09-24.**
+  `nkc-main` is already private. Rotation is the real fix, but leaving it public keeps handing bots the history.
+
+- [ ] **Deploy everything.** The database is ahead of the code right now. In order:
+  1. Backend (Cloud Run)
+  2. Both frontends
+  3. The Cloudflare worker (this is where the new CSP and security headers live)
+  4. The two edge functions, `create-order` and `verify-payment` — safe now that the RPC exists. Until they are deployed the promo counter will not increment; the code logs an error rather than failing a payment, so nobody is blocked, but counts are lost in the gap.
+
+- [ ] **Set `ENVIRONMENT` in Cloud Run.** *(L5)*
+  It defaults to `production`, which is the safe default — but confirm it is not set to `development` anywhere, or the config validator will only warn instead of refusing to boot.
+
+## 6.3 — Do soon 🟠
+
+- [ ] **Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in Cloud Run.** *(M1)*
+  Not present in your local `.env`. Until these are set, rate limits stay per-instance — the code is correct either way, but M1 is not truly closed. Upstash's free tier is sufficient at your scale.
+
+- [ ] **Flip the `materials` bucket to private and point the UI at `/api/materials/{id}/download`.** *(M9)*
+  **Verified: all five buckets are still public-read.** The signed-URL endpoint is ready. Until the flip, existing public URLs still work and the endpoint falls back to them.
+
+- [ ] **Set per-bucket size and MIME limits in the Supabase dashboard.** *(M8)*
+  **Verified: `file_size_limit` and `allowed_mime_types` are `null` on all five buckets.** The backend validates uploads, but these limits are defence in depth for anything that reaches storage another way. Suggested: `avatars` 5 MB images only; `post-images` / `test-images` 10 MB images only; `materials` / `ai-user-uploads` 50 MB images + PDF.
+
+- [ ] **Check for promo codes already past their limit, then validate the constraint.** *(L4)*
+  The `CHECK` was added `NOT VALID` because the old race may already have overshot:
+  ```sql
+  SELECT id, code, used_count, max_uses FROM promo_codes
+   WHERE max_uses IS NOT NULL AND used_count > max_uses;
+  -- fix any rows found, then:
+  ALTER TABLE promo_codes VALIDATE CONSTRAINT promo_codes_used_within_max;
+  ```
+
+- [ ] **Install the pre-commit hook in your other clones.** *(H1)*
+  `core.hooksPath` is per-clone, not committed. Run `./scripts/scan-secrets.sh install` wherever else you work.
+
+## 6.4 — Deferred by design 🟡
+
+Both were left undone on purpose, not overlooked. Each needs its own focused session.
+
+- [ ] **Move the refresh token to an httpOnly cookie.** *(M6 root cause)*
+  Tokens are still in `localStorage`, so any XSS is an account takeover. The sinks are closed and the CSP is tightened, but this is the real fix. It is an auth-architecture change and deserves to be done deliberately.
+
+- [ ] **Route anonymous attempts to `anon_test_attempts`.** *(H4 root cause)*
+  Needs a nullable `user_tests.user_id` (or guest identity in metadata) plus creator-dashboard changes. Doing it naively empties conducted-exam dashboards.
+
+## 6.5 — Ongoing 🟢
+
+- [ ] **Run the drift checker after any manual SQL.** `scripts/check-rls-drift.sql` — seven queries that must all return zero rows. Run it whenever you change policies in the dashboard, and regenerate the baseline afterwards.
+- [ ] **Never run anything from `supabase/_archive_do_not_apply/`.** If you need something from one of those files, write a new migration instead.
+- [ ] **Consider `gitleaks`.** The pre-commit hook works without it, but will use it automatically if installed.
+- [ ] **Keep `scoring.py` and `TestPage.tsx` in sync.** If you change marking rules, change both and re-run `backend/scripts/test_scoring_parity.py`.
+
+---
+
+## Part 7 — Where this leaves you
+
+Every finding in the original audit has been either fixed, bounded with the reason stated, or handed to you in Part 6 with its live status. Nine further issues were found while verifying and are fixed — four of them (stored XSS via `revision_notes`, KaTeX `trust: true`, the password-reset open redirect, and the unauthenticated results endpoint) were at least as serious as items in the original HIGH list.
+
+The two enforcement layers now back each other up, which was the core problem. The backend checks authorization in Python because it runs as service-role; RLS independently blocks the anon key; and the answer key is unreachable from either direction — column privileges stop PostgREST, and `strip_answer_key` stops the API.
+
+**The single most important thing left is not code: rotate the leaked keys and make the repo private.** That is the only finding where the exposure is ongoing, outside your application, and entirely outside this work's reach.

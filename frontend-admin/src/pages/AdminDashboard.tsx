@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
     BarChart3, Wrench, Upload, CreditCard, Ticket, LogOut, Loader2,
     FolderKanban, PlusCircle, Sparkles, GraduationCap, Newspaper, PanelLeft, X,
-    FileText, BookOpen, Users, Layers, Radio, Mail, Bell
+    FileText, BookOpen, Users, Layers, Radio, Mail, Bell, FlaskConical
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,12 +23,13 @@ import AdminMigrationPanel from './AdminMigrationPanel';
 import AdminAiAuditPanel from './AdminAiAuditPanel';
 import AdminEmailBroadcastPanel from './AdminEmailBroadcastPanel';
 import AdminNotificationsPanel from './AdminNotificationsPanel';
+import AdminTestingToolsPanel from './AdminTestingToolsPanel';
 import { useNotifications } from '@/hooks/useNotifications';
 import { authApi } from '@/lib/authApi';
 import { fetchConductModeTests } from '@/lib/testsApi';
 import SplashLoader from '@/components/ui/SplashLoader';
 
-type TabId = 'analytics' | 'notifications' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration';
+type TabId = 'analytics' | 'notifications' | 'tests' | 'categories' | 'users' | 'verified_creators' | 'combined' | 'activity' | 'builder' | 'importer' | 'ai_analysis' | 'ai_audit' | 'materials' | 'posts' | 'email_broadcast' | 'features' | 'pricing' | 'promos' | 'migration' | 'testing_tools';
 
 export default function AdminDashboard() {
     const { user, isAdmin, loading: authLoading, refreshSession, signOut } = useAuth();
@@ -99,6 +100,13 @@ export default function AdminDashboard() {
                 { id: 'materials' as const, label: 'Class Materials', icon: GraduationCap },
                 { id: 'posts' as const, label: 'News & Announcements', icon: Newspaper },
                 { id: 'email_broadcast' as const, label: 'Email Broadcast', icon: Mail },
+            ]
+        },
+        {
+            title: "Testing Tools",
+            items: [
+                // Preview surfaces before they ship. Nothing here is live or indexed.
+                { id: 'testing_tools' as const, label: 'Landing Page V2', icon: FlaskConical },
             ]
         },
         {
@@ -263,6 +271,7 @@ export default function AdminDashboard() {
                     {activeTab === 'pricing' && <AdminPricingPanel />}
                     {activeTab === 'promos' && <AdminPromoCodesPanel />}
                     {activeTab === 'migration' && <AdminMigrationPanel />}
+                    {activeTab === 'testing_tools' && <AdminTestingToolsPanel />}
                 </div>
             </main>
         </div>
