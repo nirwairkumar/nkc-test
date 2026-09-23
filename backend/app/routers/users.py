@@ -5,6 +5,7 @@ from supabase import Client
 from typing import Optional, List, Dict, Any
 from cachetools import TTLCache
 import logging
+from app.core.auth import is_admin_user
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +185,20 @@ async def check_admin(
     user_id: str,
     db: Client = Depends(get_db)
 ):
+    # L2: this endpoint is what the admin frontend gates its UI on. The real security
+    # boundary is _verify_is_admin on each privileged route (C5), but two things here
+    # were wrong:
+    #   1. the 401 from _verify_auth_token was swallowed by the bare `except` below and
+    #      returned as HTTP 200 + false, so an admin whose access token had merely
+    #      EXPIRED was silently demoted in the UI instead of the client refreshing it;
+    #   2. any logged-in user could pass someone else's user_id and learn whether that
+    #      account is an admin.
+    requesting_user_id = _verify_auth_token(request, db)
+    if user_id != requesting_user_id and not is_admin_user(requesting_user_id, db):
+        # Answer only about yourself, unless you are already an admin.
+        return False
+
     try:
-        _verify_auth_token(request, db)
         # 1. Fetch user's email from profiles
         user_profile = supabase.table("profiles").select("email").eq("id", user_id).execute()
         if not user_profile.data:

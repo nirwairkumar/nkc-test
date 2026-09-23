@@ -32,3 +32,22 @@ client_secret*.json
 *-service-account*.json
 *serviceaccount*.json
 .secrets/
+
+# ── L3: build/crash artifacts that must never be committed ───────────────────
+# `chemdoodle.zip` (36K of HTML saved under a .zip name) and `bash.exe.stackdump`
+# had both been sitting in the tree; the zip was even tracked. The risk is not the
+# junk itself but that a stray `git add -A` sweeps up whatever else lands here.
+*.stackdump
+*.dmp
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+*.bak
+*.orig
+*.tmp
+*.swp
+*~
+recycle/

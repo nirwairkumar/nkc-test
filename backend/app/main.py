@@ -23,6 +23,11 @@ from app.core.logging_config import configure_logging, request_id_ctx
 configure_logging()
 logger = logging.getLogger("app")
 
+# L5: refuse to boot a production deployment that is missing its service-role key,
+# rather than silently falling back to the anon key and returning empty data everywhere.
+from app.core.config import validate_runtime_config
+validate_runtime_config()
+
 # Disable API docs in production to prevent information disclosure
 _is_dev = os.getenv("ENVIRONMENT", "production").lower() in ("development", "dev", "local")
 
@@ -263,11 +268,14 @@ async def get_root_sitemap():
 
 @app.get("/api/health")
 def health_check():
-    return {
-        "status": "healthy",
-        "project": settings.PROJECT_NAME,
-        "version": settings.PROJECT_VERSION
-    }
+    # L6: `status` is the stable contract uptime monitors and Cloud Run check.
+    # Project name and version are build details — useful locally, needless
+    # fingerprinting for an unauthenticated public endpoint in production.
+    payload = {"status": "healthy"}
+    if _is_dev:
+        payload["project"] = settings.PROJECT_NAME
+        payload["version"] = settings.PROJECT_VERSION
+    return payload
 
 @app.get("/api/me")
 def read_users_me(user = Depends(get_current_user)):

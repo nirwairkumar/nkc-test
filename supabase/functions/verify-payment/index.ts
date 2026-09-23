@@ -96,19 +96,23 @@ serve(async (req) => {
                 });
 
             if (!redemptionError) {
-                // Increment Used Count
-                // This is a simple counter increment. For high concurrency, use an RPC.
-                // But for this scale, a simple read-update or RPC is fine.
-                // We'll use a raw RPC query ideally, or just fetch-update.
-                // Supabase has .rpc('increment_promo_usage', { pid: promoId }) if we made one.
-                // For now, let's just do a direct update since we have Admin access.
+                // L4: atomic consume. The old read-then-update lost increments under
+                // concurrency AND let a limited code be redeemed past its max_uses.
+                // increment_promo_usage() does the limit check and the increment in one
+                // statement; see supabase/migrations/20260924020000_l4_atomic_promo_usage.sql
+                const { data: promoUsage, error: promoUsageError } = await supabaseAdmin
+                    .rpc('increment_promo_usage', { p_promo_id: promoId });
 
-                /* Race condition note: This simple approach might skip counts under heavy load.
-                   Production Fix: Create a DB function `increment_promo_usage(uuid)`.
-                */
-                const { data: currentPromo } = await supabaseAdmin.from('promo_codes').select('used_count').eq('id', promoId).single();
-                if (currentPromo) {
-                    await supabaseAdmin.from('promo_codes').update({ used_count: currentPromo.used_count + 1 }).eq('id', promoId);
+                const consumed = Array.isArray(promoUsage) ? promoUsage[0] : promoUsage;
+                if (promoUsageError || !consumed?.success) {
+                    // The payment already succeeded, so never fail the request here —
+                    // the user keeps their plan. Log it for reconciliation instead.
+                    console.error('Promo usage could not be consumed (exhausted or expired)', {
+                        promoId,
+                        error: promoUsageError?.message,
+                        used_count: consumed?.used_count,
+                        max_uses: consumed?.max_uses,
+                    });
                 }
             } else {
                 console.error("Failed to record promo redemption", redemptionError);
