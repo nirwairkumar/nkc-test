@@ -1,7 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request
 from app.core.database import get_db
 from supabase import Client
+from app.utils.upload_validation import validate_upload, UploadRejected
+from app.utils.rate_limiter import enforce_limit, upload_per_user
+import logging
 import uuid
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -19,7 +24,7 @@ def _verify_auth_token(request: Request, db: Client) -> str:
             raise HTTPException(status_code=401, detail="Invalid token")
         return user_response.user.id
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 @router.post("/upload")
 async def upload_file(
@@ -29,29 +34,42 @@ async def upload_file(
     db: Client = Depends(get_db)
 ):
     # Verify auth
-    _verify_auth_token(request, db)
-    
+    user_id = _verify_auth_token(request, db)
+
     ALLOWED_BUCKETS = ["avatars", "materials", "post-images", "test-images"]
     if bucket not in ALLOWED_BUCKETS:
         raise HTTPException(status_code=400, detail="Forbidden bucket path")
 
+    enforce_limit(upload_per_user, user_id, "Upload limit reached. Please try again later.")
+
+    file_content = await file.read()
+
+    # M8: decide the type from the BYTES. Previously the extension came from the client
+    # filename and the Content-Type came from the client too, so a .html file (or any
+    # bytes labelled text/html) could be stored in a public bucket and served as a live
+    # document from the storage origin.
     try:
-        file_content = await file.read()
-        file_ext = file.filename.split(".")[-1]
-        file_path = f"{uuid.uuid4()}.{file_ext}"
-        
-        # Use service role key client (global supabase) for storage uploads if needed
-        # or use the user's client if RLS allows.
-        # Given the proxy goal, we'll try to use the provided client.
-        response = db.storage.from_(bucket).upload(
+        content_type, file_ext = validate_upload(
+            bucket, file_content, filename=file.filename, claimed_type=file.content_type
+        )
+    except UploadRejected as rejected:
+        raise HTTPException(status_code=400, detail=str(rejected))
+
+    file_path = f"{uuid.uuid4()}.{file_ext}"
+
+    try:
+        db.storage.from_(bucket).upload(
             path=file_path,
             file=file_content,
-            file_options={"content-type": file.content_type}
+            file_options={"content-type": content_type},
         )
-        
+
         # Get public URL
         url_res = db.storage.from_(bucket).get_public_url(file_path)
-        
+
         return {"url": url_res, "path": file_path}
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error("storage upload failed for bucket=%s: %s", bucket, e)
+        raise HTTPException(status_code=400, detail="Upload failed. Please try again.")

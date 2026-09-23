@@ -12,6 +12,9 @@ from typing import List, Optional, Dict
 import xml.etree.ElementTree as ET
 import os
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sitemap", tags=["sitemap"])
 
@@ -230,7 +233,7 @@ async def get_tests_sitemap(db: Client = Depends(get_db)):
                 "image_title": test.get('title', 'Test')[:100]
             })
     except Exception as e:
-        print(f"Error fetching tests for sitemap: {e}")
+        logger.error(f"Error fetching tests for sitemap: {e}")
     
     xml_content = build_sitemap_xml(urls)
     cache_manager.set(cache_key, xml_content, ttl=3600)
@@ -289,7 +292,7 @@ async def get_categories_sitemap(db: Client = Depends(get_db)):
                     "priority": "0.75"
                 })
     except Exception as e:
-        print(f"Error fetching categories for sitemap: {e}")
+        logger.error(f"Error fetching categories for sitemap: {e}")
     
     xml_content = build_sitemap_xml(urls)
     cache_manager.set(cache_key, xml_content, ttl=21600)
@@ -334,7 +337,7 @@ async def get_posts_sitemap(db: Client = Depends(get_db)):
                 "priority": "0.8"
             })
     except Exception as e:
-        print(f"Error fetching posts for sitemap: {e}")
+        logger.error(f"Error fetching posts for sitemap: {e}")
     
     xml_content = build_sitemap_xml(urls)
     cache_manager.set(cache_key, xml_content, ttl=7200)
@@ -373,7 +376,7 @@ async def get_creators_sitemap(db: Client = Depends(get_db)):
                 "priority": "0.6"
             })
     except Exception as e:
-        print(f"Error fetching creators for sitemap: {e}")
+        logger.error(f"Error fetching creators for sitemap: {e}")
     
     xml_content = build_sitemap_xml(urls)
     cache_manager.set(cache_key, xml_content, ttl=21600)

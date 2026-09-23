@@ -4,6 +4,9 @@ from app.core.auth import verify_auth_token, verify_owner_or_admin
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -79,7 +82,7 @@ async def get_followers(user_id: str, db: Client = Depends(get_db)):
         return response.data
     except Exception as e:
         # Fallback if FK name issue?
-        # print(e)
+        # logger.debug(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/follows/following/{user_id}")

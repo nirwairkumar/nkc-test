@@ -3,6 +3,9 @@ from app.core.database import get_db
 from supabase import Client
 from typing import Dict, Any
 from pydantic import BaseModel
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -55,7 +58,7 @@ async def save_test_solutions(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error saving solutions for test {test_id}: {e}")
+        logger.error(f"Error saving solutions for test {test_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{test_id}/solutions")
@@ -101,5 +104,5 @@ async def get_test_solutions(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching solutions for test {test_id}: {e}")
+        logger.error(f"Error fetching solutions for test {test_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

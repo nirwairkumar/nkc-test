@@ -51,8 +51,12 @@ export const authApi = {
         const response = await apiClient.post('/auth/password-reset', { email });
         return response.data;
     },
-    updatePassword: async (password: string) => {
-        const response = await apiClient.post('/auth/password-update', { password });
+    updatePassword: async (password: string, currentPassword: string) => {
+        // M5: the backend re-authenticates with the current password before changing it.
+        const response = await apiClient.post('/auth/password-update', {
+            password,
+            current_password: currentPassword,
+        });
         return response.data;
     },
     updateMetadata: async (data: any) => {

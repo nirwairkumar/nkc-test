@@ -6,6 +6,12 @@ from pydantic import BaseModel
 from typing import Optional, List
 import time
 import random
+import logging
+from app.utils.upload_validation import validate_upload, UploadRejected
+from app.utils.rate_limiter import enforce_limit, upload_per_user
+from app.core.auth import verify_auth_token, is_admin_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -70,7 +76,7 @@ async def get_user_materials(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching materials: {e}")
+        logger.error(f"Error fetching materials: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/link")
@@ -89,7 +95,7 @@ async def add_link_material(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error adding link material: {e}")
+        logger.error(f"Error adding link material: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/upload")
@@ -105,19 +111,29 @@ async def upload_file_material(
         _verify_owner_or_admin(user_id, request, db)
         
         # 1. Upload to Supabase Storage
-        file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'bin'
-        file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
+        enforce_limit(upload_per_user, user_id, "Upload limit reached. Please try again later.")
         file_content = await file.read()
-        
-        print(f"DEBUG: Attempting upload to 'materials' bucket as {user_id}")
-        # Supabase Storage Upload
-        res = db.storage.from_("materials").upload(file_name, file_content)
-        print(f"DEBUG: Upload result: {res}")
-        
+
+        # M8: type and extension come from the bytes, never from the client filename
+        # or Content-Type — the materials bucket is public-read, so an .html upload
+        # would be a live page served from the storage origin.
+        try:
+            content_type, file_ext = validate_upload(
+                "materials", file_content, filename=file.filename, claimed_type=file.content_type
+            )
+        except UploadRejected as rejected:
+            raise HTTPException(status_code=400, detail=str(rejected))
+
+        file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
+
+        # M4: no DEBUG print of upload paths / user ids into production logs.
+        logger.info("materials upload: bucket=materials type=%s size=%d", content_type, len(file_content))
+        db.storage.from_("materials").upload(
+            file_name, file_content, file_options={"content-type": content_type}
+        )
+
         # 2. Get Public URL
-        public_url_res = db.storage.from_("materials").get_public_url(file_name)
-        public_url = public_url_res 
-        print(f"DEBUG: Public URL: {public_url}")
+        public_url = db.storage.from_("materials").get_public_url(file_name)
         
         # 3. Insert into DB
         db_data = {
@@ -129,7 +145,6 @@ async def upload_file_material(
             "class_id": class_id if class_id != 'null' and class_id != '' else None
         }
         
-        print(f"DEBUG: Inserting into DB: {db_data}")
         response = db.table("materials").insert(db_data).execute()
         
         # response.data is a list of inserted records
@@ -141,8 +156,8 @@ async def upload_file_material(
         raise
     except Exception as e:
         import traceback
-        print(f"Error uploading material: {e}")
-        print(traceback.format_exc())
+        logger.error(f"Error uploading material: {e}")
+        logger.debug(traceback.format_exc())
         
         # Raise generic 500 but include detail for debugging
         raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
@@ -172,5 +187,52 @@ async def delete_material(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error deleting material: {e}")
+        logger.error(f"Error deleting material: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{material_id}/download")
+async def get_material_download_url(
+    material_id: str,
+    request: Request,
+    db: Client = Depends(get_db)
+):
+    """
+    M9: issue a short-lived signed URL for a stored material instead of handing out a
+    permanent public link.
+
+    The `materials` bucket is public-read, and until C2 the `materials` table was
+    world-readable too — so every creator's uploaded file was enumerable and
+    permanently downloadable by anyone who had seen the URL once. A signed URL
+    expires, and access is checked here before it is minted.
+
+    Flipping the bucket itself to private is a Supabase dashboard change and is what
+    finally closes direct-URL access; this endpoint is what the app should call once
+    that happens, and it is safe to adopt beforehand.
+    """
+    requesting_user_id = verify_auth_token(request, db)
+
+    res = db.table("materials").select("id, user_id, file_path, url, type").eq("id", material_id).limit(1).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    material = res.data[0]
+
+    # Owner or admin only. Widen this when paid access is introduced.
+    if material.get("user_id") != requesting_user_id and not is_admin_user(requesting_user_id, db):
+        raise HTTPException(status_code=403, detail="You do not have access to this material")
+
+    # External links are not ours to sign.
+    if material.get("type") != "file" or not material.get("file_path"):
+        return {"url": material.get("url"), "signed": False}
+
+    try:
+        signed = db.storage.from_("materials").create_signed_url(material["file_path"], 300)
+        signed_url = signed.get("signedURL") or signed.get("signed_url") if isinstance(signed, dict) else None
+        if signed_url:
+            return {"url": signed_url, "signed": True, "expires_in": 300}
+    except Exception as e:
+        logger.error("could not sign material %s: %s", material_id, e)
+
+    # Bucket is still public: fall back so downloads keep working either way.
+    return {"url": material.get("url"), "signed": False}

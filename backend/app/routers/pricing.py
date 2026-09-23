@@ -52,6 +52,9 @@ class PromoCodeCreate(BaseModel):
 
 import threading
 from cachetools import TTLCache
+import logging
+
+logger = logging.getLogger(__name__)
 
 _pricing_cache_lock = threading.Lock()
 _plans_cache: TTLCache = TTLCache(maxsize=10, ttl=600)
@@ -81,7 +84,7 @@ async def get_plans(db: Client = Depends(get_db)):
             _plans_cache["all"] = data
         return data
     except Exception as e:
-        print(f"Error fetching plans: {e}")
+        logger.error(f"Error fetching plans: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/plans")
@@ -132,7 +135,7 @@ async def get_promos(db: Client = Depends(get_db)):
         response = db.table("promo_codes").select("*").order("created_at", desc=False).execute()
         return response.data
     except Exception as e:
-        print(f"Error fetching promos: {e}")
+        logger.error(f"Error fetching promos: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/promos")
@@ -181,10 +184,10 @@ class ApplyPromoRequest(BaseModel):
 async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
     try:
         code = payload.code.strip().upper()
-        print(f"DEBUG API: code={code}, plan={payload.plan_id}")
+        logger.debug(f"DEBUG API: code={code}, plan={payload.plan_id}")
         # Fetch Promo using admin client (to bypass RLS for users)
         promo_res = supabase.table("promo_codes").select("*").eq("code", code).eq("is_active", True).execute()
-        print(f"DEBUG PROMO_RES: {promo_res.data}")
+        logger.debug(f"DEBUG PROMO_RES: {promo_res.data}")
         if not promo_res.data:
             raise HTTPException(status_code=400, detail="Invalid or inactive promo code")
         
@@ -235,7 +238,7 @@ async def apply_promo(payload: ApplyPromoRequest, db: Client = Depends(get_db)):
     except HTTPException as he:
         raise he
     except Exception as e:
-        print(f"Error applying promo: {e}")
+        logger.error(f"Error applying promo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- Global Premium Settings Endpoints ---
@@ -261,7 +264,7 @@ async def get_premium_settings(db: Client = Depends(get_db)):
             _settings_cache["settings"] = default_settings
         return default_settings
     except Exception as e:
-        print(f"Error fetching premium settings: {e}")
+        logger.error(f"Error fetching premium settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class UpdateSettingsRequest(BaseModel):
@@ -332,7 +335,7 @@ async def check_premium_access(db: Client = Depends(get_db)):
             "premium_accessible": unlock_all or not has_active_plans
         }
     except Exception as e:
-        print(f"Error checking premium access: {e}")
+        logger.error(f"Error checking premium access: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 @router.post("/create-order")
 async def create_order(payload: Dict[str, Any], db: Client = Depends(get_db)):
@@ -348,7 +351,7 @@ async def create_order(payload: Dict[str, Any], db: Client = Depends(get_db)):
             return json.loads(response.decode())
         return response
     except Exception as e:
-        print(f"Error invoking create-order: {e}")
+        logger.error(f"Error invoking create-order: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/verify-payment")
@@ -364,5 +367,5 @@ async def verify_payment(payload: Dict[str, Any], db: Client = Depends(get_db)):
             return json.loads(response.decode())
         return response
     except Exception as e:
-        print(f"Error invoking verify-payment: {e}")
+        logger.error(f"Error invoking verify-payment: {e}")
         raise HTTPException(status_code=500, detail=str(e))

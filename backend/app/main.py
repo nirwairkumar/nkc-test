@@ -9,7 +9,19 @@ from pydantic import BaseModel
 
 # this is a test of branch change. I am editing in gcp-migration.
 
+import logging
 import os
+import uuid as _uuid
+
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.core.logging_config import configure_logging, request_id_ctx
+
+# M3/M4: install redacting, request-correlated logging before anything else runs.
+configure_logging()
+logger = logging.getLogger("app")
 
 # Disable API docs in production to prevent information disclosure
 _is_dev = os.getenv("ENVIRONMENT", "production").lower() in ("development", "dev", "local")
@@ -29,18 +41,9 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 def read_root():
     return {"message": "TestoZa Backend is running on Google Cloud Run!"}
 
-# CORS Middleware — explicit origins only, NO wildcard
-origins = [
-    "https://testoza.com",
-    "https://www.testoza.com",
-    "https://app.testoza.com",
-    "https://admin.testoza.com",
-    "https://blog.testoza.com",
-    "https://news.testoza.com",
-    "https://testing.testoza.com",
-    "http://localhost:5173", # Local dev
-    "http://localhost:8081", # Local dev
-]
+# CORS Middleware — explicit origins only, NO wildcard.
+# Shared with the password-reset redirect allow-list so the two cannot drift apart.
+from app.core.config import ALLOWED_ORIGINS as origins
 
 
 app.add_middleware(
@@ -53,6 +56,77 @@ app.add_middleware(
 
 from fastapi import Request
 
+
+# ── M3: request correlation + safe error responses ───────────────────────────
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """
+    Give every request an id, echo it back, and put it on every log record.
+
+    When a user reports "it failed", the id in their error response is enough to
+    find the real exception in the logs — which is what lets the response itself
+    stay generic.
+    """
+    incoming = request.headers.get("x-request-id") or request.headers.get("cf-ray")
+    rid = (incoming or _uuid.uuid4().hex)[:64]
+    token = request_id_ctx.set(rid)
+    try:
+        response = await call_next(request)
+    finally:
+        request_id_ctx.reset(token)
+    response.headers["X-Request-ID"] = rid
+    return response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """
+    M3: 4xx messages are written for users and pass through unchanged.
+
+    5xx details are NOT — dozens of handlers raise `detail=str(e)`, which hands the
+    client raw database/library internals. Those are logged in full and replaced with
+    a generic message plus the request id.
+    """
+    rid = request_id_ctx.get()
+    if exc.status_code >= 500:
+        logger.error(
+            "unhandled server error %s %s -> %s: %s",
+            request.method, request.url.path, exc.status_code, exc.detail,
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": "Something went wrong. Please try again.", "request_id": rid},
+            headers=getattr(exc, "headers", None) or {},
+        )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "request_id": rid},
+        headers=getattr(exc, "headers", None) or {},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Validation errors echo the submitted body back by default; strip that."""
+    rid = request_id_ctx.get()
+    logger.info("validation error %s %s: %s", request.method, request.url.path, exc.errors())
+    safe = [
+        {"loc": e.get("loc"), "msg": e.get("msg"), "type": e.get("type")}
+        for e in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": safe, "request_id": rid})
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Last resort: never let a raw traceback or exception string reach the client."""
+    rid = request_id_ctx.get()
+    logger.exception("unhandled exception %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Something went wrong. Please try again.", "request_id": rid},
+    )
+
 @app.middleware("http")
 async def add_security_headers_middleware(request: Request, call_next):
     response = await call_next(request)
@@ -63,16 +137,32 @@ async def add_security_headers_middleware(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data: blob: https:; "
-        "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://apigcp.testoza.com; "
-        "frame-ancestors 'none'"
-    )
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    # M7: this API serves JSON, never an HTML document, so it needs no script/style
+    # sources at all. The previous policy copied the frontend's (with 'unsafe-inline'
+    # and 'unsafe-eval'), which bought nothing here and advertised a weak policy.
+    # The document CSP that actually matters lives in the Cloudflare worker that
+    # serves the SPA (infrastructure/cloudflare-worker/worker.js -> securityHeaders()).
+    #
+    # Swagger/ReDoc need inline scripts from a CDN, so they get a scoped exception;
+    # docs are disabled in production anyway.
+    if request.url.path in ("/docs", "/redoc") or request.url.path.startswith("/docs"):
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https://fastapi.tiangolo.com; "
+            "frame-ancestors 'none'; base-uri 'self'"
+        )
+    else:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'none'; "
+            "form-action 'none'"
+        )
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-site"
 
     # Secure API endpoints by default against CDN/Edge caching
     # If the response already has a Cache-Control header, respect it

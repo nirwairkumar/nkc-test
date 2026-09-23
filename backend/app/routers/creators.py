@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.core.database import get_db
 from supabase import Client
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -37,7 +40,7 @@ async def get_creator_profile(creator_id: str, db: Client = Depends(get_db)):
         }
 
     except Exception as e:
-        print(f"Error fetching creator profile: {e}")
+        logger.error(f"Error fetching creator profile: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{creator_id}/rewards")
@@ -92,6 +95,6 @@ async def get_creator_rewards(creator_id: str, db: Client = Depends(get_db)):
         }
 
     except Exception as e:
-        print(f"Error fetching creator rewards: {e}")
+        logger.error(f"Error fetching creator rewards: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -14,6 +14,9 @@ import threading
 router = APIRouter()
 
 from app.routers.tests.cache_config import test_cache, feed_cache, cache_get, cache_set, cache_bust
+import logging
+
+logger = logging.getLogger(__name__)
 
 def ensure_user_has_example_test(user_id: str, db: Client):
     try:
@@ -25,7 +28,7 @@ def ensure_user_has_example_test(user_id: str, db: Client):
         # Check if a template test exists dynamically in the DB (admin can edit this like a normal test)
         template_res = db.table("tests").select("*").eq("settings->>is_example_template", "true").limit(1).execute()
         if not template_res.data:
-            print("No example template test (settings.is_example_template == True) found in database.")
+            logger.debug("No example template test (settings.is_example_template == True) found in database.")
             return
 
         template = template_res.data[0]
@@ -58,9 +61,9 @@ def ensure_user_has_example_test(user_id: str, db: Client):
             }
         }
         db.table("tests").insert(clone_data).execute()
-        print(f"Automatically cloned example test from template {template['id']} for user {user_id}")
+        logger.debug(f"Automatically cloned example test from template {template['id']} for user {user_id}")
     except Exception as e:
-        print(f"Error ensuring user has example test: {e}")
+        logger.error(f"Error ensuring user has example test: {e}")
 
 
 
@@ -85,7 +88,7 @@ async def get_tests_batch(
         enriched = enrich_tests(tests, db)
         return enriched
     except Exception as e:
-        print(f"Error fetching batch tests: {e}")
+        logger.error(f"Error fetching batch tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/feed")
@@ -234,7 +237,7 @@ async def get_tests_feed(
         return result
 
     except Exception as e:
-        print(f"Error fetching test feed: {e}")
+        logger.error(f"Error fetching test feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -467,7 +470,7 @@ async def get_user_tests(
                     from collections import Counter
                     submission_counts_map = Counter(a["test_id"] for a in attempts_res.data)
             except Exception as se:
-                print(f"Warning fetching submission counts: {se}")
+                logger.warning(f"Warning fetching submission counts: {se}")
         
         enriched_tests = []
         for t in paginated_subset:
@@ -493,7 +496,7 @@ async def get_user_tests(
         return enriched_tests
 
     except Exception as e:
-        print(f"Error fetching user tests: {e}")
+        logger.error(f"Error fetching user tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -662,7 +665,7 @@ async def get_test_by_id(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching test details: {e}")
+        logger.error(f"Error fetching test details: {e}")
         raise HTTPException(status_code=500, detail=f"Server error fetching test: {str(e)}")
 
 
@@ -794,5 +797,5 @@ async def get_test_by_slug(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching test by slug: {e}")
+        logger.error(f"Error fetching test by slug: {e}")
         raise HTTPException(status_code=500, detail=f"Server error fetching test: {str(e)}")

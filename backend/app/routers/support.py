@@ -3,6 +3,10 @@ from app.core.database import get_db, supabase as admin_db
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, List
+import logging
+from app.utils.rate_limiter import check_support_rate_limit
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -20,14 +24,14 @@ class FeedbackCreate(BaseModel):
     test_experience: Optional[str] = None
     dislikes: Optional[str] = None
 
-@router.post("/feedback")
+@router.post("/feedback", dependencies=[Depends(check_support_rate_limit)])
 async def submit_feedback(payload: FeedbackCreate, db: Client = Depends(get_db)):
     try:
         data = payload.dict(exclude_unset=True)
         response = db.table("feedback").insert(data).execute()
         return response.data
     except Exception as e:
-        print(f"Error submitting feedback: {e}")
+        logger.error(f"Error submitting feedback: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class SupportMessage(BaseModel):
@@ -36,14 +40,14 @@ class SupportMessage(BaseModel):
     phone: Optional[str] = None
     message: str
 
-@router.post("/message")
+@router.post("/message", dependencies=[Depends(check_support_rate_limit)])
 async def send_support_message(payload: SupportMessage, db: Client = Depends(get_db)):
     try:
         data = payload.dict()
         response = db.table("support_messages").insert(data).execute()
         return {"success": True, "message": "Support message saved successfully", "data": response.data}
     except Exception as e:
-        print(f"Error sending support message: {e}")
+        logger.error(f"Error sending support message: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class ExitFeedbackCreate(BaseModel):
@@ -51,7 +55,7 @@ class ExitFeedbackCreate(BaseModel):
     experience: str
     user_id: Optional[str] = None
 
-@router.post("/exit-feedback")
+@router.post("/exit-feedback", dependencies=[Depends(check_support_rate_limit)])
 async def submit_exit_feedback(payload: ExitFeedbackCreate, db: Client = Depends(get_db)):
     try:
         data_to_insert = {
@@ -95,9 +99,9 @@ async def submit_exit_feedback(payload: ExitFeedbackCreate, db: Client = Depends
                     ]
                     admin_db.table("notifications").insert(notifications).execute()
         except Exception as ne:
-            print(f"Failed to create admin notifications: {ne}")
+            logger.error(f"Failed to create admin notifications: {ne}")
             
         return response.data[0] if response.data else {"success": True}
     except Exception as e:
-        print(f"Error submitting exit feedback: {e}")
+        logger.error(f"Error submitting exit feedback: {e}")
         raise HTTPException(status_code=500, detail=str(e))

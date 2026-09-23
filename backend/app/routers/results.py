@@ -5,6 +5,9 @@ from typing import Optional, Dict, Any, List
 from app.utils.attempt_control import calculate_test_max_marks, apply_section_attempt_control
 from app.core.auth import verify_auth_token, is_admin_user
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 @router.get("/{attempt_id}")
@@ -56,10 +59,11 @@ async def get_test_result(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching result: {e}")
+        logger.error(f"Error fetching result: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch result")
 
 from pydantic import BaseModel
+
 class AnalyzeRequest(BaseModel):
     test: dict
     answers: dict
@@ -98,7 +102,7 @@ def _load_authoritative_test(test_id: Optional[str]) -> Optional[Dict[str, Any]]
             ).limit(1).execute()
         return res.data[0] if res.data else None
     except Exception as e:
-        print(f"analyze: could not load test {test_id}: {e}")
+        logger.error(f"analyze: could not load test {test_id}: {e}")
         return None
 
 

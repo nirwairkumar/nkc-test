@@ -5,6 +5,7 @@ import 'katex/dist/katex.min.css';
 import 'katex/dist/contrib/mhchem'; // Registers \ce{} and \pu{} on this katex instance
 import { cn } from '@/lib/utils';
 import { Maximize2 } from 'lucide-react';
+import { katexTrust, sanitizeHtml } from '@/utils/sanitize';
 import {
     Dialog,
     DialogContent,
@@ -165,7 +166,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                             renderedCell = katex.renderToString(cell.trim() || '\\text{ }', {
                                 displayMode: false,
                                 throwOnError: false,
-                                trust: true,
+                                trust: katexTrust,   // M6: was `true`, which allowed \href{javascript:...}
                                 strict: false,
                             });
                         } catch (err) {
@@ -225,7 +226,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                     const html = katex.renderToString(finalTex, {
                         displayMode,
                         throwOnError: false,
-                        trust: true,
+                        trust: katexTrust,   // M6: was `true`, which allowed \href{javascript:...}
                         strict: false,
                     });
 
@@ -306,7 +307,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                 className={cn("latex-renderer-container font-medium text-slate-800 dark:text-slate-200", className)}
                 onClick={handleContainerClick}
             >
-                <span dangerouslySetInnerHTML={{ __html: rendered }} />
+                <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(rendered) }} />
             </div>
 
             <Dialog open={!!maximizedTable} onOpenChange={(open) => !open && setMaximizedTable(null)}>
@@ -316,7 +317,7 @@ const LatexRenderer: React.FC<LatexRendererProps> = ({ children, className }) =>
                             {maximizedTable && (
                                 <div
                                     className="latex-renderer-container"
-                                    dangerouslySetInnerHTML={{ __html: maximizedTable }}
+                                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(maximizedTable) }}
                                 />
                             )}
                         </div>

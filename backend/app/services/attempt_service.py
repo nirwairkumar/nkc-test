@@ -7,6 +7,9 @@ from app.schemas.attempts import (
 from datetime import datetime, timezone
 from app.core.database import supabase
 from typing import Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 def process_progress(payload: ProgressUpdateRequest):
     try:
@@ -31,7 +34,7 @@ def process_progress(payload: ProgressUpdateRequest):
         except Exception:
             pass
     except Exception as e:
-        print(f"Error in background progress: {e}")
+        logger.error(f"Error in background progress: {e}")
 
 def process_abandon(payload: AbandonRequest):
     try:
@@ -54,7 +57,7 @@ def process_abandon(payload: AbandonRequest):
         except Exception:
             pass
     except Exception as e:
-        print(f"Error in background abandon: {e}")
+        logger.error(f"Error in background abandon: {e}")
 
 def process_anon_progress(payload: AnonProgressRequest):
     try:
@@ -69,7 +72,7 @@ def process_anon_progress(payload: AnonProgressRequest):
             .neq("status", "submitted")\
             .execute()
     except Exception as e:
-        print(f"Error in background anon_progress: {e}")
+        logger.error(f"Error in background anon_progress: {e}")
 
 def process_anon_abandon(payload: AnonAbandonRequest):
     try:
@@ -89,4 +92,4 @@ def process_anon_abandon(payload: AnonAbandonRequest):
             .neq("status", "submitted")\
             .execute()
     except Exception as e:
-        print(f"Error in background anon_abandon: {e}")
+        logger.error(f"Error in background anon_abandon: {e}")

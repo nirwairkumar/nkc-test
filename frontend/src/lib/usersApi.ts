@@ -85,10 +85,10 @@ export async function uploadAvatar(userId: string, file: File) {
     }
 }
 
-export async function updatePassword(password: string) {
+export async function updatePassword(password: string, currentPassword: string) {
     try {
         const { authApi } = await import('@/lib/authApi');
-        const response = await authApi.updatePassword(password);
+        const response = await authApi.updatePassword(password, currentPassword);
         return { error: response.error };
     } catch (error: any) {
         return { error };

@@ -4,6 +4,9 @@ from supabase import Client
 from datetime import datetime, timedelta
 from typing import Optional
 from .track import classify_user_agent
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -84,7 +87,7 @@ async def get_test_funnel(
             "reg_in_progress": total_in_progress,
         }
     except Exception as e:
-        print(f"Error in test funnel: {e}")
+        logger.error(f"Error in test funnel: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -135,7 +138,7 @@ async def get_abandonment_analysis(
             "drop_off_buckets": buckets,
         }
     except Exception as e:
-        print(f"Error in abandonment analysis: {e}")
+        logger.error(f"Error in abandonment analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -237,7 +240,7 @@ async def get_test_matrix(
         return result[:limit]
 
     except Exception as e:
-        print(f"Error in test matrix: {e}")
+        logger.error(f"Error in test matrix: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -340,7 +343,7 @@ async def get_user_matrix(
         return result[:limit]
 
     except Exception as e:
-        print(f"Error in user matrix: {e}")
+        logger.error(f"Error in user matrix: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -378,7 +381,7 @@ async def get_test_creation_stats(
             "daily_trend": daily_trend,
         }
     except Exception as e:
-        print(f"Error in test creation stats: {e}")
+        logger.error(f"Error in test creation stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -444,7 +447,7 @@ async def get_upload_logs(
         }
 
     except Exception as e:
-        print(f"Error in upload logs: {e}")
+        logger.error(f"Error in upload logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -496,7 +499,7 @@ async def get_visitor_locations(
             "top_cities": cities,
         }
     except Exception as e:
-        print(f"Error in visitor locations: {e}")
+        logger.error(f"Error in visitor locations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -587,7 +590,7 @@ async def get_anon_summary(
             "daily_trend": daily_trend,
         }
     except Exception as e:
-        print(f"Error in anon/summary: {e}")
+        logger.error(f"Error in anon/summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -648,7 +651,7 @@ async def get_attempt_logs(
                     if uid and tid and created_at:
                         user_submissions[(uid, tid)] = created_at
             except Exception as sub_err:
-                print(f"Warning: could not fetch user submissions for live logs: {sub_err}")
+                logger.error(f"Warning: could not fetch user submissions for live logs: {sub_err}")
 
         # Process registered
         for r in (regs.data or []):
@@ -746,7 +749,7 @@ async def get_attempt_logs(
         return logs[:limit]
 
     except Exception as e:
-        print(f"Error in attempt logs: {e}")
+        logger.error(f"Error in attempt logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -815,7 +818,7 @@ async def get_detailed_visitors(
                         dur = pg_cnt * 15
                     visitor_stay_map[vid] = visitor_stay_map.get(vid, 0) + max(dur, 10)
             except Exception as s_err:
-                print(f"Warning fetching visitor session durations: {s_err}")
+                logger.warning(f"Warning fetching visitor session durations: {s_err}")
                 
         result = []
         for v in visitors:
@@ -863,7 +866,7 @@ async def get_detailed_visitors(
             
         return result
     except Exception as e:
-        print(f"Error in detailed visitors: {e}")
+        logger.error(f"Error in detailed visitors: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -928,5 +931,5 @@ async def get_visitor_pages(
         result.reverse()
         return result
     except Exception as e:
-        print(f"Error in visitor pages timeline: {e}")
+        logger.error(f"Error in visitor pages timeline: {e}")
         raise HTTPException(status_code=500, detail=str(e))

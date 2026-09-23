@@ -12,6 +12,9 @@ from app.core.config import settings
 from supabase import Client
 from cachetools import TTLCache
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 # In-memory store for custom SMTP settings overridden by admin UI during server runtime
@@ -122,7 +125,7 @@ def send_smtp_message(smtp_cfg: Dict[str, Any], sender_email: str, sender_name: 
     msg.attach(MIMEText(text_plain, "plain", "utf-8"))
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-    print(f"Connecting to SMTP server {host}:{port} for user {user}...")
+    logger.debug(f"Connecting to SMTP server {host}:{port} for user {user}...")
 
     if port == 465:
         context = ssl.create_default_context()
@@ -231,6 +234,7 @@ def build_branded_html(raw_content: str, recipient_name: str) -> str:
 </html>"""
 
 import html
+
 
 CREATOR_LEVELS_CONFIG = [
     {
@@ -381,7 +385,7 @@ def fetch_creator_tests_and_stats(user_ids: List[str]) -> Dict[str, Dict[str, An
             stats["tests"].sort(key=lambda x: (1 if x["is_quality"] else 0, x["submissions_count"]), reverse=True)
 
     except Exception as e:
-        print(f"Error fetching creator tests and stats: {e}")
+        logger.error(f"Error fetching creator tests and stats: {e}")
 
     return user_stats
 
@@ -576,7 +580,7 @@ async def get_email_recipients(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching email recipients: {e}")
+        logger.error(f"Error fetching email recipients: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/smtp-status")
@@ -672,7 +676,7 @@ async def send_test_email(payload: SendTestEmailRequest, request: Request, db: C
         )
         return {"success": True, "message": f"Test email sent successfully to {payload.target_email}"}
     except Exception as e:
-        print(f"Failed to send test email: {e}")
+        logger.error(f"Failed to send test email: {e}")
         raise HTTPException(status_code=500, detail=f"SMTP Delivery Failed: {str(e)}")
 
 @router.post("/send-batch")
@@ -744,7 +748,7 @@ async def send_batch_emails(payload: BatchEmailRequest, request: Request, db: Cl
             sent_count += 1
         except Exception as e:
             failed_count += 1
-            print(f"FAILED to send broadcast email to {email}: {e}")
+            logger.error(f"FAILED to send broadcast email to {email}: {e}")
             import traceback
             traceback.print_exc()
             failures.append({"id": uid, "email": email, "error": str(e)})

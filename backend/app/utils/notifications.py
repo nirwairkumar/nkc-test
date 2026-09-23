@@ -1,5 +1,8 @@
 from app.core.database import get_db, supabase as admin_client
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 def send_notification(
     user_id: str,
@@ -33,5 +36,5 @@ def send_notification(
         res = client.table("notifications").insert(payload).execute()
         return res.data
     except Exception as e:
-        print(f"[Notification] Failed to send notification to user {user_id}: {e}")
+        logger.error(f"[Notification] Failed to send notification to user {user_id}: {e}")
         return None

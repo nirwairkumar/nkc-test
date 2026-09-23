@@ -5,10 +5,16 @@ from app.core.database import supabase, get_db
 from supabase import Client
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Dict, Any
-from app.core.config import settings
+from app.core.config import settings, safe_origin
 
 security = HTTPBearer()
-from app.utils.rate_limiter import check_login_rate_limit, check_register_rate_limit, check_password_reset_rate_limit
+import logging
+from app.utils.rate_limiter import (
+    check_login_rate_limit, check_register_rate_limit, check_password_reset_rate_limit,
+    enforce_limit, password_update_per_user,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -26,6 +32,11 @@ class PasswordResetRequest(BaseModel):
 
 class PasswordUpdateRequest(BaseModel):
     password: str
+    # M5: proof that the caller knows the CURRENT password. Required — a stolen access
+    # token alone must not be enough to change it and lock the real owner out.
+    # The forgot-password flow does not use this endpoint; it updates through the
+    # Supabase recovery session from the browser (see frontend UpdatePassword.tsx).
+    current_password: str
 
 class RefreshRequest(BaseModel):
     refresh_token: str
@@ -124,14 +135,20 @@ async def get_me(
 @router.post("/password-reset", dependencies=[Depends(check_password_reset_rate_limit)])
 async def password_reset(payload: PasswordResetRequest, request: Request):
     try:
-        host = request.headers.get("origin") or "https://testoza.com"
+        # The Origin header is attacker-controlled on a direct (non-browser) request,
+        # and it becomes the target of the reset link we ask Supabase to email. Without
+        # this allow-list, anyone could have a victim mailed a recovery link pointing at
+        # their own host and capture the token from the URL fragment.
+        host = safe_origin(request.headers.get("origin"))
         response = supabase.auth.reset_password_for_email(
             payload.email,
             {"redirect_to": f"{host}/update-password"}
         )
         return {"data": response, "error": None}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error("password_reset failed: %s", e)
+        # Do not reveal whether the address exists (account enumeration).
+        return {"data": None, "error": None}
 
 @router.post("/password-update")
 async def password_update(payload: PasswordUpdateRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -144,7 +161,42 @@ async def password_update(payload: PasswordUpdateRequest, credentials: HTTPAutho
             raise HTTPException(status_code=401, detail="Invalid session or token")
             
         user_id = user_response.user.id
-        
+        user_email = user_response.user.email
+
+        # M5: re-authenticate. Without this, anyone holding a valid access token
+        # (e.g. lifted from localStorage via XSS) could change the password and lock
+        # the owner out of their own account.
+        enforce_limit(
+            password_update_per_user, user_id,
+            "Too many password change attempts. Please try again later.",
+        )
+
+        if not payload.current_password:
+            raise HTTPException(status_code=400, detail="Current password is required")
+        if not user_email:
+            raise HTTPException(status_code=400, detail="This account cannot change its password here")
+
+        try:
+            # A throwaway client so verifying the old password cannot disturb the
+            # caller's live session on the shared service-role client.
+            from supabase import create_client
+            verifier = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+            reauth = verifier.auth.sign_in_with_password(
+                {"email": user_email, "password": payload.current_password}
+            )
+            reauth_ok = bool(reauth and reauth.user and reauth.user.id == user_id)
+            try:
+                verifier.auth.sign_out()
+            except Exception:
+                pass
+        except HTTPException:
+            raise
+        except Exception:
+            reauth_ok = False
+
+        if not reauth_ok:
+            raise HTTPException(status_code=403, detail="Current password is incorrect")
+
         # 2. Use global admin client (Service Key) to update the password
         response = supabase.auth.admin.update_user_by_id(
             user_id,
@@ -159,9 +211,11 @@ async def password_update(payload: PasswordUpdateRequest, credentials: HTTPAutho
                 "error": None
             }
         return {"data": jsonable_encoder(response), "error": None}
+    except HTTPException:
+        raise
     except Exception as e:
-        error_detail = str(e)
-        raise HTTPException(status_code=400, detail=error_detail)
+        logger.error("password_update failed: %s", e)
+        raise HTTPException(status_code=400, detail="Could not update password")
 @router.post("/update-user")
 async def update_user(
     payload: Dict[str, Any],

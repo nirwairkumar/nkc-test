@@ -18,6 +18,9 @@ from app.utils.rate_limiter import (
     enforce_limit, client_ip,
 )
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 # Initialize Gemini Client using Google Cloud Vertex AI / Agent Platform
@@ -30,13 +33,13 @@ try:
             client = genai.Client(
                 api_key=settings.GEMINI_API_KEY
             )
-            print("Initialized google-genai client using Google AI Studio API key.")
+            logger.debug("Initialized google-genai client using Google AI Studio API key.")
         else:
             client = genai.Client(
                 vertexai=True,
                 api_key=settings.GEMINI_API_KEY
             )
-            print("Initialized google-genai client with Vertex AI Express Mode.")
+            logger.debug("Initialized google-genai client with Vertex AI Express Mode.")
     else:
         gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GCP_PROJECT") or "nkc-test-2-0"
         client = genai.Client(
@@ -44,9 +47,9 @@ try:
             project=gcp_project,
             location="us-central1"
         )
-        print(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
+        logger.debug(f"Initialized google-genai client with Vertex AI (ADC). Project: {gcp_project}, Location: us-central1")
 except Exception as e:
-    print(f"Error initializing Gemini client: {e}")
+    logger.error(f"Error initializing Gemini client: {e}")
 
 
 @router.get("/test-key")
@@ -135,7 +138,7 @@ def extract_video_id(url: str) -> Optional[str]:
                     
     except Exception as e:  # catches yt_dlp.utils.DownloadError when lazy-loaded
         # Video might be private, deleted, or URL is invalid
-        print(f"yt-dlp extraction error: {e}")
+        logger.error(f"yt-dlp extraction error: {e}")
         
         # Fallback to regex-based extraction for common patterns
         regex_patterns = [
@@ -151,7 +154,7 @@ def extract_video_id(url: str) -> Optional[str]:
                 return match.group(1)
                 
     except Exception as e:
-        print(f"Unexpected error extracting video ID: {e}")
+        logger.error(f"Unexpected error extracting video ID: {e}")
         
     return None
 
@@ -178,7 +181,7 @@ async def generate_youtube_test(
          raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
 
     video_id = extract_video_id(payload.url)
-    print(f"Extracted video ID: {video_id} from URL: {payload.url}")
+    logger.debug(f"Extracted video ID: {video_id} from URL: {payload.url}")
     if not video_id:
         raise HTTPException(status_code=400, detail="Invalid YouTube URL")
 
@@ -187,14 +190,14 @@ async def generate_youtube_test(
     
     # 1. Fetch Transcript
     try:
-        print(f"Attempting to fetch transcript for video ID: {video_id}")
+        logger.debug(f"Attempting to fetch transcript for video ID: {video_id}")
         from youtube_transcript_api import YouTubeTranscriptApi  # lazy-loaded
         # Prefer English, Hindi, or auto
         transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi'])
         transcript_text = " ".join([t['text'] for t in transcript_list])
-        print(f"Successfully fetched transcript. Length: {len(transcript_text)} characters")
+        logger.debug(f"Successfully fetched transcript. Length: {len(transcript_text)} characters")
     except Exception as e:
-        print(f"Transcript Error: {e}. Falling back to Multimodal Video.")
+        logger.error(f"Transcript Error: {e}. Falling back to Multimodal Video.")
         used_method = "video"
 
     # 2. Prepare Prompt & Content
@@ -251,7 +254,7 @@ async def generate_youtube_test(
         
     else:
         # Multimodal Video Mode (Fallback)
-        print("Using Multimodal Video Mode")
+        logger.debug("Using Multimodal Video Mode")
         prompt = f"""
             You are an expert exam setter.
             Analyze the visual video content efficiently from the content.
@@ -312,12 +315,12 @@ async def generate_youtube_test(
     import time
     start_time = time.time()
     try:
-        print(f"Starting Gemini content generation for video: {payload.url}")
-        print(f"Using method: {used_method}")
+        logger.debug(f"Starting Gemini content generation for video: {payload.url}")
+        logger.debug(f"Using method: {used_method}")
         
         # Generate content with timeout to prevent hanging
         # Use asyncio.to_thread to run blocking SDK call in separate thread
-        print("Calling Gemini API...")
+        logger.debug("Calling Gemini API...")
         response = await asyncio.wait_for(
             asyncio.to_thread(
                 client.models.generate_content,
@@ -326,7 +329,7 @@ async def generate_youtube_test(
             ),
             timeout=120.0
         )
-        print("Gemini API call completed successfully")
+        logger.debug("Gemini API call completed successfully")
         
         text = response.text if response.text else ""
         if not text:
@@ -394,7 +397,7 @@ async def generate_youtube_test(
                 ai_log["mode"] = "generate"
                 db.table("ai_generation_history").insert(ai_log).execute()
             except Exception as e2:
-                print(f"Failed to log YouTube generation history: {e2}")
+                logger.error(f"Failed to log YouTube generation history: {e2}")
 
         if res.data:
             return res.data[0]
@@ -402,10 +405,10 @@ async def generate_youtube_test(
         raise HTTPException(status_code=500, detail="Failed to save test")
 
     except asyncio.TimeoutError:
-        print("AI Generation Error: Request timed out after 120 seconds")
+        logger.error("AI Generation Error: Request timed out after 120 seconds")
         raise HTTPException(status_code=504, detail="AI Generation Failed: The video analysis is taking too long. Please try with a shorter video.")
     except Exception as e:
-        print(f"AI Generation Error: {e}")
+        logger.error(f"AI Generation Error: {e}")
         raise HTTPException(status_code=500, detail=f"AI Generation Failed: {str(e)}")
 
 # --- PDF/Image Parsing Endpoint (Gemini Full-Page Vision Pipeline) ---
@@ -505,6 +508,7 @@ async def parse_document(
 from fastapi.responses import StreamingResponse
 # process_files_stream is lazily imported inside the route to avoid loading heavy OCR libs at startup
 import asyncio
+
 
 @router.post("/parse-stream")
 async def parse_document_stream(
@@ -777,12 +781,12 @@ async def generate_topics(
                     ai_log["mode"] = "generate"
                     db.table("ai_generation_history").insert(ai_log).execute()
                 except Exception as e2:
-                    print(f"Failed to log Topic AI generation: {e2}")
+                    logger.error(f"Failed to log Topic AI generation: {e2}")
 
         return {"topics": topics_map}
 
     except Exception as e:
-        print(f"Error generating topics: {e}")
+        logger.error(f"Error generating topics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

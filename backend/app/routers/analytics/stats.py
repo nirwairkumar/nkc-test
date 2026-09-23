@@ -3,6 +3,9 @@ from app.core.database import get_db, supabase
 from supabase import Client
 from datetime import datetime, timedelta
 from collections import defaultdict
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -43,7 +46,7 @@ async def get_analytics_overview(
             "bounce_rate": bounce_rate
         }
     except Exception as e:
-        print(f"Error in analytics overview: {e}")
+        logger.error(f"Error in analytics overview: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -104,7 +107,7 @@ async def get_daily_trends(
         return result
 
     except Exception as e:
-        print(f"Error in daily trends: {e}")
+        logger.error(f"Error in daily trends: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -138,7 +141,7 @@ async def get_top_pages(
         return result[:limit]
 
     except Exception as e:
-        print(f"Error in top pages: {e}")
+        logger.error(f"Error in top pages: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -173,7 +176,7 @@ async def get_top_referrers(
         return result[:10]
 
     except Exception as e:
-        print(f"Error in referrers: {e}")
+        logger.error(f"Error in referrers: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

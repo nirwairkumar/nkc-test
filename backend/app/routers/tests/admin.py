@@ -5,6 +5,9 @@ from supabase import Client
 from typing import Optional, List, Dict, Any
 from app.routers.tests.utils import enrich_tests
 from app.routers.tests.cache_config import bust_test_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -32,7 +35,7 @@ async def get_all_tests(
                 }).execute()
                 tests = response.data
             except Exception as rpc_error:
-                print(f"RPC Admin Search Error: {rpc_error}")
+                logger.error(f"RPC Admin Search Error: {rpc_error}")
                 # Fallback
                 cleaned_query = search_query.replace(",", "")
                 query = db.table("tests")\
@@ -58,7 +61,7 @@ async def get_all_tests(
             }
         }
     except Exception as e:
-        print(f"Error fetching all tests: {e}")
+        logger.error(f"Error fetching all tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -94,7 +97,7 @@ async def get_next_test_id(
              return {"next_id": f"{prefix}001"}
 
     except Exception as e:
-        print(f"Error fetching next ID: {e}")
+        logger.error(f"Error fetching next ID: {e}")
         # Default fallback
         return {"next_id": f"{prefix}001"}
 
@@ -111,7 +114,7 @@ async def admin_update_test(
             bust_test_cache(test_id)
         return response.data[0] if response.data else None
     except Exception as e:
-        print(f"Error updating test (admin): {e}")
+        logger.error(f"Error updating test (admin): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -126,7 +129,7 @@ async def admin_delete_test(
         bust_test_cache(test_id)
         return {"success": True}
     except Exception as e:
-        print(f"Error deleting test (admin): {e}")
+        logger.error(f"Error deleting test (admin): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -191,13 +194,13 @@ async def admin_clone_test(
                 new_tc_rows = [{"test_id": clone_id, "category_id": tc["category_id"]} for tc in tc_res.data]
                 admin_db.table("test_categories").insert(new_tc_rows).execute()
         except Exception as cat_err:
-            print(f"Warning: Failed to copy categories for admin clone {clone_id}: {cat_err}")
+            logger.error(f"Warning: Failed to copy categories for admin clone {clone_id}: {cat_err}")
 
-        print(f"[admin clone] Test {test_id} cloned as {clone_id} for user {target_user_id}")
+        logger.debug(f"[admin clone] Test {test_id} cloned as {clone_id} for user {target_user_id}")
         return cloned_test
 
     except Exception as e:
-        print(f"Error cloning test (admin): {e}")
+        logger.error(f"Error cloning test (admin): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -249,10 +252,10 @@ async def get_conduct_mode_tests():
                                     "is_public": False
                                 }).eq("id", t["id"]).execute()
                             except Exception as deact_err:
-                                print(f"Error auto-deactivating expired test {t['id']}: {deact_err}")
+                                logger.error(f"Error auto-deactivating expired test {t['id']}: {deact_err}")
                             continue # Has ended and auto-deactivated
                     except Exception as parse_err:
-                        print(f"Error parsing schedule end_time for test {t['id']}: {parse_err}")
+                        logger.error(f"Error parsing schedule end_time for test {t['id']}: {parse_err}")
                 
                 conduct_candidates.append(t)
                 if t.get("created_by"):
@@ -292,7 +295,7 @@ async def get_conduct_mode_tests():
                             if tid not in first_conduct_attempt_map and a.get("created_at"):
                                 first_conduct_attempt_map[tid] = a.get("created_at")
             except Exception as se:
-                print(f"Warning fetching submission counts for conduct tests: {se}")
+                logger.warning(f"Warning fetching submission counts for conduct tests: {se}")
 
         # 5. Enrich and format response
         conduct_tests = []
@@ -346,7 +349,7 @@ async def get_conduct_mode_tests():
             
         return conduct_tests
     except Exception as e:
-        print(f"Error fetching conduct mode tests: {e}")
+        logger.error(f"Error fetching conduct mode tests: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

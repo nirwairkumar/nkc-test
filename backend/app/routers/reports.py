@@ -5,6 +5,10 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from app.core.config import settings
 from app.core.auth import verify_auth_token, verify_is_admin, verify_owner_or_admin, is_admin_user
+import logging
+from app.utils.rate_limiter import check_support_rate_limit
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -19,7 +23,7 @@ class ReportStatusUpdate(BaseModel):
     status: str # "open" or "solved"
 
 # 1. Submit a new report (Public/Anonymous allowed)
-@router.post("/")
+@router.post("/", dependencies=[Depends(check_support_rate_limit)])
 async def submit_report(payload: ReportCreate, db: Client = Depends(get_db)):
     try:
         data_to_insert = {
@@ -53,11 +57,11 @@ async def submit_report(payload: ReportCreate, db: Client = Depends(get_db)):
                 db=admin_db
             )
         except Exception as ne:
-            print(f"Failed to create notification: {ne}")
+            logger.error(f"Failed to create notification: {ne}")
             
         return response.data[0] if response.data else {"success": True}
     except Exception as e:
-        print(f"Error submitting report: {e}")
+        logger.error(f"Error submitting report: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # 2. Get reports for a specific creator
@@ -75,7 +79,7 @@ async def get_creator_reports(creator_id: str, request: Request, db: Client = De
                      
         return response.data
     except Exception as e:
-        print(f"Error fetching creator reports: {e}")
+        logger.error(f"Error fetching creator reports: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # 3. Mark report as solved (Creator or Admin)
@@ -100,7 +104,7 @@ async def update_report_status(report_id: str, payload: ReportStatusUpdate, requ
                      
         return response.data[0] if response.data else {"success": True}
     except Exception as e:
-        print(f"Error updating report status: {e}")
+        logger.error(f"Error updating report status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # 4. ADMIN ONLY: Get report stats for all users (For the Users Tab Red Dot)
@@ -128,7 +132,7 @@ async def get_admin_users_report_stats(request: Request):
                 
         return stats
     except Exception as e:
-        print(f"Error fetching admin user report stats: {e}")
+        logger.error(f"Error fetching admin user report stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # 5. ADMIN ONLY: Get detailed reports for a specific users tests (For User Profile Dialog)
@@ -144,6 +148,6 @@ async def get_admin_user_reports(user_id: str, request: Request):
                            
         return response.data
     except Exception as e:
-        print(f"Error fetching admin user reports: {e}")
+        logger.error(f"Error fetching admin user reports: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

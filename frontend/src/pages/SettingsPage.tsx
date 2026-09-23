@@ -15,6 +15,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'security' | 'billing'>('security');
 
+    const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -26,9 +27,10 @@ export default function SettingsPage() {
         setLoading(true);
         try {
             const { updatePassword } = await import('@/lib/usersApi');
-            const { error } = await updatePassword(newPassword);
+            const { error } = await updatePassword(newPassword, currentPassword);
             if (error) throw error;
             toast.success("Password updated successfully!");
+            setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (error: any) {
@@ -87,6 +89,26 @@ export default function SettingsPage() {
                             </div>
                         </div>
                         <form onSubmit={handlePasswordChange} className="p-4 space-y-4">
+                            {/* M5: re-authentication — a stolen access token alone must not
+                                be enough to change the password and lock the owner out. */}
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide" htmlFor="current-password">
+                                    Current Password
+                                </Label>
+                                <Input
+                                    id="current-password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    value={currentPassword}
+                                    onChange={e => setCurrentPassword(e.target.value)}
+                                    placeholder="Enter your current password"
+                                    required
+                                    className="h-10 text-sm"
+                                />
+                                <p className="text-[11px] text-slate-400">
+                                    Forgot it? <a href="/login" className="underline">Reset your password by email</a> instead.
+                                </p>
+                            </div>
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide" htmlFor="new-password">
                                     New Password

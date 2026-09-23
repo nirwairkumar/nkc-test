@@ -9,6 +9,9 @@ router = APIRouter()
 
 import threading
 from cachetools import TTLCache
+import logging
+
+logger = logging.getLogger(__name__)
 
 _classes_cache_lock = threading.Lock()
 # Cache classes for 5 minutes (300s)
@@ -36,7 +39,7 @@ async def get_all_classes(db: Client = Depends(get_db)):
             _classes_cache["all"] = data
         return data
     except Exception as e:
-        print(f"Error fetching all classes: {e}")
+        logger.error(f"Error fetching all classes: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/user/{user_id}")
@@ -54,7 +57,7 @@ async def get_user_classes(user_id: str, db: Client = Depends(get_db)):
             _classes_cache[cache_key] = data
         return data
     except Exception as e:
-        print(f"Error fetching classes: {e}")
+        logger.error(f"Error fetching classes: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/")
@@ -69,7 +72,7 @@ async def create_class(payload: ClassCreate, request: Request, db: Client = Depe
             return response.data[0]
         return None
     except Exception as e:
-        print(f"Error creating class: {e}")
+        logger.error(f"Error creating class: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{class_id}")
@@ -86,5 +89,5 @@ async def delete_class(class_id: str, request: Request, db: Client = Depends(get
         _bust_classes_cache()
         return {"success": True}
     except Exception as e:
-        print(f"Error deleting class: {e}")
+        logger.error(f"Error deleting class: {e}")
         raise HTTPException(status_code=500, detail=str(e))

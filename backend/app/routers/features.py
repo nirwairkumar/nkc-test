@@ -4,6 +4,9 @@ from app.core.auth import verify_is_admin
 from supabase import Client
 from typing import Dict, Any
 from pydantic import BaseModel
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -26,7 +29,7 @@ async def get_feature_flags(db: Client = Depends(get_db)):
             "news_updates_notes": "",
         }
     except Exception as e:
-        print(f"Error fetching feature flags: {e}")
+        logger.error(f"Error fetching feature flags: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class UpdateFeatureFlagsRequest(BaseModel):
@@ -80,5 +83,5 @@ async def update_feature_flags(payload: UpdateFeatureFlagsRequest, request: Requ
                 
         raise HTTPException(status_code=500, detail="Failed to update settings")
     except Exception as e:
-        print(f"Error updating feature flags: {e}")
+        logger.error(f"Error updating feature flags: {e}")
         raise HTTPException(status_code=500, detail=str(e))

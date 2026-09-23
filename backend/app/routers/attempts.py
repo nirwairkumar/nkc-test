@@ -30,6 +30,9 @@ from app.services.attempt_service import (
     process_anon_abandon
 )
 from app.utils.attempt_control import apply_section_attempt_control, calculate_test_max_marks
+import logging
+
+logger = logging.getLogger(__name__)
 
 def _verify_auth_token_attempts(request: Request, db: Client) -> str:
     """Verify JWT from Authorization header and return requesting user's ID."""
@@ -71,7 +74,7 @@ async def save_attempt(
                 if test_res.data and len(test_res.data) > 0:
                     test_data = test_res.data[0]
         except Exception as te:
-            print(f"Warning: error looking up test {payload.test_id} in save_attempt: {te}")
+            logger.error(f"Warning: error looking up test {payload.test_id} in save_attempt: {te}")
 
         settings_dict = (test_data.get("settings") or {}) if test_data else {}
         is_conduct_exam = bool(settings_dict.get("conduct_exam", {}).get("enabled", False))
@@ -93,7 +96,7 @@ async def save_attempt(
                 except HTTPException:
                     raise
                 except Exception as parse_err:
-                    print(f"Warning parsing schedule end_time in save_attempt: {parse_err}")
+                    logger.warning(f"Warning parsing schedule end_time in save_attempt: {parse_err}")
 
         # Determine if unauthenticated submission is allowed:
         # Allowed if login is NOT explicitly required, OR if conduct exam is active, OR if candidate start form was filled
@@ -181,7 +184,7 @@ async def save_attempt(
                     }
                 })
         except Exception as ue:
-            print(f"Notice: guest user check/create for {effective_user_id}: {ue}")
+            logger.warning(f"Notice: guest user check/create for {effective_user_id}: {ue}")
 
         metadata = payload.metadata or {}
         if is_conduct_exam or has_start_form or has_form_submission:
@@ -255,7 +258,7 @@ async def save_attempt(
                     db=supabase
                 )
         except Exception as ne:
-            print(f"Failed to send submission notification: {ne}")
+            logger.error(f"Failed to send submission notification: {ne}")
 
         # In v2, insert returns APIResponse. .data contains array of inserted rows.
         if response.data:
@@ -331,7 +334,7 @@ async def get_user_attempts(
                 if tests_res.data:
                     tests_map = {t["id"]: t for t in tests_res.data}
             except Exception as e:
-                print(f"Error fetching related tests: {e}")
+                logger.error(f"Error fetching related tests: {e}")
 
         # Step C: Merge Data
         enriched = []
@@ -369,7 +372,7 @@ async def get_user_attempts(
         return enriched
         
     except Exception as e:
-        print(f"!!! ERROR in get_user_attempts: {e}")
+        logger.error(f"!!! ERROR in get_user_attempts: {e}")
         import traceback
         traceback.print_exc()
         if isinstance(e, HTTPException):
@@ -434,11 +437,11 @@ async def get_batch_status(
                     if tid_str in results:
                         results[tid_str]["total_marks"] = t.get("total_max_marks", 0)
             except Exception as e:
-                print(f"Batch-status Exception: {e}")
+                logger.error(f"Batch-status Exception: {e}")
 
         return results
     except Exception as e:
-        print(f"Error fetching batch status: {e}")
+        logger.error(f"Error fetching batch status: {e}")
         return {}
 
 @router.get("/check/{user_id}/{test_id}")
@@ -473,7 +476,7 @@ async def check_attempt_status(
         return {"hasAttempted": has_attempted}
 
     except Exception as e:
-        print(f"Error checking attempt status: {e}")
+        logger.error(f"Error checking attempt status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/register")
@@ -527,7 +530,7 @@ async def register_start(
         return {"success": True}
 
     except Exception as e:
-        print(f"Error registering start: {e}")
+        logger.error(f"Error registering start: {e}")
         # Non-critical: don't block the test start
         return {"success": False}
 
@@ -580,7 +583,7 @@ async def get_attempt_detail(
                   
         return attempt
     except Exception as e:
-        print(f"Error fetching attempt detail: {e}")
+        logger.error(f"Error fetching attempt detail: {e}")
         if isinstance(e, HTTPException): raise e
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -652,7 +655,7 @@ async def get_test_attempts(
                             now = datetime.now(timezone.utc)
                             is_premium = expiry > now
                         except Exception as parse_error:
-                            print(f"Error parsing expiry date: {parse_error}")
+                            logger.error(f"Error parsing expiry date: {parse_error}")
 
         # Fetch all attempts for specific test (including those user deleted from their own history)
         select_cols = "id, test_id, user_id, score, created_at, metadata, violation_count, questions_attempted"
@@ -680,7 +683,7 @@ async def get_test_attempts(
                 if uid and sat:
                     reg_start_map[uid] = sat
         except Exception as reg_err:
-            print(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
+            logger.error(f"Warning: could not fetch test registrations for started_at fallback: {reg_err}")
 
         # Enrich metadata with startedAt if missing
         from datetime import datetime
@@ -746,7 +749,7 @@ async def get_test_attempts(
             
         return data
     except Exception as e:
-        print(f"Error fetching test attempts: {e}")
+        logger.error(f"Error fetching test attempts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{attempt_id}")
@@ -891,7 +894,7 @@ async def anon_start(payload: AnonStartRequest, db: Client = Depends(get_db)):
         }).execute()
         return {"success": True, "resumed": False}
     except Exception as e:
-        print(f"Error in anon/start: {e}")
+        logger.error(f"Error in anon/start: {e}")
         return {"success": False}
 
 
@@ -944,7 +947,7 @@ async def anon_submit(payload: AnonSubmitRequest, db: Client = Depends(get_db)):
             .execute()
         return {"success": True}
     except Exception as e:
-        print(f"Error in anon/submit: {e}")
+        logger.error(f"Error in anon/submit: {e}")
         return {"success": False}
 
 

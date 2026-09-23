@@ -10,6 +10,9 @@ import random
 import os
 import re
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 # Bot/crawler regex
@@ -95,7 +98,7 @@ def _is_user_admin(user_id: str, db: Client) -> bool:
                 admin_res = db.table("admins").select("email").eq("email", email).execute()
                 return bool(admin_res.data)
     except Exception as e:
-        print(f"Error checking admin status: {e}")
+        logger.error(f"Error checking admin status: {e}")
     return False
 
 def _verify_owner_or_admin(user_id: str, request: Request, db: Client) -> str:
@@ -118,6 +121,9 @@ def require_verified_creator(user_id: str, request: Request, db: Client):
         raise HTTPException(status_code=403, detail="Only verified creators or admins can perform this action")
 
 from fastapi.responses import Response
+from app.utils.upload_validation import validate_upload, UploadRejected
+from app.utils.rate_limiter import enforce_limit, upload_per_user
+
 
 def generate_slug(title: str, custom_slug: Optional[str] = None) -> str:
     import re
@@ -149,7 +155,7 @@ def _attach_author_profiles(posts: List[Dict[str, Any]], db: Client) -> List[Dic
             for prof in (prof_res.data or []):
                 profiles_map[prof["id"]] = prof
         except Exception as pe:
-            print(f"Warning: Failed to fetch author profiles: {pe}")
+            logger.error(f"Warning: Failed to fetch author profiles: {pe}")
             
     for p in posts:
         p["profiles"] = profiles_map.get(p.get("author_id"), {
@@ -197,7 +203,7 @@ async def get_posts_feed(
         posts = response.data or []
         return _attach_author_profiles(posts, db)
     except Exception as e:
-        print(f"Error fetching feed: {e}")
+        logger.error(f"Error fetching feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/my")
@@ -219,7 +225,7 @@ async def get_my_posts(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching my posts: {e}")
+        logger.error(f"Error fetching my posts: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/id/{post_id}")
@@ -236,7 +242,7 @@ async def get_post_by_id(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching post by id: {e}")
+        logger.error(f"Error fetching post by id: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sitemap.xml")
@@ -301,7 +307,7 @@ async def get_post_by_slug(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error fetching post: {e}")
+        logger.error(f"Error fetching post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{post_id}/view")
@@ -336,7 +342,7 @@ async def record_post_view(
 
         return {"recorded": True}
     except Exception as e:
-        print(f"Error recording view: {e}")
+        logger.error(f"Error recording view: {e}")
         return {"recorded": False, "error": str(e)}
 
 @router.post("")
@@ -365,7 +371,7 @@ async def create_post(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error creating post: {e}")
+        logger.error(f"Error creating post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{post_id}")
@@ -409,7 +415,7 @@ async def update_post(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error updating post: {e}")
+        logger.error(f"Error updating post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{post_id}")
@@ -442,7 +448,7 @@ async def delete_post(
                     file_path = parts[1]
                     db.storage.from_("post-images").remove([file_path])
             except Exception as store_err:
-                print(f"Failed to delete cover image: {store_err}")
+                logger.error(f"Failed to delete cover image: {store_err}")
                 
         # Delete post
         db.table("posts").delete().eq("id", post_id).execute()
@@ -450,7 +456,7 @@ async def delete_post(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error deleting post: {e}")
+        logger.error(f"Error deleting post: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/upload-image")
@@ -464,12 +470,24 @@ async def upload_post_image(
     try:
         require_verified_creator(user_id, request, db)
         
-        file_ext = file.filename.split('.')[-1] if '.' in file.filename else 'webp'
-        file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
+        enforce_limit(upload_per_user, user_id, "Upload limit reached. Please try again later.")
         file_content = await file.read()
-        
+
+        # M8: post-images is public-read; validate from the bytes so nothing
+        # script-bearing (HTML/SVG) can be stored and served as a document.
+        try:
+            content_type, file_ext = validate_upload(
+                "post-images", file_content, filename=file.filename, claimed_type=file.content_type
+            )
+        except UploadRejected as rejected:
+            raise HTTPException(status_code=400, detail=str(rejected))
+
+        file_name = f"{user_id}/{int(time.time())}_{random.randint(1000,9999)}.{file_ext}"
+
         # Upload
-        db.storage.from_("post-images").upload(file_name, file_content)
+        db.storage.from_("post-images").upload(
+            file_name, file_content, file_options={"content-type": content_type}
+        )
         
         # Get public URL
         public_url = db.storage.from_("post-images").get_public_url(file_name)
@@ -478,7 +496,7 @@ async def upload_post_image(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error uploading image: {e}")
+        logger.error(f"Error uploading image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{post_id}/like")
@@ -516,7 +534,7 @@ async def toggle_like(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error toggling like: {e}")
+        logger.error(f"Error toggling like: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{post_id}/liked")
@@ -534,5 +552,5 @@ async def check_liked(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error checking like status: {e}")
+        logger.error(f"Error checking like status: {e}")
         raise HTTPException(status_code=500, detail=str(e))

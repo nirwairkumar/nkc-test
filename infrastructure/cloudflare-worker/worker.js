@@ -370,14 +370,14 @@ function generateMetaTags(url, testData = null) {
     <!-- Dynamic SEO Meta Tags (Cloudflare Worker) -->
     <title>${escapeHtml(title)}</title>
     <meta name="description" content="${escapeHtml(description)}">
-    <link rel="canonical" href="${canonicalUrl}">
+    <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
     
     <!-- Open Graph -->
     <meta property="og:title" content="${escapeHtml(title)}">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:type" content="${type}">
-    <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:image" content="${image}">
+    <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+    <meta property="og:image" content="${escapeHtml(image)}">
     <meta property="og:site_name" content="TestoZa">
     <meta property="og:locale" content="en_IN">
     
@@ -385,7 +385,7 @@ function generateMetaTags(url, testData = null) {
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${escapeHtml(title)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
-    <meta name="twitter:image" content="${image}">
+    <meta name="twitter:image" content="${escapeHtml(image)}">
     <meta name="twitter:site" content="@testoza">
     
     <!-- Robots -->
@@ -397,6 +397,18 @@ function generateMetaTags(url, testData = null) {
 /**
  * Escape HTML entities
  */
+function safeJsonLd(value) {
+  // M6: JSON.stringify does not escape "<", so a value containing "</script>" would
+  // close the tag early and everything after it would execute as script.
+  // U+2028/U+2029 are line terminators in JS source and must be escaped too.
+  return JSON.stringify(value, null, 2)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 function escapeHtml(text) {
   if (!text) return '';
   return String(text)
@@ -994,6 +1006,7 @@ async function handleHTMLRequest(request) {
       status: 200,
       headers: {
         ...Object.fromEntries(cached.headers),
+        ...securityHeaders(),
         'X-Cache': 'HIT',
         'X-Cache-Location': 'EDGE'
       }
@@ -1077,7 +1090,7 @@ async function handleHTMLRequest(request) {
         element(el) {
           el.append(metaTags, { html: true });
           if (routeContent && routeContent.faqSchema) {
-            el.append(`\n    <!-- Route FAQPage Schema -->\n    <script id="schema-faq" type="application/ld+json">\n${JSON.stringify(routeContent.faqSchema, null, 2)}\n    </script>`, { html: true });
+            el.append(`\n    <!-- Route FAQPage Schema -->\n    <script id="schema-faq" type="application/ld+json">\n${safeJsonLd(routeContent.faqSchema)}\n    </script>`, { html: true });
           }
         }
       });
@@ -1099,6 +1112,7 @@ async function handleHTMLRequest(request) {
     status: responseToReturn.status,
     headers: {
       ...Object.fromEntries(responseToReturn.headers),
+      ...securityHeaders(),
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': shouldBypassCache(request.url)
         ? 'no-store, no-cache, must-revalidate'
@@ -1114,6 +1128,58 @@ async function handleHTMLRequest(request) {
   }
 
   return response;
+}
+
+/**
+ * M6 / M7 (SECURITY_THREAT_MODEL_AND_PLAN.md) — security headers for the HTML document.
+ *
+ * These belong here, not on the API: the backend's CSP only covers JSON responses,
+ * while XSS happens in the page. Access/refresh tokens live in localStorage, so any
+ * script execution in this origin is an account takeover — CSP is the safety net.
+ *
+ * script-src still needs 'unsafe-inline' and 'unsafe-eval':
+ *   - the Vite bundle and GTM inject inline <script> blocks
+ *   - KaTeX/mhchem and the chart library evaluate generated code
+ * Removing either breaks the app today, so the enforced policy keeps them while
+ * locking down everything that costs nothing: object-src, base-uri, form-action,
+ * frame-ancestors.
+ */
+function securityHeaders() {
+  const connectSrc = [
+    "'self'",
+    'https://*.supabase.co',
+    'wss://*.supabase.co',
+    'https://www.google-analytics.com',
+    'https://*.google-analytics.com',
+    'https://apigcp.testoza.com',
+    'https://challenges.cloudflare.com'
+  ].join(' ');
+
+  return {
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://challenges.cloudflare.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "media-src 'self' blob: https:",
+      `connect-src ${connectSrc}`,
+      "frame-src https://challenges.cloudflare.com",
+      // Nothing here embeds plugins or sets a <base> tag, and no form should post
+      // off-origin. These cost nothing and block common XSS escalations.
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      'upgrade-insecure-requests'
+    ].join('; '),
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()',
+    'Cross-Origin-Opener-Policy': 'same-origin'
+  };
 }
 
 /**

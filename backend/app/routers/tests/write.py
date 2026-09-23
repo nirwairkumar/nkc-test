@@ -7,6 +7,9 @@ from app.routers.tests.schemas import *
 import uuid
 from app.utils.google_indexing import notify_test_created, notify_test_updated
 from app.routers.tests.cache_config import bust_test_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -97,10 +100,10 @@ async def create_test(
                         db=db
                     )
                 except Exception as ne:
-                    print(f"Failed to send test creation notification: {ne}")
+                    logger.error(f"Failed to send test creation notification: {ne}")
             return result
         except Exception as e:
-            print(f"Full insert failed: {e}. Retrying with legacy fields only.")
+            logger.error(f"Full insert failed: {e}. Retrying with legacy fields only.")
             legacy_keys = {
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "is_public", "visibility", "revision_notes", 
@@ -112,7 +115,7 @@ async def create_test(
             }
             safe_data = {k: v for k, v in data.items() if k in legacy_keys}
             response = db.table("tests").insert(safe_data).execute()
-            print("Legacy insert successful.")
+            logger.debug("Legacy insert successful.")
             result = response.data[0] if response.data else None
             if result:
                 background_tasks.add_task(notify_test_created, result)
@@ -128,13 +131,13 @@ async def create_test(
                         db=db
                     )
                 except Exception as ne:
-                    print(f"Failed to send test creation notification: {ne}")
+                    logger.error(f"Failed to send test creation notification: {ne}")
             return result
             
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error creating test: {e}")
+        logger.error(f"Error creating test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -167,7 +170,7 @@ async def update_test(
                     payload["is_public"] = False
                     payload["visibility"] = "private"
         except Exception as e:
-            print(f"Warning: could not verify test example status on update: {e}")
+            logger.error(f"Warning: could not verify test example status on update: {e}")
 
         # Check if we need to update total_max_marks and total_questions
         needs_marks_calc = any(k in payload for k in ["questions", "sections", "enable_section_mode"])
@@ -188,7 +191,7 @@ async def update_test(
                             qs = merged.get("questions") or []
                             payload["total_questions"] = len(qs) if isinstance(qs, list) else 0
             except Exception as e:
-                print(f"Warning: Could not proactively calculate total_max_marks on update: {e}")
+                logger.error(f"Warning: Could not proactively calculate total_max_marks on update: {e}")
         
         # 1. Update Test
         try:
@@ -218,12 +221,12 @@ async def update_test(
                             db=db
                         )
                 except Exception as ne:
-                    print(f"Failed to send exam concluded notification: {ne}")
+                    logger.error(f"Failed to send exam concluded notification: {ne}")
 
                 return response.data[0]
             return None
         except Exception as e:
-            print(f"Full update failed: {e}. Retrying with legacy fields.")
+            logger.error(f"Full update failed: {e}. Retrying with legacy fields.")
             legacy_keys = {
                 "title", "description", "questions", "created_by", "created_at", 
                 "custom_id", "duration", "is_public", "visibility", "revision_notes", 
@@ -259,7 +262,7 @@ async def update_test(
                             db=db
                         )
                 except Exception as ne:
-                    print(f"Failed to send exam concluded notification: {ne}")
+                    logger.error(f"Failed to send exam concluded notification: {ne}")
 
                 return response.data[0]
             return None
@@ -267,7 +270,7 @@ async def update_test(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error updating test: {e}")
+        logger.error(f"Error updating test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -291,7 +294,7 @@ async def delete_test(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error deleting test: {e}")
+        logger.error(f"Error deleting test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -494,9 +497,9 @@ async def clone_test(
                 new_tc_rows = [{"test_id": clone_id, "category_id": tc["category_id"]} for tc in tc_res.data]
                 db.table("test_categories").insert(new_tc_rows).execute()
         except Exception as cat_err:
-            print(f"Warning: Failed to copy categories for clone {clone_id}: {cat_err}")
+            logger.error(f"Warning: Failed to copy categories for clone {clone_id}: {cat_err}")
 
-        print(f"[clone] Test {test_id} cloned as {clone_id} by {payload.cloner_id}")
+        logger.debug(f"[clone] Test {test_id} cloned as {clone_id} by {payload.cloner_id}")
 
         # Send notifications for test cloning
         try:
@@ -520,13 +523,13 @@ async def clone_test(
                 db=db
             )
         except Exception as ne:
-            print(f"Failed to send clone notifications: {ne}")
+            logger.error(f"Failed to send clone notifications: {ne}")
 
         return cloned_test
 
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error cloning test: {e}")
+        logger.error(f"Error cloning test: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 

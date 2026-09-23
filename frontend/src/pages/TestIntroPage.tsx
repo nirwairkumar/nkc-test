@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { signInWithGoogle } from '@/hooks/useAuthActions';
 import { GoogleSignInButton } from '@/components/GoogleSignInButton';
 import { runBrowserDiagnosticsAndVacateStorage, SystemCheckResult } from '@/lib/browserCheck';
+import { sanitizeHtml, safeJsonLd } from '@/utils/sanitize';
 
 const formatDateCustom = (date: Date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -598,7 +599,7 @@ export default function TestIntroPage() {
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
+                    __html: safeJsonLd({
                         "@context": "https://schema.org",
                         "@type": "Quiz",
                         "name": test.title,
@@ -865,7 +866,7 @@ export default function TestIntroPage() {
                                     <div className="p-4 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 max-h-[350px] overflow-y-auto">
                                         <article
                                             className="prose prose-sm dark:prose-invert max-w-none text-xs"
-                                            dangerouslySetInnerHTML={{ __html: test.revision_notes }}
+                                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(test.revision_notes) }}
                                         />
                                     </div>
                                 </details>
