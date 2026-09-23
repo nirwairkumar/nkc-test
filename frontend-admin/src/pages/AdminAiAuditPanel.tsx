@@ -94,7 +94,15 @@ export default function AdminAiAuditPanel() {
         try {
             const API_BASE = getApiUrl();
             const url = API_BASE.endsWith('/') ? `${API_BASE}ai/test-key` : `${API_BASE}/ai/test-key`;
-            const res = await fetch(url, { method: 'POST' });
+            // H2: /ai/test-key is admin-only now (it burns a live Gemini call).
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    ...(localStorage.getItem('testoza_token')
+                        ? { Authorization: `Bearer ${localStorage.getItem('testoza_token')}` }
+                        : {})
+                }
+            });
             const data = await res.json();
             setHealthResult(data);
             if (data.status === 'healthy') {

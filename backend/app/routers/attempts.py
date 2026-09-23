@@ -2,6 +2,7 @@ import json
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
 from app.core.database import get_db, supabase
 from app.utils.attempt_control import apply_section_attempt_control
+from app.utils.rate_limiter import anon_submit_per_ip, enforce_limit, client_ip
 from supabase import Client
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
@@ -56,6 +57,8 @@ async def save_attempt(
         # Security: Check auth header first
         auth_header = request.headers.get("Authorization")
         effective_user_id = None
+        # Set only when a token is present AND verifies (see the H4 identity check below).
+        authenticated_user_id = None
 
         # Fetch test details for attempt control validation, notification, and conduct verification
         test_data = None
@@ -112,6 +115,35 @@ async def save_attempt(
                 effective_user_id = payload.user_id
             else:
                 raise HTTPException(status_code=401, detail="Missing Authorization header: Login is required to submit this exam")
+
+        # ── H4: identity checks for unauthenticated submissions ──────────────
+        # Two separate abuses were possible here:
+        #   1. POST with someone else's user_id and no token -> the attempt is filed
+        #      against a REAL account (junk data in their history and the creator's
+        #      dashboard). Claiming an identity requires proving it.
+        #   2. Scripted submissions, each minting a permanent guest auth.users row.
+        is_authenticated = effective_user_id == authenticated_user_id and authenticated_user_id is not None
+        if not is_authenticated:
+            enforce_limit(
+                anon_submit_per_ip, client_ip(request),
+                "Too many submissions from this network. Please try again later.",
+            )
+            if payload.user_id:
+                # Reject only when the claimed id belongs to a real (non-guest) account.
+                # A token that merely expired mid-exam is recovered by the frontend's
+                # 401 refresh-and-retry interceptor, so no submission is lost.
+                try:
+                    claimed = supabase.auth.admin.get_user_by_id(payload.user_id)
+                    claimed_user = getattr(claimed, "user", None) if claimed else None
+                except Exception:
+                    claimed_user = None
+                if claimed_user is not None:
+                    is_guest = bool((getattr(claimed_user, "user_metadata", None) or {}).get("is_guest_candidate"))
+                    if not is_guest:
+                        raise HTTPException(
+                            status_code=401,
+                            detail="Please sign in again to submit this attempt.",
+                        )
         
         if test_data and test_data.get("enable_section_mode") and test_data.get("sections"):
             try:

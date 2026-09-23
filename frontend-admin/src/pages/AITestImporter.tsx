@@ -908,6 +908,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
             const response = await fetch(`${baseUrl}/ai/parse-stream?${queryParams}`, {
                 method: 'POST',
+                // H2: /api/ai/* now requires a login (these calls burn Gemini budget).
+                headers: {
+                    ...(localStorage.getItem('testoza_token')
+                        ? { Authorization: `Bearer ${localStorage.getItem('testoza_token')}` }
+                        : {})
+                },
                 body: formData,
                 signal: abortCtrl.signal,
             });
@@ -1058,6 +1064,12 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
             const response = await fetch(`${baseUrl}/ai/parse?${queryParams}`, {
                 method: 'POST',
+                // H2: /api/ai/* now requires a login (these calls burn Gemini budget).
+                headers: {
+                    ...(localStorage.getItem('testoza_token')
+                        ? { Authorization: `Bearer ${localStorage.getItem('testoza_token')}` }
+                        : {})
+                },
                 body: formData,
             });
 

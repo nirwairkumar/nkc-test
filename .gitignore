@@ -16,3 +16,19 @@ backend/dist/
 frontend/vite.config.ts.timestamp-*
 google-indexing-key.json
 *.stackdump
+
+# ── H1: secrets (SECURITY_THREAT_MODEL_AND_PLAN.md) ──────────────────────────
+# Four Google/Gemini API keys reached this repo's public history via committed
+# .env files. `.env` alone did not cover variants like .env.local / .env.production.
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+client_secret*.json
+*-service-account*.json
+*serviceaccount*.json
+.secrets/

@@ -50,6 +50,18 @@ class RateLimiter:
 # ── Helper ────────────────────────────────────────────────────────
 
 def _get_client_ip(request: Request) -> str:
+    """
+    Resolve the caller's IP.
+
+    `X-Forwarded-For` is attacker-controlled — a client can send any value, which makes
+    an IP-keyed limit trivially bypassable. This deployment sits behind Cloudflare, which
+    strips and re-sets `CF-Connecting-IP`, so that header is preferred when present and
+    X-Forwarded-For is only a local/dev fallback.
+    """
+    cf_ip = request.headers.get("cf-connecting-ip")
+    if cf_ip:
+        return cf_ip.strip()
+
     client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
     if "," in client_ip:
         client_ip = client_ip.split(",")[0].strip()
@@ -92,6 +104,22 @@ reset_per_email = RateLimiter(requests=3, window=3600)
 
 # ── Analytics (IP only) ───────────────────────────────────────────
 analytics_rate_limiter = RateLimiter(requests=100, window=60)
+
+# ── AI endpoints (H2) ─────────────────────────────────────────────
+# Every /api/ai/* call spends real Gemini budget. These are keyed per authenticated
+# user, so abuse costs an account rather than a fresh IP.
+# "Heavy" = the PDF-vision pipeline and YouTube download/analysis.
+ai_heavy_per_user = RateLimiter(requests=30, window=3600)
+# Cheap text completions (topic tagging, mentor chat).
+ai_light_per_user = RateLimiter(requests=120, window=3600)
+# /predict-rank stays reachable for anonymous candidates on their own results page,
+# so it is capped per IP instead of requiring a login.
+ai_rank_per_ip = RateLimiter(requests=10, window=3600)
+
+# ── Anonymous exam submissions (H4) ───────────────────────────────
+# Each unauthenticated submit can mint a guest auth.users row, so cap how fast one
+# source can create them.
+anon_submit_per_ip = RateLimiter(requests=30, window=3600)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -142,3 +170,19 @@ async def check_analytics_rate_limit(request: Request):
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many analytics requests"
         )
+
+
+def enforce_limit(limiter: RateLimiter, key: str, detail: str) -> None:
+    """Raise 429 when `key` has exhausted `limiter`. No-op for an empty key."""
+    if not key:
+        return
+    if not limiter.is_allowed(key):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=detail,
+        )
+
+
+def client_ip(request: Request) -> str:
+    """Public accessor for the resolved client IP (see _get_client_ip)."""
+    return _get_client_ip(request)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException, Depends, Body, Request
 from app.core.database import get_db
 from app.core.config import settings
 from supabase import Client
@@ -11,6 +11,12 @@ from google.genai import types
 import json
 import re
 import asyncio
+
+from app.core.auth import verify_auth_token, verify_is_admin
+from app.utils.rate_limiter import (
+    ai_heavy_per_user, ai_light_per_user, ai_rank_per_ip,
+    enforce_limit, client_ip,
+)
 
 router = APIRouter()
 
@@ -45,7 +51,10 @@ except Exception as e:
 
 @router.get("/test-key")
 @router.post("/test-key")
-async def test_ai_key():
+async def test_ai_key(request: Request):
+    # H2: this confirms whether the Gemini key is live and burns a real call.
+    # Admin-only — it is a diagnostic for the admin AI audit panel.
+    verify_is_admin(request)
     import time
     start = time.time()
     try:
@@ -156,8 +165,15 @@ def clean_json(text: str) -> str:
 @router.post("/generate/youtube")
 async def generate_youtube_test(
     payload: GenerateYoutubeRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
+    # H2: was unauthenticated, and payload.user_id was attacker-controlled (the row is
+    # written as `created_by`). Identity now comes from the verified token only.
+    requesting_user_id = verify_auth_token(request, db)
+    payload.user_id = requesting_user_id
+    enforce_limit(ai_heavy_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI test generation. Please try again later.")
     if not client:
          raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
 
@@ -406,7 +422,8 @@ async def parse_document(
     mode: str = Query("extract", pattern="^(extract|generate)$", description="Processing mode: 'extract' to keep exact questions, 'generate' to create new ones"),
     languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
     difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
-    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions")
+    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions"),
+    request: Request = None,
 ):
     """
     Parses uploaded PDF/image files and returns structured questions.
@@ -416,6 +433,13 @@ async def parse_document(
     - extract: Extract exact questions from the exam paper as-is
     - generate: Create new original MCQs based on the content
     """
+    # H2: the heaviest AI paths (PDF-vision pipeline / multi-page Gemini calls). These
+    # were fully unauthenticated — a stranger could loop them and burn the Gemini budget.
+    # Require a login and cap per user.
+    requesting_user_id = verify_auth_token(request)
+    enforce_limit(ai_heavy_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI document parsing. Please try again later.")
+
     logger.info(f"Received {len(files)} file(s) for AI processing (mode: {mode}, langs: {languages}, diff: {difficulty})")
     
     if answer_key:
@@ -490,7 +514,8 @@ async def parse_document_stream(
     algorithm: str = Query("parallel", pattern="^(parallel|stateful)$", description="Parsing pipeline: 'parallel' for fast chunked mode, 'stateful' for high-accuracy single stream"),
     languages: Optional[str] = Query(None, description="Comma separated languages, e.g. 'English,Hindi' or 'default'"),
     difficulty: Optional[str] = Query("Tough", description="Difficulty level: Easy, Moderate, Tough"),
-    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions")
+    user_instructions: Optional[str] = Query(None, description="Custom generation/extraction instructions"),
+    request: Request = None,
 ):
     """
     ULTRA-FAST streaming document parsing with real-time progress updates.
@@ -509,6 +534,13 @@ async def parse_document_stream(
     - complete: { final result }
     - error: { message }
     """
+    # H2: the heaviest AI paths (PDF-vision pipeline / multi-page Gemini calls). These
+    # were fully unauthenticated — a stranger could loop them and burn the Gemini budget.
+    # Require a login and cap per user.
+    requesting_user_id = verify_auth_token(request)
+    enforce_limit(ai_heavy_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI document parsing. Please try again later.")
+
     logger.info(f"🚀 Starting ULTRA-FAST stream processing for {len(files)} file(s) (mode: {mode}, langs: {languages}, diff: {difficulty})")
     
     # IMPORTANT: Read ALL file content BEFORE starting the stream
@@ -671,8 +703,14 @@ async def parse_document_stream(
 @router.post("/generate/topics")
 async def generate_topics(
     payload: GenerateTopicsRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
+    # H2: identity from the token, never from the body (it is logged as user_id).
+    requesting_user_id = verify_auth_token(request, db)
+    payload.user_id = requesting_user_id
+    enforce_limit(ai_light_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI topic tagging. Please try again later.")
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
@@ -756,7 +794,14 @@ class PredictRankRequest(BaseModel):
     difficulty: Optional[str] = "Medium"
 
 @router.post("/predict-rank")
-async def predict_rank(payload: PredictRankRequest):
+async def predict_rank(payload: PredictRankRequest, request: Request):
+    # H2: deliberately NOT login-gated — anonymous candidates use this on their own
+    # results page. It is a single short completion, capped per IP so it cannot be
+    # looped into a cost-DoS. Authenticated callers are keyed by user id instead.
+    from app.core.auth import get_optional_user_id
+    rank_key = get_optional_user_id(request) or client_ip(request)
+    enforce_limit(ai_rank_per_ip, rank_key,
+                  "Too many rank predictions. Please try again later.")
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
@@ -791,7 +836,10 @@ async def predict_rank(payload: PredictRankRequest):
         return {"rank_prediction": response.text}
     except Exception as e:
         logger.error(f"Rank Prediction Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # H2: this endpoint is reachable without a login, so the upstream error text
+        # (which carries the GCP project number and billing console URL) stays in the
+        # server log and never goes to the client.
+        raise HTTPException(status_code=500, detail="Could not generate a rank prediction right now.")
 
 
 class ChatMessage(BaseModel):
@@ -966,16 +1014,25 @@ Duration: {duration} minutes | Total Questions: {total_qs}
 @router.post("/chat")
 async def chat_with_ai(
     payload: AIChatRequest,
+    request: Request,
     db: Client = Depends(get_db)
 ):
+    # H2 (IDOR): this endpoint used to read `userId` from the request body and then
+    # fetch THAT user's last 10 attempts with the admin client — passing any uuid
+    # returned a stranger's exam history. Identity now comes from the verified token.
+    requesting_user_id = verify_auth_token(request, db)
+    enforce_limit(ai_light_per_user, requesting_user_id,
+                  "You have reached the hourly limit for AI mentor chat. Please try again later.")
     if not client:
         raise HTTPException(status_code=500, detail="Server misconfigured: Vertex AI client not initialized")
     
     context = payload.test_context
+    if isinstance(context, dict):
+        context['userId'] = requesting_user_id
     
     # ── Fetch past exam history from database (if user ID provided) ──
     past_history = []
-    user_id = context.get('userId')
+    user_id = requesting_user_id
     if user_id:
         try:
             from app.core.database import supabase as admin_db
