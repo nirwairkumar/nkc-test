@@ -17,7 +17,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, PlayCircle, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 import { HERO } from './content';
-import ExamMock from './ExamMock';
+import DeviceShowcase from './showcase/DeviceShowcase';
 import { Grain, Orb } from './ui';
 
 const TRUST = [
@@ -112,8 +112,7 @@ export default function LandingV2Hero() {
                                         strokeLinecap="round"
                                     />
                                 </svg>
-                            </span>{' '}
-                            for teachers
+                            </span>
                         </h1>
 
                         {/* Rotating text lives here, not in the H1. Fixed height = no CLS. */}
@@ -159,7 +158,8 @@ export default function LandingV2Hero() {
                             </a>
                         </div>
 
-                        {/* Trust row — replaces a generic one-liner with scannable proof */}
+                        {/* Scannable proof. The old "Free forever for teachers" line is gone —
+                            the product is not teacher-only. */}
                         <ul className="mt-9 flex flex-wrap justify-center gap-x-6 gap-y-2.5 lg:justify-start">
                             {TRUST.map((t) => (
                                 <li key={t.label} className="flex items-center gap-2 text-[13px] text-slate-400">
@@ -178,8 +178,8 @@ export default function LandingV2Hero() {
                             className="absolute -inset-10 rounded-[3rem] opacity-70 blur-3xl"
                             style={{ background: 'radial-gradient(circle at 55% 45%, rgba(56,189,248,.30), transparent 68%)' }}
                         />
-                        <div className="relative motion-safe:animate-[heroFloat_7s_ease-in-out_infinite]">
-                            <ExamMock />
+                        <div className="relative">
+                            <DeviceShowcase />
                         </div>
                     </div>
                 </div>

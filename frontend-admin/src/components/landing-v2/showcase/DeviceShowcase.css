@@ -1,0 +1,163 @@
+/* ════════════════════════════════════════════════════════════════
+   DeviceShowcase — turntable rotation between desktop and mobile.
+
+   The live landing page cross-fades the two devices. Here they sit on a
+   shared 3D turntable: the outgoing device swings back and away on the Y
+   axis while the incoming one swings forward into place, so the pair reads
+   as one object rotating rather than two images swapping.
+
+   Overrides the `.lt-laptop / .lt-phone` show/hide rules from
+   LiveTestShowcase.css, which this file is always imported after.
+════════════════════════════════════════════════════════════════ */
+
+.dsw-root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+}
+
+/* The turntable. `perspective` is what turns the Y rotation into depth
+   rather than a flat squash. */
+.dsw-stage {
+    position: relative;
+    width: 100%;
+    max-width: 760px;
+    height: 470px;
+    perspective: 1800px;
+    perspective-origin: 50% 45%;
+    transform-style: preserve-3d;
+}
+
+.dsw-slot {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform-style: preserve-3d;
+    /* One easing for the whole swing — a long, settled cubic so it reads as
+       weight rather than a snap. */
+    transition:
+        transform 1100ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+        filter 900ms ease;
+    will-change: transform, opacity;
+}
+
+/* Scale the laptop down so the 740px shell fits the hero column. */
+.dsw-slot-desktop { transform-origin: 50% 100%; }
+.dsw-slot-mobile { transform-origin: 50% 100%; }
+
+/* Neutralise the base show/hide transition from LiveTestShowcase.css —
+   the slot owns all motion here. */
+.dsw-device.lt-laptop,
+.dsw-device.lt-phone {
+    position: static;
+    opacity: 1;
+    transform: none;
+    transition: none;
+    pointer-events: none;
+}
+
+/* ── FRONT / BACK positions ─────────────────────────────────────
+   Front: facing the viewer, full opacity.
+   Back:  rotated away, pushed back in Z, dimmed and blurred so the
+          front device separates cleanly.                            */
+
+/* Desktop in front */
+.dsw-view-desktop .dsw-slot-desktop {
+    transform: translateX(-50%) scale(0.62) rotateY(0deg) translateZ(0);
+    opacity: 1;
+    filter: none;
+    z-index: 3;
+}
+.dsw-view-desktop .dsw-slot-mobile {
+    transform: translateX(-50%) translateX(150px) scale(0.72) rotateY(-42deg) translateZ(-260px);
+    opacity: 0;
+    filter: blur(3px);
+    z-index: 1;
+}
+
+/* Mobile in front */
+.dsw-view-mobile .dsw-slot-mobile {
+    transform: translateX(-50%) scale(1.06) rotateY(0deg) translateZ(0);
+    opacity: 1;
+    filter: none;
+    z-index: 3;
+}
+.dsw-view-mobile .dsw-slot-desktop {
+    transform: translateX(-50%) translateX(-120px) scale(0.52) rotateY(38deg) translateZ(-300px);
+    opacity: 0;
+    filter: blur(3px);
+    z-index: 1;
+}
+
+/* ── Manual switch ──────────────────────────────────────────── */
+.dsw-switch {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
+}
+
+.dsw-switch-btn {
+    appearance: none;
+    border: 0;
+    cursor: pointer;
+    border-radius: 7px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #94a3b8;
+    background: transparent;
+    transition: color 180ms ease, background-color 180ms ease;
+}
+
+.dsw-switch-btn:hover { color: #e2e8f0; }
+
+.dsw-switch-btn.is-active {
+    color: #fff;
+    background: linear-gradient(180deg, #38bdf8, #0284c7);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        0 4px 12px -4px rgba(2, 132, 199, 0.7);
+}
+
+.dsw-switch-btn:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+    .dsw-stage { height: 400px; }
+    .dsw-view-desktop .dsw-slot-desktop { transform: translateX(-50%) scale(0.52); }
+    .dsw-view-mobile .dsw-slot-mobile { transform: translateX(-50%) scale(0.95); }
+}
+
+@media (max-width: 639px) {
+    .dsw-stage { height: 330px; perspective: 1200px; }
+    .dsw-view-desktop .dsw-slot-desktop { transform: translateX(-50%) scale(0.40); }
+    .dsw-view-mobile .dsw-slot-mobile { transform: translateX(-50%) scale(0.80); }
+}
+
+/* ── Reduced motion: no swing, just a fade. ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .dsw-slot {
+        transition: opacity 200ms linear;
+    }
+    .dsw-view-desktop .dsw-slot-desktop,
+    .dsw-view-mobile .dsw-slot-mobile {
+        transform: translateX(-50%) scale(0.62);
+        filter: none;
+    }
+    .dsw-view-mobile .dsw-slot-mobile { transform: translateX(-50%) scale(1.06); }
+    .dsw-view-desktop .dsw-slot-mobile,
+    .dsw-view-mobile .dsw-slot-desktop {
+        filter: none;
+    }
+}

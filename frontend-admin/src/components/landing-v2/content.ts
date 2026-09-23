@@ -17,7 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 export const HERO = {
     eyebrow: "The Educator's Choice",
-    h1: 'Free online test maker for teachers',
+    h1: 'Free online test maker',
     // Keep this in sync with index.html's #seo-fallback so crawlers and users
     // see substantially the same page (audit T3).
     sub: 'Create and conduct exams with AI. Generate quizzes from PDFs, YouTube videos, or plain text in minutes — auto-graded, proctored, and free for unlimited students.',
@@ -30,7 +30,6 @@ export const HERO = {
     rotatingPrefix: 'Build a full paper',
     primaryCta: { label: 'Generate a test with AI', href: '/generate-with-ai' },
     secondaryCta: { label: 'Build one manually', href: '/create-test' },
-    reassurance: 'Free forever for teachers · No card required · No student limit',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,19 +161,21 @@ export const FEATURES = [
 // so make it a table)
 // ─────────────────────────────────────────────────────────────────────────────
 export const COMPARISON = {
-    columns: ['TestoZa', 'Google Forms', 'Quizizz'],
+    columns: ['TestoZa', 'Google Forms', 'Moodle', 'Quizizz'],
     rows: [
-        { feature: 'Built for formal assessment', values: [true, false, 'partial'] },
-        { feature: 'AI questions from PDF / YouTube', values: [true, false, 'partial'] },
-        { feature: 'Negative marking', values: [true, false, false] },
-        { feature: 'Tab-switch and full-screen proctoring', values: [true, false, false] },
-        { feature: 'Section-wise papers with timers', values: [true, false, false] },
-        { feature: 'Rank list and percentile', values: [true, false, 'partial'] },
-        { feature: 'White-label branding', values: [true, false, 'partial'] },
-        { feature: 'Unlimited students, free', values: [true, true, false] },
+        { feature: 'Built for formal assessment', values: [true, false, true, 'partial'] },
+        { feature: 'Ready to use without setup', values: [true, true, false, true] },
+        { feature: 'No server or hosting to maintain', values: [true, true, false, true] },
+        { feature: 'AI questions from PDF / YouTube', values: [true, false, false, 'partial'] },
+        { feature: 'Negative marking', values: [true, false, true, false] },
+        { feature: 'Tab-switch and full-screen proctoring', values: [true, false, 'partial', false] },
+        { feature: 'Section-wise papers with timers', values: [true, false, 'partial', false] },
+        { feature: 'Rank list and percentile', values: [true, false, 'partial', 'partial'] },
+        { feature: 'White-label branding', values: [true, false, true, 'partial'] },
+        { feature: 'Unlimited students, free', values: [true, true, 'partial', false] },
     ],
     footnote:
-        'Comparison reflects the freely available tiers as understood on 2026-09-23. Competitor products change — verify before publishing, and re-check each claim you keep.',
+        'Moodle is open-source and capable, but it is an LMS you host, configure and maintain — quiz setup, proctoring plugins and scoring rules are each separate work. Google Forms is a survey tool. Reflects the freely available tiers and a default Moodle install as understood on 2026-09-23. Competitor products change — verify every claim before publishing.',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,16 +197,6 @@ export const TESTIMONIALS = [
         role: 'Role, Institution',
     },
 ] as const;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PRICING PREVIEW  (audit Part 4 — handle the unspoken objection)
-// ─────────────────────────────────────────────────────────────────────────────
-export const PRICING_PREVIEW = {
-    title: 'Free for teachers. Properly free.',
-    body: 'Unlimited tests, unlimited students, AI generation, proctoring and analytics on the free plan. Paid plans add white-label branding, custom domains and priority support for institutions.',
-    bullets: ['No card to start', 'No student cap', 'No paywalled question types'],
-    cta: { label: 'See plans and pricing', href: '/pricing' },
-} as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FAQ  (audit T4, M3 — the strongest content on the current site, kept verbatim)

@@ -25,10 +25,10 @@
 import { useEffect, useState } from 'react';
 import LandingV2Hero from '@/components/landing-v2/LandingV2Hero';
 import {
-    FeatureDeepDives, HowItWorks, ProofBand, ValueProps,
+    FeatureDeepDives, HowItWorks, ProofBand, QuestionTypesStrip, ValueProps,
 } from '@/components/landing-v2/LandingV2Sections';
 import {
-    Comparison, Faq, FinalCta, LandingV2Footer, PricingPreview, Testimonials,
+    Comparison, Faq, FinalCta, LandingV2Footer, Testimonials,
 } from '@/components/landing-v2/LandingV2Closing';
 import { FAQS, HERO, NAV_LINKS } from '@/components/landing-v2/content';
 
@@ -169,9 +169,9 @@ export default function LandingPageV2() {
                 <ValueProps />
                 <HowItWorks />
                 <FeatureDeepDives />
+                <QuestionTypesStrip />
                 <Comparison />
                 <Testimonials />
-                <PricingPreview />
                 <Faq />
                 <FinalCta />
             </main>

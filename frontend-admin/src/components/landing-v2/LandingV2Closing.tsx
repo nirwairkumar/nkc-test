@@ -1,5 +1,5 @@
 /**
- * Landing V2 — comparison, testimonials, pricing preview, FAQ, final CTA, footer.
+ * Landing V2 — comparison, testimonials, FAQ, final CTA, footer.
  *
  * The footer is the single highest-ROI SEO change on the page: the live footer
  * has five links and the live navbar links to none of the ~15 keyword landing
@@ -7,9 +7,9 @@
  */
 
 import { useState } from 'react';
-import { ArrowRight, Check, ChevronDown, Minus, Quote, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Minus, Quote, X } from 'lucide-react';
 import {
-    COMPARISON, FAQS, FOOTER_LINKS, PRICING_PREVIEW,
+    COMPARISON, FAQS, FOOTER_LINKS,
     TESTIMONIALS, TESTIMONIALS_ARE_PLACEHOLDER,
 } from './content';
 import { Grain, Orb, Pill, Reveal, Section, SectionHeading, Surface } from './ui';
@@ -42,16 +42,16 @@ export function Comparison() {
             <div className="mx-auto max-w-5xl px-6">
                 <SectionHeading
                     kicker="Comparison"
-                    title="Why not just use Google Forms?"
-                    sub="A fair question, and the honest answer is that Forms is a survey tool. Here is what changes when the thing you're running is an exam."
+                    title="Google Forms, Moodle, or TestoZa?"
+                    sub="Forms is a survey tool. Moodle is a full LMS you host and maintain. If what you actually need is to set a paper and conduct it, here is where the three diverge."
                 />
 
                 <Reveal>
                     <Surface className="mt-14">
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[560px] border-collapse text-sm">
+                            <table className="w-full min-w-[680px] border-collapse text-sm">
                                 <caption className="sr-only">
-                                    Feature comparison between TestoZa, Google Forms and Quizizz
+                                    Feature comparison between TestoZa, Google Forms, Moodle and Quizizz
                                 </caption>
                                 <thead>
                                     <tr>
@@ -168,58 +168,6 @@ export function Testimonials() {
                         </Reveal>
                     ))}
                 </div>
-            </div>
-        </Section>
-    );
-}
-
-/* ── 8. Pricing preview ─────────────────────────────────────────────────── */
-
-export function PricingPreview() {
-    return (
-        <Section>
-            <div className="mx-auto max-w-5xl px-6">
-                <Reveal>
-                    <Surface className="relative overflow-hidden">
-                        {/* Warm light source — differentiates this block from the neutral ones */}
-                        <div
-                            aria-hidden="true"
-                            className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full opacity-60 blur-3xl"
-                            style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.22), transparent 70%)' }}
-                        />
-                        <div className="relative grid items-center gap-10 p-8 sm:p-12 md:grid-cols-[1.45fr_1fr]">
-                            <div>
-                                <Pill tone="amber">
-                                    <Sparkles className="h-3 w-3" aria-hidden="true" />
-                                    Free plan
-                                </Pill>
-                                <h2 className="mt-5 text-balance text-2xl font-bold tracking-[-0.02em] text-slate-900 dark:text-white sm:text-[2rem] sm:leading-[1.15]">
-                                    {PRICING_PREVIEW.title}
-                                </h2>
-                                <p className="mt-4 text-pretty text-[15px] leading-[1.7] text-slate-600 dark:text-slate-400">
-                                    {PRICING_PREVIEW.body}
-                                </p>
-                                <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2.5">
-                                    {PRICING_PREVIEW.bullets.map((b) => (
-                                        <li key={b} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            <Check className="h-4 w-4 text-emerald-500" aria-hidden="true" />
-                                            {b}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <div className="md:text-right">
-                                <a
-                                    href={PRICING_PREVIEW.cta.href}
-                                    className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-slate-800 to-slate-950 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_10px_24px_-12px_rgba(15,23,42,0.8)] transition-transform duration-200 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 dark:from-sky-500 dark:to-sky-700 sm:w-auto"
-                                >
-                                    {PRICING_PREVIEW.cta.label}
-                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                                </a>
-                            </div>
-                        </div>
-                    </Surface>
-                </Reveal>
             </div>
         </Section>
     );

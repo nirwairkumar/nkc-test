@@ -14,6 +14,9 @@ import {
     CAPABILITY_PROOF, FEATURES, PROOF_MODE, REAL_METRICS, STEPS, VALUE_PROPS,
 } from './content';
 import { Divider, IconTile, Pill, Reveal, Section, SectionHeading, Surface } from './ui';
+import ManualEditorShowcase from './showcase/ManualEditorShowcase';
+import SettingsShowcase from './showcase/SettingsShowcase';
+import './showcase/showcase-frame.css';
 
 export { SectionHeading } from './ui';
 
@@ -154,66 +157,30 @@ export function HowItWorks() {
 
 /* ── 5. Feature deep-dives, alternating (audit Part 4) ───────────────────── */
 
+/**
+ * Feature visuals.
+ *
+ * `question` and `exam` now render the REAL showcase components lifted from the
+ * live landing page (ManualEditorShowcase / SettingsShowcase), keeping their
+ * own animation. The earlier hand-drawn stand-ins showed UI the product does
+ * not have; these are the actual builder and the actual settings panel.
+ *
+ * `results` stays an illustration — there is no live-page equivalent to reuse.
+ */
 function FeatureVisual({ kind }: { kind: string }) {
     if (kind === 'question') {
         return (
-            <Surface className="p-6" >
-                <div className="mb-4 flex items-center justify-between">
-                    <Pill tone="neutral">Marking scheme</Pill>
-                    <span className="font-mono text-[11px] text-slate-400">4 types</span>
-                </div>
-                <div className="space-y-2.5" style={{ minHeight: 236 }}>
-                    {([
-                        ['Single correct', '+4 / −1', 'sky'],
-                        ['Multiple correct', '+4 / partial', 'violet'],
-                        ['Numerical range', '+4 / 0', 'emerald'],
-                        ['Assertion–reason', '+3 / −1', 'amber'],
-                    ] as const).map(([label, marks, tone]) => (
-                        <div
-                            key={label}
-                            className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-inset ring-slate-200/70 dark:bg-white/[0.03] dark:ring-white/[0.06]"
-                        >
-                            <Pill tone={tone}>{label}</Pill>
-                            <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">
-                                {marks}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            </Surface>
+            <div className="lv2-showcase-frame">
+                <ManualEditorShowcase />
+            </div>
         );
     }
 
     if (kind === 'exam') {
         return (
-            <Surface className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                    <Pill tone="emerald">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
-                        Exam in progress
-                    </Pill>
-                    <span className="font-mono text-[11px] tabular-nums text-slate-400">28:14</span>
-                </div>
-                <div className="space-y-2.5" style={{ minHeight: 236 }}>
-                    {([
-                        ['Full-screen enforced', true],
-                        ['Tab switches blocked', true],
-                        ['Copy / paste disabled', true],
-                        ['Questions randomised', true],
-                        ['Violations logged', true],
-                    ] as const).map(([label, ok]) => (
-                        <div
-                            key={label}
-                            className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-2.5 ring-1 ring-inset ring-slate-200/70 dark:bg-white/[0.03] dark:ring-white/[0.06]"
-                        >
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                                <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
-                            </span>
-                            <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300">{label}</span>
-                        </div>
-                    ))}
-                </div>
-            </Surface>
+            <div className="lv2-showcase-frame">
+                <SettingsShowcase />
+            </div>
         );
     }
 
@@ -251,6 +218,47 @@ function FeatureVisual({ kind }: { kind: string }) {
     );
 }
 
+/* ── Question types — compact strip, not a full-width panel ─────────────── */
+
+const QUESTION_TYPES = [
+    { label: 'Single correct', marks: '+4 / −1', tone: 'sky' },
+    { label: 'Multiple correct', marks: '+4 / partial', tone: 'violet' },
+    { label: 'Numerical range', marks: '+4 / 0', tone: 'emerald' },
+    { label: 'Assertion–reason', marks: '+3 / −1', tone: 'amber' },
+] as const;
+
+export function QuestionTypesStrip() {
+    return (
+        <div className="mx-auto max-w-7xl px-6">
+            <Reveal>
+                <Surface className="flex flex-col items-center gap-5 px-6 py-5 sm:flex-row sm:justify-between">
+                    <div className="shrink-0 text-center sm:text-left">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sky-600 dark:text-sky-400">
+                            Question types
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                            With per-question marking
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-2.5">
+                        {QUESTION_TYPES.map((q) => (
+                            <span
+                                key={q.label}
+                                className="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3.5 py-2 ring-1 ring-inset ring-slate-200/70 dark:bg-white/[0.03] dark:ring-white/[0.06]"
+                            >
+                                <Pill tone={q.tone}>{q.label}</Pill>
+                                <span className="font-mono text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                    {q.marks}
+                                </span>
+                            </span>
+                        ))}
+                    </div>
+                </Surface>
+            </Reveal>
+        </div>
+    );
+}
+
 export function FeatureDeepDives() {
     return (
         <Section tone="muted">
@@ -258,7 +266,7 @@ export function FeatureDeepDives() {
                 {FEATURES.map((f, i) => (
                     <Reveal key={f.title}>
                         <div
-                            className={`grid items-center gap-10 lg:grid-cols-2 lg:gap-20 ${
+                            className={`grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16 ${
                                 i % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''
                             }`}
                         >
