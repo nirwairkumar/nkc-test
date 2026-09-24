@@ -1,25 +1,34 @@
 /* ════════════════════════════════════════════════════════════════
-   DeviceShowcase — the real exam UI, presented as a product shot.
+   DeviceShowcase — the real exam UI as a fixed product composition.
 
-   TWO problems this file solves.
+   Both devices are shown together in one three-quarter shot: the laptop
+   set back and to the right, the phone standing in front on the left and
+   overlapping it. Nothing rotates or cycles.
+
+   The thing that makes a two-device shot read as ONE photograph rather
+   than two pasted cut-outs is that both objects share a single camera:
+   the same perspective origin, the same Y rotation, and light coming from
+   the same direction. Both mounts therefore use an identical
+   `rotateY(18deg)` — only their position in X and Z differs.
+
+   Positive rotateY swings each device's right edge away from the viewer
+   and brings its left edge forward, which is the angle in the reference:
+   front-left corner nearest, body receding to the right.
+
+   Two further problems this file solves:
 
    (1) The exam interface is a LIGHT UI and the hero is near-black. Dropped
        in unmodified it reads as a screenshot pasted onto a dark page. What
-       makes a bright screen sit convincingly on a dark background — the way
-       Apple, Linear and Vercel shoot product — is not changing the UI, it
-       is lighting the object:
+       makes a bright screen sit convincingly on a dark background is not
+       changing the UI, it is lighting the object:
          • a dark graphite bezel instead of the pale silver default
-         • an off-axis seat, so it reads as an object in space
-         • screen bloom — the display spilling light onto the background,
-           which is what actually sells "this is a screen, not a picture"
+         • screen bloom — the display spilling light onto the background
          • a glass sheen across the panel
          • a reflected pool of light beneath, grounding it
 
-   (2) The rotation must run in ONE direction. This is a real turntable:
-       the two devices are bolted to seats 180° apart on a carousel, and
-       the carousel's angle only ever decreases (step * -180deg in the
-       component). Nothing swings back — each device enters from the same
-       side and exits from the same side, forever.
+   (2) The phone must sit believably in FRONT of the laptop — it is pushed
+       forward in Z and carries a contact shadow so it occludes rather than
+       merely overlapping.
 
    Overrides LiveTestShowcase.css, which is always imported before this file.
 ════════════════════════════════════════════════════════════════ */
@@ -30,57 +39,49 @@
     width: 100%;
 }
 
-/* Deep perspective so the carousel reads as depth, not a horizontal squash. */
+/* One camera for the whole composition. */
 .dsw-stage {
     position: relative;
     width: 100%;
-    max-width: 780px;
-    height: 500px;
-    perspective: 2400px;
-    perspective-origin: 50% 44%;
+    max-width: 820px;
+    height: 460px;
+    perspective: 2600px;
+    perspective-origin: 46% 48%;
 }
 
-/* ══ THE TURNTABLE ═══════════════════════════════════════════════
-   Angle is driven from the component and only ever decreases.       */
-.dsw-turntable {
+.dsw-composition {
     position: absolute;
     inset: 0;
     transform-style: preserve-3d;
-    transition: transform 1400ms cubic-bezier(0.55, 0.06, 0.24, 0.99);
-    will-change: transform;
 }
 
-/* Seats sit on the rim of the carousel, 180° apart. */
-.dsw-seat {
+/* ══ MOUNTS ══════════════════════════════════════════════════════
+   Identical rotateY on both so they share one viewing angle. Only X
+   position and Z depth differ.                                      */
+
+.dsw-mount {
     position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 46px;
+    bottom: 0;
+    left: 50%;
     transform-style: preserve-3d;
-    backface-visibility: hidden;
-    /* Fades slightly after the swing starts so the back seat never shows
-       through the front one. */
-    transition: opacity 500ms ease 180ms;
-    opacity: 0;
 }
 
-.dsw-seat.is-front {
-    opacity: 1;
-    transition: opacity 600ms ease 420ms;
+/* Laptop: back and to the right. */
+.dsw-mount-laptop {
+    transform: translateX(-50%) translateX(96px) translateZ(0) rotateY(18deg);
 }
 
-.dsw-seat-desktop { transform: rotateY(0deg)   translateZ(300px); }
-.dsw-seat-mobile  { transform: rotateY(180deg) translateZ(300px); }
+/* Phone: forward in Z and out to the left, standing lower than the
+   laptop base — as in the reference. */
+.dsw-mount-phone {
+    transform: translateX(-50%) translateX(-268px) translateZ(190px) rotateY(18deg);
+}
 
-/* Per-device sizing, kept off the 3D transforms so the carousel maths
-   stays clean. */
-.dsw-fit { transform-origin: 50% 100%; }
-.dsw-fit-desktop { transform: scale(0.63); }
-.dsw-fit-mobile  { transform: scale(1.12); }
+.dsw-fit { position: relative; transform-origin: 50% 100%; }
+.dsw-fit-laptop { transform: scale(0.60); }
+.dsw-fit-phone { transform: scale(0.74) translateY(34px); }
 
-/* Neutralise the base show/hide behaviour — the carousel owns all motion. */
+/* Neutralise the live page's show/hide behaviour — this file owns layout. */
 .dsw-device.lt-laptop,
 .dsw-device.lt-phone {
     position: static;
@@ -92,8 +93,8 @@
 
 /* ══ 1. BEZEL RE-GRADE ═══════════════════════════════════════════
    Pale silver (#e2e8f0 → #cbd5e1) is what made this look pasted on.
-   Graphite with a warm-white rim reads as machined metal under a
-   single light source.                                              */
+   Graphite with a warm-white rim reads as machined metal lit from
+   the upper left — the same direction for both devices.             */
 
 .dsw-root .lt-laptop-body {
     background: linear-gradient(168deg, #4a5568 0%, #2a3342 42%, #1a212c 100%);
@@ -125,7 +126,9 @@
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.20),
         0 0 0 1.5px rgba(0, 0, 0, 0.7),
-        0 0 0 3px rgba(90, 102, 122, 0.55);
+        0 0 0 3px rgba(90, 102, 122, 0.55),
+        /* Contact shadow — the phone is in front, so it must occlude. */
+        -18px 26px 60px rgba(0, 0, 0, 0.75);
 }
 
 /* Thin dark inset so the bright panel does not bleed into the bezel. */
@@ -135,8 +138,7 @@
 }
 
 /* ══ 2. GLASS SHEEN ══════════════════════════════════════════════
-   A single raking highlight across the panel. Low opacity — enough to
-   read as glass, not enough to hurt legibility.                      */
+   One raking highlight per panel, from the same light direction.    */
 
 .dsw-root .lt-laptop-screen::after,
 .dsw-root .lt-phone-screen::after {
@@ -148,14 +150,14 @@
     background:
         linear-gradient(
             104deg,
-            rgba(255, 255, 255, 0.16) 0%,
+            rgba(255, 255, 255, 0.15) 0%,
             rgba(255, 255, 255, 0.05) 18%,
             transparent 42%,
             transparent 100%
         ),
         radial-gradient(
             ellipse 70% 50% at 82% 100%,
-            rgba(56, 189, 248, 0.12),
+            rgba(56, 189, 248, 0.11),
             transparent 65%
         );
 }
@@ -163,11 +165,8 @@
 .dsw-root .lt-phone-screen::after { border-radius: 28px; }
 
 /* ══ 3. SCREEN BLOOM ═════════════════════════════════════════════
-   The bright display spilling onto the dark background — the single
-   most important cue that the device is lit from within. Lives on the
-   fit wrapper so it scales and swings with its device.               */
-
-.dsw-fit { position: relative; }
+   The bright displays spilling onto the dark background — the cue
+   that these are lit screens rather than images.                    */
 
 .dsw-fit::before {
     content: '';
@@ -180,8 +179,8 @@
     border-radius: 50%;
     background: radial-gradient(
         ellipse 50% 44% at 50% 45%,
-        rgba(186, 230, 253, 0.32) 0%,
-        rgba(56, 189, 248, 0.17) 38%,
+        rgba(186, 230, 253, 0.30) 0%,
+        rgba(56, 189, 248, 0.16) 38%,
         rgba(37, 99, 235, 0.07) 62%,
         transparent 78%
     );
@@ -203,8 +202,8 @@
     border-radius: 50%;
     background: radial-gradient(
         ellipse 50% 50% at 50% 50%,
-        rgba(125, 211, 252, 0.28) 0%,
-        rgba(56, 189, 248, 0.11) 42%,
+        rgba(125, 211, 252, 0.26) 0%,
+        rgba(56, 189, 248, 0.10) 42%,
         transparent 72%
     );
     filter: blur(20px);
@@ -213,37 +212,37 @@
 }
 
 /* A phone throws less light than a laptop. */
-.dsw-fit-mobile::before {
-    width: 280%;
-    height: 108%;
-    filter: blur(54px);
+.dsw-fit-phone::before {
+    width: 260%;
+    height: 106%;
+    filter: blur(52px);
 }
-.dsw-fit-mobile::after { width: 170%; }
+.dsw-fit-phone::after { width: 165%; }
 
-/* ══ 5. RESPONSIVE ═══════════════════════════════════════════════ */
+/* ══ 5. RESPONSIVE ═══════════════════════════════════════════════
+   The composition holds its angle; only scale and spacing change.   */
 
-@media (max-width: 1023px) {
-    .dsw-stage { height: 430px; }
-    .dsw-seat { padding-bottom: 34px; }
-    .dsw-seat-desktop { transform: rotateY(0deg)   translateZ(240px); }
-    .dsw-seat-mobile  { transform: rotateY(180deg) translateZ(240px); }
-    .dsw-fit-desktop { transform: scale(0.52); }
-    .dsw-fit-mobile  { transform: scale(1.00); }
+@media (max-width: 1279px) {
+    .dsw-stage { height: 410px; }
+    .dsw-mount-laptop { transform: translateX(-50%) translateX(78px) rotateY(18deg); }
+    .dsw-mount-phone { transform: translateX(-50%) translateX(-224px) translateZ(170px) rotateY(18deg); }
+    .dsw-fit-laptop { transform: scale(0.52); }
+    .dsw-fit-phone { transform: scale(0.64) translateY(28px); }
 }
 
-@media (max-width: 639px) {
-    .dsw-stage { height: 350px; perspective: 1600px; }
-    .dsw-seat { padding-bottom: 24px; }
-    .dsw-seat-desktop { transform: rotateY(0deg)   translateZ(170px); }
-    .dsw-seat-mobile  { transform: rotateY(180deg) translateZ(170px); }
-    .dsw-fit-desktop { transform: scale(0.40); }
-    .dsw-fit-mobile  { transform: scale(0.84); }
+@media (max-width: 767px) {
+    .dsw-stage { height: 330px; perspective: 1800px; }
+    .dsw-mount-laptop { transform: translateX(-50%) translateX(56px) rotateY(16deg); }
+    .dsw-mount-phone { transform: translateX(-50%) translateX(-160px) translateZ(130px) rotateY(16deg); }
+    .dsw-fit-laptop { transform: scale(0.40); }
+    .dsw-fit-phone { transform: scale(0.50) translateY(22px); }
     .dsw-fit::before { filter: blur(40px); }
 }
 
-/* ══ 6. REDUCED MOTION ═══════════════════════════════════════════ */
-
-@media (prefers-reduced-motion: reduce) {
-    .dsw-turntable { transition: none; }
-    .dsw-seat { transition: opacity 200ms linear; }
+@media (max-width: 479px) {
+    .dsw-stage { height: 280px; }
+    .dsw-mount-laptop { transform: translateX(-50%) translateX(42px) rotateY(15deg); }
+    .dsw-mount-phone { transform: translateX(-50%) translateX(-124px) translateZ(110px) rotateY(15deg); }
+    .dsw-fit-laptop { transform: scale(0.32); }
+    .dsw-fit-phone { transform: scale(0.40) translateY(18px); }
 }

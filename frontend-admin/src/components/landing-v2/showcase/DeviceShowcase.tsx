@@ -1,24 +1,20 @@
 /**
- * Landing V2 — real test-environment showcase (static).
+ * Landing V2 — real test-environment showcase (static composition).
  *
  * This is the ACTUAL TestoZa exam interface, lifted verbatim from the live
  * landing page's LiveTestShowcase markup and styling (LiveTestShowcase.css is
  * copied alongside). The earlier hero used an invented mock-up, which showed a
  * UI the product does not have — this shows the real thing.
  *
- * Two deliberate differences from the live version:
- *   1. STATIC. No cursor, no option-picking, no typing, no scrubber. The live
- *      version runs a 32-second scripted animation; here the devices simply
- *      present themselves.
- *   2. The desktop and mobile views sit on a true turntable that rotates in
- *      ONE direction only. `step` never decreases, so the carousel always
- *      spins the same way — each device enters from the same side and leaves
- *      from the same side, rather than swinging back and forth.
+ * Presentation: both devices are shown TOGETHER in one fixed three-quarter
+ * composition — laptop set back and to the right, phone standing in front on
+ * the left, both sharing the same viewing angle so they read as a single
+ * photograph rather than two separate images. Nothing rotates or cycles.
  *
- * Reduced motion: the rotation stops on the desktop view.
+ * The laptop shows the desktop exam view; the phone shows the mobile exam
+ * view. Both are static: no cursor, no option-picking, no typing.
  */
 
-import { useEffect, useRef, useState } from 'react';
 import './LiveTestShowcase.css';
 import './DeviceShowcase.css';
 
@@ -46,43 +42,14 @@ const MOBILE_Q = {
 /** Physics palette: 14 answered, 15 current, rest unvisited — as students see it. */
 const PILL_STATE = (i: number) => (i < 14 ? 'ans' : i === 14 ? 'cur' : '');
 
-const ROTATE_MS = 3600;
-
 export default function DeviceShowcase() {
-    /** Monotonic — never decreases, so the turntable only ever spins one way. */
-    const [step, setStep] = useState(0);
-    const [paused, setPaused] = useState(false);
-    const reduced = useRef(false);
-
-    useEffect(() => {
-        reduced.current =
-            typeof window !== 'undefined' &&
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduced.current) setPaused(true);
-    }, []);
-
-    useEffect(() => {
-        if (paused) return;
-        const id = setInterval(() => setStep((s) => s + 1), ROTATE_MS);
-        return () => clearInterval(id);
-    }, [paused]);
-
-    const desktopFront = step % 2 === 0;
-
     return (
         <div className="dsw-root">
-            <div
-                className="dsw-stage"
-                onMouseEnter={() => setPaused(true)}
-                onMouseLeave={() => { if (!reduced.current) setPaused(false); }}
-            >
-                <div
-                    className="dsw-turntable"
-                    style={{ transform: `rotateY(${step * -180}deg)` }}
-                >
-                    {/* ══ DESKTOP — seat 0 ═══════════════════════════════ */}
-                    <div className={`dsw-seat dsw-seat-desktop${desktopFront ? ' is-front' : ''}`}>
-                        <div className="dsw-fit dsw-fit-desktop">
+            <div className="dsw-stage">
+                <div className="dsw-composition">
+                    {/* ══ LAPTOP — set back and right ════════════════════ */}
+                    <div className="dsw-mount dsw-mount-laptop">
+                        <div className="dsw-fit dsw-fit-laptop">
                             <div className="lt-laptop dsw-device">
                                 <div className="lt-laptop-body">
                                     <div className="lt-cam-row"><div className="lt-cam" /></div>
@@ -183,9 +150,9 @@ export default function DeviceShowcase() {
                         </div>
                     </div>
 
-                    {/* ══ MOBILE — seat 180° ═════════════════════════════ */}
-                    <div className={`dsw-seat dsw-seat-mobile${!desktopFront ? ' is-front' : ''}`}>
-                        <div className="dsw-fit dsw-fit-mobile">
+                    {/* ══ PHONE — standing in front, left ════════════════ */}
+                    <div className="dsw-mount dsw-mount-phone">
+                        <div className="dsw-fit dsw-fit-phone">
                             <div className="lt-phone dsw-device">
                                 <div className="lt-phone-body">
                                     <div className="lt-phone-screen">
