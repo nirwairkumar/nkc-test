@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { ArrowRight, Check, ChevronDown, Minus, Quote, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Heart, Minus, Quote, X } from 'lucide-react';
 import {
     COMPARISON, FAQS, FOOTER_LINKS,
     TESTIMONIALS, TESTIMONIALS_ARE_PLACEHOLDER,
@@ -350,13 +350,30 @@ export function LandingV2Footer() {
                     ))}
                 </div>
 
-                <div className="mt-14 flex flex-col items-center justify-center gap-4 border-t border-slate-100 pt-8 dark:border-white/[0.06]">
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
-                        © {new Date().getFullYear()} TestoZa Educational Systems. All rights reserved.
-                    </p>
-                    {/* Flag emoji removed: regional-indicator glyphs don't render on most
-                        Windows configurations (shows as blank or two-letter fallback). */}
-                    {/* <p className="text-xs text-slate-500 dark:text-slate-500">Made for educators in India 🇮🇳</p> */}
+                <div className="mt-8 border-t border-slate-100 pt-5 text-center dark:border-white/[0.06] sm:mt-10 sm:pt-5">
+                    <div className="flex flex-col items-center justify-center gap-1.5 sm:flex-row sm:gap-2.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        <span>© 2026 TestoZa Educational Systems. All rights reserved.</span>
+                        <span className="hidden sm:inline text-slate-300 dark:text-slate-700" aria-hidden="true">•</span>
+                        <span className="inline-flex items-center gap-1.5">
+                            Made with
+                            <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" aria-label="love" />
+                            in India
+                            <span className="inline-flex items-center ml-0.5" title="India">
+                                <svg
+                                    className="h-3 w-4.5 rounded-[2px] shadow-xs ring-1 ring-black/10 dark:ring-white/10"
+                                    viewBox="0 0 900 600"
+                                    aria-label="India flag"
+                                >
+                                    <rect width="900" height="200" fill="#FF9933" />
+                                    <rect y="200" width="900" height="200" fill="#FFFFFF" />
+                                    <rect y="400" width="900" height="200" fill="#138808" />
+                                    <circle cx="450" cy="300" r="80" fill="#000080" />
+                                    <circle cx="450" cy="300" r="64" fill="#FFFFFF" />
+                                    <circle cx="450" cy="300" r="16" fill="#000080" />
+                                </svg>
+                            </span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </footer>

@@ -18,7 +18,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import TestoZaLogo from './TestoZaLogo';
+import { Heart } from 'lucide-react';
 
 const LINK_COLUMNS = [
     {
@@ -69,51 +69,60 @@ export default function Footer() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="relative w-full mt-auto border-t border-slate-200 bg-slate-50 dark:border-white/[0.06] dark:bg-slate-950">
-            {/* Soft accent line, carried over from the previous footer */}
-            <div
-                aria-hidden="true"
-                className="absolute left-0 top-0 h-px w-full bg-gradient-to-r from-transparent via-indigo-500/25 to-transparent"
-            />
-
-            <div className="container mx-auto px-4 py-14 sm:px-6 sm:py-16">
+        <footer className="relative w-full mt-auto border-t border-slate-200 bg-white font-[Outfit,system-ui,sans-serif] dark:border-white/[0.06] dark:bg-slate-950">
+            <div className="container mx-auto px-4 pt-12 pb-6 sm:px-6 sm:pt-14 sm:pb-6">
                 <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6 lg:gap-8">
                     {/* Brand + contact */}
                     <div className="lg:col-span-2">
-                        <TestoZaLogo size={32} />
-                        <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                        <Link to="/" className="inline-block hover:opacity-95 transition-opacity">
+                            <p className="flex items-baseline font-bold tracking-tight text-2xl">
+                                <span className="text-sky-500 dark:text-sky-400">Testo</span>
+                                <span
+                                    className="mx-[0.02em] text-[1.26em] font-black"
+                                    style={{
+                                        background: 'linear-gradient(to bottom, #FFE885, #F4B838, #9E6400)',
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                    }}
+                                >
+                                    Z
+                                </span>
+                                <span className="text-sky-500 dark:text-sky-400">a</span>
+                            </p>
+                        </Link>
+                        <p className="mt-4 max-w-xs text-pretty text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                             The free online test maker for teachers, coaching institutes and
                             schools. Create, conduct and analyse exams — powered by AI.
                         </p>
 
                         <dl className="mt-6 space-y-2 text-sm">
                             <div className="flex flex-wrap items-center gap-x-1.5">
-                                <dt className="font-medium text-slate-700 dark:text-slate-300">Email:</dt>
+                                <dt className="font-medium text-slate-900 dark:text-slate-200">Email:</dt>
                                 <dd>
                                     <a
                                         href="mailto:support@testoza.com"
-                                        className="text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+                                        className="text-slate-600 transition-colors hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
                                     >
                                         support@testoza.com
                                     </a>
                                 </dd>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-1.5">
-                                <dt className="font-medium text-slate-700 dark:text-slate-300">LinkedIn:</dt>
+                                <dt className="font-medium text-slate-900 dark:text-slate-200">LinkedIn:</dt>
                                 <dd>
                                     <a
                                         href="https://www.linkedin.com/company/testoza"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-xs font-medium text-indigo-600 transition-colors hover:underline dark:text-indigo-400"
+                                        className="text-xs font-medium text-sky-600 transition-colors hover:underline dark:text-sky-400"
                                     >
                                         linkedin.com/company/testoza
                                     </a>
                                 </dd>
                             </div>
                             <div className="flex gap-x-1.5">
-                                <dt className="shrink-0 font-medium text-slate-700 dark:text-slate-300">Address:</dt>
-                                <dd className="text-xs text-slate-500 dark:text-slate-400">
+                                <dt className="shrink-0 font-medium text-slate-900 dark:text-slate-200">Address:</dt>
+                                <dd className="text-xs text-slate-600 dark:text-slate-400">
                                     1st Floor, Nirmaan, Sudha &amp; Shankar Inv Hub, IIT Madras,
                                     Chennai, Tamil Nadu 600036, India
                                 </dd>
@@ -139,7 +148,7 @@ export default function Footer() {
                                     <li key={l.to}>
                                         <Link
                                             to={l.to}
-                                            className="text-sm text-slate-500 transition-colors hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 dark:text-slate-400 dark:hover:text-indigo-400"
+                                            className="text-sm text-slate-600 transition-colors hover:text-sky-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 dark:text-slate-400 dark:hover:text-sky-400"
                                         >
                                             {l.label}
                                         </Link>
@@ -152,7 +161,7 @@ export default function Footer() {
                                             href="https://blog.testoza.com"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+                                            className="inline-flex items-center gap-1 text-sm text-slate-600 transition-colors hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
                                         >
                                             Blog &amp; news
                                             <span aria-hidden="true" className="text-[10px] text-slate-400">↗</span>
@@ -164,16 +173,30 @@ export default function Footer() {
                     ))}
                 </div>
 
-                <div className="mt-12 space-y-2 border-t border-slate-200 pt-8 text-center dark:border-white/[0.06]">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        © {currentYear} TestoZa Educational Systems. All rights reserved.
-                        Built for educators, schools and competitive exam preparation.
-                    </p>
-                    <p className="mx-auto max-w-2xl text-xs text-slate-400 dark:text-slate-500">
-                        TestoZa is a privacy-compliant digital assessment and exam preparation
-                        platform designed for learning, mock test practice and institutional
-                        evaluation.
-                    </p>
+                <div className="mt-8 border-t border-slate-200 pt-5 text-center dark:border-white/[0.06] sm:mt-10 sm:pt-5">
+                    <div className="flex flex-col items-center justify-center gap-1.5 sm:flex-row sm:gap-2.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        <span>© 2026 TestoZa Educational Systems. All rights reserved.</span>
+                        <span className="hidden sm:inline text-slate-300 dark:text-slate-700" aria-hidden="true">•</span>
+                        <span className="inline-flex items-center gap-1.5">
+                            Made with
+                            <Heart className="h-3.5 w-3.5 fill-rose-500 text-rose-500" aria-label="love" />
+                            in India
+                            <span className="inline-flex items-center ml-0.5" title="India">
+                                <svg
+                                    className="h-3 w-4.5 rounded-[2px] shadow-xs ring-1 ring-black/10 dark:ring-white/10"
+                                    viewBox="0 0 900 600"
+                                    aria-label="India flag"
+                                >
+                                    <rect width="900" height="200" fill="#FF9933" />
+                                    <rect y="200" width="900" height="200" fill="#FFFFFF" />
+                                    <rect y="400" width="900" height="200" fill="#138808" />
+                                    <circle cx="450" cy="300" r="80" fill="#000080" />
+                                    <circle cx="450" cy="300" r="64" fill="#FFFFFF" />
+                                    <circle cx="450" cy="300" r="16" fill="#000080" />
+                                </svg>
+                            </span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </footer>
