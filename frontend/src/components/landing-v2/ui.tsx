@@ -160,7 +160,7 @@ export function Section({
         dark: 'bg-slate-950',
     } as const;
     return (
-        <section id={id} className={`relative py-20 sm:py-28 ${tones[tone]} ${className}`}>
+        <section id={id} className={`relative py-20 sm:py-28 ${id ? 'scroll-mt-16' : ''} ${tones[tone]} ${className}`}>
             {children}
         </section>
     );

@@ -29,6 +29,7 @@ import { useEffect } from 'react';
 import { SEO } from '@/components/SEO';
 import { getAppUrl } from '@/utils/subdomain';
 
+import LandingV2Nav from '@/components/landing-v2/LandingV2Nav';
 import LandingV2Hero from '@/components/landing-v2/LandingV2Hero';
 import {
     FeatureDeepDives,
@@ -140,7 +141,8 @@ export default function LandingPage() {
                 schemas={[homepageFAQSchema, softwareSchema]}
             />
 
-            <div className="min-h-screen bg-white dark:bg-slate-950">
+            <div className="min-h-screen bg-white font-[Outfit,system-ui,sans-serif] antialiased dark:bg-slate-950">
+                <LandingV2Nav />
                 <LandingV2Hero />
                 <ProofBand />
                 <ValueProps />

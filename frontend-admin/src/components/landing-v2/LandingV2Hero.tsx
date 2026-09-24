@@ -92,7 +92,7 @@ export default function LandingV2Hero() {
                             id="hero-heading"
                             className="text-balance text-[2.6rem] font-extrabold leading-[1.04] tracking-[-0.035em] text-white sm:text-6xl lg:text-[4rem]"
                         >
-                            Free online{' '}
+                            Free online<br />
                             <span className="relative whitespace-nowrap">
                                 <span className="bg-gradient-to-br from-sky-200 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
                                     test maker

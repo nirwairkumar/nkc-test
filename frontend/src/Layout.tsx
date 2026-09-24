@@ -117,9 +117,11 @@ export default function Layout() {
         }
     };
 
+    const isLandingPage = !isBlogSubdomain && location.pathname === '/';
+
     return (
         <div className="min-h-screen bg-slate-50 dashboard-mesh-bg flex flex-col">
-            {!isLiveTestPage && (
+            {!isLiveTestPage && !isLandingPage && (
                 <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <Navbar onToggleSidebar={handleToggleSidebar} />
                 </div>
