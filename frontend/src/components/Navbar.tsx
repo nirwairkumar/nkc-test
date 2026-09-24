@@ -107,7 +107,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps = {}) {
             .slice(0, 2);
     };
 
-    const isLandingPage = location.pathname === '/' || location.pathname === '/dashboard' || location.pathname === '/support';
+    const isLandingPage = location.pathname === '/' || location.pathname === '/dashboard' || location.pathname === '/explore' || location.pathname === '/support';
 
     const isBlogSubdomain = typeof window !== 'undefined' && (
         window.location.hostname === 'blog.testoza.com' ||

@@ -9,7 +9,6 @@ import { TestProvider } from "@/contexts/TestContext";
 import PrivateRoute from "@/components/ui/PrivateRoute";
 import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
-import { Loader2 } from "lucide-react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 
 import Layout from "./Layout";
@@ -108,24 +107,18 @@ const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDa
 
 import { useAuth } from "@/contexts/AuthContext";
 
+// /dashboard is the educator workspace only (rendered inside PrivateRoute, so user is set).
+// Everyone else goes to their own results; the public test library lives at /explore.
 const DashboardRoute = () => {
-  const { user, profile, loading, isAdmin } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-      </div>
-    );
-  }
+  const { user, profile, isAdmin } = useAuth();
 
   const designation = profile?.designation || user?.user_metadata?.designation || (typeof window !== 'undefined' ? localStorage.getItem('user_designation') : null);
   const isTeacherOrInstitution = (designation === 'Teacher' || designation === 'Institution') || (isAdmin && designation !== 'Student');
 
-  if (user && isTeacherOrInstitution) {
+  if (isTeacherOrInstitution) {
     return <TeacherDashboard />;
   }
-  return <TestList />;
+  return <Navigate to="/history" replace />;
 };
 
 const queryClient = new QueryClient({
@@ -175,7 +168,8 @@ const App = () => (
                     <Route path="/" element={<HomeRoute />} />
                     <Route path="/quiz-creator" element={<GoogleAdsLanding />} />
                     <Route path="/assessment-platform" element={<GoogleAdsLanding />} />
-                    <Route path="/dashboard" element={<DashboardRoute />} />
+                    <Route path="/dashboard" element={<PrivateRoute><DashboardRoute /></PrivateRoute>} />
+                    <Route path="/explore" element={<TestList />} />
                     <Route path="/more-tests" element={<MoreTestsPage />} />
 
                     {/* News & Blog Routes */}

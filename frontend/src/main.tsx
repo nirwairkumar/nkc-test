@@ -48,8 +48,8 @@ try {
         required: ['query']
       }
     }, async (params: any) => {
-      window.location.href = `/dashboard?search=${encodeURIComponent(params.query)}${params.category ? `&category=${encodeURIComponent(params.category)}` : ''}`;
-      return { status: 'success', message: `Navigating to dashboard with query: ${params.query}` };
+      window.location.href = `/more-tests?q=${encodeURIComponent(params.query)}${params.category ? `&category=${encodeURIComponent(params.category)}` : ''}`;
+      return { status: 'success', message: `Navigating to test search with query: ${params.query}` };
     });
 
     // 3. View Pricing/Premium Plans tool

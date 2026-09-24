@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import LatexRenderer from '@/components/ui/LatexRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
+import TestLinkPaster from '@/components/TestLinkPaster';
 
 const formatQuestionTime = (seconds?: number | string): string => {
     if (seconds === undefined || seconds === null || seconds === '') return '< 1s';
@@ -317,6 +318,9 @@ export default function TestHistory() {
                     Refresh
                 </Button>
             </div>
+
+            {/* Students land here from /dashboard — let them open a test link shared by their teacher */}
+            <TestLinkPaster />
 
             {/* --- Desktop Table View --- */}
             <Card className="hidden md:block overflow-hidden border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">

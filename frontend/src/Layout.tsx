@@ -107,7 +107,7 @@ export default function Layout() {
         location.pathname === '/convert' ||
         location.pathname === '/privacy-policy' ||
         location.pathname === '/terms-and-conditions' ||
-        (location.pathname === '/dashboard' && !user);
+        ((location.pathname === '/dashboard' || location.pathname === '/explore') && !user);
 
     const handleToggleSidebar = () => {
         if (window.innerWidth < 768) {
