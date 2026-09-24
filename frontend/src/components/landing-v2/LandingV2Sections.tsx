@@ -7,6 +7,7 @@
  * trimmed to three, alternating sides.
  */
 
+import { Link } from 'react-router-dom';
 import {
     ArrowRight, BarChart3, CheckCircle2, ShieldCheck, Sparkles,
 } from 'lucide-react';
@@ -95,8 +96,8 @@ export function ValueProps() {
                                     </p>
 
                                     {/* Internal links to the orphaned keyword pages (audit C3) */}
-                                    <a
-                                        href={v.href}
+                                    <Link
+                                        to={v.href}
                                         className="group/link mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-sky-600 transition-colors hover:text-sky-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 dark:text-sky-400"
                                     >
                                         {v.linkLabel}
@@ -104,7 +105,7 @@ export function ValueProps() {
                                             className="h-3.5 w-3.5 transition-transform duration-200 group-hover/link:translate-x-1"
                                             aria-hidden="true"
                                         />
-                                    </a>
+                                    </Link>
                                 </Surface>
                             </Reveal>
                         );

@@ -1,122 +1,178 @@
-import { Link } from "react-router-dom";
+/**
+ * Global site footer.
+ *
+ * Rendered once from Layout.tsx, which decides where it appears — it is
+ * suppressed on live test, results and create-test routes. This component does
+ * not control its own visibility, so editing it can never reintroduce a footer
+ * on a page that deliberately has none.
+ *
+ * Structure follows the V2 landing design, with two deliberate carry-overs
+ * from the previous footer that V2 did not have and which must not be lost:
+ * the registered business address, and the support/LinkedIn contact block.
+ *
+ * The four link columns exist for a concrete reason (LANDING_PAGE_AUDIT.md
+ * C3): roughly fifteen keyword landing pages were orphaned — present in the
+ * sitemap but linked from nowhere. Sitemaps tell Google a URL exists; internal
+ * links tell it the URL matters. Putting them in the shared footer means every
+ * page on the site passes equity to them, not just the homepage.
+ */
+
+import { Link } from 'react-router-dom';
+import TestoZaLogo from './TestoZaLogo';
+
+const LINK_COLUMNS = [
+    {
+        title: 'Create',
+        links: [
+            { label: 'AI test generator', to: '/generate-with-ai' },
+            { label: 'Manual test builder', to: '/create-test' },
+            { label: 'PDF to quiz', to: '/pdf-to-quiz' },
+            { label: 'AI question generator', to: '/ai-question-generator' },
+            { label: 'MCQ test maker', to: '/mcq-test-maker' },
+            { label: 'Online quiz maker', to: '/online-quiz-maker' },
+        ],
+    },
+    {
+        title: 'Solutions',
+        links: [
+            { label: 'Online test maker', to: '/online-test-maker' },
+            { label: 'Online exam software', to: '/online-exam-software' },
+            { label: 'Exam software for schools', to: '/exam-software-for-schools' },
+            { label: 'Online tests for coaching', to: '/online-test-for-coaching' },
+            { label: 'Online proctoring software', to: '/online-proctoring-software' },
+            { label: 'Assessment platform', to: '/assessment-platform' },
+        ],
+    },
+    {
+        title: 'Platform',
+        links: [
+            { label: 'Pricing and plans', to: '/pricing' },
+            { label: 'Auto-grading software', to: '/auto-grading-software' },
+            { label: 'Quiz creator', to: '/quiz-creator' },
+            { label: 'Browse tests', to: '/more-tests' },
+            { label: 'LaTeX converter', to: '/convert' },
+            { label: 'User guide', to: '/user-guide' },
+        ],
+    },
+    {
+        title: 'Company',
+        links: [
+            { label: 'About TestoZa', to: '/about' },
+            { label: 'Support', to: '/support' },
+            { label: 'Privacy policy', to: '/privacy-policy' },
+            { label: 'Terms & conditions', to: '/terms-and-conditions' },
+        ],
+    },
+] as const;
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className="w-full border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 py-12 mt-auto relative overflow-hidden">
-            {/* Soft gradient decorative line at the top */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
-            
-            <div className="container mx-auto px-4 sm:px-6 relative z-10">
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:gap-12">
-                    {/* Brand Section */}
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent" style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1.5px' }}>
-                            TestoZa
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 w-full max-w-[300px] leading-relaxed">
-                            Professional online test and assessment platform for practice, evaluation, and learning.
+        <footer className="relative w-full mt-auto border-t border-slate-200 bg-slate-50 dark:border-white/[0.06] dark:bg-slate-950">
+            {/* Soft accent line, carried over from the previous footer */}
+            <div
+                aria-hidden="true"
+                className="absolute left-0 top-0 h-px w-full bg-gradient-to-r from-transparent via-indigo-500/25 to-transparent"
+            />
+
+            <div className="container mx-auto px-4 py-14 sm:px-6 sm:py-16">
+                <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6 lg:gap-8">
+                    {/* Brand + contact */}
+                    <div className="lg:col-span-2">
+                        <TestoZaLogo size={32} />
+                        <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                            The free online test maker for teachers, coaching institutes and
+                            schools. Create, conduct and analyse exams — powered by AI.
+                        </p>
+
+                        <dl className="mt-6 space-y-2 text-sm">
+                            <div className="flex flex-wrap items-center gap-x-1.5">
+                                <dt className="font-medium text-slate-700 dark:text-slate-300">Email:</dt>
+                                <dd>
+                                    <a
+                                        href="mailto:support@testoza.com"
+                                        className="text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+                                    >
+                                        support@testoza.com
+                                    </a>
+                                </dd>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-1.5">
+                                <dt className="font-medium text-slate-700 dark:text-slate-300">LinkedIn:</dt>
+                                <dd>
+                                    <a
+                                        href="https://www.linkedin.com/company/testoza"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs font-medium text-indigo-600 transition-colors hover:underline dark:text-indigo-400"
+                                    >
+                                        linkedin.com/company/testoza
+                                    </a>
+                                </dd>
+                            </div>
+                            <div className="flex gap-x-1.5">
+                                <dt className="shrink-0 font-medium text-slate-700 dark:text-slate-300">Address:</dt>
+                                <dd className="text-xs text-slate-500 dark:text-slate-400">
+                                    1st Floor, Nirmaan, Sudha &amp; Shankar Inv Hub, IIT Madras,
+                                    Chennai, Tamil Nadu 600036, India
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <p className="mt-4 flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                            ✓ SSL encrypted &amp; privacy protected
                         </p>
                     </div>
 
-                    {/* Legal Links Section */}
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-base font-semibold">Legal</h3>
-                        <nav className="flex flex-col gap-1">
-                            <Link
-                                to="/privacy-policy"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    {/* Link columns — the orphaned-page fix (audit C3) */}
+                    {LINK_COLUMNS.map((col) => (
+                        <nav key={col.title} aria-labelledby={`footer-${col.title}`}>
+                            <h2
+                                id={`footer-${col.title}`}
+                                className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-900 dark:text-white"
                             >
-                                Privacy Policy
-                            </Link>
-                            <Link
-                                to="/terms-and-conditions"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                            >
-                                Terms & Conditions
-                            </Link>
+                                {col.title}
+                            </h2>
+                            <ul className="mt-4 space-y-2.5">
+                                {col.links.map((l) => (
+                                    <li key={l.to}>
+                                        <Link
+                                            to={l.to}
+                                            className="text-sm text-slate-500 transition-colors hover:text-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 dark:text-slate-400 dark:hover:text-indigo-400"
+                                        >
+                                            {l.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                                {/* Blog lives on a subdomain, so it stays a plain anchor */}
+                                {col.title === 'Company' && (
+                                    <li>
+                                        <a
+                                            href="https://blog.testoza.com"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+                                        >
+                                            Blog &amp; news
+                                            <span aria-hidden="true" className="text-[10px] text-slate-400">↗</span>
+                                        </a>
+                                    </li>
+                                )}
+                            </ul>
                         </nav>
-                    </div>
-
-                    {/* Support & Contact Section */}
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-base font-semibold">Support & Contact</h3>
-                        <div className="flex flex-col gap-1 text-sm text-muted-foreground text-left">
-                            <div className="flex items-center gap-1">
-                                <span className="font-medium text-slate-700 dark:text-slate-300">Email:</span>
-                                <a
-                                    href="mailto:support@testoza.com"
-                                    className="hover:text-primary transition-colors"
-                                >
-                                    support@testoza.com
-                                </a>
-                            </div>
-                            <div className="flex items-start gap-1">
-                                <span className="font-medium text-slate-700 dark:text-slate-300">Platform:</span>
-                                <span className="text-slate-500 dark:text-slate-400">TestoZa Educational Systems</span>
-                            </div>
-                            <div className="flex items-start gap-1">
-                                <span className="font-medium text-slate-700 dark:text-slate-300 shrink-0">Address:</span>
-                                <span className="text-slate-500 dark:text-slate-400 text-xs">1st Floor, Nirmaan, Sudha & Shankar Inv Hub, IIT Madras, Chennai, Tamil Nadu 600036, India</span>
-                            </div>
-                            <div className="flex items-center gap-1 mt-1">
-                                <span className="font-medium text-slate-700 dark:text-slate-300">LinkedIn:</span>
-                                <a
-                                    href="https://www.linkedin.com/company/testoza"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-indigo-600 dark:text-indigo-400 hover:underline transition-colors font-medium text-xs"
-                                >
-                                    linkedin.com/company/testoza
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Resources & About Section */}
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-base font-semibold">Resources & News</h3>
-                        <nav className="flex flex-col gap-1">
-                            <a
-                                href="https://blog.testoza.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left font-medium text-indigo-600 dark:text-indigo-400 flex items-center gap-1"
-                            >
-                                <span>📰 TestoZa Blog & News</span>
-                                <span className="text-[10px] text-slate-400">↗</span>
-                            </a>
-                            <Link
-                                to="/user-guide"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
-                            >
-                                User Guide
-                            </Link>
-                            <Link
-                                to="/about"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
-                            >
-                                About Platform
-                            </Link>
-                            <Link
-                                to="/convert"
-                                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left"
-                            >
-                                LaTeX Converter
-                            </Link>
-                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
-                                ✓ SSL Encrypted & Privacy Protected
-                            </span>
-                        </nav>
-                    </div>
+                    ))}
                 </div>
 
-                {/* Copyright & Trust Disclaimer */}
-                <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground space-y-2">
-                    <p>© {currentYear} <span style={{ fontFamily: "'Ribeye', serif", letterSpacing: '1px' }}>TestoZa</span>. All rights reserved. Built for educators, schools, and competitive exam preparation.</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 max-w-2xl mx-auto">
-                        TestoZa is a privacy-compliant digital assessment and exam preparation software designed for learning, mock test practice, and institutional evaluation.
+                <div className="mt-12 space-y-2 border-t border-slate-200 pt-8 text-center dark:border-white/[0.06]">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        © {currentYear} TestoZa Educational Systems. All rights reserved.
+                        Built for educators, schools and competitive exam preparation.
+                    </p>
+                    <p className="mx-auto max-w-2xl text-xs text-slate-400 dark:text-slate-500">
+                        TestoZa is a privacy-compliant digital assessment and exam preparation
+                        platform designed for learning, mock test practice and institutional
+                        evaluation.
                     </p>
                 </div>
             </div>

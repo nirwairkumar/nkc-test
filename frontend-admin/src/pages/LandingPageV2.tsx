@@ -171,7 +171,8 @@ export default function LandingPageV2() {
                 <FeatureDeepDives />
                 <QuestionTypesStrip />
                 <Comparison />
-                <Testimonials />
+                {/* Testimonials disabled: placeholder quotes, no real ones to publish yet. */}
+                {/* <Testimonials /> */}
                 <Faq />
                 <FinalCta />
             </main>

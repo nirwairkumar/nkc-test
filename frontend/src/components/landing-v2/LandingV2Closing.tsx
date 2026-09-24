@@ -1,15 +1,17 @@
 /**
- * Landing V2 — comparison, testimonials, FAQ, final CTA, footer.
+ * Landing V2 — comparison, testimonials, FAQ, final CTA.
  *
- * The footer is the single highest-ROI SEO change on the page: the live footer
- * has five links and the live navbar links to none of the ~15 keyword landing
- * pages that already exist (audit C3). Here every one of them is linked.
+ * NOTE: no footer here. The live app renders one global <Footer /> from
+ * Layout.tsx on every page that should have one; the V2 footer's link
+ * structure was folded into that shared component instead (audit C3), so the
+ * whole site benefits rather than just this page.
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Check, ChevronDown, Minus, Quote, X } from 'lucide-react';
 import {
-    COMPARISON, FAQS, FOOTER_LINKS,
+    COMPARISON, FAQS,
     TESTIMONIALS, TESTIMONIALS_ARE_PLACEHOLDER,
 } from './content';
 import { Grain, Orb, Pill, Reveal, Section, SectionHeading, Surface } from './ui';
@@ -269,8 +271,8 @@ export function FinalCta() {
                     Upload a chapter PDF and see what the AI drafts. If it isn't useful, you've lost ten minutes.
                 </p>
                 <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                    <a
-                        href="/generate-with-ai"
+                    <Link
+                        to="/generate-with-ai"
                         className="group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-b from-sky-400 to-sky-600 px-8 py-4 text-[15px] font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.25)_inset,0_12px_32px_-10px_rgba(2,132,199,0.75)] transition-transform duration-200 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 sm:w-auto"
                     >
                         <span
@@ -279,86 +281,15 @@ export function FinalCta() {
                         />
                         <span className="relative">Generate a test with AI</span>
                         <ArrowRight className="relative h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                    </a>
-                    <a
-                        href="/pricing"
+                    </Link>
+                    <Link
+                        to="/pricing"
                         className="inline-flex w-full items-center justify-center rounded-xl border border-white/12 bg-white/[0.04] px-8 py-4 text-[15px] font-semibold text-slate-100 backdrop-blur-sm transition-colors hover:border-white/25 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 sm:w-auto"
                     >
                         See pricing
-                    </a>
+                    </Link>
                 </div>
-                <p className="mt-6 text-sm text-slate-400">Free forever for teachers · No card required</p>
             </div>
         </section>
-    );
-}
-
-/* ── 11. Footer — the SEO link hub (audit C3) ───────────────────────────── */
-
-function Wordmark({ size = 'text-2xl' }: { size?: string }) {
-    return (
-        <p className={`flex items-baseline font-bold tracking-tight ${size}`}>
-            <span className="text-sky-500 dark:text-sky-400">Testo</span>
-            <span
-                className="mx-[0.02em] text-[1.26em] font-black"
-                style={{
-                    background: 'linear-gradient(to bottom, #FFE885, #F4B838, #9E6400)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                }}
-            >
-                Z
-            </span>
-            <span className="text-sky-500 dark:text-sky-400">a</span>
-        </p>
-    );
-}
-
-export function LandingV2Footer() {
-    return (
-        <footer className="border-t border-slate-200 bg-white dark:border-white/[0.06] dark:bg-slate-950">
-            <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
-                <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-8">
-                    <div className="lg:col-span-1">
-                        <Wordmark />
-                        <p className="mt-4 max-w-xs text-pretty text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                            The free online test maker for teachers, coaching institutes and schools.
-                        </p>
-                    </div>
-
-                    {FOOTER_LINKS.map((col) => (
-                        <nav key={col.title} aria-labelledby={`footer-${col.title}`}>
-                            <h2
-                                id={`footer-${col.title}`}
-                                className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-900 dark:text-white"
-                            >
-                                {col.title}
-                            </h2>
-                            <ul className="mt-5 space-y-3">
-                                {col.links.map((l) => (
-                                    <li key={l.href}>
-                                        <a
-                                            href={l.href}
-                                            className="text-sm text-slate-600 transition-colors hover:text-sky-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 dark:text-slate-400 dark:hover:text-sky-400"
-                                        >
-                                            {l.label}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
-                    ))}
-                </div>
-
-                <div className="mt-14 flex flex-col items-center justify-center gap-4 border-t border-slate-100 pt-8 dark:border-white/[0.06]">
-                    <p className="text-xs text-slate-500 dark:text-slate-500">
-                        © {new Date().getFullYear()} TestoZa Educational Systems. All rights reserved.
-                    </p>
-                    {/* Flag emoji removed: regional-indicator glyphs don't render on most
-                        Windows configurations (shows as blank or two-letter fallback). */}
-                    {/* <p className="text-xs text-slate-500 dark:text-slate-500">Made for educators in India 🇮🇳</p> */}
-                </div>
-            </div>
-        </footer>
     );
 }
