@@ -232,6 +232,7 @@ export default function AdminAnalyticsPanel() {
     const [visitorSearch, setVisitorSearch] = useState('');
     const [visitorTypeFilter, setVisitorTypeFilter] = useState<'all' | 'registered' | 'repeat_guest' | 'guest'>('all');
     const [botFilter, setBotFilter] = useState<'all' | 'human' | 'bot'>('all');
+    const [platformFilter, setPlatformFilter] = useState<'all' | 'pdf' | 'main'>('all');
 
     const handleFetchVisitorPages = async (visitorId: string) => {
         if (visitorPages[visitorId]) {
@@ -702,10 +703,20 @@ export default function AdminAnalyticsPanel() {
                         )}
 
                         {/* VISITORS TAB */}
-                        {activeTab === 'visitors' && (
+                        {activeTab === 'visitors' && (() => {
+                            const pdfVisitorsCount = detailedVisitors.filter((v: any) => v.platform === 'pdf' || v.platform === 'both' || v.has_pdf).length;
+                            return (
                             <div className="space-y-6">
-                                <div className="grid gap-4 md:grid-cols-4">
+                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                                     <StatCard title="Total Visitors" value={detailedVisitors.length} icon={Users} color="text-indigo-500" bgColor="bg-indigo-500/10" />
+                                    <StatCard 
+                                        title="PDF Tools (Panna)" 
+                                        value={pdfVisitorsCount} 
+                                        icon={FileText} 
+                                        color="text-purple-600" 
+                                        bgColor="bg-purple-500/10" 
+                                        subtitle="pdf.testoza.com traffic"
+                                    />
                                     <StatCard 
                                         title="Real Humans" 
                                         value={detailedVisitors.filter((v: any) => !v.is_bot && v.traffic_category === 'human').length} 
@@ -718,8 +729,8 @@ export default function AdminAnalyticsPanel() {
                                         title="AI Bots & Crawlers" 
                                         value={detailedVisitors.filter((v: any) => v.is_bot || v.traffic_category !== 'human').length} 
                                         icon={Bot} 
-                                        color="text-purple-500" 
-                                        bgColor="bg-purple-500/10" 
+                                        color="text-amber-500" 
+                                        bgColor="bg-amber-500/10" 
                                         subtitle="Crawlers, scrapers & LLM bots"
                                     />
                                     <StatCard 
@@ -737,13 +748,22 @@ export default function AdminAnalyticsPanel() {
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <input
                                             type="text"
-                                            placeholder="Search location/fingerprint/name..."
+                                            placeholder="Search location/fingerprint/pdf..."
                                             value={visitorSearch}
                                             onChange={(e) => setVisitorSearch(e.target.value)}
                                             className="w-full rounded-lg border bg-background pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                                        <select
+                                            value={platformFilter}
+                                            onChange={(e: any) => setPlatformFilter(e.target.value)}
+                                            className="rounded-lg border bg-background px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                                        >
+                                            <option value="all">🌐 All Platforms</option>
+                                            <option value="pdf">📄 PDF Tools (pdf.testoza.com)</option>
+                                            <option value="main">🎓 Main Platform (testoza.com)</option>
+                                        </select>
                                         <select
                                             value={botFilter}
                                             onChange={(e: any) => setBotFilter(e.target.value)}
@@ -782,18 +802,26 @@ export default function AdminAnalyticsPanel() {
                                         <tbody className="divide-y">
                                             {detailedVisitors
                                                 .filter((v: any) => {
-                                                    const matchesSearch = 
-                                                        v.fingerprint?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-                                                        v.full_name?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-                                                        v.email?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-                                                        v.country?.toLowerCase().includes(visitorSearch.toLowerCase()) ||
-                                                        v.city?.toLowerCase().includes(visitorSearch.toLowerCase());
+                                                    const query = visitorSearch.toLowerCase().trim();
+                                                    const isPdfSearch = query === 'pdf' || query === 'panna' || query === 'pdf.testoza.com';
+                                                    const matchesSearch = !query || 
+                                                        (isPdfSearch && (v.platform === 'pdf' || v.platform === 'both' || v.has_pdf)) ||
+                                                        v.fingerprint?.toLowerCase().includes(query) ||
+                                                        v.full_name?.toLowerCase().includes(query) ||
+                                                        v.email?.toLowerCase().includes(query) ||
+                                                        v.country?.toLowerCase().includes(query) ||
+                                                        v.city?.toLowerCase().includes(query);
                                                     if (!matchesSearch) return false;
                                                     
                                                     if (botFilter === 'human' && (v.is_bot || v.traffic_category !== 'human')) return false;
                                                     if (botFilter === 'bot' && (!v.is_bot && v.traffic_category === 'human')) return false;
 
-                                                    return visitorTypeFilter === 'all' || v.visitor_type === visitorTypeFilter;
+                                                    if (visitorTypeFilter !== 'all' && v.visitor_type !== visitorTypeFilter) return false;
+
+                                                    if (platformFilter === 'pdf' && !(v.platform === 'pdf' || v.platform === 'both' || v.has_pdf)) return false;
+                                                    if (platformFilter === 'main' && !(v.platform === 'main' || v.platform === 'both' || v.has_main)) return false;
+
+                                                    return true;
                                                 })
                                                 .map((v: any) => {
                                                     const isExpanded = expandedVisitorId === v.id;
@@ -806,7 +834,19 @@ export default function AdminAnalyticsPanel() {
                                                                             {v.visitor_type === 'registered' && v.full_name ? v.full_name : `${v.fingerprint?.substring(0, 10)}...`}
                                                                         </span>
                                                                         {v.email && <span className="text-xs text-slate-500 dark:text-slate-400">{v.email}</span>}
-                                                                        <span className="text-[11px] text-slate-400 capitalize">{v.visitor_type.replace('_', ' ')}</span>
+                                                                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                                                            <span className="text-[11px] text-slate-400 capitalize">{v.visitor_type?.replace('_', ' ')}</span>
+                                                                            {(v.platform === 'pdf' || (v.has_pdf && !v.has_main)) && (
+                                                                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                                                                    PDF Tools
+                                                                                </span>
+                                                                            )}
+                                                                            {(v.platform === 'both' || (v.has_pdf && v.has_main)) && (
+                                                                                <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                                                                                    Multi-Platform
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-5 py-4">
@@ -932,10 +972,17 @@ export default function AdminAnalyticsPanel() {
                                                                                                 className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/60 shadow-2xs hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
                                                                                             >
                                                                                                 <div className="flex flex-col min-w-0 pr-4">
-                                                                                                    <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate">
-                                                                                                        {pv.title || 'Untitled Page'}
-                                                                                                    </span>
-                                                                                                    <span className="text-[11px] text-slate-400 font-mono truncate">
+                                                                                                    <div className="flex items-center gap-2">
+                                                                                                        <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate">
+                                                                                                            {pv.title || 'Untitled Page'}
+                                                                                                        </span>
+                                                                                                        {(pv.path?.includes('pdf.testoza.com') || pv.path?.startsWith('/edit-pdf') || pv.path?.startsWith('/latex-to-pdf') || pv.path?.startsWith('/chatgpt-to-pdf') || pv.title?.includes('Panna')) && (
+                                                                                                            <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 px-1.5 py-0.2 rounded border border-purple-200 dark:border-purple-800">
+                                                                                                                pdf.testoza.com
+                                                                                                            </span>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                    <span className="text-[11px] text-slate-400 font-mono truncate mt-0.5">
                                                                                                         {pv.path}
                                                                                                     </span>
                                                                                                 </div>
@@ -964,7 +1011,8 @@ export default function AdminAnalyticsPanel() {
                                     </table>
                                 </div>
                             </div>
-                        )}
+                            );
+                        })()}
                     </>
                 )}
             </div>

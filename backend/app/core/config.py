@@ -95,8 +95,11 @@ ALLOWED_ORIGINS = [
     "https://blog.testoza.com",
     "https://news.testoza.com",
     "https://testing.testoza.com",
-    "http://localhost:5173",  # Local dev
-    "http://localhost:8081",  # Local dev
+    "https://pdf.testoza.com",
+    "http://localhost:5173",  # Local dev (frontend)
+    "http://localhost:8081",  # Local dev (frontend-admin)
+    "http://localhost:8095",  # Local dev (pdf tools)
+    "http://localhost:8096",  # Local preview (pdf tools)
 ]
 
 

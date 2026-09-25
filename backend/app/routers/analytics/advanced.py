@@ -790,13 +790,14 @@ async def get_detailed_visitors(
             for p in (p_res.data or []):
                 profiles_map[p["id"]] = p
 
-        # Get stay time / duration for each visitor from sessions
+        # Get stay time / duration for each visitor from sessions and detect platform
         v_ids = [v["id"] for v in visitors]
         visitor_stay_map = {}
+        visitor_platform_map = {}
         if v_ids:
             try:
                 s_res = supabase.table("sessions")\
-                    .select("visitor_id, started_at, ended_at, duration_secs, page_count")\
+                    .select("visitor_id, started_at, ended_at, duration_secs, page_count, entry_page")\
                     .in_("visitor_id", v_ids)\
                     .execute()
                 for s in (s_res.data or []):
@@ -817,8 +818,38 @@ async def get_detailed_visitors(
                     if dur <= 0:
                         dur = pg_cnt * 15
                     visitor_stay_map[vid] = visitor_stay_map.get(vid, 0) + max(dur, 10)
+
+                    entry = (s.get("entry_page") or "").lower()
+                    if vid not in visitor_platform_map:
+                        visitor_platform_map[vid] = {"pdf": False, "main": False}
+                    if "pdf.testoza.com" in entry or entry.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf")) or "/pdf" in entry:
+                        visitor_platform_map[vid]["pdf"] = True
+                    elif entry:
+                        visitor_platform_map[vid]["main"] = True
             except Exception as s_err:
                 logger.warning(f"Warning fetching visitor session durations: {s_err}")
+
+            # Also check page_views to detect any PDF page views accurately
+            try:
+                pv_res = supabase.table("page_views")\
+                    .select("visitor_id, page_path, page_title")\
+                    .in_("visitor_id", v_ids)\
+                    .limit(1000)\
+                    .execute()
+                for pv in (pv_res.data or []):
+                    vid = pv.get("visitor_id")
+                    path = (pv.get("page_path") or "").lower()
+                    title = (pv.get("page_title") or "").lower()
+                    if not vid:
+                        continue
+                    if vid not in visitor_platform_map:
+                        visitor_platform_map[vid] = {"pdf": False, "main": False}
+                    if "pdf.testoza.com" in path or path.startswith(("/edit-pdf", "/edit-hindi-pdf", "/latex-to-pdf", "/chatgpt-to-pdf")) or "panna" in title or ("pdf" in title and "testoza" in title):
+                        visitor_platform_map[vid]["pdf"] = True
+                    elif path:
+                        visitor_platform_map[vid]["main"] = True
+            except Exception as pv_err:
+                logger.warning(f"Warning fetching visitor page view platforms: {pv_err}")
                 
         result = []
         for v in visitors:
@@ -841,6 +872,14 @@ async def get_detailed_visitors(
             total_stay = visitor_stay_map.get(vid)
             if total_stay is None:
                 total_stay = max(total_page_views * 15, 10)
+
+            plat_data = visitor_platform_map.get(vid, {"pdf": False, "main": True})
+            if plat_data["pdf"] and plat_data["main"]:
+                platform_label = "both"
+            elif plat_data["pdf"]:
+                platform_label = "pdf"
+            else:
+                platform_label = "main"
                 
             result.append({
                 "id": vid,
@@ -861,6 +900,9 @@ async def get_detailed_visitors(
                 "is_bot": traffic_info["is_bot"],
                 "traffic_category": traffic_info["category"],
                 "traffic_label": traffic_info["label"],
+                "platform": platform_label,
+                "has_pdf": plat_data["pdf"],
+                "has_main": plat_data["main"],
                 "page_views": []  # Lazy loaded on demand
             })
             

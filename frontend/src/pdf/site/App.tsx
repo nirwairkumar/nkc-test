@@ -9,14 +9,31 @@ import { Toaster } from '@/components/ui/sonner';
 import PannaFooter from '../ui/PannaFooter';
 import { PAGES, pageFor, type PageKey } from './routes';
 import { applyHead } from './seo';
+import { analyticsTracker } from '@/lib/analyticsTracker';
 
 export type PageComponents = Record<PageKey, ComponentType>;
 
 export default function App({ pages, onIntent }: { pages: PageComponents; onIntent?: (key: PageKey) => void }) {
-    const { pathname, hash } = useLocation();
+    const { pathname, search, hash } = useLocation();
     const page = pageFor(pathname);
 
-    useEffect(() => applyHead(page), [page]);
+    useEffect(() => {
+        applyHead(page);
+
+        if (typeof window !== 'undefined') {
+            const pdfPath = `pdf.testoza.com${page.path === '/' ? '/' : page.path}`;
+            analyticsTracker.trackPageView(pdfPath, page.title);
+
+            if ((window as any).gtag) {
+                (window as any).gtag('event', 'page_view', {
+                    page_path: page.path + (search || ''),
+                    page_title: page.title,
+                    page_location: window.location.href,
+                });
+            }
+        }
+    }, [page, pathname, search]);
+
     useEffect(() => {
         if (!hash) window.scrollTo(0, 0);
     }, [pathname, hash]);

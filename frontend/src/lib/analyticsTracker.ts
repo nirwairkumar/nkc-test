@@ -1,26 +1,28 @@
 import { generateFingerprint } from './fingerprint';
 import { getApiUrl } from './getApiUrl';
-const API_BASE = getApiUrl();
 
 class AnalyticsTracker {
     private fingerprint: string | null = null;
-    private sessionToken: string;
+    private sessionToken: string = '';
     private SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
     private initializationPromise: Promise<void> | null = null;
 
     constructor() {
-        this.sessionToken = this.getOrCreateSession();
+        if (typeof window !== 'undefined') {
+            this.sessionToken = this.getOrCreateSession();
+        }
     }
 
     private async ensureInitialized() {
+        if (typeof window === 'undefined') return;
         if (!this.fingerprint) {
             if (!this.initializationPromise) {
                 this.initializationPromise = generateFingerprint().then(fp => {
                     this.fingerprint = fp;
                 }).catch(e => {
                     console.error("Failed to generate fingerprint:", e);
-                    // Fallback to random if SHA256 subtile crypto fails
-                    this.fingerprint = "00000000000000000000000000000000000000000000000000000000000" + Math.random().toString(36).substring(2);
+                    // Fallback to exactly 64-char string if crypto fails
+                    this.fingerprint = ("0".repeat(64) + Math.random().toString(36).substring(2)).slice(-64);
                 });
             }
             await this.initializationPromise;
@@ -28,6 +30,10 @@ class AnalyticsTracker {
     }
 
     async trackPageView(path: string, title: string, userId?: string) {
+        if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+            return;
+        }
+
         // Skip analytics tracking for bots, search crawlers, and Lighthouse/PageSpeed audits to optimize CPU/TBT
         const ua = navigator.userAgent.toLowerCase();
         if (/lighthouse|pagespeed|speedinsights|bot|crawler|spider/i.test(ua)) {
@@ -41,8 +47,8 @@ class AnalyticsTracker {
 
         const payload = {
             event_type: "page_view",
-            fingerprint: this.fingerprint!,
-            session_token: this.sessionToken,
+            fingerprint: this.fingerprint || ("0".repeat(64)),
+            session_token: this.sessionToken || '00000000-0000-0000-0000-000000000000',
             page_path: path,
             page_title: title,
             user_id: userId || undefined,
@@ -60,16 +66,16 @@ class AnalyticsTracker {
     }
 
     private send(data: object) {
-        // API_BASE likely already includes /api, e.g., http://localhost:8000/api
-        // We just need to route to /analytics/track
-        const baseUrl = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
-        const url = `${baseUrl}/analytics/track`;
+        if (typeof window === 'undefined') return;
+        // Dynamically resolve base URL on the client
+        const baseUrl = getApiUrl();
+        const url = `${baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`}/analytics/track`;
 
         // Use sendBeacon if available, otherwise fallback to fetch
-        if (navigator.sendBeacon) {
+        if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
             const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             navigator.sendBeacon(url, blob);
-        } else {
+        } else if (typeof fetch !== 'undefined') {
             fetch(url, {
                 method: 'POST',
                 body: JSON.stringify(data),
@@ -80,22 +86,33 @@ class AnalyticsTracker {
     }
 
     private getOrCreateSession(): string {
-        let token = sessionStorage.getItem("nkc_session");
-        const lastStartStr = sessionStorage.getItem("nkc_session_start");
+        if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+            return '';
+        }
+        let token: string | null = null;
+        try {
+            token = sessionStorage.getItem("nkc_session");
+        } catch { }
+        const lastStartStr = sessionStorage ? sessionStorage.getItem("nkc_session_start") : null;
         const lastStart = lastStartStr ? parseInt(lastStartStr, 10) : 0;
 
         const isExpired = Date.now() - lastStart > this.SESSION_TIMEOUT;
 
         if (!token || isExpired) {
-            token = crypto.randomUUID();
-            sessionStorage.setItem("nkc_session", token);
-            sessionStorage.setItem("nkc_session_start", Date.now().toString());
+            token = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : (Math.random().toString(36).substring(2) + Date.now().toString(36));
+            try {
+                sessionStorage.setItem("nkc_session", token);
+                sessionStorage.setItem("nkc_session_start", Date.now().toString());
+            } catch { }
         } else {
             // Refresh expiration
-            sessionStorage.setItem("nkc_session_start", Date.now().toString());
+            try {
+                sessionStorage.setItem("nkc_session_start", Date.now().toString());
+            } catch { }
         }
         return token;
     }
 }
 
 export const analyticsTracker = new AnalyticsTracker();
+
