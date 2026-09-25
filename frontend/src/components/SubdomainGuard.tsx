@@ -41,14 +41,16 @@ export default function SubdomainGuard() {
         '/support',
         '/user-guide',
         '/convert',
+        '/pdf',
         '/quiz-creator',
         '/assessment-platform'
       ];
 
-      // Check if current path matches allowed list or starts with an allowed list subpath (e.g. /user-guide/:slug, /blog/:slug)
+      // Allowed when the path is an entry or one of its sub-paths (/user-guide/:slug, /pdf/editor).
+      // Matching on "p/" keeps '/pdf' from also admitting '/pdf-to-quiz'.
       const isAllowed = allowedMarketingPaths.some(p => {
         if (p === '/') return location.pathname === '/';
-        return location.pathname.startsWith(p);
+        return location.pathname === p || location.pathname.startsWith(p + '/');
       });
 
       if (!isAllowed) {

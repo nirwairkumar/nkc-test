@@ -89,7 +89,10 @@ const CombinedIntroPage = safeLazy(() => import("./pages/CombinedIntroPage"));
 const CombinedBreakScreen = safeLazy(() => import("./pages/CombinedBreakScreen"));
 const CreateCombinedTestPage = safeLazy(() => import("./pages/CreateCombinedTestPage"));
 const MoreTestsPage = safeLazy(() => import("./pages/MoreTestsPage"));
-const ConvertPage = safeLazy(() => import("./pages/ConvertPage"));
+// Panna — PDF tools
+const PdfToolsLanding = safeLazy(() => import("./pdf/pages/PdfToolsLanding"));
+const PdfEditorPage = safeLazy(() => import("./pdf/pages/PdfEditorPage"));
+const LatexToPdfPage = safeLazy(() => import("./pdf/pages/LatexToPdfPage"));
 const SurveyPage = safeLazy(() => import("./pages/SurveyPage"));
 
 // SEO Landing Pages
@@ -215,7 +218,11 @@ const App = () => (
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                     <Route path="/about" element={<AboutPage />} />
-                    <Route path="/convert" element={<ConvertPage />} />
+                    {/* Panna — PDF tools (the LaTeX converter moved here from /convert) */}
+                    <Route path="/pdf" element={<PdfToolsLanding />} />
+                    <Route path="/pdf/editor" element={<PdfEditorPage />} />
+                    <Route path="/pdf/latex-to-pdf" element={<LatexToPdfPage />} />
+                    <Route path="/convert" element={<Navigate to="/pdf/latex-to-pdf" replace />} />
                     <Route path="/survey" element={<SurveyPage />} />
 
                     {/* SEO Use-Case Landing Pages */}

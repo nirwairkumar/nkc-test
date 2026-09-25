@@ -83,6 +83,9 @@ export default function Layout() {
 
     const hideFooter = isLiveTestPage || isResultsPage || isCreateTestPage;
 
+    // Panna (PDF tools) pages bring their own header; the global footer stays.
+    const isPannaPage = location.pathname === '/pdf' || location.pathname.startsWith('/pdf/');
+
     // Check if current page is on blog subdomain or blog/news routes
     const isBlogSubdomain = typeof window !== 'undefined' && (
         window.location.hostname === 'blog.testoza.com' ||
@@ -99,6 +102,7 @@ export default function Layout() {
     // Sidebar is shown only on internal dashboard & management pages, completely hidden on blog & marketing pages
     const isSidebarHidden =
         isBlogPage ||
+        isPannaPage ||
         isLiveTestPage ||
         isResultsPage ||
         location.pathname === '/' ||
@@ -121,7 +125,7 @@ export default function Layout() {
 
     return (
         <div className="min-h-screen bg-slate-50 dashboard-mesh-bg flex flex-col">
-            {!isLiveTestPage && !isLandingPage && (
+            {!isLiveTestPage && !isLandingPage && !isPannaPage && (
                 <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <Navbar onToggleSidebar={handleToggleSidebar} />
                 </div>

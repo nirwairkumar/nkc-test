@@ -50,8 +50,16 @@ const LINK_COLUMNS = [
             { label: 'Auto-grading software', to: '/auto-grading-software' },
             { label: 'Quiz creator', to: '/quiz-creator' },
             { label: 'Browse tests', to: '/more-tests' },
-            { label: 'LaTeX converter', to: '/convert' },
             { label: 'User guide', to: '/user-guide' },
+        ],
+    },
+    {
+        // Panna — TestoZa's free PDF tools (src/pdf).
+        title: 'PDF tools',
+        links: [
+            { label: 'Panna PDF tools', to: '/pdf' },
+            { label: 'Free PDF editor', to: '/pdf/editor' },
+            { label: 'LaTeX to PDF', to: '/pdf/latex-to-pdf' },
         ],
     },
     {
@@ -71,9 +79,9 @@ export default function Footer() {
     return (
         <footer className="relative w-full mt-auto border-t border-slate-200 bg-white font-[Outfit,system-ui,sans-serif] dark:border-white/[0.06] dark:bg-slate-950">
             <div className="container mx-auto px-4 pt-12 pb-6 sm:px-6 sm:pt-14 sm:pb-6">
-                <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6 lg:gap-8">
+                <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 lg:gap-8">
                     {/* Brand + contact */}
-                    <div className="lg:col-span-2">
+                    <div className="sm:col-span-2 md:col-span-3 lg:col-span-2">
                         <Link to="/" className="inline-block hover:opacity-95 transition-opacity">
                             <p className="flex items-baseline font-bold tracking-tight text-2xl">
                                 <span className="text-sky-500 dark:text-sky-400">Testo</span>

@@ -1,0 +1,3 @@
+Noto Sans, Noto Serif and Noto Sans Devanagari are licensed under the SIL Open Font License 1.1.
+Copyright 2022 The Noto Project Authors (https://github.com/notofonts). https://openfontlicense.org
+These files are used by the Panna PDF editor for text that the original PDF font cannot show.

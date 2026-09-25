@@ -1,11 +1,41 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from 'url';
 import { compression } from 'vite-plugin-compression2';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/**
+ * Serves pdf.js runtime assets (CMaps, standard fonts, wasm decoders, ICC
+ * profiles) at /pdfjs/* in dev and copies them into the build. Self-hosting
+ * keeps the PDF editor free of third-party requests.
+ */
+function pdfjsAssets(): Plugin {
+  const src = path.resolve(__dirname, 'node_modules/pdfjs-dist');
+  const dirs = ['cmaps', 'standard_fonts', 'wasm', 'iccs'];
+  let outDir = path.resolve(__dirname, 'dist');
+  return {
+    name: 'pdfjs-assets',
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    configureServer(server) {
+      server.middlewares.use('/pdfjs', (req, res, next) => {
+        const rel = decodeURIComponent((req.url || '').split('?')[0]).replace(/^\/+/, '');
+        const file = path.join(src, rel);
+        if (!dirs.some((d) => rel.startsWith(d + '/')) || !file.startsWith(src) || !fs.existsSync(file)) return next();
+        if (file.endsWith('.wasm')) res.setHeader('Content-Type', 'application/wasm');
+        fs.createReadStream(file).pipe(res);
+      });
+    },
+    closeBundle() {
+      for (const d of dirs) fs.cpSync(path.join(src, d), path.join(outDir, 'pdfjs', d), { recursive: true });
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -31,6 +61,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    pdfjsAssets(),
     // Brotli & Gzip compression — primary & fallback compression formats
     compression({
       algorithms: ['brotliCompress', 'gzip'],
