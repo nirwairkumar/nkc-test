@@ -16,8 +16,12 @@ CACHE_TTL_HTML = "300"
 
 # Production environment
 [env.production]
-# Route pattern - handles all requests to testoza.com
-route = { pattern = "testoza.com/*", zone_name = "testoza.com" }
+# Route patterns - all requests to testoza.com, and to blog.testoza.com (the blog's own
+# head, robots.txt and sitemap; the site itself is the same Pages project)
+routes = [
+  { pattern = "testoza.com/*", zone_name = "testoza.com" },
+  { pattern = "blog.testoza.com/*", zone_name = "testoza.com" }
+]
 
 [env.production.vars]
 API_BASE_URL = "https://apigcp.testoza.com"  # Update with your Cloud Run URL

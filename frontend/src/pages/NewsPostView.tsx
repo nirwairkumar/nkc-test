@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { toast } from 'sonner';
 import { SEO } from '@/components/SEO';
+import { BLOG_NAME, BLOG_URL, blogHomePath, blogPostPath, blogPostUrl } from '@/lib/blog';
 
 // Tiptap Read-Only Renderer
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -196,7 +197,7 @@ export default function NewsPostView() {
     }, [post?.content]);
 
     const handleCopyLink = () => {
-        const url = `https://blog.testoza.com/${post?.slug || slug}`;
+        const url = blogPostUrl(post?.slug || slug || '');
         navigator.clipboard.writeText(url);
         setCopied(true);
         toast.success("Blog link copied to clipboard!");
@@ -204,18 +205,18 @@ export default function NewsPostView() {
     };
 
     const handleShareTwitter = () => {
-        const url = encodeURIComponent(`https://blog.testoza.com/${post?.slug || slug}`);
+        const url = encodeURIComponent(blogPostUrl(post?.slug || slug || ''));
         const text = encodeURIComponent(`Read "${post?.title}" on TestoZa Blog:`);
         window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
     };
 
     const handleShareLinkedIn = () => {
-        const url = encodeURIComponent(`https://blog.testoza.com/${post?.slug || slug}`);
+        const url = encodeURIComponent(blogPostUrl(post?.slug || slug || ''));
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
     };
 
     const handleShareWhatsApp = () => {
-        const url = encodeURIComponent(`https://blog.testoza.com/${post?.slug || slug}`);
+        const url = encodeURIComponent(blogPostUrl(post?.slug || slug || ''));
         const text = encodeURIComponent(`Check out this article: "${post?.title}"\n${decodeURIComponent(url)}`);
         window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
     };
@@ -266,14 +267,16 @@ export default function NewsPostView() {
                 <div className="text-5xl">🔍</div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Article Not Found</h2>
                 <p className="text-slate-500 text-sm">The article you are looking for might have been moved or removed.</p>
-                <Button onClick={() => navigate('/news')} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">
+                <Button onClick={() => navigate(blogHomePath)} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">
                     Explore All Blog Articles
                 </Button>
             </div>
         );
     }
 
-    const canonicalUrl = `https://blog.testoza.com/${post.slug}`;
+    // The Cloudflare worker writes the same canonical, description and BlogPosting for crawlers.
+    const canonicalUrl = blogPostUrl(post.slug);
+    const description = post.summary || `Read ${post.title} on TestoZa Blog for top exam preparation and insights.`;
     const formattedDate = new Date(post.published_at || post.created_at).toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
@@ -284,7 +287,7 @@ export default function NewsPostView() {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "headline": post.title,
-        "description": post.summary || post.title,
+        "description": description,
         "image": post.cover_image ? [post.cover_image] : ["https://testoza.com/default-og.png"],
         "datePublished": post.published_at || post.created_at,
         "dateModified": post.updated_at || post.published_at || post.created_at,
@@ -304,6 +307,12 @@ export default function NewsPostView() {
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": canonicalUrl
+        },
+        "isPartOf": {
+            "@type": "Blog",
+            "@id": `${BLOG_URL}/#blog`,
+            "name": BLOG_NAME,
+            "url": `${BLOG_URL}/`
         }
     };
 
@@ -320,10 +329,12 @@ export default function NewsPostView() {
 
             {/* SEO Meta & Schema.org Structured Data */}
             <SEO
-                title={`${post.title} - TestoZa Blog`}
-                description={post.summary || `Read ${post.title} on TestoZa Blog for top exam preparation and insights.`}
+                title={post.title}
+                siteName={BLOG_NAME}
+                description={description}
                 image={post.cover_image || undefined}
                 type="article"
+                url={canonicalUrl}
                 canonicalUrl={canonicalUrl}
                 schemas={[jsonLdArticleSchema]}
             />
@@ -331,7 +342,7 @@ export default function NewsPostView() {
             {/* Top Navigation & Breadcrumbs */}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 pb-3">
                 <Link
-                    to="/news"
+                    to={blogHomePath}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors group"
                 >
                     <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
@@ -530,7 +541,7 @@ export default function NewsPostView() {
                             {relatedPosts.filter(p => p.id !== post.id).slice(0, 3).map((r) => (
                                 <Link
                                     key={r.id}
-                                    to={`/news/${r.slug}`}
+                                    to={blogPostPath(r.slug)}
                                     className="group block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all p-4 space-y-2"
                                 >
                                     <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">

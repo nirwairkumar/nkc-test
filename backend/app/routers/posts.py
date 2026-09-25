@@ -9,6 +9,7 @@ import time
 import random
 import os
 import re
+import uuid
 
 import logging
 logger = logging.getLogger(__name__)
@@ -287,6 +288,13 @@ async def get_blog_sitemap(db: Client = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+def _is_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(value)
+        return True
+    except ValueError:
+        return False
+
 @router.get("/{slug}")
 async def get_post_by_slug(
     slug: str,
@@ -295,9 +303,12 @@ async def get_post_by_slug(
     """Pure read-only fetch for post by slug or ID. Does not mutate view_count."""
     try:
         response = db.table("posts").select("*").eq("slug", slug).execute()
-        
+
         if not response.data:
-            # Fallback: check if slug is a post ID UUID
+            # Fallback: the value may be a post ID. Postgres rejects a non-UUID id, which
+            # used to turn every unknown slug into a 500 instead of a 404.
+            if not _is_uuid(slug):
+                raise HTTPException(status_code=404, detail="Post not found")
             response = db.table("posts").select("*").eq("id", slug).execute()
             if not response.data:
                 raise HTTPException(status_code=404, detail="Post not found")

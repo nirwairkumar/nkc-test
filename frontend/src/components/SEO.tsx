@@ -33,7 +33,12 @@ export const SEO: React.FC<SEOProps> = ({
     schemas = [],
     noindex = false
 }) => {
-    const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - AI Test Maker`;
+    // A title that already carries the site name ("TestoZa Blog – …", "… | TestoZa") is used as-is.
+    const fullTitle = !title
+        ? `${siteName} - AI Test Maker`
+        : title.startsWith(siteName) || title.endsWith(`| ${siteName}`)
+            ? title
+            : `${title} | ${siteName}`;
     const metaImage = image || DEFAULT_IMAGE;
 
     // Ensure URL is absolute if provided, otherwise use current path on the main domain to consolidate indexing authority.

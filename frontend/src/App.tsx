@@ -186,6 +186,9 @@ const App = () => (
                     <Route path="/news/:slug" element={<NewsPostView />} />
                     <Route path="/posts" element={<NewsFeed />} />
                     <Route path="/posts/:slug" element={<NewsPostView />} />
+                    {/* On blog.testoza.com posts live at /<slug> (their canonical URL);
+                        static paths like /pricing still win over this pattern. */}
+                    {isBlogSubdomain && <Route path="/:slug" element={<NewsPostView />} />}
                     <Route path="/news/create" element={
                       <PrivateRoute>
                         <NewsPostEditor />

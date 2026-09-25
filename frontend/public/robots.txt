@@ -10,7 +10,6 @@ Sitemap: https://testoza.com/sitemap/index.xml
 Sitemap: https://testoza.com/sitemap/static.xml
 Sitemap: https://testoza.com/sitemap/tests.xml
 Sitemap: https://testoza.com/sitemap/categories.xml
-Sitemap: https://testoza.com/sitemap/posts.xml
 Sitemap: https://testoza.com/sitemap/creators.xml
 
 # ============================================

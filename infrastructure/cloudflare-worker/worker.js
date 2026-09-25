@@ -1179,6 +1179,368 @@ function securityHeaders() {
   };
 }
 
+// ─── blog.testoza.com ────────────────────────────────────────────────────────
+// The blog is the same Pages build as testoza.com (the app shows the news feed
+// when the hostname is blog.testoza.com). Without this section the HTML Google
+// reads for the blog is testoza.com's — same title, canonical https://testoza.com/,
+// site name "TestoZa" — so Google treats the blog as a copy of testoza.com and
+// lists it as one of its sitelinks. Here the blog gets its own identity (site
+// name "TestoZa Blog", own canonicals, robots.txt and sitemap) and every post
+// lives at https://blog.testoza.com/<slug>.
+// Keep the home title and description identical to src/lib/blog.ts in the
+// frontend, so nothing changes when the app hydrates.
+
+const BLOG_HOST = 'blog.testoza.com';
+const BLOG_URL = `https://${BLOG_HOST}`;
+const BLOG_NAME = 'TestoZa Blog';
+const BLOG_HOME_TITLE = 'TestoZa Blog – Exam Tips, Teaching Guides & Product Updates';
+const BLOG_HOME_DESCRIPTION = 'Guides for teachers and coaching institutes on creating and conducting online exams, exam preparation tips, and TestoZa product updates — from the TestoZa team.';
+const BLOG_IMAGE = 'https://testoza.com/default-og.png';
+const BLOG_PUBLISHER = {
+  '@type': 'Organization',
+  name: 'TestoZa',
+  url: 'https://testoza.com/',
+  logo: { '@type': 'ImageObject', url: 'https://testoza.com/favicon.ico' }
+};
+
+/** The app's older blog URLs: /news, /blog, /posts and /<prefix>/<slug>. */
+const BLOG_PREFIXES = ['news', 'blog', 'posts'];
+
+/**
+ * First path segments of testoza.com app pages (src/App.tsx) and Pages Functions
+ * (functions/). The blog's header and footer link to them with relative URLs, so
+ * on this host they are duplicates of testoza.com pages — they 301 to testoza.com.
+ */
+const APP_SECTIONS = new Set([
+  'share', 'about', 'ai-question-generator', 'all-submissions', 'analysis', 'analytics', 'assessment-platform',
+  'auth', 'auth-error', 'auto-grading-software', 'combined-break', 'combined-intro', 'compare',
+  'create-combined-test', 'create-test', 'creator', 'dashboard', 'edit-test', 'exam-software-for-schools',
+  'explore', 'generate-with-ai', 'history', 'live', 'login', 'materials', 'mcq-test-maker', 'more-tests',
+  'my-posts', 'my-tests', 'notifications', 'onboarding', 'online-exam-software', 'online-proctoring-software',
+  'online-quiz-maker', 'online-test-for-coaching', 'online-test-maker', 'pdf-to-quiz', 'premium', 'pricing',
+  'privacy-policy', 'profile', 'quiz-creator', 'results', 'rewards', 'settings', 'solutions',
+  'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test', 'test-analysis', 'test-intro',
+  'test-submitted', 'tests', 'update-password', 'user-guide', 'white-label-test-platform', 'youtube-to-quiz'
+]);
+
+const BLOG_ROBOTS_TXT = `# TestoZa Blog — https://blog.testoza.com
+User-agent: *
+Allow: /
+
+Sitemap: https://blog.testoza.com/sitemap.xml
+`;
+
+/**
+ * Every published post (pinned first, then newest), or null when the API is
+ * unreachable. One edge-cached list serves the home page, the sitemap and post
+ * lookups; it holds the title, summary, cover, dates and author a page head needs.
+ */
+async function fetchBlogFeed() {
+  try {
+    const res = await fetch(`${CONFIG.API_BASE_URL}/api/posts/feed?limit=1000`, {
+      headers: { Accept: 'application/json' },
+      cf: { cacheTtl: CONFIG.CACHE_TTL.HTML, cacheEverything: true }
+    });
+    if (!res.ok) return null;
+    const posts = await res.json();
+    return Array.isArray(posts) ? posts : null;
+  } catch (e) {
+    console.error('Blog feed fetch failed:', e);
+    return null;
+  }
+}
+
+function blogPostUrl(slug) {
+  return `${BLOG_URL}/${encodeURIComponent(slug)}`;
+}
+
+function formatBlogDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
+}
+
+/** Head tags for a blog page. Replaces everything testoza.com-specific in index.html. */
+function blogHeadTags({ title, ogTitle = title, description, url, image = BLOG_IMAGE, type = 'website', noindex = false, extra = '', jsonLd = null }) {
+  const robots = noindex
+    ? 'noindex, follow'
+    : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
+  return `
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}">
+    <meta name="robots" content="${robots}">${url ? `
+    <link rel="canonical" href="${escapeHtml(url)}">
+    <meta property="og:url" content="${escapeHtml(url)}">` : ''}
+    <meta property="og:site_name" content="${BLOG_NAME}">
+    <meta property="og:type" content="${type}">
+    <meta property="og:title" content="${escapeHtml(ogTitle)}">
+    <meta property="og:description" content="${escapeHtml(description)}">
+    <meta property="og:image" content="${escapeHtml(image)}">
+    <meta property="og:locale" content="en_IN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@testoza">
+    <meta name="twitter:title" content="${escapeHtml(ogTitle)}">
+    <meta name="twitter:description" content="${escapeHtml(description)}">
+    <meta name="twitter:image" content="${escapeHtml(image)}">${extra}${jsonLd ? `
+    <script type="application/ld+json">
+${safeJsonLd(jsonLd)}
+    </script>` : ''}
+`;
+}
+
+function blogHomePage(posts) {
+  const url = `${BLOG_URL}/`;
+  const items = posts
+    .map((p) => `<li><a href="${escapeHtml(blogPostUrl(p.slug))}">${escapeHtml(p.title)}</a>${p.summary ? ` — ${escapeHtml(p.summary)}` : ''}</li>`)
+    .join('\n          ');
+
+  return {
+    head: blogHeadTags({
+      title: BLOG_HOME_TITLE,
+      description: BLOG_HOME_DESCRIPTION,
+      url,
+      // The site name Google shows comes from this WebSite node on the home page.
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'WebSite',
+            '@id': `${BLOG_URL}/#website`,
+            name: BLOG_NAME,
+            alternateName: 'TestoZa Blog & News',
+            url,
+            inLanguage: 'en-IN',
+            publisher: BLOG_PUBLISHER
+          },
+          {
+            '@type': 'Blog',
+            '@id': `${BLOG_URL}/#blog`,
+            name: BLOG_NAME,
+            url,
+            description: BLOG_HOME_DESCRIPTION,
+            publisher: BLOG_PUBLISHER,
+            blogPost: posts.slice(0, 10).map((p) => ({
+              '@type': 'BlogPosting',
+              headline: p.title,
+              url: blogPostUrl(p.slug),
+              datePublished: p.published_at || p.created_at
+            }))
+          }
+        ]
+      }
+    }),
+    body: `
+        <h1>${BLOG_NAME}</h1>
+        <p>${escapeHtml(BLOG_HOME_DESCRIPTION)}</p>${items ? `
+        <h2>Latest articles</h2>
+        <ul>
+          ${items}
+        </ul>` : ''}
+        <p><a href="https://testoza.com/">TestoZa</a> is a free online test maker for teachers, schools and coaching institutes.</p>
+`
+  };
+}
+
+function blogPostPage(post) {
+  const url = blogPostUrl(post.slug);
+  // Same fallback text as NewsPostView.tsx, so the description does not change on hydration.
+  const description = post.summary || `Read ${post.title} on TestoZa Blog for top exam preparation and insights.`;
+  const image = post.cover_image || BLOG_IMAGE;
+  const published = post.published_at || post.created_at;
+  const modified = post.updated_at || published;
+  const author = (post.profiles && post.profiles.full_name) || 'TestoZa Editorial Team';
+
+  return {
+    head: blogHeadTags({
+      title: `${post.title} | ${BLOG_NAME}`,
+      ogTitle: post.title,
+      description,
+      url,
+      image,
+      type: 'article',
+      extra: `
+    <meta property="article:published_time" content="${escapeHtml(published)}">
+    <meta property="article:modified_time" content="${escapeHtml(modified)}">`,
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'BlogPosting',
+            '@id': `${url}#article`,
+            headline: post.title,
+            description,
+            image: [image],
+            datePublished: published,
+            dateModified: modified,
+            author: { '@type': 'Person', name: author },
+            publisher: BLOG_PUBLISHER,
+            mainEntityOfPage: url,
+            isPartOf: { '@type': 'Blog', '@id': `${BLOG_URL}/#blog`, name: BLOG_NAME, url: `${BLOG_URL}/` }
+          },
+          {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: BLOG_NAME, item: `${BLOG_URL}/` },
+              { '@type': 'ListItem', position: 2, name: post.title, item: url }
+            ]
+          }
+        ]
+      }
+    }),
+    body: `
+        <article>
+          <h1>${escapeHtml(post.title)}</h1>
+          <p>${escapeHtml(description)}</p>
+          <p>Published ${escapeHtml(formatBlogDate(published))} by ${escapeHtml(author)} on the <a href="${BLOG_URL}/">${BLOG_NAME}</a>.</p>
+        </article>
+`
+  };
+}
+
+function blogMessagePage(title, message) {
+  return {
+    head: blogHeadTags({ title: `${title} | ${BLOG_NAME}`, description: message, noindex: true }),
+    body: `
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(message)} <a href="${BLOG_URL}/">Browse all articles on the ${BLOG_NAME}</a>.</p>
+`
+  };
+}
+
+/**
+ * The app's index.html from Pages with the blog's head and crawlable body.
+ * The browser still gets the full app: React replaces <main> when it loads.
+ */
+async function serveBlogHtml(request, page, status = 200) {
+  const originResponse = await fetch(request);
+  if (!originResponse.ok) return originResponse;
+
+  // Everything that describes testoza.com instead of the blog.
+  const strip = [
+    'title', 'meta[name="description"]', 'meta[name="keywords"]', 'meta[name="author"]',
+    'meta[name="robots"]', 'meta[name="googlebot"]', 'link[rel="canonical"]',
+    'meta[property^="og:"]', 'meta[name^="twitter:"]', 'script[type="application/ld+json"]'
+  ];
+  const rewriter = new HTMLRewriter();
+  for (const selector of strip) {
+    rewriter.on(selector, { element(el) { el.remove(); } });
+  }
+  rewriter
+    .on('head', { element(el) { el.append(page.head, { html: true }); } })
+    .on('main', { element(el) { el.setInnerContent(page.body, { html: true }); } });
+
+  const transformed = rewriter.transform(originResponse);
+  const headers = new Headers(transformed.headers);
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  // Pages sends "max-age=0, must-revalidate" for HTML; keep it, so a new deploy
+  // is never served with an old page that points at deleted asset files.
+  if (status === 503) headers.set('Retry-After', '300');
+
+  return new Response(transformed.body, { status, headers });
+}
+
+async function handleBlogSitemap() {
+  const posts = await fetchBlogFeed();
+  if (!posts) {
+    // 503 tells crawlers to come back later instead of dropping every post URL.
+    return new Response('Sitemap temporarily unavailable', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Retry-After': '3600' }
+    });
+  }
+
+  const day = (value) => (value ? String(value).slice(0, 10) : '');
+  const entry = (loc, lastmod) => `  <url>
+    <loc>${escapeHtml(loc)}</loc>${lastmod ? `
+    <lastmod>${lastmod}</lastmod>` : ''}
+  </url>`;
+  const newest = posts.map((p) => day(p.updated_at || p.published_at)).filter(Boolean).sort().pop();
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${[entry(`${BLOG_URL}/`, newest), ...posts.map((p) => entry(blogPostUrl(p.slug), day(p.updated_at || p.published_at)))].join('\n')}
+</urlset>
+`;
+  return new Response(xml, {
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': `public, max-age=${CONFIG.CACHE_TTL.SITEMAP}`
+    }
+  });
+}
+
+/** Every request to blog.testoza.com. */
+async function handleBlogRequest(request, url) {
+  const path = url.pathname.replace(/\/+$/, '') || '/';
+  const segments = path.split('/').filter(Boolean);
+
+  if (path === '/robots.txt') {
+    return new Response(BLOG_ROBOTS_TXT, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=86400' }
+    });
+  }
+  if (path === '/sitemap.xml') {
+    return handleBlogSitemap();
+  }
+
+  // Files (scripts, styles, images, llms.txt …), the Pages API proxy and
+  // Cloudflare's own /cdn-cgi endpoints come straight from Pages.
+  if ((segments.length && segments[segments.length - 1].includes('.')) || segments[0] === 'api' || segments[0] === 'cdn-cgi') {
+    return fetch(request);
+  }
+
+  // Older URLs: /news → /, /news/<slug> → /<slug> (same for /blog and /posts).
+  if (BLOG_PREFIXES.includes(segments[0])) {
+    if (segments.length === 1) {
+      return Response.redirect(`${BLOG_URL}/${url.search}`, 301);
+    }
+    if (segments.length === 2 && segments[1] !== 'create') {
+      return Response.redirect(`${BLOG_URL}/${segments[1]}${url.search}`, 301);
+    }
+    // Writing and editing posts (/news/create, /news/edit/<id>) happen in the signed-in app.
+    return Response.redirect(`https://app.testoza.com${url.pathname}${url.search}`, 302);
+  }
+
+  if (path === '/') {
+    return serveBlogHtml(request, blogHomePage(((await fetchBlogFeed()) || []).slice(0, 20)));
+  }
+
+  if (APP_SECTIONS.has(segments[0])) {
+    return Response.redirect(`https://testoza.com${url.pathname}${url.search}`, 301);
+  }
+
+  if (segments.length === 1) {
+    let slug = segments[0];
+    try { slug = decodeURIComponent(slug); } catch { /* keep the raw segment */ }
+
+    const posts = await fetchBlogFeed();
+    if (!posts) {
+      return serveBlogHtml(request, blogMessagePage('Article temporarily unavailable', 'This article could not be loaded right now. Please try again in a few minutes.'), 503);
+    }
+    const post = posts.find((p) => p.slug === slug || p.id === slug);
+    if (post) {
+      // Links by post ID (the app accepts them) go to the post's real URL.
+      if (post.slug !== slug) {
+        return Response.redirect(`${blogPostUrl(post.slug)}${url.search}`, 301);
+      }
+      return serveBlogHtml(request, blogPostPage(post));
+    }
+  }
+
+  // Unknown or unpublished: a real 404 for crawlers. The app still loads and
+  // shows its own "not found" (or a draft to its signed-in author).
+  return serveBlogHtml(request, blogMessagePage('Article not found', 'This article does not exist or is no longer published.'), 404);
+}
+
+/** testoza.com/news, /blog, /posts and their post URLs → the same pages on the blog. */
+function mainSiteBlogRedirect(url) {
+  const segments = url.pathname.split('/').filter(Boolean);
+  if (!BLOG_PREFIXES.includes(segments[0])) return null;
+  if (segments.length === 1) return `${BLOG_URL}/${url.search}`;
+  if (segments.length === 2 && segments[1] !== 'create') return `${BLOG_URL}/${segments[1]}${url.search}`;
+  return null; // /news/create and /news/edit/<id> stay in the app
+}
+
 /** Old testoza.com PDF-tool URLs → their pages on pdf.testoza.com. */
 const PANNA_MOVED = {
   '/pdf': '/',
@@ -1214,6 +1576,17 @@ export default {
       const pannaTarget = PANNA_MOVED[url.pathname.replace(/\/+$/, '') || '/'];
       if (pannaTarget) {
         return Response.redirect(`https://pdf.testoza.com${pannaTarget}${url.search}`, 301);
+      }
+
+      // blog.testoza.com is its own site ("TestoZa Blog"), served from the same Pages build.
+      if (url.hostname === BLOG_HOST) {
+        return await handleBlogRequest(request, url);
+      }
+
+      // The blog moved to blog.testoza.com — its old testoza.com URLs follow it.
+      const blogTarget = mainSiteBlogRedirect(url);
+      if (blogTarget) {
+        return Response.redirect(blogTarget, 301);
       }
 
       // Sitemap requests (e.g. /sitemap.xml, /sitemap/index.xml, /sitemap/static.xml)
@@ -1302,7 +1675,6 @@ Sitemap: https://testoza.com/sitemap/index.xml
 Sitemap: https://testoza.com/sitemap/static.xml
 Sitemap: https://testoza.com/sitemap/tests.xml
 Sitemap: https://testoza.com/sitemap/categories.xml
-Sitemap: https://testoza.com/sitemap/posts.xml
 Sitemap: https://testoza.com/sitemap/creators.xml
 
 # Crawl rate

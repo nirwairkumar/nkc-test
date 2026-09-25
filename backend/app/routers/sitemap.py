@@ -153,7 +153,8 @@ async def get_sitemap_index():
         {"loc": f"{SITE_URL}/sitemap/static.xml", "lastmod": today},
         {"loc": f"{SITE_URL}/sitemap/tests.xml", "lastmod": today},
         {"loc": f"{SITE_URL}/sitemap/categories.xml", "lastmod": today},
-        {"loc": f"{SITE_URL}/sitemap/posts.xml", "lastmod": today},
+        # Blog posts live on blog.testoza.com, which serves its own sitemap
+        # (Cloudflare worker: https://blog.testoza.com/sitemap.xml).
         {"loc": f"{SITE_URL}/sitemap/creators.xml", "lastmod": today},
     ]
     
@@ -208,14 +209,16 @@ async def get_tests_sitemap(db: Client = Depends(get_db)):
     
     urls = []
     try:
+        # tests has no updated_at column; selecting it made this query fail and the
+        # sitemap came back empty.
         result = db.table("tests").select(
-            "id, slug, title, created_at, updated_at, is_public, visibility"
+            "id, slug, title, created_at, is_public, visibility"
         ).eq("is_public", True).neq("visibility", "private").execute()
-        
+
         tests = result.data if result and result.data else []
         for test in tests:
             url_path = f"/test/{test['slug']}" if test.get('slug') else f"/test-intro/{test['id']}"
-            lastmod = test.get('updated_at') or test.get('created_at')
+            lastmod = test.get('created_at')
             if lastmod:
                 lastmod = str(lastmod)[:10]
             else:
