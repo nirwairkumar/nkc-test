@@ -5,7 +5,7 @@
 import { ArrowUpRight, Circle, Eraser, Highlighter, ImagePlus, Minus, PenLine, Signature, Square, SquareDashed, TextCursorInput, Type } from 'lucide-react';
 import type { ComponentType } from 'react';
 import type { RGB } from '../engine/edits';
-import { useEditor } from './EditorContext';
+import { rgbCss, useEditor } from './EditorContext';
 import { ColorDots, Divider } from './FormatBar';
 import { FAMILIES } from './fonts';
 import type { Tool } from './store';
@@ -66,7 +66,7 @@ function ToolButton({ def, active, onClick }: { def: ToolDef; active: boolean; o
 }
 
 export default function ToolBar({ onImage, onSign }: { onImage: () => void; onSign: () => void }) {
-    const { state, dispatch } = useEditor();
+    const { state, dispatch, scale } = useEditor();
     const setTool = (tool: Tool) => dispatch({ type: 'tool', tool });
     const t = state.tool;
     const d = state.draw;
@@ -98,6 +98,10 @@ export default function ToolBar({ onImage, onSign }: { onImage: () => void; onSi
                             <label className="flex shrink-0 items-center gap-1.5">
                                 Width
                                 <input type="range" min={0.5} max={10} step={0.5} value={d.width} onChange={(e) => dispatch({ type: 'drawDefaults', patch: { width: +e.target.value } })} className="w-20 accent-emerald-600" />
+                                {/* Preview: the stroke as thick as it will look on the page at this zoom */}
+                                <svg width={40} height={24} aria-hidden="true" className="shrink-0">
+                                    <line x1={4} y1={12} x2={36} y2={12} stroke={rgbCss(d.stroke)} strokeWidth={Math.max(1, d.width * scale)} strokeLinecap="round" />
+                                </svg>
                             </label>
                             {(t === 'rect' || t === 'ellipse') && (
                                 <label className="flex shrink-0 items-center gap-1.5">
