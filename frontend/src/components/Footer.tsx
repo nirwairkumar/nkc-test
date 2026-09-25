@@ -159,10 +159,18 @@ export default function Footer() {
                                         'text-sm text-slate-600 transition-colors hover:text-sky-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 dark:text-slate-400 dark:hover:text-sky-400';
                                     return (
                                         <li key={l.to}>
-                                            {/* Other TestoZa subdomains (pdf.) are plain anchors */}
+                                            {/* Other TestoZa subdomains (pdf.) open in a new tab. No
+                                                noreferrer: both sites share one GA4 property, so the
+                                                referrer lets it credit testoza.com for the visit. */}
                                             {l.to.startsWith('https://') ? (
-                                                <a href={l.to} className={cls}>
+                                                <a
+                                                    href={l.to}
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                    className={`inline-flex items-center gap-1 ${cls}`}
+                                                >
                                                     {l.label}
+                                                    <span aria-hidden="true" className="text-[10px] text-slate-400">↗</span>
                                                 </a>
                                             ) : (
                                                 <Link to={l.to} className={cls}>
