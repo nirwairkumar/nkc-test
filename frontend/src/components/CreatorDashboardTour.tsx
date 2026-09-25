@@ -303,7 +303,7 @@ export default function CreatorDashboardTour({
       case 3:
         return {
           title: "⚙️ Security Settings",
-          desc: "Nice! Your test is now live in Active Exams. Let's customize the cheating protection. Click Settings.",
+          desc: "Nice! Your test is now live under Live exams. Let's customize the cheating protection. Click Settings.",
           inst: "Click Settings",
           num: 3,
           max: 11

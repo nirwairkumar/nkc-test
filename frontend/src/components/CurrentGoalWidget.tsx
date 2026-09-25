@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Sparkles, CheckCircle2, Shield } from 'lucide-react';
+import { Award, CheckCircle2, ChevronRight } from 'lucide-react';
 import { CreatorBadgeIcon } from '@/components/CreatorBadgeIcon';
 import { CreatorRewardsStats } from '@/lib/rewardsApi';
 
@@ -9,18 +9,20 @@ interface CurrentGoalWidgetProps {
     loading?: boolean;
 }
 
+// Level titles are stored in caps ("VERIFIED CREATOR"); shouting reads as noise in a sentence.
+const toTitleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
 export const CurrentGoalWidget: React.FC<CurrentGoalWidgetProps> = ({ stats, loading = false }) => {
     const navigate = useNavigate();
 
     if (loading) {
         return (
-            <div className="w-full bg-slate-900/90 dark:bg-slate-900/95 border border-slate-800 rounded-2xl p-3 sm:px-4 sm:py-3 animate-pulse flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-slate-800 rounded-full shrink-0" />
-                    <div className="space-y-1">
-                        <div className="h-3 w-32 bg-slate-800 rounded" />
-                        <div className="h-2 w-48 bg-slate-800/60 rounded" />
-                    </div>
+            <div className="flex w-full items-center gap-4 rounded-2xl bg-[#0b1120] p-4 ring-1 ring-white/10 animate-pulse sm:px-5">
+                <div className="h-12 w-12 shrink-0 rounded-full bg-white/10" />
+                <div className="flex-1 space-y-2">
+                    <div className="h-3 w-28 rounded bg-white/10" />
+                    <div className="h-4 w-48 rounded bg-white/10" />
+                    <div className="h-2 w-full rounded-full bg-white/10" />
                 </div>
             </div>
         );
@@ -30,85 +32,86 @@ export const CurrentGoalWidget: React.FC<CurrentGoalWidgetProps> = ({ stats, loa
 
     const currentLvl = stats.currentLevel;
     const nextLvl = stats.nextLevel;
-    const isMaxLevel = currentLvl && currentLvl.level === 6;
+    const isMaxLevel = !!currentLvl && currentLvl.level === 6;
+    const pct = Math.min(100, Math.max(0, stats.progressPercentage));
+    const needed = stats.qualityTestsNeededForNext;
 
     return (
-        <div 
+        <button
+            type="button"
             onClick={() => navigate('/rewards')}
-            className="group relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950/50 p-2.5 sm:px-5 sm:py-3.5 shadow-md shadow-amber-950/20 text-white cursor-pointer transition-all duration-300 hover:border-amber-500/50"
+            className="group relative w-full overflow-hidden rounded-2xl bg-[#0b1120] text-left text-white ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_16px_32px_-20px_rgba(2,6,23,0.9)] transition-shadow duration-300 hover:ring-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 cursor-pointer"
         >
-            {/* Background ambient glow */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-2xl pointer-events-none -translate-y-1/2 translate-x-1/3 group-hover:bg-amber-500/20 transition-all duration-500" />
+            {/* Light sources — same recipe as the landing hero */}
+            <span aria-hidden="true" className="pointer-events-none absolute -left-20 -top-28 h-60 w-60 rounded-full bg-sky-500/20 blur-3xl" />
+            <span aria-hidden="true" className="pointer-events-none absolute -bottom-28 right-6 h-60 w-60 rounded-full bg-amber-400/15 blur-3xl transition-opacity duration-500 group-hover:bg-amber-400/25" />
 
-            <div className="relative z-10 flex flex-row items-center justify-between gap-2.5 sm:gap-5">
-                {/* Left Side: Current Level Badge & Goal Info */}
-                <div className="flex items-center gap-2.5 sm:gap-4 flex-1 min-w-0">
-                    {/* Current Badge Icon */}
-                    <div className="relative shrink-0 flex flex-col items-center justify-center">
-                        {currentLvl ? (
-                            <CreatorBadgeIcon level={currentLvl.level} size={48} className="w-10 h-10 sm:w-14 sm:h-14" />
+            <div className="relative flex items-center gap-3.5 p-4 sm:gap-5 sm:px-5">
+                {/* The badge being worked towards — the goal is the hero, not the current rank */}
+                <div className="relative shrink-0">
+                    <span aria-hidden="true" className="absolute inset-0 rounded-full bg-amber-400/25 blur-md" />
+                    {isMaxLevel || !nextLvl ? (
+                        currentLvl ? (
+                            <CreatorBadgeIcon level={currentLvl.level} size={52} className="relative h-12 w-12 sm:h-14 sm:w-14" />
                         ) : (
-                            <div className="w-9 h-9 sm:w-13 sm:h-13 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/40 flex items-center justify-center shadow-inner">
-                                <Award className="w-4 h-4 sm:w-6 sm:h-6 text-amber-400" />
-                            </div>
-                        )}
-                        <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                            {currentLvl ? `Lvl ${currentLvl.level}` : 'Starter'}
-                        </span>
-                    </div>
-
-                    <div className="flex-1 min-w-0 space-y-0.5">
-                        <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight truncate">
-                            {isMaxLevel ? (
-                                <span className="text-amber-300">Legend Creator — Max Level!</span>
-                            ) : (
-                                <span>Target: <strong className="text-amber-300">{nextLvl.title}</strong> <span className="hidden sm:inline">(Level {nextLvl.level})</span></span>
-                            )}
-                        </h3>
-
-                        {/* Progress Bar Container */}
-                        {!isMaxLevel ? (
-                            <div className="space-y-0.5 pt-0.5">
-                                <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold">
-                                    <span className="text-slate-300 truncate">
-                                        {stats.quality_tests_count} / {nextLvl.requiredQualityTests} Conducted Tests
-                                    </span>
-                                    <span className="text-amber-400 font-mono font-bold ml-1.5 shrink-0">{stats.progressPercentage}%</span>
-                                </div>
-                                
-                                <div className="relative w-full bg-slate-800/90 rounded-full h-1.5 sm:h-2 overflow-hidden border border-slate-700/80">
-                                    <div 
-                                        className="bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 h-full rounded-full transition-all duration-500 shadow-sm" 
-                                        style={{ width: `${Math.max(5, stats.progressPercentage)}%` }}
-                                    />
-                                </div>
-
-                                <p className="text-[9px] sm:text-[10px] text-slate-400 flex items-center gap-1 truncate">
-                                    <Shield className="w-2.5 h-2.5 text-amber-400 shrink-0" />
-                                    <span className="truncate">
-                                        Need <strong>{stats.qualityTestsNeededForNext}</strong> more conducted test{stats.qualityTestsNeededForNext > 1 ? 's' : ''} (min 20 subs each)
-                                    </span>
-                                </p>
-                            </div>
-                        ) : (
-                            <p className="text-[10px] sm:text-[11px] text-slate-300 flex items-center gap-1 truncate">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                <span className="truncate">Mastered {stats.quality_tests_count} conducted tests!</span>
-                            </p>
-                        )}
-                    </div>
+                            <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/15 ring-1 ring-amber-400/40">
+                                <Award className="h-6 w-6 text-amber-300" />
+                            </span>
+                        )
+                    ) : (
+                        <CreatorBadgeIcon level={nextLvl.level} size={52} className="relative h-12 w-12 sm:h-14 sm:w-14" />
+                    )}
                 </div>
 
-                {/* Right Side: Direct Target Badge Icon */}
-                {!isMaxLevel && nextLvl && (
-                    <div className="shrink-0 flex items-center justify-center pl-1 sm:pl-2">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-amber-400/20 rounded-full blur-md animate-pulse pointer-events-none" />
-                            <CreatorBadgeIcon level={nextLvl.level} size={52} className="w-12 h-12 sm:w-16 sm:h-16 drop-shadow-md relative z-10" />
-                        </div>
-                    </div>
-                )}
+                <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300">
+                        Creator rewards · {currentLvl ? `Level ${currentLvl.level}` : 'Starter'}
+                    </p>
+
+                    {isMaxLevel ? (
+                        <>
+                            <p className="mt-1 truncate text-[15px] font-semibold leading-tight sm:text-base">
+                                {toTitleCase(currentLvl!.title)} — highest level reached
+                            </p>
+                            <p className="mt-1.5 flex items-center gap-1.5 text-[13px] text-slate-300">
+                                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                                <span className="truncate">You've conducted {stats.quality_tests_count} quality exams.</span>
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="mt-1 truncate text-[15px] font-semibold leading-tight sm:text-base">
+                                Next badge: <span className="text-amber-200">{toTitleCase(nextLvl.title)}</span>
+                            </p>
+
+                            <div className="mt-2.5 flex items-center gap-3">
+                                <div
+                                    className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/10"
+                                    role="progressbar"
+                                    aria-valuenow={pct}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-label={`Progress to ${toTitleCase(nextLvl.title)}`}
+                                >
+                                    <div
+                                        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-[width] duration-700 ease-out"
+                                        style={{ width: pct === 0 ? 0 : `${Math.max(4, pct)}%` }}
+                                    />
+                                </div>
+                                <span className="shrink-0 text-[13px] font-semibold tabular-nums text-amber-200">
+                                    {stats.quality_tests_count}/{nextLvl.requiredQualityTests}
+                                </span>
+                            </div>
+
+                            <p className="mt-1.5 line-clamp-2 text-[13px] leading-snug text-slate-300">
+                                Conduct {needed} more exam{needed === 1 ? '' : 's'} with 20+ students each to unlock it.
+                            </p>
+                        </>
+                    )}
+                </div>
+
+                <ChevronRight className="h-5 w-5 shrink-0 text-slate-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-slate-300" />
             </div>
-        </div>
+        </button>
     );
 };

@@ -1,27 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Loader2, Edit, Plus, Upload, Radio, Settings, BarChart2, Link as LinkIcon, X, GraduationCap, Search, Inbox, CheckCircle, Shield, AlertTriangle, Copy, Share2, ArrowLeft } from 'lucide-react';
+import {
+    Loader2, Pencil, Plus, Radio, Settings, BarChart3, Link as LinkIcon, X, GraduationCap, Search, Inbox,
+    CheckCircle, AlertTriangle, Copy, Share2, Globe, Lock, Info, Trash2, MoreHorizontal, Check, FileText,
+    FilePlus2, ListChecks, Clock, Users, Square, History, ChevronDown,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
 import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
 import { fetchClasses } from '@/lib/classesApi';
 import { fetchUserDetails } from '@/lib/usersApi';
 import { fetchCategories } from '@/lib/categoriesApi';
-import { Globe, Lock, Info } from 'lucide-react';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchCreatorReports, updateReportStatus, Report } from "@/lib/reportsApi";
-import { Badge } from "@/components/ui/badge";
-import TestBuilder from '@/components/TestBuilder';
-import { TestUploadFormatGuide } from '@/components/TestUploadFormatGuide';
 import { shareTest } from '@/utils/shareUtils';
 import TestSettingsPanel from '@/components/TestSettingsPanel';
 import TestResultsPanel from '@/components/TestResultsPanel';
@@ -46,16 +38,34 @@ import {
     DropdownMenuSubContent,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Trash2, MoreVertical, Check, FileText } from 'lucide-react';
 
-import { UserTestCard } from '@/components/UserTestCard';
-import { TestCardSkeleton } from '@/components/TestCardSkeleton';
+import { UserTestCard, UserTestCardSkeleton, StatusPill } from '@/components/UserTestCard';
 import { useYouTubeStyleRender } from '@/hooks/useYouTubeStyleRender';
 import CreatorDashboardTour from '@/components/CreatorDashboardTour';
 import SplashLoader from '@/components/ui/SplashLoader';
 import { CurrentGoalWidget } from '@/components/CurrentGoalWidget';
 import { fetchCreatorRewards, CreatorRewardsStats } from '@/lib/rewardsApi';
-import { supabase } from '@/integrations/supabase/client';
+
+/* Shared control styles — iOS-flavoured, in the landing page's sky palette. */
+const PRIMARY_BTN =
+    'inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary text-[15px] font-semibold text-white ' +
+    'shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_24px_-12px_rgba(2,132,199,0.85)] ' +
+    'transition-[background-color,transform] duration-150 hover:bg-[hsl(200,95%,30%)] motion-safe:active:scale-[0.97] ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 focus-visible:ring-offset-2 cursor-pointer';
+const PILL_BTN =
+    'inline-flex h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3.5 text-[13px] font-semibold text-slate-700 ' +
+    'transition-[background-color,transform] duration-150 hover:bg-slate-200/80 motion-safe:active:scale-[0.97] ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 cursor-pointer';
+const MENU_TRIGGER =
+    'flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-900 cursor-pointer';
+const SEGMENT =
+    'h-9 rounded-[9px] px-4 text-sm font-semibold text-slate-600 transition-all hover:text-slate-900 ' +
+    'data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-[0_1px_3px_rgba(15,23,42,0.12),0_1px_1px_rgba(15,23,42,0.04)]';
+
+const GUIDE_DISMISSED_KEY = 'testoza_mytests_guide_dismissed';
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 const isProctoringEnabled = (test: any) => {
     const s = test?.settings;
@@ -681,93 +691,8 @@ export default function UserTestManager() {
         await confirmRemoveExamById(removeExamId, makePublic);
     };
 
-    // ─── Helpers ──────────────────────────────────────────────────
-    const getVisibilityIcon = (visibility: string) => {
-        switch (visibility) {
-            case 'public': return <Globe className="h-3 w-3" />;
-            case 'private': return <Lock className="h-3 w-3" />;
-            default: return <Globe className="h-3 w-3" />;
-        }
-    };
-
-    const getVisibilityColor = (visibility: string) => {
-        switch (visibility) {
-            case 'public': return 'text-green-600 bg-green-50 border-green-200';
-            case 'private': return 'text-slate-600 bg-slate-50 border-slate-200';
-            default: return 'text-slate-500';
-        }
-    };
-
-    if (authLoading || checkingCreator) return <SplashLoader text="Checking permissions..." />;
-    if (!user) return null;
-
-    // Non-creator lock screen
-    if (isCreator === false) {
-        return (
-            <div className="relative h-[80vh] w-full overflow-hidden flex flex-col items-center justify-center">
-                <div className="absolute inset-0 blur-sm opacity-50 pointer-events-none select-none overflow-hidden flex flex-col items-center pt-20">
-                    <div className="container max-w-5xl opacity-50 grayscale">
-                        <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-3xl font-bold">Your Tests</h1>
-                            <Button disabled>Import JSON</Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {[1, 2, 3].map(i => (
-                                <Card key={i} className="h-40 bg-slate-50"></Card>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                <div className="relative z-10 bg-white/90 backdrop-blur-md p-8 rounded-xl shadow-2xl border text-center max-w-md mx-4">
-                    <div className="h-16 w-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Edit className="h-8 w-8" />
-                    </div>
-                    <h2 className="text-2xl font-bold mb-2">Become a Creator</h2>
-                    <p className="text-muted-foreground mb-6">
-                        To manage and publish tests, you need to enable your **Creator Profile**. Using this feature, you can build a following and share your exams.
-                    </p>
-                    <Button size="lg" className="w-full" onClick={() => navigate('/profile')}>
-                        Go to Profile & Enable
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    const now = new Date();
-    const hasEnded = (test: any) => {
-        if (test.computed_status === 'inactive' && test.settings?.conduct_exam?.enabled) return true;
-        if (!test.settings?.schedule?.enabled) return false;
-        if (!test.settings?.schedule?.end_time) return false;
-        return new Date(test.settings.schedule.end_time) < now;
-    };
-
-    const isUpcoming = (test: any) => {
-        if (test.computed_status === 'upcoming') return true;
-        if (!test.settings?.schedule?.enabled) return false;
-        if (!test.settings?.schedule?.start_time) return false;
-        return new Date(test.settings.schedule.start_time) > now;
-    };
-
-    const hasConductSettings = (t: any) => t.settings?.conduct_exam !== undefined;
-
-    // Active = conduct enabled AND currently in active window (not ended and not upcoming)
-    const activeExams = tests.filter(t =>
-        hasConductSettings(t) &&
-        t.settings.conduct_exam.enabled === true &&
-        !hasEnded(t) &&
-        !isUpcoming(t)
-    );
-    // Inactive = conduct settings exist AND (explicitly disabled OR schedule ended)
-    const inactiveExams = tests.filter(t =>
-        hasConductSettings(t) &&
-        (t.settings.conduct_exam.enabled !== true || hasEnded(t))
-    );
-    const regularTests = tests; // Show all tests in grid (conducted ones also show with LIVE badge)
-
-
-
-    // Auto-transition: when a scheduled exam ends, move it to inactive with private mode
+    // Auto-transition: when a scheduled exam ends, move it to inactive with private mode.
+    // Declared above the early returns below so the hook count never changes between renders.
     const autoDeactivatedRef = React.useRef<Set<string>>(new Set());
     useEffect(() => {
         const currentNow = new Date();
@@ -810,660 +735,659 @@ export default function UserTestManager() {
         });
     }, [tests]);
 
-    return (
-        <div className="container mx-auto max-w-5xl py-3 px-3 sm:py-5 sm:px-4 space-y-4">
-            {isAdmin && impersonateUserId && targetUserProfile && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex justify-between items-center shadow-sm mb-4">
-                    <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span className="text-sm font-medium">
-                            Impersonating creator dashboard for <strong>{targetUserProfile.full_name || targetUserProfile.email}</strong>
-                        </span>
+    // "How it works" strip — shown until the creator dismisses it once.
+    const [guideDismissed, setGuideDismissed] = useState(() => {
+        try {
+            return localStorage.getItem(GUIDE_DISMISSED_KEY) === 'true';
+        } catch {
+            return false;
+        }
+    });
+    const dismissGuide = () => {
+        setGuideDismissed(true);
+        try {
+            localStorage.setItem(GUIDE_DISMISSED_KEY, 'true');
+        } catch {
+            // Storage blocked (private mode) — hiding for this visit is enough.
+        }
+    };
+
+    const [showEnded, setShowEnded] = useState(false);
+
+    if (authLoading || checkingCreator) return <SplashLoader text="Checking permissions..." />;
+    if (!user) return null;
+
+    // Non-creator lock screen
+    if (isCreator === false) {
+        return (
+            <div className="relative flex min-h-[80vh] w-full items-center justify-center overflow-hidden px-4">
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none overflow-hidden opacity-60 blur-sm">
+                    <div className="mx-auto max-w-5xl px-6 pt-16">
+                        <div className="mb-8 h-9 w-48 rounded-xl bg-slate-200" />
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                            {[1, 2, 3].map(i => <UserTestCardSkeleton key={i} />)}
+                        </div>
                     </div>
+                </div>
+                <div className="relative z-10 w-full max-w-md rounded-3xl bg-white/90 p-8 text-center shadow-[0_24px_60px_-24px_rgba(15,23,42,0.35)] ring-1 ring-slate-900/[0.06] backdrop-blur-xl">
+                    <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-sky-700 ring-1 ring-inset ring-sky-500/20">
+                        <Pencil className="h-6 w-6" />
+                    </span>
+                    <h2 className="text-2xl font-bold tracking-[-0.02em] text-slate-900">Turn on your creator profile</h2>
+                    <p className="mt-2 text-[15px] leading-relaxed text-slate-600">
+                        To create, publish and conduct tests, switch on <strong className="font-semibold text-slate-900">Creator Profile</strong> from your profile page.
+                    </p>
+                    <button type="button" className={`${PRIMARY_BTN} mt-6 h-12 w-full justify-center`} onClick={() => navigate('/profile')}>
+                        Go to profile
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const now = new Date();
+    const hasEnded = (test: any) => {
+        if (test.computed_status === 'inactive' && test.settings?.conduct_exam?.enabled) return true;
+        if (!test.settings?.schedule?.enabled) return false;
+        if (!test.settings?.schedule?.end_time) return false;
+        return new Date(test.settings.schedule.end_time) < now;
+    };
+
+    const isUpcoming = (test: any) => {
+        if (test.computed_status === 'upcoming') return true;
+        if (!test.settings?.schedule?.enabled) return false;
+        if (!test.settings?.schedule?.start_time) return false;
+        return new Date(test.settings.schedule.start_time) > now;
+    };
+
+    const hasConductSettings = (t: any) => t.settings?.conduct_exam !== undefined;
+
+    // Active = conduct enabled AND currently in active window (not ended and not upcoming)
+    const activeExams = tests.filter(t =>
+        hasConductSettings(t) &&
+        t.settings.conduct_exam.enabled === true &&
+        !hasEnded(t) &&
+        !isUpcoming(t)
+    );
+    // Inactive = conduct settings exist AND (explicitly disabled OR schedule ended)
+    const inactiveExams = tests.filter(t =>
+        hasConductSettings(t) &&
+        (t.settings.conduct_exam.enabled !== true || hasEnded(t))
+    );
+
+    const openReportsCount = reports.filter(r => r.status === 'open').length;
+    const visibleReports = selectedReportTestId ? reports.filter(r => r.test_id === selectedReportTestId) : reports;
+
+    const goToCreateTest = () => {
+        if (isAdmin && impersonateUserId) {
+            navigate(`/create-test?userId=${impersonateUserId}`);
+        } else {
+            navigate('/create-test');
+        }
+    };
+
+    const clearReportFilter = () => {
+        setSelectedReportTestId(null);
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.delete('testId');
+        navigate(`/my-tests?${searchParams.toString()}`);
+    };
+
+    const viewTest = (t: any) => {
+        if (t.settings?.conduct_exam?.enabled) {
+            const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
+            navigate(`/test/${conductSlug}`);
+        } else if (t.visibility === 'private' || !t.is_public) {
+            navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
+        } else {
+            navigate(`/test-intro/${t.id}`);
+        }
+    };
+
+    // Shared "•••" menu for rows in the Live and Ended lists.
+    const renderExamMenu = (test: any, source: 'active' | 'inactive') => {
+        const reportsCount = unresolvedReportsByTestId[test.id] || 0;
+        return (
+            <DropdownMenu>
+                <div className="relative inline-flex shrink-0">
+                    <DropdownMenuTrigger asChild>
+                        <button type="button" aria-label="More options" className={MENU_TRIGGER}>
+                            <MoreHorizontal className="h-[18px] w-[18px]" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    {reportsCount > 0 && (
+                        <span className="pointer-events-none absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                    )}
+                </div>
+                <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5">
+                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => setViewingResultsTest(test)}>
+                        <BarChart3 className="mr-2.5 h-4 w-4 text-slate-500" /> Results
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleOpenTestReports(test)} className="flex items-center justify-between rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 cursor-pointer">
+                        <span className="flex items-center">
+                            <Inbox className="mr-2.5 h-4 w-4 text-slate-500" /> Student reports
+                        </span>
+                        {reportsCount > 0 && (
+                            <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+                                {reportsCount}
+                            </span>
+                        )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => openTestEditor(test)}>
+                        <Pencil className="mr-2.5 h-4 w-4 text-slate-500" /> Edit questions
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => setConfiguringTest(test)}>
+                        <Settings className="mr-2.5 h-4 w-4 text-slate-500" /> Settings
+                    </DropdownMenuItem>
+                    {source === 'active' && (
+                        <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => handleShare(test)}>
+                            <LinkIcon className="mr-2.5 h-4 w-4 text-slate-500" /> Share link
+                        </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900" onClick={() => handleUploadSolutions(test)}>
+                        <FileText className="mr-2.5 h-4 w-4 text-slate-500" /> Upload solutions
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 data-[state=open]:bg-slate-100 data-[state=open]:text-slate-900">
+                            <GraduationCap className="mr-2.5 h-4 w-4 text-slate-500" /> Assign to class
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="max-h-60 overflow-y-auto rounded-xl p-1.5">
+                            <DropdownMenuItem className="rounded-lg focus:bg-slate-100 focus:text-slate-900" onClick={() => handleClassChange(test, null)}>
+                                <span className="text-slate-500">No class</span>
+                                {!test.class_id && <Check className="ml-auto h-4 w-4 text-sky-600" />}
+                            </DropdownMenuItem>
+                            {classes.map(cls => (
+                                <DropdownMenuItem className="rounded-lg focus:bg-slate-100 focus:text-slate-900" key={cls.id} onClick={() => handleClassChange(test, cls.id)}>
+                                    {cls.name}
+                                    {test.class_id === cls.id && <Check className="ml-auto h-4 w-4 text-sky-600" />}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    {source === 'active' ? (
+                        <DropdownMenuItem onClick={() => handleRemoveFromActive(test.id)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 text-red-600 focus:bg-red-50 focus:text-red-600">
+                            <Square className="mr-2.5 h-4 w-4" /> Stop exam
+                        </DropdownMenuItem>
+                    ) : (
+                        <DropdownMenuItem onClick={() => handleRemoveFromInactive(test.id, test.title)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 text-red-600 focus:bg-red-50 focus:text-red-600">
+                            <X className="mr-2.5 h-4 w-4" /> Remove from ended list
+                        </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 font-semibold text-red-700 focus:bg-red-50 focus:text-red-700">
+                        <Trash2 className="mr-2.5 h-4 w-4" /> Delete test
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    };
+
+    return (
+        <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-5 sm:px-6 sm:pt-8 lg:px-8">
+            {isAdmin && impersonateUserId && targetUserProfile && (
+                <div className="mb-5 flex items-center gap-2.5 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-inset ring-amber-600/20">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500 motion-safe:animate-pulse" />
+                    <span>
+                        Viewing the creator dashboard of <strong>{targetUserProfile.full_name || targetUserProfile.email}</strong>
+                    </span>
                 </div>
             )}
-            <Tabs value={activeTab} onValueChange={(v) => {
-                setActiveTab(v);
-                if (v === 'reports') {
-                    navigate('/my-tests?tab=reports', { replace: true });
-                    loadReports();
-                } else {
-                    navigate('/my-tests', { replace: true });
-                }
-            }}>
-                <div className="flex items-center justify-between mb-4 gap-4">
-                    <div className="pl-7 sm:pl-0">
-                        <p className="text-[11px] sm:text-[12px] font-medium text-slate-400 uppercase tracking-widest leading-none mb-1">Creator</p>
-                        <p className="text-xl sm:text-[27px] font-semibold text-slate-800 tracking-tight leading-tight">
-                            {activeTab === 'reports' ? 'Reports' : 'Dashboard'}
+            <Tabs
+                value={activeTab}
+                onValueChange={(v) => {
+                    setActiveTab(v);
+                    if (v === 'reports') {
+                        navigate('/my-tests?tab=reports', { replace: true });
+                        loadReports();
+                    } else {
+                        navigate('/my-tests', { replace: true });
+                    }
+                }}
+                className="space-y-6"
+            >
+                {/* ── Large title + the one primary action ── */}
+                <header className="flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">Creator studio</p>
+                        <h1 className="mt-1.5 text-[28px] font-bold leading-[1.1] tracking-[-0.025em] text-slate-900 sm:text-[34px]">
+                            My Tests
+                        </h1>
+                        <p className="mt-2 hidden text-[15px] text-slate-600 sm:block">
+                            Create tests, run them as live exams, and see every student's result.
                         </p>
                     </div>
+                    <button type="button" onClick={goToCreateTest} className={`${PRIMARY_BTN} h-11 px-4 sm:px-5`}>
+                        <Plus className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                        <span>Create test</span>
+                    </button>
+                </header>
 
-                    {/* Note explaining "Conduct" mode for creators, visible on medium and larger screens only */}
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-violet-100 bg-violet-50/50 text-[11px] text-violet-700 max-w-2xl flex-1 justify-center mx-4">
-                        <Info className="h-3.5 w-3.5 text-violet-500 shrink-0" />
-                        <span>
-                            Use <strong>"Conduct Online"</strong> mode on any test card to organize live exams, enable proctoring, and view submitted results.
-                        </span>
-                    </div>
+                {/* ── Segmented control + search ── */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl bg-slate-200/60 p-1 sm:inline-grid sm:w-auto">
+                        <TabsTrigger value="tests" className={SEGMENT}>
+                            My tests
+                        </TabsTrigger>
+                        <TabsTrigger value="reports" className={SEGMENT}>
+                            Student reports
+                            {openReportsCount > 0 && (
+                                <span className="ml-1.5 min-w-[20px] rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white tabular-nums">
+                                    {openReportsCount}
+                                </span>
+                            )}
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {activeTab === 'tests' && (
+                        <div className="relative w-full sm:w-72">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                            <Input
+                                type="search"
+                                aria-label="Search your tests"
+                                placeholder="Search your tests"
+                                className="h-10 rounded-xl border-transparent bg-slate-200/60 pl-9 text-[15px] text-slate-900 placeholder:text-slate-500 transition-colors focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-sky-500/40 focus-visible:ring-offset-0"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    )}
                 </div>
 
-                {/* Creator Rewards Current Goal Banner */}
-                {activeTab === 'tests' && (
-                    <div className="mb-5">
+                <TabsContent value="tests" className="m-0 space-y-8 border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                    <div className="space-y-4">
                         <CurrentGoalWidget stats={rewardsStats} loading={rewardsLoading} />
+                        {!guideDismissed && <HowItWorks onDismiss={dismissGuide} />}
                     </div>
-                )}
-
-                <TabsContent value="tests" className="space-y-3 m-0 border-0 p-0">
 
                     {/* ═══════════════════════════════════════════════
-                        ACTIVE EXAMS CONTAINER
+                        LIVE EXAMS
                     ═══════════════════════════════════════════════ */}
                     {activeExams.length > 0 && (
-                        <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-50 shadow-sm mb-6">
-                            {/* Decorative glow */}
-                            <div className="absolute inset-0 pointer-events-none">
-                                <div className="absolute top-0 left-0 w-48 h-48 bg-emerald-300/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
-                                <div className="absolute bottom-0 right-0 w-32 h-32 bg-teal-300/10 rounded-full translate-x-1/4 translate-y-1/4" />
-                            </div>
-
-                            {/* Header */}
-                            <div className="relative flex items-center justify-between px-3.5 py-2.5 border-b border-emerald-100">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                                        <Radio className="w-3 h-3 text-white" />
-                                    </div>
-                                    <span className="font-semibold text-slate-800 text-xs">Active Exams</span>
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 animate-pulse shrink-0">
-                                        <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
-                                        {activeExams.length} Live
+                        <section aria-labelledby="live-exams-heading">
+                            <SectionTitle id="live-exams-heading" title="Live exams" count={activeExams.length} />
+                            <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-emerald-600/20 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-18px_rgba(5,150,105,0.45)]">
+                                <div className="flex items-center gap-2.5 border-b border-emerald-100 bg-emerald-50/70 px-4 py-2.5 text-[13px] font-medium text-emerald-800 sm:px-5">
+                                    <span className="relative flex h-2 w-2 shrink-0">
+                                        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 motion-safe:animate-ping" />
+                                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                                     </span>
+                                    <span>Students can take these right now. Only people with the link can join.</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                                    <Shield className="w-3 h-3" />
-                                    <span className="hidden sm:inline">Link-only</span>
-                                </div>
-                            </div>
 
-                            {/* Cards */}
-                            <div className="relative px-3 py-2.5 space-y-2">
-                                {activeExams.map(test => {
-                                    const conductSlug = test.settings?.conduct_exam?.conduct_slug || test.slug;
-                                    const examUrl = conductSlug
-                                        ? `${window.location.origin}/test/${conductSlug}`
-                                        : `${window.location.origin}/test-intro/${test.id}`;
-                                    const questionCount = test.total_questions || test.questions?.length || 0;
-                                    const submissionCount = test.submission_count ?? 0;
+                                <ul className="divide-y divide-slate-100">
+                                    {activeExams.map(test => {
+                                        const conductSlug = test.settings?.conduct_exam?.conduct_slug || test.slug;
+                                        const examUrl = conductSlug
+                                            ? `${window.location.origin}/test/${conductSlug}`
+                                            : `${window.location.origin}/test-intro/${test.id}`;
+                                        const questionCount = test.total_questions || test.questions?.length || 0;
+                                        const submissionCount = test.submission_count ?? 0;
 
-                                    return (
-                                        <div
-                                            key={test.id}
-                                            className="group relative bg-white rounded-lg border border-emerald-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-200 p-3"
-                                        >
-                                            {/* Left accent */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-l-xl" />
-
-                                            <div className="pl-3 flex flex-col gap-3">
-                                                {/* Test Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <h3 className="font-semibold text-slate-800 text-xs truncate">{test.title}</h3>
-                                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                            <Radio className="w-2 h-2" /> LIVE
-                                                        </span>
+                                        return (
+                                            <li key={test.id} className="p-4 sm:p-5">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div className="min-w-0">
+                                                        <h3 className="truncate text-base font-semibold tracking-[-0.01em] text-slate-900" title={test.title}>
+                                                            {test.title}
+                                                        </h3>
+                                                        <p className="mt-1 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-slate-600">
+                                                            <span className="inline-flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5 text-slate-400" />{plural(questionCount, 'question')}</span>
+                                                            <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-slate-400" />{test.duration || 0} min</span>
+                                                            <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-slate-400" />{submissionCount} submitted</span>
+                                                        </p>
                                                     </div>
-                                                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400 flex-wrap">
-                                                        <span>{questionCount} Qs</span>
-                                                        <span>·</span>
-                                                        <span>{test.duration || 0} min</span>
-                                                    </div>
+                                                    {renderExamMenu(test, 'active')}
                                                 </div>
 
-                                                {/* Direct Exam Link Line */}
-                                                <div className="flex items-center justify-between gap-2 text-[11px] py-1.5 border-y border-slate-100">
-                                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                                                        <LinkIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                        <span className="text-slate-500 font-medium whitespace-nowrap text-[11px]">Share among candidates:</span>
-                                                        <span className="font-mono text-slate-600 truncate select-all text-[11px] font-normal" title={examUrl}>
-                                                            {examUrl}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 shrink-0">
-                                                        <Button
-                                                            id={test.settings?.is_user_example ? "tour-copy-link-btn" : undefined}
-                                                            size="icon"
-                                                            variant="outline"
-                                                            className="h-7 w-7 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 cursor-pointer"
-                                                            title="Copy link"
-                                                            onClick={async () => {
-                                                                await navigator.clipboard.writeText(examUrl);
-                                                                toast.success("Exam link copied!");
-                                                            }}
-                                                        >
-                                                            <Copy className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                        <Button
-                                                            size="icon"
-                                                            variant="outline"
-                                                            className="h-7 w-7 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 cursor-pointer"
-                                                            title="Share link"
-                                                            onClick={() => handleShare(test)}
-                                                        >
-                                                            <Share2 className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    </div>
+                                                {/* Exam link */}
+                                                <p className="mb-1.5 mt-4 text-xs font-medium text-slate-500">Exam link — send this to your students</p>
+                                                <div className="flex items-center gap-2 rounded-xl bg-slate-100 p-1.5 pl-3">
+                                                    <LinkIcon className="h-4 w-4 shrink-0 text-slate-500" />
+                                                    <span className="min-w-0 flex-1 select-all truncate font-mono text-[13px] text-slate-700" title={examUrl}>
+                                                        {examUrl.replace(/^https?:\/\//, '')}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        id={test.settings?.is_user_example ? "tour-copy-link-btn" : undefined}
+                                                        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 text-[13px] font-semibold text-sky-700 shadow-sm ring-1 ring-slate-900/5 transition-colors hover:bg-sky-50 motion-safe:active:scale-[0.97] cursor-pointer"
+                                                        onClick={async () => {
+                                                            await navigator.clipboard.writeText(examUrl);
+                                                            toast.success("Exam link copied!");
+                                                        }}
+                                                    >
+                                                        <Copy className="h-3.5 w-3.5" />
+                                                        <span>Copy<span className="hidden sm:inline"> link</span></span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        aria-label="Share link"
+                                                        title="Share link"
+                                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm ring-1 ring-slate-900/5 transition-colors hover:bg-sky-50 hover:text-sky-700 cursor-pointer"
+                                                        onClick={() => handleShare(test)}
+                                                    >
+                                                        <Share2 className="h-3.5 w-3.5" />
+                                                    </button>
                                                 </div>
 
-                                                {/* Quick Actions */}
-                                                <div className="flex items-center gap-2 flex-wrap">
+                                                {/* Actions */}
+                                                <div className="mt-3 flex flex-wrap items-center gap-2">
                                                     <div className="relative">
-                                                        <Button
+                                                        <button
+                                                            type="button"
                                                             id={test.settings?.is_user_example ? "tour-settings-btn-active" : undefined}
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
+                                                            className={PILL_BTN}
                                                             onClick={() => setConfiguringTest(test)}
                                                         >
-                                                            <Settings className="w-3.5 h-3.5 sm:mr-1.5" />
-                                                            <span className="hidden sm:inline">Settings</span>
-                                                        </Button>
-                                                        {!isProctoringEnabled(test) && (
-                                                            <div className="absolute -top-1 -right-1 z-10 text-yellow-500">
-                                                                <AlertTriangle className="h-3.5 w-3.5" />
-                                                            </div>
-                                                        )}
+                                                            <Settings className="h-4 w-4 text-sky-600" /> Settings
+                                                        </button>
                                                         {showEnvPopupTestId === test.id && (
-                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-yellow-500 text-slate-900 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-md whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-200 flex items-center gap-1.5 border border-yellow-400">
-                                                                <AlertTriangle className="w-3.5 h-3.5 text-slate-900" />
+                                                            <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-bold text-slate-900 shadow-md animate-in fade-in zoom-in-95 duration-200">
+                                                                <AlertTriangle className="h-3.5 w-3.5" />
                                                                 <span>Set exam environment</span>
-                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-yellow-500" />
+                                                                <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-amber-400" />
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="relative">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-8 px-2 sm:px-3 text-xs border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
-                                                            onClick={() => setViewingResultsTest(test)}
-                                                        >
-                                                            <BarChart2 className="w-3.5 h-3.5 sm:mr-1.5" />
-                                                            <span className="hidden sm:inline">Results</span>
-                                                        </Button>
+                                                    <button type="button" className={PILL_BTN} onClick={() => setViewingResultsTest(test)}>
+                                                        <BarChart3 className="h-4 w-4 text-sky-600" /> Results
                                                         {submissionCount > 0 && (
-                                                            <span className="absolute -top-1.5 -right-1.5 z-10 min-w-[18px] h-[18px] px-1 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-sm leading-none pointer-events-none">
+                                                            <span className="min-w-[20px] rounded-full bg-sky-600 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white tabular-nums">
                                                                 {submissionCount > 99 ? '99+' : submissionCount}
                                                             </span>
                                                         )}
-                                                    </div>
-
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-8 px-2 sm:px-3 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors duration-200 cursor-pointer"
+                                                    </button>
+                                                    {!isProctoringEnabled(test) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setConfiguringTest(test)}
+                                                            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 px-3 text-[13px] font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 transition-colors hover:bg-amber-100 cursor-pointer"
+                                                        >
+                                                            <AlertTriangle className="h-3.5 w-3.5" /> Anti-cheating is off
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        type="button"
                                                         onClick={() => handleRemoveFromActive(test.id)}
+                                                        className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
                                                     >
-                                                        <X className="w-3.5 h-3.5 sm:mr-1.5" />
-                                                        <span className="hidden sm:inline">Remove</span>
-                                                    </Button>
-
-                                                    {/* Full hamburger menu — identical to normal card */}
-                                                    <DropdownMenu>
-                                                        <div className="relative inline-flex">
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50 cursor-pointer">
-                                                                    <MoreVertical className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
-                                                                <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 pointer-events-none animate-pulse" />
-                                                            )}
-                                                        </div>
-                                                        <DropdownMenuContent align="end" className="w-56">
-                                                            <DropdownMenuItem onClick={() => setViewingResultsTest(test)}>
-                                                                <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
-                                                            </DropdownMenuItem>
-                                                            {/* Reports */}
-                                                            <DropdownMenuItem onClick={() => handleOpenTestReports(test)} className="flex items-center justify-between cursor-pointer">
-                                                                <div className="flex items-center">
-                                                                    <Inbox className="mr-2 h-4 w-4 text-slate-500" /> Reports
-                                                                </div>
-                                                                {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                                                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/50 px-1.5 py-0.5 rounded-full border border-red-200 dark:border-red-900 leading-none">
-                                                                            {unresolvedReportsByTestId[test.id]}
-                                                                        </span>
-                                                                    </span>
-                                                                )}
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => openTestEditor(test)}>
-                                                                <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
-                                                                <Settings className="mr-2 h-4 w-4 text-slate-500" /> Manage Settings
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleShare(test)}>
-                                                                <LinkIcon className="mr-2 h-4 w-4 text-slate-500" /> Share Link
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => handleUploadSolutions(test)}>
-                                                                <FileText className="mr-2 h-4 w-4 text-indigo-500" /> Upload Solutions
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSub>
-                                                                <DropdownMenuSubTrigger>
-                                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
-                                                                </DropdownMenuSubTrigger>
-                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                                                    <DropdownMenuItem onClick={() => handleClassChange(test, null)}>
-                                                                        <span className="opacity-50">None</span>
-                                                                        {!test.class_id && <Check className="ml-auto h-4 w-4" />}
-                                                                    </DropdownMenuItem>
-                                                                    {classes.map(cls => (
-                                                                        <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id)}>
-                                                                            {cls.name}
-                                                                            {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
-                                                                        </DropdownMenuItem>
-                                                                    ))}
-                                                                </DropdownMenuSubContent>
-                                                            </DropdownMenuSub>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => handleRemoveFromActive(test.id)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                                                                <X className="mr-2 h-4 w-4" /> Remove from Conduct
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="text-red-700 focus:text-red-700 focus:bg-red-50 font-semibold">
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Test
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                        <Square className="h-3 w-3 fill-current" /> Stop exam
+                                                    </button>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
                             </div>
-                        </div>
+                        </section>
                     )}
 
                     {/* ═══════════════════════════════════════════════
-                        INACTIVE EXAMS CONTAINER
+                        ENDED EXAMS (collapsed by default)
                     ═══════════════════════════════════════════════ */}
                     {inactiveExams.length > 0 && (
-                        <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 shadow-sm">
-                            {/* Header */}
-                            <div className="relative flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-lg bg-slate-400 flex items-center justify-center shrink-0">
-                                        <X className="w-3 h-3 text-white" />
-                                    </div>
-                                    <span className="font-semibold text-slate-600 text-xs">Inactive Exams</span>
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-500 border border-slate-300 shrink-0">
-                                        {inactiveExams.length} Ended
+                        <section className="overflow-hidden rounded-2xl bg-white ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.14)]">
+                            <button
+                                type="button"
+                                aria-expanded={showEnded}
+                                onClick={() => setShowEnded(v => !v)}
+                                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 sm:px-5 cursor-pointer"
+                            >
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-slate-100 text-slate-500">
+                                    <History className="h-[18px] w-[18px]" />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="flex items-center gap-2 text-[15px] font-semibold text-slate-900">
+                                        Ended exams
+                                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600 tabular-nums">{inactiveExams.length}</span>
                                     </span>
-                                </div>
-                            </div>
+                                    <span className="block text-[13px] text-slate-500">Results stay saved here</span>
+                                </span>
+                                <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 ${showEnded ? 'rotate-180' : ''}`} />
+                            </button>
 
-                            {/* Cards */}
-                            <div className="relative px-3 py-2.5 space-y-2">
-                                {inactiveExams.map(test => {
-                                    const questionCount = test.total_questions || test.questions?.length || 0;
+                            {showEnded && (
+                                <ul className="divide-y divide-slate-100 border-t border-slate-100">
+                                    {inactiveExams.map(test => {
+                                        const questionCount = test.total_questions || test.questions?.length || 0;
+                                        const submissionCount = test.submission_count ?? 0;
 
-                                    return (
-                                        <div
-                                            key={test.id}
-                                            className="group relative bg-white rounded-lg border border-slate-200 shadow-sm p-3 opacity-80 hover:opacity-100 transition-opacity duration-200"
-                                        >
-                                            {/* Left accent */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-slate-300 to-slate-400 rounded-l-lg" />
-
-                                            <div className="pl-3 flex flex-col gap-2">
-                                                {/* Test Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <h3 className="font-semibold text-slate-500 text-xs truncate line-through decoration-slate-300">{test.title}</h3>
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                                            Ended
-                                                        </span>
+                                        return (
+                                            <li key={test.id} className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                                                <div className="min-w-0">
+                                                    <div className="flex min-w-0 items-center gap-2">
+                                                        <span className="truncate text-[15px] font-semibold text-slate-700" title={test.title}>{test.title}</span>
+                                                        <StatusPill status="ended" />
                                                     </div>
-                                                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
-                                                        <span>{questionCount} Qs</span>
-                                                        <span>·</span>
-                                                        <span>{test.duration || 0} min</span>
-                                                    </div>
+                                                    <p className="mt-0.5 text-[13px] text-slate-500">
+                                                        {plural(questionCount, 'question')} · {test.duration || 0} min
+                                                        {submissionCount > 0 && ` · ${submissionCount} submitted`}
+                                                    </p>
                                                 </div>
-
-                                                {/* Quick Actions */}
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-7 px-2 sm:px-3 text-[11px] border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300 transition-colors duration-200 cursor-pointer"
-                                                        onClick={() => setViewingResultsTest(test)}
-                                                    >
-                                                        <BarChart2 className="w-3 h-3 sm:mr-1" />
-                                                        <span className="hidden sm:inline">Results</span>
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-7 px-2 sm:px-3 text-[11px] border-red-100 text-red-400 hover:bg-red-50 hover:border-red-200 transition-colors duration-200 cursor-pointer"
+                                                <div className="flex shrink-0 items-center gap-2">
+                                                    <button type="button" className={PILL_BTN} onClick={() => setViewingResultsTest(test)}>
+                                                        <BarChart3 className="h-4 w-4 text-sky-600" /> Results
+                                                    </button>
+                                                    <button
+                                                        type="button"
                                                         onClick={() => handleRemoveFromInactive(test.id, test.title)}
+                                                        className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-medium text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600 cursor-pointer"
                                                     >
-                                                        <X className="w-3 h-3 sm:mr-1" />
-                                                        <span className="hidden sm:inline">Remove</span>
-                                                    </Button>
-
-                                                    {/* Hamburger menu */}
-                                                    <DropdownMenu>
-                                                        <div className="relative inline-flex">
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-slate-400 hover:text-primary hover:bg-violet-50 cursor-pointer">
-                                                                    <MoreVertical className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
-                                                                <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 pointer-events-none animate-pulse" />
-                                                            )}
-                                                        </div>
-                                                        <DropdownMenuContent align="end" className="w-56">
-                                                            <DropdownMenuItem onClick={() => setViewingResultsTest(test)}>
-                                                                <BarChart2 className="mr-2 h-4 w-4 text-slate-500" /> View Results
-                                                            </DropdownMenuItem>
-                                                            {/* Reports */}
-                                                            <DropdownMenuItem onClick={() => handleOpenTestReports(test)} className="flex items-center justify-between cursor-pointer">
-                                                                <div className="flex items-center">
-                                                                    <Inbox className="mr-2 h-4 w-4 text-slate-500" /> Reports
-                                                                </div>
-                                                                {(unresolvedReportsByTestId[test.id] || 0) > 0 && (
-                                                                    <span className="flex items-center gap-1.5">
-                                                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                                                                        <span className="text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/50 px-1.5 py-0.5 rounded-full border border-red-200 dark:border-red-900 leading-none">
-                                                                            {unresolvedReportsByTestId[test.id]}
-                                                                        </span>
-                                                                    </span>
-                                                                )}
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => openTestEditor(test)}>
-                                                                <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Test
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => setConfiguringTest(test)}>
-                                                                <Settings className="mr-2 h-4 w-4 text-slate-500" /> Manage Settings
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => handleUploadSolutions(test)}>
-                                                                <FileText className="mr-2 h-4 w-4 text-indigo-500" /> Upload Solutions
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSub>
-                                                                <DropdownMenuSubTrigger>
-                                                                    <GraduationCap className="mr-2 h-4 w-4" /> Assign Class
-                                                                </DropdownMenuSubTrigger>
-                                                                <DropdownMenuSubContent className="max-h-60 overflow-y-auto">
-                                                                    <DropdownMenuItem onClick={() => handleClassChange(test, null)}>
-                                                                        <span className="opacity-50">None</span>
-                                                                        {!test.class_id && <Check className="ml-auto h-4 w-4" />}
-                                                                    </DropdownMenuItem>
-                                                                    {classes.map(cls => (
-                                                                        <DropdownMenuItem key={cls.id} onClick={() => handleClassChange(test, cls.id)}>
-                                                                            {cls.name}
-                                                                            {test.class_id === cls.id && <Check className="ml-auto h-4 w-4" />}
-                                                                        </DropdownMenuItem>
-                                                                    ))}
-                                                                </DropdownMenuSubContent>
-                                                            </DropdownMenuSub>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem onClick={() => handleRemoveFromInactive(test.id, test.title)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                                                                <X className="mr-2 h-4 w-4" /> Remove from Conduct
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleDeleteTest(test.id, test.title)} className="text-red-700 focus:text-red-700 focus:bg-red-50 font-semibold">
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Test
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                        Remove
+                                                    </button>
+                                                    {renderExamMenu(test, 'inactive')}
                                                 </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+                        </section>
                     )}
-
-                    {/* ═══════════════════════════════════════════════
-                        TOOLBAR
-                    ═══════════════════════════════════════════════ */}
-                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 sm:items-center">
-                            {/* Search Input */}
-                            <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    type="search"
-                                    placeholder="Search tests..."
-                                    className="pl-9 bg-white text-sm h-9"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                            </div>
-
-                            <Button size="sm" className="h-9 text-sm w-full sm:w-auto" onClick={() => {
-                                if (isAdmin && impersonateUserId) {
-                                    navigate(`/create-test?userId=${impersonateUserId}`);
-                                } else {
-                                    navigate('/create-test');
-                                }
-                            }}>
-                                <Plus className="w-4 h-4 mr-1.5" /> Create Test
-                            </Button>
-                        </div>
-                    </div>
 
                     {/* ═══════════════════════════════════════════════
                         ALL TESTS GRID
                     ═══════════════════════════════════════════════ */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {testsLoading && tests.length === 0 ? (
-                            <>
-                                {Array.from({ length: 6 }).map((_, i) => (
-                                    <TestCardSkeleton key={i} />
-                                ))}
-                            </>
-                        ) : tests.length === 0 ? (
-                            <div className="col-span-full text-center py-10 text-muted-foreground border rounded-lg border-dashed">
-                                You haven't generated any tests yet.
-                            </div>
-                        ) : (
-                            <>
-                                {tests.map((test) => {
+                    <section aria-labelledby="all-tests-heading">
+                        <SectionTitle
+                            id="all-tests-heading"
+                            title={debouncedSearchQuery ? `Results for "${debouncedSearchQuery}"` : 'All tests'}
+                        />
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+                            {testsLoading && tests.length === 0 ? (
+                                Array.from({ length: 6 }).map((_, i) => <UserTestCardSkeleton key={i} />)
+                            ) : tests.length === 0 ? (
+                                debouncedSearchQuery ? (
+                                    <EmptyState
+                                        icon={Search}
+                                        title={`No tests match "${debouncedSearchQuery}"`}
+                                        body="Check the spelling, or try a shorter word from the title."
+                                        action={
+                                            <button type="button" className={PILL_BTN} onClick={() => setSearchQuery('')}>
+                                                <X className="h-4 w-4 text-slate-500" /> Clear search
+                                            </button>
+                                        }
+                                    />
+                                ) : (
+                                    <EmptyState
+                                        icon={FilePlus2}
+                                        title="Create your first test"
+                                        body="Upload a PDF, paste your questions, or type them in. You can conduct it online as soon as it's ready."
+                                        action={
+                                            <button type="button" onClick={goToCreateTest} className={`${PRIMARY_BTN} h-11 px-5`}>
+                                                <Plus className="h-[18px] w-[18px]" strokeWidth={2.5} /> Create test
+                                            </button>
+                                        }
+                                    />
+                                )
+                            ) : (
+                                tests.map((test) => {
                                     const testId = test.id;
-                                    const isRendered = isItemRendered(testId);
 
-                                    if (isRendered) {
+                                    if (!isItemRendered(testId)) {
                                         return (
-                                            <UserTestCard
-                                                key={testId}
-                                                test={test}
-                                                classes={classes}
-                                                onEdit={openTestEditor}
-                                                onConfigure={setConfiguringTest}
-                                                onDelete={handleDeleteTest}
-                                                onVisibilityChange={handleVisibilityChange}
-                                                onShare={handleShare}
-                                                onUploadSolutions={handleUploadSolutions}
-                                                onClassChange={handleClassChange}
-                                                getVisibilityColor={getVisibilityColor}
-                                                getVisibilityIcon={getVisibilityIcon}
-                                                onViewResults={(t) => setViewingResultsTest(t)}
-                                                onView={(t) => {
-                                                    if (t.settings?.conduct_exam?.enabled) {
-                                                        const conductSlug = t.settings.conduct_exam.conduct_slug || t.slug;
-                                                        navigate(`/test/${conductSlug}`);
-                                                    } else if (t.visibility === 'private' || !t.is_public) {
-                                                        navigate(`/test/${t.slug || `unlisted-${t.custom_id || t.id}`}`);
-                                                    } else {
-                                                        navigate(`/test-intro/${t.id}`);
-                                                    }
-                                                }}
-                                                onConductExam={handleConductExam}
-                                                onViewReports={handleOpenTestReports}
-                                                unresolvedReportsCount={unresolvedReportsByTestId[test.id] || 0}
-                                                showEnvPopup={showEnvPopupTestId === test.id}
-                                            />
-                                        );
-                                    } else {
-                                        return (
-                                            <div
-                                                key={testId}
-                                                ref={(el) => registerSkeleton(testId, el)}
-                                            >
-                                                <TestCardSkeleton />
+                                            <div key={testId} ref={(el) => registerSkeleton(testId, el)}>
+                                                <UserTestCardSkeleton />
                                             </div>
                                         );
                                     }
-                                })}
-                            </>
+
+                                    return (
+                                        <UserTestCard
+                                            key={testId}
+                                            test={test}
+                                            classes={classes}
+                                            onEdit={openTestEditor}
+                                            onConfigure={setConfiguringTest}
+                                            onDelete={handleDeleteTest}
+                                            onVisibilityChange={handleVisibilityChange}
+                                            onShare={handleShare}
+                                            onUploadSolutions={handleUploadSolutions}
+                                            onClassChange={handleClassChange}
+                                            onViewResults={(t) => setViewingResultsTest(t)}
+                                            onView={viewTest}
+                                            onConductExam={handleConductExam}
+                                            onViewReports={handleOpenTestReports}
+                                            unresolvedReportsCount={unresolvedReportsByTestId[test.id] || 0}
+                                        />
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Observer Target for Paginated Infinite Scroll */}
+                        {tests.length > 0 && (
+                            <div ref={observerTarget} className="mt-6 flex h-16 w-full items-center justify-center">
+                                {testsLoading && (
+                                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                                        <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
+                                        <span>Loading more tests...</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </section>
+                </TabsContent>
+
+                <TabsContent value="reports" className="m-0 space-y-4 border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold tracking-[-0.01em] text-slate-900">Student reports</h2>
+                            <p className="mt-0.5 text-[13px] text-slate-600">
+                                Problems students flagged in your questions. Fix the question, then mark the report solved.
+                            </p>
+                        </div>
+
+                        {selectedReportTestId && (
+                            <div className="flex max-w-full items-center gap-1 self-start rounded-full bg-sky-50 py-1 pl-3 pr-1 text-[13px] text-sky-800 ring-1 ring-inset ring-sky-600/15 sm:self-auto">
+                                <span className="truncate">
+                                    Showing: <strong className="font-semibold">{tests.find(t => t.id === selectedReportTestId)?.title || reports.find(r => r.test_id === selectedReportTestId)?.tests?.title || 'Selected test'}</strong>
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={clearReportFilter}
+                                    className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 font-semibold text-sky-700 transition-colors hover:bg-sky-100 cursor-pointer"
+                                >
+                                    <X className="h-3.5 w-3.5" /> Show all
+                                </button>
+                            </div>
                         )}
                     </div>
 
-                    {/* Observer Target for Paginated Infinite Scroll */}
-                    {tests.length > 0 && (
-                        <div ref={observerTarget} className="h-16 w-full flex items-center justify-center mt-6">
-                            {testsLoading && (
-                                <div className="flex items-center gap-2 text-sm text-slate-500">
-                                    <Loader2 className="animate-spin h-5 w-5 text-primary" />
-                                    <span>Loading more tests...</span>
-                                </div>
-                            )}
+                    {reportsLoading ? (
+                        <div className="flex items-center justify-center gap-2 rounded-2xl bg-white py-14 text-sm text-slate-500 ring-1 ring-slate-900/[0.06]">
+                            <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
+                            <span>Loading reports...</span>
                         </div>
-                    )}
-                </TabsContent>
-
-                <TabsContent value="reports" className="space-y-4 m-0 border-0 p-0">
-                    <Card className="p-4 md:p-6 shadow-sm border-slate-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs text-slate-600 hover:text-slate-900 -ml-2 gap-1.5 cursor-pointer shrink-0"
-                                    onClick={() => {
-                                        setSelectedReportTestId(null);
-                                        setActiveTab('tests');
-                                        navigate('/my-tests');
-                                    }}
-                                >
-                                    <ArrowLeft className="w-4 h-4" /> Back to Tests
-                                </Button>
-                                <div className="w-10 h-10 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
-                                    <Inbox className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-slate-800">Issue Reports</h2>
-                                    <p className="text-xs text-slate-500">Reports filed by users taking your tests.</p>
-                                </div>
-                            </div>
-
-                            {selectedReportTestId && (
-                                <div className="flex items-center gap-2 bg-violet-50 text-violet-700 px-3 py-1.5 rounded-lg border border-violet-100 text-xs">
-                                    <span className="truncate max-w-[220px]">
-                                        Filtered test: <strong>{tests.find(t => t.id === selectedReportTestId)?.title || reports.find(r => r.test_id === selectedReportTestId)?.tests?.title || 'Selected Test'}</strong>
-                                    </span>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-6 px-1.5 text-xs text-violet-700 hover:text-violet-900 hover:bg-violet-100 cursor-pointer"
-                                        onClick={() => {
-                                            setSelectedReportTestId(null);
-                                            const searchParams = new URLSearchParams(location.search);
-                                            searchParams.delete('testId');
-                                            navigate(`/my-tests?${searchParams.toString()}`);
-                                        }}
+                    ) : visibleReports.length === 0 ? (
+                        <div className="grid">
+                            <EmptyState
+                                icon={CheckCircle}
+                                tone="emerald"
+                                title={selectedReportTestId ? 'No reports for this test' : 'All clear'}
+                                body={selectedReportTestId ? 'Students have not flagged any question in this test.' : 'When a student flags a problem in one of your questions, it shows up here.'}
+                                action={selectedReportTestId ? (
+                                    <button type="button" className={PILL_BTN} onClick={clearReportFilter}>
+                                        View all reports
+                                    </button>
+                                ) : undefined}
+                            />
+                        </div>
+                    ) : (
+                        <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.14)]">
+                            {visibleReports.map((report) => {
+                                const isOpen = report.status === 'open';
+                                return (
+                                    <li
+                                        key={report.id}
+                                        className={`flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-5 ${isOpen ? '' : 'bg-slate-50/60'}`}
                                     >
-                                        <X className="w-3.5 h-3.5 mr-1" /> Show All
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-
-                        {reportsLoading ? (
-                            <div className="py-10 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
-                                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                                <span>Loading reports...</span>
-                            </div>
-                        ) : (selectedReportTestId ? reports.filter(r => r.test_id === selectedReportTestId) : reports).length === 0 ? (
-                            <div className="py-10 text-center border dashed rounded-md text-muted-foreground border-slate-200 bg-slate-50">
-                                {selectedReportTestId ? (
-                                    <div className="space-y-2">
-                                        <p>No reports found for this test.</p>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                setSelectedReportTestId(null);
-                                                const searchParams = new URLSearchParams(location.search);
-                                                searchParams.delete('testId');
-                                                navigate(`/my-tests?${searchParams.toString()}`);
-                                            }}
-                                        >
-                                            View All Reports
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    "No reports found."
-                                )}
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {(selectedReportTestId ? reports.filter(r => r.test_id === selectedReportTestId) : reports).map((report) => (
-                                    <div key={report.id} className={`p-4 rounded-lg border flex flex-col md:flex-row gap-4 items-start md:items-center justify-between transition-colors
-                                        ${report.status === 'open' ? 'bg-white border-slate-200 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-70'}
-                                    `}>
-                                        <div className="space-y-1 flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Badge variant={report.status === 'open' ? 'destructive' : 'secondary'} className={report.status === 'open' ? 'bg-red-500' : ''}>
-                                                    {report.status.toUpperCase()}
-                                                </Badge>
+                                        <div className={`min-w-0 flex-1 ${isOpen ? '' : 'opacity-70'}`}>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {isOpen ? (
+                                                    <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold leading-none text-red-700 ring-1 ring-inset ring-red-600/15">
+                                                        Needs review
+                                                    </span>
+                                                ) : (
+                                                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold capitalize leading-none text-emerald-700 ring-1 ring-inset ring-emerald-600/15">
+                                                        {report.status}
+                                                    </span>
+                                                )}
                                                 <span className="text-xs text-slate-500">{new Date(report.created_at).toLocaleString()}</span>
                                             </div>
-                                            <h4 className="font-semibold text-slate-800 flex items-center gap-2">
-                                                {report.tests?.title || 'Unknown Test'} {report.tests?.custom_id ? <span className="text-xs font-normal text-slate-500">({report.tests.custom_id})</span> : ''}
-                                                <span className="text-sm font-normal text-slate-500">| Q No: {report.question_id + 1}</span>
-                                            </h4>
-                                            <div className="text-sm text-slate-700">
-                                                <span className="font-medium mr-1">Issue:</span>
+                                            <p className="mt-2 text-[15px] font-semibold text-slate-900">
+                                                {report.tests?.title || 'Unknown test'}
+                                                <span className="font-normal text-slate-500"> · Question {report.question_id + 1}</span>
+                                                {report.tests?.custom_id && (
+                                                    <span className="ml-1.5 font-mono text-xs font-normal text-slate-500">#{report.tests.custom_id}</span>
+                                                )}
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-700">
+                                                <span className="font-medium text-slate-900">Issue: </span>
                                                 {report.reason}
-                                            </div>
+                                            </p>
                                             {report.details && (
-                                                <div className="text-sm text-slate-600 bg-slate-100 p-2 rounded mt-2 border border-slate-200">
+                                                <p className="mt-2 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-700">
                                                     "{report.details}"
-                                                </div>
+                                                </p>
                                             )}
                                         </div>
-                                        {report.status === 'open' && (
-                                            <Button size="sm" variant="outline" className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 shrink-0 cursor-pointer" onClick={() => handleResolveReport(report.id)}>
-                                                <CheckCircle className="w-4 h-4 mr-2" /> Mark Solved
-                                            </Button>
+                                        {isOpen && (
+                                            <div className="flex shrink-0 items-center gap-2">
+                                                {report.test_id && (
+                                                    <button type="button" className={PILL_BTN} onClick={() => openTestEditor({ id: report.test_id })}>
+                                                        <Pencil className="h-4 w-4 text-sky-600" /> Fix question
+                                                    </button>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleResolveReport(report.id)}
+                                                    className="inline-flex h-9 items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 text-[13px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 transition-colors hover:bg-emerald-100 cursor-pointer"
+                                                >
+                                                    <CheckCircle className="h-4 w-4" /> Mark solved
+                                                </button>
+                                            </div>
                                         )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </Card>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
                 </TabsContent>
             </Tabs>
 
             {/* ── Delete Test Dialog ── */}
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-[min(420px,calc(100vw-32px))] rounded-2xl">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Delete this test?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This will permanently delete the test "{deleteTitle}". This action cannot be undone.
+                            "{deleteTitle}" will be permanently deleted. This can't be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDeleteId(null)}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">Delete Permanently</AlertDialogAction>
+                        <AlertDialogCancel className="rounded-xl" onClick={() => setDeleteId(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete} className="rounded-xl bg-red-600 hover:bg-red-700">Delete permanently</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -1472,7 +1396,7 @@ export default function UserTestManager() {
             <AlertDialog open={!!removeExamId} onOpenChange={(open) => { if (!open) { setRemoveExamId(null); setRemoveExamSource(null); setRemoveInfoOpen(null); } }}>
                 <AlertDialogContent className="max-w-[min(380px,calc(100vw-32px))] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
                     {/* Dark header */}
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-6 pt-6 pb-5 text-center">
+                    <div className="bg-[#0b1120] px-6 pt-6 pb-5 text-center">
                         <div className="w-11 h-11 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                             <X className="w-5 h-5 text-red-400" />
                         </div>
@@ -1480,7 +1404,7 @@ export default function UserTestManager() {
                             {removeExamSource === 'inactive' ? 'Remove from exams?' : 'Stop conducting?'}
                         </AlertDialogTitle>
                         {removeExamSource === 'inactive' && (
-                            <p className="text-slate-400 text-xs mt-1.5">Choose the visibility for "{removeExamTitle}" after removal.</p>
+                            <p className="text-slate-300 text-[13px] mt-1.5">Choose who can see "{removeExamTitle}" after removal.</p>
                         )}
                     </div>
 
@@ -1491,23 +1415,25 @@ export default function UserTestManager() {
                             <div className="flex items-stretch gap-2">
                                 <AlertDialogAction
                                     onClick={() => confirmRemoveExam(true)}
-                                    className="flex-1 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl border-0 text-xs font-semibold shadow-lg shadow-indigo-200/50 transition-all active:scale-[0.98] cursor-pointer"
+                                    className="flex-1 h-11 bg-primary hover:bg-[hsl(200,95%,30%)] text-white rounded-xl border-0 text-[13px] font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-all active:scale-[0.98] cursor-pointer"
                                 >
-                                    <Globe className="w-3.5 h-3.5 mr-1.5" /> {removeExamSource === 'inactive' ? 'Save as Public' : 'Stop & Make Public'}
+                                    <Globe className="w-4 h-4 mr-1.5" /> {removeExamSource === 'inactive' ? 'Save as Public' : 'Stop & Make Public'}
                                 </AlertDialogAction>
                                 <button
+                                    type="button"
+                                    aria-label="What does public mean?"
                                     onClick={() => setRemoveInfoOpen(removeInfoOpen === 'public' ? null : 'public')}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${removeInfoOpen === 'public'
-                                            ? 'bg-indigo-200 text-indigo-700'
-                                            : 'bg-indigo-50 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100'
+                                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${removeInfoOpen === 'public'
+                                            ? 'bg-sky-200 text-sky-800'
+                                            : 'bg-sky-50 text-sky-600 hover:bg-sky-100'
                                         }`}
                                 >
                                     <Info className="w-4 h-4" />
                                 </button>
                             </div>
                             {removeInfoOpen === 'public' && (
-                                <div className="text-[11px] leading-relaxed bg-indigo-50 text-indigo-800 border border-indigo-100 rounded-lg px-3 py-2">
-                                    Allow candidates to analyse exam. Anonymous students can also access.
+                                <div className="text-[13px] leading-relaxed bg-sky-50 text-sky-900 ring-1 ring-inset ring-sky-600/15 rounded-xl px-3 py-2">
+                                    Students can review the exam afterwards. Anyone, even without an account, can open it.
                                 </div>
                             )}
                         </div>
@@ -1517,30 +1443,32 @@ export default function UserTestManager() {
                             <div className="flex items-stretch gap-2">
                                 <AlertDialogAction
                                     onClick={() => confirmRemoveExam(false)}
-                                    className="flex-1 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl border-0 text-xs font-semibold shadow-lg shadow-red-200/50 transition-all active:scale-[0.98] cursor-pointer"
+                                    className="flex-1 h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl border-0 text-[13px] font-semibold transition-all active:scale-[0.98] cursor-pointer"
                                 >
-                                    <Lock className="w-3.5 h-3.5 mr-1.5" /> {removeExamSource === 'inactive' ? 'Save as Private' : 'Stop & Make Private'}
+                                    <Lock className="w-4 h-4 mr-1.5" /> {removeExamSource === 'inactive' ? 'Save as Private' : 'Stop & Make Private'}
                                 </AlertDialogAction>
                                 <button
+                                    type="button"
+                                    aria-label="What does private mean?"
                                     onClick={() => setRemoveInfoOpen(removeInfoOpen === 'private' ? null : 'private')}
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${removeInfoOpen === 'private'
-                                            ? 'bg-red-200 text-red-700'
-                                            : 'bg-red-50 text-red-400 hover:text-red-600 hover:bg-red-100'
+                                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors shrink-0 cursor-pointer ${removeInfoOpen === 'private'
+                                            ? 'bg-red-200 text-red-800'
+                                            : 'bg-red-50 text-red-600 hover:bg-red-100'
                                         }`}
                                 >
                                     <Info className="w-4 h-4" />
                                 </button>
                             </div>
                             {removeInfoOpen === 'private' && (
-                                <div className="text-[11px] leading-relaxed bg-red-50 text-red-800 border border-red-100 rounded-lg px-3 py-2">
-                                    Restrict all further access. Results and exam not visible to anyone.
+                                <div className="text-[13px] leading-relaxed bg-red-50 text-red-900 ring-1 ring-inset ring-red-600/15 rounded-xl px-3 py-2">
+                                    Nobody else can open the exam or see its results.
                                 </div>
                             )}
                         </div>
 
                         <AlertDialogCancel
                             onClick={() => { setRemoveExamId(null); setRemoveInfoOpen(null); setRemoveExamSource(null); }}
-                            className="w-full h-9 border-0 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
+                            className="w-full h-10 border-0 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[13px] font-medium transition-all active:scale-[0.98] cursor-pointer"
                         >
                             Cancel
                         </AlertDialogCancel>
@@ -1606,6 +1534,86 @@ export default function UserTestManager() {
                     }}
                 />
             )}
+        </div>
+    );
+}
+
+/* ── Page-level building blocks ─────────────────────────────────────────── */
+
+function SectionTitle({ id, title, count }: { id?: string; title: string; count?: number }) {
+    return (
+        <div className="mb-3 flex items-center gap-2 px-1">
+            <h2 id={id} className="truncate text-lg font-semibold tracking-[-0.01em] text-slate-900">
+                {title}
+            </h2>
+            {count !== undefined && (
+                <span className="rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-semibold text-slate-600 tabular-nums">
+                    {count}
+                </span>
+            )}
+        </div>
+    );
+}
+
+const GUIDE_STEPS = [
+    { icon: FilePlus2, title: 'Create a test', body: 'Upload a PDF, paste questions, or type them in.' },
+    { icon: Radio, title: 'Conduct it online', body: 'Tap "Conduct exam" to get a secure link and switch on anti-cheating.' },
+    { icon: BarChart3, title: 'Share and see results', body: 'Send the link to students. Scores appear here automatically.' },
+];
+
+function HowItWorks({ onDismiss }: { onDismiss: () => void }) {
+    return (
+        <section aria-labelledby="how-it-works-heading" className="rounded-2xl bg-white p-4 ring-1 ring-slate-900/[0.06] shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-16px_rgba(15,23,42,0.14)] sm:p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 id="how-it-works-heading" className="text-[15px] font-semibold text-slate-900">How it works</h2>
+                <button
+                    type="button"
+                    onClick={onDismiss}
+                    className="h-8 rounded-full px-3 text-[13px] font-semibold text-sky-700 transition-colors hover:bg-sky-50 cursor-pointer"
+                >
+                    Got it
+                </button>
+            </div>
+            <ol className="grid gap-2.5 sm:grid-cols-3 sm:gap-3">
+                {GUIDE_STEPS.map((step, i) => (
+                    <li key={step.title} className="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-sky-700 ring-1 ring-inset ring-sky-500/20">
+                            <step.icon className="h-[18px] w-[18px]" />
+                        </span>
+                        <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900">
+                                <span className="text-sky-700 tabular-nums">{i + 1}.</span> {step.title}
+                            </p>
+                            <p className="mt-0.5 text-[13px] leading-snug text-slate-600">{step.body}</p>
+                        </div>
+                    </li>
+                ))}
+            </ol>
+        </section>
+    );
+}
+
+function EmptyState({
+    icon: Icon, title, body, action, tone = 'sky',
+}: {
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    body: string;
+    action?: React.ReactNode;
+    tone?: 'sky' | 'emerald';
+}) {
+    const tones = {
+        sky: 'from-sky-500/15 to-sky-500/5 text-sky-700 ring-sky-500/20',
+        emerald: 'from-emerald-500/15 to-emerald-500/5 text-emerald-700 ring-emerald-500/20',
+    } as const;
+    return (
+        <div className="col-span-full flex flex-col items-center rounded-2xl bg-white px-6 py-14 text-center ring-1 ring-slate-900/[0.06]">
+            <span className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ring-1 ring-inset ${tones[tone]}`}>
+                <Icon className="h-6 w-6" />
+            </span>
+            <h3 className="mt-4 text-lg font-semibold tracking-[-0.01em] text-slate-900">{title}</h3>
+            <p className="mt-1.5 max-w-sm text-[15px] leading-relaxed text-slate-600">{body}</p>
+            {action && <div className="mt-5">{action}</div>}
         </div>
     );
 }
