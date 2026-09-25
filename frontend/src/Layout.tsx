@@ -83,7 +83,7 @@ export default function Layout() {
 
     const hideFooter = isLiveTestPage || isResultsPage || isCreateTestPage;
 
-    // Panna (PDF tools) pages bring their own header; the global footer stays.
+    // Old Panna (PDF tools) URLs only show a loader while redirecting to pdf.testoza.com.
     const isPannaPage = location.pathname === '/pdf' || location.pathname.startsWith('/pdf/');
 
     // Check if current page is on blog subdomain or blog/news routes

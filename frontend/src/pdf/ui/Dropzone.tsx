@@ -42,7 +42,7 @@ export default function Dropzone({ onFile, busy = false, label = 'Choose PDF' }:
                 type="button"
                 disabled={busy}
                 onClick={() => input.current?.click()}
-                className="mt-3 inline-flex h-12 items-center gap-2 rounded-xl bg-emerald-600 px-7 text-base font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_10px_24px_-10px_rgba(5,150,105,0.9)] transition hover:bg-emerald-700 disabled:opacity-70"
+                className="mt-3 inline-flex h-12 items-center gap-2 rounded-xl bg-emerald-700 px-7 text-base font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_10px_24px_-10px_rgba(5,150,105,0.9)] transition hover:bg-emerald-800 disabled:opacity-70"
             >
                 {busy ? 'Opening…' : label}
             </button>

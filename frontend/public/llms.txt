@@ -31,6 +31,15 @@
 
 - **Flexible Test Sharing** – Share tests via public links, private access codes, or email invitations with customizable access permissions.
 
+## Free PDF tools (Panna)
+
+Panna is TestoZa's free, in-browser PDF toolkit at https://pdf.testoza.com — files are processed on the user's device and never uploaded.
+
+- [Edit PDF](https://pdf.testoza.com/edit-pdf): edit existing PDF text in the document's own font, erase for real, sign and annotate
+- [Edit Hindi PDF](https://pdf.testoza.com/edit-hindi-pdf): edit Hindi (Devanagari) text with correct matras and conjuncts
+- [LaTeX to PDF](https://pdf.testoza.com/latex-to-pdf): convert LaTeX or AI-generated maths into a PDF with selectable text
+- [ChatGPT to PDF](https://pdf.testoza.com/chatgpt-to-pdf): save ChatGPT, Gemini or Claude answers as PDF with equations intact
+
 ## Quick Links
 
 - [Website](https://testoza.com)

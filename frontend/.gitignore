@@ -245,3 +245,7 @@ playwright-report/
 test-results/
 test-results.xml
 e2e/
+
+# pdf.testoza.com build output
+dist-pdf
+dist-pdf-server

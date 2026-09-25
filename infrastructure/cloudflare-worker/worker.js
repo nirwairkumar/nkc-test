@@ -294,18 +294,6 @@ function generateMetaTags(url, testData = null) {
   } else if (path === '/survey') {
     title = 'Community Survey | TestoZa';
     description = 'Share your feedback and help us improve TestoZa for teachers and students.';
-  } else if (path === '/pdf') {
-    title = 'Panna — Free PDF Tools: Edit PDF in the Same Font, LaTeX to PDF | TestoZa';
-    description = 'Free online PDF tools by TestoZa. Edit PDF text in its original font (Hindi and English), erase for real, sign and annotate, and convert LaTeX or ChatGPT maths to PDF. No sign-up, no watermark.';
-    keywords = 'pdf tools, free pdf editor, edit pdf same font, hindi pdf editor, latex to pdf, pdf editor no watermark, TestoZa';
-  } else if (path === '/pdf/editor') {
-    title = 'Free PDF Editor — Edit PDF Text in the Same Font | Panna by TestoZa';
-    description = 'Edit text in any PDF in its original font, erase for real, sign, highlight and add images. Works with Hindi and English. Free, no sign-up, no watermark — your file never leaves your device.';
-    keywords = 'pdf editor, edit pdf, edit pdf text, edit pdf online free, pdf editor same font, edit hindi pdf, pdf editor without watermark';
-  } else if (path === '/pdf/latex-to-pdf' || path === '/convert') {
-    title = 'LaTeX to PDF Converter — Paste ChatGPT or Gemini Maths | Panna by TestoZa';
-    description = 'Paste maths from ChatGPT, Gemini or Claude, or a full LaTeX document, and download a clean PDF with real selectable text. Repairs broken formulas, supports Hindi and chemistry. Free, no sign-up, no watermark.';
-    keywords = 'latex to pdf, chatgpt math to pdf, gemini latex to pdf, latex converter online, katex to pdf, markdown math to pdf';
   } else if (path === '/news' || path.startsWith('/news/') || path === '/blog' || path.startsWith('/blog/')) {
     title = 'Education News, Guides & Updates | TestoZa';
     description = 'Stay up to date with the latest exam updates, test creation guides, and education tips from the TestoZa team.';
@@ -372,8 +360,7 @@ function generateMetaTags(url, testData = null) {
   }
 
   // Clean canonical URL without trailing slash or tracking parameters
-  // /convert moved to /pdf/latex-to-pdf; point search engines at the new home.
-  const canonicalUrl = `${siteUrl}${path === '/convert' ? '/pdf/latex-to-pdf' : path}`;
+  const canonicalUrl = `${siteUrl}${path}`;
 
   // Build meta tag HTML
   return `
@@ -979,64 +966,6 @@ function generateRouteContent(url, testData = null) {
     };
   }
 
-  // ─── PANNA — PDF TOOLS (/pdf, /pdf/editor, /pdf/latex-to-pdf) ─────────────
-  const pannaContent = {
-    '/pdf': {
-      h1: 'Panna — free PDF tools that keep your document looking like itself',
-      intro: 'Edit a name on a certificate, update marks on a result sheet or correct a Hindi application form in the original font. Free, no sign-up, no watermark, and your file never leaves your device.',
-      points: ['PDF editor that re-uses the PDF’s own embedded fonts', 'True erase: removed text is deleted from the file', 'Hindi (Devanagari) and English editing', 'LaTeX to PDF for ChatGPT and Gemini maths'],
-      faqs: [
-        { q: 'What is Panna?', a: 'Panna is a set of free PDF tools by TestoZa: a PDF editor that keeps your document’s fonts, and a LaTeX-to-PDF converter.' },
-        { q: 'Are my files uploaded?', a: 'No. PDFs are processed inside your browser and never uploaded.' },
-      ],
-    },
-    '/pdf/editor': {
-      h1: 'Edit PDF text in the same font — free online PDF editor',
-      intro: 'Click any text in your PDF and type. Panna sets your words in the PDF’s own embedded font, keeps table cells separate, handles Hindi, and removes erased text for real. Sign, highlight, draw, add images and reorder pages. One-click download.',
-      points: ['Same-font text editing', 'Find and replace across the whole document', 'Hindi and English', 'Signatures, highlights, shapes and images', 'Password-protected PDFs', 'No sign-up, no watermark, no upload'],
-      faqs: [
-        { q: 'Can I edit text in a PDF in the same font?', a: 'Yes. Panna re-uses the font embedded in your PDF and tells you if any character you type is missing from it.' },
-        { q: 'Is it free?', a: 'Yes — free with no sign-up, no watermark and no subscription.' },
-        { q: 'Can I edit Hindi text in a PDF?', a: 'Yes. Devanagari text is shaped correctly and stays searchable.' },
-      ],
-    },
-    '/pdf/latex-to-pdf': {
-      h1: 'LaTeX to PDF — paste maths from ChatGPT or Gemini, download a clean PDF',
-      intro: 'Paste an answer from ChatGPT, Gemini or Claude, or a full LaTeX document, and download a print-ready PDF with real, selectable text. Broken copies are repaired, every page break is shown before you download, and Hindi works — even inside formulas.',
-      points: ['Understands ChatGPT, Gemini and Claude maths as-is', 'Repairs formulas that lost their backslashes while copying', 'Full LaTeX documents: sections, lists, tables, numbered equations', 'Chemistry (mhchem) and Hindi', 'A4 or Letter, margins, page numbers, bookmarks', 'A real PDF: searchable, sharp at any zoom, no print dialog'],
-      faqs: [
-        { q: 'How do I convert ChatGPT maths to PDF?', a: "Click the copy button under ChatGPT's answer, paste it into Panna and press Download PDF. Formulas written as \\( … \\) and \\[ … \\] are converted automatically." },
-        { q: 'Why does maths from ChatGPT or Gemini look broken when I paste it elsewhere?', a: 'AI chats write maths in several different notations, and copying often loses backslashes or mixes the formula with its rendered text. Panna recognises every common notation and repairs the usual copy damage before typesetting.' },
-        { q: 'Can I paste a full LaTeX document?', a: 'Yes. \\documentclass, the preamble, sections, lists, tables, equations and simple \\newcommand macros are supported. Drawing packages such as TikZ are not.' },
-        { q: 'Is the text in the PDF selectable?', a: 'Yes. The PDF contains real text in the same fonts as the preview, so you can search it, copy from it and zoom in without blur.' },
-        { q: 'Is my text uploaded anywhere?', a: 'No. Everything happens in your browser, and your draft is saved only on this device.' },
-      ],
-    },
-  };
-  const panna = pannaContent[path === '/convert' ? '/pdf/latex-to-pdf' : path];
-  if (panna) {
-    const bodyHtml = `
-      <h1>${escapeHtml(panna.h1)}</h1>
-      <p>${escapeHtml(panna.intro)}</p>
-      <ul>${panna.points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
-      <h2>Frequently Asked Questions</h2>
-      ${panna.faqs.map(f => `<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>`).join('\n')}
-      <p><a href="https://testoza.com/pdf/editor">Free PDF editor</a> | <a href="https://testoza.com/pdf/latex-to-pdf">LaTeX to PDF</a> | <a href="https://testoza.com/pdf">All PDF tools</a> | <a href="https://testoza.com/">TestoZa</a></p>
-    `;
-    return {
-      bodyHtml,
-      faqSchema: {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": panna.faqs.map(f => ({
-          "@type": "Question",
-          "name": f.q,
-          "acceptedAnswer": { "@type": "Answer", "text": f.a }
-        }))
-      }
-    };
-  }
-
   // ─── 7. TEST PRACTICE & INTRO ROUTES ───────────────────────────────────────
   if (path.startsWith('/test/') || path.startsWith('/test-intro/')) {
     if (testData) {
@@ -1250,6 +1179,14 @@ function securityHeaders() {
   };
 }
 
+/** Old testoza.com PDF-tool URLs → their pages on pdf.testoza.com. */
+const PANNA_MOVED = {
+  '/pdf': '/',
+  '/pdf/editor': '/edit-pdf',
+  '/pdf/latex-to-pdf': '/latex-to-pdf',
+  '/convert': '/latex-to-pdf',
+};
+
 /**
  * Main request handler
  */
@@ -1272,6 +1209,13 @@ export default {
 
     // Route handling
     try {
+      // Panna (PDF tools) moved to https://pdf.testoza.com — permanent redirects
+      // pass the old URLs' links and rankings to the new pages.
+      const pannaTarget = PANNA_MOVED[url.pathname.replace(/\/+$/, '') || '/'];
+      if (pannaTarget) {
+        return Response.redirect(`https://pdf.testoza.com${pannaTarget}${url.search}`, 301);
+      }
+
       // Sitemap requests (e.g. /sitemap.xml, /sitemap/index.xml, /sitemap/static.xml)
       if (url.pathname.startsWith('/sitemap') || url.pathname === '/sitemap.xml') {
         return await handleSitemap(request);

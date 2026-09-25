@@ -201,7 +201,7 @@ export default function SignatureDialog({ open, onOpenChange, onPick }: { open: 
                                     await finish(await trimmedPng(canvasRef.current));
                                     setBusy(false);
                                 }}
-                                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
                             >
                                 Use signature
                             </button>
@@ -237,7 +237,7 @@ export default function SignatureDialog({ open, onOpenChange, onPick }: { open: 
                                     await finish(await typedCanvas());
                                     setBusy(false);
                                 }}
-                                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                                className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
                             >
                                 Use signature
                             </button>

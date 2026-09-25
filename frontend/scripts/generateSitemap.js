@@ -71,10 +71,6 @@ async function generateSitemap() {
             { url: '/premium', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/about', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/support', changefreq: 'monthly', priority: 0.7, lastmod: STATIC_PAGE_LASTMOD },
-            // Panna — PDF tools (/convert redirects to /pdf/latex-to-pdf)
-            { url: '/pdf', changefreq: 'weekly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/pdf/editor', changefreq: 'weekly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
-            { url: '/pdf/latex-to-pdf', changefreq: 'monthly', priority: 0.75, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/survey', changefreq: 'monthly', priority: 0.6, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/privacy-policy', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/terms-and-conditions', changefreq: 'yearly', priority: 0.4, lastmod: STATIC_PAGE_LASTMOD },

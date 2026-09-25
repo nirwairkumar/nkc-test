@@ -3,7 +3,8 @@
 **Date:** 2026-09-25  
 **Component:** Frontend only (`frontend/src/pdf/`, `frontend/public/pdf-fonts/`), plus SEO touches in the Cloudflare worker and sitemaps  
 **Status:** Implemented & Verified (Chromium end-to-end tests, PyMuPDF output checks, production build)  
-**Routes:** `/pdf` · `/pdf/editor` · `/pdf/latex-to-pdf` (old `/convert` redirects here)
+**Routes:** now served from **https://pdf.testoza.com** — `/` · `/edit-pdf` · `/edit-hindi-pdf` · `/latex-to-pdf` · `/chatgpt-to-pdf` (old testoza.com `/pdf*` and `/convert` URLs 301 there)  
+**Update (same day):** the tools moved to their own pre-rendered subdomain with full SEO / AI-search work — see [2026-09-25-pdf-testoza-subdomain-seo.md](2026-09-25-pdf-testoza-subdomain-seo.md). Where this document mentions `/pdf/...` routes, `public/pdf-fonts` or the main `vite.config.ts` plugin, read the new doc for the current setup.
 
 ---
 

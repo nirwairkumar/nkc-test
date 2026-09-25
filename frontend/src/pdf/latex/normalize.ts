@@ -23,7 +23,7 @@ export interface NormalizeResult {
     notes: string[];
 }
 
-/** Must match PAGE_BREAK_MARK in MathDocument.tsx. */
+/** Must match PAGE_BREAK_MARK in documentStyle.ts. */
 const PAGE_BREAK = '⟨page-break⟩';
 
 const MATH_ENVS = 'equation|align|alignat|gather|multline|flalign|eqnarray|displaymath|math|split';

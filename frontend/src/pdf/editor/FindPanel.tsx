@@ -160,7 +160,7 @@ export default function FindPanel({ onClose }: { onClose: () => void }) {
                         const { count, skipped } = applyReplacements(search.matches);
                         toast.success(`Replaced ${count} ${count === 1 ? 'match' : 'matches'}${skipped ? ` · ${skipped} in text that can't be edited` : ''}`);
                     }}
-                    className="inline-flex h-9 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 text-[13px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
+                    className="inline-flex h-9 items-center gap-1 rounded-lg bg-emerald-700 px-2.5 text-[13px] font-semibold text-white hover:bg-emerald-800 disabled:opacity-40"
                 >
                     <Replace className="h-3.5 w-3.5" /> All
                 </button>

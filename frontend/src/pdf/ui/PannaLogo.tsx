@@ -20,12 +20,17 @@ export function PannaMark({ className = 'h-8 w-8' }: { className?: string }) {
 
 export default function PannaLogo({ to = PANNA.routes.home, compact = false, dark = false }: { to?: string; compact?: boolean; dark?: boolean }) {
     return (
-        <Link to={to} className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500" aria-label={`${PANNA.name} home`}>
+        <Link
+            to={to}
+            className="flex shrink-0 items-center gap-2 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+            // With the wordmark shown, its text ("Panna by TestoZa") is the link's name.
+            aria-label={compact ? `${PANNA.name} home` : undefined}
+        >
             <PannaMark />
             {!compact && (
                 <span className="flex flex-col leading-none">
                     <span className={`font-[Outfit,system-ui,sans-serif] text-[19px] font-bold tracking-tight ${dark ? 'text-white' : 'text-slate-900'}`}>{PANNA.name}</span>
-                    <span className={`mt-0.5 text-[10px] font-medium tracking-wide ${dark ? 'text-emerald-300/80' : 'text-emerald-700/80'}`}>{PANNA.by}</span>
+                    <span className={`mt-0.5 text-[10px] font-medium tracking-wide ${dark ? 'text-emerald-300' : 'text-emerald-700'}`}>{PANNA.by}</span>
                 </span>
             )}
         </Link>

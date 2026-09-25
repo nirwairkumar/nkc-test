@@ -54,12 +54,14 @@ const LINK_COLUMNS = [
         ],
     },
     {
-        // Panna — TestoZa's free PDF tools (src/pdf).
+        // Panna — TestoZa's free PDF tools, served from pdf.testoza.com (src/pdf).
         title: 'PDF tools',
         links: [
-            { label: 'Panna PDF tools', to: '/pdf' },
-            { label: 'Free PDF editor', to: '/pdf/editor' },
-            { label: 'LaTeX to PDF', to: '/pdf/latex-to-pdf' },
+            { label: 'Panna PDF tools', to: 'https://pdf.testoza.com/' },
+            { label: 'Free PDF editor', to: 'https://pdf.testoza.com/edit-pdf' },
+            { label: 'Hindi PDF editor', to: 'https://pdf.testoza.com/edit-hindi-pdf' },
+            { label: 'LaTeX to PDF', to: 'https://pdf.testoza.com/latex-to-pdf' },
+            { label: 'ChatGPT to PDF', to: 'https://pdf.testoza.com/chatgpt-to-pdf' },
         ],
     },
     {
@@ -152,16 +154,24 @@ export default function Footer() {
                                 {col.title}
                             </h2>
                             <ul className="mt-4 space-y-2.5">
-                                {col.links.map((l) => (
-                                    <li key={l.to}>
-                                        <Link
-                                            to={l.to}
-                                            className="text-sm text-slate-600 transition-colors hover:text-sky-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 dark:text-slate-400 dark:hover:text-sky-400"
-                                        >
-                                            {l.label}
-                                        </Link>
-                                    </li>
-                                ))}
+                                {col.links.map((l) => {
+                                    const cls =
+                                        'text-sm text-slate-600 transition-colors hover:text-sky-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 dark:text-slate-400 dark:hover:text-sky-400';
+                                    return (
+                                        <li key={l.to}>
+                                            {/* Other TestoZa subdomains (pdf.) are plain anchors */}
+                                            {l.to.startsWith('https://') ? (
+                                                <a href={l.to} className={cls}>
+                                                    {l.label}
+                                                </a>
+                                            ) : (
+                                                <Link to={l.to} className={cls}>
+                                                    {l.label}
+                                                </Link>
+                                            )}
+                                        </li>
+                                    );
+                                })}
                                 {/* Blog lives on a subdomain, so it stays a plain anchor */}
                                 {col.title === 'Company' && (
                                     <li>

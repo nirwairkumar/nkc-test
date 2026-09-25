@@ -4,5 +4,12 @@
 # Proxy Python Backend requests if needed (adjust base URL if backend is hosted elsewhere)
 # /api/* https://your-backend-url.com/api/:splat 200
 
+# Panna (PDF tools) moved to its own subdomain: permanent redirects keep links and rankings.
+/pdf https://pdf.testoza.com/ 301
+/pdf/ https://pdf.testoza.com/ 301
+/pdf/editor https://pdf.testoza.com/edit-pdf 301
+/pdf/latex-to-pdf https://pdf.testoza.com/latex-to-pdf 301
+/convert https://pdf.testoza.com/latex-to-pdf 301
+
 # Client-side routing fallback
 /* /index.html 200

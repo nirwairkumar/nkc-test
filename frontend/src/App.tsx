@@ -89,10 +89,14 @@ const CombinedIntroPage = safeLazy(() => import("./pages/CombinedIntroPage"));
 const CombinedBreakScreen = safeLazy(() => import("./pages/CombinedBreakScreen"));
 const CreateCombinedTestPage = safeLazy(() => import("./pages/CreateCombinedTestPage"));
 const MoreTestsPage = safeLazy(() => import("./pages/MoreTestsPage"));
-// Panna — PDF tools
-const PdfToolsLanding = safeLazy(() => import("./pdf/pages/PdfToolsLanding"));
-const PdfEditorPage = safeLazy(() => import("./pdf/pages/PdfEditorPage"));
-const LatexToPdfPage = safeLazy(() => import("./pdf/pages/LatexToPdfPage"));
+// Panna (PDF tools) moved to https://pdf.testoza.com. The Cloudflare edge answers old
+// URLs with real 301s; this covers in-app links and the app./blog. hosts.
+const PdfToolsMoved = ({ to }: { to: string }) => {
+  useEffect(() => {
+    window.location.replace(`https://pdf.testoza.com${to}`);
+  }, [to]);
+  return <PageLoader />;
+};
 const SurveyPage = safeLazy(() => import("./pages/SurveyPage"));
 
 // SEO Landing Pages
@@ -218,11 +222,11 @@ const App = () => (
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                     <Route path="/about" element={<AboutPage />} />
-                    {/* Panna — PDF tools (the LaTeX converter moved here from /convert) */}
-                    <Route path="/pdf" element={<PdfToolsLanding />} />
-                    <Route path="/pdf/editor" element={<PdfEditorPage />} />
-                    <Route path="/pdf/latex-to-pdf" element={<LatexToPdfPage />} />
-                    <Route path="/convert" element={<Navigate to="/pdf/latex-to-pdf" replace />} />
+                    {/* Panna — PDF tools now live on pdf.testoza.com */}
+                    <Route path="/pdf" element={<PdfToolsMoved to="/" />} />
+                    <Route path="/pdf/editor" element={<PdfToolsMoved to="/edit-pdf" />} />
+                    <Route path="/pdf/latex-to-pdf" element={<PdfToolsMoved to="/latex-to-pdf" />} />
+                    <Route path="/convert" element={<PdfToolsMoved to="/latex-to-pdf" />} />
                     <Route path="/survey" element={<SurveyPage />} />
 
                     {/* SEO Use-Case Landing Pages */}

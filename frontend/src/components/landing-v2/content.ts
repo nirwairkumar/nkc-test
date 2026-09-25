@@ -274,7 +274,7 @@ export const FOOTER_LINKS = [
             { label: 'Auto-grading software', href: '/auto-grading-software' },
             { label: 'Quiz creator', href: '/quiz-creator' },
             { label: 'Browse tests', href: '/more-tests' },
-            { label: 'LaTeX to PDF', href: '/pdf/latex-to-pdf' },
+            { label: 'LaTeX to PDF', href: 'https://pdf.testoza.com/latex-to-pdf' },
             { label: 'User guide', href: '/user-guide' },
         ],
     },

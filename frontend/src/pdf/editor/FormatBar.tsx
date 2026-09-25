@@ -190,7 +190,7 @@ export default function FormatBar({
                         type="button"
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={onDone}
-                        className="ml-0.5 inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[12.5px] font-semibold text-white hover:bg-emerald-700"
+                        className="ml-0.5 inline-flex h-8 shrink-0 items-center gap-1 rounded-md bg-emerald-700 px-2.5 text-[12.5px] font-semibold text-white hover:bg-emerald-800"
                     >
                         <Check className="h-4 w-4" /> Done
                     </button>

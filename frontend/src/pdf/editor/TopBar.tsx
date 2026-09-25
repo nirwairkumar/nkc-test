@@ -81,7 +81,7 @@ export default function TopBar({
                 type="button"
                 onClick={onDownload}
                 disabled={exporting}
-                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_6px_16px_-8px_rgba(5,150,105,0.9)] transition hover:bg-emerald-700 disabled:opacity-70 sm:px-4"
+                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-emerald-700 px-3 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.2)_inset,0_6px_16px_-8px_rgba(5,150,105,0.9)] transition hover:bg-emerald-800 disabled:opacity-70 sm:px-4"
             >
                 {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                 <span className="hidden sm:inline">{exporting ? 'Preparing…' : 'Download PDF'}</span>

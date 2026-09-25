@@ -15,7 +15,11 @@
         "test:e2e": "playwright test",
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:mobile": "playwright test --project='iPhone 14' --project='iPad Pro' --project='Pixel 7' --project='Galaxy Tab S8'",
-        "test:e2e:prod": "PLAYWRIGHT_TEST_BASE_URL=https://www.testoza.com playwright test"
+        "test:e2e:prod": "PLAYWRIGHT_TEST_BASE_URL=https://www.testoza.com playwright test",
+        "dev:pdf": "vite --config vite.pdf.config.ts",
+        "build:pdf": "vite build --config vite.pdf.config.ts && vite build --config vite.pdf.config.ts --ssr src/pdf/site/entry-server.tsx && node scripts/prerender-pdf.mjs",
+        "preview:pdf": "node scripts/serve-pdf.mjs",
+        "indexnow:pdf": "node scripts/indexnow-pdf.mjs"
     },
     "dependencies": {
         "@google/generative-ai": "^0.24.1",

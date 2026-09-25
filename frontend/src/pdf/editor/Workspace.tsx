@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ShieldCheck, X } from 'lucide-react';
+import { testozaUrl } from '../brand';
 import type { PageEdit, PageSlot, StoredImage } from '../engine/edits';
 import type { PdfSession } from '../session/session';
 import { EditorProvider, useEditor } from './EditorContext';
@@ -136,7 +137,7 @@ function WorkspaceInner({ zoom, scrollRef }: { zoom: number; scrollRef: React.Re
             toast.success('Your PDF is downloaded', {
                 id: t,
                 description: 'No watermark, no sign-up. Teaching from this PDF? Turn it into an online test in one click.',
-                action: { label: 'Make a test', onClick: () => window.open('/pdf-to-quiz', '_blank') },
+                action: { label: 'Make a test', onClick: () => window.open(testozaUrl('/pdf-to-quiz'), '_blank') },
                 duration: 9000,
             });
         } catch (err) {
