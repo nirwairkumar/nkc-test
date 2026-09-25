@@ -99,8 +99,8 @@ export default function ToolBar({ onImage, onSign }: { onImage: () => void; onSi
                                 Width
                                 <input type="range" min={0.5} max={10} step={0.5} value={d.width} onChange={(e) => dispatch({ type: 'drawDefaults', patch: { width: +e.target.value } })} className="w-20 accent-emerald-600" />
                                 {/* Preview: the stroke as thick as it will look on the page at this zoom */}
-                                <svg width={40} height={24} aria-hidden="true" className="shrink-0">
-                                    <line x1={4} y1={12} x2={36} y2={12} stroke={rgbCss(d.stroke)} strokeWidth={Math.max(1, d.width * scale)} strokeLinecap="round" />
+                                <svg width={48} height={28} aria-hidden="true" className="shrink-0 overflow-visible">
+                                    <path d="M4 14 C 10 4, 18 4, 24 14 S 38 24, 44 14" fill="none" stroke={rgbCss(d.stroke)} strokeWidth={Math.max(1, d.width * scale)} strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </label>
                             {(t === 'rect' || t === 'ellipse') && (
