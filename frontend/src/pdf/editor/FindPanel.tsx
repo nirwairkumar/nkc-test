@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, CaseSensitive, Replace, WholeWord, X } from 'lucide
 import { toast } from 'sonner';
 import type { TextEdit } from '../engine/edits';
 import { blockTextRects } from '../engine/layout';
+import type { Rect } from '../engine/matrix';
 import { useEditor, type SearchMatch } from './EditorContext';
 import { slotKey } from './PageView';
 import { textEditId } from './store';
@@ -25,10 +26,7 @@ export default function FindPanel({ onClose }: { onClose: () => void }) {
 
     const pageKeys = useMemo(() => state.slots.filter((s) => s.src >= 0).map(slotKey), [state.slots]);
 
-    const currentText = (page: string, blockId: string, original: string) => {
-        const e = state.edits.find((x) => x.id === textEditId(page, blockId)) as TextEdit | undefined;
-        return e ? e.text : original;
-    };
+    const editOf = (page: string, blockId: string) => state.edits.find((x) => x.id === textEditId(page, blockId)) as TextEdit | undefined;
 
     const re = useMemo(() => {
         if (!query) return null;
@@ -47,13 +45,17 @@ export default function FindPanel({ onClose }: { onClose: () => void }) {
             for (const page of pageKeys) {
                 const blocks = session.analyze(page)?.text.blocks ?? [];
                 for (const b of blocks) {
-                    const text = currentText(page, b.id, b.text);
+                    const e = editOf(page, b.id);
+                    const text = e ? e.text : b.text;
                     const edited = text !== b.text;
+                    // Moved text: the original glyph boxes, shifted with it.
+                    const dx = e?.dx ?? 0, dy = e?.dy ?? 0;
+                    const shift = (r: Rect): Rect => ({ x0: r.x0 + dx, y0: r.y0 + dy, x1: r.x1 + dx, y1: r.y1 + dy });
                     for (const m of text.matchAll(re)) {
                         const start = m.index ?? 0;
                         const end = start + m[0].length;
                         const plan = reports.get(page)?.plans.get(textEditId(page, b.id));
-                        const rects = edited ? [plan?.bbox ?? b.bbox] : blockTextRects(b, Array.from(text.slice(0, start)).length, Array.from(text.slice(0, end)).length);
+                        const rects = edited ? [plan?.bbox ?? shift(b.bbox)] : blockTextRects(b, Array.from(text.slice(0, start)).length, Array.from(text.slice(0, end)).length).map(shift);
                         matches.push({ page, blockId: b.id, start, end, rects });
                     }
                 }

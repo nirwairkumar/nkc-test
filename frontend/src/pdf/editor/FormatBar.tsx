@@ -1,5 +1,5 @@
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Check, Italic, RotateCcw, Trash2, TriangleAlert } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import type { RGB } from '../engine/edits';
 import type { FontInfo } from '../engine/fonts';
 import type { Align } from '../engine/layout';
@@ -23,7 +23,7 @@ export const SWATCHES: RGB[] = [
     [0.05, 0.5, 0.3],
 ];
 
-export function IconButton({ label, active, onClick, children, danger }: { label: string; active?: boolean; onClick: () => void; children: ReactNode; danger?: boolean }) {
+export function IconButton({ label, active, onClick, children, danger }: { label: string; active?: boolean; onClick: (e: MouseEvent<HTMLButtonElement>) => void; children: ReactNode; danger?: boolean }) {
     return (
         <button
             type="button"

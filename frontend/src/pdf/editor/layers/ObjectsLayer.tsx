@@ -12,6 +12,9 @@ import { useEditor, rgbCss } from '../EditorContext';
 import FormatBar, { ColorDots, Divider, IconButton, type Fmt } from '../FormatBar';
 import { baselineOffset, ensureEditorFonts, familyCss, resetFontMetrics } from '../fonts';
 import type { View } from '../geometry';
+import GuideLines from '../GuideLines';
+import { buildTargets, shiftBox, snapMove, toBox, type Baseline, type Box, type Guide, type SnapSpec } from '../guides';
+import { objectItems, screenRules, textItems } from '../move';
 import { imageUrl, isObject, objectBounds, translateEdit, type ObjectEdit } from '../objects';
 
 type Handle = 'nw' | 'ne' | 'sw' | 'se' | 'e' | 'p0' | 'p1';
@@ -25,15 +28,21 @@ interface Drag {
     dx: number;
     dy: number;
     orig: ObjectEdit;
+    /** Alignment guides for moves (none when the object has no known extent). */
+    snap?: SnapSpec;
+    guides?: Guide[];
+    /** Moved far enough to count as a drag (a click must not snap the object anywhere). */
+    started?: boolean;
 }
 
-export default function ObjectsLayer({ pageKey, view }: { pageKey: PageKey; view: View }) {
-    const { session, state, dispatch, editingObject, setEditingObject } = useEditor();
+export default function ObjectsLayer({ pageKey, view, overlay }: { pageKey: PageKey; view: View; overlay: HTMLElement | null }) {
+    const { session, state, dispatch, reports, editingObject, setEditingObject } = useEditor();
     const objects = useMemo(() => state.edits.filter((e): e is ObjectEdit => e.page === pageKey && isObject(e)), [state.edits, pageKey]);
     const selectedId = state.selection?.kind === 'object' ? state.selection.id : null;
     const interactive = state.tool === 'edit';
     const [drag, setDrag] = useState<Drag | null>(null);
     const docFonts = useMemo(() => session.documentFonts(), [session]);
+    const layerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => ensureEditorFonts(), []);
 
@@ -43,7 +52,16 @@ export default function ObjectsLayer({ pageKey, view }: { pageKey: PageKey; view
     const dragging = drag !== null;
     useEffect(() => {
         if (!dragging) return;
-        const move = (ev: PointerEvent) => setDrag((d) => (d ? { ...d, dx: ev.clientX - d.x, dy: ev.clientY - d.y } : d));
+        const move = (ev: PointerEvent) =>
+            setDrag((d) => {
+                if (!d) return d;
+                const rx = ev.clientX - d.x, ry = ev.clientY - d.y;
+                const started = d.started || Math.hypot(rx, ry) >= 3;
+                if (!started) return d;
+                if (d.mode !== 'move' || !d.snap) return { ...d, dx: rx, dy: ry, started };
+                const s = snapMove(d.snap, rx, ry, { lock: ev.shiftKey, free: ev.altKey });
+                return { ...d, dx: s.dx, dy: s.dy, guides: s.guides, started };
+            });
         const up = () => {
             const d = dragRef.current;
             if (d && (Math.abs(d.dx) > 1 || Math.abs(d.dy) > 1)) {
@@ -60,13 +78,37 @@ export default function ObjectsLayer({ pageKey, view }: { pageKey: PageKey; view
         };
     }, [dragging, view, dispatch]);
 
+    /** Guides for moving `o`: its screen box and baseline, and everything else on the page. */
+    const snapFor = (o: ObjectEdit): SnapSpec | undefined => {
+        let box: Box | null = null;
+        let baseline: Baseline | undefined;
+        const layer = layerRef.current;
+        if (o.kind === 'add-text') {
+            const el = layer?.querySelector(`[data-object-id="${CSS.escape(o.id)}"]`);
+            if (el && layer) {
+                const r = el.getBoundingClientRect();
+                const h = layer.getBoundingClientRect();
+                box = { left: r.left - h.left, top: r.top - h.top, right: r.right - h.left, bottom: r.bottom - h.top };
+            }
+            if (Math.abs(view.screenAngle(o.angle)) < 0.01) baseline = { axis: 'y', pos: view.toScreen(o.x, o.y)[1] };
+        } else {
+            const bb = objectBounds(o);
+            if (bb) box = toBox(view.rectToScreen(bb));
+        }
+        if (!box) return undefined;
+        const analysis = session.analyze(pageKey);
+        const page = { width: view.width, height: view.height };
+        const items = [...textItems(analysis?.text.blocks ?? [], state.edits, pageKey, reports.get(pageKey), view), ...objectItems(state.edits, pageKey, view, overlay?.parentElement ?? null, o.id)];
+        return { box, baseline, targets: buildTargets(items, page, screenRules(view, analysis?.model.rules ?? [])), page };
+    };
+
     const startDrag = (e: RPointerEvent, o: ObjectEdit, mode: 'move' | 'resize', handle?: Handle) => {
         if (!interactive || e.button !== 0) return;
         e.stopPropagation();
         e.preventDefault();
         if (editingObject && editingObject !== o.id) setEditingObject(null);
         dispatch({ type: 'select', selection: { kind: 'object', id: o.id } });
-        setDrag({ id: o.id, mode, handle, x: e.clientX, y: e.clientY, dx: 0, dy: 0, orig: o });
+        setDrag({ id: o.id, mode, handle, x: e.clientX, y: e.clientY, dx: 0, dy: 0, orig: o, snap: mode === 'move' ? snapFor(o) : undefined });
     };
 
     // While dragging, show the object at its tentative position.
@@ -79,7 +121,7 @@ export default function ObjectsLayer({ pageKey, view }: { pageKey: PageKey; view
     const shapes = objects.filter((o) => o.kind === 'shape' || o.kind === 'ink');
 
     return (
-        <div className="absolute inset-0" style={{ zIndex: 20, pointerEvents: 'none' }}>
+        <div ref={layerRef} className="absolute inset-0" style={{ zIndex: 20, pointerEvents: 'none' }}>
             {/* Highlights (multiply, like a marker) */}
             {objects
                 .filter((o) => o.kind === 'highlight')
@@ -176,6 +218,8 @@ export default function ObjectsLayer({ pageKey, view }: { pageKey: PageKey; view
 
             {/* Selection frame, handles and object toolbar */}
             {interactive && selectedId && <Selection objects={objects} selectedId={selectedId} live={live} view={view} dragging={!!drag} startDrag={startDrag} />}
+
+            {drag?.snap && drag.started && <GuideLines overlay={overlay} guides={drag.guides ?? []} box={shiftBox(drag.snap.box, drag.dx, drag.dy)} />}
         </div>
     );
 }
@@ -472,6 +516,7 @@ function AddTextBox({
     return (
         <div
             ref={boxRef}
+            data-object-id={o.id}
             className="absolute"
             style={{ left: sx, top: sy - off, transform: angle ? `rotate(${angle}rad)` : undefined, transformOrigin: `0 ${off}px`, pointerEvents: interactive || editing ? 'auto' : 'none', zIndex: selected || editing ? 35 : undefined }}
         >

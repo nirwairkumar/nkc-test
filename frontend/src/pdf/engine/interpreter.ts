@@ -97,6 +97,8 @@ export interface PageModel {
     glyphs: GlyphRec[];
     containers: Map<string, Container>;
     images: ImageRec[];
+    /** Painted horizontal/vertical line segments and rectangle edges (table rules, cell borders), page space. */
+    rules: Rect[];
     /** Page user-space box used for rendering (CropBox ∩ MediaBox). */
     view: Rect;
     rotate: number;
@@ -122,6 +124,9 @@ interface GState {
 const nums = (args: Operand[]) => args.map((a) => (a.t === 'num' ? a.v : 0));
 
 const MAX_FORM_DEPTH = 8;
+const MAX_RULES = 5000;
+/** Shortest segment kept as a rule (page units). */
+const MIN_RULE = 3;
 let clusterSeq = 0;
 
 /** PDF text string -> JS string (UTF-16BE with BOM, UTF-8 with BOM, else PDFDocEncoding≈Latin-1). */
@@ -155,7 +160,7 @@ export function pageView(ctx: PDFContext, page: PDFPage): { view: Rect; rotate: 
 
 export function interpretPage(ctx: PDFContext, page: PDFPage, fonts: FontCache): PageModel {
     const { view, rotate } = pageView(ctx, page);
-    const model: PageModel = { glyphs: [], containers: new Map(), images: [], view, rotate };
+    const model: PageModel = { glyphs: [], containers: new Map(), images: [], rules: [], view, rotate };
     const { bytes } = contentBytes(ctx, page.node.get(N('Contents')));
     const resources = page.node.Resources() as PDFDict | undefined;
 
@@ -345,6 +350,31 @@ function runStream(
         model.images.push({ container: key, opIndex: i, bbox: { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) } });
     };
 
+    // Current path as straight page-space segments (curves only move the pen).
+    let segs: [number, number, number, number][] = [];
+    let pen: [number, number] | null = null;
+    let subStart: [number, number] | null = null;
+    const lineTo = (p: [number, number]) => {
+        if (pen) segs.push([pen[0], pen[1], p[0], p[1]]);
+        pen = p;
+    };
+    const closePath = () => {
+        if (pen && subStart) lineTo(subStart);
+    };
+    const endPath = (painted: boolean) => {
+        if (painted) {
+            for (const [x0, y0, x1, y1] of segs) {
+                if (model.rules.length >= MAX_RULES) break;
+                const w = Math.abs(x1 - x0), h = Math.abs(y1 - y0);
+                if ((w < 0.3 && h >= MIN_RULE) || (h < 0.3 && w >= MIN_RULE)) {
+                    model.rules.push({ x0: Math.min(x0, x1), y0: Math.min(y0, y1), x1: Math.max(x0, x1), y1: Math.max(y0, y1) });
+                }
+            }
+        }
+        segs = [];
+        pen = subStart = null;
+    };
+
     for (let i = 0; i < ops.length; i++) {
         const { op, args } = ops[i];
         switch (op) {
@@ -360,6 +390,54 @@ function runStream(
                 if (m.length === 6) gs.ctm = mul(m as Mat, gs.ctm);
                 break;
             }
+            case 'm': {
+                const [x, y] = nums(args);
+                pen = subStart = apply(gs.ctm, x ?? 0, y ?? 0);
+                break;
+            }
+            case 'l': {
+                const [x, y] = nums(args);
+                lineTo(apply(gs.ctm, x ?? 0, y ?? 0));
+                break;
+            }
+            case 'c': {
+                const a = nums(args);
+                pen = apply(gs.ctm, a[4] ?? 0, a[5] ?? 0);
+                break;
+            }
+            case 'v':
+            case 'y': {
+                const a = nums(args);
+                pen = apply(gs.ctm, a[2] ?? 0, a[3] ?? 0);
+                break;
+            }
+            case 'h':
+                closePath();
+                break;
+            case 're': {
+                const [x = 0, y = 0, w = 0, h = 0] = nums(args);
+                const p = [apply(gs.ctm, x, y), apply(gs.ctm, x + w, y), apply(gs.ctm, x + w, y + h), apply(gs.ctm, x, y + h)];
+                pen = subStart = p[0];
+                for (let k = 1; k <= 4; k++) lineTo(p[k % 4]);
+                break;
+            }
+            case 's':
+            case 'b':
+            case 'b*':
+                closePath();
+                endPath(true);
+                break;
+            case 'S':
+            case 'f':
+            case 'F':
+            case 'f*':
+            case 'B':
+            case 'B*':
+                endPath(true);
+                break;
+            case 'n':
+                endPath(false);
+                break;
             case 'BT':
                 tm = [...IDENTITY];
                 tlm = [...IDENTITY];

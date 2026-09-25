@@ -7,6 +7,7 @@
  * layers above it, where they can be selected and moved.
  */
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import type { PageReport } from '../engine/apply';
 import { isBaked, pageIndexOf, type PageSlot } from '../engine/edits';
 import type { PdfSession } from '../session/session';
 import { A4 } from '../session/session';
@@ -37,6 +38,8 @@ function PageViewInner({ slot, number }: { slot: PageSlot; number: number }) {
     const view = useMemo(() => slotView(session, slot, scale), [session, slot, scale]);
     const hostRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    /** Top-most layer for alignment guides (above text, objects and tools). */
+    const [overlay, setOverlay] = useState<HTMLDivElement | null>(null);
     const [visible, setVisible] = useState(false);
     const [renderedKey, setRenderedKey] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
@@ -55,7 +58,12 @@ function PageViewInner({ slot, number }: { slot: PageSlot; number: number }) {
     }, []);
 
     useEffect(() => {
-        if (!visible || renderKey === renderedKey) return;
+        if (!visible) return;
+        if (renderKey === renderedKey) {
+            // Changes that cancelled a render and were then undone leave nothing to draw.
+            setBusy(false);
+            return;
+        }
         let cancelled = false;
         let task: RenderTaskLike | null = null;
         let dispose = () => {};
@@ -63,17 +71,17 @@ function PageViewInner({ slot, number }: { slot: PageSlot; number: number }) {
             setBusy(true);
             try {
                 let page: PDFPageProxy | null = null;
+                let report: PageReport | null = null;
                 if (pageIndexOf(key) >= 0) {
                     if (baked.length) {
                         const pv = await session.preview(key, state.edits);
                         if (pv) {
                             page = pv.page;
                             dispose = pv.dispose;
-                            if (!cancelled) setReport(key, pv.report);
+                            report = pv.report;
                         }
                     } else {
                         page = await session.originalPage(key);
-                        if (!cancelled) setReport(key, null);
                     }
                 }
                 if (cancelled) return;
@@ -102,6 +110,8 @@ function PageViewInner({ slot, number }: { slot: PageSlot; number: number }) {
                 canvas.height = off.height;
                 canvas.getContext('2d')!.drawImage(off, 0, 0);
                 registerCanvas(key, { canvas, view, ratio });
+                // The report describes what the canvas now shows (layers place boxes from it).
+                setReport(key, report);
                 setRenderedKey(renderKey);
             } catch (err) {
                 if (!cancelled && (err as { name?: string })?.name !== 'RenderingCancelledException') console.error('Page render failed', err);
@@ -139,12 +149,13 @@ function PageViewInner({ slot, number }: { slot: PageSlot; number: number }) {
                 )}
                 {visible && (
                     <>
-                        <TextBlocksLayer pageKey={key} view={view} pending={stale || busy} />
+                        <TextBlocksLayer pageKey={key} view={view} pending={stale || busy} overlay={overlay} />
                         <SearchLayer pageKey={key} view={view} />
-                        <ObjectsLayer pageKey={key} view={view} />
+                        <ObjectsLayer pageKey={key} view={view} overlay={overlay} />
                         <ToolLayer pageKey={key} view={view} />
                     </>
                 )}
+                <div ref={setOverlay} className="pointer-events-none absolute inset-0" style={{ zIndex: 45 }} />
             </div>
             <span className="select-none text-[11px] font-medium text-slate-500">
                 {number} / {state.slots.length}

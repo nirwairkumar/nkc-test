@@ -95,6 +95,19 @@ interface Overrides {
     align?: Align;
     du: number;
     dv: number;
+    width?: number;
+}
+
+/**
+ * The box (along the baseline, angle frame) a block's text wraps in when given
+ * a width: it keeps the edge — or the centre — the original text was aligned to.
+ */
+export function textBox(block: TextBlock, width: number): { left: number; right: number } {
+    const l = block.paragraph ? block.uLeft : block.lines[0].u0;
+    const r = block.paragraph ? block.uRight : block.lines[0].u1;
+    if (block.align === 'right') return { left: r - width, right: r };
+    if (block.align === 'center') return { left: (l + r) / 2 - width / 2, right: (l + r) / 2 + width / 2 };
+    return { left: l, right: l + width };
 }
 
 /** Custom fonts the planner may reach for — prepare these on the registry first. */
@@ -132,9 +145,18 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
         align: edit.align && edit.align !== block.align ? edit.align : undefined,
         du,
         dv,
+        width: edit.width && edit.width > 0 ? edit.width : undefined,
     };
     const hasOverrides =
-        !!ov.family || Math.abs(ov.scale - 1) > 1e-3 || !!ov.color || ov.bold !== undefined || ov.italic !== undefined || !!ov.align || Math.abs(du) > 1e-3 || Math.abs(dv) > 1e-3;
+        !!ov.family ||
+        Math.abs(ov.scale - 1) > 1e-3 ||
+        !!ov.color ||
+        ov.bold !== undefined ||
+        ov.italic !== undefined ||
+        !!ov.align ||
+        Math.abs(du) > 1e-3 ||
+        Math.abs(dv) > 1e-3 ||
+        ov.width !== undefined;
 
     // ---- 1. Old units (chars) with their atom/line origin
     type Unit = { ch: string; line: number; atom: number; join: boolean; style: number };
@@ -424,6 +446,25 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
         };
     };
 
+    // Unchanged text that is only moved and/or recoloured: redraw every original
+    // glyph exactly where it was, shifted, so line breaks, spacing and
+    // hyphenation stay identical (re-wrapping could reflow a paragraph).
+    const sameLayout = Math.abs(ov.scale - 1) <= 1e-3 && !ov.family && ov.bold === undefined && ov.italic === undefined && !ov.align && ov.width === undefined;
+    if (!dirty.size && sameLayout) {
+        for (const line of block.lines) {
+            for (const g of line.glyphs) remove.add(g.key);
+            for (const atom of line.atoms) {
+                const first = out.length;
+                for (const g of atom.glyphs) {
+                    const [gu, gv] = toFrame(angle, g.x, g.y);
+                    out.push({ ...pieceFromGlyph(g, 0, 0), u: gu + du, v: gv + dv });
+                }
+                if (atom.glyphs.some((g) => g.cluster >= 0)) markActual(out, first, atom.text);
+            }
+        }
+        return { angle, glyphs: out, remove, missing, substituted, bbox: planBBox(out, angle), overflow: false, keptLines: 0 };
+    }
+
     // Determine which tokens to lay out.
     const firstDirty = hasOverrides ? 0 : Math.min(...dirty);
     const k0 = block.paragraph ? Math.max(0, Math.min(firstDirty, nLines - 1)) : 0;
@@ -581,15 +622,28 @@ export function planTextEdit(block: TextBlock, edit: TextEdit, faces: FaceRegist
         for (const l of lines) for (const g of l.glyphs) remove.add(g.key);
         const u0 = lines[0].u0;
         const u1 = Math.max(...lines.map((l) => l.u1));
+        const box = ov.width !== undefined ? textBox(block, ov.width) : null;
         if (block.paragraph) {
-            const firstStart = lines[0].u0;
-            const wrapped = wrap(words, block.uRight - firstStart, block.uRight - bodyLeft);
+            // A chosen width moves the paragraph's edges; the first-line indent stays.
+            const left = box ? box.left : block.uLeft;
+            const right = box ? box.right : block.uRight;
+            const firstStart = left + (lines[0].u0 - block.uLeft);
+            const bodyStart = left + (bodyLeft - block.uLeft);
+            const wrapped = wrap(words, right - firstStart, right - bodyStart);
             wrapped.forEach((ws, i) => {
-                const start = i === 0 ? firstStart : bodyLeft;
+                const start = i === 0 ? firstStart : bodyStart;
                 const lastInPara = i === wrapped.length - 1 || ws[ws.length - 1].breakAfter;
-                placeLine(ws, start, lines[0].v - i * lineGap, block.uRight - start, align === 'justify' && !lastInPara, align === 'justify' ? 'left' : align);
+                placeLine(ws, start, lines[0].v - i * lineGap, right - start, align === 'justify' && !lastInPara, align === 'justify' ? 'left' : align);
             });
             overflow = wrapped.length > nLines;
+        } else if (box) {
+            // A single line given a box wraps inside it.
+            const gap = main.size * 1.25 * ov.scale;
+            const wrapped = wrap(words, box.right - box.left, box.right - box.left);
+            wrapped.forEach((ws, i) => {
+                const last = i === wrapped.length - 1 || ws[ws.length - 1].breakAfter;
+                placeLine(ws, box.left, lines[0].v - i * gap, box.right - box.left, align === 'justify' && !last, align === 'justify' ? 'left' : align);
+            });
         } else {
             // Hard breaks only; each line anchored per alignment against the original extent.
             const groups: Word[][] = [];

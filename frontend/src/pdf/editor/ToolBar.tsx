@@ -19,7 +19,7 @@ interface ToolDef {
 }
 
 export const TOOLS: ToolDef[] = [
-    { id: 'edit', label: 'Edit text', icon: TextCursorInput, key: 'V', hint: 'Click any text to change it — same font, same place' },
+    { id: 'edit', label: 'Edit text', icon: TextCursorInput, key: 'V', hint: 'Click any text to change it — same font, same place. Drag it to move; guides line it up' },
     { id: 'text', label: 'Add text', icon: Type, key: 'T', hint: 'Click where the new text should go' },
     { id: 'erase', label: 'Erase', icon: Eraser, key: 'E', hint: 'Drag over text to remove it for real (background stays)' },
     { id: 'whiteout', label: 'White-out', icon: SquareDashed, key: 'W', hint: 'Drag to cover an area with the page colour' },

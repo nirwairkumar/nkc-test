@@ -50,7 +50,8 @@ export interface EditorState extends Doc {
 export type Action =
     | { type: 'init'; slots: PageSlot[]; edits?: PageEdit[] }
     | { type: 'upsert'; edit: PageEdit }
-    | { type: 'upsertMany'; edits: PageEdit[] }
+    /** Several edits as one undo step; `remove` drops edits by id in the same step. */
+    | { type: 'upsertMany'; edits: PageEdit[]; remove?: string[] }
     | { type: 'remove'; id: string }
     | { type: 'slots'; slots: PageSlot[] }
     | { type: 'undo' }
@@ -95,8 +96,10 @@ export function reducer(s: EditorState, a: Action): EditorState {
             return { ...initialState, zoom: s.zoom, fitWidth: s.fitWidth, text: s.text, draw: s.draw, slots: a.slots, edits: a.edits ?? [], version: s.version + 1, dirty: !!a.edits?.length };
         case 'upsert':
             return commit(s, { edits: upsertInto(s.edits, a.edit), slots: s.slots });
-        case 'upsertMany':
-            return commit(s, { edits: a.edits.reduce(upsertInto, s.edits), slots: s.slots });
+        case 'upsertMany': {
+            const kept = a.remove?.length ? s.edits.filter((e) => !a.remove!.includes(e.id)) : s.edits;
+            return commit(s, { edits: a.edits.reduce(upsertInto, kept), slots: s.slots });
+        }
         case 'remove': {
             const selection = s.selection?.kind === 'object' && s.selection.id === a.id ? null : s.selection;
             return { ...commit(s, { edits: s.edits.filter((e) => e.id !== a.id), slots: s.slots }), selection };

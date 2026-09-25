@@ -40,6 +40,11 @@ export interface TextEdit {
     /** Move offset in page units. */
     dx?: number;
     dy?: number;
+    /**
+     * Width of the text's box in page units; the text wraps inside it. The box
+     * keeps the edge (or centre) the original text was aligned to.
+     */
+    width?: number;
 }
 
 export interface AddTextEdit {

@@ -12,9 +12,11 @@ import { EditorProvider, useEditor } from './EditorContext';
 import FindPanel from './FindPanel';
 import { CSS_UNITS } from './geometry';
 import { imageFromFile } from './images';
+import { nudgeAction } from './move';
 import PagesPanel from './PagesPanel';
 import PageView, { slotKey, slotView } from './PageView';
 import { saveSession } from './persist';
+import SelectionBar from './SelectionBar';
 import SignatureDialog from './SignatureDialog';
 import { newId, useEditorReducer, type Tool } from './store';
 import ToolBar from './ToolBar';
@@ -176,6 +178,19 @@ function WorkspaceInner({ zoom, scrollRef }: { zoom: number; scrollRef: React.Re
     // ---- Keyboard shortcuts
     useEffect(() => {
         const toolKeys: Record<string, Tool> = { v: 'edit', t: 'text', e: 'erase', w: 'whiteout', h: 'highlight', d: 'draw' };
+        const arrows: Record<string, [number, number]> = { arrowleft: [-1, 0], arrowright: [1, 0], arrowup: [0, -1], arrowdown: [0, 1] };
+        /** Nudges the selected text block or object; false when nothing is selected. */
+        const nudge = (dir: [number, number], step: number) => {
+            const s = stateRef.current;
+            const sel = s.selection;
+            if (!sel) return false;
+            const page = sel.kind === 'block' ? sel.page : s.edits.find((x) => x.id === sel.id)?.page;
+            const slot = s.slots.find((x) => slotKey(x) === page);
+            if (!slot) return false;
+            const action = nudgeAction(session, s.edits, sel, slotView(session, slot, 1), dir[0] * step, dir[1] * step);
+            if (action) dispatch(action);
+            return true;
+        };
         const onKey = (e: KeyboardEvent) => {
             const el = e.target as HTMLElement;
             const typing = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable;
@@ -210,6 +225,9 @@ function WorkspaceInner({ zoom, scrollRef }: { zoom: number; scrollRef: React.Re
             } else if ((k === 'delete' || k === 'backspace') && stateRef.current.selection?.kind === 'object') {
                 e.preventDefault();
                 dispatch({ type: 'remove', id: stateRef.current.selection.id });
+            } else if (arrows[k] && !mod && !e.altKey) {
+                // Arrow keys move the selection 1 pt (Shift: 10 pt); otherwise they scroll as usual.
+                if (nudge(arrows[k], e.shiftKey ? 10 : 1)) e.preventDefault();
             } else if (k === 'escape') {
                 setFindOpen(false);
                 setEditingObject(null);
@@ -220,7 +238,7 @@ function WorkspaceInner({ zoom, scrollRef }: { zoom: number; scrollRef: React.Re
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [dispatch, download, zoom, setEditingObject]);
+    }, [dispatch, download, zoom, setEditingObject, session]);
 
     // ---- Autosave (this browser only) and leave-page warning
     useEffect(() => {
@@ -291,6 +309,7 @@ function WorkspaceInner({ zoom, scrollRef }: { zoom: number; scrollRef: React.Re
                         <FindPanel onClose={() => setFindOpen(false)} />
                     </div>
                 )}
+                <SelectionBar />
                 <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-slate-900/75 px-3 py-1 text-[11px] font-medium text-white md:hidden">
                     Page {current + 1} / {state.slots.length}
                 </div>

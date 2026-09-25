@@ -160,7 +160,7 @@ The only network requests the PDF code makes (verified by searching the code):
 ### Tools (left toolbar)
 | Tool | Key | What it does |
 |---|---|---|
-| **Edit text** | V | Click any text to change it in place — same font, same position. |
+| **Edit text** | V | Click any text to change it in place — same font, same position. Drag it to move it (alignment guides), arrow keys nudge it, side handles change its width. |
 | **Add text** | T | Click to place a new text box; choose font, size, colour, bold/italic, alignment. |
 | **Erase** | E | Drag over text to remove it for real (the background stays). |
 | **White-out** | W | Drag to cover an area with the sampled page colour (for scanned pages / images). |
@@ -174,10 +174,19 @@ The only network requests the PDF code makes (verified by searching the code):
 - Clicking a text block opens an inline editor exactly over the original text, rendered in the matching web font.
 - **Live feedback while typing:** e.g. "Not in this PDF's font: V → Times" — the user sees which characters will be drawn in a fallback font before committing.
 - **Tab** jumps to the next text block (also across pages), **Enter** commits single-line blocks (**Ctrl+Enter** commits paragraphs, where Enter is a new line), **Esc** cancels.
-- Format bar: font family (the document's own fonts + Helvetica/Times/Courier + Noto Sans/Serif/Devanagari), size, colour swatches, bold, italic, alignment, and moving the block.
+- Format bar: font family (the document's own fonts + Helvetica/Times/Courier + Noto Sans/Serif/Devanagari), size, colour swatches, bold, italic, alignment. Beside the text, the ✥ grip moves the block and the side handles set its width (see below).
 - Paragraphs re-flow from the first changed line; lines before it are untouched.
 - Blocks in fonts that cannot be re-encoded (e.g. Type3) are handled as "erase + add text" automatically.
 - Scanned pages show a hint that there is no text layer (use White-out + Add text).
+
+### Moving text and changing its width (guided shift, added 2026-09-26)
+- **Drag any text** (or the round ✥ grip that appears on hover, or the one beside the open editor) to move it. A plain click still opens the editor.
+- **Alignment guides** (rose lines) appear while dragging and the text snaps to them within 6 px: left edges, centres, right edges and baselines of the other text on the page, added images/shapes/text boxes, the page centre, the centre of the **table cell** it is over (found from the page's own ruling lines), and its **original position** (dashed). A read-out shows the move in mm.
+- **Shift** while dragging keeps the move straight (horizontal or vertical); **Alt** turns snapping off; **Esc** cancels the drag.
+- After a move (or after finishing an edit with Enter) the text stays **selected**: a bar at the bottom of the view (top, if the text is down there) has *Edit text*, ← ↑ ↓ → (1 pt, Shift = 10 pt) and *Back to original position*. The **arrow keys** do the same (also for selected images and shapes). Clicking elsewhere lets go.
+- **Width:** the open editor has a handle on each side. Dragging one changes the width the text wraps to — wider to fit more text per line, narrower to wrap onto more lines (a single line becomes wrapped text, e.g. a longer entry kept inside its table column). The dragged side snaps to other text edges and to ruling lines; the box keeps the edge (or centre) the original text was aligned to, so right-aligned amounts grow to the left.
+- Stored on the text edit as `dx`/`dy` and `width` (page units). A pure move redraws every original glyph at exactly its old position plus the offset (same line breaks, spacing, hyphenation and /ActualText); a width change re-flows the text in the PDF's own font.
+- Until the page re-renders (a fraction of a second), a moved block is shown from a copy of its own pixels (background and crossing table rules keyed out), so it moves at once.
 
 ### Find & replace (Ctrl+F)
 Search across all pages with match highlighting; **Replace** or **Replace all** (e.g. change a name or date everywhere). Replacements keep each block's formatting (bold stays bold).
@@ -202,8 +211,10 @@ Thumbnails with drag-to-reorder (or buttons), **rotate**, **duplicate**, **delet
 | Ctrl+Z / Ctrl+Y | Undo / Redo |
 | Ctrl + / Ctrl − / Ctrl 0 | Zoom in / out / fit width |
 | Delete | Delete selected object |
-| Esc | Cancel edit / deselect |
+| Esc | Cancel edit / deselect / cancel a drag |
 | Tab (while editing) | Next text block |
+| ← ↑ ↓ → | Nudge the selected text, image or shape 1 pt (Shift: 10 pt) |
+| Shift / Alt while dragging | Keep the move straight / move without snapping |
 
 ---
 
@@ -540,6 +551,8 @@ Tests were run with Playwright (Chromium) against the dev server **and** the pro
 ### Editor UI
 Edit text (with the live "not in this font" warning), Tab navigation, add text, erase, white-out, highlight, draw, rectangle, arrow, image insert and move, drawn signature, find & replace (bold kept), undo/redo, insert blank page, rotate, download, password flow, phone layouts — all passing.
 
+**Moving text / width (2026-09-26)**, on a passbook-style table fixture (Helvetica amounts crossing a column rule, a Times paragraph), checked in Chromium and with PyMuPDF on the downloads: dragging "11,999.00" 3 px short of the deposit column snapped its right edge onto "10,000.00" (output x1 474.0 = 474.0); a Shift-drag of a 4-line paragraph moved all 45 words by exactly (0, 33.06) pt with the same line breaks; Shift+↓ then 10 × ↑ returned it exactly; bar buttons move 1 pt per click; undo/redo and Esc-cancel restore positions; the paragraph re-wrapped to 5 lines inside a narrower box; a longer date-cell entry wrapped to 3 lines with its width snapped to the column rule (max x1 125.2 < 132); a rectangle snapped to x = 40 pt and Shift+→ moved it 10 pt; the original fonts stayed (no substitutes).
+
 ### LaTeX to PDF
 - All six samples: **0 KaTeX errors**; PDF fonts are the KaTeX + Noto files; text searchable; PDF matches the preview visually.
 - 4-page document: preview says 4 pages, PDF has 4 pages; page numbers on every page; `\newpage` honoured; link annotation present; 8 bookmarks; over-wide formula shrunk to fit; no text crosses the margins.
@@ -561,6 +574,7 @@ Edit text (with the live "not in this font" warning), Tab navigation, add text, 
 - Not editable in place: vertical text, Type3 fonts, some CJK fonts with non-Identity CMaps (these fall back to erase + new text where possible).
 - No hyphenation when re-flowing paragraphs.
 - Superscripts/subscripts become separate small blocks.
+- Vertical (top-to-bottom) text can't be moved; width handles snap only for text running across the screen.
 - Page thumbnails show the original pages, not the edits.
 - Very large PDFs on low-end phones can be slow (all processing is on-device).
 
