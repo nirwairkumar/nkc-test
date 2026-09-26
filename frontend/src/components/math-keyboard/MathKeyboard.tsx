@@ -152,6 +152,65 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const lastGoodHtmlRef = useRef('');
   const coarsePointer = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
 
+  // Drag offset from the docked spot (null = docked at the bottom, like a phone keyboard).
+  const [offset, setOffset] = useState<{ x: number; y: number } | null>(null);
+  const offsetRef = useRef<{ x: number; y: number } | null>(null);
+  offsetRef.current = offset;
+  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; baseX: number; baseY: number; moved: boolean } | null>(null);
+
+  /** Keeps the whole pad on screen for a given offset. */
+  const clampOffset = useCallback((x: number, y: number) => {
+    const panel = panelRef.current;
+    if (!panel) return { x, y };
+    const cur = offsetRef.current ?? { x: 0, y: 0 };
+    const rect = panel.getBoundingClientRect();
+    const dockedLeft = rect.left - cur.x;
+    const dockedTop = rect.top - cur.y;
+    const margin = 8;
+    const minX = margin - dockedLeft;
+    const maxX = window.innerWidth - margin - rect.width - dockedLeft;
+    const minY = margin - dockedTop;
+    const maxY = window.innerHeight - rect.height - dockedTop;
+    return {
+      x: Math.min(Math.max(x, Math.min(minX, 0)), Math.max(maxX, 0)),
+      y: Math.min(Math.max(y, Math.min(minY, 0)), Math.max(maxY, 0)),
+    };
+  }, []);
+
+  const onDragStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || (e.target as HTMLElement).closest('button, input, textarea')) return;
+    const cur = offsetRef.current ?? { x: 0, y: 0 };
+    dragRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, baseX: cur.x, baseY: cur.y, moved: false };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+
+  const onDragMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.moved && Math.hypot(dx, dy) < 4) return;
+    d.moved = true;
+    setOffset(clampOffset(d.baseX + dx, d.baseY + dy));
+  }, [clampOffset]);
+
+  const onDragEnd = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    dragRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    // Dropped back near the dock → snap home.
+    setOffset(o => (o && Math.abs(o.x) < 12 && Math.abs(o.y) < 12 ? null : o));
+  }, []);
+
+  // Keep a moved pad on screen when the window shrinks.
+  useEffect(() => {
+    if (!offset) return;
+    const onResize = () => setOffset(o => (o ? clampOffset(o.x, o.y) : o));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [offset, clampOffset]);
+
   const context: MathContext = useMemo(
     () => contextAt(expression, caretIndex ?? expression.length),
     [expression, caretIndex]
@@ -219,7 +278,8 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
     const panel = panelRef.current;
     if (!el || !el.isConnected || !panel) return;
     const rect = el.getBoundingClientRect();
-    const visibleBottom = window.innerHeight - panel.offsetHeight - 20;
+    // A pad the teacher has moved away no longer covers the bottom of the page.
+    const visibleBottom = window.innerHeight - (offsetRef.current ? 0 : panel.offsetHeight) - 20;
     if (rect.bottom > visibleBottom) {
       window.scrollBy({ top: rect.bottom - visibleBottom + Math.min(rect.height, 24), behavior: smooth ? 'smooth' : 'auto' });
     } else if (rect.top < 88) {
@@ -532,7 +592,10 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       role="region"
       aria-label="Sy Pad — maths and chemistry keyboard"
       className="sy-pad-container fixed inset-x-0 bottom-0 z-[60] mx-auto w-full sm:bottom-3 sm:w-[min(780px,calc(100vw-32px))] rounded-t-[22px] sm:rounded-[22px] bg-[#E4E7EC]/95 backdrop-blur-xl ring-1 ring-slate-900/10 shadow-[0_-16px_48px_-20px_rgba(15,23,42,0.45)] select-none animate-in slide-in-from-bottom-6 fade-in duration-200"
-      style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}
+      style={{
+        paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
+        ...(offset ? { translate: `${offset.x}px ${offset.y}px` } : null),
+      }}
       onMouseDown={e => {
         if (!(e.target as HTMLElement).closest('input, textarea')) e.preventDefault();
       }}
@@ -564,8 +627,19 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
         .sy-pad-container .katex-display > .katex { text-align: left !important; }
       `}</style>
 
-      {/* ── Accessory bar: where it goes, help, done ── */}
-      <div className="flex items-center gap-2 px-3 pt-2.5 pb-2 sm:px-4">
+      {/* ── Accessory bar: where it goes, help, done — also the drag handle ── */}
+      <div
+        className="relative flex touch-none items-center gap-2 px-3 pt-3.5 pb-2 sm:px-4 cursor-grab active:cursor-grabbing"
+        onPointerDown={onDragStart}
+        onPointerMove={onDragMove}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragEnd}
+        onDoubleClick={e => {
+          if (!(e.target as HTMLElement).closest('button')) setOffset(null);
+        }}
+        title={offset ? 'Drag to move · double-click to dock' : 'Drag to move'}
+      >
+        <span aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1.5 h-1 w-10 -translate-x-1/2 rounded-full bg-slate-400/60" />
         <button
           type="button"
           onClick={() => revealTarget()}
