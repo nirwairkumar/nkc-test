@@ -39,25 +39,26 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
             'a', 'img', 'figure', 'figcaption',
             // Tables
             'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col',
-            // KaTeX output
+            // KaTeX output & icons
             'math', 'semantics', 'mrow', 'mi', 'mn', 'mo', 'ms', 'mtext', 'annotation',
             'msup', 'msub', 'msubsup', 'mfrac', 'msqrt', 'mroot', 'mstyle',
             'munder', 'mover', 'munderover', 'mtable', 'mtr', 'mtd', 'mspace', 'mpadded',
-            'svg', 'path', 'line', 'g', 'rect',
+            'svg', 'path', 'line', 'g', 'rect', 'polyline', 'button',
         ],
         ALLOWED_ATTR: [
             'href', 'src', 'alt', 'title', 'width', 'height',
             'class', 'style', 'colspan', 'rowspan', 'align', 'dir', 'lang',
-            'target', 'rel',
+            'target', 'rel', 'type', 'data-table-id',
             // KaTeX / MathML presentation attributes
             'mathvariant', 'displaystyle', 'scriptlevel', 'stretchy', 'accent',
             'viewBox', 'preserveAspectRatio', 'd', 'fill', 'x', 'y', 'x1', 'x2', 'y1', 'y2',
+            'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'points',
             'aria-hidden', 'encoding',
         ],
         // Block every URI scheme except the safe ones. This is what stops
         // href="javascript:..." and src="data:text/html,...".
         ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
-        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'link', 'meta', 'base'],
+        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'link', 'meta', 'base'],
         FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onanimationstart', 'formaction', 'srcdoc'],
         // Keep <a target="_blank"> from handing the opener window to the linked page.
         ADD_ATTR: ['target'],
