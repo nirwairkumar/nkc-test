@@ -1,331 +1,270 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { TestSection, Question } from '@/lib/testsApi';
-import {
-    Layers,
-    ChevronRight,
-    ChevronLeft,
-    Sparkles
-} from 'lucide-react';
+import { ChevronRight, ChevronUp, ChevronDown, Map as MapIcon } from 'lucide-react';
 
 interface TestBuilderMinimapProps {
     sections?: TestSection[];
     questions?: Question[];
     mode?: 'section' | 'standard';
-    activeQuestionId?: string | number;
-    onSelectQuestion?: (questionId: string | number) => void;
+    /** Question ids that still need something before the test can be saved. */
+    issueIds?: Set<string>;
 }
+
+/*
+ * A VS Code–style overview of the whole test. Questions are rendered as real text at
+ * normal size and scaled down to ~20%, so the minimap has the same shape as the page:
+ * long questions are long, passages stand out, correct options are green. The grey
+ * slider is the part of the page currently on screen — drag it, or click anywhere.
+ */
+
+const PANEL_WIDTH = 112;
+const PAD_X = 8;
+const SCALE = 0.2;
+const CONTENT_WIDTH = (PANEL_WIDTH - PAD_X * 2) / SCALE;
+
+/** LaTeX and markdown down to plain characters — only the shape of the text matters here. */
+function plain(text: unknown, max: number): string {
+    if (typeof text !== 'string') return '';
+    return text
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, '▢▢▢')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\\[a-zA-Z]+/g, ' ')
+        .replace(/[${}\\^_]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, max);
+}
+
+const isCorrect = (q: Question, key: string) =>
+    Array.isArray(q.correctAnswer) ? q.correctAnswer.includes(key) : q.correctAnswer === key;
+
+interface Anchor { page: number; mini: number }
 
 export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
     sections = [],
     questions = [],
     mode = 'standard',
-    activeQuestionId,
-    onSelectQuestion
+    issueIds,
 }) => {
-    const [collapsed, setCollapsed] = useState<boolean>(false);
-    const [activeId, setActiveId] = useState<string | number | null>(null);
+    const [collapsed, setCollapsed] = useState(false);
+    const [slider, setSlider] = useState({ top: 0, height: 0 });
+    const [miniScroll, setMiniScroll] = useState(0);
+    const [contentHeight, setContentHeight] = useState(0);
+    const viewportRef = useRef<HTMLDivElement>(null);
+    const innerRef = useRef<HTMLDivElement>(null);
+    const anchorsRef = useRef<Anchor[]>([]);
+    const dragRef = useRef<{ grabOffset: number } | null>(null);
+    const frameRef = useRef(0);
 
-    const minimapRef = useRef<HTMLDivElement>(null);
-    const minimapScrollRef = useRef<HTMLDivElement>(null);
-
-    // Safely calculate total question count
-    const safeSections = Array.isArray(sections) ? sections : [];
+    const safeSections = Array.isArray(sections) ? sections.filter(Boolean) : [];
     const safeQuestions = Array.isArray(questions) ? questions.filter(Boolean) : [];
-
     const totalQuestions = mode === 'section'
-        ? safeSections.reduce((acc, s) => acc + (Array.isArray(s?.questions) ? s.questions.filter(Boolean).length : 0), 0)
+        ? safeSections.reduce((acc, s) => acc + (Array.isArray(s.questions) ? s.questions.filter(Boolean).length : 0), 0)
         : safeQuestions.length;
 
-    const prevTotalQuestionsRef = useRef<number>(totalQuestions);
+    /** Pairs each question's position on the page with its position in the minimap. */
+    const measure = useCallback(() => {
+        const inner = innerRef.current;
+        const viewport = viewportRef.current;
+        if (!inner || !viewport) return;
 
-    // 1. Auto scroll minimap container to bottom when new questions are added / generated
-    useEffect(() => {
-        if (totalQuestions > prevTotalQuestionsRef.current) {
-            if (minimapScrollRef.current) {
-                setTimeout(() => {
-                    if (minimapScrollRef.current) {
-                        minimapScrollRef.current.scrollTo({
-                            top: minimapScrollRef.current.scrollHeight,
-                            behavior: 'smooth'
-                        });
-                    }
-                }, 100);
+        const miniHeight = inner.offsetHeight * SCALE;
+        const docHeight = Math.max(document.documentElement.scrollHeight, window.innerHeight + 1);
+        const anchors: Anchor[] = [{ page: 0, mini: 0 }];
+        inner.querySelectorAll<HTMLElement>('[data-mini-id]').forEach(block => {
+            const id = block.dataset.miniId;
+            const pageEl = document.querySelector<HTMLElement>(`[data-minimap-id="${CSS.escape(id || '')}"]`);
+            if (!pageEl) return;
+            const r = pageEl.getBoundingClientRect();
+            const top = r.top + window.scrollY;
+            const last = anchors[anchors.length - 1];
+            const miniTop = block.offsetTop * SCALE;
+            const miniBottom = (block.offsetTop + block.offsetHeight) * SCALE;
+            if (top > last.page && miniTop >= last.mini) anchors.push({ page: top, mini: miniTop });
+            const bottom = top + r.height;
+            if (bottom > anchors[anchors.length - 1].page) anchors.push({ page: bottom, mini: Math.max(miniBottom, anchors[anchors.length - 1].mini) });
+        });
+        const tail = anchors[anchors.length - 1];
+        anchors.push({ page: Math.max(docHeight, tail.page + 1), mini: Math.max(miniHeight, tail.mini) });
+        anchorsRef.current = anchors;
+
+        const toMini = (y: number) => {
+            for (let i = 1; i < anchors.length; i++) {
+                const a = anchors[i - 1], b = anchors[i];
+                if (y <= b.page) return a.mini + ((y - a.page) / (b.page - a.page || 1)) * (b.mini - a.mini);
             }
-        }
-        prevTotalQuestionsRef.current = totalQuestions;
-    }, [totalQuestions]);
-
-    // 2. Auto scroll active question card inside minimap when scrolling main page
-    useEffect(() => {
-        if (activeId === null || !minimapScrollRef.current) return;
-        const activeMinimapItem = minimapScrollRef.current.querySelector(`[data-minimap-item-id="${activeId}"]`);
-        if (activeMinimapItem) {
-            activeMinimapItem.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest'
-            });
-        }
-    }, [activeId]);
-
-    // Track scroll position to update active question indicator
-    useEffect(() => {
-        const handleScroll = () => {
-            try {
-                const windowHeight = window.innerHeight || 800;
-                const questionElements = document.querySelectorAll('[data-minimap-id]');
-                let currentActiveId: string | number | null = null;
-                let minDistance = Infinity;
-
-                questionElements.forEach((el) => {
-                    const rect = el.getBoundingClientRect();
-                    const distance = Math.abs(rect.top - 150);
-                    if (rect.top <= windowHeight && rect.bottom >= 0 && distance < minDistance) {
-                        minDistance = distance;
-                        currentActiveId = el.getAttribute('data-minimap-id');
-                    }
-                });
-
-                if (currentActiveId !== null) {
-                    setActiveId(currentActiveId);
-                }
-            } catch (err) {
-                // Silently handle DOM metric changes
-            }
+            return anchors[anchors.length - 1].mini;
         };
 
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        window.addEventListener('resize', handleScroll, { passive: true });
-        handleScroll();
-
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('resize', handleScroll);
-        };
+        const top = toMini(window.scrollY);
+        const bottom = toMini(window.scrollY + window.innerHeight);
+        const overflow = Math.max(0, miniHeight - viewport.clientHeight);
+        const progress = window.scrollY / Math.max(1, docHeight - window.innerHeight);
+        setMiniScroll(overflow * Math.min(1, Math.max(0, progress)));
+        setSlider({ top, height: Math.max(14, bottom - top) });
+        setContentHeight(miniHeight);
     }, []);
 
-    // Scroll to target question when clicked in minimap
-    const scrollToTarget = (id: string | number) => {
-        try {
-            const allNodes = Array.from(document.querySelectorAll('[data-minimap-id]'));
-            const el = allNodes.find(node => node.getAttribute('data-minimap-id') === String(id));
-            if (el) {
-                const yOffset = -90; // Offset for fixed top navbar
-                const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                window.scrollTo({ top: y, behavior: 'smooth' });
-                setActiveId(id);
-                if (onSelectQuestion) onSelectQuestion(id);
-            }
-        } catch (err) {
-            console.error("Minimap scroll error:", err);
+    const schedule = useCallback(() => {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = requestAnimationFrame(measure);
+    }, [measure]);
+
+    useEffect(() => {
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule, { passive: true });
+        const ro = new ResizeObserver(schedule);
+        ro.observe(document.body);
+        return () => {
+            window.removeEventListener('scroll', schedule);
+            window.removeEventListener('resize', schedule);
+            ro.disconnect();
+            cancelAnimationFrame(frameRef.current);
+        };
+    }, [schedule]);
+
+    useLayoutEffect(() => {
+        if (!collapsed) schedule();
+    }, [sections, questions, mode, collapsed, schedule]);
+
+    /** Minimap y (in its own coordinates) → page scroll position. */
+    const toPage = (mini: number) => {
+        const anchors = anchorsRef.current;
+        for (let i = 1; i < anchors.length; i++) {
+            const a = anchors[i - 1], b = anchors[i];
+            if (mini <= b.mini) return a.page + ((mini - a.mini) / (b.mini - a.mini || 1)) * (b.page - a.page);
         }
+        return anchors.length ? anchors[anchors.length - 1].page : 0;
     };
+
+    const pointerMini = (clientY: number) => {
+        const rect = viewportRef.current?.getBoundingClientRect();
+        return rect ? clientY - rect.top + miniScroll : 0;
+    };
+
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return;
+        const y = pointerMini(e.clientY);
+        const onSlider = y >= slider.top && y <= slider.top + slider.height;
+        // Clicking outside the slider jumps there first (centred), then the drag continues from it.
+        const grabOffset = onSlider ? y - slider.top : slider.height / 2;
+        if (!onSlider) window.scrollTo({ top: Math.max(0, toPage(y - grabOffset)), behavior: 'auto' });
+        dragRef.current = { grabOffset };
+        (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+        e.preventDefault();
+    };
+
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!dragRef.current) return;
+        const y = pointerMini(e.clientY) - dragRef.current.grabOffset;
+        window.scrollTo({ top: Math.max(0, toPage(y)), behavior: 'auto' });
+    };
+
+    const endDrag = () => { dragRef.current = null; };
 
     if (totalQuestions === 0) return null;
 
-    // Render items with Light Mode styling matching the page UI
-    const renderItems = () => {
-        if (mode === 'section') {
-            let totalQCounter = 0;
-            return safeSections.map((sec, sIdx) => {
-                if (!sec) return null;
-                const secQuestions = Array.isArray(sec.questions) ? sec.questions.filter(Boolean) : [];
-                return (
-                    <div key={sec.id || sIdx} className="mb-3 w-full min-w-0 max-w-full">
-                        {/* Section Header Indicator */}
-                        <div className="flex items-center gap-1 px-1.5 py-1 mb-1 bg-indigo-50/90 rounded border border-indigo-200/80 text-[9px] font-bold text-indigo-700 shadow-2xs w-full min-w-0 max-w-full overflow-hidden">
-                            <Layers className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
-                            <span className="truncate min-w-0 flex-1">{sec.name || `Section ${sIdx + 1}`}</span>
-                        </div>
-
-                        {/* Section Questions */}
-                        <div className="space-y-1.5 pl-1 w-full min-w-0 max-w-full">
-                            {secQuestions.map((q, qIdx) => {
-                                if (!q || q.id === undefined || q.id === null) return null;
-                                totalQCounter++;
-                                const isCurrentActive = String(activeId) === String(q.id) || String(activeQuestionId) === String(q.id);
-                                const isPassage = !!q.groupId;
-                                const optionsKeys = q.options ? Object.keys(q.options) : ['A', 'B', 'C', 'D'];
-                                const optionsCount = optionsKeys.length;
-                                const qText = typeof q.question === 'string' ? q.question.replace(/<[^>]*>?/gm, '').slice(0, 40) : '';
-
-                                return (
-                                    <div
-                                        key={q.id}
-                                        data-minimap-item-id={q.id}
-                                        onClick={() => scrollToTarget(q.id)}
-                                        className={`group/qitem relative cursor-pointer p-1.5 rounded-lg border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${isCurrentActive
-                                            ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-2 ring-indigo-400/40'
-                                            : isPassage
-                                                ? 'bg-indigo-50/40 border-indigo-200/80 hover:bg-indigo-50 hover:border-indigo-300 text-slate-800'
-                                                : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
-                                            }`}
-                                        title={`Q${totalQCounter}: ${qText || 'Question'}`}
-                                    >
-                                        {/* Passage Indicator vertical accent */}
-                                        {isPassage && (
-                                            <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
-                                        )}
-
-                                        <div className="flex items-center justify-between gap-0.5 mb-1 min-w-0 w-full">
-                                            <div className="flex items-center gap-0.5 min-w-0">
-                                                <span className={`text-[9px] font-extrabold ${isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-indigo-600'}`}>
-                                                    #{totalQCounter}
-                                                </span>
-                                                {isPassage && (
-                                                    <span className={`text-[7px] font-bold px-0.5 rounded uppercase shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
-                                                        PAS
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="inline-flex items-center gap-0.5 text-[9px] font-bold font-mono slashed-zero shrink-0 tracking-tighter">
-                                                <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
-                                                    {q.marks || 1}M
-                                                </span>
-                                                <span className={isCurrentActive ? 'text-rose-200' : 'text-rose-600'}>
-                                                    {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Miniature Lines Visual Effect */}
-                                        <div className="space-y-0.5 w-full min-w-0">
-                                            <div className={`h-0.5 w-full rounded-full ${isCurrentActive ? 'bg-white/90' : 'bg-slate-300 group-hover/qitem:bg-indigo-400'}`} />
-                                            <div className={`h-0.5 w-4/5 rounded-full ${isCurrentActive ? 'bg-indigo-200/80' : 'bg-slate-200'}`} />
-                                            {qText && qText.length > 30 && (
-                                                <div className={`h-0.5 w-3/5 rounded-full ${isCurrentActive ? 'bg-indigo-200/60' : 'bg-slate-200/70'}`} />
-                                            )}
-
-                                            <div className="pt-0.5 grid grid-cols-2 gap-0.5 w-full">
-                                                {Array.from({ length: Math.min(optionsCount, 4) }).map((_, optIdx) => (
-                                                    <div
-                                                        key={optIdx}
-                                                        className={`h-0.5 rounded-full ${isCurrentActive ? 'bg-indigo-200/80' : 'bg-slate-200'}`}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
-            });
-        }
-
-        // Standard Mode
+    const renderQuestion = (q: Question, number: number, prevGroup?: string) => {
+        const id = String(q.id);
+        const flagged = issueIds?.has(id);
+        const keys = q.options && q.type !== 'numerical' ? Object.keys(q.options).sort() : [];
+        const startsPassage = !!q.groupId && q.groupId !== prevGroup;
         return (
-            <div className="space-y-1.5 w-full min-w-0 max-w-full">
-                {safeQuestions.map((q, qIdx) => {
-                    if (!q || q.id === undefined || q.id === null) return null;
-                    const isCurrentActive = String(activeId) === String(q.id) || String(activeQuestionId) === String(q.id);
-                    const isPassage = !!q.groupId;
-                    const optionsKeys = q.options ? Object.keys(q.options) : ['A', 'B', 'C', 'D'];
-                    const optionsCount = optionsKeys.length;
-                    const qText = typeof q.question === 'string' ? q.question.replace(/<[^>]*>?/gm, '').slice(0, 40) : '';
-
-                    return (
-                        <div
-                            key={q.id}
-                            data-minimap-item-id={q.id}
-                            onClick={() => scrollToTarget(q.id)}
-                            className={`group/qitem relative cursor-pointer p-1.5 rounded-lg border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${isCurrentActive
-                                ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-2 ring-indigo-400/40'
-                                : isPassage
-                                    ? 'bg-indigo-50/40 border-indigo-200/80 hover:bg-indigo-50 hover:border-indigo-300 text-slate-800'
-                                    : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
-                                }`}
-                            title={`Q${qIdx + 1}: ${qText || 'Question'}`}
-                        >
-                            {/* Passage Indicator vertical accent */}
-                            {isPassage && (
-                                <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
-                            )}
-
-                            <div className="flex items-center justify-between gap-0.5 mb-1 min-w-0 w-full">
-                                <div className="flex items-center gap-0.5 min-w-0">
-                                    <span className={`text-[9px] font-extrabold ${isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-indigo-600'}`}>
-                                        #{qIdx + 1}
-                                    </span>
-                                    {isPassage && (
-                                        <span className={`text-[7px] font-bold px-0.5 rounded uppercase shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
-                                            PAS
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="inline-flex items-center gap-0.5 text-[9px] font-bold font-mono slashed-zero shrink-0 tracking-tighter">
-                                    <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
-                                        {q.marks || 1}M
-                                    </span>
-                                    <span className={isCurrentActive ? 'text-rose-200' : 'text-rose-600'}>
-                                        {q.negativeMarks !== undefined && q.negativeMarks !== null ? q.negativeMarks : 0}N
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Miniature Lines Visual Effect */}
-                            <div className="space-y-0.5 w-full min-w-0">
-                                <div className={`h-0.5 w-full rounded-full ${isCurrentActive ? 'bg-white/90' : 'bg-slate-300 group-hover/qitem:bg-indigo-400'}`} />
-                                <div className={`h-0.5 w-4/5 rounded-full ${isCurrentActive ? 'bg-indigo-200/80' : 'bg-slate-200'}`} />
-                                {qText && qText.length > 30 && (
-                                    <div className={`h-0.5 w-3/5 rounded-full ${isCurrentActive ? 'bg-indigo-200/60' : 'bg-slate-200/70'}`} />
-                                )}
-
-                                <div className="pt-0.5 grid grid-cols-2 gap-0.5 w-full">
-                                    {Array.from({ length: Math.min(optionsCount, 4) }).map((_, optIdx) => (
-                                        <div
-                                            key={optIdx}
-                                            className={`h-0.5 rounded-full ${isCurrentActive ? 'bg-indigo-200/80' : 'bg-slate-200'}`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+            <div key={id} data-mini-id={id} className="relative mb-5 pl-6">
+                {flagged && <span className="absolute left-0 top-0 h-full w-[10px] rounded-full bg-amber-400" />}
+                {startsPassage && q.passageContent && (
+                    <p className="mb-1.5 text-violet-600">{plain(q.passageContent, 420)}</p>
+                )}
+                <p className="text-slate-800">
+                    <span className="font-black text-sky-600">Q{number} </span>
+                    {plain(q.question, 300) || <span className="text-slate-400">··················</span>}
+                </p>
+                {q.image && <div className="my-1 h-10 w-40 rounded bg-slate-300" />}
+                {keys.map(k => (
+                    <p key={k} className={isCorrect(q, k) ? 'text-emerald-600' : 'text-slate-500'}>
+                        <span className="font-bold">{k} </span>
+                        {plain(q.options?.[k], 90) || '·········'}
+                    </p>
+                ))}
+                {q.type === 'numerical' && <p className="text-emerald-600">= ·····</p>}
             </div>
         );
     };
 
-    return (
-        <div className="fixed right-3 top-24 bottom-6 z-40 hidden lg:flex items-start pointer-events-none select-none">
-            {/* Collapse / Expand Toggle Button */}
+    const body = mode === 'section'
+        ? safeSections.map((sec, sIdx) => {
+            const qs = Array.isArray(sec.questions) ? sec.questions.filter(Boolean) : [];
+            return (
+                <div key={sec.id || sIdx} className="mb-6">
+                    <p className="mb-3 border-b-[6px] border-amber-300 pb-1 text-[26px] font-black uppercase text-amber-700">
+                        {sec.name || `Section ${sIdx + 1}`}
+                    </p>
+                    {qs.map((q, i) => renderQuestion(q, i + 1, qs[i - 1]?.groupId))}
+                </div>
+            );
+        })
+        : safeQuestions.map((q, i) => renderQuestion(q, i + 1, safeQuestions[i - 1]?.groupId));
+
+    if (collapsed) {
+        return (
             <button
                 type="button"
-                onClick={() => setCollapsed(!collapsed)}
-                className="pointer-events-auto bg-white text-slate-700 hover:text-indigo-600 border border-slate-200 hover:border-slate-300 shadow-md rounded-l-lg p-1.5 transition-all cursor-pointer backdrop-blur-md self-center shrink-0"
-                title={collapsed ? "Expand Minimap" : "Collapse Minimap"}
+                onClick={() => setCollapsed(false)}
+                className="fixed right-0 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-1 rounded-l-xl bg-white/90 py-3 pl-2 pr-1.5 text-[12px] font-semibold text-slate-600 shadow-md ring-1 ring-slate-900/10 backdrop-blur hover:text-sky-700 lg:flex [body[data-sypad-open]_&]:hidden"
+                title="Show the question map"
             >
-                {collapsed ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                <MapIcon className="h-4 w-4" />
             </button>
+        );
+    }
 
-            {/* Minimap Drawer Container (Light Mode theme matching page UI) */}
-            {!collapsed && (
-                <div
-                    ref={minimapRef}
-                    className="pointer-events-auto w-32 min-w-[128px] max-w-[128px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
-                >
-                    {/* Header Bar */}
-                    <div className="px-2 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 w-full min-w-0 overflow-hidden">
-                        <div className="flex items-center min-w-0">
-                            <span className="text-[10px] font-bold text-slate-800 tracking-wider uppercase truncate">
-                                Minimap
-                            </span>
-                        </div>
-                        <span className="text-[9px] font-mono font-bold px-1 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/80 shrink-0">
-                            {totalQuestions} Qs
-                        </span>
-                    </div>
+    return (
+        <aside
+            aria-label="Question map"
+            className="fixed bottom-3 right-2 top-[76px] z-30 hidden flex-col overflow-hidden rounded-2xl bg-white/85 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_12px_32px_-18px_rgba(15,23,42,0.35)] ring-1 ring-slate-900/[0.07] backdrop-blur-md lg:flex"
+            style={{ width: PANEL_WIDTH }}
+        >
+            <div className="flex h-9 shrink-0 items-center gap-0.5 border-b border-slate-100 pl-2.5 pr-1">
+                <span className="flex min-w-0 flex-1 items-center gap-1 text-[12px] font-semibold tabular-nums text-slate-700" title={`${totalQuestions} questions`}>
+                    {totalQuestions}<span className="font-medium text-slate-400">Q</span>
+                    {issueIds && issueIds.size > 0 && (
+                        <span className="rounded-full bg-amber-100 px-1.5 text-[11px] font-bold text-amber-700" title={`${issueIds.size} need attention`}>{issueIds.size}</span>
+                    )}
+                </span>
+                <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Go to top" aria-label="Go to top">
+                    <ChevronUp className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })} className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Go to bottom" aria-label="Go to bottom">
+                    <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" onClick={() => setCollapsed(true)} className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Hide the map" aria-label="Hide the question map">
+                    <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+            </div>
 
-                    {/* Minimap Scrollable Body */}
+            <div
+                ref={viewportRef}
+                className="relative flex-1 cursor-pointer touch-none overflow-hidden"
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+            >
+                <div style={{ transform: `translateY(${-miniScroll}px)`, height: contentHeight }} className="relative">
                     <div
-                        ref={minimapScrollRef}
-                        className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden p-1.5 scrollbar-thin scrollbar-thumb-slate-300 relative space-y-1"
+                        ref={innerRef}
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-0 top-0 break-words font-mono text-[15px] font-bold leading-[1.3]"
+                        style={{ width: CONTENT_WIDTH, transform: `scale(${SCALE})`, transformOrigin: 'top left', padding: `${PAD_X / SCALE}px ${PAD_X / SCALE}px 0` }}
                     >
-                        {renderItems()}
+                        {body}
                     </div>
+                    <div
+                        className="absolute inset-x-0 rounded-[3px] bg-slate-500/[0.14] ring-1 ring-inset ring-slate-500/10 transition-colors hover:bg-slate-500/25"
+                        style={{ top: slider.top, height: slider.height }}
+                    />
                 </div>
-            )}
-        </div>
+            </div>
+        </aside>
     );
 };

@@ -704,6 +704,211 @@ async def parse_document_stream(
         )
 
 
+# --- Single question from a photo (test builder "Fill from photo") ---
+
+PHOTO_QUESTION_PROMPT = r"""
+You are reading ONE exam question from a photo a teacher took. The photo may be printed,
+typed, a screenshot, or HANDWRITTEN (messy writing, lined paper, taken at an angle, shadows).
+
+Return ONLY this JSON object, nothing else:
+{
+  "question": "question text",
+  "type": "single" | "multiple" | "numerical",
+  "options": {"A": "...", "B": "...", "C": "...", "D": "..."} or null,
+  "correctAnswer": "B" | ["A", "C"] | {"min": 2.5, "max": 2.5} | null,
+  "answerSource": "marked" | "answer_key" | "none",
+  "language": "en" | "hi",
+  "diagram_bbox": [ymin, xmin, ymax, xmax] or null,
+  "otherQuestionsInPhoto": 0
+}
+
+RULES
+1. Copy the wording exactly. Do not solve, rewrite, translate or improve the question.
+2. If the photo shows several questions, take only the first complete one (top-most) and
+   put how many other questions you can see in "otherQuestionsInPhoto".
+3. Drop the question number ("Q5.", "5)", "प्रश्न 5") from the start of the question text.
+4. Options: map labels like (a), (1), (i), A., (क) to A, B, C, D, E in order. The value is the
+   option content only, without its label.
+5. "numerical" only when there are no options and the answer is a number. "multiple" only when
+   the question says more than one option can be correct, or more than one option is marked.
+   Otherwise "single".
+6. correctAnswer comes ONLY from evidence in the photo: a tick, circle, underline, highlight,
+   star or box on an option ("marked"), or a written line like "Ans: (b)", "Answer - 3",
+   "उत्तर: ग" ("answer_key"). With no such evidence, correctAnswer is null and answerSource is
+   "none". NEVER work out the answer yourself.
+7. Maths goes in LaTeX inside $...$, e.g. $\\frac{1}{2}$, $x^{2}$, $\\sqrt{3}$. Chemical formulas
+   and reactions use mhchem inside $...$: $\\ce{H2SO4}$, $\\ce{2H2 + O2 -> 2H2O}$. Use double
+   backslashes because this is JSON.
+8. Tables and match-the-column lists go inside the question text as
+   $$\\begin{array}{|c|c|} ... \\end{array}$$ with each cell's words in \\text{...}. Never use
+   markdown tables.
+9. A diagram, graph, figure, circuit or structure: set diagram_bbox to the box around the figure
+   only (not the text), as integers 0-1000 relative to the photo: [ymin, xmin, ymax, xmax].
+   Otherwise null.
+10. language is "hi" when the question is mainly Hindi (Devanagari), else "en". Keep the original
+    language.
+11. If a word is hard to read, write your best reading. Never return an empty question when any
+    text is visible.
+"""
+
+PHOTO_TYPES = ("single", "multiple", "numerical")
+# "Q5.", "Question 12:", "5)", "(5)", "प्रश्न 5." — only when followed by a space, so "2.5 kg" survives.
+QUESTION_NUMBER_PREFIX = re.compile(r'^\s*(?:Q(?:ue(?:stion)?)?\.?\s*\d{1,3}\s*[.):-]?|\(?\d{1,3}[.)]|प्रश्न\s*\d{1,3}\s*[.):-]?)\s+', re.IGNORECASE)
+
+
+def _normalize_photo_question(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Coerce Gemini's single-question JSON into the builder's question shape."""
+    from ai_preview_importer.pdf_vision_pipeline import sanitize_latex_and_mhchem
+
+    q_type = data.get("type") if data.get("type") in PHOTO_TYPES else "single"
+    question_text = QUESTION_NUMBER_PREFIX.sub('', str(data.get("question") or "").strip(), count=1)
+    question_text = sanitize_latex_and_mhchem(question_text)
+
+    options: Dict[str, str] = {}
+    raw_options = data.get("options")
+    if isinstance(raw_options, dict):
+        for key in sorted(raw_options.keys()):
+            value = raw_options[key]
+            label = str(key).strip().upper()[:1]
+            if label.isalpha() and value is not None and str(value).strip():
+                options[label] = sanitize_latex_and_mhchem(str(value).strip())
+
+    if q_type != "numerical" and not options:
+        # No options were readable: a bare number question is the only thing that fits.
+        q_type = "numerical"
+
+    answer = data.get("correctAnswer")
+    correct: Any = None
+    if q_type == "numerical":
+        options = {}
+        if isinstance(answer, dict):
+            try:
+                low = float(answer.get("min"))
+                high = float(answer.get("max", low))
+                correct = {"min": min(low, high), "max": max(low, high)}
+            except (TypeError, ValueError):
+                correct = None
+        elif isinstance(answer, (int, float, str)):
+            try:
+                value = float(answer)
+                correct = {"min": value, "max": value}
+            except ValueError:
+                correct = None
+    elif q_type == "multiple":
+        picked = answer if isinstance(answer, list) else [answer]
+        correct = sorted({str(a).strip().upper() for a in picked if a and str(a).strip().upper() in options})
+        if len(correct) == 1:
+            q_type, correct = "single", correct[0]
+        elif not correct:
+            correct = None
+    else:
+        if isinstance(answer, list):
+            picked = [str(a).strip().upper() for a in answer if a and str(a).strip().upper() in options]
+            if len(picked) > 1:
+                q_type, correct = "multiple", sorted(set(picked))
+            elif picked:
+                correct = picked[0]
+        elif answer and str(answer).strip().upper() in options:
+            correct = str(answer).strip().upper()
+
+    source = data.get("answerSource") if data.get("answerSource") in ("marked", "answer_key") else "none"
+    if correct is None:
+        source = "none"
+
+    try:
+        others = max(0, int(data.get("otherQuestionsInPhoto") or 0))
+    except (TypeError, ValueError):
+        others = 0
+
+    return {
+        "question": question_text,
+        "type": q_type,
+        "options": options,
+        "correctAnswer": correct,
+        "answerSource": source,
+        "language": "hi" if data.get("language") == "hi" else "en",
+        "otherQuestionsInPhoto": others,
+    }
+
+
+@router.post("/read-question")
+async def read_question_from_photo(
+    file: UploadFile = File(..., description="Photo or screenshot of one question"),
+    expected_type: Optional[str] = Query(None, pattern="^(single|multiple|numerical)$"),
+    request: Request = None,
+):
+    """
+    Reads one question (printed or handwritten) from a photo and returns it in the
+    builder's question shape: text, type, options, and the answer when the photo marks it.
+    A diagram in the photo is cropped, uploaded, and returned as `image`.
+    """
+    requesting_user_id = verify_auth_token(request)
+    enforce_limit(ai_light_per_user, requesting_user_id,
+                  "You have reached the hourly limit for reading questions from photos. Please try again later.")
+
+    if not file.filename or not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+        raise HTTPException(status_code=400, detail="Please upload a photo (PNG, JPG or WEBP).")
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="The photo is empty.")
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="The photo is larger than 10 MB. Please use a smaller photo.")
+
+    from ai_preview_importer.pdf_vision_pipeline import (  # lazy import: heavy OCR deps
+        _call_gemini_with_retry, _sanitize_gemini_json, convert_image_to_bytes, process_diagram_bboxes,
+    )
+
+    jpeg = await asyncio.to_thread(convert_image_to_bytes, content)
+    prompt = PHOTO_QUESTION_PROMPT
+    if expected_type:
+        prompt += f"\nThe teacher expects a \"{expected_type}\" question; use that type unless the photo clearly shows otherwise.\n"
+
+    try:
+        raw = await _call_gemini_with_retry(
+            [prompt, types.Part.from_bytes(data=jpeg, mime_type="image/jpeg")],
+            batch_num=0,
+            max_retries=2,
+        )
+    except Exception as e:
+        logger.error(f"read-question Gemini call failed: {e}")
+        raise HTTPException(status_code=502, detail="Could not read the photo right now. Please try again.")
+
+    clean = raw.strip()
+    if clean.startswith("```"):
+        clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+    if clean.endswith("```"):
+        clean = clean[:-3]
+    clean = clean_json(clean.strip())
+
+    try:
+        data = json.loads(clean)
+    except json.JSONDecodeError:
+        try:
+            data = json.loads(_sanitize_gemini_json(clean))
+        except json.JSONDecodeError:
+            logger.error(f"read-question returned invalid JSON: {clean[:300]}")
+            raise HTTPException(status_code=422, detail="The photo could not be read clearly. Try a sharper, well-lit photo.")
+
+    if isinstance(data, list):
+        data = data[0] if data else {}
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=422, detail="The photo could not be read clearly. Try a sharper, well-lit photo.")
+
+    result = _normalize_photo_question(data)
+    if not result["question"] and not result["options"]:
+        raise HTTPException(status_code=422, detail="No question was found in this photo.")
+
+    bbox = data.get("diagram_bbox")
+    if isinstance(bbox, list) and len(bbox) == 4:
+        holder: Dict[str, Any] = {"id": 1, "diagram_bbox": {"page_number": 1, "box_2d": bbox}}
+        await process_diagram_bboxes([holder], [{"type": "image", "content": jpeg}])
+        if holder.get("image"):
+            result["image"] = holder["image"]
+
+    return result
+
+
 @router.post("/generate/topics")
 async def generate_topics(
     payload: GenerateTopicsRequest,

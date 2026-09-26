@@ -12,11 +12,15 @@ interface IMEInputProps {
     className?: string;
     placeholder?: string;
     enablePreview?: boolean;
+    /** While editing, show the rendered maths under the box (question builder). */
+    livePreview?: boolean;
     [key: string]: any;
 }
 
 export interface IMEInputHandle {
     insertAtCursor: (text: string) => void;
+    /** Switches to editing (if previewing) and puts the caret at the end. */
+    focus: () => void;
 }
 
 export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
@@ -26,6 +30,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     as = 'input',
     className,
     enablePreview = true,
+    livePreview = false,
     ...props
 }, ref) => {
     const Component = as === 'textarea' || props.multiline ? Textarea : Input;
@@ -33,6 +38,7 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
     const [lastWordPos, setLastWordPos] = useState<{ start: number, end: number } | null>(null);
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
     const lastCursorPosRef = useRef<{ start: number, end: number } | null>(null);
+    const caretToEndRef = useRef(false);
 
     React.useImperativeHandle(ref, () => ({
         insertAtCursor: (text: string) => {
@@ -41,7 +47,9 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                 const end = lastCursorPosRef.current?.end ?? value.length;
                 const newValue = value.substring(0, start) + text + value.substring(end);
                 onChange(newValue);
-                setIsEditing(true);
+                // Stay in the rendered view so the inserted maths/picture shows as it will to students;
+                // the next insert lands right after this one.
+                lastCursorPosRef.current = { start: start + text.length, end: start + text.length };
                 return;
             }
             const el = inputRef.current;
@@ -54,6 +62,16 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                 el.setSelectionRange(newPos, newPos);
                 el.focus();
             }, 0);
+        },
+        focus: () => {
+            const el = inputRef.current;
+            if (el) {
+                el.focus();
+                el.setSelectionRange(el.value.length, el.value.length);
+            } else {
+                caretToEndRef.current = true;
+                setIsEditing(true);
+            }
         }
     }));
 
@@ -68,10 +86,27 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
         if (isEditing && inputRef.current) {
             if (isMounted.current) {
                 inputRef.current.focus();
+                if (caretToEndRef.current) {
+                    const end = inputRef.current.value.length;
+                    inputRef.current.setSelectionRange(end, end);
+                    caretToEndRef.current = false;
+                }
             }
         }
         isMounted.current = true;
     }, [isEditing]);
+
+    // Text changed while nobody is typing here (filled from a photo, Sy Pad insert, import):
+    // show it rendered, the same as after clicking away.
+    useEffect(() => {
+        const el = inputRef.current;
+        if (!enablePreview || !isEditing || !value || !el || document.activeElement === el) return;
+        if (/[$\\{*_`#]|!\[/.test(value)) {
+            lastCursorPosRef.current = { start: el.selectionStart ?? value.length, end: el.selectionEnd ?? value.length };
+            setIsEditing(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
 
     // Auto-resize textarea to fit content height dynamically
     useLayoutEffect(() => {
@@ -273,6 +308,14 @@ export const IMEInput = React.forwardRef<IMEInputHandle, IMEInputProps>(({
                         autoComplete="off"
                         {...props}
                     />
+                    {livePreview && value && (value.includes('$') || value.includes('![')) && (
+                        <div className="flex items-start gap-2 border-t border-dashed border-slate-200 px-3 pb-2 pt-1.5 text-left">
+                            <span className="mt-0.5 shrink-0 rounded bg-slate-100 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-slate-500">Preview</span>
+                            <div className="min-w-0 flex-1 overflow-x-auto text-[15px] text-slate-800 [&_.katex-display]:!my-1 [&_.katex-display]:!text-left">
+                                <LatexRenderer>{value}</LatexRenderer>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
         </div>

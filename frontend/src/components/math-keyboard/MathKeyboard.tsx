@@ -1,8 +1,14 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { X, Copy, Check, Trash2, Plus, Minus } from 'lucide-react';
+import React, { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import { Copy, Check, Delete, ChevronLeft, ChevronRight, HelpCircle, CornerDownLeft, X, Type, AlertTriangle } from 'lucide-react';
 import katex from 'katex';
+import 'katex/dist/contrib/mhchem'; // registers \ce{} on this katex instance
 import { FIXED_ROWS, TOPICS, type TopicId, type MathKey } from './keys';
 import TableEditor from './TableEditor';
+import { prepareExpressionForKaTeX } from './previewTex';
+import {
+  finalizeLatex, contextAt, smartBackspace,
+  countEmptySlots, clearEmptySlots, firstEmptySlot, SYPAD_INSERT_EVENT, type MathContext,
+} from './mathSyntax';
 import { toast } from 'sonner';
 
 
@@ -11,585 +17,116 @@ interface MathKeyboardProps {
   onClose: () => void;
 }
 
+
 /* ── helpers ─────────────────────────────────────────── */
 
-function isIndexInsideTextCommand(expr: string, targetIdx: number): boolean {
-  let i = 0;
-  while (i < expr.length) {
-    if (expr[i] === '\\') {
-      i++;
-      let cmdName = '';
-      while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
-        cmdName += expr[i];
-        i++;
-      }
-
-      if (cmdName === 'text') {
-        // Find opening '{'
-        while (i < expr.length && expr[i] !== '{') {
-          i++;
-        }
-        if (i < expr.length && expr[i] === '{') {
-          const contentStart = i + 1;
-          i++;
-          let braceCount = 1;
-          while (i < expr.length && braceCount > 0) {
-            if (expr[i] === '{') braceCount++;
-            if (expr[i] === '}') braceCount--;
-            if (braceCount === 0) {
-              const contentEnd = i; // index of closing '}'
-              if (targetIdx >= contentStart && targetIdx <= contentEnd) {
-                return true;
-              }
-            }
-            i++;
-          }
-        }
-      }
-    } else {
-      i++;
-    }
-  }
-  return false;
-}
-
-function parseTextCommand(
-  expr: string,
-  startIndex: number,
-  caretIndex: number | null
-): { result: string; newIndex: number } {
-  let result = '';
-  let i = startIndex;
-
-  const insertCursorIfNeeded = (idx: number) => {
-    if (caretIndex !== null && idx === caretIndex) {
-      result += '\\htmlClass{math-cursor}{}';
-    }
-  };
-
-  // Find the opening '{'
-  while (i < expr.length && expr[i] !== '{') {
-    insertCursorIfNeeded(i);
-    result += expr[i];
-    i++;
-  }
-
-  if (i < expr.length && expr[i] === '{') {
-    i++;
-    let braceCount = 1;
-    while (i < expr.length && braceCount > 0) {
-      insertCursorIfNeeded(i);
-      const charAt = expr[i];
-      if (charAt === '{') braceCount++;
-      if (charAt === '}') braceCount--;
-
-      if (braceCount > 0) {
-        if (charAt === ' ') {
-          result += `\\htmlClass{math-token token-idx-${i}}{\\text{\\ }}`;
-        } else if (charAt === '\\') {
-          let subCmd = '';
-          const subStart = i;
-          i++;
-          while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
-            subCmd += expr[i];
-            i++;
-          }
-          result += `\\htmlClass{math-token token-idx-${subStart}}{\\${subCmd}}`;
-          continue; // skip i++ at the bottom of the loop
-        } else {
-          result += `\\htmlClass{math-token token-idx-${i}}{\\text{${charAt}}}`;
-        }
-      }
-      i++;
-    }
-  }
-
-  return { result, newIndex: i };
-}
-
-function prepareExpressionForKaTeX(expr: string, caretIndex: number | null): string {
-  let result = '';
-  let i = 0;
-
-  const insertCursorIfNeeded = (idx: number) => {
-    if (caretIndex !== null && idx === caretIndex) {
-      result += '\\htmlClass{math-cursor}{}';
-    }
-  };
-
-  while (i < expr.length) {
-    // Insert cursor before processing the character at index i
-    insertCursorIfNeeded(i);
-
-    const char = expr[i];
-
-    // 1. Handle escape sequences (control words like \frac, \alpha, \begin, etc.)
-    if (char === '\\') {
-      const commandStartIdx = i;
-      i++;
-
-      // Consume command name
-      let cmdName = '';
-      while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
-        cmdName += expr[i];
-        i++;
-      }
-
-      let nextIsLimits = false;
-      let limitCmd = '';
-      if (cmdName === 'sum' || cmdName === 'int') {
-        let tempIdx = i;
-        while (tempIdx < expr.length && (expr[tempIdx] === ' ' || expr[tempIdx] === '\n')) {
-          tempIdx++;
-        }
-        if (tempIdx < expr.length && expr[tempIdx] === '\\') {
-          let nextCmd = '';
-          let t = tempIdx + 1;
-          while (t < expr.length && /[a-zA-Z]/.test(expr[t])) {
-            nextCmd += expr[t];
-            t++;
-          }
-          if (nextCmd === 'limits' || nextCmd === 'nolimits' || nextCmd === 'displaylimits') {
-            nextIsLimits = true;
-            limitCmd = nextCmd;
-            i = t;
-          }
-        }
-      }
-
-      if (cmdName === '') {
-        // Escaped symbol like \\, \&, \{, \}, \_, \%, \#, \$
-        const nextChar = expr[i] || '';
-        result += '\\' + nextChar;
-        i++;
-
-        // If it is \\ followed by [, consume the entire [...] bracket to prevent wrapping its contents
-        if (nextChar === '\\' && i < expr.length && expr[i] === '[') {
-          while (i < expr.length && expr[i] !== ']') {
-            result += expr[i];
-            i++;
-          }
-          if (i < expr.length && expr[i] === ']') {
-            result += ']';
-            i++;
-          }
-        }
-        continue;
-      }
-
-      if (cmdName === 'text') {
-        const parsed = parseTextCommand(expr, i, caretIndex);
-        result += parsed.result;
-        i = parsed.newIndex;
-        continue;
-      }
-
-      if (cmdName === 'ce') {
-        let ceContent = '\\ce';
-
-        // Consume environment/ce braces
-        while (i < expr.length && expr[i] !== '{') {
-          if (caretIndex !== null && i === caretIndex) {
-            ceContent += '$\\htmlClass{math-cursor}{}$';
-          }
-          ceContent += expr[i];
-          i++;
-        }
-        if (i < expr.length && expr[i] === '{') {
-          if (caretIndex !== null && i === caretIndex) {
-            ceContent += '$\\htmlClass{math-cursor}{}$';
-          }
-          ceContent += '{';
-          i++;
-          let braceCount = 1;
-          while (i < expr.length && braceCount > 0) {
-            if (caretIndex !== null && i === caretIndex) {
-              ceContent += '$\\htmlClass{math-cursor}{}$';
-            }
-            const charAt = expr[i];
-            if (charAt === '{') braceCount++;
-            if (charAt === '}') braceCount--;
-            ceContent += charAt;
-            i++;
-          }
-        }
-
-        result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{${ceContent}}`;
-        continue;
-      }
-
-      // If it's a begin/end/hline/cline command, skip wrapping
-      if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'hline' || cmdName === 'cline') {
-        result += '\\' + cmdName;
-
-        if (cmdName === 'begin' || cmdName === 'end') {
-          let envName = '';
-          // Consume environment/ce braces
-          while (i < expr.length && expr[i] !== '{') {
-            insertCursorIfNeeded(i);
-            result += expr[i];
-            i++;
-          }
-          if (i < expr.length && expr[i] === '{') {
-            insertCursorIfNeeded(i);
-            result += '{';
-            i++;
-            let braceCount = 1;
-            while (i < expr.length && braceCount > 0) {
-              insertCursorIfNeeded(i);
-              if (expr[i] === '{') braceCount++;
-              if (expr[i] === '}') braceCount--;
-              envName += expr[i];
-              result += expr[i];
-              i++;
-            }
-          }
-
-          // If the environment is 'array', we must skip the column specification brace (e.g. {c|c}) too
-          if (envName.includes('array')) {
-            while (i < expr.length && expr[i] !== '{') {
-              insertCursorIfNeeded(i);
-              result += expr[i];
-              i++;
-            }
-            if (i < expr.length && expr[i] === '{') {
-              insertCursorIfNeeded(i);
-              result += '{';
-              i++;
-              let braceCount = 1;
-              while (i < expr.length && braceCount > 0) {
-                insertCursorIfNeeded(i);
-                if (expr[i] === '{') braceCount++;
-                if (expr[i] === '}') braceCount--;
-                result += expr[i];
-                i++;
-              }
-            }
-          }
-        } else if (cmdName === 'cline') {
-          // cline takes braces: \cline{1-2}
-          while (i < expr.length && expr[i] !== '{') {
-            insertCursorIfNeeded(i);
-            result += expr[i];
-            i++;
-          }
-          if (i < expr.length && expr[i] === '{') {
-            insertCursorIfNeeded(i);
-            result += '{';
-            i++;
-            let braceCount = 1;
-            while (i < expr.length && braceCount > 0) {
-              insertCursorIfNeeded(i);
-              if (expr[i] === '{') braceCount++;
-              if (expr[i] === '}') braceCount--;
-              result += expr[i];
-              i++;
-            }
-          }
-        }
-      } else {
-        // It's a standard command (like \alpha, \frac, etc.)
-        // Check if it is followed by braces/arguments ({ or [)
-        let hasBraces = false;
-        let temp = i;
-        while (temp < expr.length && (expr[temp] === ' ' || expr[temp] === '\n')) {
-          temp++;
-        }
-        if (temp < expr.length && (expr[temp] === '{' || expr[temp] === '[')) {
-          hasBraces = true;
-        }
-
-        if (hasBraces) {
-          // Output structural command normally
-          result += '\\' + cmdName;
-          if (nextIsLimits) {
-            result += '\\' + limitCmd;
-          }
-        } else {
-          // Wrap symbol command (like \alpha, \pi, \sum) in htmlClass to make it clickable
-          const fullCmd = nextIsLimits ? `${cmdName}\\${limitCmd}` : cmdName;
-          result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{\\${fullCmd}}`;
-        }
-      }
-      continue;
-    }
-
-    // 2. Handle syntax chars (curly braces, caret, subscript, ampersand, brackets, spaces)
-    if (char === '^' || char === '_') {
-      result += char;
-      i++;
-
-      const nextChar = expr[i];
-      if (nextChar && nextChar !== '{') {
-        result += '{';
-        insertCursorIfNeeded(i);
-
-        // Inline parse the next token inside the braces
-        if (nextChar === '\\') {
-          const commandStartIdx = i;
-          i++;
-          let cmdName = '';
-          while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
-            cmdName += expr[i];
-            i++;
-          }
-          if (cmdName === '') {
-            const nextSymbol = expr[i] || '';
-            result += '\\' + nextSymbol;
-            i++;
-          } else if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce' || cmdName === 'hline' || cmdName === 'cline') {
-            result += '\\' + cmdName;
-            if (cmdName === 'begin' || cmdName === 'end' || cmdName === 'ce') {
-              let envName = '';
-              while (i < expr.length && expr[i] !== '{') {
-                insertCursorIfNeeded(i);
-                result += expr[i];
-                i++;
-              }
-              if (i < expr.length && expr[i] === '{') {
-                insertCursorIfNeeded(i);
-                result += '{';
-                i++;
-                let braceCount = 1;
-                while (i < expr.length && braceCount > 0) {
-                  insertCursorIfNeeded(i);
-                  if (expr[i] === '{') braceCount++;
-                  if (expr[i] === '}') braceCount--;
-                  envName += expr[i];
-                  result += expr[i];
-                  i++;
-                }
-              }
-              if (envName.includes('array')) {
-                while (i < expr.length && expr[i] !== '{') {
-                  insertCursorIfNeeded(i);
-                  result += expr[i];
-                  i++;
-                }
-                if (i < expr.length && expr[i] === '{') {
-                  insertCursorIfNeeded(i);
-                  result += '{';
-                  i++;
-                  let braceCount = 1;
-                  while (i < expr.length && braceCount > 0) {
-                    insertCursorIfNeeded(i);
-                    if (expr[i] === '{') braceCount++;
-                    if (expr[i] === '}') braceCount--;
-                    result += expr[i];
-                    i++;
-                  }
-                }
-              }
-            } else if (cmdName === 'cline') {
-              while (i < expr.length && expr[i] !== '{') {
-                insertCursorIfNeeded(i);
-                result += expr[i];
-                i++;
-              }
-              if (i < expr.length && expr[i] === '{') {
-                insertCursorIfNeeded(i);
-                result += '{';
-                i++;
-                let braceCount = 1;
-                while (i < expr.length && braceCount > 0) {
-                  insertCursorIfNeeded(i);
-                  if (expr[i] === '{') braceCount++;
-                  if (expr[i] === '}') braceCount--;
-                  result += expr[i];
-                  i++;
-                }
-              }
-            }
-          } else {
-            let hasBraces = false;
-            let temp = i;
-            while (temp < expr.length && (expr[temp] === ' ' || expr[temp] === '\n')) {
-              temp++;
-            }
-            if (temp < expr.length && (expr[temp] === '{' || expr[temp] === '[')) {
-              hasBraces = true;
-            }
-            if (hasBraces) {
-              result += '\\' + cmdName;
-            } else {
-              result += `\\htmlClass{math-token token-idx-${commandStartIdx}}{\\${cmdName}}`;
-            }
-          }
-        } else if (nextChar === '?') {
-          result += `\\htmlClass{math-placeholder token-idx-${i}}{\\color{#1e40af}{?}}`;
-          i++;
-        } else if (/[0-9a-zA-Z+\-*/=<>!.,()]/.test(nextChar)) {
-          result += `\\htmlClass{math-token token-idx-${i}}{${nextChar}}`;
-          i++;
-        } else {
-          result += nextChar;
-          i++;
-        }
-        result += '}';
-      }
-      continue;
-    }
-
-    if (['{', '}', '&', '[', ']', ' ', '\n', '\t'].includes(char)) {
-      result += char;
-      i++;
-      continue;
-    }
-
-    // 3. Handle placeholders (question marks)
-    if (char === '?') {
-      result += `\\htmlClass{math-placeholder token-idx-${i}}{\\color{#1e40af}{?}}`;
-      i++;
-      continue;
-    }
-
-    // 4. Handle visible literal content (numbers, letters, operators, variables)
-    if (/[0-9a-zA-Z+\-*/=<>!.,()]/.test(char)) {
-      result += `\\htmlClass{math-token token-idx-${i}}{${char}}`;
-      i++;
-    } else {
-      result += char;
-      i++;
-    }
-  }
-
-  // Insert cursor at the very end of expression if caretIndex is at expr.length
-  insertCursorIfNeeded(expr.length);
-
-  return result;
-}
-
-function renderKatex(expr: string, caretIndex: number | null): string {
-  if (!expr.trim()) return '<span style="color:#94a3b8">Preview</span>';
+function tryKatex(tex: string, displayMode = true): string | null {
   try {
-    const parsedExpr = prepareExpressionForKaTeX(expr, caretIndex);
-    return katex.renderToString(parsedExpr, { throwOnError: false, displayMode: true, trust: true });
+    return katex.renderToString(tex, { throwOnError: true, displayMode, trust: true, strict: 'ignore' });
   } catch {
-    return '<span style="color:#ef4444">Invalid expression</span>';
+    return null;
   }
 }
 
 function renderMhchemToHtml(expr: string): string {
-  try {
-    return katex.renderToString(`\\ce{${expr}}`, { throwOnError: false, displayMode: false, trust: true });
-  } catch {
-    return expr;
-  }
+  return tryKatex(`\\ce{${expr}}`, false) ?? expr;
 }
 
+const TABLE_ICONS: Record<string, { label: string; svg: React.ReactNode }> = {
+  __TABLE_HEADER: {
+    label: 'Headered',
+    svg: (<><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="12" y1="3" x2="12" y2="21" /></>),
+  },
+  __TABLE_GRID: {
+    label: 'Grid',
+    svg: (<><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /><line x1="9" y1="3" x2="9" y2="21" /><line x1="15" y1="3" x2="15" y2="21" /></>),
+  },
+  __TABLE_MATCH: {
+    label: 'Match List',
+    svg: (<><line x1="4" y1="4" x2="4" y2="20" /><line x1="20" y1="4" x2="20" y2="20" /><line x1="7" y1="7" x2="17" y2="17" strokeDasharray="1 2" /><line x1="7" y1="17" x2="17" y2="7" strokeDasharray="1 2" /></>),
+  },
+  __TABLE_LIST: {
+    label: 'Simple List',
+    svg: (<><rect x="2" y="3" width="8" height="5" rx="1.2" /><rect x="14" y="3" width="8" height="5" rx="1.2" /><line x1="3" y1="12" x2="9" y2="12" /><line x1="3" y1="16" x2="9" y2="16" /><line x1="3" y1="20" x2="9" y2="20" /><line x1="15" y1="12" x2="21" y2="12" /><line x1="15" y1="16" x2="21" y2="16" /><line x1="15" y1="20" x2="21" y2="20" /></>),
+  },
+  __TABLE_MATRIX: {
+    label: 'Matrix',
+    svg: (<><path d="M7,3 L3,3 L3,21 L7,21" /><path d="M17,3 L21,3 L21,21 L17,21" /><circle cx="8" cy="8" r="1.2" fill="currentColor" /><circle cx="16" cy="8" r="1.2" fill="currentColor" /><circle cx="8" cy="16" r="1.2" fill="currentColor" /><circle cx="16" cy="16" r="1.2" fill="currentColor" /></>),
+  },
+  __TABLE_DETERMINANT: {
+    label: 'Det',
+    svg: (<><line x1="6" y1="3" x2="6" y2="21" /><line x1="18" y1="3" x2="18" y2="21" /><circle cx="10" cy="8" r="1.2" fill="currentColor" /><circle cx="14" cy="8" r="1.2" fill="currentColor" /><circle cx="10" cy="16" r="1.2" fill="currentColor" /><circle cx="14" cy="16" r="1.2" fill="currentColor" /></>),
+  },
+  __TABLE_EMPTY: {
+    label: 'Empty Grid',
+    svg: (<rect x="3" y="3" width="18" height="18" rx="2" />),
+  },
+};
+
 function renderKeyLabel(label: string, display?: string, latex?: string): React.ReactNode {
-  if (latex === '__TABLE_HEADER') {
+  const table = latex ? TABLE_ICONS[latex] : undefined;
+  if (table) {
     return (
-      <span className="flex items-center justify-center gap-1 w-full font-semibold">
-        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <line x1="3" y1="9" x2="21" y2="9" />
-          <line x1="12" y1="3" x2="12" y2="21" />
+      <span className="flex items-center justify-center gap-1.5 w-full font-semibold">
+        <svg className="w-4 h-4 shrink-0 text-sky-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          {table.svg}
         </svg>
-        <span className="text-[10px] truncate">Headered</span>
+        <span className="text-[12px] truncate">{table.label}</span>
       </span>
     );
   }
-  if (latex === '__TABLE_GRID') {
+
+  if (latex === '\\frac{?}{?}') {
     return (
-      <span className="flex items-center justify-center gap-1 w-full font-semibold">
-        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <line x1="3" y1="9" x2="21" y2="9" />
-          <line x1="3" y1="15" x2="21" y2="15" />
-          <line x1="9" y1="3" x2="9" y2="21" />
-          <line x1="15" y1="3" x2="15" y2="21" />
-        </svg>
-        <span className="text-[10px] truncate">Grid</span>
-      </span>
-    );
-  }
-  if (latex === '__TABLE_MATCH') {
-    return (
-      <span className="flex items-center justify-center gap-1 w-full font-semibold">
-        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <line x1="4" y1="4" x2="4" y2="20" />
-          <line x1="20" y1="4" x2="20" y2="20" />
-          <line x1="7" y1="7" x2="17" y2="17" strokeDasharray="1 2" />
-          <line x1="7" y1="17" x2="17" y2="7" strokeDasharray="1 2" />
-        </svg>
-        <span className="text-[10px] truncate">Match List</span>
-      </span>
-    );
-  }
-  if (latex === '__TABLE_LIST') {
-    return (
-      <span className="flex items-center justify-center gap-1 w-full font-semibold">
-        <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          {/* Left Header Box */}
-          <rect x="2" y="3" width="8" height="5" rx="1.2" />
-          {/* Right Header Box */}
-          <rect x="14" y="3" width="8" height="5" rx="1.2" />
-          {/* Left List Lines */}
-          <line x1="3" y1="12" x2="9" y2="12" />
-          <line x1="3" y1="16" x2="9" y2="16" />
-          <line x1="3" y1="20" x2="9" y2="20" />
-          {/* Right List Lines */}
-          <line x1="15" y1="12" x2="21" y2="12" />
-          <line x1="15" y1="16" x2="21" y2="16" />
-          <line x1="15" y1="20" x2="21" y2="20" />
-        </svg>
-        <span className="text-[10px] truncate">Simple List</span>
-      </span>
-    );
-  }
-  if (latex === '__TABLE_MATRIX') {
-    return (
-      <span className="flex items-center justify-center gap-1 w-full font-semibold">
-        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M7,3 L3,3 L3,21 L7,21" />
-          <path d="M17,3 L21,3 L21,21 L17,21" />
-          <circle cx="8" cy="8" r="1.2" fill="currentColor" />
-          <circle cx="16" cy="8" r="1.2" fill="currentColor" />
-          <circle cx="8" cy="16" r="1.2" fill="currentColor" />
-          <circle cx="16" cy="16" r="1.2" fill="currentColor" />
-        </svg>
-        <span className="text-[10px] truncate">Matrix</span>
-      </span>
-    );
-  }
-  if (latex === '__TABLE_DETERMINANT') {
-    return (
-      <span className="flex items-center justify-center gap-1 w-full font-semibold">
-        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <line x1="6" y1="3" x2="6" y2="21" />
-          <line x1="18" y1="3" x2="18" y2="21" />
-          <circle cx="10" cy="8" r="1.2" fill="currentColor" />
-          <circle cx="14" cy="8" r="1.2" fill="currentColor" />
-          <circle cx="10" cy="16" r="1.2" fill="currentColor" />
-          <circle cx="14" cy="16" r="1.2" fill="currentColor" />
-        </svg>
-        <span className="text-[10px] truncate">Det</span>
-      </span>
-    );
-  }
-  if (latex === '__TABLE_EMPTY') {
-    return (
-      <span className="flex items-center justify-center gap-1 w-full font-semibold">
-        <svg className="w-3.5 h-3.5 text-blue-800 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-        </svg>
-        <span className="text-[10px] truncate">Empty Grid</span>
+      <span className="flex flex-col items-center justify-center gap-[2px] w-4 h-5 mx-auto" aria-hidden="true">
+        <span className="w-2 h-1.5 border border-current rounded-[1px]" />
+        <span className="w-3.5 h-[1.5px] bg-current" />
+        <span className="w-2 h-1.5 border border-current rounded-[1px]" />
       </span>
     );
   }
 
   const text = display ?? label;
   if (text.includes('\\') || text.includes('^') || text.includes('_')) {
-    try {
-      const html = katex.renderToString(text, { throwOnError: false });
-      return <span dangerouslySetInnerHTML={{ __html: html }} />;
-    } catch {
-      return text;
-    }
+    const html = tryKatex(text, false);
+    if (html) return <span dangerouslySetInnerHTML={{ __html: html }} />;
   }
   return text;
 }
+
+/* ── target tracking ─────────────────────────────────── */
+
+interface PadTarget {
+  el: HTMLTextAreaElement | HTMLInputElement;
+  key?: string;
+  label: string;
+}
+
+const isTargetField = (t: EventTarget | null): t is HTMLTextAreaElement | HTMLInputElement =>
+  t instanceof HTMLTextAreaElement || (t instanceof HTMLInputElement && !!t.dataset.sypadLabel);
+
+const targetFromElement = (el: HTMLTextAreaElement | HTMLInputElement): PadTarget => ({
+  el,
+  key: el.dataset.sypadTarget,
+  label: el.dataset.sypadLabel || el.getAttribute('aria-label') || el.placeholder || 'the selected box',
+});
+
+const HINTS: Record<MathContext, string> = {
+  math: 'Maths — tap a key or type. Blue boxes are blanks: click one, then type.',
+  chemistry: 'Chemistry — type the formula as plain text: H2O, Fe^3+, 2H2 + O2 -> 2H2O. Numbers become small automatically.',
+  text: 'Plain words — type normally, spaces work here. Tap outside the grey words to go back to maths.',
+};
+
+const HELP_ROWS: { want: string; how: string; shows: string }[] = [
+  { want: 'A fraction', how: 'Tap ▫/▫, fill top and bottom', shows: '\\frac{3}{4}' },
+  { want: 'A power', how: 'Tap □ⁿ after the number', shows: 'x^{2}' },
+  { want: 'A chemical formula', how: 'Chemistry → Formula, then type H2SO4', shows: '\\ce{H2SO4}' },
+  { want: 'A reaction', how: 'Formula, then type 2H2 + O2 -> 2H2O', shows: '\\ce{2H2 + O2 -> 2H2O}' },
+  { want: 'Heat or catalyst on the arrow', how: 'Chemistry → the arrow with boxes', shows: '\\xrightarrow{\\Delta}' },
+  { want: 'Normal words inside maths', how: 'Tap Aa Words, then type', shows: '\\text{speed} = 5\\,\\text{m/s}' },
+  { want: 'A table or match-the-columns', how: 'Open the Tables tab', shows: '\\begin{array}{|c|c|}\\hline A & B\\\\\\hline\\end{array}' },
+  { want: 'Greek letters (α, θ, Δ)', how: 'Physics or Statistics tab', shows: '\\alpha,\\ \\theta,\\ \\Delta' },
+];
 
 /* ── component ───────────────────────────────────────── */
 
@@ -597,35 +134,49 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
   const [expression, setExpression] = useState('');
   const [caretIndex, setCaretIndex] = useState<number | null>(null);
   const [topic, setTopic] = useState<TopicId>('algebra');
+  const [mobilePane, setMobilePane] = useState<'digits' | 'topic'>('digits');
   const [abcMode, setAbcMode] = useState(false);
   const [tableMode, setTableMode] = useState(false);
   const [tableType, setTableType] = useState('header');
+  const [showHelp, setShowHelp] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [inserted, setInserted] = useState(false);
   const [shiftOn, setShiftOn] = useState(false);
-  const [ceAnim, setCeAnim] = useState<{
-    status: 'idle' | 'typing' | 'converted';
-    text: string;
-  }>({ status: 'idle', text: '' });
+  const [target, setTarget] = useState<PadTarget | null>(null);
+  const [notice, setNotice] = useState<null | { kind: 'slots' | 'invalid' | 'no-target'; action: 'insert' | 'copy'; count?: number }>(null);
+  const [ceAnim, setCeAnim] = useState<{ status: 'idle' | 'typing' | 'converted'; text: string }>({ status: 'idle', text: '' });
 
-  const lastTextareaRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+  const targetRef = useRef<PadTarget | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const expressionInputRef = useRef<HTMLInputElement>(null);
+  const lastGoodHtmlRef = useRef('');
+  const coarsePointer = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
 
-  // Initialize caretIndex on open
+  const context: MathContext = useMemo(
+    () => contextAt(expression, caretIndex ?? expression.length),
+    [expression, caretIndex]
+  );
+
+  // Initialize caret on open
   useEffect(() => {
     if (isOpen) {
       setCaretIndex(expression.length);
       setCeAnim({ status: 'idle', text: '' });
+      if (!coarsePointer) setTimeout(() => expressionInputRef.current?.focus(), 60);
+    } else {
+      setShowHelp(false);
+      setNotice(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Chemistry demo: types "2H2 + O2 -> 2H2O", then shows it rendered, on a loop.
   useEffect(() => {
     if (ceAnim.status === 'idle') return;
 
     if (ceAnim.status === 'typing') {
-      const fullText = "2H2 + O2 -> 2H2O";
+      const fullText = '2H2 + O2 -> 2H2O';
       let index = 0;
-
       const interval = setInterval(() => {
         index++;
         setCeAnim(prev => {
@@ -636,69 +187,122 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
             }, 600);
             return prev;
           }
-          return {
-            ...prev,
-            text: fullText.slice(0, index)
-          };
+          return { ...prev, text: fullText.slice(0, index) };
         });
-      }, 200);
-
-      return () => {
-        clearInterval(interval);
-      };
+      }, 160);
+      return () => clearInterval(interval);
     }
 
     if (ceAnim.status === 'converted') {
-      const timeout = setTimeout(() => {
-        setCeAnim({ status: 'typing', text: '' });
-      }, 1800);
-
-      return () => {
-        clearTimeout(timeout);
-      };
+      const timeout = setTimeout(() => setCeAnim({ status: 'typing', text: '' }), 1800);
+      return () => clearTimeout(timeout);
     }
   }, [ceAnim.status]);
 
-  // Track last focused textarea (before keyboard gets focus)
+  // Remember the last question/option box the teacher clicked into — that's where Insert goes.
   useEffect(() => {
     const handler = (e: FocusEvent) => {
       const t = e.target;
-      if (t instanceof HTMLTextAreaElement || (t instanceof HTMLInputElement && t.type === 'text')) {
-        if (!panelRef.current?.contains(t)) {
-          lastTextareaRef.current = t;
-        }
-      }
+      if (!isTargetField(t) || panelRef.current?.contains(t)) return;
+      const next = targetFromElement(t);
+      targetRef.current = next;
+      setTarget(next);
+      setNotice(n => (n?.kind === 'no-target' ? null : n));
     };
     document.addEventListener('focusin', handler);
     return () => document.removeEventListener('focusin', handler);
   }, []);
 
-  // Click outside detection to close the Sy Pad
+  /** Scrolls the target box above the pad, the way a phone lifts the page over its keyboard. */
+  const revealTarget = useCallback((smooth = true) => {
+    const el = targetRef.current?.el;
+    const panel = panelRef.current;
+    if (!el || !el.isConnected || !panel) return;
+    const rect = el.getBoundingClientRect();
+    const visibleBottom = window.innerHeight - panel.offsetHeight - 20;
+    if (rect.bottom > visibleBottom) {
+      window.scrollBy({ top: rect.bottom - visibleBottom + Math.min(rect.height, 24), behavior: smooth ? 'smooth' : 'auto' });
+    } else if (rect.top < 88) {
+      window.scrollBy({ top: rect.top - 96, behavior: smooth ? 'smooth' : 'auto' });
+    }
+  }, []);
+
+  // Reserve room under the page for the pad so nothing is hidden behind it.
+  useLayoutEffect(() => {
+    if (!isOpen || !panelRef.current) return;
+    const panel = panelRef.current;
+    const body = document.body;
+    const previous = body.style.paddingBottom;
+    const apply = () => {
+      body.style.paddingBottom = `${panel.offsetHeight + 16}px`;
+      document.documentElement.style.setProperty('--sypad-h', `${panel.offsetHeight}px`);
+    };
+    apply();
+    body.dataset.sypadOpen = 'true';
+    const ro = new ResizeObserver(apply);
+    ro.observe(panel);
+    requestAnimationFrame(() => revealTarget());
+    return () => {
+      ro.disconnect();
+      body.style.paddingBottom = previous;
+      delete body.dataset.sypadOpen;
+      document.documentElement.style.removeProperty('--sypad-h');
+    };
+  }, [isOpen, revealTarget]);
+
+  useEffect(() => {
+    if (isOpen && target) requestAnimationFrame(() => revealTarget());
+  }, [isOpen, target, revealTarget]);
+
+  // Esc closes the pad
   useEffect(() => {
     if (!isOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        const target = event.target as HTMLElement;
-        if (target.closest('.sy-pad-trigger') || target.classList.contains('sy-pad-trigger')) {
-          return;
-        }
-        onClose();
-      }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented && !document.querySelector('[role="dialog"]')) onClose();
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
-  const handleInsert = useCallback((latex: string) => {
-    if (latex === '\\ce{?}') {
-      setCeAnim({ status: 'typing', text: '' });
-    } else {
-      setCeAnim({ status: 'idle', text: '' });
+  /* ── editing primitives ── */
+
+  const applyEdit = useCallback((next: string, selStart: number, selEnd: number = selStart) => {
+    const inputEl = expressionInputRef.current;
+    if (inputEl) {
+      // Write the box first: React then sees no change to apply and leaves the caret where we put it,
+      // even when keys arrive faster than re-renders.
+      inputEl.value = next;
+      if (!coarsePointer) inputEl.focus();
+      inputEl.setSelectionRange(selStart, selEnd);
     }
+    setExpression(next);
+    setCaretIndex(selStart);
+    setNotice(null);
+  }, [coarsePointer]);
+
+  const getSelection = useCallback((): [number, number] => {
+    const inputEl = expressionInputRef.current;
+    if (!inputEl) return [expression.length, expression.length];
+    const start = inputEl.selectionStart ?? caretIndex ?? expression.length;
+    const end = inputEl.selectionEnd ?? start;
+    return [start, end];
+  }, [expression, caretIndex]);
+
+  const moveCaret = useCallback((dir: -1 | 1) => {
+    const [start] = getSelection();
+    let pos = start;
+    if (dir < 0) {
+      const m = /\\[a-zA-Z]+\s?$/.exec(expression.slice(0, start));
+      pos = m ? start - m[0].length : Math.max(0, start - 1);
+    } else {
+      const m = /^\\[a-zA-Z]+\s?/.exec(expression.slice(start));
+      pos = m ? start + m[0].length : Math.min(expression.length, start + 1);
+    }
+    applyEdit(expression, pos);
+  }, [expression, getSelection, applyEdit]);
+
+  const handleInsert = useCallback((latex: string) => {
+    setCeAnim(latex === '\\ce{?}' ? { status: 'typing', text: '' } : { status: 'idle', text: '' });
 
     if (latex.startsWith('__TABLE_')) {
       const type = latex.replace('__TABLE_', '').replace(/_+$/, '').toLowerCase();
@@ -707,609 +311,572 @@ export default function MathKeyboard({ isOpen, onClose }: MathKeyboardProps) {
       return;
     }
     if (latex === '__ABC__') { setAbcMode(v => !v); return; }
+    if (latex === '__LEFT__') { moveCaret(-1); return; }
+    if (latex === '__RIGHT__') { moveCaret(1); return; }
+
+    const [start, end] = getSelection();
+
     if (latex === '__BACK__') {
-      const inputEl = expressionInputRef.current;
-      if (inputEl) {
-        const start = inputEl.selectionStart ?? inputEl.value.length;
-        if (start > 0) {
-          const before = expression.slice(0, start - 1);
-          const after = expression.slice(inputEl.selectionEnd ?? start);
-          const newExpr = before + after;
-          setExpression(newExpr);
-          setCaretIndex(start - 1);
-          setTimeout(() => {
-            inputEl.focus();
-            inputEl.setSelectionRange(start - 1, start - 1);
-          }, 0);
-        }
-      } else {
-        const newExpr = expression.slice(0, -1);
-        setExpression(newExpr);
-        setCaretIndex(newExpr.length);
-      }
+      const res = smartBackspace(expression, start, end);
+      applyEdit(res.expr, res.caret);
       return;
     }
-
     if (latex === '__CLEAR__') {
-      setExpression('');
-      setCaretIndex(0);
+      applyEdit('', 0);
       return;
     }
 
-    const inputEl = expressionInputRef.current;
-    let newExpr = expression;
-    let nextSelectionStart = expression.length;
-    let nextSelectionEnd = expression.length;
-
-    if (inputEl) {
-      const start = inputEl.selectionStart ?? inputEl.value.length;
-      const end = inputEl.selectionEnd ?? start;
-      const before = expression.slice(0, start);
-      const after = expression.slice(end);
-      newExpr = before + latex + after;
-
-      const placeholderOffset = latex.indexOf('?');
-      if (placeholderOffset !== -1) {
-        nextSelectionStart = start + placeholderOffset;
-        nextSelectionEnd = nextSelectionStart + 1;
-      } else {
-        nextSelectionStart = start + latex.length;
-        nextSelectionEnd = nextSelectionStart;
-      }
-
-      setExpression(newExpr);
-      setCaretIndex(nextSelectionStart);
-
-      setTimeout(() => {
-        inputEl.focus();
-        inputEl.setSelectionRange(nextSelectionStart, nextSelectionEnd);
-      }, 0);
+    // Inside \ce{} and \text{} a space key means a real space, not a maths gap.
+    const piece = latex === '\\,' && context !== 'math' ? ' ' : latex;
+    const next = expression.slice(0, start) + piece + expression.slice(end);
+    const placeholderOffset = piece.indexOf('?');
+    if (placeholderOffset !== -1 && countEmptySlots(piece) > 0) {
+      const slotAt = start + placeholderOffset;
+      applyEdit(next, slotAt, slotAt + 1);
     } else {
-      newExpr = expression + latex;
-      setExpression(newExpr);
-      setCaretIndex(newExpr.length);
+      applyEdit(next, start + piece.length);
     }
-  }, [expression]);
+  }, [expression, context, getSelection, applyEdit, moveCaret]);
 
-  const handleTextOperatorMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleWordsKey = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setCeAnim({ status: 'idle', text: '' });
-    const activeEl = document.activeElement;
-    if (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) {
-      const start = activeEl.selectionStart ?? activeEl.value.length;
-      const end = activeEl.selectionEnd ?? start;
-      const val = activeEl.value;
-      const text = '\\text{?}';
-      const newVal = val.slice(0, start) + text + val.slice(end);
-
-      const setter = Object.getOwnPropertyDescriptor(
-        activeEl instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
-        'value'
-      )?.set;
-      setter?.call(activeEl, newVal);
-      activeEl.dispatchEvent(new Event('input', { bubbles: true }));
-
-      const nextCursor = start + 6;
-      setTimeout(() => {
-        activeEl.focus();
-        activeEl.setSelectionRange(nextCursor, nextCursor + 1);
-      }, 0);
-    } else {
-      handleInsert('\\text{?}');
-    }
-  }, [expression, handleInsert]);
-
+    handleInsert('\\text{?}');
+  }, [handleInsert]);
 
   const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    const rect = container.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
     const elements = Array.from(container.querySelectorAll('.math-placeholder, .math-token'));
+    const inputEl = expressionInputRef.current;
+    const place = (s: number, en = s) => {
+      setCaretIndex(s);
+      if (inputEl) {
+        if (!coarsePointer) inputEl.focus();
+        inputEl.setSelectionRange(s, en);
+      }
+    };
     if (elements.length === 0) {
-      setCaretIndex(0);
+      place(expression.length);
       return;
     }
 
+    const firstRect = elements[0].getBoundingClientRect();
+    const lastRect = elements[elements.length - 1].getBoundingClientRect();
+    if (e.clientX < firstRect.left - 10) { place(0); return; }
+    if (e.clientX > lastRect.right + 10) { place(expression.length); return; }
+
     let closestEl: Element | null = null;
     let minDistance = Infinity;
-
     for (const el of elements) {
-      const elRect = el.getBoundingClientRect();
-      const elX = elRect.left - rect.left + elRect.width / 2;
-      const elY = elRect.top - rect.top + elRect.height / 2;
-
-      const dist = Math.pow(clickX - elX, 2) + Math.pow(clickY - elY, 2);
+      const r = el.getBoundingClientRect();
+      const dist = (e.clientX - (r.left + r.width / 2)) ** 2 + (e.clientY - (r.top + r.height / 2)) ** 2;
       if (dist < minDistance) {
         minDistance = dist;
         closestEl = el;
       }
     }
+    if (!closestEl) return;
 
-    const firstRect = elements[0].getBoundingClientRect();
-    const lastRect = elements[elements.length - 1].getBoundingClientRect();
-
-    if (e.clientX < firstRect.left - 10) {
-      setCaretIndex(0);
-      const inputEl = expressionInputRef.current;
-      if (inputEl) {
-        inputEl.focus();
-        inputEl.setSelectionRange(0, 0);
-      }
-      return;
+    const idxClass = Array.from(closestEl.classList).find(c => c.startsWith('token-idx-'));
+    if (!idxClass) return;
+    const rawIdx = parseInt(idxClass.replace('token-idx-', ''), 10);
+    if (closestEl.classList.contains('math-placeholder')) {
+      place(rawIdx, rawIdx + 1);
+    } else {
+      const r = closestEl.getBoundingClientRect();
+      place(e.clientX - r.left < r.width / 2 ? rawIdx : rawIdx + 1);
     }
+  }, [expression, coarsePointer]);
 
-    if (e.clientX > lastRect.right + 10) {
-      const endIdx = expression.length;
-      setCaretIndex(endIdx);
-      const inputEl = expressionInputRef.current;
-      if (inputEl) {
-        inputEl.focus();
-        inputEl.setSelectionRange(endIdx, endIdx);
-      }
-      return;
-    }
+  /* ── leaving the pad: Copy / Insert ── */
 
-    if (closestEl) {
-      const classList = Array.from(closestEl.classList);
-      const idxClass = classList.find(c => c.startsWith('placeholder-idx-') || c.startsWith('token-idx-'));
-
-      if (idxClass) {
-        const rawIdx = parseInt(idxClass.replace(/^(placeholder|token)-idx-/, ''), 10);
-        const isPlaceholder = closestEl.classList.contains('math-placeholder');
-
-        const inputEl = expressionInputRef.current;
-        if (inputEl) {
-          inputEl.focus();
-          if (isPlaceholder) {
-            inputEl.setSelectionRange(rawIdx, rawIdx + 1);
-            setCaretIndex(rawIdx);
-          } else {
-            const elRect = closestEl.getBoundingClientRect();
-            const clickXInEl = e.clientX - elRect.left;
-            const newCaretIdx = clickXInEl < elRect.width / 2 ? rawIdx : rawIdx + 1;
-            inputEl.setSelectionRange(newCaretIdx, newCaretIdx);
-            setCaretIndex(newCaretIdx);
-          }
-        }
-      }
-    }
-  }, [expression]);
-
-  const handleCopy = useCallback(async () => {
-    const raw = expression ? `$${expression}$` : '';
-    await navigator.clipboard.writeText(raw);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  }, [expression]);
-
-  const handleInsertText = useCallback(() => {
-    if (!expression) return;
-    const ta = lastTextareaRef.current;
-    if (!ta || !document.body.contains(ta)) {
-      toast.error("Please click/focus inside a question or option text box first to set your cursor position.");
-      return;
-    }
-    const textToInsert = `$${expression}$`;
-    const start = ta.selectionStart ?? ta.value.length;
-    const end = ta.selectionEnd ?? start;
-    const before = ta.value.slice(0, start);
-    const after = ta.value.slice(end);
-
-    const setter = Object.getOwnPropertyDescriptor(
-      ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
-      'value'
-    )?.set;
-    setter?.call(ta, before + textToInsert + after);
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
-
-    const pos = start + textToInsert.length;
-    setTimeout(() => {
-      ta.focus();
+  const writeIntoTarget = useCallback((text: string): boolean => {
+    const t = targetRef.current;
+    if (t?.el && t.el.isConnected) {
+      const ta = t.el;
+      const start = ta.selectionStart ?? ta.value.length;
+      const end = ta.selectionEnd ?? start;
+      const setter = Object.getOwnPropertyDescriptor(
+        ta instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+        'value'
+      )?.set;
+      setter?.call(ta, ta.value.slice(0, start) + text + ta.value.slice(end));
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      // Caret right after the insert, before the box re-renders, so the next insert follows this one.
+      const pos = start + text.length;
       ta.setSelectionRange(pos, pos);
-    }, 0);
+      setTimeout(() => revealTarget(), 0);
+      return true;
+    }
+    if (t?.key) {
+      window.dispatchEvent(new CustomEvent(SYPAD_INSERT_EVENT, { detail: { target: t.key, text } }));
+      return true;
+    }
+    return false;
+  }, [revealTarget]);
+
+  const commit = useCallback(async (action: 'insert' | 'copy', force = false) => {
+    const current = expressionInputRef.current?.value ?? expression;
+    if (!current.trim()) return;
+
+    if (action === 'insert' && !targetRef.current) {
+      setNotice({ kind: 'no-target', action });
+      return;
+    }
+
+    const slots = countEmptySlots(current);
+    if (slots > 0 && !force) {
+      setNotice({ kind: 'slots', action, count: slots });
+      const at = firstEmptySlot(current);
+      if (at !== -1) {
+        setCaretIndex(at);
+        expressionInputRef.current?.setSelectionRange(at, at + 1);
+      }
+      return;
+    }
+
+    const latex = finalizeLatex(force ? clearEmptySlots(current) : current);
+    if (!latex) return;
+    if (!force && !tryKatex(latex)) {
+      setNotice({ kind: 'invalid', action });
+      return;
+    }
+
+    const text = `$${latex}$`;
+    if (action === 'copy') {
+      try {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      } catch {
+        toast.error('Could not copy. Please select the code and copy it by hand.');
+      }
+      setNotice(null);
+      return;
+    }
+
+    if (!writeIntoTarget(text)) {
+      setNotice({ kind: 'no-target', action });
+      return;
+    }
+    setInserted(true);
+    setTimeout(() => setInserted(false), 1400);
+    setNotice(null);
+    if (expressionInputRef.current) expressionInputRef.current.value = '';
     setExpression('');
     setCaretIndex(0);
-  }, [expression]);
+  }, [expression, writeIntoTarget]);
+
+  /* ── preview ── */
+
+  const preview = useMemo(() => {
+    if (!expression.trim()) {
+      lastGoodHtmlRef.current = '';
+      return { html: '', stale: false };
+    }
+    // Strict first; then draw half-typed commands as grey text; then without the caret.
+    const html =
+      tryKatex(prepareExpressionForKaTeX(expression, caretIndex)) ??
+      tryKatex(prepareExpressionForKaTeX(expression, caretIndex, true)) ??
+      tryKatex(prepareExpressionForKaTeX(expression, null, true));
+    if (html) {
+      lastGoodHtmlRef.current = html;
+      return { html, stale: false };
+    }
+    // Mid-edit and not renderable yet: keep showing the last good version, never raw code.
+    return { html: lastGoodHtmlRef.current.replace(/math-cursor/g, 'math-cursor-off'), stale: true };
+  }, [expression, caretIndex]);
 
   const topicData = TOPICS.find(t => t.id === topic) ?? TOPICS[0];
+  const slotsLeft = countEmptySlots(expression);
 
   if (!isOpen) return null;
+
+  /* ── key styles (iOS light keyboard) ── */
+  const KEY = 'min-w-0 h-[34px] sm:h-9 rounded-[8px] text-[15px] leading-none select-none transition-[background-color,transform] duration-75 motion-safe:active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60';
+  const LETTER = `${KEY} bg-white text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.28)] hover:bg-slate-50 active:bg-slate-200`;
+  const FUNC = `${KEY} bg-[#BCC2CB] text-slate-800 font-semibold shadow-[0_1px_0_rgba(15,23,42,0.28)] hover:bg-[#B0B6C0] active:bg-white`;
+  const ACCENT = `${KEY} bg-sky-50 text-sky-800 font-semibold ring-1 ring-inset ring-sky-600/25 shadow-[0_1px_0_rgba(15,23,42,0.18)] hover:bg-sky-100 active:bg-sky-200`;
+
+  const renderKey = (k: MathKey, idx: number, extra = '') => {
+    const cls = k.className === 'action' ? FUNC
+      : k.className === 'highlight' ? ACCENT
+        : LETTER;
+    return (
+      <button
+        key={idx}
+        type="button"
+        title={k.hint ?? k.label}
+        aria-label={k.hint ?? k.label}
+        onClick={() => {
+          if (k.latex === '__ABC__') setAbcMode(true);
+          else handleInsert(k.latex);
+        }}
+        className={`${cls} ${k.className === 'space-key' ? 'flex-[3]' : 'flex-1'} ${k.className === 'italic' ? 'italic font-serif text-[17px]' : ''} ${extra}`}
+      >
+        {k.className === 'space-key' ? <span className="text-[13px] text-slate-500">space</span> : renderKeyLabel(k.label, k.display, k.latex)}
+      </button>
+    );
+  };
+
+  const hintText = notice
+    ? null
+    : !expression
+      ? `Build your formula here, then press Insert to put it into ${target ? target.label : 'a question'}.`
+      : slotsLeft > 0 && context === 'math'
+        ? `${slotsLeft} blue ${slotsLeft === 1 ? 'box is' : 'boxes are'} still empty — click one, then type.`
+        : HINTS[context];
 
   return (
     <div
       ref={panelRef}
-      className="sy-pad-container fixed bottom-4 left-14 z-[9999] w-[740px] max-w-[95vw] rounded-2xl shadow-2xl border border-blue-200 bg-gradient-to-b from-blue-50 to-slate-100 overflow-hidden select-none"
-      style={{ fontFamily: "'Inter', sans-serif" }}
-      onMouseDown={e => e.preventDefault()}
+      role="region"
+      aria-label="Sy Pad — maths and chemistry keyboard"
+      className="sy-pad-container fixed inset-x-0 bottom-0 z-[60] mx-auto w-full sm:bottom-3 sm:w-[min(780px,calc(100vw-32px))] rounded-t-[22px] sm:rounded-[22px] bg-[#E4E7EC]/95 backdrop-blur-xl ring-1 ring-slate-900/10 shadow-[0_-16px_48px_-20px_rgba(15,23,42,0.45)] select-none animate-in slide-in-from-bottom-6 fade-in duration-200"
+      style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}
+      onMouseDown={e => {
+        if (!(e.target as HTMLElement).closest('input, textarea')) e.preventDefault();
+      }}
     >
       <style>{`
-        .math-placeholder {
-          background-color: #dbeafe !important;
-          color: #1e40af !important;
-          border-radius: 4px;
-          padding: 0px 5px;
-          margin: 0px 2px;
+        .sy-pad-container .math-placeholder {
+          background-color: #e0f2fe !important;
+          color: #0369a1 !important;
+          border-radius: 5px;
+          padding: 0 5px;
+          margin: 0 2px;
           cursor: pointer;
-          font-weight: bold;
+          font-weight: 700;
           display: inline-block;
-          transition: all 0.2s;
-          border: 1px dashed #93c5fd;
+          border: 1.5px dashed #7dd3fc;
         }
-        .math-placeholder:hover {
-          background-color: #bfdbfe !important;
-          border-color: #3b82f6;
-        }
-        .math-token {
-          cursor: text;
-          transition: background-color 0.1s;
+        .sy-pad-container .math-token { cursor: text; display: inline-block; border-radius: 3px; }
+        .sy-pad-container .math-token:hover { background-color: rgba(14,165,233,0.12) !important; }
+        .sy-pad-container .math-cursor {
+          border-left: 2px solid #0284c7;
+          margin: 0 -1px;
+          animation: sypad-blink 1s step-end infinite;
           display: inline-block;
-        }
-        .math-token:hover {
-          background-color: rgba(59, 130, 246, 0.15) !important;
-          border-radius: 2px;
-          outline: 1px solid rgba(59, 130, 246, 0.3);
-        }
-        .math-cursor {
-          border-left: 2px solid #3b82f6;
-          margin-left: -1px;
-          margin-right: -1px;
-          animation: math-blink 1s step-end infinite;
-          display: inline-block;
-          height: 1.2em;
+          height: 1.15em;
           vertical-align: middle;
         }
-        @keyframes math-blink {
-          from, to { border-color: transparent }
-          50% { border-color: #3b82f6 }
-        }
+        @keyframes sypad-blink { 50% { border-color: transparent } }
+        .sy-pad-container .katex-display { margin: 0 !important; text-align: left !important; }
+        .sy-pad-container .katex-display > .katex { text-align: left !important; }
       `}</style>
 
-      {/* ── Header ─────────── */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-50 border-b border-blue-200">
-        <span className="text-xs font-bold text-blue-800 tracking-wide">Sy Pad</span>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-blue-200/60 text-blue-600 transition-colors" title="Minimize">
-          <Minus className="w-4 h-4" />
+      {/* ── Accessory bar: where it goes, help, done ── */}
+      <div className="flex items-center gap-2 px-3 pt-2.5 pb-2 sm:px-4">
+        <button
+          type="button"
+          onClick={() => revealTarget()}
+          className={`flex min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] transition-colors ${target
+            ? 'bg-white/70 text-slate-700 hover:bg-white'
+            : 'bg-amber-100 text-amber-900'
+            }`}
+          title={target ? 'Show this box' : undefined}
+        >
+          <CornerDownLeft className={`h-3.5 w-3.5 shrink-0 ${target ? 'text-sky-600' : 'text-amber-600'}`} />
+          {target ? (
+            <span className="truncate">Goes into <strong className="font-semibold text-slate-900">{target.label}</strong></span>
+          ) : (
+            <span className="truncate">Click a question or option box first</span>
+          )}
         </button>
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShowHelp(v => !v)}
+            aria-pressed={showHelp}
+            className={`flex h-8 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium transition-colors ${showHelp ? 'bg-sky-600 text-white' : 'text-slate-600 hover:bg-white/70'}`}
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">How to</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 rounded-full px-3 text-[15px] font-semibold text-sky-700 hover:bg-white/70"
+          >
+            Done
+          </button>
+        </div>
       </div>
 
-      {/* ── Preview & Input Area ── */}
-      <div className="px-3 py-2 border-b border-blue-100 space-y-2 bg-white/60">
-        {/* Rendered KaTeX Output Wrapper */}
-        <div className="relative min-h-[50px] flex items-center justify-between rounded-lg bg-white border border-blue-100 overflow-hidden">
+      {/* ── Display: rendered formula, code line, insert ── */}
+      <div className="mx-3 sm:mx-4 rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/[0.06]">
+        <div className="flex items-stretch gap-2 p-1.5 pl-3">
           <div
-            className="flex-1 min-h-[50px] flex items-center px-3 py-1.5 overflow-x-auto text-lg cursor-pointer"
+            className="relative flex min-h-[48px] flex-1 cursor-text items-center overflow-x-auto overflow-y-hidden text-[19px] text-slate-900"
             onClick={handlePreviewClick}
-            dangerouslySetInnerHTML={{ __html: renderKatex(expression, caretIndex) }}
-            title="Click on any blue box or math symbol to edit that slot"
-          />
-          {ceAnim.status !== 'idle' && (
-            <div className="shrink-0 flex items-center border-l border-blue-100 bg-blue-50/80 px-3 py-1.5 self-stretch text-sm max-w-[320px]">
-              <div className="font-mono text-xs bg-white px-2.5 py-1 rounded border border-blue-100 shadow-sm flex items-center min-w-[130px] h-[28px] overflow-hidden">
-                {ceAnim.status === 'typing' ? (
-                  <span className="text-slate-400 font-bold whitespace-nowrap flex items-center">
-                    {ceAnim.text}
-                    <span className="inline-block w-[2px] h-3 bg-slate-400 ml-0.5 animate-pulse" />
-                  </span>
-                ) : (
-                  <span
-                    className="text-slate-400 font-bold scale-90 origin-left whitespace-nowrap flex items-center [&_.katex]:text-slate-400 [&_.katex]:font-bold"
-                    dangerouslySetInnerHTML={{ __html: renderMhchemToHtml('2H2 + O2 -> 2H2O') }}
-                  />
-                )}
-              </div>
-            </div>
-          )}
+            title="Click a blue box or a symbol to edit there"
+          >
+            {preview.html ? (
+              <div
+                className={`transition-opacity ${preview.stale ? 'opacity-50' : ''}`}
+                dangerouslySetInnerHTML={{ __html: preview.html }}
+              />
+            ) : (
+              <span className="text-[15px] text-slate-400">Your formula appears here</span>
+            )}
+            {preview.stale && (
+              <span className="ml-3 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">keep typing…</span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => commit('insert')}
+            disabled={!expression.trim()}
+            className="inline-flex shrink-0 items-center gap-1.5 self-center rounded-xl bg-primary px-4 h-11 text-[15px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_20px_-10px_rgba(2,132,199,0.9)] transition-[background-color,transform] hover:bg-[hsl(200,95%,30%)] motion-safe:active:scale-[0.97] disabled:bg-slate-300 disabled:shadow-none"
+          >
+            {inserted ? <Check className="h-4 w-4" /> : <CornerDownLeft className="h-4 w-4" />}
+            {inserted ? 'Added' : 'Insert'}
+          </button>
         </div>
-
-        {/* Raw LaTeX Input */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 border-t border-slate-100 px-3 py-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Code</span>
           <input
             ref={expressionInputRef}
             type="text"
+            inputMode={coarsePointer ? 'none' : 'text'}
+            spellCheck={false}
+            autoComplete="off"
+            aria-label="Formula code"
             value={expression}
             onChange={e => {
               setExpression(e.target.value);
+              setCaretIndex(e.target.selectionStart);
+              setNotice(null);
               setCeAnim({ status: 'idle', text: '' });
             }}
             onKeyDown={e => {
-              if (e.key === ' ') {
+              // Read the box itself, not state: state lags a keystroke behind fast typing.
+              const el = e.currentTarget;
+              const cur = el.value;
+              const start = el.selectionStart ?? cur.length;
+              const end = el.selectionEnd ?? start;
+              if (e.key === 'Enter') {
                 e.preventDefault();
-                const inputEl = expressionInputRef.current;
-                if (inputEl) {
-                  const start = inputEl.selectionStart ?? inputEl.value.length;
-                  const end = inputEl.selectionEnd ?? start;
-                  const before = expression.slice(0, start);
-                  const after = expression.slice(end);
-
-                  const isInsideText = isIndexInsideTextCommand(expression, start);
-                  const spaceStr = isInsideText ? ' ' : '\\,';
-                  const newExpr = before + spaceStr + after;
-                  setExpression(newExpr);
-
-                  const nextPos = start + spaceStr.length;
-                  setCaretIndex(nextPos);
-                  setTimeout(() => {
-                    inputEl.focus();
-                    inputEl.setSelectionRange(nextPos, nextPos);
-                  }, 0);
-                } else {
-                  const isInsideText = isIndexInsideTextCommand(expression, expression.length);
-                  const spaceStr = isInsideText ? ' ' : '\\,';
-                  const newExpr = expression + spaceStr;
-                  setExpression(newExpr);
-                  setCaretIndex(newExpr.length);
-                }
+                commit('insert');
+              } else if (e.key === ' ') {
+                e.preventDefault();
+                const gap = contextAt(cur, start) === 'math' ? '\\,' : ' ';
+                applyEdit(cur.slice(0, start) + gap + cur.slice(end), start + gap.length);
+              } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                const res = smartBackspace(cur, start, end);
+                applyEdit(res.expr, res.caret);
+              } else if (e.key === '{') {
+                // Keep braces paired so a half-typed group never breaks the formula
+                e.preventDefault();
+                const inner = cur.slice(start, end);
+                applyEdit(cur.slice(0, start) + '{' + inner + '}' + cur.slice(end), start + 1, start + 1 + inner.length);
+              } else if (e.key === '}' && start === end && cur[start] === '}') {
+                e.preventDefault();
+                applyEdit(cur, start + 1);
               }
             }}
-            onSelect={e => {
-              setCaretIndex(e.currentTarget.selectionStart);
-            }}
-            placeholder="Type or use keys below..."
-            className="flex-1 h-9 px-3 rounded-lg border border-blue-200 text-sm font-mono text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            onSelect={e => setCaretIndex(e.currentTarget.selectionStart)}
+            placeholder="or type here, e.g. \frac{1}{2}"
+            className="h-7 min-w-0 flex-1 select-text bg-transparent font-mono text-[13px] text-slate-600 placeholder:text-slate-300 focus:outline-none"
           />
           <button
-            onClick={handleCopy}
-            disabled={!expression}
-            className="shrink-0 flex items-center gap-1 h-9 px-3 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
-            title="Copy raw LaTeX (wrapped in $...$)"
+            type="button"
+            onClick={() => commit('copy')}
+            disabled={!expression.trim()}
+            className="flex h-7 shrink-0 items-center gap-1 rounded-lg px-2 text-[12px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40"
+            title="Copy the formula with $…$ to paste anywhere"
           >
-            {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
-          <button
-            onClick={handleInsertText}
-            disabled={!expression}
-            className="shrink-0 flex items-center gap-1 h-9 px-3 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors shadow-sm"
-            title="Insert expression into active text box (wrapped in $...$)"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Insert
-          </button>
-          <button
-            onClick={() => {
-              setExpression('');
-              setCaretIndex(0);
-            }}
-            className="shrink-0 p-2 rounded-lg text-xs text-red-500 hover:bg-red-50 transition-colors"
-            title="Clear expression"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
       </div>
 
-      {/* ── Raw format display ── */}
-      {expression && (
-        <div className="px-4 py-1 bg-slate-50 border-b border-blue-100">
-          <code className="text-[11px] text-slate-500 font-mono break-all">
-            ${expression}$
-          </code>
-        </div>
-      )}
-
-      {/* ── Topic tabs ──────── */}
-      <div className="flex items-center justify-between border-b border-blue-100 bg-blue-50/50 pr-3">
-        <div className="flex gap-1 px-3 py-2 overflow-x-auto scrollbar-none">
-          {TOPICS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => { setTopic(t.id); setAbcMode(false); }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all ${topic === t.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-blue-700 hover:bg-blue-100'
-                }`}
-            >
-              {t.label}
+      {/* ── Hint / notice line ── */}
+      <div className="mx-3 sm:mx-4 mt-1.5 flex min-h-[26px] items-center gap-2 px-1 text-[12.5px] leading-snug">
+        {notice ? (
+          <div className="flex w-full items-center gap-2 text-amber-900">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+            <span className="min-w-0 flex-1 truncate">
+              {notice.kind === 'slots' && `${notice.count} blue ${notice.count === 1 ? 'box is' : 'boxes are'} still empty.`}
+              {notice.kind === 'invalid' && 'This formula looks unfinished.'}
+              {notice.kind === 'no-target' && 'Click inside a question or option box first, then press Insert.'}
+            </span>
+            {notice.kind !== 'no-target' && (
+              <button
+                type="button"
+                onClick={() => commit(notice.action, true)}
+                className="shrink-0 rounded-full bg-white/80 px-2.5 py-0.5 font-semibold text-slate-800 hover:bg-white"
+              >
+                {notice.action === 'copy' ? 'Copy anyway' : 'Insert anyway'}
+              </button>
+            )}
+            <button type="button" onClick={() => setNotice(null)} className="shrink-0 rounded-full p-0.5 text-amber-700 hover:bg-white/60" aria-label="Dismiss">
+              <X className="h-3.5 w-3.5" />
             </button>
-          ))}
-        </div>
+          </div>
+        ) : ceAnim.status !== 'idle' ? (
+          <div className="flex min-w-0 items-center gap-2 text-slate-600">
+            <span className="shrink-0">Now type the formula, like</span>
+            <span className="inline-flex h-6 min-w-[140px] items-center rounded-md bg-white/80 px-2 font-mono text-[12px] text-slate-700 ring-1 ring-slate-900/5">
+              {ceAnim.status === 'typing' ? (
+                <>{ceAnim.text}<span className="ml-0.5 inline-block h-3 w-[2px] animate-pulse bg-slate-500" /></>
+              ) : (
+                <span className="font-sans text-[14px]" dangerouslySetInnerHTML={{ __html: renderMhchemToHtml('2H2 + O2 -> 2H2O') }} />
+              )}
+            </span>
+          </div>
+        ) : (
+          <span className={`truncate ${context === 'chemistry' ? 'text-emerald-800' : context === 'text' ? 'text-violet-800' : 'text-slate-600'}`}>
+            {context !== 'math' && (
+              <span className={`mr-1.5 rounded-full px-1.5 py-px text-[10.5px] font-bold uppercase tracking-wide ${context === 'chemistry' ? 'bg-emerald-100' : 'bg-violet-100'}`}>
+                {context === 'chemistry' ? 'Chemistry' : 'Words'}
+              </span>
+            )}
+            {hintText}
+          </span>
+        )}
+      </div>
 
-        {/* Text Mode formatting button */}
+      {/* ── Tabs ── */}
+      <div className="mt-1 flex items-center gap-2 px-3 sm:px-4">
+        <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto rounded-[10px] bg-slate-900/[0.07] p-0.5 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => { setMobilePane('digits'); setAbcMode(false); setTableMode(false); setShowHelp(false); }}
+            className={`sm:hidden h-7 shrink-0 rounded-[8px] px-2.5 text-[13px] font-semibold transition-all ${mobilePane === 'digits' && !abcMode && !tableMode ? 'bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.15)]' : 'text-slate-600'}`}
+          >
+            123
+          </button>
+          {TOPICS.map(t => {
+            const active = topic === t.id && (mobilePane === 'topic' || typeof window === 'undefined' || window.innerWidth >= 640);
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => {
+                  setTopic(t.id);
+                  setMobilePane('topic');
+                  setAbcMode(false);
+                  setTableMode(false);
+                  setShowHelp(false);
+                }}
+                className={`h-7 shrink-0 whitespace-nowrap rounded-[8px] px-2.5 text-[13px] font-semibold transition-all ${active && !abcMode ? 'bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.15)]' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
         <button
           type="button"
-          onMouseDown={handleTextOperatorMouseDown}
-          className="shrink-0 px-2 py-1.5 rounded-lg text-[11px] font-bold bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-900/50 text-purple-700 shadow-sm transition-all"
-          title="Insert text block \text{?} (for entering normal text inside tables, math formulas, or between $)"
+          onClick={handleWordsKey}
+          className={`${ACCENT} h-8 sm:h-8 shrink-0 px-2.5 text-[13px] !bg-violet-50 !text-violet-800 !ring-violet-600/25 hover:!bg-violet-100 flex items-center gap-1`}
+          title="Normal words inside a formula — e.g. speed = 5 m/s"
         >
-          \text{"{?}"}
+          <Type className="h-3.5 w-3.5" /> Words
         </button>
       </div>
 
-      {/* ── Keyboard Grid ──── */}
-      <div className="p-2">
-        {tableMode ? (
+      {/* ── Keys ── */}
+      <div className="px-2 pt-2 sm:px-3">
+        {showHelp ? (
+          <div className="max-h-[172px] overflow-y-auto rounded-2xl bg-white p-1 ring-1 ring-slate-900/[0.06] select-text">
+            <table className="w-full text-left text-[13px]">
+              <tbody>
+                {HELP_ROWS.map(r => (
+                  <tr key={r.want} className="border-b border-slate-100 last:border-0">
+                    <td className="px-2.5 py-1.5 font-semibold text-slate-800">{r.want}</td>
+                    <td className="px-2.5 py-1.5 text-slate-600">{r.how}</td>
+                    <td className="px-2.5 py-1.5 text-right text-[15px]" dangerouslySetInnerHTML={{ __html: tryKatex(r.shows, false) ?? '' }} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : tableMode ? (
           <TableEditor
             initialType={tableType}
             onInsert={latex => { handleInsert(latex); setTableMode(false); }}
             onClose={() => setTableMode(false)}
           />
         ) : abcMode ? (
-          /* ABC mode */
-          <div className="space-y-1">
-            {/* Row 1: Numbers */}
-            <div className="flex justify-center gap-1">
-              {["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].map(n => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => handleInsert(n)}
-                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-semibold hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
-                >{n}</button>
+          <div className="space-y-1.5">
+            <div className="flex gap-1.5">
+              {['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'].map(ch => (
+                <button key={ch} type="button" onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)} className={`${LETTER} flex-1`}>
+                  {shiftOn ? ch.toUpperCase() : ch}
+                </button>
               ))}
             </div>
-
-            {/* Row 2: QWERTY Row 1 */}
-            <div className="flex justify-center gap-1">
-              {["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"].map(ch => (
-                <button
-                  key={ch}
-                  type="button"
-                  onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)}
-                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
-                >{shiftOn ? ch.toUpperCase() : ch}</button>
+            <div className="flex gap-1.5 px-[4.5%]">
+              {['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'].map(ch => (
+                <button key={ch} type="button" onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)} className={`${LETTER} flex-1`}>
+                  {shiftOn ? ch.toUpperCase() : ch}
+                </button>
               ))}
             </div>
-
-            {/* Row 3: QWERTY Row 2 */}
-            <div className="flex justify-center gap-1 px-4">
-              {["a", "s", "d", "f", "g", "h", "j", "k", "l"].map(ch => (
-                <button
-                  key={ch}
-                  type="button"
-                  onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)}
-                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
-                >{shiftOn ? ch.toUpperCase() : ch}</button>
-              ))}
-            </div>
-
-            {/* Row 4: Shift, QWERTY Row 3, Backspace */}
-            <div className="flex justify-center gap-1">
+            <div className="flex gap-1.5">
               <button
                 type="button"
                 onClick={() => setShiftOn(s => !s)}
-                className={`w-12 h-10 rounded-lg text-lg font-bold flex items-center justify-center transition-all ${shiftOn ? 'bg-blue-600 text-white border border-blue-700 shadow-inner' : 'bg-blue-100 border border-blue-200 text-blue-800 hover:bg-blue-200'
-                  }`}
+                aria-pressed={shiftOn}
+                className={`${shiftOn ? LETTER : FUNC} w-[12%] text-lg`}
+                title="Capital letters"
               >
                 ⇧
               </button>
-
-              {["z", "x", "c", "v", "b", "n", "m", ","].map(ch => (
-                <button
-                  key={ch}
-                  type="button"
-                  onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)}
-                  className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
-                >{shiftOn ? ch.toUpperCase() : ch}</button>
+              {['z', 'x', 'c', 'v', 'b', 'n', 'm', ','].map(ch => (
+                <button key={ch} type="button" onClick={() => handleInsert(shiftOn ? ch.toUpperCase() : ch)} className={`${LETTER} flex-1`}>
+                  {shiftOn ? ch.toUpperCase() : ch}
+                </button>
               ))}
-
-              <button
-                type="button"
-                onClick={() => handleInsert('__BACK__')}
-                className="w-12 h-10 rounded-lg bg-blue-100 border border-blue-200 text-blue-800 flex items-center justify-center hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all text-lg"
-              >
-                ⌫
+              <button type="button" onClick={() => handleInsert('__BACK__')} className={`${FUNC} w-[12%] flex items-center justify-center`} title="Delete">
+                <Delete className="h-5 w-5" />
               </button>
             </div>
-
-            {/* Row 5: Action Keys */}
-            <div className="flex justify-center gap-1">
-              <button
-                type="button"
-                onClick={() => setAbcMode(false)}
-                className="w-14 h-10 rounded-lg bg-blue-200/80 border border-blue-300 text-blue-800 font-bold text-xs hover:bg-blue-300 transition-all"
-              >
-                123
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleInsert('\\quad ')}
-                className="w-14 h-10 rounded-lg bg-blue-200/80 border border-blue-300 text-blue-800 flex items-center justify-center hover:bg-blue-300 transition-all text-lg"
-                title="Tab (Indent)"
-              >
-                ⇄
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleInsert('\\,')}
-                className="flex-1 h-10 rounded-lg bg-white border border-blue-200 text-blue-400 flex items-center justify-center hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
-              >
-                ␣
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleInsert('.')}
-                className="w-12 h-10 rounded-lg bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100 transition-all text-base"
-              >
-                .
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleInsert('\n')}
-                className="w-14 h-10 rounded-lg bg-blue-200/80 border border-blue-300 text-blue-800 flex items-center justify-center hover:bg-blue-300 transition-all text-lg"
-                title="Enter"
-              >
-                ↵
-              </button>
+            <div className="flex gap-1.5">
+              <button type="button" onClick={() => setAbcMode(false)} className={`${FUNC} w-[14%] text-[13px]`}>123</button>
+              <button type="button" onClick={() => handleInsert('\\quad ')} className={`${FUNC} w-[12%]`} title="Wide gap (tab)">⇥</button>
+              <button type="button" onClick={() => handleInsert('\\,')} className={`${LETTER} flex-1 text-[13px] text-slate-500`}>space</button>
+              <button type="button" onClick={() => handleInsert('.')} className={`${LETTER} w-[10%]`}>.</button>
+              <button type="button" onClick={() => handleInsert('\n')} className={`${FUNC} w-[14%]`} title="New line">↵</button>
             </div>
           </div>
-        ) : tableMode ? null : (
-          /* Math mode */
-          <div className="flex gap-1">
-            {/* Fixed section */}
-            <div className="flex-1 space-y-1">
+        ) : (
+          <div className="flex gap-2">
+            {/* Digits & structures */}
+            <div className={`${mobilePane === 'digits' ? 'flex' : 'hidden'} sm:flex min-w-0 flex-[10] flex-col gap-1.5`}>
               {FIXED_ROWS.map((row, ri) => (
-                <div key={ri} className="flex gap-1">
-                  {row.map((k, ki) => (
-                    <button
-                      key={ki}
-                      type="button"
-                      onClick={() => {
-                        if (k.latex === '__ABC__') setAbcMode(true);
-                        else if (k.label === 'Table') setTableMode(true);
-                        else if (k.className !== 'empty') handleInsert(k.latex);
-                      }}
-                      disabled={k.className === 'empty'}
-                      className={`h-10 rounded-lg text-sm transition-all ${k.className === 'space-key'
-                          ? 'flex-[2] bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
-                          : k.className === 'action'
-                            ? 'flex-grow flex-1 bg-blue-200 text-blue-800 font-bold text-xs hover:bg-blue-300'
-                            : k.className === 'empty'
-                              ? 'bg-transparent cursor-default flex-1'
-                              : k.className === 'italic'
-                                ? 'flex-1 bg-white border border-blue-200 text-blue-900 italic font-serif hover:bg-blue-50 active:bg-blue-100'
-                                : 'flex-1 bg-white border border-blue-200 text-blue-900 font-medium hover:bg-blue-50 active:bg-blue-100'
-                        }`}
-                    >
-                      {k.latex === '\\frac{?}{?}' ? (
-                        <div className="flex flex-col items-center justify-center gap-[2px] w-4 h-5 mx-auto">
-                          <div className="w-2 h-1.5 bg-current rounded-[1px]" />
-                          <div className="w-3.5 h-[1.5px] bg-current" />
-                          <div className="w-2 h-1.5 bg-current rounded-[1px]" />
-                        </div>
-                      ) : (
-                        renderKeyLabel(k.label, k.display, k.latex)
-                      )}
-                    </button>
-                  ))}
+                <div key={ri} className="flex gap-1.5">
+                  {row.map((k, ki) => renderKey(k, ki))}
                 </div>
               ))}
             </div>
 
-            {/* Dynamic topic section */}
-            <div className="w-[200px] shrink-0 space-y-1">
+            {/* Topic symbols */}
+            <div className={`${mobilePane === 'topic' ? 'flex' : 'hidden'} sm:flex min-w-0 flex-[10] sm:flex-[4.2] flex-col gap-1.5`}>
               {topicData.keys.map((row, ri) => (
-                <div key={ri} className="flex gap-1">
-                  {row.map((k, ki) => (
-                    <button
-                      key={ki}
-                      type="button"
-                      onClick={() => handleInsert(k.latex)}
-                      className={`flex-1 h-10 rounded-lg text-xs transition-all font-semibold ${k.className === 'highlight'
-                          ? 'bg-indigo-600 border border-indigo-700 text-white hover:bg-indigo-700 active:bg-indigo-800 shadow-sm'
-                          : k.className === 'italic'
-                            ? 'bg-blue-50 border border-blue-200 text-blue-800 italic font-serif text-sm hover:bg-blue-100 active:bg-blue-200'
-                            : 'bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100 active:bg-blue-200'
-                        }`}
-                      title={k.latex}
-                    >
-                      {renderKeyLabel(k.label, k.display, k.latex)}
-                    </button>
-                  ))}
+                <div key={ri} className="flex gap-1.5">
+                  {row.map((k, ki) => renderKey(k, ki, topic === 'tables' ? '!text-[12px]' : '!text-[14px]'))}
                 </div>
               ))}
-              {/* Navigation row */}
-              <div className="flex gap-1">
-                <button type="button" onClick={() => handleInsert('\\leftarrow ')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-lg">◀</button>
-                <button type="button" onClick={() => handleInsert('\\rightarrow ')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-lg">▶</button>
-                <button type="button" onClick={() => handleInsert('__BACK__')} className="flex-1 h-10 rounded-lg bg-red-100 border border-red-200 text-red-600 font-bold hover:bg-red-200 transition-all text-lg">⌫</button>
-                <button type="button" onClick={() => handleInsert('__CLEAR__')} className="flex-1 h-10 rounded-lg bg-blue-300/60 border border-blue-300 text-blue-800 font-bold hover:bg-blue-300 transition-all text-xs">CLR</button>
-              </div>
+            </div>
+
+            {/* Editing keys */}
+            <div className="flex w-[52px] sm:w-[58px] shrink-0 flex-col gap-1.5">
+              <button type="button" onClick={() => handleInsert('__BACK__')} className={`${FUNC} flex items-center justify-center`} title="Delete (removes a whole symbol at a time)" aria-label="Delete">
+                <Delete className="h-5 w-5" />
+              </button>
+              <button type="button" onClick={() => handleInsert('__LEFT__')} className={`${FUNC} flex items-center justify-center`} title="Move left" aria-label="Move cursor left">
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button type="button" onClick={() => handleInsert('__RIGHT__')} className={`${FUNC} flex items-center justify-center`} title="Move right" aria-label="Move cursor right">
+                <ChevronRight className="h-5 w-5" />
+              </button>
+              <button type="button" onClick={() => handleInsert('__CLEAR__')} className={`${FUNC} text-[12px]`} title="Clear the whole formula">
+                Clear
+              </button>
             </div>
           </div>
         )}
