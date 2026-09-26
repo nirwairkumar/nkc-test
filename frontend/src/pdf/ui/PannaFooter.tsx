@@ -5,6 +5,9 @@ import { UPDATED } from '../site/content';
 import { TOOL_PAGES } from '../site/routes';
 import PannaLogo from './PannaLogo';
 
+/** The long-form guide to every Panna tool, on the TestoZa Blog (src/blog/articles). */
+const PANNA_GUIDE = 'https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs';
+
 const TESTOZA_LINKS = [
     { href: testozaUrl('/'), label: 'Online test maker' },
     { href: testozaUrl('/pdf-to-quiz'), label: 'PDF to quiz' },
@@ -45,6 +48,11 @@ export default function PannaFooter() {
                                 </Link>
                             </li>
                         ))}
+                        <li>
+                            <a href={PANNA_GUIDE} className={col}>
+                                Complete guide
+                            </a>
+                        </li>
                     </ul>
                 </nav>
                 <nav aria-label="TestoZa">

@@ -315,6 +315,19 @@ Testoza's security is built on multiple layers:
 
 ---
 
+## Free PDF Tools (Panna)
+
+Panna (https://pdf.testoza.com) is TestoZa's free set of PDF tools. Every tool runs in the browser, so files are processed on the user's device and never uploaded. There is no sign-up and no watermark.
+
+- **Edit PDF** (https://pdf.testoza.com/edit-pdf): changes existing PDF text using the font embedded in the document, and says which characters (if any) are missing from that font. Erased text is deleted from the file rather than covered with a white box. Also adds text, images, signatures (draw, type or upload), highlights, freehand ink and shapes; find and replace across pages; reorders, rotates, duplicates, inserts and deletes pages; opens password-protected PDFs when the user knows the password.
+- **Edit Hindi PDF** (https://pdf.testoza.com/edit-hindi-pdf): edits Unicode Hindi (Devanagari) with correct matras and conjuncts; new Hindi text is set in Noto Sans Devanagari and stays searchable. Legacy fonts such as Kruti Dev are erased and retyped.
+- **LaTeX to PDF** (https://pdf.testoza.com/latex-to-pdf) and **ChatGPT to PDF** (https://pdf.testoza.com/chatgpt-to-pdf): convert LaTeX documents, Markdown and maths copied from ChatGPT, Gemini or Claude into an A4 or Letter vector PDF with selectable text, repairing formulas damaged by copying.
+- Not yet available: OCR for scanned PDFs, merge, split, compress and PDF to Word.
+
+Complete guide: https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs
+
+---
+
 ## Frequently Asked Questions (FAQ)
 
 ### How does Testoza use AI to create tests?

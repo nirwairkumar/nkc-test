@@ -62,6 +62,8 @@ const LINK_COLUMNS = [
             { label: 'Hindi PDF editor', to: 'https://pdf.testoza.com/edit-hindi-pdf' },
             { label: 'LaTeX to PDF', to: 'https://pdf.testoza.com/latex-to-pdf' },
             { label: 'ChatGPT to PDF', to: 'https://pdf.testoza.com/chatgpt-to-pdf' },
+            // The complete Panna guide (a static article on the blog, src/blog/articles).
+            { label: 'Panna guide', to: 'https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs' },
         ],
     },
     {

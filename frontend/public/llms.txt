@@ -39,6 +39,13 @@ Panna is TestoZa's free, in-browser PDF toolkit at https://pdf.testoza.com — f
 - [Edit Hindi PDF](https://pdf.testoza.com/edit-hindi-pdf): edit Hindi (Devanagari) text with correct matras and conjuncts
 - [LaTeX to PDF](https://pdf.testoza.com/latex-to-pdf): convert LaTeX or AI-generated maths into a PDF with selectable text
 - [ChatGPT to PDF](https://pdf.testoza.com/chatgpt-to-pdf): save ChatGPT, Gemini or Claude answers as PDF with equations intact
+- [The complete Panna guide](https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs): every tool, how same-font editing and true erasing work, Hindi support, and a comparison with Smallpdf, iLovePDF, Sejda, Adobe Acrobat and PDF24
+- [Panna in the user guide](https://testoza.com/user-guide/pdf-tools): short how-to with links to each tool
+
+## Blog
+
+- [TestoZa Blog](https://blog.testoza.com/): exam tips, teaching guides and product updates
+- [Stop painting white boxes on your PDFs](https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs): why most free PDF editors hide text under white boxes, and how Panna edits PDFs in their own font instead
 
 ## Quick Links
 

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import { TestProvider } from "@/contexts/TestContext";
@@ -10,6 +10,7 @@ import PrivateRoute from "@/components/ui/PrivateRoute";
 import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
+import { WHITE_BOXES_META } from "@/blog/articles/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -110,6 +111,18 @@ const NewsPostView = safeLazy(() => import("./pages/NewsPostView"));
 const NewsPostEditor = safeLazy(() => import("./pages/NewsPostEditor"));
 const MyPosts = safeLazy(() => import("./pages/MyPosts"));
 
+// Static blog articles (src/blog/articles): long-form pages the post editor can't
+// build. They share the post URLs, so the router picks them by slug.
+const StopPaintingWhiteBoxes = safeLazy(() => import("./pages/blog/StopPaintingWhiteBoxes"));
+const STATIC_ARTICLE_PAGES: Record<string, React.ComponentType> = {
+  [WHITE_BOXES_META.slug]: StopPaintingWhiteBoxes,
+};
+const BlogPostRoute = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const StaticArticle = slug ? STATIC_ARTICLE_PAGES[slug] : undefined;
+  return StaticArticle ? <StaticArticle /> : <NewsPostView />;
+};
+
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -181,14 +194,14 @@ const App = () => (
 
                     {/* News & Blog Routes */}
                     <Route path="/blog" element={<NewsFeed />} />
-                    <Route path="/blog/:slug" element={<NewsPostView />} />
+                    <Route path="/blog/:slug" element={<BlogPostRoute />} />
                     <Route path="/news" element={<NewsFeed />} />
-                    <Route path="/news/:slug" element={<NewsPostView />} />
+                    <Route path="/news/:slug" element={<BlogPostRoute />} />
                     <Route path="/posts" element={<NewsFeed />} />
-                    <Route path="/posts/:slug" element={<NewsPostView />} />
+                    <Route path="/posts/:slug" element={<BlogPostRoute />} />
                     {/* On blog.testoza.com posts live at /<slug> (their canonical URL);
                         static paths like /pricing still win over this pattern. */}
-                    {isBlogSubdomain && <Route path="/:slug" element={<NewsPostView />} />}
+                    {isBlogSubdomain && <Route path="/:slug" element={<BlogPostRoute />} />}
                     <Route path="/news/create" element={
                       <PrivateRoute>
                         <NewsPostEditor />
