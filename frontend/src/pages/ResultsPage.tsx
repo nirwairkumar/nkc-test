@@ -816,7 +816,12 @@ const ResultsPage = () => {
                   testDurationMinutes={selectedTest?.duration || 60}
                   questionStatus={questionStatus}
                   onSelectQuestion={(idx) => {
-                    setSearchParams({ tab: 'solutions' });
+                    const qId = allQuestions[idx]?.id;
+                    setSearchParams({ tab: 'solution-key', q: String(idx + 1) });
+                    setTimeout(() => {
+                      const el = document.getElementById(`solution-item-${qId}`);
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 120);
                   }}
                 />
               </motion.div>
@@ -1002,7 +1007,21 @@ const ResultsPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <Accordion type="single" collapsible className="w-full">
+                    <Accordion 
+                      type="single" 
+                      collapsible 
+                      className="w-full"
+                      defaultValue={(() => {
+                        const qParam = searchParams.get('q');
+                        if (qParam) {
+                          const idx = parseInt(qParam, 10) - 1;
+                          if (!isNaN(idx) && allQuestions[idx]?.id !== undefined) {
+                            return `item-${allQuestions[idx].id}`;
+                          }
+                        }
+                        return undefined;
+                      })()}
+                    >
                       {allQuestions.map((q: any, index: number) => {
                         const ans = answers[q.id];
 
@@ -1045,7 +1064,7 @@ const ResultsPage = () => {
                         const qTime = qStats.time_spent !== undefined ? qStats.time_spent : (questionTimes[q.id] || questionTimes[String(q.id)] || 0);
 
                         return (
-                          <AccordionItem key={q.id} value={`item-${q.id}`} className="border rounded-lg px-2 data-[state=open]:bg-slate-50">
+                          <AccordionItem key={q.id} value={`item-${q.id}`} id={`solution-item-${q.id}`} className="border rounded-lg px-2 data-[state=open]:bg-slate-50">
                             <AccordionTrigger className="hover:no-underline py-3 px-2">
                               <div className="flex items-center gap-4 text-left w-full">
                                 <div className={`

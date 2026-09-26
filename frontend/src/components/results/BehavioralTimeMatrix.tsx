@@ -13,11 +13,26 @@ import {
   ChevronRight,
   TrendingUp,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  X,
+  ExternalLink,
+  Eye,
+  LayoutGrid,
+  List,
+  Image as ImageIcon,
+  ArrowRight
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import LatexRenderer from '@/components/ui/LatexRenderer';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface BehavioralTimeMatrixProps {
   questions: any[];
@@ -47,6 +62,8 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
   onSelectQuestion
 }) => {
   const [selectedQuadrant, setSelectedQuadrant] = useState<QuadrantId>('time_traps');
+  const [viewMode, setViewMode] = useState<'cards' | 'compact'>('cards');
+  const [selectedQuestionItem, setSelectedQuestionItem] = useState<MatrixItem | null>(null);
 
   // Format seconds to clean mm:ss or seconds format
   const formatTime = (seconds: number) => {
@@ -55,6 +72,33 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
     const m = Math.floor(s / 60);
     const rem = s % 60;
     return rem > 0 ? `${m}m ${rem}s` : `${m}m`;
+  };
+
+  const formatAnswer = (ans: any) => {
+    if (ans === undefined || ans === null || ans === '') return 'None';
+    if (Array.isArray(ans)) return ans.join(', ');
+    if (typeof ans === 'object') {
+      if (ans.min !== undefined && ans.max !== undefined) return `${ans.min} - ${ans.max}`;
+      return JSON.stringify(ans);
+    }
+    return String(ans);
+  };
+
+  const getUserAnswer = (item: MatrixItem) => {
+    const qId = item.question?.id;
+    if (qId !== undefined && answers[qId] !== undefined) return answers[qId];
+    if (answers[item.index] !== undefined) return answers[item.index];
+    if (answers[String(item.index)] !== undefined) return answers[String(item.index)];
+    return undefined;
+  };
+
+  const getItemScore = (item: MatrixItem) => {
+    const qId = item.question?.id;
+    const stat = (qId !== undefined ? questionStatus[qId] : undefined) || questionStatus[item.index] || questionStatus[String(item.index)];
+    if (stat?.score !== undefined) return parseFloat(Number(stat.score).toFixed(2));
+    if (item.status === 'correct') return item.question?.marks || 4;
+    if (item.status === 'wrong') return -(item.question?.negativeMarks !== undefined ? item.question.negativeMarks : 1);
+    return 0;
   };
 
   const totalQuestions = questions.length || 1;
@@ -92,7 +136,7 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
         ? Math.round(((timeSpent - benchmarkPaceSeconds) / benchmarkPaceSeconds) * 100)
         : 0;
 
-      const item = { index: idx, question: q, timeSpent, deltaPercent, status };
+      const item: MatrixItem = { index: idx, question: q, timeSpent, deltaPercent, status };
 
       if (status === 'correct') {
         if (timeSpent < 0.8 * benchmarkPaceSeconds) {
@@ -332,7 +376,7 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
       {/* Interactive Drill-Down Drawer for the Selected Quadrant */}
       <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800/60 rounded-3xl shadow-sm overflow-hidden">
         <CardContent className="p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
             <div>
               <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <span>{currentQuadrantConfig.title} Breakdown</span>
@@ -344,13 +388,163 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
                 {currentQuadrantConfig.description}
               </p>
             </div>
+
+            {/* iOS Segmented Control: Questions view vs Compact view */}
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  viewMode === 'cards'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                <span>Questions</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('compact')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                  viewMode === 'compact'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Compact</span>
+              </button>
+            </div>
           </div>
 
           {currentQuadrantConfig.items.length === 0 ? (
-            <div className="py-8 text-center text-slate-400 text-xs">
-              No questions fell into this quadrant for this test session.
+            <div className="py-12 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+              <Sparkles className="w-7 h-7 opacity-30 text-indigo-500" />
+              <span>No questions fell into this quadrant for this test session.</span>
+            </div>
+          ) : viewMode === 'cards' ? (
+            /* iOS Rich Question Cards Layout */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {currentQuadrantConfig.items.map((item) => {
+                const isFaster = item.timeSpent < benchmarkPaceSeconds;
+                const userAns = getUserAnswer(item);
+                const correctAns = item.question?.correctAnswer;
+                const score = getItemScore(item);
+
+                return (
+                  <motion.div
+                    key={item.index}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setSelectedQuestionItem(item)}
+                    className="p-4 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all duration-200 shadow-xs hover:shadow-md flex flex-col justify-between gap-3 cursor-pointer group backdrop-blur-xl relative overflow-hidden"
+                  >
+                    {/* Top row: Q# badge, Status, Topic, Time & Pace capsule */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 border ${
+                          item.status === 'correct' 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                            : item.status === 'wrong'
+                              ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                        }`}>
+                          Q{item.index + 1}
+                        </div>
+
+                        {item.status === 'correct' ? (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Correct</span>
+                          </span>
+                        ) : item.status === 'wrong' ? (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 shrink-0">
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Incorrect</span>
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                            <HelpCircle className="w-3.5 h-3.5" />
+                            <span>Skipped</span>
+                          </span>
+                        )}
+
+                        {item.question?.topic && (
+                          <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 truncate max-w-[120px]">
+                            {item.question.topic}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Time and Pace Badge */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-200">
+                          <Clock className="w-3 h-3 text-indigo-500" />
+                          {formatTime(item.timeSpent)}
+                        </span>
+                        <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-full border ${
+                          isFaster
+                            ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200/60 dark:border-emerald-800/40'
+                            : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200/60 dark:border-amber-800/40'
+                        }`}>
+                          {item.deltaPercent > 0 ? `+${item.deltaPercent}%` : `${item.deltaPercent}%`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Question Statement rendered with LaTeX like in Solution Key */}
+                    <div className="relative overflow-hidden text-xs sm:text-[13px] font-medium text-slate-800 dark:text-slate-200 line-clamp-2 max-h-12 leading-relaxed">
+                      <div className="[&_*]:!inline [&_.math]:!inline-block [&_p]:!m-0 text-slate-800 dark:text-slate-200">
+                        <LatexRenderer>{item.question?.question || "No question content"}</LatexRenderer>
+                      </div>
+                    </div>
+
+                    {/* Image indicator if image exists */}
+                    {item.question?.image && (
+                      <div className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        <span>Includes diagram/figure</span>
+                      </div>
+                    )}
+
+                    {/* Bottom row: Student Answer vs Correct Answer + Score + Action */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                        <span className={`px-2 py-0.5 rounded-lg text-[11px] font-semibold border ${
+                          item.status === 'correct'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                            : item.status === 'wrong'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+                              : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                        }`}>
+                          You: {formatAnswer(userAns)}
+                        </span>
+
+                        {item.status !== 'correct' && (
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                            Ans: {formatAnswer(correctAns)}
+                          </span>
+                        )}
+
+                        <span className={`text-[11px] font-mono font-bold ml-0.5 ${
+                          score > 0 ? 'text-emerald-600 dark:text-emerald-400' : score < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'
+                        }`}>
+                          {score > 0 ? `+${score}M` : `${score}M`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 text-xs font-bold shrink-0 group-hover:translate-x-0.5 transition-transform">
+                        <span>Solution</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           ) : (
+            /* iOS Compact Grid Layout */
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
               {currentQuadrantConfig.items.map((item) => {
                 const isFaster = item.timeSpent < benchmarkPaceSeconds;
@@ -358,7 +552,8 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
                   <motion.div
                     key={item.index}
                     whileHover={{ y: -2 }}
-                    onClick={() => onSelectQuestion?.(item.index)}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedQuestionItem(item)}
                     className="p-3 rounded-2xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between gap-1.5 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors shadow-2xs group"
                   >
                     <div className="flex items-center justify-between">
@@ -367,8 +562,10 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
                       </span>
                       {item.status === 'correct' ? (
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                      ) : (
+                      ) : item.status === 'wrong' ? (
                         <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                      ) : (
+                        <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
                       )}
                     </div>
 
@@ -387,6 +584,187 @@ export const BehavioralTimeMatrix: React.FC<BehavioralTimeMatrixProps> = ({
           )}
         </CardContent>
       </Card>
+
+      {/* iOS Quick Look Modal / Sheet for Selected Question */}
+      <Dialog open={!!selectedQuestionItem} onOpenChange={(open) => !open && setSelectedQuestionItem(null)}>
+        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto p-0 border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl shadow-2xl">
+          {selectedQuestionItem && (
+            <div className="flex flex-col">
+              {/* Modal Header */}
+              <DialogHeader className="p-5 pb-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-9 h-9 rounded-2xl flex items-center justify-center font-black text-sm border ${
+                      selectedQuestionItem.status === 'correct'
+                        ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                        : selectedQuestionItem.status === 'wrong'
+                          ? 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800'
+                          : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                    }`}>
+                      Q{selectedQuestionItem.index + 1}
+                    </div>
+                    <div>
+                      <DialogTitle className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <span>Question {selectedQuestionItem.index + 1}</span>
+                        {selectedQuestionItem.status === 'correct' ? (
+                          <Badge className="bg-emerald-600 hover:bg-emerald-600 text-[10px]">Correct</Badge>
+                        ) : selectedQuestionItem.status === 'wrong' ? (
+                          <Badge variant="destructive" className="text-[10px]">Incorrect</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px]">Skipped</Badge>
+                        )}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {selectedQuestionItem.question?.topic ? `${selectedQuestionItem.question.topic} · ` : ''}
+                        Time spent: {formatTime(selectedQuestionItem.timeSpent)} ({selectedQuestionItem.deltaPercent > 0 ? `+${selectedQuestionItem.deltaPercent}% slower` : `${Math.abs(selectedQuestionItem.deltaPercent)}% faster`} than benchmark)
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-5">
+                {/* Question Statement */}
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Question Statement
+                  </div>
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-relaxed overflow-x-auto">
+                    <LatexRenderer>{selectedQuestionItem.question?.question || ""}</LatexRenderer>
+                  </div>
+
+                  {/* Question Image if any */}
+                  {selectedQuestionItem.question?.image && (
+                    <div className="pt-2">
+                      <img
+                        src={(selectedQuestionItem.question.image || "").trim()}
+                        alt={`Question ${selectedQuestionItem.index + 1}`}
+                        className="max-w-full max-h-[260px] rounded-xl border border-slate-200 dark:border-slate-800 object-contain mx-auto"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Multiple Choice Options Comparison */}
+                {selectedQuestionItem.question?.options && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Options & Response
+                    </div>
+                    <div className="grid grid-cols-1 gap-2">
+                      {Object.entries(selectedQuestionItem.question.options).map(([key, val]) => {
+                        const userAns = getUserAnswer(selectedQuestionItem);
+                        const correctAns = selectedQuestionItem.question?.correctAnswer;
+                        const isChosen = String(userAns) === String(key) || (Array.isArray(userAns) && userAns.includes(key));
+                        const isCorrectOption = String(correctAns) === String(key) || (Array.isArray(correctAns) && correctAns.includes(key));
+
+                        return (
+                          <div
+                            key={key}
+                            className={`p-3 rounded-2xl border transition-colors flex items-start gap-3 ${
+                              isCorrectOption
+                                ? 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100'
+                                : isChosen
+                                  ? 'bg-rose-50/80 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-100'
+                                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                              isCorrectOption
+                                ? 'bg-emerald-600 text-white'
+                                : isChosen
+                                  ? 'bg-rose-600 text-white'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                            }`}>
+                              {key}
+                            </span>
+                            <div className="flex-1 text-xs font-medium pt-0.5 overflow-x-auto">
+                              <LatexRenderer>{String(val)}</LatexRenderer>
+                            </div>
+                            {isChosen && (
+                              <Badge variant={isCorrectOption ? "default" : "destructive"} className="text-[10px] shrink-0">
+                                Your Pick
+                              </Badge>
+                            )}
+                            {isCorrectOption && !isChosen && (
+                              <Badge className="bg-emerald-600 text-white text-[10px] shrink-0">
+                                Correct Answer
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Numerical Type Answer Display */}
+                {selectedQuestionItem.question?.type === 'numerical' && (
+                  <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800">
+                    <div>
+                      <span className="text-xs font-bold text-slate-400 block mb-1">Your Answer</span>
+                      <span className={`font-mono text-base font-bold ${
+                        selectedQuestionItem.status === 'correct' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}>
+                        {formatAnswer(getUserAnswer(selectedQuestionItem))}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-400 block mb-1">Correct Answer</span>
+                      <span className="font-mono text-base font-bold text-emerald-600">
+                        {formatAnswer(selectedQuestionItem.question?.correctAnswer)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Explanation / Solution Logic */}
+                {(selectedQuestionItem.question?.explanation || selectedQuestionItem.question?.solution) && (
+                  <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Solution & Step-by-Step Explanation</span>
+                    </div>
+                    <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed overflow-x-auto">
+                      <LatexRenderer>
+                        {selectedQuestionItem.question.explanation || selectedQuestionItem.question.solution}
+                      </LatexRenderer>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 px-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/30">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedQuestionItem(null)}
+                  className="rounded-xl text-xs"
+                >
+                  Close
+                </Button>
+
+                {onSelectQuestion && (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const idx = selectedQuestionItem.index;
+                      setSelectedQuestionItem(null);
+                      onSelectQuestion(idx);
+                    }}
+                    className="rounded-xl text-xs bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-sm"
+                  >
+                    <span>Open in Full Solution Key</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
