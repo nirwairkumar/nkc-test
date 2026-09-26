@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from . import track, stats, advanced
+from . import track, stats, advanced, collect, insights
 from app.core.auth import verify_is_admin
 
 router = APIRouter()
@@ -18,8 +18,10 @@ def _require_admin(request: Request) -> None:
     verify_is_admin(request)
 
 
-# Tracking stays public: the browser beacon posts to it (rate-limited in track.py).
+# Tracking stays public: the browser beacons post to these (rate-limited).
+# /track is the legacy v1 beacon, kept for pages cached before v2 shipped.
 router.include_router(track.router, tags=["Analytics Tracking"])
+router.include_router(collect.router, tags=["Analytics Tracking"])
 
 router.include_router(
     stats.router, prefix="/stats", tags=["Analytics Dashboard"],
@@ -27,5 +29,10 @@ router.include_router(
 )
 router.include_router(
     advanced.router, prefix="/stats", tags=["Advanced Analytics"],
+    dependencies=[Depends(_require_admin)],
+)
+# Analytics v2 reports (documentation/2026-09-26-analytics-v2.md).
+router.include_router(
+    insights.router, prefix="/v2", tags=["Analytics v2"],
     dependencies=[Depends(_require_admin)],
 )

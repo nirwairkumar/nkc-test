@@ -18,7 +18,9 @@
       window.dataLayer = window.dataLayer || [];
       function gtag() { dataLayer.push(arguments); }
       gtag('js', new Date());
-      gtag('config', 'G-H9VZL1VTKL');
+      // The app sends every page view itself (src/pdf/site/App.tsx), so the automatic
+      // one on load would count each landing page twice.
+      gtag('config', 'G-H9VZL1VTKL', { send_page_view: false });
       (function () {
         var done = false;
         var events = ['pointerdown', 'keydown', 'scroll', 'touchstart'];

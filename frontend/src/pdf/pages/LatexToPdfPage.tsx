@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PANNA, testozaUrl } from '../brand';
 import { setPendingFile } from '../handoff';
+import { analytics } from '@/lib/analytics/tracker';
 import { CHATGPT_FAQS, CHATGPT_STEPS, COMMON_FACTS, DEFINITIONS, LATEX_FAQS, LATEX_STEPS, LATEX_SYNTAX, TOOL_FACTS } from '../site/content';
 import PannaHeader from '../ui/PannaHeader';
 import { FaqSection, HowToSteps, QuickFacts, RelatedTools, Screenshot } from '../ui/Sections';
@@ -460,6 +461,7 @@ export default function LatexToPdfPage({ variant = 'default' }: { variant?: 'def
             a.click();
             a.remove();
             setTimeout(() => URL.revokeObjectURL(url), 60_000);
+            analytics.track('pdf_export', { tool: variant === 'chatgpt' ? 'chatgpt-to-pdf' : 'latex-to-pdf' });
             toast.success(`Downloaded ${name}`, {
                 description: 'Need a logo, signature or a last-minute fix? Open it in the Panna editor.',
                 action: { label: 'Edit PDF', onClick: () => openInEditor(bytes, name) },
@@ -471,7 +473,7 @@ export default function LatexToPdfPage({ variant = 'default' }: { variant?: 'def
         } finally {
             setBusy(null);
         }
-    }, [busy, empty, makePdf, openInEditor]);
+    }, [busy, empty, makePdf, openInEditor, variant]);
 
     const editAsPdf = async () => {
         if (busy || empty) return;

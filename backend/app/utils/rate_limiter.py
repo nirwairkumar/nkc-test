@@ -266,7 +266,9 @@ login_per_ip = RateLimiter(requests=30, window=300, name="login_ip")
 register_per_ip = RateLimiter(requests=10, window=3600, name="register_ip")
 
 # ── Analytics ingest ──────────────────────────────────────────────
-analytics_rate_limiter = RateLimiter(requests=100, window=60, name="analytics_ip")
+# A whole classroom or coaching centre often shares one public IP (NAT), and a
+# 60-student live exam sends a burst of page views at the start.
+analytics_rate_limiter = RateLimiter(requests=600, window=60, name="analytics_ip")
 
 # ── AI endpoints (H2) ─────────────────────────────────────────────
 # Every /api/ai/* call spends real Gemini budget, so these are keyed per

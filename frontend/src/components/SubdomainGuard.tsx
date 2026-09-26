@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { mainDomainRedirect } from '@/utils/subdomain';
+import { analytics } from '@/lib/analytics/tracker';
 
 export default function SubdomainGuard() {
   const location = useLocation();
@@ -19,43 +21,12 @@ export default function SubdomainGuard() {
     }
 
     if (isMainDomain) {
-      // 1. If OAuth response (hash with access_token or query param code/error) lands on main domain, forward to app subdomain immediately
-      const hasAuthHash = window.location.hash.includes('access_token') || window.location.hash.includes('error');
-      const hasAuthCode = window.location.search.includes('code=') || window.location.search.includes('error=');
-      const isCallbackPath = location.pathname.startsWith('/auth/callback');
-
-      if (hasAuthHash || hasAuthCode || isCallbackPath) {
-        console.log("SubdomainGuard: Forwarding OAuth response from marketing domain to app subdomain...");
-        window.location.replace(`https://app.testoza.com/auth/callback${location.search}${location.hash}`);
-        return;
-      }
-
-      // Marketing domain allowed paths
-      const allowedMarketingPaths = [
-        '/',
-        '/about',
-        '/blog',
-        '/news',
-        '/privacy-policy',
-        '/terms-and-conditions',
-        '/support',
-        '/user-guide',
-        '/convert',
-        '/pdf',
-        '/quiz-creator',
-        '/assessment-platform'
-      ];
-
-      // Allowed when the path is an entry or one of its sub-paths (/user-guide/:slug, /pdf/editor).
-      // Matching on "p/" keeps '/pdf' from also admitting '/pdf-to-quiz'.
-      const isAllowed = allowedMarketingPaths.some(p => {
-        if (p === '/') return location.pathname === '/';
-        return location.pathname === p || location.pathname.startsWith(p + '/');
-      });
-
-      if (!isAllowed) {
-        console.log(`SubdomainGuard: Redirecting restricted path ${location.pathname} to app subdomain.`);
-        window.location.replace(`https://app.testoza.com${location.pathname}${location.search}${location.hash}`);
+      // OAuth responses and every non-marketing path continue on the app subdomain.
+      const target = mainDomainRedirect({ pathname: location.pathname, search: window.location.search, hash: window.location.hash });
+      if (target) {
+        console.log(`SubdomainGuard: Redirecting ${location.pathname} to app subdomain.`);
+        analytics.handoff(); // the visit's referrer continues to app.testoza.com
+        window.location.replace(target);
       }
     } else if (isAppDomain) {
       // App subdomain root: signed-in users go to dashboard (it routes by role);

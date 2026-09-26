@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ShieldCheck, X } from 'lucide-react';
 import { testozaUrl } from '../brand';
+import { analytics } from '@/lib/analytics/tracker';
 import type { PageEdit, PageSlot, StoredImage } from '../engine/edits';
 import type { PdfSession } from '../session/session';
 import { EditorProvider, useEditor } from './EditorContext';
@@ -136,6 +137,10 @@ function WorkspaceInner({ zoom, scrollRef }: { zoom: number; scrollRef: React.Re
             a.remove();
             setTimeout(() => URL.revokeObjectURL(url), 60_000);
             dispatch({ type: 'saved' });
+            analytics.track('pdf_export', {
+                tool: window.location.pathname.includes('hindi') ? 'edit-hindi-pdf' : 'edit-pdf',
+                pages: s.slots.length,
+            });
             toast.success('Your PDF is downloaded', {
                 id: t,
                 description: 'No watermark, no sign-up. Teaching from this PDF? Turn it into an online test in one click.',

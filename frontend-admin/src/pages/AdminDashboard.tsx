@@ -10,7 +10,7 @@ import {
 import { toast } from 'sonner';
 
 import AdminLoginPanel from './AdminLoginPanel';
-import AdminAnalyticsPanel from './AdminAnalyticsPanel';
+import AnalyticsPanel from './analytics/AnalyticsPanel';
 import ManageTests from './ManageTests';
 import CreateTestPage from './CreateTestPage';
 import AITestImporter from './AITestImporter';
@@ -81,7 +81,7 @@ export default function AdminDashboard() {
         {
             title: "Core Platform",
             items: [
-                { id: 'analytics' as const, label: 'Analytics & Matrix', icon: BarChart3 },
+                { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
                 { id: 'notifications' as const, label: 'Notifications', icon: Bell },
                 { id: 'tests' as const, label: 'Manage Tests', icon: FileText },
                 { id: 'categories' as const, label: 'Categories', icon: BookOpen },
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
             {/* Main Panel Content */}
             <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 overflow-x-hidden">
                 <div className="max-w-7xl mx-auto">
-                    {activeTab === 'analytics' && <AdminAnalyticsPanel />}
+                    {activeTab === 'analytics' && <AnalyticsPanel />}
                     {activeTab === 'notifications' && <AdminNotificationsPanel />}
                     {['tests', 'categories', 'users', 'verified_creators', 'combined', 'activity'].includes(activeTab) && (
                         <ManageTests activeTab={activeTab} />

@@ -1,36 +1,8 @@
 import apiClient from './apiClient';
 
 
-export interface PageViewEvent {
-    event_type: 'page_view' | 'session_start' | 'session_end';
-    fingerprint: string;
-    session_token: string;
-    page_path: string;
-    page_title?: string;
-    user_id?: string;
-    referrer?: string;
-    utm_source?: string;
-    utm_medium?: string;
-    utm_campaign?: string;
-    screen_width?: number;
-    screen_height?: number;
-    user_agent?: string;
-    timestamp?: string;
-}
-
 export const analyticsApi = {
-    /**
-     * Note: For standard page views, we use `navigator.sendBeacon` in `analyticsTracker.ts`.
-     * This function is kept here if we need to manually await a tracking call or send custom events.
-     */
-    trackEvent: async (event: PageViewEvent) => {
-        try {
-            await apiClient.post('analytics/track', event);
-        } catch {
-            // Silently ignore — analytics tracking is non-critical.
-            // Logging errors here is picked up by Lighthouse as a console error penalty.
-        }
-    },
+    // Page views and product events are sent by src/lib/analytics/tracker.ts.
 
     getOverviewStats: async (days: number = 30) => {
         const response = await apiClient.get('analytics/stats/overview', { params: { days } });

@@ -6,7 +6,8 @@ import AppSidebar from './components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import AuthModal from '@/components/auth/AuthModal';
-import { analyticsTracker } from '@/lib/analyticsTracker';
+import { analytics } from '@/lib/analytics/tracker';
+import { mainDomainRedirect } from '@/utils/subdomain';
 import { PanelLeft } from 'lucide-react';
 
 export default function Layout() {
@@ -38,9 +39,16 @@ export default function Layout() {
         } catch { }
     }, [isCollapsed]);
 
-    // Track page views on route change (in custom analytics tracker + Google Analytics GA4)
+    // One page view per path (our analytics + GA4). Query changes (filters, search
+    // boxes) and sign-in state are not new pages — counting them inflated views ~20%.
     React.useEffect(() => {
-        analyticsTracker.trackPageView(location.pathname, document.title, user?.id);
+        // testoza.com hands most paths to app.testoza.com (SubdomainGuard): count the
+        // page there, once, and carry this visit's referrer across the hop.
+        if (mainDomainRedirect({ pathname: location.pathname, search: window.location.search, hash: window.location.hash })) {
+            analytics.handoff();
+            return;
+        }
+        analytics.page();
 
         if (typeof window !== 'undefined' && (window as any).gtag) {
             (window as any).gtag('event', 'page_view', {
@@ -49,7 +57,13 @@ export default function Layout() {
                 page_location: window.location.href,
             });
         }
-    }, [location.pathname, location.search, user?.id]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.pathname]);
+
+    // Link this browser's visits to the account once sign-in state is known.
+    React.useEffect(() => {
+        if (!loading) analytics.identify(user?.id ?? null);
+    }, [user?.id, loading]);
 
     // If user is already onboarded and visits /onboarding, redirect to home
     React.useEffect(() => {

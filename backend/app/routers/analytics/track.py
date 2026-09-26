@@ -4,17 +4,11 @@ from app.utils.rate_limiter import check_analytics_rate_limit
 from supabase import Client
 from .models import PageViewEvent
 from user_agents import parse
-import httpx
+from .enrich import geo_from_headers
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-# Single shared httpx client — reused across all requests, prevents TCP connection leaks
-_geo_client = httpx.AsyncClient(
-    timeout=3.0,
-    limits=httpx.Limits(max_connections=5, max_keepalive_connections=2),
-)
 
 
 AI_BOT_KEYWORDS = [
@@ -64,7 +58,7 @@ def classify_user_agent(ua_string: str, parsed_ua=None):
     return {"is_bot": False, "category": "human", "label": "Real Human"}
 
 
-async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Client):
+async def process_analytics_event(event: PageViewEvent, geo: dict, db: Client):
     try:
         # 1. Parse User Agent & Classify Traffic
         ua_string = event.user_agent or ""
@@ -83,18 +77,10 @@ async def process_analytics_event(event: PageViewEvent, client_ip: str, db: Clie
             
         os = f"{user_agent.os.family} {user_agent.os.version_string}"
         
-        # 2. Extract Geo via free IP geolocation API (ip-api.com, no key needed)
-        country = "Unknown"
-        city = "Unknown"
-        try:
-            geo_resp = await _geo_client.get(f"http://ip-api.com/json/{client_ip}?fields=country,city,status")
-            if geo_resp.status_code == 200:
-                geo_data = geo_resp.json()
-                if geo_data.get("status") == "success":
-                    country = geo_data.get("country", "Unknown")
-                    city = geo_data.get("city", "Unknown")
-        except Exception as geo_err:
-            logger.warning(f"Geo lookup failed for {client_ip}: {geo_err}")
+        # 2. Location from Cloudflare's edge headers. This used to send every visitor's
+        #    IP to ip-api.com over plain HTTP (whose free tier forbids commercial use).
+        country = geo.get("country_code") or "Unknown"
+        city = geo.get("city") or "Unknown"
         
         # 3. UPSERT Visitor
         visitor_resp = db.table("visitors").select("id").eq("fingerprint", event.fingerprint).execute()
@@ -190,17 +176,7 @@ async def track_event(
     Fire-and-forget endpoint for tracking page views.
     Processes the event in the background to keep the response fast.
     """
-    # IP extraction: Cloudflare sets CF-Connecting-IP with the real visitor IP.
-    # X-Forwarded-For often contains Cloudflare's own edge node IP when proxied,
-    # which causes geo-lookup to return "Unknown" or the wrong country.
-    client_ip = request.headers.get(
-        "cf-connecting-ip",
-        request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
-    )
-    if "," in client_ip:
-        client_ip = client_ip.split(",")[0].strip()
-
-    # Offload the DB writes to a background task
-    background_tasks.add_task(process_analytics_event, event, client_ip, db)
+    # Legacy v1 beacon (pages cached before analytics v2). Offload the DB writes.
+    background_tasks.add_task(process_analytics_event, event, geo_from_headers(request.headers), db)
     return
 

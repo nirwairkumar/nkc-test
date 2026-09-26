@@ -9,7 +9,7 @@ import { Toaster } from '@/components/ui/sonner';
 import PannaFooter from '../ui/PannaFooter';
 import { PAGES, pageFor, type PageKey } from './routes';
 import { applyHead } from './seo';
-import { analyticsTracker } from '@/lib/analyticsTracker';
+import { analytics } from '@/lib/analytics/tracker';
 
 export type PageComponents = Record<PageKey, ComponentType>;
 
@@ -19,20 +19,21 @@ export default function App({ pages, onIntent }: { pages: PageComponents; onInte
 
     useEffect(() => {
         applyHead(page);
+    }, [page]);
 
-        if (typeof window !== 'undefined') {
-            const pdfPath = `pdf.testoza.com${page.path === '/' ? '/' : page.path}`;
-            analyticsTracker.trackPageView(pdfPath, page.title);
+    // One page view per path (our analytics + GA4); the host tells the sites apart.
+    useEffect(() => {
+        analytics.page();
 
-            if ((window as any).gtag) {
-                (window as any).gtag('event', 'page_view', {
-                    page_path: page.path + (search || ''),
-                    page_title: page.title,
-                    page_location: window.location.href,
-                });
-            }
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'page_view', {
+                page_path: page.path + (search || ''),
+                page_title: page.title,
+                page_location: window.location.href,
+            });
         }
-    }, [page, pathname, search]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname]);
 
     useEffect(() => {
         if (!hash) window.scrollTo(0, 0);
