@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from "sonner";
-import { fetchTestsByUserId, updateTest, deleteTest } from '@/lib/testsApi';
+import { fetchTestsByUserId, fetchConductedTestsByCreator, updateTest, deleteTest } from '@/lib/testsApi';
 import { fetchClasses } from '@/lib/classesApi';
 import { fetchUserDetails } from '@/lib/usersApi';
 import { fetchCategories } from '@/lib/categoriesApi';
@@ -139,6 +139,20 @@ export default function UserTestManager() {
     const [testsLoading, setTestsLoading] = useState(true);
     const pageRef = React.useRef(1);
     const [hasMore, setHasMore] = useState(true);
+
+    // Every conducted test (live + ended), fetched on its own so a live exam sitting on an
+    // unloaded grid page still shows in "Live exams". Stays [] if the call fails, which
+    // falls back to deriving the lists from the loaded grid, as before.
+    const [conductedTests, setConductedTests] = useState<any[]>([]);
+
+    // The same test can be in both lists; every optimistic update goes to both.
+    const mapAllTests = (fn: (t: any) => any) => {
+        setTests(prev => prev.map(fn));
+        setConductedTests(prev => prev.map(fn));
+    };
+    const findTest = (testId: string) =>
+        tests.find(t => t.id === testId) || conductedTests.find(t => t.id === testId);
+
     const {
         registerSkeleton,
         isItemRendered,
@@ -168,6 +182,8 @@ export default function UserTestManager() {
     const [removeExamTitle, setRemoveExamTitle] = useState("");
     const [removeInfoOpen, setRemoveInfoOpen] = useState<'public' | 'private' | null>(null);
     const [removeExamSource, setRemoveExamSource] = useState<'active' | 'inactive' | null>(null);
+    // Live exam awaiting "Stop exam" confirmation — stopping cuts off the link mid-exam, so never one click.
+    const [stopExamTarget, setStopExamTarget] = useState<any>(null);
 
     const [showEnvPopupTestId, setShowEnvPopupTestId] = useState<string | null>(null);
 
@@ -387,6 +403,20 @@ export default function UserTestManager() {
         }
     }, [targetUserId]);
 
+    const loadConductedTests = React.useCallback(async () => {
+        if (!targetUserId) return;
+        const { data, error } = await fetchConductedTestsByCreator(targetUserId);
+        if (error) {
+            console.error('Error loading conducted tests:', error);
+            return;
+        }
+        setConductedTests(data || []);
+    }, [targetUserId]);
+
+    useEffect(() => {
+        loadConductedTests();
+    }, [loadConductedTests]);
+
     const isFirstSearchRef = React.useRef(true);
     useEffect(() => {
         if (isFirstSearchRef.current) {
@@ -430,6 +460,7 @@ export default function UserTestManager() {
             const { error } = await deleteTest(deleteId);
             if (error) throw error;
             setTests(prev => prev.filter(t => t.id !== deleteId));
+            setConductedTests(prev => prev.filter(t => t.id !== deleteId));
             toast.success(`Test "${deleteTitle}" deleted`);
             setDeleteId(null);
         } catch (error: any) {
@@ -471,11 +502,11 @@ export default function UserTestManager() {
         }
 
         // Optimistic update
-        setTests(prev => prev.map(t =>
+        mapAllTests(t =>
             t.id === test.id
                 ? { ...t, visibility: newVisibility, is_public: isPublic, slug: restoredSlug, settings: updatedSettings }
                 : t
-        ));
+        );
 
         try {
             const payload: any = {
@@ -491,9 +522,9 @@ export default function UserTestManager() {
         } catch (error: any) {
             console.error("Failed to update visibility:", error);
             toast.error("Failed to update visibility");
-            setTests(prev => prev.map(t =>
+            mapAllTests(t =>
                 t.id === test.id ? { ...t, visibility: oldVisibility, is_public: test.is_public, slug: test.slug, settings: test.settings } : t
-            ));
+            );
         }
     };
 
@@ -511,13 +542,13 @@ export default function UserTestManager() {
 
     const handleClassChange = async (test: any, classId: string | null) => {
         const oldClassId = test.class_id;
-        setTests(prev => prev.map(t => t.id === test.id ? { ...t, class_id: classId } : t));
+        mapAllTests(t => t.id === test.id ? { ...t, class_id: classId } : t);
 
         const { error } = await updateTest(test.id, { class_id: classId }, isAdmin);
         if (error) {
             console.error("Failed to update class:", error);
             toast.error("Failed to update class assignment");
-            setTests(prev => prev.map(t => t.id === test.id ? { ...t, class_id: oldClassId } : t));
+            mapAllTests(t => t.id === test.id ? { ...t, class_id: oldClassId } : t);
         } else {
             toast.success(classId ? "Class assigned" : "Class removed");
         }
@@ -561,11 +592,11 @@ export default function UserTestManager() {
             };
 
             // Optimistic update
-            setTests(prev => prev.map(t =>
+            mapAllTests(t =>
                 t.id === conductExamTest.id
                     ? { ...t, ...payload }
                     : t
-            ));
+            );
 
             const { error } = await updateTest(conductExamTest.id, payload, isAdmin);
             if (error) throw error;
@@ -577,9 +608,9 @@ export default function UserTestManager() {
             console.error("Failed to start exam:", error);
             toast.error("Failed to start exam: " + error.message);
             // revert
-            setTests(prev => prev.map(t =>
+            mapAllTests(t =>
                 t.id === conductExamTest.id ? { ...t, ...conductExamTest } : t
-            ));
+            );
         } finally {
             setConductExamLoading(false);
         }
@@ -603,7 +634,7 @@ export default function UserTestManager() {
 
     // Remove from ACTIVE container → move to Inactive as private (no dialog)
     const handleRemoveFromActive = async (testId: string) => {
-        const test = tests.find(t => t.id === testId);
+        const test = findTest(testId);
         if (!test) return;
 
         const resetSettings = {
@@ -620,15 +651,15 @@ export default function UserTestManager() {
         };
 
         // Optimistic update
-        setTests(prev => prev.map(t => t.id === testId ? { ...t, ...payload } : t));
+        mapAllTests(t => t.id === testId ? { ...t, ...payload } : t);
 
         try {
             const { error } = await updateTest(testId, payload, isAdmin);
             if (error) throw error;
-            toast.success('Exam stopped. Reset to default settings and moved to Inactive (Private).');
+            toast.success('Exam stopped. Its results are under Ended exams.');
         } catch (error: any) {
             toast.error('Failed to stop exam: ' + error.message);
-            setTests(prev => prev.map(t => t.id === testId ? { ...t, ...test } : t));
+            mapAllTests(t => t.id === testId ? { ...t, ...test } : t);
         }
     };
 
@@ -641,7 +672,7 @@ export default function UserTestManager() {
 
     // Legacy handler used by the hamburger menus and the "Remove" button
     const handleRemoveExam = async (testId: string, testTitle: string) => {
-        const test = tests.find(t => t.id === testId);
+        const test = findTest(testId);
         if (!test) return;
 
         const isActive = test.settings?.conduct_exam?.enabled === true;
@@ -657,7 +688,7 @@ export default function UserTestManager() {
 
     // Confirm removal from inactive → fully remove conduct_exam settings, set visibility
     const confirmRemoveExamById = async (testId: string, makePublic: boolean) => {
-        const test = tests.find(t => t.id === testId);
+        const test = findTest(testId);
         if (!test) return;
 
         const resetSettings = {
@@ -672,7 +703,7 @@ export default function UserTestManager() {
             slug: makePublic ? (test.custom_id || test.id) : `unlisted-${test.custom_id || test.id}`,
         };
 
-        setTests(prev => prev.map(t => t.id === testId ? { ...t, ...payload } : t));
+        mapAllTests(t => t.id === testId ? { ...t, ...payload } : t);
         setRemoveExamId(null);
         setRemoveExamSource(null);
 
@@ -682,7 +713,7 @@ export default function UserTestManager() {
             toast.success(`Exam removed. Reset to default settings and set to ${makePublic ? 'public' : 'private'}.`);
         } catch (error: any) {
             toast.error('Failed to remove exam: ' + error.message);
-            setTests(prev => prev.map(t => t.id === testId ? { ...t, ...test } : t));
+            mapAllTests(t => t.id === testId ? { ...t, ...test } : t);
         }
     };
 
@@ -693,10 +724,23 @@ export default function UserTestManager() {
 
     // Auto-transition: when a scheduled exam ends, move it to inactive with private mode.
     // Declared above the early returns below so the hook count never changes between renders.
+    // Live + ended exams: the full conducted list, plus conducted tests from the grid it does not
+    // have yet (e.g. one conducted a moment ago). Both copies get the same optimistic updates.
+    const conductedPool = React.useMemo(() => {
+        const byId = new Map<string, any>();
+        conductedTests.forEach(t => byId.set(t.id, t));
+        tests.forEach(t => {
+            if (t.settings?.conduct_exam !== undefined || byId.has(t.id)) byId.set(t.id, t);
+        });
+        return [...byId.values()]
+            .filter(t => t.settings?.conduct_exam !== undefined)
+            .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    }, [tests, conductedTests]);
+
     const autoDeactivatedRef = React.useRef<Set<string>>(new Set());
     useEffect(() => {
         const currentNow = new Date();
-        const endedActiveExams = tests.filter(t =>
+        const endedActiveExams = conductedPool.filter(t =>
             t.settings?.conduct_exam?.enabled === true &&
             t.settings?.schedule?.enabled === true &&
             t.settings?.schedule?.end_time &&
@@ -723,17 +767,17 @@ export default function UserTestManager() {
             };
 
             // Optimistic update
-            setTests(prev => prev.map(t => t.id === test.id ? { ...t, ...payload } : t));
+            mapAllTests(t => t.id === test.id ? { ...t, ...payload } : t);
 
             try {
                 await updateTest(test.id, payload, isAdmin);
-                toast.info(`"${test.title}" has ended and moved to Inactive.`);
+                toast.info(`"${test.title}" has ended and moved to Ended exams.`);
             } catch (err) {
                 console.error('Failed to auto-deactivate ended exam:', err);
                 autoDeactivatedRef.current.delete(test.id);
             }
         });
-    }, [tests]);
+    }, [conductedPool]);
 
     // "How it works" strip — shown until the creator dismisses it once.
     const [guideDismissed, setGuideDismissed] = useState(() => {
@@ -802,17 +846,20 @@ export default function UserTestManager() {
 
     const hasConductSettings = (t: any) => t.settings?.conduct_exam !== undefined;
 
+    // While searching, the lists follow the search results; otherwise they show every conducted test.
+    const examSource = debouncedSearchQuery ? tests : conductedPool;
+
     // Active = conduct enabled AND currently in active window (not ended and not upcoming)
-    const activeExams = tests.filter(t =>
+    const activeExams = examSource.filter(t =>
         hasConductSettings(t) &&
-        t.settings.conduct_exam.enabled === true &&
+        t.settings.conduct_exam?.enabled === true &&
         !hasEnded(t) &&
         !isUpcoming(t)
     );
     // Inactive = conduct settings exist AND (explicitly disabled OR schedule ended)
-    const inactiveExams = tests.filter(t =>
+    const inactiveExams = examSource.filter(t =>
         hasConductSettings(t) &&
-        (t.settings.conduct_exam.enabled !== true || hasEnded(t))
+        (t.settings.conduct_exam?.enabled !== true || hasEnded(t))
     );
 
     const openReportsCount = reports.filter(r => r.status === 'open').length;
@@ -907,7 +954,7 @@ export default function UserTestManager() {
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
                     {source === 'active' ? (
-                        <DropdownMenuItem onClick={() => handleRemoveFromActive(test.id)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 text-red-600 focus:bg-red-50 focus:text-red-600">
+                        <DropdownMenuItem onClick={() => setStopExamTarget(test)} className="rounded-lg py-2 focus:bg-slate-100 focus:text-slate-900 text-red-600 focus:bg-red-50 focus:text-red-600">
                             <Square className="mr-2.5 h-4 w-4" /> Stop exam
                         </DropdownMenuItem>
                     ) : (
@@ -1108,7 +1155,7 @@ export default function UserTestManager() {
                                                     )}
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleRemoveFromActive(test.id)}
+                                                        onClick={() => setStopExamTarget(test)}
                                                         className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 cursor-pointer"
                                                     >
                                                         <Square className="h-3 w-3 fill-current" /> Stop exam
@@ -1392,6 +1439,61 @@ export default function UserTestManager() {
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* ── Stop Live Exam Confirmation ── */}
+            <AlertDialog open={!!stopExamTarget} onOpenChange={(open) => { if (!open) setStopExamTarget(null); }}>
+                <AlertDialogContent className="max-w-[min(400px,calc(100vw-32px))] gap-0 rounded-2xl p-0 overflow-hidden">
+                    <div className="px-6 pt-6 text-center">
+                        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600 ring-1 ring-inset ring-red-600/15">
+                            <Square className="h-4 w-4 fill-current" />
+                        </span>
+                        <AlertDialogTitle className="text-lg font-semibold tracking-[-0.01em] text-slate-900">
+                            Stop this exam?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="mt-1 line-clamp-2 text-[15px] font-medium text-slate-700">
+                            {stopExamTarget?.title}
+                        </AlertDialogDescription>
+                    </div>
+
+                    <ul className="mx-6 mt-4 space-y-2.5 rounded-xl bg-slate-50 p-4 text-left text-[13px] leading-snug text-slate-700">
+                        <li className="flex gap-2.5">
+                            <LinkIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                            <span>The exam link stops working, so no new student can start.</span>
+                        </li>
+                        <li className="flex gap-2.5">
+                            <Users className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                            <span>Ask anyone still writing to submit before you stop.</span>
+                        </li>
+                        <li className="flex gap-2.5">
+                            <BarChart3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                            <span>
+                                {(stopExamTarget?.submission_count ?? 0) > 0
+                                    ? `${plural(stopExamTarget.submission_count, 'result')} already submitted stay saved under Ended exams.`
+                                    : 'Any submitted results stay saved under Ended exams.'}
+                            </span>
+                        </li>
+                        <li className="flex gap-2.5">
+                            <Settings className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                            <span>Exam settings like anti-cheating go back to default.</span>
+                        </li>
+                    </ul>
+
+                    <div className="grid grid-cols-2 gap-2 p-6 pt-5">
+                        <AlertDialogCancel className="m-0 h-11 rounded-xl border-0 bg-slate-100 text-[15px] font-semibold text-slate-700 hover:bg-slate-200 cursor-pointer">
+                            Keep it live
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (stopExamTarget) handleRemoveFromActive(stopExamTarget.id);
+                                setStopExamTarget(null);
+                            }}
+                            className="h-11 rounded-xl bg-red-600 text-[15px] font-semibold text-white hover:bg-red-700 cursor-pointer"
+                        >
+                            Stop exam
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {/* ── Remove Exam Confirmation Dialog (Active exams only) ── */}
             <AlertDialog open={!!removeExamId} onOpenChange={(open) => { if (!open) { setRemoveExamId(null); setRemoveExamSource(null); setRemoveInfoOpen(null); } }}>
                 <AlertDialogContent className="max-w-[min(380px,calc(100vw-32px))] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
@@ -1494,9 +1596,10 @@ export default function UserTestManager() {
                     onClose={() => setConfiguringTest(null)}
                     onUpdate={(updatedTest) => {
                         if (updatedTest) {
-                            setTests(prev => prev.map(t => t.id === updatedTest.id ? updatedTest : t));
+                            mapAllTests(t => t.id === updatedTest.id ? updatedTest : t);
                         } else {
                             loadUserTests();
+                            loadConductedTests();
                         }
                     }}
                     onSettingsChange={(newSettings) => {

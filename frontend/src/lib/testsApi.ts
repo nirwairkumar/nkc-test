@@ -365,6 +365,21 @@ export async function fetchTestsByCreator(
 // Alias for compatibility
 export const fetchTestsByUserId = fetchTestsByCreator;
 
+/**
+ * Every test the creator has conducted online (live first, then ended), independent of the
+ * dashboard's 9-per-page grid — so a live exam is never hidden on an unloaded page. The
+ * backend filters in Postgres, so this is typically a handful of small rows.
+ */
+export async function fetchConductedTestsByCreator(userId: string, signal?: AbortSignal) {
+    try {
+        const response = await apiClient.get(`tests/user/${userId}/conducted`, { signal });
+        return { data: (response.data || []) as any[], error: null };
+    } catch (error: any) {
+        if (error.name === 'CanceledError' || error.code === 'ERR_CANCELED') throw error;
+        return { data: null, error };
+    }
+}
+
 let snippetQueue: string[] = [];
 let snippetResolvers: Map<string, { resolve: Function, reject: Function }[]> = new Map();
 let snippetTimeout: any = null;

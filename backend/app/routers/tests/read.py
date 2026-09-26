@@ -286,6 +286,73 @@ def _get_request_user_and_admin(request: Request, db: Client) -> tuple[Optional[
         return None, False
 
 
+# Columns the creator dashboard needs — never `questions`, which is the heavy column.
+DASHBOARD_TEST_COLUMNS = "id, title, total_questions, duration, created_by, custom_id, created_at, is_public, visibility, slug, settings, class_id, custom_category, is_cloned, cloned_from_id, total_max_marks"
+
+# Safety cap for the conducted-exams list. Live exams sort first, so the cap only ever trims old ended ones.
+CONDUCTED_TESTS_LIMIT = 50
+
+
+def _submission_counts(db: Client, test_ids: List[str]) -> Dict[str, int]:
+    """Attempts per test as numbers only. `count=exact` + `limit(0)` returns no rows, so the
+    cost stays flat no matter how many students submitted (the old way downloaded one row
+    per attempt). There is no user_tests → tests FK, so PostgREST cannot embed the count."""
+    if not test_ids:
+        return {}
+
+    def _count(test_id: str):
+        res = db.table("user_tests").select("id", count="exact").eq("test_id", test_id).limit(0).execute()
+        return test_id, res.count or 0
+
+    counts: Dict[str, int] = {}
+    with ThreadPoolExecutor(max_workers=min(len(test_ids), 9)) as pool:
+        futures = [pool.submit(_count, tid) for tid in test_ids]
+        for f in as_completed(futures):
+            try:
+                tid, n = f.result()
+                counts[tid] = n
+            except Exception as e:
+                logger.warning(f"Warning fetching submission count: {e}")
+    return counts
+
+
+@router.get("/user/{user_id}/conducted")
+async def get_user_conducted_tests(
+    user_id: str,
+    request: Request,
+    response: Response = None,
+    db: Client = Depends(get_db)
+):
+    """Every test the creator has run as an online exam (live or ended), whichever page of the
+    dashboard grid it sits on. Filtered in Postgres, so only these rows leave Supabase."""
+    try:
+        requesting_user_id, is_admin = _get_request_user_and_admin(request, db)
+        if requesting_user_id != user_id and not is_admin:
+            raise HTTPException(status_code=403, detail="Unauthorized dashboard access")
+        if response:
+            set_no_cache(response)
+
+        tests_res = db.table("tests")\
+            .select(DASHBOARD_TEST_COLUMNS)\
+            .eq("created_by", user_id)\
+            .not_.is_("settings->conduct_exam", "null")\
+            .order("settings->conduct_exam->>enabled", desc=True, nullsfirst=False)\
+            .order("created_at", desc=True)\
+            .limit(CONDUCTED_TESTS_LIMIT)\
+            .execute()
+        tests = tests_res.data or []
+
+        counts = _submission_counts(db, [t["id"] for t in tests])
+        for t in tests:
+            t["submission_count"] = counts.get(t["id"], 0)
+        return tests
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching conducted tests: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/user/{user_id}")
 async def get_user_tests(
     user_id: str,
@@ -320,7 +387,10 @@ async def get_user_tests(
             ensure_user_has_example_test(user_id, db)
                 
         tests = []
-        
+        is_paginated = (page is not None and limit is not None)
+        # Set when Postgres already did the paging, so the Python slicing below is skipped.
+        db_total: Optional[int] = None
+
         if search_query:
             import re
             tokens = [t.strip().lower() for t in re.split(r'\W+', search_query) if len(t.strip()) > 1]
@@ -363,6 +433,19 @@ async def get_user_tests(
             
             scored_tests.sort(key=lambda x: (x["_match_score"], x.get("created_at", "")), reverse=True)
             tests = scored_tests
+        elif is_paginated and not profile_view:
+            # Creator dashboard: page inside Postgres so only `limit` rows leave Supabase per
+            # scroll, instead of every test the creator owns on every request.
+            start = (page - 1) * limit
+            paged_res = db.table("tests")\
+                .select(f"{DASHBOARD_TEST_COLUMNS}, classes(name)", count="exact")\
+                .eq("created_by", user_id)\
+                .order("created_at", desc=True)\
+                .order("id", desc=True)\
+                .range(start, start + limit - 1)\
+                .execute()
+            tests = paged_res.data or []
+            db_total = paged_res.count or 0
         else:
             # Default fetch — include settings/visibility/slug for conduct exam detection
             query_default = db.table("tests")\
@@ -375,9 +458,7 @@ async def get_user_tests(
                 query_default = query_default.eq("visibility", "public")
             tests_res = query_default.execute()
             tests = tests_res.data
-        
-        is_paginated = (page is not None and limit is not None)
-        
+
         if not tests:
             if is_paginated:
                 return {
@@ -408,13 +489,18 @@ async def get_user_tests(
                 }
             return []
 
-        total_tests_count = len(tests)
-        if is_paginated:
+        if db_total is not None:
+            total_tests_count = db_total
+            paginated_subset = tests
+            has_more = total_tests_count > page * limit
+        elif is_paginated:
+            total_tests_count = len(tests)
             start = (page - 1) * limit
             end = start + limit
             paginated_subset = tests[start:end]
             has_more = total_tests_count > end
         else:
+            total_tests_count = len(tests)
             paginated_subset = tests
             has_more = False
 
@@ -461,16 +547,8 @@ async def get_user_tests(
         profile_res = db.table("profiles").select("id, is_verified_creator, full_name, avatar_url").eq("id", user_id).single().execute()
         creator_info = profile_res.data if profile_res.data else {}
 
-        # Fetch submission counts from user_tests
-        submission_counts_map = {}
-        if test_ids:
-            try:
-                attempts_res = db.table("user_tests").select("test_id").in_("test_id", test_ids).execute()
-                if attempts_res.data:
-                    from collections import Counter
-                    submission_counts_map = Counter(a["test_id"] for a in attempts_res.data)
-            except Exception as se:
-                logger.warning(f"Warning fetching submission counts: {se}")
+        # Submission counts as numbers, not one downloaded row per attempt
+        submission_counts_map = _submission_counts(db, test_ids)
         
         enriched_tests = []
         for t in paginated_subset:
