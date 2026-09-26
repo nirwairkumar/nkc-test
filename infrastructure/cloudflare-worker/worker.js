@@ -4,6 +4,17 @@
  * Deploy to: Cloudflare Workers (testoza.com domain)
  */
 
+// Static blog articles live in the frontend (frontend/src/blog/articles) so the
+// React page and the HTML crawlers read come from the same text. Wrangler
+// bundles this import at deploy time; the module has no dependencies.
+import {
+  STATIC_ARTICLES,
+  articleCrawlerHtml,
+  articleJsonLd,
+  staticArticleUrl,
+  staticAssetUrl
+} from '../../frontend/src/blog/articles/worker.ts';
+
 // Configuration
 const CONFIG = {
   // Backend API URL (GCP Cloud Run)
@@ -265,6 +276,10 @@ function generateMetaTags(url, testData = null) {
   } else if (path === '/generate-with-ai') {
     title = 'Free AI Quiz & Test Generator | Create Exams in Minutes | TestoZa';
     description = 'Generate comprehensive quizzes and tests in seconds using AI. Import PDFs, YouTube videos, or text prompts to create ready-to-take exams.';
+  } else if (path === '/user-guide/pdf-tools') {
+    // Same title and description as UserGuidePage.tsx, so nothing changes when the app loads.
+    title = 'Panna PDF Tools – TestoZa Docs | TestoZa';
+    description = 'Edit PDF text in its own font, erase for real, sign, and turn ChatGPT or LaTeX maths into a PDF. Free, and your file never leaves your device.';
   } else if (path.startsWith('/user-guide')) {
     title = 'TestoZa User Guide & Tutorials for Teachers | TestoZa';
     description = 'Learn how to use TestoZa to create exams, invite students, and analyze test results with our step-by-step documentation.';
@@ -1224,6 +1239,18 @@ const APP_SECTIONS = new Set([
 ]);
 
 const BLOG_ROBOTS_TXT = `# TestoZa Blog — https://blog.testoza.com
+# Every article is public and may be crawled, cited and summarised.
+
+# AI search and answer engines (these decide whether an article can be cited in answers)
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+Allow: /
+
+# Search engines and everyone else
 User-agent: *
 Allow: /
 
@@ -1397,6 +1424,52 @@ function blogPostPage(post) {
   };
 }
 
+/**
+ * A static article (frontend/src/blog/articles): full head, JSON-LD (article,
+ * FAQ, breadcrumb) and the whole article text for crawlers and AI assistants.
+ */
+function staticArticlePage(article) {
+  const { meta } = article;
+  return {
+    head: blogHeadTags({
+      title: `${meta.seoTitle} | ${BLOG_NAME}`,
+      ogTitle: meta.title,
+      description: meta.description,
+      url: staticArticleUrl(meta.slug),
+      image: staticAssetUrl(meta.cover.src),
+      type: 'article',
+      extra: `
+    <meta name="author" content="${escapeHtml(meta.author)}">
+    <meta property="article:published_time" content="${escapeHtml(meta.datePublished)}">
+    <meta property="article:modified_time" content="${escapeHtml(meta.dateModified)}">
+    <meta property="og:image:width" content="${meta.cover.width}">
+    <meta property="og:image:height" content="${meta.cover.height}">
+    <meta property="og:image:alt" content="${escapeHtml(meta.cover.alt)}">`,
+      jsonLd: articleJsonLd(article)
+    }),
+    body: articleCrawlerHtml(article)
+  };
+}
+
+/** Static articles in the shape of feed posts (slug, title, summary, dates). */
+const STATIC_FEED_POSTS = STATIC_ARTICLES.map(({ meta }) => ({
+  slug: meta.slug,
+  title: meta.title,
+  summary: meta.description,
+  published_at: meta.datePublished,
+  updated_at: meta.dateModified,
+  is_pinned: false,
+  cover_image: staticAssetUrl(meta.cover.src)
+}));
+
+/** Feed posts with the static articles merged in, in the feed's order: pinned first, then newest. */
+function withStaticArticles(posts) {
+  return [...posts, ...STATIC_FEED_POSTS].sort((a, b) =>
+    Number(!!b.is_pinned) - Number(!!a.is_pinned) ||
+    Date.parse(b.published_at || b.created_at || 0) - Date.parse(a.published_at || a.created_at || 0)
+  );
+}
+
 function blogMessagePage(title, message) {
   return {
     head: blogHeadTags({ title: `${title} | ${BLOG_NAME}`, description: message, noindex: true }),
@@ -1450,15 +1523,20 @@ async function handleBlogSitemap() {
   }
 
   const day = (value) => (value ? String(value).slice(0, 10) : '');
-  const entry = (loc, lastmod) => `  <url>
+  const entry = (loc, lastmod, image) => `  <url>
     <loc>${escapeHtml(loc)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ''}
+    <lastmod>${lastmod}</lastmod>` : ''}${image ? `
+    <image:image><image:loc>${escapeHtml(image)}</image:loc></image:image>` : ''}
   </url>`;
-  const newest = posts.map((p) => day(p.updated_at || p.published_at)).filter(Boolean).sort().pop();
+  const all = withStaticArticles(posts);
+  const newest = all.map((p) => day(p.updated_at || p.published_at)).filter(Boolean).sort().pop();
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[entry(`${BLOG_URL}/`, newest), ...posts.map((p) => entry(blogPostUrl(p.slug), day(p.updated_at || p.published_at)))].join('\n')}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${[
+  entry(`${BLOG_URL}/`, newest),
+  ...all.map((p) => entry(blogPostUrl(p.slug), day(p.updated_at || p.published_at), p.cover_image && /^https?:\/\//.test(p.cover_image) ? p.cover_image : null))
+].join('\n')}
 </urlset>
 `;
   return new Response(xml, {
@@ -1502,7 +1580,7 @@ async function handleBlogRequest(request, url) {
   }
 
   if (path === '/') {
-    return serveBlogHtml(request, blogHomePage(((await fetchBlogFeed()) || []).slice(0, 20)));
+    return serveBlogHtml(request, blogHomePage(withStaticArticles((await fetchBlogFeed()) || []).slice(0, 20)));
   }
 
   if (APP_SECTIONS.has(segments[0])) {
@@ -1512,6 +1590,12 @@ async function handleBlogRequest(request, url) {
   if (segments.length === 1) {
     let slug = segments[0];
     try { slug = decodeURIComponent(slug); } catch { /* keep the raw segment */ }
+
+    // Static articles need no API call.
+    const article = STATIC_ARTICLES.find((a) => a.meta.slug === slug);
+    if (article) {
+      return serveBlogHtml(request, staticArticlePage(article));
+    }
 
     const posts = await fetchBlogFeed();
     if (!posts) {
