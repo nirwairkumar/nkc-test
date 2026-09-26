@@ -5,7 +5,7 @@ import {
     BookOpen, FileText, FlaskConical, Sparkles, ChevronRight, ArrowLeft,
     ArrowRight, Menu, X, Clock, Search, Copy, Check, Sun, Moon,
     Terminal, Download, HelpCircle, Info, Layout, Lightbulb, AlertTriangle, Loader2,
-    Radio, BarChart2
+    Radio, BarChart2, PenLine, Languages, Sigma, Bot, ExternalLink
 } from 'lucide-react';
 const SolutionUploadGuide = React.lazy(() => import('@/components/SolutionUploadGuide'));
 const TestUploadFormatGuide = React.lazy(() => import('@/components/TestUploadFormatGuide'));
@@ -13,6 +13,7 @@ const ScientificNotationGuide = React.lazy(() => import('@/components/Scientific
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { WHITE_BOXES_META, staticArticleUrl } from '@/blog/articles/meta';
 
 // --- Guide Content Registry ---
 interface SubSection {
@@ -71,6 +72,17 @@ const DOC_SECTIONS: DocSection[] = [
                 title: "Viewing Results",
                 description: "Step-by-step guide with screenshots on how to view, sort, download, and analyze student results on TestoZa.",
                 icon: <BarChart2 className="h-4 w-4" />
+            }
+        ]
+    },
+    {
+        title: "Free PDF Tools",
+        items: [
+            {
+                slug: "pdf-tools",
+                title: "Panna PDF Tools",
+                description: "Edit PDF text in its own font, erase for real, sign, and turn ChatGPT or LaTeX maths into a PDF. Free, and your file never leaves your device.",
+                icon: <PenLine className="h-4 w-4" />
             }
         ]
     },
@@ -149,6 +161,16 @@ const DOC_SECTIONS: DocSection[] = [
             },
         ]
     }
+];
+
+// --- Panna (free PDF tools on pdf.testoza.com) ---
+const PANNA_URL = 'https://pdf.testoza.com/';
+const PANNA_GUIDE_URL = staticArticleUrl(WHITE_BOXES_META.slug);
+const PANNA_TOOLS = [
+    { href: `${PANNA_URL}edit-pdf`, title: 'Edit PDF', text: 'Change existing text in the PDF’s own font, erase for real, sign, highlight and organise pages.', icon: PenLine },
+    { href: `${PANNA_URL}edit-hindi-pdf`, title: 'Edit Hindi PDF', text: 'Edit Hindi forms and documents with matras and conjuncts shaped correctly, and keep the text searchable.', icon: Languages },
+    { href: `${PANNA_URL}latex-to-pdf`, title: 'LaTeX to PDF', text: 'Paste a LaTeX document or maths and download a clean, paged PDF with selectable text.', icon: Sigma },
+    { href: `${PANNA_URL}chatgpt-to-pdf`, title: 'ChatGPT to PDF', text: 'Save ChatGPT, Gemini or Claude answers as a PDF with every equation intact.', icon: Bot },
 ];
 
 // Helper SVGs to avoid extra lucide-react dependencies
@@ -443,6 +465,81 @@ export default function UserGuidePage() {
                                 </p>
                             </button>
                         </div>
+
+                        <AlertBlock type="tip" title="Free PDF tools">
+                            Need to fix a PDF before you turn it into a test? Panna, TestoZa’s free PDF editor, changes text in the document’s own font, erases for real and works in your browser.{' '}
+                            <button type="button" onClick={() => navigate('/user-guide/pdf-tools')} className="font-semibold underline underline-offset-2">
+                                See the PDF tools guide
+                            </button>
+                            .
+                        </AlertBlock>
+                    </div>
+                );
+
+            case 'pdf-tools':
+                return (
+                    <div className="space-y-6">
+                        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
+                            Panna is TestoZa’s free set of PDF tools at{' '}
+                            <a href={PANNA_URL} target="_blank" rel="noopener" className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                pdf.testoza.com
+                            </a>
+                            . It edits the existing text of a PDF in the document’s own font, deletes erased text from the file, and turns ChatGPT, Gemini or LaTeX maths into a clean PDF. Everything runs in your browser, so files are never uploaded, and there’s no sign-up or watermark.
+                        </p>
+
+                        <AlertBlock type="info" title="The complete guide">
+                            Every tool, how Panna keeps the original font, and how it compares with other PDF editors, in one article on the TestoZa Blog:{' '}
+                            <a href={PANNA_GUIDE_URL} className="font-semibold underline underline-offset-2">
+                                Stop painting white boxes on your PDFs
+                            </a>
+                            .
+                        </AlertBlock>
+
+                        <h3 className="text-xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-200">The tools</h3>
+                        <div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {PANNA_TOOLS.map(({ href, title, text, icon: Icon }) => (
+                                <a
+                                    key={href}
+                                    href={href}
+                                    target="_blank"
+                                    rel="noopener"
+                                    className="p-5 text-left border border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500/50 bg-white dark:bg-[#121316] rounded-xl transition-all duration-200 group no-underline"
+                                >
+                                    <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 w-fit rounded-lg mb-3">
+                                        <Icon className="h-5 w-5" />
+                                    </div>
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-500 transition-colors flex items-center gap-1.5">
+                                        {title} <ExternalLink className="h-3.5 w-3.5 opacity-50" />
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{text}</p>
+                                </a>
+                            ))}
+                        </div>
+
+                        <h3 className="text-xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-200">Edit a PDF in three steps</h3>
+                        <ol className="list-decimal pl-5 space-y-2 text-slate-600 dark:text-slate-400">
+                            <li>
+                                Open{' '}
+                                <a href={`${PANNA_URL}edit-pdf`} target="_blank" rel="noopener" className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                                    pdf.testoza.com/edit-pdf
+                                </a>{' '}
+                                and drop your PDF on the page. It opens in your browser; nothing is uploaded.
+                            </li>
+                            <li>Click any line of text and type. Your words are written in the PDF’s own font, in the same place. If a letter isn’t in that font, Panna tells you which one before you finish.</li>
+                            <li>Press Download PDF or Ctrl+S. There’s no watermark and no account.</li>
+                        </ol>
+
+                        <AlertBlock type="tip" title="Teaching from a PDF?">
+                            Once the PDF is right, turn its questions into an online test with automatic grading:{' '}
+                            <button type="button" onClick={() => navigate('/pdf-to-quiz')} className="font-semibold underline underline-offset-2">
+                                PDF to quiz
+                            </button>
+                            .
+                        </AlertBlock>
+
+                        <AlertBlock type="warning" title="Scanned PDFs">
+                            A scan is a picture with no text layer, and Panna doesn’t do OCR yet. Use White-out to cover the old words and Add text to type new ones. White-out covers a scanned image but doesn’t remove it from the file, so it isn’t a substitute for proper redaction.
+                        </AlertBlock>
                     </div>
                 );
 
