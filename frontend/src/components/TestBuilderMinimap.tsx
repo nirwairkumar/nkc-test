@@ -171,7 +171,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                 key={q.id}
                 data-minimap-item-id={q.id}
                 onClick={() => scrollToTarget(q.id)}
-                className={`group/qitem relative cursor-pointer px-1.5 py-1 rounded-md border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${
+                className={`group/qitem relative cursor-pointer px-1.5 py-1 rounded-md border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden antialiased ${
                     isCurrentActive
                         ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-1 ring-indigo-400/40'
                         : isPassage
@@ -188,11 +188,11 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                 {/* Header row: question number, passage pill, issue indicator, marking scheme */}
                 <div className="flex items-center justify-between gap-0.5 mb-0.5 min-w-0 w-full">
                     <div className="flex items-center gap-0.5 min-w-0">
-                        <span className={`text-[8.5px] font-extrabold leading-none ${isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-indigo-600'}`}>
+                        <span className={`text-[9px] font-bold leading-none tracking-tight ${isCurrentActive ? 'text-white' : 'text-slate-800 group-hover/qitem:text-indigo-600'}`}>
                             #{number}
                         </span>
                         {isPassage && (
-                            <span className={`text-[6.5px] font-bold px-0.5 rounded uppercase leading-none shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
+                            <span className={`text-[7px] font-semibold px-0.5 rounded uppercase leading-none shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
                                 PAS
                             </span>
                         )}
@@ -203,8 +203,8 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                             />
                         )}
                     </div>
-                    <div className="inline-flex items-center gap-0.5 text-[7.5px] font-bold font-mono slashed-zero shrink-0 tracking-tighter leading-none">
-                        <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
+                    <div className="inline-flex items-center gap-0.5 text-[8px] font-semibold font-mono slashed-zero shrink-0 tracking-tighter leading-none">
+                        <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-500'}>
                             {q.marks || 1}M
                         </span>
                         <span className={isCurrentActive ? 'text-rose-200' : 'text-rose-600'}>
@@ -213,9 +213,9 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                     </div>
                 </div>
 
-                {/* Actual Question Text in Ultra-Compact Font */}
+                {/* Actual Question Text with readable crisp typography */}
                 <p
-                    className={`text-[7px] leading-[1.15] font-medium line-clamp-2 break-words ${
+                    className={`text-[8px] leading-[1.25] font-medium line-clamp-2 break-words tracking-tight ${
                         isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-slate-900'
                     }`}
                 >
@@ -224,7 +224,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
 
                 {/* Image Indicator if question has an image */}
                 {q.image && (
-                    <div className={`mt-0.5 flex items-center gap-0.5 text-[6.5px] leading-none font-semibold ${
+                    <div className={`mt-0.5 flex items-center gap-0.5 text-[7px] leading-none font-semibold ${
                         isCurrentActive ? 'text-indigo-200' : 'text-sky-600'
                     }`}>
                         <ImageIcon className="w-2 h-2 shrink-0" />
@@ -234,17 +234,17 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
 
                 {/* Numerical answer indicator */}
                 {q.type === 'numerical' && (
-                    <div className={`mt-0.5 pt-0.5 border-t border-slate-100 text-[6.5px] font-mono font-medium truncate leading-none ${
+                    <div className={`mt-0.5 pt-0.5 border-t text-[7px] font-mono font-medium truncate leading-none ${
                         isCurrentActive ? 'border-indigo-500/50 text-emerald-200' : 'border-slate-100 text-emerald-600'
                     }`}>
                         = {q.correctAnswer !== undefined && q.correctAnswer !== '' ? String(q.correctAnswer) : 'Numerical'}
                     </div>
                 )}
 
-                {/* Actual Options Text in Compact Small Letters */}
+                {/* Options Text with crisp readable font size & line spacing */}
                 {optionsKeys.length > 0 && q.type !== 'numerical' && (
-                    <div className={`mt-0.5 pt-0.5 border-t space-y-[1px] ${
-                        isCurrentActive ? 'border-indigo-500/50' : 'border-slate-100/70'
+                    <div className={`mt-0.5 pt-0.5 border-t space-y-[1.5px] ${
+                        isCurrentActive ? 'border-indigo-500/50' : 'border-slate-100'
                     }`}>
                         {optionsKeys.map((key) => {
                             const optSnippet = cleanSnippet(q.options?.[key], 22);
@@ -255,18 +255,18 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                             return (
                                 <div
                                     key={key}
-                                    className={`flex items-baseline gap-0.5 text-[6.5px] leading-[1.1] truncate ${
+                                    className={`flex items-baseline gap-0.5 text-[7.5px] leading-[1.2] truncate ${
                                         isCorrect
                                             ? isCurrentActive
-                                                ? 'text-emerald-200 font-extrabold'
-                                                : 'text-emerald-600 font-bold'
+                                                ? 'text-emerald-200 font-bold'
+                                                : 'text-emerald-600 font-semibold'
                                             : isCurrentActive
-                                                ? 'text-indigo-100/80'
-                                                : 'text-slate-500'
+                                                ? 'text-indigo-100/90 font-normal'
+                                                : 'text-slate-500 font-normal'
                                     }`}
                                     title={`${key}: ${optSnippet}`}
                                 >
-                                    <span className="font-bold shrink-0">{key}.</span>
+                                    <span className="font-semibold shrink-0">{key}.</span>
                                     <span className="truncate">{optSnippet || '—'}</span>
                                 </div>
                             );
