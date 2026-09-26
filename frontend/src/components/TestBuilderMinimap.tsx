@@ -18,7 +18,7 @@ interface TestBuilderMinimapProps {
 }
 
 /** Clean HTML, image markdown, and LaTeX syntax down to a readable plain text snippet */
-function cleanSnippet(text: unknown, maxLen = 75): string {
+function cleanSnippet(text: unknown, maxLen = 50): string {
     if (typeof text !== 'string') return '';
     return text
         .replace(/<[^>]*>/g, '') // remove HTML tags
@@ -164,46 +164,46 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
         const isPassage = !!q.groupId;
         const hasIssue = issueIds?.has(String(q.id));
         const optionsKeys = q.options && q.type !== 'numerical' ? Object.keys(q.options) : [];
-        const qSnippet = cleanSnippet(q.question, 75);
+        const qSnippet = cleanSnippet(q.question, 50);
 
         return (
             <div
                 key={q.id}
                 data-minimap-item-id={q.id}
                 onClick={() => scrollToTarget(q.id)}
-                className={`group/qitem relative cursor-pointer p-1.5 rounded-lg border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${
+                className={`group/qitem relative cursor-pointer px-1.5 py-1 rounded-md border transition-all duration-150 w-full min-w-0 max-w-full overflow-hidden ${
                     isCurrentActive
-                        ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-2 ring-indigo-400/40'
+                        ? 'bg-indigo-600 border-indigo-700 text-white shadow-md ring-1 ring-indigo-400/40'
                         : isPassage
                             ? 'bg-indigo-50/40 border-indigo-200/80 hover:bg-indigo-50 hover:border-indigo-300 text-slate-800'
-                            : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
+                            : 'bg-white border-slate-200/90 hover:bg-slate-50 hover:border-slate-300 text-slate-700 shadow-2xs'
                 }`}
                 title={`Q${number}: ${qSnippet || 'Question'}`}
             >
                 {/* Passage Indicator vertical accent */}
                 {isPassage && (
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
+                    <div className={`absolute left-0 top-0 bottom-0 w-0.5 rounded-l-md ${isCurrentActive ? 'bg-amber-300' : 'bg-indigo-500'}`} />
                 )}
 
                 {/* Header row: question number, passage pill, issue indicator, marking scheme */}
-                <div className="flex items-center justify-between gap-0.5 mb-1 min-w-0 w-full">
+                <div className="flex items-center justify-between gap-0.5 mb-0.5 min-w-0 w-full">
                     <div className="flex items-center gap-0.5 min-w-0">
-                        <span className={`text-[9px] font-extrabold ${isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-indigo-600'}`}>
+                        <span className={`text-[8.5px] font-extrabold leading-none ${isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-indigo-600'}`}>
                             #{number}
                         </span>
                         {isPassage && (
-                            <span className={`text-[7px] font-bold px-0.5 rounded uppercase shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
+                            <span className={`text-[6.5px] font-bold px-0.5 rounded uppercase leading-none shrink-0 ${isCurrentActive ? 'bg-indigo-700 text-indigo-100' : 'bg-indigo-100 text-indigo-700'}`}>
                                 PAS
                             </span>
                         )}
                         {hasIssue && (
                             <span
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${isCurrentActive ? 'bg-amber-300' : 'bg-amber-500'}`}
+                                className={`w-1 h-1 rounded-full shrink-0 ${isCurrentActive ? 'bg-amber-300' : 'bg-amber-500'}`}
                                 title="Needs attention"
                             />
                         )}
                     </div>
-                    <div className="inline-flex items-center gap-0.5 text-[8.5px] font-bold font-mono slashed-zero shrink-0 tracking-tighter">
+                    <div className="inline-flex items-center gap-0.5 text-[7.5px] font-bold font-mono slashed-zero shrink-0 tracking-tighter leading-none">
                         <span className={isCurrentActive ? 'text-indigo-100' : 'text-slate-400'}>
                             {q.marks || 1}M
                         </span>
@@ -213,9 +213,9 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                     </div>
                 </div>
 
-                {/* Actual Question Text in Small Letters */}
+                {/* Actual Question Text in Ultra-Compact Font */}
                 <p
-                    className={`text-[8px] leading-[1.25] font-medium line-clamp-2 break-words ${
+                    className={`text-[7px] leading-[1.15] font-medium line-clamp-2 break-words ${
                         isCurrentActive ? 'text-white' : 'text-slate-700 group-hover/qitem:text-slate-900'
                     }`}
                 >
@@ -224,30 +224,30 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
 
                 {/* Image Indicator if question has an image */}
                 {q.image && (
-                    <div className={`mt-0.5 flex items-center gap-0.5 text-[7px] font-semibold ${
+                    <div className={`mt-0.5 flex items-center gap-0.5 text-[6.5px] leading-none font-semibold ${
                         isCurrentActive ? 'text-indigo-200' : 'text-sky-600'
                     }`}>
-                        <ImageIcon className="w-2.5 h-2.5 shrink-0" />
+                        <ImageIcon className="w-2 h-2 shrink-0" />
                         <span>Image</span>
                     </div>
                 )}
 
                 {/* Numerical answer indicator */}
                 {q.type === 'numerical' && (
-                    <div className={`mt-1 pt-0.5 border-t text-[7.5px] font-mono font-medium truncate ${
+                    <div className={`mt-0.5 pt-0.5 border-t border-slate-100 text-[6.5px] font-mono font-medium truncate leading-none ${
                         isCurrentActive ? 'border-indigo-500/50 text-emerald-200' : 'border-slate-100 text-emerald-600'
                     }`}>
                         = {q.correctAnswer !== undefined && q.correctAnswer !== '' ? String(q.correctAnswer) : 'Numerical'}
                     </div>
                 )}
 
-                {/* Actual Options Text in Small Letters */}
+                {/* Actual Options Text in Compact Small Letters */}
                 {optionsKeys.length > 0 && q.type !== 'numerical' && (
-                    <div className={`mt-1 pt-0.5 border-t space-y-0.5 ${
-                        isCurrentActive ? 'border-indigo-500/50' : 'border-slate-100'
+                    <div className={`mt-0.5 pt-0.5 border-t space-y-[1px] ${
+                        isCurrentActive ? 'border-indigo-500/50' : 'border-slate-100/70'
                     }`}>
                         {optionsKeys.map((key) => {
-                            const optSnippet = cleanSnippet(q.options?.[key], 32);
+                            const optSnippet = cleanSnippet(q.options?.[key], 22);
                             const isCorrect = Array.isArray(q.correctAnswer)
                                 ? q.correctAnswer.includes(key)
                                 : q.correctAnswer === key;
@@ -255,7 +255,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                             return (
                                 <div
                                     key={key}
-                                    className={`flex items-baseline gap-1 text-[7.5px] leading-tight truncate ${
+                                    className={`flex items-baseline gap-0.5 text-[6.5px] leading-[1.1] truncate ${
                                         isCorrect
                                             ? isCurrentActive
                                                 ? 'text-emerald-200 font-extrabold'
@@ -285,15 +285,15 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                 if (!sec) return null;
                 const secQuestions = Array.isArray(sec.questions) ? sec.questions.filter(Boolean) : [];
                 return (
-                    <div key={sec.id || sIdx} className="mb-3 w-full min-w-0 max-w-full">
+                    <div key={sec.id || sIdx} className="mb-2 w-full min-w-0 max-w-full">
                         {/* Section Header Indicator */}
-                        <div className="flex items-center gap-1 px-1.5 py-1 mb-1 bg-indigo-50/90 rounded border border-indigo-200/80 text-[9px] font-bold text-indigo-700 shadow-2xs w-full min-w-0 max-w-full overflow-hidden">
-                            <Layers className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
+                        <div className="flex items-center gap-1 px-1 py-0.5 mb-0.5 bg-indigo-50/90 rounded border border-indigo-200/80 text-[8px] font-bold text-indigo-700 shadow-2xs w-full min-w-0 max-w-full overflow-hidden">
+                            <Layers className="w-2 h-2 text-indigo-600 shrink-0" />
                             <span className="truncate min-w-0 flex-1">{sec.name || `Section ${sIdx + 1}`}</span>
                         </div>
 
                         {/* Section Questions */}
-                        <div className="space-y-1.5 pl-1 w-full min-w-0 max-w-full">
+                        <div className="space-y-1 pl-0.5 w-full min-w-0 max-w-full">
                             {secQuestions.map((q) => {
                                 totalQCounter++;
                                 return renderQuestionCard(q, totalQCounter);
@@ -306,7 +306,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
 
         // Standard Mode
         return (
-            <div className="space-y-1.5 w-full min-w-0 max-w-full">
+            <div className="space-y-1 w-full min-w-0 max-w-full">
                 {safeQuestions.map((q, qIdx) => renderQuestionCard(q, qIdx + 1))}
             </div>
         );
@@ -331,23 +331,23 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                     className="pointer-events-auto w-32 min-w-[128px] max-w-[128px] shrink-0 h-full bg-white/95 border border-slate-200/90 rounded-r-xl shadow-xl backdrop-blur-md flex flex-col overflow-hidden relative transition-all duration-300"
                 >
                     {/* Header Bar */}
-                    <div className="px-2 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 w-full min-w-0 overflow-hidden">
+                    <div className="px-2 py-1.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0 w-full min-w-0 overflow-hidden">
                         <div className="flex items-center gap-1 min-w-0">
                             <Sparkles className="w-3 h-3 text-indigo-600 shrink-0" />
-                            <span className="text-[10px] font-bold text-slate-800 tracking-wider uppercase truncate">
+                            <span className="text-[9.5px] font-bold text-slate-800 tracking-wider uppercase truncate">
                                 Minimap
                             </span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                             {issueIds && issueIds.size > 0 && (
                                 <span
-                                    className="text-[8px] font-bold px-1 py-0.5 bg-amber-50 text-amber-700 rounded border border-amber-200/80 shrink-0"
+                                    className="text-[7.5px] font-bold px-1 py-0.5 bg-amber-50 text-amber-700 rounded border border-amber-200/80 shrink-0"
                                     title={`${issueIds.size} questions need attention`}
                                 >
                                     {issueIds.size} !
                                 </span>
                             )}
-                            <span className="text-[9px] font-mono font-bold px-1 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/80 shrink-0">
+                            <span className="text-[8.5px] font-mono font-bold px-1 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200/80 shrink-0">
                                 {totalQuestions} Qs
                             </span>
                         </div>
@@ -356,7 +356,7 @@ export const TestBuilderMinimap: React.FC<TestBuilderMinimapProps> = ({
                     {/* Minimap Scrollable Body */}
                     <div
                         ref={minimapScrollRef}
-                        className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden p-1.5 scrollbar-thin scrollbar-thumb-slate-300 relative space-y-1"
+                        className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden p-1 scrollbar-thin scrollbar-thumb-slate-300 relative space-y-1"
                     >
                         {renderItems()}
                     </div>
