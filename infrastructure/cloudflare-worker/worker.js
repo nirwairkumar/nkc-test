@@ -14,14 +14,16 @@ import {
   staticArticleUrl,
   staticAssetUrl
 } from '../../frontend/src/blog/articles/worker.ts';
-// Guides are the same idea for long-form pages on testoza.com itself
-// (frontend/src/guides), e.g. testoza.com/create-mock-test-online.
+// Guides are long-form pages on testoza.com (e.g. /best-online-test-platform),
+// kept in frontend/src/guides for the same reason.
+import { GUIDES, guideAssetUrl, guideCrawlerHtml, guideJsonLd } from '../../frontend/src/guides/worker.ts';
+// /create-mock-test-online has its own content model (frontend/src/guides/mock-test).
 import {
-  GUIDES,
-  guideAssetUrl,
-  guideCrawlerHtml,
-  guideJsonLd,
-  guideUrl
+  MOCK_TEST_GUIDES,
+  mockGuideAssetUrl,
+  mockGuideCrawlerHtml,
+  mockGuideJsonLd,
+  mockGuideUrl
 } from '../../frontend/src/guides/worker.ts';
 
 // Configuration
@@ -383,6 +385,25 @@ function generateMetaTags(url, testData = null) {
     }
   }
 
+  // ─── GUIDES (frontend/src/guides) ───────────────────────────────────
+  // Same title and description the React page sets, so nothing changes when the app loads.
+  let extra = '';
+  const guide = GUIDES.find((g) => g.meta.path === path);
+  if (guide) {
+    const { meta } = guide;
+    title = `${meta.seoTitle} | TestoZa`;
+    description = meta.description;
+    type = 'article';
+    image = guideAssetUrl(meta.cover.src);
+    extra = `
+    <meta name="author" content="${escapeHtml(meta.author)}">
+    <meta property="article:published_time" content="${escapeHtml(meta.datePublished)}">
+    <meta property="article:modified_time" content="${escapeHtml(meta.dateModified)}">
+    <meta property="og:image:width" content="${meta.cover.width}">
+    <meta property="og:image:height" content="${meta.cover.height}">
+    <meta property="og:image:alt" content="${escapeHtml(meta.cover.alt)}">`;
+  }
+
   // Clean canonical URL without trailing slash or tracking parameters
   const canonicalUrl = `${siteUrl}${path}`;
 
@@ -400,8 +421,8 @@ function generateMetaTags(url, testData = null) {
     <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
     <meta property="og:image" content="${escapeHtml(image)}">
     <meta property="og:site_name" content="TestoZa">
-    <meta property="og:locale" content="en_IN">
-    
+    <meta property="og:locale" content="en_IN">${extra}
+
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${escapeHtml(title)}">
@@ -446,6 +467,14 @@ function escapeHtml(text) {
  */
 function generateRouteContent(url, testData = null) {
   const path = new URL(url).pathname;
+
+  // ─── 0. GUIDES ──────────────────────────────────────────────────────────────
+  // The whole guide as plain HTML, and one JSON-LD graph (Article, FAQPage,
+  // BreadcrumbList) that takes the place of the homepage FAQ schema.
+  const guide = GUIDES.find((g) => g.meta.path === path);
+  if (guide) {
+    return { bodyHtml: guideCrawlerHtml(guide), faqSchema: guideJsonLd(guide) };
+  }
 
   // ─── 1. PRICING PAGE ────────────────────────────────────────────────────────
   if (path === '/pricing') {
@@ -1246,6 +1275,8 @@ const APP_SECTIONS = new Set([
   'solutions-editor', 'support', 'survey', 'terms-and-conditions', 'test', 'test-analysis', 'test-intro',
   'test-submitted', 'tests', 'update-password', 'user-guide', 'white-label-test-platform', 'youtube-to-quiz'
 ]);
+// Guides live on testoza.com too.
+for (const { meta } of GUIDES) APP_SECTIONS.add(meta.slug);
 
 const BLOG_ROBOTS_TXT = `# TestoZa Blog — https://blog.testoza.com
 # Every article is public and may be crawled, cited and summarised.
@@ -1640,13 +1671,13 @@ function mainSiteBlogRedirect(url) {
 // same title, description, canonical and JSON-LD (article, how-to, FAQ,
 // breadcrumb) the React page sets, so nothing changes when the app hydrates.
 
-const GUIDE_BY_PATH = new Map(GUIDES.map((g) => [g.meta.path, g]));
+const GUIDE_BY_PATH = new Map(MOCK_TEST_GUIDES.map((g) => [g.meta.path, g]));
 
 /** Head tags for a guide. Keep the title format identical to SEO.tsx ("… | TestoZa"). */
 function guideHeadTags(guide) {
   const { meta } = guide;
-  const url = guideUrl(meta.path);
-  const image = guideAssetUrl(meta.cover.src);
+  const url = mockGuideUrl(meta.path);
+  const image = mockGuideAssetUrl(meta.cover.src);
   return `
     <!-- Guide SEO (Cloudflare Worker, text from frontend/src/guides) -->
     <title>${escapeHtml(`${meta.seoTitle} | TestoZa`)}</title>
@@ -1673,7 +1704,7 @@ function guideHeadTags(guide) {
     <meta name="twitter:description" content="${escapeHtml(meta.description)}">
     <meta name="twitter:image" content="${escapeHtml(image)}">
     <script type="application/ld+json">
-${safeJsonLd(guideJsonLd(guide))}
+${safeJsonLd(mockGuideJsonLd(guide))}
     </script>
 `;
 }
@@ -1699,7 +1730,7 @@ async function serveGuideHtml(request, guide) {
   }
   rewriter
     .on('head', { element(el) { el.append(guideHeadTags(guide), { html: true }); } })
-    .on('main', { element(el) { el.setInnerContent(guideCrawlerHtml(guide), { html: true }); } });
+    .on('main', { element(el) { el.setInnerContent(mockGuideCrawlerHtml(guide), { html: true }); } });
 
   const transformed = rewriter.transform(originResponse);
   const headers = new Headers(transformed.headers);
