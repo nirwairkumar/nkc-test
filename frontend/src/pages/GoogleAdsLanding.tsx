@@ -1,271 +1,307 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+/**
+ * Google Ads landing pages: testoza.com/quiz-creator and /assessment-platform.
+ *
+ * Visual-first and light on words: every section is a picture with a headline.
+ * Copy lives in src/landing/adsLanding.ts (the Cloudflare worker serves the same
+ * text to crawlers). Read the compliance note at the top of that file before
+ * adding wording: no proctoring terms, no invented testimonials or ratings.
+ */
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import { SEO } from '@/components/SEO';
-import { 
-  Sparkles, 
-  BookOpen, 
-  FileText, 
-  CheckCircle2, 
-  ArrowRight, 
-  GraduationCap, 
-  Zap, 
-  BarChart3,
-  Search,
-  Check,
-  ShieldCheck,
-  Award
-} from 'lucide-react';
+import { analytics } from '@/lib/analytics/tracker';
+import { ADS_CTA, ADS_SOURCES, ADS_STEPS, adsFaqSchema, adsLandingFor } from '@/landing/adsLanding';
+import {
+    AnyPhone,
+    Audiences,
+    LanguageCard,
+    QuestionTypes,
+    QuizPhone,
+    ScoreRing,
+    ShareCard,
+    SourceIcon,
+    TryOne,
+} from './ads/AdsLandingWidgets';
+import './ads/adsLanding.css';
+
+const softwareSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'TestoZa',
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'Web',
+    url: 'https://testoza.com/',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+};
 
 export default function GoogleAdsLanding() {
-  const navigate = useNavigate();
+    const { pathname } = useLocation();
+    const navigate = useNavigate();
+    const copy = adsLandingFor(pathname);
+    const rootRef = useRef<HTMLDivElement>(null);
+    const heroCtaRef = useRef<HTMLDivElement>(null);
+    const closingRef = useRef<HTMLElement>(null);
+    const [openFaq, setOpenFaq] = useState<number | null>(0);
+    const [floatOn, setFloatOn] = useState(false);
+    const [floatPeek, setFloatPeek] = useState(true);
+    // On testoza.com the worker already puts this page's FAQPage JSON-LD in the HTML
+    // (script#schema-faq, not a Helmet tag); adding it again would duplicate it.
+    const [faqInHtml] = useState(
+        () => !!document.querySelector('script#schema-faq:not([data-rh])')?.textContent?.includes(copy.faqs[0].q),
+    );
 
-  const handleStartFree = () => {
-    navigate('/generate-with-ai');
-  };
+    // Sections rise in as they arrive. Content is visible without JavaScript:
+    // the hidden state needs the qcl-js class.
+    useEffect(() => {
+        const root = rootRef.current;
+        if (!root) return;
+        root.classList.add('qcl-js');
+        const items = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
+        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+            items.forEach((el) => el.classList.add('is-in'));
+            return;
+        }
+        const io = new IntersectionObserver(
+            (entries) => {
+                for (const e of entries) {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('is-in');
+                        io.unobserve(e.target);
+                    }
+                }
+            },
+            { rootMargin: '0px 0px -10% 0px', threshold: 0.1 },
+        );
+        items.forEach((el) => io.observe(el));
+        return () => io.disconnect();
+    }, [pathname]);
 
-  const handleLogin = () => {
-    navigate('/login');
-  };
+    // Floating button: after the hero's button scrolls away, until the closing card.
+    // On phones it steps aside while reading down, like Safari's toolbar.
+    useEffect(() => {
+        const cta = heroCtaRef.current;
+        const closing = closingRef.current;
+        if (!cta || !closing || !('IntersectionObserver' in window)) return;
+        let ctaVisible = true;
+        let closingReached = false;
+        const io = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (e.target === cta) ctaVisible = e.isIntersecting;
+                if (e.target === closing) closingReached = e.isIntersecting || e.boundingClientRect.top < 0;
+            }
+            setFloatOn(!ctaVisible && !closingReached);
+        });
+        io.observe(cta);
+        io.observe(closing);
 
-  // Dynamically configure content to avoid duplicate content flags
-  const isAssessmentPlatform = typeof window !== 'undefined' && window.location.pathname.includes('assessment-platform');
+        let lastY = window.scrollY;
+        const narrow = window.matchMedia?.('(max-width: 1023px)');
+        const onScroll = () => {
+            const dy = window.scrollY - lastY;
+            if (!narrow?.matches) setFloatPeek(true);
+            else if (Math.abs(dy) > 6) setFloatPeek(dy < 0);
+            if (Math.abs(dy) > 6) lastY = window.scrollY;
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => {
+            io.disconnect();
+            window.removeEventListener('scroll', onScroll);
+        };
+    }, []);
 
-  const content = isAssessmentPlatform ? {
-    seoTitle: "CBT & Assessment Platform | Free Online Exam Creator",
-    seoDesc: "Create, distribute, and grade computer-based tests (CBT) and classroom assessments online. Get detailed student score reports and automated analytics instantly.",
-    canonical: "https://testoza.com/assessment-platform",
-    heroBadge: "Online Assessment Suite",
-    heroTitlePrefix: "Secure Computer-Based Tests ",
-    heroTitleSuffix: "and Class Assessments",
-    heroDesc: "TestoZa is a powerful computer-based assessment simulator. Set up online tests, manage candidate registration, and track real-time grading and performance analytics.",
-    sectionTitle: "Assess Classroom Performance Better",
-    sectionDesc: "A complete software suite tailored for organizing secure computer-based examinations and grading.",
-    feature1Title: "Custom Exam Composer",
-    feature1Desc: "Structure your exams with single-choice, multiple-choice, or numerical answer formats. Shuffle layouts automatically to maintain evaluation integrity.",
-    feature2Title: "CBT Exam Simulator",
-    feature2Desc: "Provide candidates with a clean, standard web-based exam layout. Perfect for administering midterms, competitive prep, and entrance assessments.",
-    feature3Title: "Automatic Evaluation & Reporting",
-    feature3Desc: "Eliminate manual checking. Receive instant digital score reports containing student average curves, standard deviation, and key explanations on submission.",
-    benefitHeadline: "Organize Tests, Mock Exams, and Practice Drills Seamlessly",
-    benefitParagraph: "Configuring class tests manually usually requires hours of layout structure planning, answer key writing, and spreadsheet logging. TestoZa streamlines student exam cycles so you can spend less time grading and more time teaching.",
-    ctaHeadline: "Ready to Administer Your Next Online Exam?",
-    ctaDesc: "Establish your assessment portal now. Formulate tests, register participants, and retrieve live analytical scorecards."
-  } : {
-    seoTitle: "Free AI Quiz & Test Generator for Teachers | TestoZa",
-    seoDesc: "Instantly create tests, quizzes, and exams online using AI. Generate assessments from text, PDFs, or YouTube videos. Clean, modern, and distraction-free CBT simulator.",
-    canonical: "https://testoza.com/quiz-creator",
-    heroBadge: "AI-Powered Test Platform",
-    heroTitlePrefix: "Create Exams and Quizzes ",
-    heroTitleSuffix: "in Seconds with AI",
-    heroDesc: "TestoZa is the fastest online assessment platform. Upload your notes, PDFs, or paste a link to generate professional, ready-to-take exams immediately.",
-    sectionTitle: "Assess Smarter, Not Harder",
-    sectionDesc: "Discover a suite of tools designed to take the friction out of test creation and grading.",
-    feature1Title: "AI Question Generator",
-    feature1Desc: "Enter any topic, paste lecture notes, upload a textbook PDF, or use a YouTube URL. Our AI creates customized single-choice, multiple-choice, or numerical questions instantly.",
-    feature2Title: "Realistic CBT Engine",
-    feature2Desc: "Provide students with a clean, standard computer-based test simulator. Ideal for preparing candidates for major competitive exams, term tests, or self-assessment.",
-    feature3Title: "Instant Auto-Grading",
-    feature3Desc: "No more manual grading. Receive instant reports containing accuracy metrics, performance distribution curves, and solution keys as soon as a student submits.",
-    benefitHeadline: "Designed for Teachers, Educators, and Self-Learners",
-    benefitParagraph: "Creating test materials manually takes hours of planning, writing, and proofreading. TestoZa shortens this entire cycle into minutes, allowing you to spend more time addressing learning gaps.",
-    ctaHeadline: "Ready to Save Hours of Assessment Time?",
-    ctaDesc: "Get started for free. Generate online exams, assign them to students, and view analytical reports today."
-  };
+    // Links are real links (crawlable); same-site ones open inside the app.
+    const onClick = (e: MouseEvent<HTMLDivElement>) => {
+        const link = (e.target as HTMLElement).closest('a');
+        if (!link || !link.href) return;
+        let url: URL;
+        try {
+            url = new URL(link.href);
+        } catch {
+            return;
+        }
+        if (url.origin !== window.location.origin) return;
+        if (url.pathname === pathname) return; // in-page anchors
+        analytics.track('ads_landing_cta', { page: copy.path, target: url.pathname, where: link.dataset.where ?? 'body' });
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        navigate(`${url.pathname}${url.search}${url.hash}`);
+    };
 
-  return (
-    <>
-      <SEO
-        title={content.seoTitle}
-        description={content.seoDesc}
-        canonicalUrl={content.canonical}
-        keywords={[
-          "online test maker for teachers",
-          "ai quiz generator",
-          "create test from pdf",
-          "free online exam maker",
-          "computer based test platform",
-          "classroom assessment creator"
-        ]}
-      />
+    const cta = (where: string, className = 'qcl-btn qcl-btn--primary') => (
+        <a className={className} href={ADS_CTA.href} data-where={where}>
+            {copy.ctaLabel}
+            <ArrowRight className="qcl-btn-arrow" aria-hidden="true" />
+        </a>
+    );
 
-      <div className="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 font-sans">
-        {/* Hero Section */}
-        <section className="relative overflow-hidden py-24 md:py-32 bg-gradient-to-br from-indigo-900/10 via-purple-900/5 to-transparent border-b border-slate-200/50 dark:border-slate-800/30">
-          <div className="absolute inset-0 z-0 pointer-events-none">
-            <div className="absolute top-1/4 left-1/10 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-1/4 right-1/10 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl"></div>
-          </div>
+    return (
+        <div className="qcl" ref={rootRef} onClick={onClick}>
+            <SEO
+                title={copy.seoTitle}
+                description={copy.description}
+                canonicalUrl={`https://testoza.com${copy.path}`}
+                keywords={copy.keywords}
+                schemas={faqInHtml ? [softwareSchema] : [adsFaqSchema(copy), softwareSchema]}
+            />
 
-          <div className="container mx-auto px-6 relative z-10 max-w-5xl text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 mb-6 font-medium text-sm">
-              <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>{content.heroBadge}</span>
-            </div>
-            
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-900 dark:from-white dark:via-indigo-200 dark:to-purple-300 bg-clip-text text-transparent">
-              {content.heroTitlePrefix}<br />
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{content.heroTitleSuffix}</span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              {content.heroDesc}
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button 
-                onClick={handleStartFree}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25"
-              >
-                <span>Create a Test Free</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={handleLogin}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold transition-all"
-              >
-                <span>Login to Dashboard</span>
-              </button>
-            </div>
-
-            {/* Quick trust banner */}
-            <div className="mt-16 flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> Secure & Private</span>
-              <span className="flex items-center gap-1.5"><Award className="w-4 h-4" /> Instantly Graded</span>
-              <span className="flex items-center gap-1.5"><Zap className="w-4 h-4" /> Zero-Setup Required</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Feature Cards Grid */}
-        <section className="py-20 md:py-28 bg-white dark:bg-slate-950">
-          <div className="container mx-auto px-6 max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">
-                {content.sectionTitle}
-              </h2>
-              <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-                {content.sectionDesc}
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Feature 1 */}
-              <div className="p-8 rounded-2xl border border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/20 hover:border-indigo-500/30 dark:hover:border-indigo-500/20 transition-all group">
-                <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-6">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  {content.feature1Title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {content.feature1Desc}
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="p-8 rounded-2xl border border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/20 hover:border-indigo-500/30 dark:hover:border-indigo-500/20 transition-all group">
-                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-6">
-                  <GraduationCap className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                  {content.feature2Title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {content.feature2Desc}
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="p-8 rounded-2xl border border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/20 hover:border-indigo-500/30 dark:hover:border-indigo-500/20 transition-all group">
-                <div className="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-6">
-                  <BarChart3 className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                  {content.feature3Title}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {content.feature3Desc}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Benefits & Trust */}
-        <section className="py-20 md:py-28 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200/50 dark:border-slate-800/30">
-          <div className="container mx-auto px-6 max-w-5xl">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold mb-6 text-slate-900 dark:text-white leading-tight">
-                  {content.benefitHeadline}
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                  {content.benefitParagraph}
-                </p>
-
-                <div className="space-y-4">
-                  {[
-                    "Supports multiple-choice & numerical answer types",
-                    "Shuffle questions and options to personalize tests",
-                    "Easy schedule and timing controls for student access",
-                    "Distraction-free environment that keeps students focused",
-                    "Export clean result sheets and performance metrics"
-                  ].map((benefit, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mt-1 flex-shrink-0">
-                        <Check className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="text-slate-700 dark:text-slate-300 font-medium">{benefit}</span>
+            {/* Hero */}
+            <header className="qcl-hero">
+                <div className="qcl-hero-bg" aria-hidden="true" />
+                <div className="qcl-hero-inner">
+                    <div className="qcl-hero-copy">
+                        <p className="qcl-eyebrow">{copy.eyebrow}</p>
+                        <h1 className="qcl-h1">
+                            <span>{copy.h1Lead}</span> <span className="qcl-h1-rest">{copy.h1Rest}</span>
+                        </h1>
+                        <p className="qcl-sub">{copy.sub}</p>
+                        <div className="qcl-actions" ref={heroCtaRef}>
+                            {cta('hero')}
+                            <a className="qcl-btn qcl-btn--glass" href="#how">See how it works</a>
+                        </div>
+                        <ul className="qcl-proof" aria-label="At a glance">
+                            <li>Free to start</li>
+                            <li>No app for students</li>
+                            <li>English &amp; <span lang="hi">हिंदी</span></li>
+                            <li>Auto-graded</li>
+                        </ul>
                     </div>
-                  ))}
+                    <QuizPhone />
                 </div>
-              </div>
+            </header>
 
-              <div className="relative">
-                <div className="p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl relative z-10">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-lg font-bold text-slate-800 dark:text-slate-200">
-                      JS
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white">Prof. Jayant Sharma</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Physics Faculty, Apex Academy</p>
-                    </div>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-400 italic mb-4 leading-relaxed">
-                    "Using TestoZa, I can compile weekly practice worksheets and chapter mock exams in under five minutes. The AI excels at picking up context from my slide uploads and generating highly relevant questions."
-                  </p>
-                  <div className="flex gap-1 text-amber-500">
-                    {"★★★★★".split("").map((star, i) => <span key={i}>{star}</span>)}
-                  </div>
+            {/* Four ways in */}
+            <section className="qcl-sec" aria-labelledby="qcl-ways">
+                <h2 id="qcl-ways" className="qcl-h2" data-reveal>{copy.waysTitle}</h2>
+                <ul className="qcl-sources">
+                    {ADS_SOURCES.map((s, i) => {
+                        return (
+                            <li key={s.id} data-reveal style={{ ['--d' as string]: i }}>
+                                <a href={s.href} className="qcl-source" data-src={s.id}>
+                                    <span className="qcl-appicon"><SourceIcon id={s.id} /></span>
+                                    <b>{s.label}</b>
+                                    <span>{s.caption}</span>
+                                </a>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </section>
+
+            {/* Three steps */}
+            <section className="qcl-sec" id="how" aria-labelledby="qcl-steps">
+                <h2 id="qcl-steps" className="qcl-h2" data-reveal>{copy.stepsTitle}</h2>
+                <ol className="qcl-steps">
+                    {ADS_STEPS.map((s, i) => (
+                        <li key={s.title} data-reveal style={{ ['--d' as string]: i }}>
+                            <div className={`qcl-step-art qcl-step-art--${i}`} aria-hidden="true">
+                                {i === 0 && (<><span className="qcl-doc"><i /><i /><i /><i /></span><span className="qcl-arrow-up" /></>)}
+                                {i === 1 && (<><span className="qcl-qcard"><i /><i /></span><span className="qcl-qcard"><i /><i /></span><span className="qcl-sparkle">✦</span></>)}
+                                {i === 2 && (<><span className="qcl-link-pill" /><span className="qcl-ticks"><i /><i /><i /></span></>)}
+                            </div>
+                            <span className="qcl-step-n">{i + 1}</span>
+                            <h3>{s.title}</h3>
+                            <p>{s.caption}</p>
+                        </li>
+                    ))}
+                </ol>
+            </section>
+
+            {/* Bento grid */}
+            <section className="qcl-sec" aria-labelledby="qcl-grid">
+                <h2 id="qcl-grid" className="qcl-h2" data-reveal>{copy.gridTitle}</h2>
+                <div className="qcl-bento">
+                    <article className="qcl-cell qcl-cell--wide" data-reveal>
+                        <h3>Every question type</h3>
+                        <p>MCQs, numericals, passages, maths.</p>
+                        <QuestionTypes />
+                    </article>
+                    <article className="qcl-cell qcl-cell--tall" data-reveal style={{ ['--d' as string]: 1 }}>
+                        <h3>Instant results</h3>
+                        <p>Scores the moment they submit.</p>
+                        <ScoreRing />
+                    </article>
+                    <article className="qcl-cell" data-reveal style={{ ['--d' as string]: 2 }}>
+                        <h3>English + <span lang="hi">हिंदी</span></h3>
+                        <LanguageCard />
+                    </article>
+                    <article className="qcl-cell qcl-cell--price" data-reveal style={{ ['--d' as string]: 3 }}>
+                        <span className="qcl-price">₹0</span>
+                        <h3>Unlimited quizzes</h3>
+                        <p>And unlimited students.</p>
+                    </article>
+                    <article className="qcl-cell" data-reveal style={{ ['--d' as string]: 4 }}>
+                        <h3>Any phone</h3>
+                        <p>No app to install.</p>
+                        <AnyPhone />
+                    </article>
+                    <article className="qcl-cell qcl-cell--wide" data-reveal style={{ ['--d' as string]: 5 }}>
+                        <h3>Share one link</h3>
+                        <p>WhatsApp, email or Google Classroom.</p>
+                        <ShareCard />
+                    </article>
                 </div>
-                
-                {/* Decorative mesh */}
-                <div className="absolute -inset-4 bg-indigo-500/5 rounded-3xl blur-2xl z-0 pointer-events-none"></div>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        {/* CTA Section */}
-        <section className="py-20 text-center relative overflow-hidden bg-white dark:bg-slate-950">
-          <div className="container mx-auto px-6 max-w-4xl relative z-10">
-            <h2 className="text-3xl md:text-5xl font-black mb-6 text-slate-900 dark:text-white">
-              {content.ctaHeadline}
-            </h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-10 max-w-xl mx-auto">
-              {content.ctaDesc}
-            </p>
-            <button 
-              onClick={handleStartFree}
-              className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-bold transition-all shadow-lg hover:shadow-indigo-500/25"
+            {/* Try one */}
+            <section className="qcl-sec qcl-sec--narrow" aria-labelledby="qcl-try">
+                <h2 id="qcl-try" className="qcl-h2" data-reveal>{copy.tryTitle}</h2>
+                <TryOne />
+            </section>
+
+            {/* Who it's for */}
+            <section className="qcl-sec qcl-sec--narrow" aria-labelledby="qcl-aud">
+                <h2 id="qcl-aud" className="qcl-h2" data-reveal>{copy.audienceTitle}</h2>
+                <Audiences />
+            </section>
+
+            {/* FAQ */}
+            <section className="qcl-sec qcl-sec--narrow" aria-labelledby="qcl-faq">
+                <h2 id="qcl-faq" className="qcl-h2" data-reveal>Questions</h2>
+                <div className="qcl-faq" data-reveal>
+                    {copy.faqs.map((f, i) => (
+                        <div key={f.q} className={`qcl-faq-item${openFaq === i ? ' is-open' : ''}`}>
+                            <h3>
+                                <button
+                                    type="button"
+                                    id={`qcl-faq-q-${i}`}
+                                    aria-expanded={openFaq === i}
+                                    aria-controls={`qcl-faq-a-${i}`}
+                                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                                >
+                                    <span>{f.q}</span>
+                                    <ChevronRight className="qcl-faq-chev" aria-hidden="true" />
+                                </button>
+                            </h3>
+                            <div className="qcl-faq-a" id={`qcl-faq-a-${i}`} role="region" aria-labelledby={`qcl-faq-q-${i}`}>
+                                <div><p>{f.a}</p></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Closing */}
+            <section className="qcl-closing" ref={closingRef} aria-labelledby="qcl-close" data-reveal>
+                <div className="qcl-closing-glow" aria-hidden="true" />
+                <h2 id="qcl-close">{copy.closingTitle}</h2>
+                <p>{copy.closingSub}</p>
+                <div className="qcl-actions qcl-actions--center">
+                    {cta('closing')}
+                    <a className="qcl-btn qcl-btn--dark" href="/pricing">See pricing</a>
+                </div>
+            </section>
+
+            <a
+                className={`qcl-floatcta${floatOn && floatPeek ? ' is-on' : ''}`}
+                href={ADS_CTA.href}
+                data-where="float"
+                tabIndex={floatOn && floatPeek ? 0 : -1}
+                aria-hidden={!(floatOn && floatPeek)}
             >
-              <span>Get Started Now</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </section>
-      </div>
-    </>
-  );
+                {copy.ctaLabel}
+                <ArrowRight className="qcl-btn-arrow" aria-hidden="true" />
+            </a>
+        </div>
+    );
 }

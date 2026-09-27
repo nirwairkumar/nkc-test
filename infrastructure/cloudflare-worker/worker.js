@@ -17,6 +17,8 @@ import {
 // Guides are long-form pages on testoza.com (e.g. /best-online-test-platform),
 // kept in frontend/src/guides for the same reason.
 import { GUIDES, guideAssetUrl, guideCrawlerHtml, guideJsonLd } from '../../frontend/src/guides/worker.ts';
+// Google Ads landing pages (/quiz-creator, /assessment-platform): copy shared with the React page.
+import { ADS_LANDING, adsCrawlerHtml, adsFaqSchema } from '../../frontend/src/landing/adsLanding.ts';
 // /create-mock-test-online has its own content model (frontend/src/guides/mock-test).
 import {
   MOCK_TEST_GUIDES,
@@ -297,14 +299,12 @@ function generateMetaTags(url, testData = null) {
   } else if (path === '/about') {
     title = 'Why TestoZa - Best Free Online Test Maker for Teachers | TestoZa';
     description = 'Discover why TestoZa is the preferred choice for educators and institutions. Secure proctoring, AI question generation, and instant grading.';
-  } else if (path === '/quiz-creator') {
-    title = 'Free AI Quiz & Test Generator for Teachers | TestoZa';
-    description = 'Instantly create tests, quizzes, and exams online using AI. Generate assessments from text, PDFs, or YouTube videos. Clean, modern CBT simulator.';
-    keywords = 'online quiz creator, ai quiz generator, free quiz maker, create quiz online, exam builder for teachers, TestoZa';
-  } else if (path === '/assessment-platform') {
-    title = 'CBT & Online Assessment Platform | Free Exam Creator | TestoZa';
-    description = 'Create, distribute, and grade computer-based tests (CBT) and classroom assessments online. Get detailed student score reports instantly.';
-    keywords = 'cbt assessment platform, computer based test, online exam platform, classroom assessment, exam software, TestoZa';
+  } else if (path === ADS_LANDING.quiz.path || path === ADS_LANDING.assessment.path) {
+    // Same title and description as GoogleAdsLanding.tsx (frontend/src/landing/adsLanding.ts).
+    const ads = path === ADS_LANDING.quiz.path ? ADS_LANDING.quiz : ADS_LANDING.assessment;
+    title = ads.seoTitle;
+    description = ads.description;
+    keywords = `${ads.keywords.join(", ")}, TestoZa`;
   } else if (path === '/login') {
     title = 'Login to TestoZa | Free Online Test Maker';
     description = 'Sign in to your TestoZa account to create tests, manage exams, and view student results.';
@@ -467,6 +467,12 @@ function escapeHtml(text) {
  */
 function generateRouteContent(url, testData = null) {
   const path = new URL(url).pathname;
+
+  // ─── 0a. GOOGLE ADS LANDING PAGES ─────────────────────────────────────────
+  const ads = [ADS_LANDING.quiz, ADS_LANDING.assessment].find((a) => a.path === path);
+  if (ads) {
+    return { bodyHtml: adsCrawlerHtml(ads), faqSchema: adsFaqSchema(ads) };
+  }
 
   // ─── 0. GUIDES ──────────────────────────────────────────────────────────────
   // The whole guide as plain HTML, and one JSON-LD graph (Article, FAQPage,

@@ -131,6 +131,9 @@ export default function Layout() {
         location.pathname === '/terms-and-conditions' ||
         GUIDE_PATHS.has(location.pathname) ||
         location.pathname === '/create-mock-test-online' ||
+        // Google Ads landing pages: a visitor from an ad should not see the app's menu.
+        location.pathname === '/quiz-creator' ||
+        location.pathname === '/assessment-platform' ||
         ((location.pathname === '/dashboard' || location.pathname === '/explore') && !user);
 
     const handleToggleSidebar = () => {
