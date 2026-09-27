@@ -13,7 +13,14 @@ import type { ArticleFaq, ArticleSourceGroup } from '../blog/articles/types';
 export type { ArticleFaq as GuideFaq, ArticleSourceGroup as GuideSourceGroup };
 
 /** Interactive parts of a guide. The React page renders them; crawlers get `fallbackHtml`. */
-export type GuideWidget = 'live-exam' | 'results-rings';
+export type GuideWidget =
+    // best-online-test-platform
+    | 'live-exam'
+    | 'results-rings'
+    // cbt-exam-software
+    | 'omr-to-cbt'
+    | 'marking-lab'
+    | 'exam-day';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };
@@ -48,6 +55,8 @@ export interface GuideMeta {
     readMinutes: number;
     cover: { src: string; alt: string; width: number; height: number };
     keywords: string[];
+    /** The main call to action (hero button, floating button, crawler link). Defaults to the AI test generator. */
+    cta?: { label: string; href: string };
 }
 
 export interface Guide {
@@ -58,6 +67,8 @@ export interface Guide {
         answer: string;
         sections: GuideSection[];
         faqs: ArticleFaq[];
+        /** Heading of the closing section. Defaults to "Start with one real test". */
+        closingTitle?: string;
         closing: GuideBlock[];
         sources: ArticleSourceGroup[];
     };

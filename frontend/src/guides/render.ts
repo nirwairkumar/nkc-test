@@ -15,6 +15,12 @@ const escapeText = (value: string) =>
 /** A block as plain HTML: widgets become their fallback text. */
 export const guideBlockHtml = (block: GuideBlock) => (block.type === 'html' ? block.html : block.fallbackHtml);
 
+/** The guide's main call to action (hero button, floating button, crawler link). */
+export const guideCta = ({ meta }: Guide) => meta.cta ?? { label: 'Make a test with AI, free', href: '/generate-with-ai' };
+
+/** Heading of the closing section. */
+export const guideClosingTitle = ({ body }: Guide) => body.closingTitle ?? 'Start with one real test';
+
 /** Words of running text, for structured data. */
 export function guideWordCount({ meta, body }: Guide): number {
     const markup = [
@@ -93,6 +99,7 @@ export function guideJsonLd(guide: Guide) {
  */
 export function guideCrawlerHtml(guide: Guide): string {
     const { meta, body } = guide;
+    const cta = guideCta(guide);
     const nav = body.sections
         .map((s) => `<li><a href="#${s.id}">${escapeText(s.title)}</a></li>`)
         .concat('<li><a href="#faq">Frequently asked questions</a></li>')
@@ -111,7 +118,7 @@ export function guideCrawlerHtml(guide: Guide): string {
 <h1>${escapeText(meta.title)}</h1>
 <p>${escapeText(meta.dek)}</p>
 <p>By ${escapeText(meta.author)} · ${formatArticleDate(meta.datePublished)} · ${meta.readMinutes} min read</p>
-<p><a href="${SITE_URL}/generate-with-ai">Make a test with AI on TestoZa, free</a></p>
+<p><a href="${SITE_URL}${cta.href}">${escapeText(cta.label)}</a></p>
 ${body.intro.map(guideBlockHtml).join('\n')}
 <aside><h2>The short answer</h2><p>${escapeText(body.answer)}</p></aside>
 <nav aria-label="In this guide"><h2>In this guide</h2><ol>${nav}</ol></nav>
@@ -119,7 +126,7 @@ ${sections}
 <section id="faq"><h2>Frequently asked questions</h2>
 ${faqs}
 </section>
-<section id="start"><h2>Start with one real test</h2>
+<section id="start"><h2>${escapeText(guideClosingTitle(guide))}</h2>
 ${body.closing.map(guideBlockHtml).join('\n')}
 </section>
 <section><h2>Sources</h2><ul>${sources}</ul></section>

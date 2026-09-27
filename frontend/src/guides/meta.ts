@@ -39,8 +39,42 @@ export const BEST_PLATFORM_META: GuideMeta = {
     ],
 };
 
+export const CBT_META: GuideMeta = {
+    slug: 'cbt-exam-software',
+    path: '/cbt-exam-software',
+    title: 'CBT exam software: run a real computer-based test from any browser',
+    seoTitle: 'CBT Exam Software for Coaching Institutes & Schools (NTA-Style)',
+    description:
+        'CBT exam software for coaching institutes and schools: an NTA-style exam screen, exact marking schemes, calculator, keypad, exam rules and instant results.',
+    dek:
+        'NEET-UG is set to leave OMR sheets for computers in 2027, joining JEE Main, CUET, GATE and SSC. If your students will sit a computer-based test, they should practise on one. Here is what good CBT exam software does, how to run a CBT for a whole batch without a test centre, and where TestoZa fits.',
+    author: 'TestoZa Team',
+    datePublished: '2026-09-28T12:00:00+05:30',
+    dateModified: '2026-09-28T12:00:00+05:30',
+    readMinutes: 12,
+    cover: {
+        src: '/guides/cbt-exam-software/cover.png',
+        alt: 'An NTA-style computer-based test on a tablet: question, numeric keypad, timer and colour-coded question palette',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'CBT exam software',
+        'computer based test software',
+        'online CBT exam platform',
+        'CBT mock test software for coaching institutes',
+        'NTA style CBT interface',
+        'conduct CBT exam online',
+        'CBT exam software for schools',
+        'NEET CBT practice',
+        'JEE Main CBT mock test',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a CBT paper, free', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

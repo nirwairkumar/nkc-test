@@ -340,6 +340,19 @@ A long-form guide for teachers, coaching institutes and students on choosing an 
 
 ---
 
+## Guide: CBT exam software (https://testoza.com/cbt-exam-software)
+
+A long-form guide for coaching institutes, schools and teachers on computer-based testing (CBT).
+
+- **Which exams are CBTs (September 2026):** JEE Main, CUET UG, GATE and SSC CGL Tier 1 are computer-based; NEET-UG was pen-and-paper (OMR) in 2026 and NTA told the Supreme Court it will move to CBT from 2027.
+- **The exam screen:** TestoZa tests open in Standard Mode by default ("traditional JEE / NEET / government exam format with right-side question palette"): palette states Not Visited, Not Answered, Answered, Review and Ans & Review; Save & Next, Review, Ans & Review and Clear buttons; a virtual numeric keypad (digits, decimal point, minus) on numerical questions; subject sections; an A−/A+ text-size control; an optional scientific calculator per test. A cleaner Modern Mode is available on paid plans.
+- **Marking:** marks and negative marks per test, per section or per question (fractions such as 1/3 accepted); numerical answers can accept a min–max range; multi-correct questions give proportional partial credit and any wrong option costs the negative mark; section attempt control ("attempt any N") either blocks extra answers or counts the best N or first N. Scores are calculated on the server.
+- **Running a CBT:** build a paper with the AI generator or upload a full paper (sections and solutions) as JSON; Conduct gives the test its own exam link and private results; progress is kept on the student's device with a resume prompt for signed-in students; when time is up answering locks and the student submits; results show immediately or can be held; combined tests link two papers with a timed break (30 minutes by default).
+- **Paid plans** add exam-security rules (full screen, tab-switch limits, copy-paste block), scheduling, start forms, branding and Excel export.
+- **Limits:** no separate per-section timers; a browser cannot lock down a device like a test centre; the student confirms submission when time is up.
+
+---
+
 ## Create a Mock Test Online (guide)
 
 Guide: https://testoza.com/create-mock-test-online

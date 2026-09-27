@@ -11,7 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
-import { BEST_PLATFORM_META } from "@/guides/meta";
+import { BEST_PLATFORM_META, CBT_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -128,6 +128,7 @@ const BlogPostRoute = () => {
 
 // Guides (src/guides): long-form pages on testoza.com, served to crawlers by the worker.
 const BestOnlineTestPlatform = safeLazy(() => import("./pages/guides/BestOnlineTestPlatform"));
+const CbtExamSoftware = safeLazy(() => import("./pages/guides/CbtExamSoftware"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -270,6 +271,7 @@ const App = () => (
 
                     {/* Guides */}
                     <Route path={BEST_PLATFORM_META.path} element={<BestOnlineTestPlatform />} />
+                    <Route path={CBT_META.path} element={<CbtExamSoftware />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />

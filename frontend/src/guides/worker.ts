@@ -4,9 +4,10 @@
  * every guide with the same head data, JSON-LD and body text the React page uses.
  */
 import { BEST_ONLINE_TEST_PLATFORM } from './bestOnlineTestPlatform';
+import { CBT_EXAM_SOFTWARE } from './cbtExamSoftware';
 import type { Guide } from './types';
 
-export const GUIDES: Guide[] = [BEST_ONLINE_TEST_PLATFORM];
+export const GUIDES: Guide[] = [CBT_EXAM_SOFTWARE, BEST_ONLINE_TEST_PLATFORM];
 
 export { guideCrawlerHtml, guideJsonLd } from './render';
 export { guideAssetUrl, guideUrl } from './meta';
