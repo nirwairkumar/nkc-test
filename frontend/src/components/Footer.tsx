@@ -41,6 +41,8 @@ const LINK_COLUMNS = [
             { label: 'Online tests for coaching', to: '/online-test-for-coaching' },
             { label: 'Online proctoring software', to: '/online-proctoring-software' },
             { label: 'Assessment platform', to: '/assessment-platform' },
+            // Long-form guide (src/guides).
+            { label: 'Best online test platform', to: '/best-online-test-platform' },
         ],
     },
     {

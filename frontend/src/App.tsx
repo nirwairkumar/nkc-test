@@ -11,6 +11,7 @@ import PageLoader from "@/components/ui/PageLoader";
 import { Suspense, lazy, useEffect } from "react";
 import SubdomainGuard from "@/components/SubdomainGuard";
 import { WHITE_BOXES_META } from "@/blog/articles/meta";
+import { BEST_PLATFORM_META } from "@/guides/meta";
 
 import Layout from "./Layout";
 // Lazy Load Pages
@@ -122,6 +123,9 @@ const BlogPostRoute = () => {
   const StaticArticle = slug ? STATIC_ARTICLE_PAGES[slug] : undefined;
   return StaticArticle ? <StaticArticle /> : <NewsPostView />;
 };
+
+// Guides (src/guides): long-form pages on testoza.com, served to crawlers by the worker.
+const BestOnlineTestPlatform = safeLazy(() => import("./pages/guides/BestOnlineTestPlatform"));
 
 const TeacherDashboard = safeLazy(() => import("./components/dashboard/TeacherDashboard"));
 
@@ -258,6 +262,9 @@ const App = () => (
                     <Route path="/white-label-test-platform" element={<UseCaseLandingPage />} />
                     <Route path="/auto-grading-software" element={<UseCaseLandingPage />} />
                     <Route path="/online-proctoring-software" element={<UseCaseLandingPage />} />
+
+                    {/* Guides */}
+                    <Route path={BEST_PLATFORM_META.path} element={<BestOnlineTestPlatform />} />
 
                     {/* SEO Subject Hub Pages */}
                     <Route path="/create-test/:subject" element={<SubjectLandingPage />} />

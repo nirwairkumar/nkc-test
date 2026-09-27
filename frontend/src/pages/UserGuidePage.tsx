@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { WHITE_BOXES_META, staticArticleUrl } from '@/blog/articles/meta';
+import { BEST_PLATFORM_META } from '@/guides/meta';
 
 // --- Guide Content Registry ---
 interface SubSection {
@@ -470,6 +471,14 @@ export default function UserGuidePage() {
                             Need to fix a PDF before you turn it into a test? Panna, TestoZa’s free PDF editor, changes text in the document’s own font, erases for real and works in your browser.{' '}
                             <button type="button" onClick={() => navigate('/user-guide/pdf-tools')} className="font-semibold underline underline-offset-2">
                                 See the PDF tools guide
+                            </button>
+                            .
+                        </AlertBlock>
+
+                        <AlertBlock type="info" title="Choosing a test platform?">
+                            Our guide covers what an online test platform has to get right, how TestoZa compares with Google Forms and Moodle, and how students can turn a textbook photo into a timed mock.{' '}
+                            <button type="button" onClick={() => navigate(BEST_PLATFORM_META.path)} className="font-semibold underline underline-offset-2">
+                                Read the guide
                             </button>
                             .
                         </AlertBlock>

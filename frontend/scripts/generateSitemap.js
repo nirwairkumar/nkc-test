@@ -108,6 +108,9 @@ async function generateSitemap() {
             { url: '/compare/google-forms-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/compare/quizizz-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/compare/typeform-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+
+            // Guides (src/guides)
+            { url: '/best-online-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-27T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend
