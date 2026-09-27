@@ -29,7 +29,8 @@ const MARKETING_PATHS = [
   '/convert',
   '/pdf',
   '/quiz-creator',
-  '/assessment-platform'
+  '/assessment-platform',
+  '/create-mock-test-online'
 ];
 
 /**

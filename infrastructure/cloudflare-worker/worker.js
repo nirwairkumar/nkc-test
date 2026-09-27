@@ -14,6 +14,15 @@ import {
   staticArticleUrl,
   staticAssetUrl
 } from '../../frontend/src/blog/articles/worker.ts';
+// Guides are the same idea for long-form pages on testoza.com itself
+// (frontend/src/guides), e.g. testoza.com/create-mock-test-online.
+import {
+  GUIDES,
+  guideAssetUrl,
+  guideCrawlerHtml,
+  guideJsonLd,
+  guideUrl
+} from '../../frontend/src/guides/worker.ts';
 
 // Configuration
 const CONFIG = {
@@ -1229,7 +1238,7 @@ const BLOG_PREFIXES = ['news', 'blog', 'posts'];
 const APP_SECTIONS = new Set([
   'share', 'about', 'ai-question-generator', 'all-submissions', 'analysis', 'analytics', 'assessment-platform',
   'auth', 'auth-error', 'auto-grading-software', 'combined-break', 'combined-intro', 'compare',
-  'create-combined-test', 'create-test', 'creator', 'dashboard', 'edit-test', 'exam-software-for-schools',
+  'create-combined-test', 'create-mock-test-online', 'create-test', 'creator', 'dashboard', 'edit-test', 'exam-software-for-schools',
   'explore', 'generate-with-ai', 'history', 'live', 'login', 'materials', 'mcq-test-maker', 'more-tests',
   'my-posts', 'my-tests', 'notifications', 'onboarding', 'online-exam-software', 'online-proctoring-software',
   'online-quiz-maker', 'online-test-for-coaching', 'online-test-maker', 'pdf-to-quiz', 'premium', 'pricing',
@@ -1625,6 +1634,82 @@ function mainSiteBlogRedirect(url) {
   return null; // /news/create and /news/edit/<id> stay in the app
 }
 
+// ─── testoza.com guides ──────────────────────────────────────────────────────
+// Long-form pages whose text lives in frontend/src/guides. Crawlers and AI
+// assistants that don't run JavaScript get the whole guide in <main>, plus the
+// same title, description, canonical and JSON-LD (article, how-to, FAQ,
+// breadcrumb) the React page sets, so nothing changes when the app hydrates.
+
+const GUIDE_BY_PATH = new Map(GUIDES.map((g) => [g.meta.path, g]));
+
+/** Head tags for a guide. Keep the title format identical to SEO.tsx ("… | TestoZa"). */
+function guideHeadTags(guide) {
+  const { meta } = guide;
+  const url = guideUrl(meta.path);
+  const image = guideAssetUrl(meta.cover.src);
+  return `
+    <!-- Guide SEO (Cloudflare Worker, text from frontend/src/guides) -->
+    <title>${escapeHtml(`${meta.seoTitle} | TestoZa`)}</title>
+    <meta name="description" content="${escapeHtml(meta.description)}">
+    <meta name="keywords" content="${escapeHtml(meta.keywords.join(', '))}">
+    <meta name="author" content="${escapeHtml(meta.author)}">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="${escapeHtml(url)}">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="TestoZa">
+    <meta property="og:locale" content="en_IN">
+    <meta property="og:url" content="${escapeHtml(url)}">
+    <meta property="og:title" content="${escapeHtml(meta.seoTitle)}">
+    <meta property="og:description" content="${escapeHtml(meta.description)}">
+    <meta property="og:image" content="${escapeHtml(image)}">
+    <meta property="og:image:width" content="${meta.cover.width}">
+    <meta property="og:image:height" content="${meta.cover.height}">
+    <meta property="og:image:alt" content="${escapeHtml(meta.cover.alt)}">
+    <meta property="article:published_time" content="${escapeHtml(meta.datePublished)}">
+    <meta property="article:modified_time" content="${escapeHtml(meta.dateModified)}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@testoza">
+    <meta name="twitter:title" content="${escapeHtml(meta.seoTitle)}">
+    <meta name="twitter:description" content="${escapeHtml(meta.description)}">
+    <meta name="twitter:image" content="${escapeHtml(image)}">
+    <script type="application/ld+json">
+${safeJsonLd(guideJsonLd(guide))}
+    </script>
+`;
+}
+
+/**
+ * The app's index.html from Pages with the guide's head and its full text in
+ * <main>. The browser still gets the full app: React replaces <main> on load.
+ */
+async function serveGuideHtml(request, guide) {
+  const originResponse = await fetch(request);
+  if (!originResponse.ok) return originResponse;
+
+  // Everything that describes the homepage instead of this guide. The site-wide
+  // WebSite / Organization / SoftwareApplication JSON-LD stays.
+  const strip = [
+    'title', 'meta[name="description"]', 'meta[name="keywords"]', 'meta[name="author"]',
+    'meta[name="robots"]', 'meta[name="googlebot"]', 'link[rel="canonical"]',
+    'meta[property^="og:"]', 'meta[name^="twitter:"]', 'script#schema-faq'
+  ];
+  const rewriter = new HTMLRewriter();
+  for (const selector of strip) {
+    rewriter.on(selector, { element(el) { el.remove(); } });
+  }
+  rewriter
+    .on('head', { element(el) { el.append(guideHeadTags(guide), { html: true }); } })
+    .on('main', { element(el) { el.setInnerContent(guideCrawlerHtml(guide), { html: true }); } });
+
+  const transformed = rewriter.transform(originResponse);
+  const headers = new Headers(transformed.headers);
+  for (const [name, value] of Object.entries(securityHeaders())) headers.set(name, value);
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  // Pages sends "max-age=0, must-revalidate" for HTML; keep it, so a new deploy
+  // is never served with an old page that points at deleted asset files.
+  return new Response(transformed.body, { status: 200, headers });
+}
+
 /** Old testoza.com PDF-tool URLs → their pages on pdf.testoza.com. */
 const PANNA_MOVED = {
   '/pdf': '/',
@@ -1722,6 +1807,15 @@ export default {
       const hasStaticExtension = /\.(txt|json|css|js|png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i.test(url.pathname);
       if (hasStaticExtension) {
         return fetch(request);
+      }
+
+      // Guides (frontend/src/guides): full text and structured data for crawlers.
+      const guide = GUIDE_BY_PATH.get(url.pathname.replace(/\/+$/, '') || '/');
+      if (guide) {
+        if (url.pathname !== guide.meta.path) {
+          return Response.redirect(`${CONFIG.FRONTEND_URL}${guide.meta.path}${url.search}`, 301);
+        }
+        return await serveGuideHtml(request, guide);
       }
 
       // HTML pages & client-side routes (all routes without a static file extension)

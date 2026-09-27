@@ -9,6 +9,10 @@ import AuthModal from '@/components/auth/AuthModal';
 import { analytics } from '@/lib/analytics/tracker';
 import { mainDomainRedirect } from '@/utils/subdomain';
 import { PanelLeft } from 'lucide-react';
+import { GUIDE_METAS } from '@/guides/meta';
+
+/** Guides are reading pages: no app sidebar. */
+const GUIDE_PATHS = new Set(GUIDE_METAS.map((g) => g.path));
 
 export default function Layout() {
     const location = useLocation();
@@ -125,6 +129,8 @@ export default function Layout() {
         location.pathname === '/convert' ||
         location.pathname === '/privacy-policy' ||
         location.pathname === '/terms-and-conditions' ||
+        GUIDE_PATHS.has(location.pathname) ||
+        location.pathname === '/create-mock-test-online' ||
         ((location.pathname === '/dashboard' || location.pathname === '/explore') && !user);
 
     const handleToggleSidebar = () => {

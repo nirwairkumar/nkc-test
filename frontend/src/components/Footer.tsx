@@ -25,6 +25,7 @@ const LINK_COLUMNS = [
         title: 'Create',
         links: [
             { label: 'AI test generator', to: '/generate-with-ai' },
+            { label: 'Create a mock test online', to: '/create-mock-test-online' },
             { label: 'Manual test builder', to: '/create-test' },
             { label: 'PDF to quiz', to: '/pdf-to-quiz' },
             { label: 'AI question generator', to: '/ai-question-generator' },
@@ -41,6 +42,8 @@ const LINK_COLUMNS = [
             { label: 'Online tests for coaching', to: '/online-test-for-coaching' },
             { label: 'Online proctoring software', to: '/online-proctoring-software' },
             { label: 'Assessment platform', to: '/assessment-platform' },
+            // Long-form guide (src/guides).
+            { label: 'Best online test platform', to: '/best-online-test-platform' },
         ],
     },
     {

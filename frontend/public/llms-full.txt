@@ -328,6 +328,34 @@ Complete guide: https://blog.testoza.com/stop-painting-white-boxes-on-your-pdfs
 
 ---
 
+## Guide: The best online test platform (https://testoza.com/best-online-test-platform)
+
+A long-form guide for teachers, coaching institutes and students on choosing an online test platform.
+
+- **What a platform must do:** get questions in quickly (PDFs, old papers, photos, video lessons); look like the real computer-based exam (countdown, question palette, sections); follow the exam's marking scheme, including negative marking; keep the test fair (full screen, tab-switch limits, no copy and paste, shuffling); work in a phone browser on patchy data; show useful results (time per question, topic accuracy, rank list); and cost what the job is worth.
+- **Other tools:** Google Forms has no built-in timer or negative marking and its locked mode works only on managed Chromebooks; Microsoft Forms has a 1–999 minute quiz timer; Moodle is capable but must be hosted and configured; game-style apps (Kahoot, Wayground, formerly Quizizz) are built for engagement rather than formal exams.
+- **Teachers:** the AI test generator accepts PDF, Word, PowerPoint and photos (including the phone camera). Extract mode copies an existing paper's questions, options and diagrams; Generate mode writes new questions. English, Hindi or bilingual papers; per-question marks and negative marks; sections with "attempt any N" rules; students need no app or account.
+- **Coaching institutes:** any test can run as a live exam with its own link and private results. Paid weekly, monthly and yearly plans add exam rules (full screen, tab-switch limits with auto-submit, copy-paste block, shuffling), scheduling, start forms, institute branding and Excel export. Combined papers can run as one session with breaks.
+- **Students:** photograph textbook pages or an old question paper, choose Extract or Generate, set a timer and marking, keep the test private and take it like the real exam. Results show score, accuracy, time per question and strong/moderate/weak topics, with an AI mentor chat and, for exams such as JEE, NEET, SSC, RRB and GATE, a rough AI rank estimate.
+
+---
+
+## Create a Mock Test Online (guide)
+
+Guide: https://testoza.com/create-mock-test-online
+
+A mock test is a practice exam that copies the real one: the same number and type of questions, the same time limit, the same marking scheme including negative marks, and a similar exam screen. On TestoZa, students, teachers and coaching institutes build one from material they already have:
+
+- **Extract Questions**: upload a question paper, previous-year questions or a worksheet (PDF, Word, PowerPoint, JPG, PNG or WebP; several photos at once) and the questions, options and diagrams are copied as printed. A separate answer key can be uploaded and matched automatically.
+- **Generate New Questions**: upload photos of a textbook chapter, notes or slides and the AI writes new questions at Easy, Moderate or Tough difficulty, in the material's language, English, Hindi, or both (bilingual). Plain-language instructions set the count and marking scheme (for example "4 marks each, minus 1 for a wrong answer").
+- **Test builder**: type or paste single-correct and multi-correct MCQs, numerical-answer questions (with an accepted range) and comprehension passages, with LaTeX for maths and chemistry.
+
+Tests open by default in an NTA-style interface similar to computer-based exams such as JEE Main: a numbered question palette with five states (not visited, not answered, answered, marked for review, answered and marked for review), Mark for Review, an on-screen keypad for numerical answers, a countdown timer that submits the test at zero, per-section marks and negative marks, and an optional scientific calculator. Results sort every question into four groups by correctness and time taken: fast and accurate, slow and accurate, fast and careless, and time traps.
+
+Creating tests, the AI and auto-grading are free; a free account is needed to create tests, while students can take a shared test without an account. New tests are private until shared. Objective questions are graded automatically; long written answers are not. AI reading is reliable on clean print and should always be reviewed, especially for blurry photos, faint photocopies or messy handwriting. TestoZa is not affiliated with the NTA, SSC or UPSC.
+
+---
+
 ## Frequently Asked Questions (FAQ)
 
 ### How does Testoza use AI to create tests?

@@ -64,6 +64,8 @@ async function generateSitemap() {
             { url: '/', changefreq: 'daily', priority: 1.0, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/quiz-creator', changefreq: 'weekly', priority: 0.95, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/assessment-platform', changefreq: 'weekly', priority: 0.95, lastmod: STATIC_PAGE_LASTMOD },
+            // Guides (src/guides): lastmod follows each guide's dateModified.
+            { url: '/create-mock-test-online', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-27T00:00:00.000Z' },
             { url: '/generate-with-ai', changefreq: 'weekly', priority: 0.9, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/create-test', changefreq: 'weekly', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/more-tests', changefreq: 'daily', priority: 0.85, lastmod: STATIC_PAGE_LASTMOD },
@@ -108,6 +110,9 @@ async function generateSitemap() {
             { url: '/compare/google-forms-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/compare/quizizz-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
             { url: '/compare/typeform-alternative', changefreq: 'monthly', priority: 0.8, lastmod: STATIC_PAGE_LASTMOD },
+
+            // Guides (src/guides)
+            { url: '/best-online-test-platform', changefreq: 'monthly', priority: 0.9, lastmod: '2026-09-27T00:00:00.000Z' },
         ];
 
         // 1. Fetch Tests from Backend
