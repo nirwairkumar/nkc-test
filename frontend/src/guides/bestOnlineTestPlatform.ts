@@ -14,8 +14,9 @@
  *     FullTestAnalysisPage.tsx (rank list), BehavioralTimeMatrix (time per question)
  *   - Visibility: documentation/2026-05-09-test-visibility-and-security-model.md
  * Competitor facts come from their own help pages (see `sources`).
- * Do not add claims the product can't back up (e.g. QR codes, numerical answer
- * ranges and independent section timers are NOT in the product).
+ * Do not add claims the product can't back up (e.g. QR codes and independent
+ * section timers are NOT in the product). Numerical answers do accept a min–max
+ * range (TestBuilder, backend/app/services/scoring.py).
  */
 import { BEST_PLATFORM_META } from './meta';
 import type { Guide } from './types';

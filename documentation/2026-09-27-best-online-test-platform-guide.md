@@ -100,7 +100,7 @@ Rules for `src/guides/*`: no React, no browser APIs, no `@/` aliases, no npm imp
 | Topic strength, AI mentor chat, AI rank estimate for JEE/NEET/SSC/RRB/GATE-type tests | `ResultsPage.tsx`, `AIChatBot.tsx` |
 | Combined papers with a break screen | `CreateCombinedTestPage.tsx`, `CombinedBreakScreen.tsx` |
 
-**Deliberately not claimed** (not in the code): QR-code sharing, numerical answer ranges/tolerance, independent section timers. The landing page copy mentions some of these — worth reviewing separately.
+**Deliberately not claimed** (not in the code): QR-code sharing, independent section timers. The landing page copy mentions these — worth reviewing separately. *Correction (2026-09-27):* an earlier version of this line also listed numerical answer ranges; those do exist — numerical questions store a min–max range (`TestBuilder.tsx`, `backend/app/services/scoring.py`).
 
 ---
 

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { WHITE_BOXES_META, staticArticleUrl } from '@/blog/articles/meta';
-import { BEST_PLATFORM_META } from '@/guides/meta';
+import { BEST_PLATFORM_META, CBT_META } from '@/guides/meta';
 
 // --- Guide Content Registry ---
 interface SubSection {
@@ -1049,6 +1049,16 @@ export default function UserGuidePage() {
                                     After selecting either option, your test will return to the inactive state.
                                 </p>
                             </div>
+                        </div>
+
+                        <div className="pt-8">
+                            <AlertBlock type="info" title="Running a computer-based test (CBT)?">
+                                Our CBT guide covers the NTA-style exam screen, marking schemes for JEE Main, NEET, CUET, SSC and GATE, and a full exam day from paper to rank list.{' '}
+                                <button type="button" onClick={() => navigate(CBT_META.path)} className="font-semibold underline underline-offset-2">
+                                    Read the CBT guide
+                                </button>
+                                .
+                            </AlertBlock>
                         </div>
                     </div>
                 );

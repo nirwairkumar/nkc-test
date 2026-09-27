@@ -216,6 +216,9 @@ function ResultsRings() {
     );
 }
 
+/** The best-online-test-platform guide's widgets. */
 export default function GuideWidget({ name }: { name: GuideWidgetName }) {
-    return name === 'live-exam' ? <LiveExam /> : <ResultsRings />;
+    if (name === 'live-exam') return <LiveExam />;
+    if (name === 'results-rings') return <ResultsRings />;
+    return null;
 }

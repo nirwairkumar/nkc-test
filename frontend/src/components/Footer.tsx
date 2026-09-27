@@ -42,7 +42,8 @@ const LINK_COLUMNS = [
             { label: 'Online tests for coaching', to: '/online-test-for-coaching' },
             { label: 'Online proctoring software', to: '/online-proctoring-software' },
             { label: 'Assessment platform', to: '/assessment-platform' },
-            // Long-form guide (src/guides).
+            // Long-form guides (src/guides).
+            { label: 'CBT exam software', to: '/cbt-exam-software' },
             { label: 'Best online test platform', to: '/best-online-test-platform' },
         ],
     },
