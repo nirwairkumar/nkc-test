@@ -25,7 +25,7 @@ export interface GuidePageProps {
     keyPhrase: string;
     /** The hero's visual (right column on wide screens). */
     hero: ReactNode;
-    /** The quieter second hero button. */
+    /** The quieter second hero button. A "#section" href scrolls within the page. */
     secondaryCta: { label: string; href: string };
     /** Renders this guide's widgets. */
     renderWidget: (name: GuideWidget) => ReactNode;
@@ -269,9 +269,15 @@ export default function GuidePage({
                                 <span>{cta.label}</span>
                                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
                             </Link>
-                            <Link to={secondaryCta.href} className="gd-btn gd-btn--glass">
-                                <span>{secondaryCta.label}</span>
-                            </Link>
+                            {secondaryCta.href.startsWith('#') ? (
+                                <a href={secondaryCta.href} className="gd-btn gd-btn--glass">
+                                    <span>{secondaryCta.label}</span>
+                                </a>
+                            ) : (
+                                <Link to={secondaryCta.href} className="gd-btn gd-btn--glass">
+                                    <span>{secondaryCta.label}</span>
+                                </Link>
+                            )}
                         </div>
                         <div className="gd-byline">
                             <img src="/logo-testoza-square.svg" alt="" width={32} height={32} />

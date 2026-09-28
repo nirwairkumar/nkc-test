@@ -73,8 +73,43 @@ export const CBT_META: GuideMeta = {
     cta: { label: 'Build a CBT paper, free', href: '/generate-with-ai' },
 };
 
+export const JEE_META: GuideMeta = {
+    slug: 'jee-mock-test-platform',
+    path: '/jee-mock-test-platform',
+    title: 'JEE mock test platform: build real JEE papers without learning LaTeX',
+    seoTitle: 'JEE Mock Test Platform for Faculty, Institutes & Students',
+    description:
+        'Build JEE Main and Advanced mocks with AI and the Sy Pad keyboard: integrals and chemical equations without LaTeX, an NTA-style exam screen and exact marking.',
+    dek:
+        'A JEE paper is the hardest kind of paper to put online. Integrals, determinants, reaction arrows and List-I/List-II tables usually mean someone learns LaTeX, or the questions go up as blurry screenshots. Here is how faculty build a real JEE Main or Advanced mock with AI and an on-screen maths keyboard, how an institute runs it for every batch, and how a student uses the same platform alone.',
+    author: 'TestoZa Team',
+    datePublished: '2026-09-28T12:00:00+05:30',
+    dateModified: '2026-09-28T12:00:00+05:30',
+    readMinutes: 19,
+    cover: {
+        src: '/guides/jee-mock-test-platform/cover.png',
+        alt: 'The Sy Pad keyboard building a definite integral and a chemical equation inside a JEE question in TestoZa',
+        width: 1200,
+        height: 630,
+    },
+    keywords: [
+        'JEE mock test platform',
+        'JEE Main mock test platform',
+        'JEE Advanced mock test',
+        'create JEE mock test online',
+        'online test platform for JEE coaching',
+        'type chemical equations in online test',
+        'maths equation keyboard for teachers',
+        'LaTeX without coding',
+        'mhchem chemical equations',
+        'NTA style mock test',
+        'TestoZa',
+    ],
+    cta: { label: 'Build a JEE mock, free', href: '/generate-with-ai' },
+};
+
 /** Newest first. */
-export const GUIDE_METAS: GuideMeta[] = [CBT_META, BEST_PLATFORM_META];
+export const GUIDE_METAS: GuideMeta[] = [JEE_META, CBT_META, BEST_PLATFORM_META];
 
 /** Canonical URL of a guide. */
 export const guideUrl = (path: string) => `${SITE_URL}${path}`;

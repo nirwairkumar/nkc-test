@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { WHITE_BOXES_META, staticArticleUrl } from '@/blog/articles/meta';
-import { BEST_PLATFORM_META, CBT_META } from '@/guides/meta';
+import { BEST_PLATFORM_META, CBT_META, JEE_META } from '@/guides/meta';
 
 // --- Guide Content Registry ---
 interface SubSection {
@@ -766,6 +766,13 @@ export default function UserGuidePage() {
             case 'notation-matching':
                 return (
                     <div className="space-y-4">
+                        <AlertBlock type="info" title="Rather not type LaTeX at all?">
+                            The Sy Pad keyboard in the test builder writes this code for you as you tap keys, and the AI writes it when it reads your PDFs and photos. Our JEE guide has a working Sy Pad you can try.{' '}
+                            <button type="button" onClick={() => navigate(JEE_META.path)} className="font-semibold underline underline-offset-2">
+                                Read the JEE mock test guide
+                            </button>
+                            .
+                        </AlertBlock>
                         <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-emerald-500" /></div>}>
                             <ScientificNotationGuide isInline />
                         </React.Suspense>

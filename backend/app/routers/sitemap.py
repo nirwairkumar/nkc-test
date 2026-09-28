@@ -48,6 +48,9 @@ STATIC_PAGES = [
     {"loc": "/assessment-platform", "priority": "0.95", "changefreq": "weekly"},
     # Guides (frontend/src/guides): long-form pages whose text the SEO worker serves to crawlers.
     {"loc": "/create-mock-test-online", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/best-online-test-platform", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/cbt-exam-software", "priority": "0.9", "changefreq": "monthly"},
+    {"loc": "/jee-mock-test-platform", "priority": "0.9", "changefreq": "monthly"},
     {"loc": "/generate-with-ai", "priority": "0.9", "changefreq": "weekly"},
     {"loc": "/create-test", "priority": "0.85", "changefreq": "weekly"},
     {"loc": "/more-tests", "priority": "0.85", "changefreq": "daily"},

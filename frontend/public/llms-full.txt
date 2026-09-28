@@ -353,6 +353,19 @@ A long-form guide for coaching institutes, schools and teachers on computer-base
 
 ---
 
+## Guide: JEE mock test platform (https://testoza.com/jee-mock-test-platform)
+
+A long-form guide for JEE faculty, coaching institutes and JEE aspirants on building JEE Main and JEE Advanced mock tests without learning LaTeX.
+
+- **The target:** JEE Main Paper 1 has 75 questions for 300 marks in 3 hours (20 multiple-choice and 5 numerical questions per subject, all compulsory; +4 correct, −1 for a wrong MCQ; negative marking on numericals has changed over the years, so check the year's bulletin). JEE Advanced is two compulsory 3-hour papers whose question types change yearly: single-correct, one-or-more-correct with partial marks and −2 for a wrong option, numerical answers to two decimal places, List-I/List-II matching.
+- **Notation without code:** LaTeX writes maths as text, KaTeX draws it in the browser, mhchem (\ce{...}) writes chemistry. On TestoZa faculty never type them: the AI writes LaTeX and mhchem when it reads PDFs, Word files, PowerPoint and photos, and the Sy Pad keyboard writes them as keys are tapped. People who know LaTeX can type it between $ signs; question boxes show a live preview.
+- **AI import:** Extract keeps a paper's questions, options and diagrams; Generate writes new questions (Easy, Moderate or Tough); English, Hindi or both; custom instructions. "Fill from photo" on a question card reads one printed or handwritten question, ticks the answer only if it is marked in the photo or written as "Ans:", never solves it, and crops any diagram.
+- **The Sy Pad:** an on-screen maths and chemistry keyboard in the test builder, opened from "Maths & symbols" under a question, "Open Sy Pad" in the builder's ⋯ menu, or "Sy Pad" under Create Test in the sidebar. It docks at the bottom (drag to move, double-click to dock), shows where the formula goes ("Goes into Question 3 · Option B"), has tabs for Algebra, Pre-Algebra, Trigonometry, Calculus, Statistics, Physics, Chemistry and Tables plus a Words key, uses blue boxes for blanks, draws a live preview, refuses to insert unfinished formulas unless told to, deletes whole symbols, and has an editable code line with Copy. Chemistry: Formula then plain typing (H2SO4, Fe^3+, 2H2 + O2 -> 2H2O), reversible and conditional arrows, state symbols. Tables: Match List (P/Q/R/S · 1/2/3/4), matrices, determinants, headed and bordered tables.
+- **Marking:** marks per test, section or question; fractions; numerical answers as an exact value, a list or a range (useful for JEE Advanced's two-decimal answers); section attempt control reproduces the 2021–2024 "any 5 of 10" numerical sections. Multi-correct partial credit is proportional (marks × options picked ÷ correct options), so it can give up to one mark more than JEE Advanced's one-mark-per-option rule when two or three options are correct.
+- **Institutes and students:** NTA-style Standard Mode by default; live exam links with private results; rank list, subject scores and per-question accuracy, average time and option split; paid plans add exam-security rules, scheduling, start forms, branding, held results and Excel export. Students can build private mocks from photos, see time per question, use an AI mentor and ask for a rough rank estimate on tests tagged JEE Main or JEE Advanced.
+
+---
+
 ## Create a Mock Test Online (guide)
 
 Guide: https://testoza.com/create-mock-test-online

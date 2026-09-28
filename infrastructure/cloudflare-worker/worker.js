@@ -167,11 +167,10 @@ async function handleSitemap(request) {
   if (cached) {
     return new Response(cached.body, {
       status: 200,
-      headers: {
-        ...Object.fromEntries(cached.headers),
+      headers: mergeHeaders(cached.headers, {
         'X-Cache': 'HIT',
         'X-Cache-Location': 'EDGE'
-      }
+      })
     });
   }
 
@@ -1060,12 +1059,11 @@ async function handleHTMLRequest(request) {
   if (cached && !shouldBypassCache(request.url)) {
     return new Response(cached.body, {
       status: 200,
-      headers: {
-        ...Object.fromEntries(cached.headers),
+      headers: mergeHeaders(cached.headers, {
         ...securityHeaders(),
         'X-Cache': 'HIT',
         'X-Cache-Location': 'EDGE'
-      }
+      })
     });
   }
 
@@ -1166,8 +1164,7 @@ async function handleHTMLRequest(request) {
   const ttl = getCacheTTL(request.url);
   const response = new Response(responseToReturn.body, {
     status: responseToReturn.status,
-    headers: {
-      ...Object.fromEntries(responseToReturn.headers),
+    headers: mergeHeaders(responseToReturn.headers, {
       ...securityHeaders(),
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': shouldBypassCache(request.url)
@@ -1175,7 +1172,7 @@ async function handleHTMLRequest(request) {
         : `public, max-age=${ttl}`,
       'X-Cache': 'MISS',
       'X-Cache-Location': 'EDGE'
-    }
+    })
   });
 
   // Cache if applicable
@@ -1184,6 +1181,18 @@ async function handleHTMLRequest(request) {
   }
 
   return response;
+}
+
+/**
+ * A copy of `base` with each override set (replacing, not appending). Spreading
+ * Object.fromEntries(headers) into an object literal kept the origin's lowercase
+ * "content-type" next to our "Content-Type", so both were sent and joined:
+ * "text/html; charset=utf-8, text/html; charset=utf-8" (and the same for Cache-Control).
+ */
+function mergeHeaders(base, overrides) {
+  const headers = new Headers(base);
+  for (const [name, value] of Object.entries(overrides)) headers.set(name, value);
+  return headers;
 }
 
 /**
@@ -1816,11 +1825,10 @@ export default {
         const cached = await cache.match(request);
         if (cached) {
           return new Response(cached.body, {
-            headers: {
-              ...Object.fromEntries(cached.headers),
+            headers: mergeHeaders(cached.headers, {
               'Content-Type': 'text/plain; charset=utf-8',
               'X-Cache': 'HIT'
-            }
+            })
           });
         }
 
@@ -1828,12 +1836,11 @@ export default {
         if (originResponse.ok) {
           const response = new Response(originResponse.body, {
             status: originResponse.status,
-            headers: {
-              ...Object.fromEntries(originResponse.headers),
+            headers: mergeHeaders(originResponse.headers, {
               'Content-Type': 'text/plain; charset=utf-8',
               'Cache-Control': `public, max-age=${CONFIG.CACHE_TTL.STATIC}`,
               'X-Cache': 'MISS'
-            }
+            })
           });
           ctx.waitUntil(cache.put(request, response.clone()));
           return response;

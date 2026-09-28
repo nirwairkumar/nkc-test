@@ -1,6 +1,7 @@
 /**
  * Subdomain routing utility
  */
+import { GUIDE_METAS } from '@/guides/meta';
 
 export const getAppUrl = (path: string): string => {
   const hostname = window.location.hostname;
@@ -30,7 +31,9 @@ const MARKETING_PATHS = [
   '/pdf',
   '/quiz-creator',
   '/assessment-platform',
-  '/create-mock-test-online'
+  '/create-mock-test-online',
+  // Long-form guides (src/guides/meta.ts), so a new guide can't be left out.
+  ...GUIDE_METAS.map(g => g.path)
 ];
 
 /**

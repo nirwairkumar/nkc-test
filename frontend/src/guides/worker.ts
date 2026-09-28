@@ -5,9 +5,10 @@
  */
 import { BEST_ONLINE_TEST_PLATFORM } from './bestOnlineTestPlatform';
 import { CBT_EXAM_SOFTWARE } from './cbtExamSoftware';
+import { JEE_MOCK_TEST_PLATFORM } from './jeeMockTestPlatform';
 import type { Guide } from './types';
 
-export const GUIDES: Guide[] = [CBT_EXAM_SOFTWARE, BEST_ONLINE_TEST_PLATFORM];
+export const GUIDES: Guide[] = [JEE_MOCK_TEST_PLATFORM, CBT_EXAM_SOFTWARE, BEST_ONLINE_TEST_PLATFORM];
 
 export { guideCrawlerHtml, guideJsonLd } from './render';
 export { guideAssetUrl, guideUrl } from './meta';

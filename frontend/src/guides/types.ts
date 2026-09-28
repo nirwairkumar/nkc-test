@@ -20,7 +20,13 @@ export type GuideWidget =
     // cbt-exam-software
     | 'omr-to-cbt'
     | 'marking-lab'
-    | 'exam-day';
+    | 'exam-day'
+    // jee-mock-test-platform
+    | 'notation-table'
+    | 'ai-before-after'
+    | 'sypad-playground'
+    | 'partial-marks'
+    | 'batch-report';
 
 /** A piece of a guide body. `html` is trusted, hand-written markup. */
 export type GuideBlock = { type: 'html'; html: string } | { type: 'widget'; widget: GuideWidget; fallbackHtml: string };
