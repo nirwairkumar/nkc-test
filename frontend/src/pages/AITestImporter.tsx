@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeatureFlags, FeatureFlags } from '@/lib/featuresApi';
 import { getApiUrl } from '@/lib/getApiUrl';
 import { Input } from "@/components/ui/input";
-import { Loader2, AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, ImageIcon, Download, Code, Eye, Plus, Calculator, CheckSquare, Camera, X, Key, Zap, CheckCircle2, MoreVertical, PenLine, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight } from "lucide-react";
+import { AlertCircle, FileText, Sparkles, ClipboardList, ArrowLeft, Check, Plus, Camera, X, Key, Zap, PencilLine, History, Trash2, ChevronLeft, FileUp, HelpCircle, Upload, ArrowRight, ChevronRight } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,10 +18,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import ManualEditorShowcase from "@/components/landing/ManualEditorShowcase";
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,53 +32,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-// Type definitions matching backend response
-interface Question {
-    id: number;
-    type: 'single' | 'multiple' | 'numerical' | string;
-    question: string;
-    image?: string | null;
-    options?: { [key: string]: string | { text: string; image?: string | null } } | null;
-    optionImages?: { [key: string]: string | null };
-    correctAnswer?: string | string[] | { min: number; max: number } | null;
-    needsAnswer?: boolean;
-    marks?: number;
-    negativeMarks?: number;
-    diagramPage?: number | null;
-    passageContent?: string;
-    groupId?: string;
-    page?: number;
-}
+import type { ExtractionMeta, ParseResponse, ProcessMode, Question, Section, StageTimes, StreamProgress, StreamedQuestion } from '@/components/ai-import/types';
+import {
+    advanceStage,
+    emptyPipelineInfo,
+    questionFingerprint,
+    reducePipelineInfo,
+    stageKeyOf,
+    stageSeconds,
+    PipelineInfo,
+} from '@/components/ai-import/progressModel';
+import ProcessingView from '@/components/ai-import/ProcessingView';
+import PreviewView from '@/components/ai-import/PreviewView';
 
-interface Section {
-    id?: string;
-    name?: string;
-    attempt_control?: {
-        enabled: boolean;
-        mode?: string;
-        max_attempts?: number;
-    };
-    questions?: Question[];
-    marks_per_question?: number;
-    negative_marks?: number;
-    question_type?: string;
-}
-
-interface ParseResponse {
-    title?: string;
-    description?: string;
-    revision_notes?: string;
-    questions: Question[];
-    canConfirm?: boolean;
-    unansweredCount?: number;
-    totalPages?: number;
-    processedPages?: number;
-    enable_section_mode?: boolean;
-    sections?: Section[];
-    duration?: number;
-}
-
-type ProcessMode = 'extract' | 'generate';
 type FileType = 'pdf' | 'image';
 type UploadType = 'document' | 'image' | null;
 
@@ -92,13 +55,6 @@ interface SelectedFile {
     preview?: string;
 }
 
-
-import LatexRenderer from '@/components/ui/LatexRenderer';
-
-// Helper component for markdown preview
-const MarkdownPreview = ({ content }: { content: string }) => (
-    <LatexRenderer className="text-sm">{content}</LatexRenderer>
-);
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
@@ -163,27 +119,25 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
     const [showCamera, setShowCamera] = useState(false);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
     const [uploadType, setUploadType] = useState<UploadType>(null);
-    const [extractionMeta, setExtractionMeta] = useState<{ quality_tier?: string, dpi?: number, warning?: boolean } | null>(null);
+    const [extractionMeta, setExtractionMeta] = useState<ExtractionMeta | null>(null);
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags | null>(null);
 
     const [savingTest, setSavingTest] = useState(false);
     const [pendingParsedData, setPendingParsedData] = useState<ParseResponse | null>(null);
-    const [timers, setTimers] = useState<{
-        uploading: number;
-        analyzing: number;
-        extracting: number;
-        finalizing: number;
-    }>({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
+    // Stage clock: wall-clock timestamps, not a counting interval, so a hidden
+    // (timer-throttled) tab keeps correct time.
+    const [runStartedAt, setRunStartedAt] = useState(0);
+    const [stageTimes, setStageTimes] = useState<StageTimes>({});
+    const stageTimesRef = useRef<StageTimes>({});
+    stageTimesRef.current = stageTimes;
+    const [pipelineInfo, setPipelineInfo] = useState<PipelineInfo>(emptyPipelineInfo);
 
     // ULTRA-FAST Streaming State
     const [isStreaming, setIsStreaming] = useState(false);
-    const [streamProgress, setStreamProgress] = useState<{
-        stage: 'uploading' | 'analyzing' | 'processing' | 'extracting' | 'finalizing' | 'complete' | 'error';
-        percent: number;
-        message: string;
-        data?: any;
-    } | null>(null);
-    const [streamingQuestions, setStreamingQuestions] = useState<Question[]>([]);
+    const [streamProgress, setStreamProgress] = useState<StreamProgress | null>(null);
+    const [streamingQuestions, setStreamingQuestions] = useState<StreamedQuestion[]>([]);
+    const seenQuestionsRef = useRef<Set<string>>(new Set());
+    const streamSeqRef = useRef(0);
     const [algorithm, setAlgorithm] = useState<'parallel' | 'stateful'>('stateful');
     const [abortController, setAbortController] = useState<AbortController | null>(null);
 
@@ -352,37 +306,15 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         syncAndLoadHistory();
     }, [user]);
 
-    // Track active stage timers
-    useEffect(() => {
-        if (!isStreaming) return;
-
-        const interval = setInterval(() => {
-            const currentStage = streamProgress?.stage || 'uploading';
-            let stageKey: 'uploading' | 'analyzing' | 'extracting' | 'finalizing' = 'uploading';
-
-            if (currentStage === 'analyzing') {
-                stageKey = 'analyzing';
-            } else if (currentStage === 'processing' || currentStage === 'extracting') {
-                stageKey = 'extracting';
-            } else if (currentStage === 'finalizing' || currentStage === 'complete') {
-                stageKey = 'finalizing';
-            }
-
-            setTimers(prev => ({
-                ...prev,
-                [stageKey]: Math.round((prev[stageKey] + 0.1) * 10) / 10
-            }));
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [isStreaming, streamProgress?.stage]);
-
     // Handle smooth transition from stream completion to preview stage
     useEffect(() => {
         if (pendingParsedData && streamProgress?.stage === 'complete') {
             const timer = setTimeout(() => {
-                setParsedData(pendingParsedData);
-                saveToHistory(pendingParsedData);
+                const t = stageSeconds(stageTimesRef.current, Date.now());
+                const total = Math.round((t.uploading + t.analyzing + t.extracting + t.finalizing) * 10) / 10;
+                const finished = total > 0 ? { ...pendingParsedData, execution_time_seconds: total } : pendingParsedData;
+                setParsedData(finished);
+                saveToHistory(finished);
                 setPendingParsedData(null);
                 setIsStreaming(false);
                 setLoading(false);
@@ -649,42 +581,13 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         closeCamera();
     };
 
-    // Helper to check if an option is correct based on question type
-    const isCorrectAnswer = (q: Question, optionKey: string): boolean => {
-        if (!q.correctAnswer) return false;
-
-        if (q.type === 'multiple' && Array.isArray(q.correctAnswer)) {
-            return q.correctAnswer.includes(optionKey);
-        }
-
-        return q.correctAnswer === optionKey;
-    };
-
-    // Helper to format correct answer display
-    const formatCorrectAnswer = (q: Question): string => {
-        if (!q.correctAnswer) return 'Not detected';
-
-        if (q.type === 'multiple' && Array.isArray(q.correctAnswer)) {
-            return q.correctAnswer.join(', ');
-        }
-
-        if (q.type === 'numerical' && typeof q.correctAnswer === 'object') {
-            const range = q.correctAnswer as { min: number; max: number };
-            if (range.min === range.max) {
-                return range.min.toString();
-            }
-            return `${range.min} - ${range.max}`;
-        }
-
-        return String(q.correctAnswer);
-    };
-
     const saveToHistory = async (data: ParseResponse) => {
         if (!data) return;
         const qCount = data.questions?.length || 0;
         if (qCount === 0) return;
 
-        const totalExecTime = Math.round((timers.uploading + timers.analyzing + timers.extracting + timers.finalizing) * 10) / 10;
+        const timers = stageSeconds(stageTimesRef.current, Date.now());
+        const totalExecTime = data.execution_time_seconds ?? Math.round((timers.uploading + timers.analyzing + timers.extracting + timers.finalizing) * 10) / 10;
         const filesList = files.map(f => ({
             name: f.file.name,
             size_bytes: f.file.size,
@@ -863,15 +766,22 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
     // ULTRA-FAST SSE Streaming Process
     const handleStreamProcess = async (selectedMode: ProcessMode) => {
+        const startedAt = Date.now();
         setIsStreaming(true);
         setStreamingQuestions([]);
-        setTimers({ uploading: 0, analyzing: 0, extracting: 0, finalizing: 0 });
-        
+        setPendingParsedData(null);
+        seenQuestionsRef.current = new Set();
+        streamSeqRef.current = 0;
+        setRunStartedAt(startedAt);
+        setStageTimes(advanceStage({}, 'upload', startedAt));
+        setPipelineInfo(emptyPipelineInfo());
+
         // Initialize streamProgress with placeholder so we immediately enter the streaming UI
         setStreamProgress({
             stage: 'uploading',
             percent: 5,
-            message: 'Uploading document to server...'
+            message: 'Uploading document to server...',
+            at: startedAt
         });
 
         const formData = new FormData();
@@ -883,8 +793,9 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             if (files.length > 2) {
                 setStreamProgress({
                     stage: 'uploading',
-                    percent: Math.min(5 + Math.round((processedCount / files.length) * 15), 20),
-                    message: `Optimizing image ${processedCount} of ${files.length} for fast AI extraction...`
+                    percent: Math.min(5 + Math.round((processedCount / files.length) * 5), 9),
+                    message: `Optimizing image ${processedCount} of ${files.length} for fast AI extraction...`,
+                    at: Date.now()
                 });
             }
             const fileToSend = fileObj.file.type.startsWith('image/')
@@ -900,6 +811,73 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
 
         const abortCtrl = new AbortController();
         setAbortController(abortCtrl);
+
+        // Applies one server-sent event. Throws on `error` so it reaches the user
+        // (it used to be swallowed by the JSON-parse catch and the UI hung).
+        const handleEvent = (event: string, parsed: any): boolean => {
+            const at = Date.now();
+            switch (event) {
+                case 'progress': {
+                    const sp: StreamProgress = {
+                        stage: parsed.stage,
+                        percent: parsed.percent,
+                        message: parsed.message,
+                        data: parsed.data,
+                        at
+                    };
+                    setStreamProgress(sp);
+                    setPipelineInfo(prev => reducePipelineInfo(prev, sp));
+                    const key = stageKeyOf(sp.stage);
+                    if (key) setStageTimes(prev => advanceStage(prev, key, at));
+                    if (parsed.data && parsed.data.quality_tier) {
+                        setExtractionMeta({
+                            quality_tier: parsed.data.quality_tier,
+                            dpi: parsed.data.dpi,
+                            warning: parsed.data.warning
+                        });
+                    }
+                    return false;
+                }
+
+                case 'question': {
+                    const q = parsed.question;
+                    if (!q) return false;
+                    // Batches (and stateful steps) each number from 1, so ids collide;
+                    // only drop a question whose content we've already shown.
+                    const fp = questionFingerprint(q);
+                    if (fp) {
+                        if (seenQuestionsRef.current.has(fp)) return false;
+                        seenQuestionsRef.current.add(fp);
+                    }
+                    const key = `sq-${streamSeqRef.current++}`;
+                    setStreamingQuestions(prev => [...prev, { key, question: q, at }]);
+                    return false;
+                }
+
+                case 'complete': {
+                    const hasQuestions = parsed.questions && parsed.questions.length > 0;
+                    const hasSections = parsed.sections && parsed.sections.length > 0;
+                    if (!hasQuestions && !hasSections) {
+                        throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
+                    }
+                    setStageTimes(prev => advanceStage(prev, 'done', at));
+                    setPendingParsedData(parsed);
+                    setStreamProgress({
+                        stage: 'complete',
+                        percent: 100,
+                        message: 'All questions processed successfully!',
+                        at
+                    });
+                    return true;
+                }
+
+                case 'error':
+                    throw new Error(parsed.message || 'Processing failed. Please try again.');
+
+                default:
+                    return false;
+            }
+        };
 
         try {
             const API_BASE_URL = getApiUrl();
@@ -943,11 +921,28 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             let currentEvent = '';
             let currentData = '';
 
+            const dispatch = (): boolean => {
+                const event = currentEvent || 'message';
+                const payload = currentData;
+                currentEvent = '';
+                currentData = '';
+                if (!payload) return false;
+                let parsed: any;
+                try {
+                    parsed = JSON.parse(payload);
+                } catch (e) {
+                    console.error('Failed to parse SSE data:', e, payload);
+                    return false;
+                }
+                return handleEvent(event, parsed);
+            };
+
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (value) buffer += decoder.decode(value, { stream: true });
+                // Flush a final event the server didn't terminate with a blank line.
+                if (done) buffer += decoder.decode() + '\n\n';
 
-                buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
                 buffer = lines.pop() || '';
 
@@ -955,72 +950,22 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
                     const trimmedLine = line.trim();
                     if (!trimmedLine) {
                         // Empty line means event completion: dispatch the collected payload
-                        if (currentEvent && currentData) {
-                            try {
-                                const parsed = JSON.parse(currentData);
-
-                                switch (currentEvent) {
-                                    case 'progress':
-                                        setStreamProgress({
-                                            stage: parsed.stage,
-                                            percent: parsed.percent,
-                                            message: parsed.message,
-                                            data: parsed.data
-                                        });
-                                        if (parsed.data && parsed.data.quality_tier) {
-                                            setExtractionMeta({
-                                                quality_tier: parsed.data.quality_tier,
-                                                dpi: parsed.data.dpi,
-                                                warning: parsed.data.warning
-                                            });
-                                        }
-                                        break;
-
-                                    case 'question':
-                                        if (parsed.question) {
-                                            setStreamingQuestions(prev => {
-                                                // Avoid duplicate entries if any
-                                                const exists = prev.some(q => q.id === parsed.question.id);
-                                                if (exists) return prev;
-                                                return [...prev, parsed.question];
-                                            });
-                                        }
-                                        break;
-
-                                    case 'complete': {
-                                        const hasQuestions = parsed.questions && parsed.questions.length > 0;
-                                        const hasSections = parsed.sections && parsed.sections.length > 0;
-                                        if (!hasQuestions && !hasSections) {
-                                            throw new Error('AI returned 0 questions. Please adjust your file or prompt.');
-                                        }
-                                        setPendingParsedData(parsed);
-                                        setStreamProgress({
-                                            stage: 'complete',
-                                            percent: 100,
-                                            message: 'All questions processed successfully!'
-                                        });
-                                        return;
-                                    }
-
-                                    case 'error':
-                                        throw new Error(parsed.message);
-                                }
-                            } catch (e) {
-                                console.error('Failed to parse SSE data:', e, currentData);
-                            }
-                            currentEvent = '';
-                            currentData = '';
-                        }
+                        if (dispatch()) return;
                         continue;
                     }
 
                     if (trimmedLine.startsWith('event:')) {
                         currentEvent = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
                     } else if (trimmedLine.startsWith('data:')) {
-                        currentData = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
+                        const chunk = trimmedLine.slice(trimmedLine.indexOf(':') + 1).trim();
+                        currentData = currentData ? `${currentData}\n${chunk}` : chunk;
                     }
                 }
+
+                if (done) break;
             }
+
+            throw new Error('The connection closed before processing finished. Please try again.');
 
         } catch (err: any) {
             if (err.name === 'AbortError') {
@@ -1408,18 +1353,19 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         }
     };
 
-    // Scroll to bottom of streaming questions
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    // Listen for AI history selection from sidebar
     useEffect(() => {
-        if (scrollContainerRef.current) {
-            const viewport = scrollContainerRef.current.querySelector('[data-radix-scroll-area-viewport]');
-            if (viewport) {
-                viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        const handleLoadHistoryItem = (e: Event) => {
+            const customEv = e as CustomEvent;
+            const item = customEv.detail;
+            if (item) {
+                handleSelectHistoryItem(item);
             }
-        }
-    }, [streamingQuestions.length]);
+        };
 
-
+        window.addEventListener('load_ai_history_item', handleLoadHistoryItem);
+        return () => window.removeEventListener('load_ai_history_item', handleLoadHistoryItem);
+    }, [handleSelectHistoryItem]);
 
     if (featureFlags && featureFlags.enable_ai_test_generation === false) {
         return (
@@ -1447,20 +1393,6 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
             </div>
         );
     }
-
-    // Listen for AI history selection from sidebar
-    useEffect(() => {
-        const handleLoadHistoryItem = (e: Event) => {
-            const customEv = e as CustomEvent;
-            const item = customEv.detail;
-            if (item) {
-                handleSelectHistoryItem(item);
-            }
-        };
-
-        window.addEventListener('load_ai_history_item', handleLoadHistoryItem);
-        return () => window.removeEventListener('load_ai_history_item', handleLoadHistoryItem);
-    }, [handleSelectHistoryItem]);
 
     // Step 1: File Upload — iOS-inspired card layout matching Profile/Support pages
     if (!parsedData && files.length === 0 && !uploadType) {
@@ -2080,682 +2012,70 @@ export default function AITestImporter({ onImport }: { onImport?: (data: any) =>
         );
     }
 
-    // Step 3: Loading state - ULTRA-FAST Streaming with Progress
+    // Step 3: Live processing — streamed questions with real progress
     if (loading || generatingMore) {
-        // Show ULTRA-FAST streaming UI for new uploads
         if (isStreaming) {
-            const currentStage = streamProgress?.stage || 'uploading';
-            const currentPercent = streamProgress?.percent || 10;
-            const currentMessage = streamProgress?.message || 'Connecting to AI model...';
-            const pipelineType = streamProgress?.data?.pipeline || 'hybrid';
-
+            const finalCount = pendingParsedData
+                ? (pendingParsedData.questions?.length
+                    || (pendingParsedData.sections || []).reduce((sum, sec) => sum + (sec.questions?.length || 0), 0))
+                : null;
             return (
-                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-6xl space-y-6">
-                    <SEO
-                        title="Extracting Exam Questions - TestoZa"
-                        description="Extracting questions in real time using Hybrid OCR + Gemini."
-                    />
-
-                    {/* Inject custom styling for premium animations */}
-                    <style dangerouslySetInnerHTML={{__html: `
-                        @keyframes scan-line {
-                            0% { top: 0%; }
-                            50% { top: 100%; }
-                            100% { top: 0%; }
-                        }
-                        @keyframes pulse-ring {
-                            0% { transform: scale(0.95); opacity: 0.5; }
-                            50% { transform: scale(1.05); opacity: 0.8; }
-                            100% { transform: scale(0.95); opacity: 0.5; }
-                        }
-                        .animate-scan-line {
-                            position: absolute;
-                            left: 0;
-                            width: 100%;
-                            height: 3px;
-                            background: linear-gradient(90deg, transparent, #3b82f6, #6366f1, transparent);
-                            animation: scan-line 3.5s infinite linear;
-                            box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
-                        }
-                        .animate-pulse-ring {
-                            animation: pulse-ring 3.5s infinite ease-in-out;
-                        }
-                    `}} />
-
-                    {/* Progress Overview Header */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                        
-                        {/* LEFT COLUMN: Pipeline Dashboard & Checkpoints (4 cols) */}
-                        <div className="md:col-span-4 space-y-4">
-                            <Card className="border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden bg-card">
-                                <div className="p-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 animate-pulse" />
-                                <CardContent className="p-6 space-y-6">
-                                    {/* App Info / Header */}
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 border-0 flex items-center gap-1 font-semibold">
-                                                <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                                Active Stream
-                                            </Badge>
-                                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                                        </div>
-                                        <h3 className="text-xl font-bold tracking-tight">AI Engine Pipeline</h3>
-                                        <p className="text-xs text-muted-foreground">Hybrid OCR & Vision architecture</p>
-                                    </div>
-
-                                    {/* Progress Meter */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-xs font-semibold">
-                                            <span className="text-muted-foreground">Total Completion</span>
-                                            <span className="text-primary">{currentPercent}%</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div 
-                                                className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 transition-all duration-500 ease-out shadow-inner"
-                                                style={{ width: `${currentPercent}%` }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-muted-foreground italic text-center animate-pulse">
-                                            "{currentMessage}"
-                                        </p>
-                                    </div>
-
-                                    {/* Status Checkpoints */}
-                                    <div className="space-y-4 pt-4 border-t text-sm">
-                                        {/* Step 1: Upload */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage !== 'uploading' 
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400' 
-                                                        : 'bg-blue-100 text-blue-600 animate-pulse'
-                                                }`}>
-                                                    {currentStage !== 'uploading' ? <Check className="w-3.5 h-3.5" /> : '1'}
-                                                </div>
-                                                <span className={currentStage === 'uploading' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    File Upload & Parse
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.uploading > 0 ? `${timers.uploading.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-
-                                        {/* Step 2: Analyzer */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage !== 'uploading' && currentStage !== 'analyzing'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'analyzing'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage !== 'uploading' && currentStage !== 'analyzing' ? <Check className="w-3.5 h-3.5" /> : '2'}
-                                                </div>
-                                                <span className={currentStage === 'analyzing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    OCR Page Classification
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.analyzing > 0 ? `${timers.analyzing.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-
-                                        {/* Step 3: Extraction */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage === 'finalizing' || currentStage === 'complete'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'processing' || currentStage === 'extracting'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage === 'finalizing' || currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '3'}
-                                                </div>
-                                                <span className={currentStage === 'processing' || currentStage === 'extracting' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    AI Question Extraction
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.extracting > 0 ? `${timers.extracting.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-
-                                        {/* Step 4: Finalizing */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                                                    currentStage === 'complete'
-                                                        ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                                                        : currentStage === 'finalizing'
-                                                        ? 'bg-blue-100 text-blue-600 animate-pulse'
-                                                        : 'bg-muted text-muted-foreground'
-                                                }`}>
-                                                    {currentStage === 'complete' ? <Check className="w-3.5 h-3.5" /> : '4'}
-                                                </div>
-                                                <span className={currentStage === 'finalizing' ? 'font-semibold text-foreground' : 'text-muted-foreground'}>
-                                                    Structure Finalization
-                                                </span>
-                                            </div>
-                                            <span className="text-xs font-mono text-muted-foreground">
-                                                {timers.finalizing > 0 ? `${timers.finalizing.toFixed(1)}s` : ''}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Live stats */}
-                                    {extractionMeta && (
-                                        <div className="p-3 bg-muted/50 rounded-lg text-xs space-y-2 border border-slate-100 dark:border-slate-800">
-                                            <p className="font-semibold text-muted-foreground">DOCUMENT METADATA</p>
-                                            <div className="flex justify-between">
-                                                <span>Scan Tier:</span>
-                                                <span className="font-medium text-foreground">{extractionMeta.quality_tier?.toUpperCase()}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>DPI setting:</span>
-                                                <span className="font-medium text-foreground">{extractionMeta.dpi} DPI</span>
-                                            </div>
-                                            {extractionMeta.warning && (
-                                                <p className="text-[10px] text-amber-500 font-medium leading-normal pt-1">
-                                                    ⚠️ Image resolution is low. Results may need review.
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleCancelStream}
-                                        className="w-full text-muted-foreground hover:text-destructive border-slate-200 dark:border-slate-800"
-                                    >
-                                        <X className="w-4 h-4 mr-2" />
-                                        Cancel Processing
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* RIGHT COLUMN: Stream Output Feed (8 cols) */}
-                        <div className="md:col-span-8 space-y-4">
-                            <Card className="border border-slate-200 dark:border-slate-800 shadow-xl bg-card min-h-[500px] flex flex-col">
-                                <CardHeader className="py-4 border-b">
-                                    <CardTitle className="text-lg">Extracted Questions</CardTitle>
-                                </CardHeader>
-                                
-                                <div className="flex-1 flex flex-col p-4">
-                                    {streamingQuestions.length > 0 ? (
-                                        <ScrollArea ref={scrollContainerRef} className="h-[480px] w-full pr-2">
-                                            <div className="space-y-4">
-                                                {streamingQuestions.map((q, idx) => (
-                                                    <Card
-                                                        key={idx}
-                                                        className="border-l-4 border-l-primary/60 hover:border-l-primary shadow-sm bg-slate-50/50 dark:bg-slate-900/50 transition-all duration-300 transform translate-y-0 animate-in fade-in-50 duration-500"
-                                                    >
-                                                        <CardContent className="p-4 space-y-3">
-                                                            <div className="flex gap-2 justify-between">
-                                                                <div className="flex gap-2">
-                                                                    <span className="font-bold text-primary min-w-[20px]">
-                                                                        Q{q.id}.
-                                                                    </span>
-                                                                    <div className="text-sm font-medium text-foreground">
-                                                                        <MarkdownPreview content={q.question || 'No question text'} />
-                                                                    </div>
-                                                                </div>
-                                                                <Badge variant="outline" className="text-xs self-start shrink-0 font-medium uppercase">
-                                                                    {q.type || 'single'}
-                                                                </Badge>
-                                                            </div>
-                                                            {q.options && Object.keys(q.options).length > 0 && (
-                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-7 pt-1">
-                                                                    {Object.entries(q.options).slice(0, 4).map(([key, value]) => {
-                                                                        const optionText = typeof value === 'object' && value !== null 
-                                                                            ? (value as any).text 
-                                                                            : String(value || '');
-                                                                        return (
-                                                                            <div
-                                                                                key={key}
-                                                                                className="text-xs text-muted-foreground bg-muted p-2 rounded border border-slate-100 dark:border-slate-800 flex gap-1.5 items-start"
-                                                                            >
-                                                                                <span className="font-bold text-slate-500 dark:text-slate-400 shrink-0">{key}:</span>
-                                                                                <div className="line-clamp-2 text-xs overflow-hidden">
-                                                                                    <MarkdownPreview content={optionText} />
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            )}
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        </ScrollArea>
-                                    ) : (
-                                        /* Elegant Scanning / Document analyzing visualizer */
-                                        <div className="flex-1 flex flex-col items-center justify-center py-10 space-y-6">
-                                            <div className="relative w-44 h-56 border-2 border-dashed border-primary/20 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 flex flex-col items-center justify-center p-4 overflow-hidden shadow-inner">
-                                                {/* Scanner scanning bar */}
-                                                <div className="animate-scan-line" />
-                                                
-                                                {/* Pulsing glow orb */}
-                                                <div className="absolute w-24 h-24 rounded-full bg-primary/20 animate-pulse-ring blur-xl" />
-                                                
-                                                {/* Mock doc details */}
-                                                <FileText className="w-14 h-14 text-primary/40 mb-3" />
-                                                <div className="w-full space-y-2">
-                                                    <div className="h-2 bg-primary/10 rounded w-5/6 mx-auto animate-pulse" />
-                                                    <div className="h-2 bg-primary/10 rounded w-4/6 mx-auto animate-pulse" />
-                                                    <div className="h-2 bg-primary/10 rounded w-5/6 mx-auto animate-pulse" />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="text-center space-y-2 max-w-sm">
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">AI Reading Document</h4>
-                                                <p className="text-xs text-muted-foreground leading-normal">
-                                                    Using PyMuPDF native OCR. Examining page structure to extract bold text, symbols, formatting, and mathematical equations...
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
-                        </div>
-                    </div>
-                </div>
+                <ProcessingView
+                    mode={mode}
+                    files={files.map(f => ({ name: f.file.name, size: f.file.size, type: f.type }))}
+                    progress={streamProgress}
+                    info={pipelineInfo}
+                    questions={streamingQuestions}
+                    stageTimes={stageTimes}
+                    startedAt={runStartedAt || Date.now()}
+                    finalCount={finalCount}
+                    extractionMeta={extractionMeta}
+                    onCancel={handleCancelStream}
+                />
             );
         }
 
-        // Legacy loading UI for "generate more" mode
+        // "Generate more" still uses the one-shot endpoint
         return (
-            <div className="container mx-auto p-4 max-w-3xl">
-                <div className="flex flex-col items-center justify-center py-20 space-y-6">
-                    <div className="relative">
-                        <div className="w-20 h-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            {mode === 'extract'
-                                ? <ClipboardList className="w-8 h-8 text-primary" />
-                                : <Sparkles className="w-8 h-8 text-primary" />
-                            }
+            <div className="aix aix-page">
+                <div className="aix-center">
+                    <div className="aix-card" role="status" aria-live="polite">
+                        <div className={`aix-appicon aix-appicon--live ${mode === 'generate' ? 'aix-appicon--generate' : ''}`} aria-hidden="true">
+                            {mode === 'extract' ? <ClipboardList /> : <Sparkles />}
                         </div>
-                    </div>
-                    <div className="text-center space-y-2">
-                        <h2 className="text-xl font-semibold">
-                            {generatingMore ? 'Generating More Questions...' : (mode === 'extract' ? 'Extracting Questions...' : 'Generating Questions...')}
-                        </h2>
-                        <p className="text-muted-foreground animate-pulse">{progress}</p>
-
-                        {extractionMeta && (
-                            <div className="flex items-center justify-center gap-2 mt-2">
-                                <Badge variant={extractionMeta.warning ? "destructive" : "secondary"} className="text-xs">
-                                    Quality: {extractionMeta.quality_tier?.toUpperCase()} ({extractionMeta.dpi} DPI)
-                                </Badge>
-                                {extractionMeta.warning && (
-                                    <span className="text-xs text-destructive">Low quality may affect accuracy</span>
-                                )}
-                            </div>
-                        )}
-                        <p className="text-xs text-muted-foreground/60 mt-2">Processing...</p>
+                        <h2>{generatingMore ? 'Generating more questions' : (mode === 'extract' ? 'Extracting questions' : 'Generating questions')}</h2>
+                        <p>{progress || 'AI is reading the rest of your document. This usually takes a minute or two.'}</p>
+                        <div className="aix-bar aix-bar--live" style={{ marginTop: 22 }}>
+                            <div className="aix-skel-bar" style={{ height: '100%' }} />
+                        </div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // Step 4: Preview & Import
+    // Step 4: Review & save
     if (parsedData) {
-        try {
-            const questions = parsedData.questions || [];
-            if (questions.length === 0) {
-                return (
-                    <div className="container mx-auto p-4 text-center">
-                        <Alert variant="destructive" className="max-w-md mx-auto text-left">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Extraction Failed</AlertTitle>
-                            <AlertDescription className="mt-2 space-y-2">
-                                <p>No extractable questions could be found.</p>
-                                {error && (
-                                    <div className="bg-destructive/10 p-2 rounded text-xs mt-2 overflow-auto max-h-32">
-                                        <p className="font-semibold mb-1">Details:</p>
-                                        <p className="whitespace-pre-wrap">{error}</p>
-                                    </div>
-                                )}
-                            </AlertDescription>
-                        </Alert>
-                        <div className="flex gap-2 justify-center mt-4">
-                            <Button variant="outline" onClick={() => { setParsedData(null); setMode(null); }}>
-                                Try Another Document
-                            </Button>
-                            {mode === 'extract' && (
-                                <Button variant="secondary" onClick={() => handleProcess('generate')}>
-                                    Try Generate Mode Instead
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                );
-            }
-
-            // Count question types
-            const singleCount = questions.filter(q => q.type === 'single' || !q.type).length;
-            const multipleCount = questions.filter(q => q.type === 'multiple').length;
-            const numericalCount = questions.filter(q => q.type === 'numerical').length;
-
-            return (
-                <div className="container mx-auto pt-2 md:pt-4 px-4 pb-8 max-w-4xl">
-                    <ErrorBoundary>
-                        <div className="space-y-6 slide-in-from-bottom-5 animate-in duration-500">
-                            {/* Header */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm sticky top-0 z-10">
-                                <div>
-                                    <h2 className="text-xl font-semibold">
-                                        Preview — {questions.length} Questions
-                                    </h2>
-                                    <div className="flex flex-wrap gap-2 mt-1">
-                                        <Badge variant={mode === 'extract' ? 'default' : 'secondary'}>
-                                            {mode === 'extract' ? '📋 Extracted' : '✨ Generated'}
-                                        </Badge>
-                                        {singleCount > 0 && (
-                                            <Badge variant="outline" className="text-xs">
-                                                {singleCount} Single Choice
-                                            </Badge>
-                                        )}
-                                        {multipleCount > 0 && (
-                                            <Badge variant="outline" className="text-xs">
-                                                {multipleCount} Multiple Choice
-                                            </Badge>
-                                        )}
-                                        {numericalCount > 0 && (
-                                            <Badge variant="outline" className="text-xs">
-                                                {numericalCount} Numerical
-                                            </Badge>
-                                        )}
-                                        {extractionMeta && (
-                                            <Badge variant={extractionMeta.warning ? "secondary" : "secondary"} className="text-xs bg-slate-100 dark:bg-slate-800">
-                                                🖥️ {extractionMeta.dpi} DPI ({extractionMeta.quality_tier})
-                                            </Badge>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => { setParsedData(null); setMode(null); }}
-                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4"
-                                    >
-                                        Try Again
-                                    </Button>
-                                    <Button
-                                        onClick={handleImport}
-                                        className="flex-1 sm:flex-initial text-xs sm:text-sm px-2.5 sm:px-4 bg-blue-600 hover:bg-blue-700 font-bold gap-2 text-white"
-                                    >
-                                        <PenLine className="w-4 h-4" />
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        onClick={handleDirectSave}
-                                        disabled={savingTest}
-                                        className="w-full sm:w-auto text-xs sm:text-sm px-2.5 sm:px-4 bg-green-600 hover:bg-green-700 font-bold gap-2 text-white"
-                                    >
-                                        {savingTest ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
-                                        ) : (
-                                            <><Check className="w-4 h-4" /> Save & Continue</>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Title/Description if available */}
-                            {(parsedData.title || parsedData.description) && (
-                                <Card className="bg-muted/30">
-                                    <CardContent className="p-4 space-y-1">
-                                        {parsedData.title && (
-                                            <p className="font-semibold text-lg">{parsedData.title}</p>
-                                        )}
-                                        {parsedData.description && (
-                                            <p className="text-sm text-muted-foreground">{parsedData.description}</p>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {/* Questions List */}
-                            <ScrollArea className="h-[600px] border rounded-md p-4 bg-muted/20">
-                                {questions.map((q, idx) => (
-                                    <Card key={idx} className="mb-4 hover:shadow-md transition-shadow">
-                                        <CardContent className="p-4 sm:p-6 space-y-4">
-
-                                            <div className="flex gap-4">
-                                                <div className="font-bold text-lg min-w-[30px] pt-1 text-primary">{q.id}.</div>
-                                                <div className="flex-1 space-y-3">
-                                                    {/* Question Type Badge & Page */}
-                                                    <div className="flex gap-2 items-center flex-wrap">
-                                                        <Badge variant="secondary" className="text-xs">
-                                                            {q.type === 'multiple' ? (
-                                                                <><CheckSquare className="w-3 h-3 mr-1" /> Multiple Choice</>
-                                                            ) : q.type === 'numerical' ? (
-                                                                <><Calculator className="w-3 h-3 mr-1" /> Numerical</>
-                                                            ) : (
-                                                                <><Check className="w-3 h-3 mr-1" /> Single Choice</>
-                                                            )}
-                                                        </Badge>
-                                                        {q.page && (
-                                                            <Badge variant="outline" className="text-xs">
-                                                                Page {q.page}
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Question Content Toggle */}
-                                                    <Tabs defaultValue="preview" className="w-full">
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <label className="text-xs font-semibold uppercase text-muted-foreground">Question</label>
-                                                            <TabsList className="h-6">
-                                                                <TabsTrigger value="preview" className="text-xs px-2 h-5"><Eye className="w-3 h-3 mr-1" /> Preview</TabsTrigger>
-                                                                <TabsTrigger value="raw" className="text-xs px-2 h-5"><Code className="w-3 h-3 mr-1" /> Raw</TabsTrigger>
-                                                            </TabsList>
-                                                        </div>
-                                                        <TabsContent value="preview" className="mt-0 border rounded-md p-3 bg-card min-h-[60px]">
-                                                            <ErrorBoundary>
-                                                                <MarkdownPreview content={q.question || ""} />
-                                                            </ErrorBoundary>
-                                                        </TabsContent>
-                                                        <TabsContent value="raw" className="mt-0">
-                                                            <Textarea
-                                                                defaultValue={q.question}
-                                                                className="font-mono text-sm min-h-[80px]"
-                                                                readOnly
-                                                            />
-                                                        </TabsContent>
-                                                    </Tabs>
-
-                                                    {/* Question Image */}
-                                                    {q.image && (
-                                                        <div className="mt-2 border rounded-lg p-2 bg-white dark:bg-gray-900 inline-block shadow-sm">
-                                                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                                                                <ImageIcon className="w-3 h-3" /> Diagram {q.diagramPage ? `(Page ${q.diagramPage})` : ''}
-                                                            </div>
-                                                            <img src={q.image} alt="Question Diagram" className="max-h-60 object-contain" />
-                                                        </div>
-                                                    )}
-
-                                                    {/* Passage Content for Comprehension */}
-                                                    {q.passageContent && (
-                                                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
-                                                            <label className="text-xs font-semibold uppercase text-blue-600 dark:text-blue-400">Passage</label>
-                                                            <div className="text-sm mt-1 text-blue-800 dark:text-blue-200">
-                                                                <MarkdownPreview content={q.passageContent} />
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Options - Only show for single/multiple choice */}
-                                            {q.type !== 'numerical' && q.options && Object.keys(q.options).length > 0 && (
-                                                <div className="space-y-2 ml-2 sm:ml-10 mt-2">
-                                                    <label className="text-xs font-semibold uppercase text-muted-foreground">Options</label>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        {Object.entries(q.options).map(([key, text]) => (
-                                                            <div key={key} className={`flex gap-3 items-start border p-3 rounded-md bg-card group transition-colors ${isCorrectAnswer(q, key) ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : 'hover:border-primary/50'}`}>
-                                                                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm shrink-0 ${isCorrectAnswer(q, key) ? 'bg-green-100 border-green-600 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-50 border-gray-200 text-gray-600 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300'}`}>
-                                                                    {q.type === 'multiple' ? (
-                                                                        isCorrectAnswer(q, key) ? <CheckSquare className="w-4 h-4" /> : <div className="w-4 h-4 border-2 border-gray-400 rounded" />
-                                                                    ) : (
-                                                                        key
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 space-y-2">
-                                                                    <div className="text-sm pt-1">
-                                                                        {(() => {
-                                                                            const displayValue = typeof text === 'object' && text !== null ? (text as any).text : text;
-                                                                            return displayValue ? (
-                                                                                <ErrorBoundary>
-                                                                                    <MarkdownPreview content={String(displayValue)} />
-                                                                                </ErrorBoundary>
-                                                                            ) : <span className="text-muted-foreground italic">Empty</span>;
-                                                                        })()}
-                                                                    </div>
-                                                                    {(q.optionImages?.[key] || (typeof text === 'object' && text !== null && (text as any).image)) && (
-                                                                        <div className="border rounded bg-white dark:bg-gray-900 p-1">
-                                                                            <img
-                                                                                src={(q.optionImages?.[key] || (text as any).image)!}
-                                                                                alt={`Option ${key}`}
-                                                                                className="h-24 object-contain"
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                {isCorrectAnswer(q, key) && (
-                                                                    <Check className="w-5 h-5 text-green-600 shrink-0" />
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Numerical Answer Display */}
-                                            {q.type === 'numerical' && (
-                                                <div className="ml-2 sm:ml-10 mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-200 dark:border-purple-800">
-                                                    <label className="text-xs font-semibold uppercase text-purple-600 dark:text-purple-400">Correct Answer (Numerical)</label>
-                                                    <div className="text-lg font-mono mt-1 text-purple-800 dark:text-purple-200">
-                                                        {formatCorrectAnswer(q)}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Unanswered Warning */}
-                                            {!q.correctAnswer && (
-                                                <div className="ml-2 sm:ml-10">
-                                                    <Badge variant="outline" className="text-orange-600 border-orange-300">
-                                                        ⚠ Correct answer not detected — set it in the editor
-                                                    </Badge>
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </ScrollArea>
-
-                            {files.length > 0 && mode && (
-                                <Card className="mt-4 border-dashed border-2 border-primary/30">
-                                    <CardContent className="p-4">
-                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                            <div>
-                                                <h3 className="font-semibold text-lg">Need more questions?</h3>
-                                                <p className="text-sm text-muted-foreground">
-                                                    AI will analyze the remaining content in your document
-                                                </p>
-                                            </div>
-                                            <Button
-                                                onClick={() => handleProcess(mode, true)}
-                                                disabled={generatingMore}
-                                                variant="outline"
-                                                className="gap-2 min-w-[200px]"
-                                            >
-                                                {generatingMore ? (
-                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
-                                                ) : (
-                                                    <><Plus className="w-4 h-4" /> Generate More Questions</>
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {/* Proceed to test builder button */}
-                            <div className="mt-8 mb-4 border-t pt-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
-                                    <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                                    <span>Review complete? Save directly or edit to customize.</span>
-                                    
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full shrink-0">
-                                                <MoreVertical className="w-4 h-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start">
-                                            <DropdownMenuItem onClick={handleDownloadJSON} className="gap-2">
-                                                <Download className="w-4 h-4" />
-                                                Download raw JSON
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                <div className="flex gap-3 w-full md:w-auto">
-                                    <Button
-                                        onClick={handleImport}
-                                        size="lg"
-                                        variant="outline"
-                                        className="flex-1 md:flex-none gap-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
-                                    >
-                                        <PenLine className="w-4 h-4 md:w-5 md:h-5" />
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        onClick={handleDirectSave}
-                                        disabled={savingTest}
-                                        size="lg"
-                                        className="flex-1 md:flex-none gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-md text-white font-medium px-4 md:px-8 text-sm md:text-base h-10 md:h-12"
-                                    >
-                                        {savingTest ? (
-                                            <><Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> Saving...</>
-                                        ) : (
-                                            <><Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-200" /> Save & Continue</>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </ErrorBoundary>
-                </div>
-            );
-        } catch (err) {
-            console.error("Critical Rendering Error:", err);
-            return (
-                <div className="container mx-auto p-4 max-w-3xl text-center">
-                    <Alert variant="destructive">
-                        <AlertTitle>Rendering Error</AlertTitle>
-                        <AlertDescription>
-                            Failed to display questions: {String(err)}
-                        </AlertDescription>
-                    </Alert>
-                    <Button
-                        variant="outline"
-                        className="mt-4"
-                        onClick={() => { setParsedData(null); setMode(null); }}
-                    >
-                        Try Again
-                    </Button>
-                </div>
-            );
-        }
+        return (
+            <ErrorBoundary>
+                <SEO title="Review your questions" description="Review AI-extracted questions before saving your test." noindex />
+                <PreviewView
+                    data={parsedData}
+                    mode={mode}
+                    extractionMeta={extractionMeta}
+                    durationSeconds={parsedData.execution_time_seconds}
+                    saving={savingTest}
+                    canGenerateMore={files.length > 0 && !!mode}
+                    generatingMore={generatingMore}
+                    onTryAgain={() => { setParsedData(null); setMode(null); }}
+                    onEdit={handleImport}
+                    onSave={handleDirectSave}
+                    onGenerateMore={() => mode && handleProcess(mode, true)}
+                    onGenerateInstead={() => handleProcess('generate')}
+                    onDownloadJSON={handleDownloadJSON}
+                />
+            </ErrorBoundary>
+        );
     }
 
     return null;
